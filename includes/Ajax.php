@@ -849,6 +849,7 @@ function federwiegen_create_payment_intent() {
             'amount'      => $preis,
             'currency'    => 'eur',
             'description' => $beschreibung,
+            'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
             'metadata'    => [
                 'produkt'     => $body['produkt'],
                 'extra'       => $body['extra'],
@@ -918,6 +919,9 @@ function federwiegen_create_subscription() {
             'customer' => $customer->id,
             'items' => [[ 'price' => $price_id ]],
             'payment_behavior' => 'default_incomplete',
+            'payment_settings' => [
+                'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
+            ],
             'expand' => ['latest_invoice.payment_intent'],
             'metadata' => [
                 'produkt'     => $body['produkt'] ?? '',
