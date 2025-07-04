@@ -43,6 +43,10 @@ foreach ($branding_results as $result) {
            class="federwiegen-tab <?php echo $active_tab === 'popup' ? 'active' : ''; ?>">
             📣 Popup
         </a>
+        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=stripe'); ?>"
+           class="federwiegen-tab <?php echo $active_tab === 'stripe' ? 'active' : ''; ?>">
+            💳 Stripe Integration
+        </a>
         <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=debug'); ?>"
            class="federwiegen-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
             🔧 Debug
@@ -58,6 +62,9 @@ foreach ($branding_results as $result) {
                 break;
             case 'popup':
                 include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/popup-tab.php';
+                break;
+            case 'stripe':
+                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/stripe-tab.php';
                 break;
             case 'debug':
                 include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/debug-tab.php';

@@ -12,10 +12,7 @@ if (isset($_POST['submit_popup'])) {
     ];
     update_option('federwiegen_popup_settings', $settings);
 
-    update_option('federwiegen_stripe_publishable_key', sanitize_text_field($_POST['stripe_publishable_key'] ?? ''));
-    update_option('federwiegen_stripe_secret_key', sanitize_text_field($_POST['stripe_secret_key'] ?? ''));
-
-    echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
+    echo '<div class="notice notice-success"><p>✅ Popup-Einstellungen gespeichert!</p></div>';
 }
 
 $popup_settings = get_option('federwiegen_popup_settings', []);
@@ -24,8 +21,6 @@ $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']
 $popup_title   = $popup_settings['title'] ?? '';
 $popup_content = $popup_settings['content'] ?? '';
 $popup_options = $popup_settings['options'] ?? '';
-$stripe_publishable_key = get_option('federwiegen_stripe_publishable_key', '');
-$stripe_secret_key = get_option('federwiegen_stripe_secret_key', '');
 ?>
 
 <div class="federwiegen-branding-tab">
@@ -55,19 +50,6 @@ $stripe_secret_key = get_option('federwiegen_stripe_secret_key', '');
                 <div class="federwiegen-form-group full-width">
                     <label>Auswahloptionen (optional, eine pro Zeile)</label>
                     <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
-                </div>
-            </div>
-        </div>
-        <div class="federwiegen-form-section">
-            <h4>🔑 Stripe API Keys</h4>
-            <div class="federwiegen-form-grid">
-                <div class="federwiegen-form-group">
-                    <label>Publishable Key</label>
-                    <input type="text" name="stripe_publishable_key" value="<?php echo esc_attr($stripe_publishable_key); ?>">
-                </div>
-                <div class="federwiegen-form-group">
-                    <label>Secret Key</label>
-                    <input type="text" name="stripe_secret_key" value="<?php echo esc_attr($stripe_secret_key); ?>">
                 </div>
             </div>
         </div>
