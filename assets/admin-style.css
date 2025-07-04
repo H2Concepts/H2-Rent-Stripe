@@ -1,0 +1,741 @@
+/* Admin Styles for Federwiegen Verleih Plugin */
+.federwiegen-admin-dashboard {
+    margin-top: 20px;
+}
+
+.federwiegen-admin-card {
+    background: white;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.federwiegen-admin-card h2 {
+    margin-top: 0;
+    color: #23282d;
+}
+
+.federwiegen-admin-card h3 {
+    color: #23282d;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.federwiegen-admin-card code {
+    background: #f1f1f1;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+}
+
+.federwiegen-admin-card ul {
+    list-style-type: disc;
+    margin-left: 20px;
+}
+
+.federwiegen-admin-card li {
+    margin-bottom: 5px;
+}
+
+.federwiegen-admin-card li a {
+    text-decoration: none;
+}
+
+.federwiegen-admin-card li a:hover {
+    text-decoration: underline;
+}
+
+/* Standard Admin Header (transparent) */
+.federwiegen-admin-header {
+    background: transparent;
+    color: #3c434a;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid #ddd;
+}
+
+.federwiegen-admin-logo {
+    width: 60px;
+    height: 60px;
+    background: rgba(60, 67, 74, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.federwiegen-admin-title h1 {
+    margin: 0;
+    color: #3c434a;
+    font-size: 28px;
+}
+
+.federwiegen-admin-title p {
+    margin: 5px 0 0 0;
+    opacity: 0.7;
+    font-size: 14px;
+    color: #3c434a;
+}
+
+/* Kompakter Header - TRANSPARENT */
+.federwiegen-admin-header-compact {
+    background: transparent;
+    color: #3c434a;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #ddd;
+}
+
+.federwiegen-admin-logo-compact {
+    width: 50px;
+    height: 50px;
+    background: rgba(60, 67, 74, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: #3c434a;
+}
+
+.federwiegen-admin-title-compact h1 {
+    margin: 0;
+    color: #3c434a;
+    font-size: 24px;
+}
+
+.federwiegen-admin-title-compact p {
+    margin: 5px 0 0 0;
+    opacity: 0.7;
+    font-size: 14px;
+    color: #3c434a;
+}
+
+/* Navigation */
+.federwiegen-admin-nav {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.federwiegen-admin-nav h3 {
+    margin: 0 0 15px 0;
+    color: #3c434a;
+}
+
+.federwiegen-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.federwiegen-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #3c434a;
+    transition: all 0.2s ease;
+}
+
+.federwiegen-nav-item:hover {
+    background: #5f7f5f;
+    color: white;
+    text-decoration: none;
+}
+
+.federwiegen-nav-item .dashicons {
+    font-size: 16px;
+}
+
+/* Breadcrumb */
+.federwiegen-breadcrumb {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.federwiegen-breadcrumb a {
+    color: #5f7f5f;
+    text-decoration: none;
+}
+
+.federwiegen-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+/* Category Selector */
+.federwiegen-category-selector {
+    background: #f0f8ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.federwiegen-category-selector form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.federwiegen-category-selector select {
+    min-width: 200px;
+}
+
+.federwiegen-category-info code {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* Tab Navigation */
+.federwiegen-tab-nav {
+    background: white;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 0;
+    display: flex;
+    overflow-x: auto;
+}
+
+.federwiegen-tab {
+    padding: 15px 20px;
+    text-decoration: none;
+    color: #666;
+    border-right: 1px solid #ddd;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.federwiegen-tab:hover {
+    background: #f8f9fa;
+    color: #5f7f5f;
+    text-decoration: none;
+}
+
+.federwiegen-tab.active {
+    background: #5f7f5f;
+    color: white;
+    font-weight: 600;
+}
+
+.federwiegen-tab:last-child {
+    border-right: none;
+}
+
+.federwiegen-tab-content {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 8px 8px;
+    padding: 30px;
+    min-height: 400px;
+}
+
+/* Tab Section Styles */
+.federwiegen-tab-section h3 {
+    margin: 0 0 10px 0;
+    color: #3c434a;
+}
+
+.federwiegen-tab-section > p {
+    margin: 0 0 30px 0;
+    color: #666;
+}
+
+/* Form Cards */
+.federwiegen-form-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.federwiegen-form-card h4 {
+    margin: 0 0 20px 0;
+    color: #5f7f5f;
+}
+
+.federwiegen-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.federwiegen-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.federwiegen-form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.federwiegen-form-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #3c434a;
+}
+
+.federwiegen-form-group input,
+.federwiegen-form-group textarea,
+.federwiegen-form-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.federwiegen-form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 8px;
+}
+
+.federwiegen-form-group small {
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Structured form layout */
+.federwiegen-form-section {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.federwiegen-form-section h4 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #3c434a;
+}
+
+.federwiegen-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.federwiegen-form-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* List Cards */
+.federwiegen-list-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.federwiegen-list-card h4 {
+    margin: 0 0 20px 0;
+    color: #3c434a;
+}
+
+.federwiegen-empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+/* Items Grid */
+.federwiegen-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.federwiegen-item-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.federwiegen-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.federwiegen-item-images {
+    position: relative;
+    height: 150px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.federwiegen-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.federwiegen-placeholder {
+    font-size: 3rem;
+    color: #ccc;
+}
+
+.federwiegen-image-count {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.federwiegen-item-content {
+    padding: 15px;
+}
+
+.federwiegen-item-content h5 {
+    margin: 0 0 8px 0;
+    color: #3c434a;
+}
+
+.federwiegen-item-content p {
+    margin: 0 0 12px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.federwiegen-item-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.federwiegen-price {
+    font-weight: 600;
+    color: #5f7f5f;
+    font-size: 16px;
+}
+
+.federwiegen-status.available {
+    color: #46b450;
+    font-size: 12px;
+}
+
+.federwiegen-status.unavailable {
+    color: #dc3232;
+    font-size: 12px;
+}
+
+.federwiegen-status,
+.federwiegen-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.federwiegen-item-actions {
+    padding: 15px;
+    background: #f8f9fa;
+    display: flex;
+    gap: 10px;
+}
+
+/* Media Upload */
+.federwiegen-media-upload {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.federwiegen-media-upload input {
+    flex: 1;
+}
+
+.federwiegen-media-button {
+    white-space: nowrap;
+}
+
+.federwiegen-image-preview {
+    margin-top: 10px;
+}
+
+.federwiegen-image-preview img {
+    max-width: 150px;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    transition: transform 0.2s ease;
+}
+
+.federwiegen-image-preview img:hover {
+    transform: scale(1.05);
+}
+
+.federwiegen-color-swatch {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    display: inline-block;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.federwiegen-color-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Unified upload area styling */
+.federwiegen-upload-area {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.federwiegen-upload-area input {
+    flex: 1;
+}
+
+.federwiegen-upload-area button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+}
+
+.federwiegen-icon-preview img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.federwiegen-feature-group {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.federwiegen-feature-group h5 {
+    margin: 0 0 10px 0;
+    color: #5f7f5f;
+    font-size: 0.9rem;
+}
+
+/* Form styling improvements */
+.form-table th {
+    width: 200px;
+    padding: 20px 10px 20px 0;
+}
+
+.form-table td {
+    padding: 15px 10px;
+}
+
+.form-table input[type="text"],
+.form-table input[type="number"],
+.form-table input[type="url"],
+.form-table textarea,
+.form-table select {
+    width: 100%;
+    max-width: 400px;
+}
+
+.form-table textarea {
+    height: 80px;
+    resize: vertical;
+}
+
+/* Table improvements */
+.wp-list-table th,
+.wp-list-table td {
+    padding: 12px;
+}
+
+.wp-list-table .button-small {
+    margin-right: 5px;
+}
+
+/* Notice styling */
+.notice {
+    margin: 15px 0;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .federwiegen-category-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .federwiegen-tab-nav {
+        flex-direction: column;
+    }
+    
+    .federwiegen-tab {
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .federwiegen-tab:last-child {
+        border-bottom: none;
+    }
+    
+    .federwiegen-tab-content {
+        padding: 20px;
+    }
+    
+    .federwiegen-form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .federwiegen-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .federwiegen-items-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-table th,
+    .form-table td {
+        display: block;
+        width: 100%;
+        padding: 10px 0;
+    }
+    
+    .form-table th {
+        border-bottom: none;
+        font-weight: bold;
+    }
+    
+    .form-table input[type="text"],
+    .form-table input[type="number"],
+    .form-table input[type="url"],
+    .form-table textarea,
+    .form-table select {
+        max-width: 100%;
+    }
+    
+    .federwiegen-nav-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.federwiegen-payment-checkboxes label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+
+.federwiegen-payment-checkboxes img {
+    width: 32px;
+    height: auto;
+    margin-right: 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px;
+    background: #fff;
+}
+
+.federwiegen-shipping-radios label {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+
+.federwiegen-shipping-radios img {
+    width: 32px;
+    height: auto;
+    margin-right: 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px;
+    background: #fff;
+}
+
+/* Toggle switch */
+.federwiegen-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.federwiegen-toggle-label input {
+    display: none;
+}
+
+.federwiegen-toggle-slider {
+    position: relative;
+    width: 40px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 22px;
+    transition: background 0.3s;
+}
+
+.federwiegen-toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s;
+}
+
+.federwiegen-toggle-label input:checked + .federwiegen-toggle-slider {
+    background: #5f7f5f;
+}
+
+.federwiegen-toggle-label input:checked + .federwiegen-toggle-slider::before {
+    transform: translateX(18px);
+}
