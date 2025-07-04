@@ -123,7 +123,7 @@ function federwiegen_stripe_elements_form() {
         preis: getUrlParameter('preis')
       };
 
-      const stripe = Stripe('pk_live_51QGi8URxDui5dUOqbXPixQCsZWvMyoYD0jLcZ3b0UHIBzK1dO3veMHVK4R8HY2G5ZKVjkKqVep0jYs4UdcPpDVYt00BYmp1Z6S');
+      const stripe = Stripe('<?php echo esc_js(\FederwiegenVerleih\StripeService::get_publishable_key()); ?>');
       let elements = stripe.elements();
       let card = elements.create('card');
       card.mount('#card-element');
