@@ -3,7 +3,7 @@
   * Plugin Name: Rent Plugin
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.6.8
+* Version: 2.6.9
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.6.8';
+const FEDERWIEGEN_PLUGIN_VERSION = '2.6.9';
 const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
 define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
@@ -68,8 +68,8 @@ function federwiegen_stripe_elements_form() {
         <?php
           $preis_cents = isset($_GET['preis']) ? intval($_GET['preis']) : 0;
           $shipping_cents = isset($_GET['shipping']) ? intval($_GET['shipping']) : 0;
-          if (!$shipping_cents && !empty($_GET['shipping_rate_id'])) {
-              $amount = \FederwiegenVerleih\StripeService::get_shipping_rate_amount(sanitize_text_field($_GET['shipping_rate_id']));
+          if (!$shipping_cents && !empty($_GET['shipping_price_id'])) {
+              $amount = \FederwiegenVerleih\StripeService::get_price_amount(sanitize_text_field($_GET['shipping_price_id']));
               if (!is_wp_error($amount)) {
                   $shipping_cents = intval(round($amount * 100));
               }
@@ -138,7 +138,7 @@ function federwiegen_stripe_elements_form() {
         price_id: getUrlParameter('price_id')
       };
 
-      const SHIPPING_RATE_ID = getUrlParameter('shipping_rate_id');
+      const SHIPPING_PRICE_ID = getUrlParameter('shipping_price_id');
 
       const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
 
@@ -148,7 +148,7 @@ function federwiegen_stripe_elements_form() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...baseData,
-            shipping_rate_id: SHIPPING_RATE_ID
+            shipping_price_id: SHIPPING_PRICE_ID
           })
         })
           .then((response) => response.json())
@@ -187,16 +187,10 @@ function federwiegen_stripe_elements_form() {
         paymentElement.mount('#payment-element');
 
         const subtotal = document.getElementById('subtotal');
-        const shipping = document.getElementById('shipping');
         const total = document.getElementById('total');
 
         checkout.on('change', (session) => {
           subtotal.textContent = `Subtotal: ${session.total.subtotal.amount}`;
-          if (session.total.shippingRate) {
-            shipping.textContent = `Shipping: ${session.total.shippingRate.amount}`;
-          } else {
-            shipping.textContent = '';
-          }
           total.textContent = `Total: ${session.total.total.amount}`;
         });
 

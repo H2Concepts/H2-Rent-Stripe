@@ -67,18 +67,6 @@ class StripeService {
         }
     }
 
-    public static function get_shipping_rate_amount($rate_id) {
-        $init = self::init();
-        if (is_wp_error($init)) {
-            return $init;
-        }
-        try {
-            $rate = \Stripe\ShippingRate::retrieve($rate_id);
-            return $rate->fixed_amount ? $rate->fixed_amount->amount / 100 : 0;
-        } catch (\Exception $e) {
-            return new \WP_Error('stripe_rate', $e->getMessage());
-        }
-    }
 
     public static function get_publishable_key() {
         return get_option('federwiegen_stripe_publishable_key', '');
