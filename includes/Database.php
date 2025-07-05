@@ -320,7 +320,26 @@ class Database {
                 PRIMARY KEY (id),
                 UNIQUE KEY variant_option (variant_id, option_type, option_id)
             ) $charset_collate;";
-            
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
+        // Create duration price table if it doesn't exist
+        $table_duration_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+        $duration_prices_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_duration_prices'");
+
+        if (!$duration_prices_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_duration_prices (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                duration_id mediumint(9) NOT NULL,
+                variant_id mediumint(9) NOT NULL,
+                stripe_price_id varchar(255) DEFAULT '',
+                PRIMARY KEY (id),
+                UNIQUE KEY duration_variant (duration_id, variant_id)
+            ) $charset_collate;";
+
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
@@ -651,6 +670,17 @@ class Database {
             PRIMARY KEY (id),
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";
+
+        // Variant price IDs per duration
+        $table_duration_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+        $sql_duration_prices = "CREATE TABLE $table_duration_prices (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            duration_id mediumint(9) NOT NULL,
+            variant_id mediumint(9) NOT NULL,
+            stripe_price_id varchar(255) DEFAULT '',
+            PRIMARY KEY (id),
+            UNIQUE KEY duration_variant (duration_id, variant_id)
+        ) $charset_collate;";
         
         // Orders table
         $table_orders = $wpdb->prefix . 'federwiegen_orders';
@@ -688,6 +718,7 @@ class Database {
         dbDelta($sql_colors);
         dbDelta($sql_color_variant_images);
         dbDelta($sql_variant_options);
+        dbDelta($sql_duration_prices);
         dbDelta($sql_orders);
 
         // Notifications table

@@ -333,6 +333,9 @@ class Plugin {
             'farbe'       => sanitize_text_field($_POST['farbe'] ?? ''),
             'preis'       => intval($_POST['preis'] ?? 0),
             'shipping'    => intval($_POST['shipping'] ?? 0),
+            'variant_id'  => intval($_POST['variant_id'] ?? 0),
+            'duration_id' => intval($_POST['duration_id'] ?? 0),
+            'price_id'    => sanitize_text_field($_POST['price_id'] ?? ''),
         ];
 
         $checkout_url = self::get_checkout_page_url();

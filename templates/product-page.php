@@ -362,6 +362,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="farbe" id="federwiegen-field-farbe">
                         <input type="hidden" name="preis" id="federwiegen-field-preis">
                         <input type="hidden" name="shipping" id="federwiegen-field-shipping">
+                        <input type="hidden" name="variant_id" id="federwiegen-field-variant-id">
+                        <input type="hidden" name="duration_id" id="federwiegen-field-duration-id">
+                        <input type="hidden" name="price_id" id="federwiegen-field-price-id">
                         <input type="hidden" name="jetzt_mieten" value="1">
                     <div class="federwiegen-availability-wrapper" id="federwiegen-availability-wrapper" style="display:none;">
                         <div id="federwiegen-availability-status" class="federwiegen-availability-status available">

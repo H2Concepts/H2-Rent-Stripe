@@ -51,12 +51,22 @@ class Ajax {
         
         if ($variant && $duration) {
             $variant_price = 0;
-            if (!empty($variant->stripe_price_id)) {
-                $price_res = StripeService::get_price_amount($variant->stripe_price_id);
+            $used_price_id = '';
+            $duration_price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+
+            $price_id_to_use = $duration_price_id ?: $variant->stripe_price_id;
+
+            if (!empty($price_id_to_use)) {
+                $price_res = StripeService::get_price_amount($price_id_to_use);
                 if (is_wp_error($price_res)) {
                     wp_send_json_error('Price fetch failed');
                 }
                 $variant_price = floatval($price_res);
+                $used_price_id = $price_id_to_use;
             } else {
                 $variant_price = floatval($variant->base_price);
             }
@@ -93,6 +103,7 @@ class Ajax {
                 'discount' => $discount,
                 'shipping_cost' => $shipping_cost,
                 'stripe_link' => $link ?: '#',
+                'price_id' => $used_price_id,
                 'available' => $variant->available ? true : false,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: ''
@@ -886,26 +897,27 @@ function federwiegen_create_subscription() {
     $body = json_decode(file_get_contents('php://input'), true);
 
     try {
-        $mietdauer = intval($body['dauer']);
+        global $wpdb;
+        $duration_id = intval($body['duration_id'] ?? $body['dauer']);
+        $variant_id = intval($body['variant_id'] ?? 0);
+        $price_id = sanitize_text_field($body['price_id'] ?? '');
 
-        $price_id = $body['price_id'] ?? '';
-        if (!$price_id) {
-            switch ($mietdauer) {
-                case 1:
-                    $price_id = 'price_1QutK3RxDui5dUOqWEiBal7P';
-                    break;
-                case 2:
-                    $price_id = 'price_1RgsfURxDui5dUOqCrHj06pj';
-                    break;
-                case 4:
-                    $price_id = 'price_1RgslZRxDui5dUOqDKCSmqkU';
-                    break;
-                case 6:
-                    $price_id = 'price_1RgssSRxDui5dUOqOUj6o0ZB';
-                    break;
-                default:
-                    wp_send_json_error(['message' => 'Ungültige Mietdauer']);
+        if (!$price_id && $variant_id && $duration_id) {
+            $price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+            if (!$price_id) {
+                $price_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                    $variant_id
+                ));
             }
+        }
+
+        if (!$price_id) {
+            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
 
         $customer = StripeService::create_customer([

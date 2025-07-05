@@ -15,6 +15,7 @@ jQuery(document).ready(function($) {
     let touchEndX = 0;
     let currentPrice = 0;
     let currentShippingCost = 0;
+    let currentPriceId = '';
     let colorNotificationTimeout = null;
 
     // Get category ID from container
@@ -163,6 +164,9 @@ jQuery(document).ready(function($) {
         $('#federwiegen-field-farbe').val(colorName);
         $('#federwiegen-field-preis').val(Math.round(currentPrice * 100));
         $('#federwiegen-field-shipping').val(Math.round(currentShippingCost * 100));
+        $('#federwiegen-field-variant-id').val(selectedVariant);
+        $('#federwiegen-field-duration-id').val(selectedDuration);
+        $('#federwiegen-field-price-id').val(currentPriceId);
 
         $('#federwiegen-order-form').submit();
     });
@@ -604,6 +608,7 @@ jQuery(document).ready(function($) {
 
                         // Update button based on availability
                         currentStripeLink = data.stripe_link;
+                        currentPriceId = data.price_id || '';
                         const isAvailable = data.available !== false;
 
                         $('#federwiegen-rent-button').prop('disabled', !isAvailable);

@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 
 global $wpdb;
 $table_name = $wpdb->prefix . 'federwiegen_durations';
+$table_prices = $wpdb->prefix . 'federwiegen_duration_prices';
 
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
@@ -48,6 +49,7 @@ if (isset($_POST['submit'])) {
             array('%d')
         );
         
+        $duration_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich aktualisiert!</p></div>';
         } else {
@@ -68,10 +70,24 @@ if (isset($_POST['submit'])) {
             array('%d', '%s', '%d', '%f', '%d', '%d')
         );
         
+        $duration_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich hinzugefügt!</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        }
+    }
+
+    if ($result !== false && isset($_POST['variant_price_id']) && is_array($_POST['variant_price_id'])) {
+        foreach ($_POST['variant_price_id'] as $v_id => $pid) {
+            $v_id = intval($v_id);
+            $pid  = sanitize_text_field($pid);
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table_prices WHERE duration_id = %d AND variant_id = %d", $duration_id, $v_id));
+            if ($exists) {
+                $wpdb->update($table_prices, ['stripe_price_id' => $pid], ['id' => $exists]);
+            } else {
+                $wpdb->insert($table_prices, ['duration_id' => $duration_id, 'variant_id' => $v_id, 'stripe_price_id' => $pid]);
+            }
         }
     }
 }
@@ -100,6 +116,7 @@ $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}
 
 // Get all durations for selected category
 $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY sort_order, months_minimum", $selected_category));
+$variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
 ?>
 
 <div class="wrap">

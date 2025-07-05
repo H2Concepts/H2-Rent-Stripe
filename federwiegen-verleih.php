@@ -158,21 +158,6 @@ function federwiegen_stripe_elements_form() {
         return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
       }
 
-      function getPriceId(dauer) {
-        switch (parseInt(dauer, 10)) {
-          case 1:
-            return 'price_1QutK3RxDui5dUOqWEiBal7P';
-          case 2:
-            return 'price_1RgsfURxDui5dUOqCrHj06pj';
-          case 4:
-            return 'price_1RgslZRxDui5dUOqDKCSmqkU';
-          case 6:
-            return 'price_1RgssSRxDui5dUOqOUj6o0ZB';
-          default:
-            return '';
-        }
-      }
-
       const baseData = {
         produkt: getUrlParameter('produkt'),
         extra: getUrlParameter('extra'),
@@ -181,7 +166,10 @@ function federwiegen_stripe_elements_form() {
         zustand: getUrlParameter('zustand'),
         farbe: getUrlParameter('farbe'),
         preis: getUrlParameter('preis'),
-        shipping: getUrlParameter('shipping')
+        shipping: getUrlParameter('shipping'),
+        variant_id: getUrlParameter('variant_id'),
+        duration_id: getUrlParameter('duration_id'),
+        price_id: getUrlParameter('price_id')
       };
 
       const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
@@ -227,7 +215,9 @@ function federwiegen_stripe_elements_form() {
           farbe: baseData.farbe,
           preis: baseData.preis,
           shipping: baseData.shipping,
-          price_id: getPriceId(baseData.dauer),
+          variant_id: baseData.variant_id,
+          duration_id: baseData.duration_id,
+          price_id: baseData.price_id,
           shipping_price_id: SHIPPING_PRICE_ID
         };
 
