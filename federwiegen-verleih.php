@@ -188,8 +188,31 @@ function federwiegen_stripe_elements_form() {
 
       const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
       const elements = stripe.elements();
-      const paymentElement = elements.create('payment');
-      paymentElement.mount('#payment-element');
+      let clientSecret = null;
+
+      async function initStripePaymentElement() {
+        try {
+          const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_subscription"); ?>', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...baseData })
+          });
+          const result = await res.json();
+          if (!result.client_secret) {
+            document.getElementById('payment-message').textContent = 'Fehler: Kein client_secret erhalten.';
+            return;
+          }
+
+          clientSecret = result.client_secret;
+          elements.update({ clientSecret });
+          const paymentElement = elements.create('payment');
+          paymentElement.mount('#payment-element');
+
+          form.addEventListener('submit', handleSubmit);
+        } catch (e) {
+          document.getElementById('payment-message').textContent = e.message;
+        }
+      }
 
       const sameAddressCheckbox = document.getElementById('same-address');
       const billingFields = document.getElementById('billing-fields');
@@ -198,7 +221,8 @@ function federwiegen_stripe_elements_form() {
       });
 
       const form = document.getElementById('checkout-form');
-      form.addEventListener('submit', async (event) => {
+
+      async function handleSubmit(event) {
         event.preventDefault();
 
         if (!document.getElementById('agb').checked) {
@@ -206,93 +230,48 @@ function federwiegen_stripe_elements_form() {
           return;
         }
 
-        const formData = {
-          fullname: document.getElementById('fullname').value,
-          email: document.getElementById('email').value,
+        const shipping = {
+          name: document.getElementById('fullname').value,
           phone: document.getElementById('phone').value,
-          street: document.getElementById('street').value,
-          postal: document.getElementById('postal').value,
-          city: document.getElementById('city').value,
-          country: document.getElementById('country').value,
-          bill_fullname: document.getElementById('bill_fullname').value,
-          bill_street: document.getElementById('bill_street').value,
-          bill_postal: document.getElementById('bill_postal').value,
-          bill_city: document.getElementById('bill_city').value,
-          bill_country: document.getElementById('bill_country').value,
-          produkt: baseData.produkt,
-          extra: baseData.extra,
-          dauer: baseData.dauer,
-          dauer_name: baseData.dauer_name,
-          zustand: baseData.zustand,
-          farbe: baseData.farbe,
-          produktfarbe: baseData.produktfarbe,
-          gestellfarbe: baseData.gestellfarbe,
-          preis: baseData.preis,
-          shipping: baseData.shipping,
-          variant_id: baseData.variant_id,
-          duration_id: baseData.duration_id,
-          price_id: baseData.price_id,
-          shipping_price_id: SHIPPING_PRICE_ID
+          address: {
+            line1: document.getElementById('street').value,
+            postal_code: document.getElementById('postal').value,
+            city: document.getElementById('city').value,
+            country: document.getElementById('country').value,
+          }
+        };
+
+        const billing = {
+          name: document.getElementById('bill_fullname').value || shipping.name,
+          email: document.getElementById('email').value,
+          address: {
+            line1: document.getElementById('bill_street').value || shipping.address.line1,
+            postal_code: document.getElementById('bill_postal').value || shipping.address.postal_code,
+            city: document.getElementById('bill_city').value || shipping.address.city,
+            country: document.getElementById('bill_country').value || shipping.address.country,
+          }
         };
 
         const messageEl = document.getElementById('payment-message');
         messageEl.textContent = '';
 
-        try {
-          const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_subscription"); ?>', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData)
-          });
-          if (!res.ok) {
-            throw new Error('Serverfehler');
-          }
-          const responseData = await res.json();
-          if (!responseData.client_secret) {
-            messageEl.textContent = 'Fehler: client_secret fehlt.';
-            return;
-          }
-          const shipping = {
-            name: document.getElementById('fullname').value,
-            phone: document.getElementById('phone').value,
-            address: {
-              line1: document.getElementById('street').value,
-              postal_code: document.getElementById('postal').value,
-              city: document.getElementById('city').value,
-              country: document.getElementById('country').value,
-            }
-          };
-
-          const billing = {
-            name: document.getElementById('bill_fullname').value || shipping.name,
-            email: document.getElementById('email').value,
-            address: {
-              line1: document.getElementById('bill_street').value || shipping.address.line1,
-              postal_code: document.getElementById('bill_postal').value || shipping.address.postal_code,
-              city: document.getElementById('bill_city').value || shipping.address.city,
-              country: document.getElementById('bill_country').value || shipping.address.country,
-            }
-          };
-
-          elements.update({ clientSecret: responseData.client_secret });
-          const { error, paymentIntent } = await stripe.confirmPayment({
-            elements,
-            confirmParams: {
-              payment_method_data: { billing_details: billing },
-              shipping: shipping
-            },
-            redirect: 'if_required',
-            clientSecret: responseData.client_secret
-          });
-          if (error) {
-            messageEl.textContent = error.message;
-          } else if (paymentIntent.status === 'succeeded') {
-            messageEl.textContent = 'Zahlung erfolgreich!';
-          }
-        } catch (err) {
-          messageEl.textContent = err.message;
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            payment_method_data: { billing_details: billing },
+            shipping: shipping
+          },
+          redirect: 'if_required',
+          clientSecret
+        });
+        if (error) {
+          messageEl.textContent = error.message;
+        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+          messageEl.textContent = 'Zahlung erfolgreich!';
         }
-      });
+      }
+
+      initStripePaymentElement();
     </script>
     </div>
 
