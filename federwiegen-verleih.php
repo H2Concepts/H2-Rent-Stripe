@@ -46,6 +46,11 @@ add_action('plugins_loaded', function () {
 
 add_shortcode('stripe_elements_form', 'federwiegen_stripe_elements_form');
 function federwiegen_stripe_elements_form() {
+    $publishable_key = \FederwiegenVerleih\StripeService::get_publishable_key();
+    if (empty($publishable_key)) {
+        return '<p>Stripe API-Schl\xC3\xBCssel fehlt. Bitte in den Plugin-Einstellungen eintragen.</p>';
+    }
+
     ob_start(); ?>
 
     <div class="federwiegen-checkout-wrapper">
@@ -181,7 +186,7 @@ function federwiegen_stripe_elements_form() {
 
       const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
 
-      const stripe = Stripe('<?php echo esc_js(\FederwiegenVerleih\StripeService::get_publishable_key()); ?>');
+      const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
       const elements = stripe.elements();
       const paymentElement = elements.create('payment');
       paymentElement.mount('#payment-element');
@@ -243,6 +248,10 @@ function federwiegen_stripe_elements_form() {
             throw new Error('Serverfehler');
           }
           const responseData = await res.json();
+          if (!responseData.client_secret) {
+            messageEl.textContent = 'Fehler: client_secret fehlt.';
+            return;
+          }
           const shipping = {
             name: document.getElementById('fullname').value,
             phone: document.getElementById('phone').value,
