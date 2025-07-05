@@ -54,6 +54,14 @@ class StripeService {
         return \Stripe\Subscription::create($params);
     }
 
+    public static function create_checkout_session(array $params) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+        return \Stripe\Checkout\Session::create($params);
+    }
+
     public static function get_price_amount($price_id) {
         $init = self::init();
         if (is_wp_error($init)) {
