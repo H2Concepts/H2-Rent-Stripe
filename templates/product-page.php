@@ -47,10 +47,10 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 }
 
 // Shipping
-$shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
+$shipping_rate_id = isset($category) ? ($category->shipping_rate_id ?? '') : '';
 $shipping_cost = 0;
-if (!empty($shipping_price_id)) {
-    $amount = \FederwiegenVerleih\StripeService::get_price_amount($shipping_price_id);
+if (!empty($shipping_rate_id)) {
+    $amount = \FederwiegenVerleih\StripeService::get_shipping_rate_amount($shipping_rate_id);
     if (!is_wp_error($amount)) {
         $shipping_cost = $amount;
     }
@@ -169,7 +169,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <div class="federwiegen-price-icon">💶</div>
                 </div>
 
-                <?php if (!empty($shipping_price_id)): ?>
+                <?php if (!empty($shipping_rate_id)): ?>
                 <div class="federwiegen-price-box federwiegen-shipping-box">
                     <p class="federwiegen-price-label">
                         <span class="federwiegen-shipping-icon">🚚</span>
@@ -371,7 +371,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="gestellfarbe" id="federwiegen-field-gestellfarbe">
                         <input type="hidden" name="preis" id="federwiegen-field-preis">
                         <input type="hidden" name="shipping" id="federwiegen-field-shipping">
-                        <input type="hidden" name="shipping_price_id" id="federwiegen-field-shipping-price-id" value="<?php echo esc_attr($shipping_price_id); ?>">
+                        <input type="hidden" name="shipping_rate_id" id="federwiegen-field-shipping-rate-id" value="<?php echo esc_attr($shipping_rate_id); ?>">
                         <input type="hidden" name="variant_id" id="federwiegen-field-variant-id">
                         <input type="hidden" name="duration_id" id="federwiegen-field-duration-id">
                         <input type="hidden" name="price_id" id="federwiegen-field-price-id">

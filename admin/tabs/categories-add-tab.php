@@ -159,8 +159,8 @@
 
             <div class="federwiegen-form-row">
                 <div class="federwiegen-form-group">
-                    <label>Stripe Preis ID Versand</label>
-                    <input type="text" name="shipping_price_id" placeholder="price_123...">
+                    <label>Stripe Versandrate ID</label>
+                    <input type="text" name="shipping_rate_id" placeholder="shr_123...">
                 </div>
                 <div class="federwiegen-form-group">
                     <label>Text Versandkosten</label>
