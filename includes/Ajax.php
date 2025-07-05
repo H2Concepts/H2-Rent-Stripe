@@ -821,16 +821,10 @@ add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\federwiegen_create_
 add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
 
 function federwiegen_create_payment_intent() {
-    $stripe_init = plugin_dir_path(__FILE__) . '/../vendor/stripe/stripe-php/init.php';
-    if (file_exists($stripe_init)) {
-        require_once $stripe_init;
+    $init = StripeService::init();
+    if (is_wp_error($init)) {
+        wp_send_json_error(['message' => $init->get_error_message()]);
     }
-
-    if (!class_exists('\\Stripe\\Stripe')) {
-        wp_send_json_error(['message' => 'Stripe library not found']);
-    }
-
-    \Stripe\Stripe::setApiKey('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');
 
     $body = json_decode(file_get_contents('php://input'), true);
 
@@ -845,10 +839,11 @@ function federwiegen_create_payment_intent() {
             sanitize_text_field($body['farbe'])
         );
 
-        $intent = \Stripe\PaymentIntent::create([
+        $intent = StripeService::create_payment_intent([
             'amount'      => $preis,
             'currency'    => 'eur',
             'description' => $beschreibung,
+            'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
             'metadata'    => [
                 'produkt'     => $body['produkt'],
                 'extra'       => $body['extra'],
@@ -858,6 +853,9 @@ function federwiegen_create_payment_intent() {
                 'farbe'       => $body['farbe'],
             ],
         ]);
+        if (is_wp_error($intent)) {
+            throw new \Exception($intent->get_error_message());
+        }
 
         wp_send_json(['client_secret' => $intent->client_secret]);
     } catch (\Exception $e) {
@@ -866,16 +864,10 @@ function federwiegen_create_payment_intent() {
 }
 
 function federwiegen_create_subscription() {
-    $stripe_init = plugin_dir_path(__FILE__) . '/../vendor/stripe/stripe-php/init.php';
-    if (file_exists($stripe_init)) {
-        require_once $stripe_init;
+    $init = StripeService::init();
+    if (is_wp_error($init)) {
+        wp_send_json_error(['message' => $init->get_error_message()]);
     }
-
-    if (!class_exists('\\Stripe\\Stripe')) {
-        wp_send_json_error(['message' => 'Stripe library not found']);
-    }
-
-    \Stripe\Stripe::setApiKey('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');
 
     $body = json_decode(file_get_contents('php://input'), true);
 
@@ -902,7 +894,7 @@ function federwiegen_create_subscription() {
             }
         }
 
-        $customer = \Stripe\Customer::create([
+        $customer = StripeService::create_customer([
             'name'  => sanitize_text_field($body['fullname'] ?? ''),
             'email' => sanitize_email($body['email'] ?? ''),
             'phone' => sanitize_text_field($body['phone'] ?? ''),
@@ -914,10 +906,17 @@ function federwiegen_create_subscription() {
             ],
         ]);
 
-        $subscription = \Stripe\Subscription::create([
+        if (is_wp_error($customer)) {
+            throw new \Exception($customer->get_error_message());
+        }
+
+        $subscription = StripeService::create_subscription([
             'customer' => $customer->id,
             'items' => [[ 'price' => $price_id ]],
             'payment_behavior' => 'default_incomplete',
+            'payment_settings' => [
+                'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
+            ],
             'expand' => ['latest_invoice.payment_intent'],
             'metadata' => [
                 'produkt'     => $body['produkt'] ?? '',
@@ -935,6 +934,10 @@ function federwiegen_create_subscription() {
                 'country'     => $body['country'] ?? '',
             ],
         ]);
+
+        if (is_wp_error($subscription)) {
+            throw new \Exception($subscription->get_error_message());
+        }
 
         $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
 

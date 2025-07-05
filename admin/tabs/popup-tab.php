@@ -11,6 +11,7 @@ if (isset($_POST['submit_popup'])) {
         'options' => sanitize_textarea_field($_POST['popup_options'] ?? '')
     ];
     update_option('federwiegen_popup_settings', $settings);
+
     echo '<div class="notice notice-success"><p>✅ Popup-Einstellungen gespeichert!</p></div>';
 }
 
