@@ -3,7 +3,7 @@
   * Plugin Name: Rent Plugin
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.6.9
+* Version: 2.7.0
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.6.9';
+const FEDERWIEGEN_PLUGIN_VERSION = '2.7.0';
 const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
 define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
@@ -30,6 +30,7 @@ if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
 
 require_once FEDERWIEGEN_PLUGIN_DIR . 'includes/Autoloader.php';
 FederwiegenVerleih\Autoloader::register();
+require_once FEDERWIEGEN_PLUGIN_DIR . 'includes/Webhook.php';
 
 // Register activation and deactivation hooks
 register_activation_hook(__FILE__, ['FederwiegenVerleih\\Plugin', 'activate_plugin']);

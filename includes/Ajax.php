@@ -1002,7 +1002,7 @@ function federwiegen_create_subscription() {
             ],
         ];
         if ($shipping_price_id) {
-            $sub_params['add_invoice_items'][] = [ 'price' => $shipping_price_id, 'quantity' => 1 ];
+            $sub_params['metadata']['shipping_price_id'] = $shipping_price_id;
         }
 
         $subscription = StripeService::create_subscription($sub_params);
@@ -1053,9 +1053,6 @@ function federwiegen_create_checkout_session() {
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
         $line_items = [[ 'price' => $price_id, 'quantity' => 1 ]];
-        if ($shipping_price_id) {
-            $line_items[] = [ 'price' => $shipping_price_id, 'quantity' => 1 ];
-        }
         $session_args = [
             'line_items' => $line_items,
             'mode' => 'subscription',
@@ -1064,7 +1061,11 @@ function federwiegen_create_checkout_session() {
             'billing_address_collection' => 'required',
             'shipping_address_collection' => [ 'allowed_countries' => ['DE'] ],
             'return_url' => site_url('/?session_id={CHECKOUT_SESSION_ID}'),
+            'metadata' => [],
         ];
+        if ($shipping_price_id) {
+            $session_args['metadata']['shipping_price_id'] = $shipping_price_id;
+        }
 
         $session = \Stripe\Checkout\Session::create($session_args);
 
