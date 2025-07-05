@@ -22,6 +22,10 @@ jQuery(document).ready(function($) {
     const container = $('.federwiegen-container');
     if (container.length) {
         currentCategoryId = container.data('category-id');
+        const sc = parseFloat(container.data('shipping-cost'));
+        if (!isNaN(sc)) {
+            currentShippingCost = sc;
+        }
     }
 
     // Remove old inline color labels if they exist

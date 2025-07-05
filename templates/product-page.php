@@ -90,7 +90,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 ));
 ?>
 
-<div class="federwiegen-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>">
+<div class="federwiegen-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>">
 
     <div class="federwiegen-content">
         <div class="federwiegen-left">

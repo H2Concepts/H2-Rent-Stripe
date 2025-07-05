@@ -66,6 +66,12 @@ function federwiegen_stripe_elements_form() {
         <?php
           $preis_cents = isset($_GET['preis']) ? intval($_GET['preis']) : 0;
           $shipping_cents = isset($_GET['shipping']) ? intval($_GET['shipping']) : 0;
+          if (!$shipping_cents && !empty($_GET['shipping_price_id'])) {
+              $amount = \FederwiegenVerleih\StripeService::get_price_amount(sanitize_text_field($_GET['shipping_price_id']));
+              if (!is_wp_error($amount)) {
+                  $shipping_cents = intval(round($amount * 100));
+              }
+          }
           $total_first_cents = $preis_cents + $shipping_cents;
         ?>
         <ul class="federwiegen-checkout-summary">
