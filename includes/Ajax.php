@@ -92,7 +92,9 @@ class Ajax {
 
             $base_price = $variant_price + $extras_price;
             $discount = floatval($duration->discount);
-            $final_price = ($variant_price * (1 - $discount)) + $extras_price;
+            // Do not apply the discount to the calculated price. It is only used
+            // for displaying the badge on the duration option.
+            $final_price = $base_price;
             $shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
                 ? floatval(constant('FEDERWIEGEN_SHIPPING_COST'))
                 : 0;

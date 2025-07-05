@@ -596,15 +596,11 @@ jQuery(document).ready(function($) {
                         // Update price display
                         $('#federwiegen-final-price').text(formatPrice(data.final_price) + '€');
                         
-                        if (data.discount > 0) {
-                            $('#federwiegen-original-price').text(formatPrice(data.base_price) + '€').show();
-                            const savings = data.base_price - data.final_price;
-                            const saveSuffix = federwiegen_ajax.price_period === 'month' ? ' pro Monat!' : '!';
-                            $('#federwiegen-savings').text(`Sie sparen ${formatPrice(savings)}€${saveSuffix}`).show();
-                        } else {
-                            $('#federwiegen-original-price').hide();
-                            $('#federwiegen-savings').hide();
-                        }
+                        // The discount percentage is used only for the badge.
+                        // Prices come directly from Stripe, so don't show any
+                        // original price or savings calculation.
+                        $('#federwiegen-original-price').hide();
+                        $('#federwiegen-savings').hide();
 
                         // Update button based on availability
                         currentStripeLink = data.stripe_link;
