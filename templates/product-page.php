@@ -47,9 +47,14 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 }
 
 // Shipping
-$shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
-    ? constant('FEDERWIEGEN_SHIPPING_COST')
-    : 0;
+$shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
+$shipping_cost = 0;
+if (!empty($shipping_price_id)) {
+    $amount = \FederwiegenVerleih\StripeService::get_price_amount($shipping_price_id);
+    if (!is_wp_error($amount)) {
+        $shipping_cost = $amount;
+    }
+}
 $shipping_provider = isset($category) ? ($category->shipping_provider ?? '') : '';
 $price_label = isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis';
 $shipping_label = isset($category) ? ($category->shipping_label ?? 'Einmalige Versandkosten:') : 'Einmalige Versandkosten:';
@@ -164,6 +169,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <div class="federwiegen-price-icon">💶</div>
                 </div>
 
+                <?php if (!empty($shipping_price_id)): ?>
                 <div class="federwiegen-price-box federwiegen-shipping-box">
                     <p class="federwiegen-price-label">
                         <span class="federwiegen-shipping-icon">🚚</span>
@@ -176,6 +182,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <img class="federwiegen-shipping-provider-icon" src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
                     <?php endif; ?>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -364,6 +371,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="gestellfarbe" id="federwiegen-field-gestellfarbe">
                         <input type="hidden" name="preis" id="federwiegen-field-preis">
                         <input type="hidden" name="shipping" id="federwiegen-field-shipping">
+                        <input type="hidden" name="shipping_price_id" id="federwiegen-field-shipping-price-id" value="<?php echo esc_attr($shipping_price_id); ?>">
                         <input type="hidden" name="variant_id" id="federwiegen-field-variant-id">
                         <input type="hidden" name="duration_id" id="federwiegen-field-duration-id">
                         <input type="hidden" name="price_id" id="federwiegen-field-price-id">

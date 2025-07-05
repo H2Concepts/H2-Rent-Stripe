@@ -20,10 +20,6 @@ define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
-// Stripe price ID for the one-time shipping charge
-define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_1QKQDzRxDui5dUOqdlAFIJcr');
-// Display amount for shipping in Euros
-define('FEDERWIEGEN_SHIPPING_COST', 9.99);
 // Payment Method Configuration ID for PayPal
 define('FEDERWIEGEN_PMC_ID', 'pmc_1QKPcvRxDui5dUOqaNaxNjsL');
 
@@ -128,7 +124,7 @@ function federwiegen_stripe_elements_form() {
         price_id: getUrlParameter('price_id')
       };
 
-      const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
+      const SHIPPING_PRICE_ID = getUrlParameter('shipping_price_id');
 
       const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
 

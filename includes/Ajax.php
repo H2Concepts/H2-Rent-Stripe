@@ -95,9 +95,19 @@ class Ajax {
             // Do not apply the discount to the calculated price. It is only used
             // for displaying the badge on the duration option.
             $final_price = $base_price;
-            $shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
-                ? floatval(constant('FEDERWIEGEN_SHIPPING_COST'))
-                : 0;
+            $shipping_cost = 0;
+            if ($variant) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT shipping_price_id FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
+                    $variant->category_id
+                ));
+                if ($category && !empty($category->shipping_price_id)) {
+                    $price_res = StripeService::get_price_amount($category->shipping_price_id);
+                    if (!is_wp_error($price_res)) {
+                        $shipping_cost = floatval($price_res);
+                    }
+                }
+            }
             
             wp_send_json_success(array(
                 'base_price' => $base_price,
