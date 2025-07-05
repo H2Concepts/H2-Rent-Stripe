@@ -3,7 +3,7 @@
   * Plugin Name: Rent Plugin
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.6.6
+* Version: 2.6.7
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.6.6';
+const FEDERWIEGEN_PLUGIN_VERSION = '2.6.7';
 const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
 define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
@@ -56,6 +56,8 @@ function federwiegen_stripe_elements_form() {
           <input type="text" id="email" />
           <div id="email-errors"></div>
         </div>
+        <div id="billing-address"></div>
+        <div id="shipping-address"></div>
         <div id="payment-element"></div>
         <button id="pay-button">Jetzt bezahlen</button>
         <div id="confirm-errors"></div>
@@ -102,6 +104,12 @@ function federwiegen_stripe_elements_form() {
           <li>Gesamt 1. Monat: <?php echo number_format($total_first_cents / 100, 2, ',', '.'); ?> €</li>
           <li>Jeder weitere Monat: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
         </ul>
+        <div>
+          <h3> Totals </h3>
+          <div id="subtotal"></div>
+          <div id="shipping"></div>
+          <div id="total"></div>
+        </div>
       </div>
     </div>
 
@@ -164,8 +172,24 @@ function federwiegen_stripe_elements_form() {
           });
         });
 
+        const billingAddressElement = checkout.createBillingAddressElement();
+        billingAddressElement.mount('#billing-address');
+
+        const shippingAddressElement = checkout.createShippingAddressElement();
+        shippingAddressElement.mount('#shipping-address');
+
         const paymentElement = checkout.createPaymentElement();
         paymentElement.mount('#payment-element');
+
+        const subtotal = document.getElementById('subtotal');
+        const shipping = document.getElementById('shipping');
+        const total = document.getElementById('total');
+
+        checkout.on('change', (session) => {
+          subtotal.textContent = `Subtotal: ${session.total.subtotal.amount}`;
+          shipping.textContent = `Shipping: ${session.total.shippingRate.amount}`;
+          total.textContent = `Total: ${session.total.total.amount}`;
+        });
 
         const button = document.getElementById('pay-button');
         const errors = document.getElementById('confirm-errors');
