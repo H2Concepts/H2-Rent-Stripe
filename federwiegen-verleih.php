@@ -55,70 +55,14 @@ function federwiegen_stripe_elements_form() {
 
     <div class="federwiegen-checkout-wrapper">
       <div class="federwiegen-checkout-left">
-        <form id="checkout-form" class="federwiegen-checkout-form">
-          <div class="checkout-section">
-            <h3>1. Kontaktinformationen</h3>
-            <p>Wir werden diese E-Mail verwenden, um Ihnen Details und Aktualisierungen zu Ihrer Bestellung zu senden.</p>
-            <label for="email">E-Mail-Adresse*</label>
-            <input type="email" id="email" name="email" required>
-          </div>
-
-          <div class="checkout-section">
-            <h3>2. Versandadresse</h3>
-            <p>Geben Sie die Adresse ein, an die Ihre Bestellung geliefert werden soll.</p>
-            <label for="country">Land*</label>
-            <input type="text" id="country" name="country" value="DE" required>
-
-            <label for="fullname">Vollständiger Name*</label>
-            <input type="text" id="fullname" name="fullname" required>
-
-            <label for="street">Adresse*</label>
-            <input type="text" id="street" name="street" required>
-
-            <label for="city">Stadt*</label>
-            <input type="text" id="city" name="city" required>
-
-            <label for="postal">PLZ*</label>
-            <input type="text" id="postal" name="postal" required>
-
-            <label for="phone">Telefon*</label>
-            <input type="tel" id="phone" name="phone" required>
-
-            <label class="checkbox">
-              <input type="checkbox" id="same-address" checked>
-              Dieselbe Adresse für die Rechnungsstellung verwenden
-            </label>
-
-            <div id="billing-fields" style="display: none;">
-              <h4>Rechnungsadresse</h4>
-              <label for="bill_country">Land*</label>
-              <input type="text" id="bill_country" name="bill_country" value="DE">
-
-              <label for="bill_fullname">Vollständiger Name*</label>
-              <input type="text" id="bill_fullname" name="bill_fullname">
-
-              <label for="bill_street">Adresse*</label>
-              <input type="text" id="bill_street" name="bill_street">
-
-              <label for="bill_city">Stadt*</label>
-              <input type="text" id="bill_city" name="bill_city">
-
-              <label for="bill_postal">PLZ*</label>
-              <input type="text" id="bill_postal" name="bill_postal">
-            </div>
-          </div>
-
-          <div class="checkout-section">
-            <h3>3. Zahlungsoptionen</h3>
-            <div id="payment-element"></div>
-            <label class="checkbox">
-              <input type="checkbox" id="agb" required>
-              Ich akzeptiere die <a href="/agb" target="_blank">Allgemeinen Geschäftsbedingungen</a>*
-            </label>
-            <button id="submit">Jetzt bezahlen</button>
-            <div id="payment-message"></div>
-          </div>
-        </form>
+        <div class="checkout-section">
+          <label for="email">E-Mail-Adresse</label>
+          <input type="text" id="email" />
+          <div id="email-errors"></div>
+        </div>
+        <div id="payment-element"></div>
+        <button id="pay-button">Jetzt bezahlen</button>
+        <div id="confirm-errors"></div>
       </div>
 
       <div class="federwiegen-checkout-right">
@@ -159,7 +103,7 @@ function federwiegen_stripe_elements_form() {
       </div>
     </div>
 
-    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://js.stripe.com/basil/stripe.js"></script>
     <script>
       function getUrlParameter(name) {
         name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
@@ -187,95 +131,51 @@ function federwiegen_stripe_elements_form() {
       const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
 
       const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
-      let elements = null;
-      let clientSecret = null;
 
-      async function initStripePaymentElement() {
-        try {
-          const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_subscription"); ?>', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...baseData,
-              shipping_price_id: SHIPPING_PRICE_ID
-            })
-          });
-          const result = await res.json();
-          if (!result.client_secret || result.success === false) {
-            const msg = (result.data && result.data.message) || result.message || 'Fehler: Kein client_secret erhalten.';
-            document.getElementById('payment-message').textContent = msg;
-            return;
-          }
+      const fetchClientSecret = () => {
+        return fetch('<?php echo admin_url("admin-ajax.php?action=create_checkout_session"); ?>', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...baseData,
+            shipping_price_id: SHIPPING_PRICE_ID
+          })
+        })
+          .then((response) => response.json())
+          .then((json) => json.checkoutSessionClientSecret);
+      };
 
-          clientSecret = result.client_secret;
-          elements = stripe.elements({ clientSecret });
-          const paymentElement = elements.create('payment');
-          paymentElement.mount('#payment-element');
+      stripe.initCheckout({ fetchClientSecret }).then((checkout) => {
+        const emailInput = document.getElementById('email');
+        const emailErrors = document.getElementById('email-errors');
 
-          form.addEventListener('submit', handleSubmit);
-        } catch (e) {
-          document.getElementById('payment-message').textContent = e.message;
-        }
-      }
-
-      const sameAddressCheckbox = document.getElementById('same-address');
-      const billingFields = document.getElementById('billing-fields');
-      sameAddressCheckbox.addEventListener('change', () => {
-        billingFields.style.display = sameAddressCheckbox.checked ? 'none' : 'block';
-      });
-
-      const form = document.getElementById('checkout-form');
-
-      async function handleSubmit(event) {
-        event.preventDefault();
-
-        if (!document.getElementById('agb').checked) {
-          alert('Bitte akzeptiere die AGB.');
-          return;
-        }
-
-        const shipping = {
-          name: document.getElementById('fullname').value,
-          phone: document.getElementById('phone').value,
-          address: {
-            line1: document.getElementById('street').value,
-            postal_code: document.getElementById('postal').value,
-            city: document.getElementById('city').value,
-            country: document.getElementById('country').value,
-          }
-        };
-
-        const billing = {
-          name: document.getElementById('bill_fullname').value || shipping.name,
-          email: document.getElementById('email').value,
-          address: {
-            line1: document.getElementById('bill_street').value || shipping.address.line1,
-            postal_code: document.getElementById('bill_postal').value || shipping.address.postal_code,
-            city: document.getElementById('bill_city').value || shipping.address.city,
-            country: document.getElementById('bill_country').value || shipping.address.country,
-          }
-        };
-
-        const messageEl = document.getElementById('payment-message');
-        messageEl.textContent = '';
-
-        const { error, paymentIntent } = await stripe.confirmPayment({
-          elements,
-          confirmParams: {
-            payment_method_data: { billing_details: billing },
-            shipping: shipping
-          },
-          redirect: 'if_required',
-          clientSecret
+        emailInput.addEventListener('input', () => {
+          emailErrors.textContent = '';
         });
-        if (error) {
-          messageEl.textContent = error.message;
-        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-          messageEl.textContent = 'Zahlung erfolgreich!';
-        }
-      }
 
-      initStripePaymentElement();
+        emailInput.addEventListener('blur', () => {
+          const newEmail = emailInput.value;
+          checkout.updateEmail(newEmail).then((result) => {
+            if (result.error) {
+              emailErrors.textContent = result.error.message;
+            }
+          });
+        });
+
+        const paymentElement = checkout.createPaymentElement();
+        paymentElement.mount('#payment-element');
+
+        const button = document.getElementById('pay-button');
+        const errors = document.getElementById('confirm-errors');
+        button.addEventListener('click', () => {
+          errors.textContent = '';
+          checkout.confirm().then((result) => {
+            if (result.type === 'error') {
+              errors.textContent = result.error.message;
+            }
+          });
+        });
+      });
     </script>
     </div>
 
