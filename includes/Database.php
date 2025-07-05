@@ -506,6 +506,7 @@ class Database {
             payment_icons text DEFAULT '',
             shipping_cost decimal(10,2) DEFAULT 0,
             shipping_provider varchar(50) DEFAULT '',
+            shipping_price_id varchar(255) DEFAULT '',
             price_label varchar(255) DEFAULT 'Monatlicher Mietpreis',
             shipping_label varchar(255) DEFAULT 'Einmalige Versandkosten:',
             price_period varchar(20) DEFAULT 'month',
