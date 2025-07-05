@@ -292,7 +292,6 @@ class Admin {
             $button_icon = esc_url_raw($_POST['button_icon']);
             $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : array();
             $payment_icons = implode(',', $payment_icons);
-            $shipping_cost = floatval($_POST['shipping_cost']);
             $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? '');
             $shipping_label = sanitize_text_field($_POST['shipping_label']);
             $price_label = sanitize_text_field($_POST['price_label']);
@@ -334,7 +333,6 @@ class Admin {
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
-                        'shipping_cost' => $shipping_cost,
                         'shipping_provider' => $shipping_provider,
                         'price_label' => $price_label,
                         'shipping_label' => $shipping_label,
@@ -350,7 +348,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -382,7 +380,6 @@ class Admin {
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
-                        'shipping_cost' => $shipping_cost,
                         'shipping_provider' => $shipping_provider,
                         'price_label' => $price_label,
                         'shipping_label' => $shipping_label,
@@ -397,7 +394,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {

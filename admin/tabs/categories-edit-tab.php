@@ -201,10 +201,6 @@
                 <h4>🚚 Versand</h4>
                 <div class="federwiegen-form-row">
                     <div class="federwiegen-form-group">
-                        <label>Versandkosten (€)</label>
-                        <input type="number" name="shipping_cost" value="<?php echo esc_attr($edit_item->shipping_cost); ?>" step="0.01" min="0">
-                    </div>
-                    <div class="federwiegen-form-group">
                         <label>Versanddienstleister</label>
                         <div class="federwiegen-shipping-radios">
                             <?php $shipping_providers = [

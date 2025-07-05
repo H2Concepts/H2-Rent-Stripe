@@ -48,11 +48,6 @@ class Ajax {
         // Find best matching Stripe link
         $link = $this->find_best_stripe_link($variant_id, $extra_ids_raw, $duration_id, $condition_id, $product_color_id, $frame_color_id);
         
-        // Get shipping cost from category
-        $category = $wpdb->get_row($wpdb->prepare(
-            "SELECT shipping_cost FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
-            $variant->category_id
-        ));
         
         if ($variant && $duration) {
             $variant_price = floatval($variant->base_price);
@@ -73,7 +68,7 @@ class Ajax {
             $final_price = ($variant_price * (1 - $discount)) + $extras_price;
             $shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
                 ? floatval(constant('FEDERWIEGEN_SHIPPING_COST'))
-                : ($category ? floatval($category->shipping_cost) : 0);
+                : 0;
             
             wp_send_json_success(array(
                 'base_price' => $base_price,
