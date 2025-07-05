@@ -16,7 +16,6 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     // Ensure the Stripe library is loaded and secret key is set
     $init = StripeService::init();
     if (is_wp_error($init)) {
-        error_log('Stripe init error: ' . $init->get_error_message());
         return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
     }
     // Explicitly set the API key again at the very beginning as requested
@@ -29,10 +28,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
     $secret = defined('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') ? constant('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') : '';
 
-    // Log details for debugging signature verification issues
-    error_log('[Stripe Webhook] Signature Header: ' . print_r($sig_header, true));
-    error_log('[Stripe Webhook] Payload: ' . $payload);
-    error_log('[Stripe Webhook] Secret: ' . $secret);
+
 
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
@@ -61,7 +57,6 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                     'subscription' => $subscription_id,
                 ]);
             } catch (\Exception $e) {
-                error_log('Stripe InvoiceItem Error: ' . $e->getMessage());
             }
         }
     }
