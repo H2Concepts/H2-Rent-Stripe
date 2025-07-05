@@ -860,6 +860,8 @@ add_action('wp_ajax_create_payment_intent', __NAMESPACE__ . '\\federwiegen_creat
 add_action('wp_ajax_nopriv_create_payment_intent', __NAMESPACE__ . '\\federwiegen_create_payment_intent');
 add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
 add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
+add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\federwiegen_create_checkout_session');
+add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\federwiegen_create_checkout_session');
 
 function federwiegen_create_payment_intent() {
     $init = StripeService::init();
@@ -1000,6 +1002,82 @@ function federwiegen_create_subscription() {
         $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
 
         wp_send_json(['client_secret' => $client_secret]);
+    } catch (\Exception $e) {
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
+function federwiegen_create_checkout_session() {
+    $init = StripeService::init();
+    if (is_wp_error($init)) {
+        wp_send_json_error(['message' => $init->get_error_message()]);
+    }
+
+    $body = json_decode(file_get_contents('php://input'), true);
+
+    try {
+        global $wpdb;
+        $duration_id = intval($body['duration_id'] ?? $body['dauer']);
+        $variant_id = intval($body['variant_id'] ?? 0);
+        $price_id = sanitize_text_field($body['price_id'] ?? '');
+
+        if (!$price_id && $variant_id && $duration_id) {
+            $price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+            if (!$price_id) {
+                $price_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                    $variant_id
+                ));
+            }
+        }
+
+        if (!$price_id) {
+            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
+        }
+
+        $line_items = [['price' => $price_id, 'quantity' => 1]];
+        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        if ($shipping_price_id) {
+            $line_items[] = ['price' => $shipping_price_id, 'quantity' => 1];
+        }
+
+        $session = StripeService::create_checkout_session([
+            'mode' => 'subscription',
+            'ui_mode' => 'embedded',
+            'return_url' => home_url('/?federwiegen=return'),
+            'payment_method_types' => ['card'],
+            'customer_email' => sanitize_email($body['email'] ?? ''),
+            'line_items' => $line_items,
+            'subscription_data' => [
+                'default_payment_method_configuration' => FEDERWIEGEN_PMC_ID,
+                'metadata' => [
+                    'produkt' => $body['produkt'] ?? '',
+                    'extra' => $body['extra'] ?? '',
+                    'dauer' => $body['dauer'] ?? '',
+                    'dauer_name' => $body['dauer_name'] ?? '',
+                    'zustand' => $body['zustand'] ?? '',
+                    'farbe' => $body['farbe'] ?? '',
+                    'produktfarbe' => $body['produktfarbe'] ?? '',
+                    'gestellfarbe' => $body['gestellfarbe'] ?? '',
+                    'fullname' => $body['fullname'] ?? '',
+                    'phone' => $body['phone'] ?? '',
+                    'street' => $body['street'] ?? '',
+                    'postal' => $body['postal'] ?? '',
+                    'city' => $body['city'] ?? '',
+                    'country' => $body['country'] ?? '',
+                ]
+            ]
+        ]);
+
+        if (is_wp_error($session)) {
+            throw new \Exception($session->get_error_message());
+        }
+
+        wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
