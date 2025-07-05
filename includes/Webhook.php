@@ -13,6 +13,13 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
+    // Ensure the Stripe library is loaded so the webhook can be verified
+    $init = StripeService::init();
+    if (is_wp_error($init)) {
+        error_log('Stripe init error: ' . $init->get_error_message());
+        return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
+    }
+
     $payload = $request->get_body();
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
     $secret = defined('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') ? constant('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') : '';
