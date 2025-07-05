@@ -1020,14 +1020,13 @@ function federwiegen_create_subscription() {
 }
 
 function federwiegen_create_checkout_session() {
-    $init = StripeService::init();
-    if (is_wp_error($init)) {
-        wp_send_json_error(['message' => $init->get_error_message()]);
-    }
-
-    $body = json_decode(file_get_contents('php://input'), true);
-
     try {
+        $init = StripeService::init();
+        if (is_wp_error($init)) {
+            wp_send_json_error(['message' => $init->get_error_message()]);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true);
         global $wpdb;
         $duration_id = intval($body['duration_id'] ?? $body['dauer']);
         $variant_id = intval($body['variant_id'] ?? 0);
@@ -1071,6 +1070,7 @@ function federwiegen_create_checkout_session() {
 
         wp_send_json(['checkoutSessionClientSecret' => $session->client_secret]);
     } catch (\Exception $e) {
+        error_log('Stripe Checkout Session Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
