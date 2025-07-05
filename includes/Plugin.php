@@ -45,6 +45,9 @@ class Plugin {
 
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
+
+        // Handle "Jetzt mieten" form submissions before headers are sent
+        add_action('template_redirect', [$this, 'handle_rent_request']);
     }
 
     public function check_for_updates() {
@@ -298,5 +301,30 @@ class Plugin {
         echo '<script type="application/ld+json">' . "\n";
         echo json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         echo "\n" . '</script>' . "\n";
+    }
+
+    /**
+     * Handle the product form submission and redirect to the checkout page
+     * before any output is sent to the browser.
+     */
+    public function handle_rent_request() {
+        if (empty($_POST['jetzt_mieten'])) {
+            return;
+        }
+
+        $params = [
+            'produkt'     => sanitize_text_field($_POST['produkt'] ?? ''),
+            'extra'       => sanitize_text_field($_POST['extra'] ?? ''),
+            'dauer'       => intval($_POST['dauer'] ?? 0),
+            'dauer_name'  => sanitize_text_field($_POST['dauer_name'] ?? ''),
+            'zustand'     => sanitize_text_field($_POST['zustand'] ?? ''),
+            'farbe'       => sanitize_text_field($_POST['farbe'] ?? ''),
+            'preis'       => intval($_POST['preis'] ?? 0),
+            'shipping'    => intval($_POST['shipping'] ?? 0),
+        ];
+
+        $zahlung_url = site_url('/zahlung/') . '?' . http_build_query($params);
+        wp_safe_redirect($zahlung_url);
+        exit;
     }
 }

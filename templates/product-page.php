@@ -1,22 +1,5 @@
 <?php
 
-if (isset($_POST['jetzt_mieten'])) {
-    $params = [
-        'produkt' => sanitize_text_field($_POST['produkt']),
-        'extra'   => sanitize_text_field($_POST['extra']),
-        'dauer'   => intval($_POST['dauer']),
-        'dauer_name' => sanitize_text_field($_POST['dauer_name']),
-        'zustand' => sanitize_text_field($_POST['zustand']),
-        'farbe'   => sanitize_text_field($_POST['farbe']),
-        'preis'   => intval($_POST['preis']),
-        'shipping' => intval($_POST['shipping'])
-    ];
-
-    $zahlung_url = site_url('/zahlung/') . '?' . http_build_query($params);
-    wp_redirect($zahlung_url);
-    exit;
-}
-
 global $wpdb;
 
 // Get category data
