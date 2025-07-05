@@ -119,13 +119,27 @@ function federwiegen_stripe_elements_form() {
           $total_first_cents = $preis_cents + $shipping_cents;
         ?>
         <ul class="federwiegen-checkout-summary">
-          <li>Produkt: <?php echo esc_html($_GET['produkt'] ?? ''); ?></li>
-          <li>Extra: <?php echo esc_html($_GET['extra'] ?? ''); ?></li>
-          <li>Mietdauer: <?php echo esc_html($_GET['dauer_name'] ?? ($_GET['dauer'] ?? '')); ?></li>
-          <li>Zustand: <?php echo esc_html($_GET['zustand'] ?? ''); ?></li>
-          <li>Farbe: <?php echo esc_html($_GET['farbe'] ?? ''); ?></li>
-          <li>Preis: <?php echo $preis_cents ? number_format($preis_cents / 100, 2, ',', '.') . ' €' : ''; ?></li>
-          <li>Versand: <?php echo $shipping_cents ? number_format($shipping_cents / 100, 2, ',', '.') . ' €' : ''; ?></li>
+          <?php if (!empty($_GET['produkt'])): ?>
+          <li>Produkt: <?php echo esc_html($_GET['produkt']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['extra'])): ?>
+          <li>Extra: <?php echo esc_html($_GET['extra']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['dauer']) || !empty($_GET['dauer_name'])): ?>
+          <li>Mietdauer: <?php echo esc_html($_GET['dauer_name'] ?? $_GET['dauer']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['zustand'])): ?>
+          <li>Zustand: <?php echo esc_html($_GET['zustand']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['farbe'])): ?>
+          <li>Farbe: <?php echo esc_html($_GET['farbe']); ?></li>
+          <?php endif; ?>
+          <?php if ($preis_cents): ?>
+          <li>Preis: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
+          <?php endif; ?>
+          <?php if ($shipping_cents): ?>
+          <li>Versand: <?php echo number_format($shipping_cents / 100, 2, ',', '.'); ?> €</li>
+          <?php endif; ?>
           <li>Gesamt 1. Monat: <?php echo number_format($total_first_cents / 100, 2, ',', '.'); ?> €</li>
           <li>Jeder weitere Monat: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
         </ul>
