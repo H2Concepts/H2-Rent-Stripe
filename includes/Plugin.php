@@ -323,8 +323,32 @@ class Plugin {
             'shipping'    => intval($_POST['shipping'] ?? 0),
         ];
 
-        $zahlung_url = site_url('/zahlung/') . '?' . http_build_query($params);
-        wp_safe_redirect($zahlung_url);
+        $checkout_url = self::get_checkout_page_url();
+        if (!$checkout_url) {
+            $checkout_url = site_url('/zahlung/');
+        }
+        $checkout_url = add_query_arg($params, $checkout_url);
+        wp_safe_redirect($checkout_url);
         exit;
+    }
+
+    /**
+     * Find the page containing the checkout shortcode and return its URL.
+     * Returns null if no such page is found.
+     */
+    public static function get_checkout_page_url() {
+        $pages = get_posts([
+            'post_type'      => 'page',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+        ]);
+
+        foreach ($pages as $page) {
+            if (has_shortcode($page->post_content, 'stripe_elements_form')) {
+                return get_permalink($page->ID);
+            }
+        }
+
+        return null;
     }
 }
