@@ -109,31 +109,14 @@ class Admin {
             array($this, 'analytics_page')
         );
 
+        // New settings menu with Stripe integration tab
         add_submenu_page(
             'federwiegen-verleih',
-            'Popup',
-            'Popup',
+            'Einstellungen',
+            'Einstellungen',
             'manage_options',
-            'federwiegen-popup',
-            array($this, 'popup_page')
-        );
-        
-        add_submenu_page(
-            'federwiegen-verleih',
-            'Branding',
-            'Branding',
-            'manage_options',
-            'federwiegen-branding',
-            array($this, 'branding_page')
-        );
-        
-        add_submenu_page(
-            'federwiegen-verleih',
-            'Debug',
-            'Debug',
-            'manage_options',
-            'federwiegen-debug',
-            array($this, 'debug_page')
+            'federwiegen-settings',
+            array($this, 'settings_page')
         );
     }
     
@@ -577,15 +560,8 @@ class Admin {
         include FEDERWIEGEN_PLUGIN_PATH . 'admin/analytics-page.php';
     }
     
-    public function branding_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/branding-page.php';
+    public function settings_page() {
+        include FEDERWIEGEN_PLUGIN_PATH . 'admin/settings-page.php';
     }
 
-    public function debug_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/debug-page.php';
-    }
-
-    public function popup_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/popup-page.php';
-    }
 }
