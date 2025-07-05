@@ -95,9 +95,19 @@ class Ajax {
             // Do not apply the discount to the calculated price. It is only used
             // for displaying the badge on the duration option.
             $final_price = $base_price;
-            $shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
-                ? floatval(constant('FEDERWIEGEN_SHIPPING_COST'))
-                : 0;
+            $shipping_cost = 0;
+            if ($variant) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT shipping_price_id FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
+                    $variant->category_id
+                ));
+                if ($category && !empty($category->shipping_price_id)) {
+                    $price_res = StripeService::get_price_amount($category->shipping_price_id);
+                    if (!is_wp_error($price_res)) {
+                        $shipping_cost = floatval($price_res);
+                    }
+                }
+            }
             
             wp_send_json_success(array(
                 'base_price' => $base_price,
@@ -860,6 +870,8 @@ add_action('wp_ajax_create_payment_intent', __NAMESPACE__ . '\\federwiegen_creat
 add_action('wp_ajax_nopriv_create_payment_intent', __NAMESPACE__ . '\\federwiegen_create_payment_intent');
 add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
 add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
+add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\federwiegen_create_checkout_session');
+add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\federwiegen_create_checkout_session');
 
 function federwiegen_create_payment_intent() {
     $init = StripeService::init();
@@ -1000,6 +1012,57 @@ function federwiegen_create_subscription() {
         $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
 
         wp_send_json(['client_secret' => $client_secret]);
+    } catch (\Exception $e) {
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
+function federwiegen_create_checkout_session() {
+    $init = StripeService::init();
+    if (is_wp_error($init)) {
+        wp_send_json_error(['message' => $init->get_error_message()]);
+    }
+
+    $body = json_decode(file_get_contents('php://input'), true);
+
+    try {
+        global $wpdb;
+        $duration_id = intval($body['duration_id'] ?? $body['dauer']);
+        $variant_id = intval($body['variant_id'] ?? 0);
+        $price_id = sanitize_text_field($body['price_id'] ?? '');
+
+        if (!$price_id && $variant_id && $duration_id) {
+            $price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+            if (!$price_id) {
+                $price_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                    $variant_id
+                ));
+            }
+        }
+
+        if (!$price_id) {
+            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
+        }
+
+        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $line_items = [[ 'price' => $price_id, 'quantity' => 1 ]];
+        if ($shipping_price_id) {
+            $line_items[] = ['price' => $shipping_price_id, 'quantity' => 1];
+        }
+
+        $session = \Stripe\Checkout\Session::create([
+            'line_items' => $line_items,
+            'mode' => 'subscription',
+            'ui_mode' => 'custom',
+            'return_url' => site_url('/?session_id={CHECKOUT_SESSION_ID}'),
+        ]);
+
+        wp_send_json(['checkoutSessionClientSecret' => $session->client_secret]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
