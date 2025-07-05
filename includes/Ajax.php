@@ -966,13 +966,8 @@ function federwiegen_create_subscription() {
             'items' => $items,
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
-                'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
-                'payment_method_options' => [
-                    'paypal' => [
-                        'setup_future_usage' => 'off_session',
-                        'payment_method_configuration' => FEDERWIEGEN_PMC_ID,
-                    ],
-                ],
+                'payment_method_types' => ['card', 'paypal'],
+                'payment_method_configuration' => FEDERWIEGEN_PMC_ID,
             ],
             'expand' => ['latest_invoice.payment_intent'],
             'metadata' => [
