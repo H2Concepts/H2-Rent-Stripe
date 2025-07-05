@@ -56,8 +56,8 @@ function federwiegen_stripe_elements_form() {
           <input type="text" id="email" />
           <div id="email-errors"></div>
         </div>
-        <div id="billing-address"></div>
-        <div id="shipping-address"></div>
+        <div id="billing-address" class="checkout-section"></div>
+        <div id="shipping-address" class="checkout-section"></div>
         <div id="payment-element"></div>
         <button id="pay-button">Jetzt bezahlen</button>
         <div id="confirm-errors"></div>
@@ -152,7 +152,12 @@ function federwiegen_stripe_elements_form() {
           })
         })
           .then((response) => response.json())
-          .then((json) => json.checkoutSessionClientSecret);
+          .then((json) => {
+            if (json.checkoutSessionClientSecret) {
+              return json.checkoutSessionClientSecret;
+            }
+            throw new Error(json.message || 'Fehler beim Erstellen der Checkout-Sitzung');
+          });
       };
 
       stripe.initCheckout({ fetchClientSecret }).then((checkout) => {
@@ -201,6 +206,8 @@ function federwiegen_stripe_elements_form() {
             }
           });
         });
+      }).catch((err) => {
+        document.getElementById('confirm-errors').textContent = err.message;
       });
     </script>
     </div>
