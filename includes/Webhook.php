@@ -26,10 +26,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     }
 
     if ($event->type === 'checkout.session.completed') {
-        $session = $event->data->object;
-        $customer_id = $session->customer;
+        $session        = $event->data->object;
+        $customer_id    = $session->customer;
         $subscription_id = $session->subscription;
-        $shipping_price_id = $session->metadata->shipping_price_id ?? '';
+
+        $metadata = $session->metadata ?? [];
+        $shipping_price_id = is_array($metadata)
+            ? ($metadata['shipping_price_id'] ?? '')
+            : (is_object($metadata) ? ($metadata->shipping_price_id ?? '') : '');
 
         if ($customer_id && $shipping_price_id) {
             try {
