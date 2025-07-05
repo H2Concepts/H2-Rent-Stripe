@@ -105,7 +105,7 @@ function federwiegen_stripe_elements_form() {
 
           <div class="checkout-section">
             <h3>3. Zahlungsoptionen</h3>
-            <div id="card-element"></div>
+            <div id="payment-element"></div>
             <label class="checkbox">
               <input type="checkbox" id="agb" required>
               Ich akzeptiere die <a href="/agb" target="_blank">Allgemeinen Geschäftsbedingungen</a>*
@@ -183,8 +183,8 @@ function federwiegen_stripe_elements_form() {
 
       const stripe = Stripe('<?php echo esc_js(\FederwiegenVerleih\StripeService::get_publishable_key()); ?>');
       const elements = stripe.elements();
-      const card = elements.create('card');
-      card.mount('#card-element');
+      const paymentElement = elements.create('payment');
+      paymentElement.mount('#payment-element');
 
       const sameAddressCheckbox = document.getElementById('same-address');
       const billingFields = document.getElementById('billing-fields');
@@ -265,9 +265,15 @@ function federwiegen_stripe_elements_form() {
             }
           };
 
-          const { error, paymentIntent } = await stripe.confirmCardPayment(responseData.client_secret, {
-            payment_method: { card: card, billing_details: billing },
-            shipping: shipping
+          elements.update({ clientSecret: responseData.client_secret });
+          const { error, paymentIntent } = await stripe.confirmPayment({
+            elements,
+            confirmParams: {
+              payment_method_data: { billing_details: billing },
+              shipping: shipping
+            },
+            redirect: 'if_required',
+            clientSecret: responseData.client_secret
           });
           if (error) {
             messageEl.textContent = error.message;
