@@ -1047,13 +1047,13 @@ function federwiegen_create_checkout_session() {
 
         $session = StripeService::create_checkout_session([
             'mode' => 'subscription',
-            'payment_method_types' => ['card', 'paypal'],
-            'payment_method_configuration' => FEDERWIEGEN_PMC_ID,
+            'payment_method_types' => ['card'],
             'customer_email' => sanitize_email($body['email'] ?? ''),
             'line_items' => $line_items,
             'success_url' => home_url('/?federwiegen=success&session_id={CHECKOUT_SESSION_ID}'),
             'cancel_url' => home_url('/?federwiegen=cancel'),
             'subscription_data' => [
+                'default_payment_method_configuration' => FEDERWIEGEN_PMC_ID,
                 'metadata' => [
                     'produkt' => $body['produkt'] ?? '',
                     'extra' => $body['extra'] ?? '',
