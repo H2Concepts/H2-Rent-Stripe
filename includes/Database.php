@@ -24,6 +24,7 @@ class Database {
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'federwiegen_variants';
         $columns_to_add = array(
+            'stripe_price_id' => 'VARCHAR(255) DEFAULT ""',
             'price_from' => 'DECIMAL(10,2) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
@@ -38,7 +39,8 @@ class Database {
         foreach ($columns_to_add as $column => $type) {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE '$column'");
             if (empty($column_exists)) {
-                $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER base_price");
+                $after = $column === 'stripe_price_id' ? 'name' : 'base_price';
+                $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER $after");
             }
         }
         
@@ -50,11 +52,15 @@ class Database {
             $wpdb->query("ALTER TABLE $table_variants DROP COLUMN image_url");
         }
         
-        // Add image_url column to extras table if it doesn't exist
+        // Add image_url and stripe_price_id columns to extras table if they don't exist
         $table_extras = $wpdb->prefix . 'federwiegen_extras';
         $extra_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'image_url'");
         if (empty($extra_column_exists)) {
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN image_url TEXT AFTER price");
+        }
+        $price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id'");
+        if (empty($price_id_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
         }
         
         // Create categories table if it doesn't exist
@@ -314,7 +320,26 @@ class Database {
                 PRIMARY KEY (id),
                 UNIQUE KEY variant_option (variant_id, option_type, option_id)
             ) $charset_collate;";
-            
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
+        // Create duration price table if it doesn't exist
+        $table_duration_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+        $duration_prices_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_duration_prices'");
+
+        if (!$duration_prices_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_duration_prices (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                duration_id mediumint(9) NOT NULL,
+                variant_id mediumint(9) NOT NULL,
+                stripe_price_id varchar(255) DEFAULT '',
+                PRIMARY KEY (id),
+                UNIQUE KEY duration_variant (duration_id, variant_id)
+            ) $charset_collate;";
+
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
@@ -502,6 +527,7 @@ class Database {
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
             description text,
+            stripe_price_id varchar(255) DEFAULT '',
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             image_url_1 text,
@@ -517,12 +543,13 @@ class Database {
             PRIMARY KEY (id)
         ) $charset_collate;";
         
-        // Extras table (updated with image field and category_id)
+        // Extras table (updated with image field, category_id and Stripe price)
         $table_extras = $wpdb->prefix . 'federwiegen_extras';
         $sql_extras = "CREATE TABLE $table_extras (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
+            stripe_price_id varchar(255) DEFAULT '',
             price decimal(10,2) NOT NULL,
             image_url text,
             active tinyint(1) DEFAULT 1,
@@ -643,6 +670,17 @@ class Database {
             PRIMARY KEY (id),
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";
+
+        // Variant price IDs per duration
+        $table_duration_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+        $sql_duration_prices = "CREATE TABLE $table_duration_prices (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            duration_id mediumint(9) NOT NULL,
+            variant_id mediumint(9) NOT NULL,
+            stripe_price_id varchar(255) DEFAULT '',
+            PRIMARY KEY (id),
+            UNIQUE KEY duration_variant (duration_id, variant_id)
+        ) $charset_collate;";
         
         // Orders table
         $table_orders = $wpdb->prefix . 'federwiegen_orders';
@@ -680,6 +718,7 @@ class Database {
         dbDelta($sql_colors);
         dbDelta($sql_color_variant_images);
         dbDelta($sql_variant_options);
+        dbDelta($sql_duration_prices);
         dbDelta($sql_orders);
 
         // Notifications table
@@ -778,9 +817,9 @@ class Database {
         $existing_variants = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
         if ($existing_variants == 0) {
             $variants = array(
-                array('Federwiege + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 89.00),
-                array('Federwiege + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', 79.00),
-                array('Wiege + Gestell & Motor mit App-Steuerung', 'Premium-Variante mit smarter App-Steuerung', 119.00)
+                array('Federwiege + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 'price_1QutK3RxDui5dUOqWEiBal7P'),
+                array('Federwiege + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', ''),
+                array('Wiege + Gestell & Motor mit App-Steuerung', 'Premium-Variante mit smarter App-Steuerung', '')
             );
             
             foreach ($variants as $index => $variant) {
@@ -790,7 +829,7 @@ class Database {
                         'category_id' => 1,
                         'name' => $variant[0],
                         'description' => $variant[1],
-                        'base_price' => $variant[2],
+                        'stripe_price_id' => $variant[2],
                         'price_from' => 0,
                         'image_url_1' => '',
                         'image_url_2' => '',
@@ -810,8 +849,8 @@ class Database {
         $existing_extras = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_extras");
         if ($existing_extras == 0) {
             $extras = array(
-                array('Kein Extra', 0.00),
-                array('Himmel', 15.00)
+                array('Kein Extra', '' , 0.00),
+                array('Himmel', '', 15.00)
             );
             
             foreach ($extras as $index => $extra) {
@@ -820,7 +859,8 @@ class Database {
                     array(
                         'category_id' => 1,
                         'name' => $extra[0],
-                        'price' => $extra[1],
+                        'stripe_price_id' => $extra[1],
+                        'price' => $extra[2],
                         'image_url' => '',
                         'sort_order' => $index
                     )

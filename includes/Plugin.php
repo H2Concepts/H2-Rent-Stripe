@@ -45,6 +45,9 @@ class Plugin {
 
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
+
+        // Handle "Jetzt mieten" form submissions before headers are sent
+        add_action('template_redirect', [$this, 'handle_rent_request']);
     }
 
     public function check_for_updates() {
@@ -234,7 +237,7 @@ class Plugin {
         }
 
         $variants = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY base_price",
+            "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order",
             $category->id
         ));
 
@@ -242,8 +245,20 @@ class Plugin {
             return;
         }
 
-        $min_price = $variants[0]->base_price;
-        $max_price = end($variants)->base_price;
+        $prices = array();
+        foreach ($variants as $v) {
+            if (!empty($v->stripe_price_id)) {
+                $p = StripeService::get_price_amount($v->stripe_price_id);
+                if (!is_wp_error($p)) {
+                    $prices[] = $p;
+                }
+            }
+        }
+        if (empty($prices)) {
+            return;
+        }
+        $min_price = min($prices);
+        $max_price = max($prices);
 
         $schema = [
             '@context' => 'https://schema.org',
@@ -298,5 +313,59 @@ class Plugin {
         echo '<script type="application/ld+json">' . "\n";
         echo json_encode($schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         echo "\n" . '</script>' . "\n";
+    }
+
+    /**
+     * Handle the product form submission and redirect to the checkout page
+     * before any output is sent to the browser.
+     */
+    public function handle_rent_request() {
+        if (empty($_POST['jetzt_mieten'])) {
+            return;
+        }
+
+        $params = [
+            'produkt'     => sanitize_text_field($_POST['produkt'] ?? ''),
+            'extra'       => sanitize_text_field($_POST['extra'] ?? ''),
+            'dauer'       => intval($_POST['dauer'] ?? 0),
+            'dauer_name'  => sanitize_text_field($_POST['dauer_name'] ?? ''),
+            'zustand'     => sanitize_text_field($_POST['zustand'] ?? ''),
+            'farbe'       => sanitize_text_field($_POST['farbe'] ?? ''),
+            'produktfarbe' => sanitize_text_field($_POST['produktfarbe'] ?? ''),
+            'gestellfarbe' => sanitize_text_field($_POST['gestellfarbe'] ?? ''),
+            'preis'       => intval($_POST['preis'] ?? 0),
+            'shipping'    => intval($_POST['shipping'] ?? 0),
+            'variant_id'  => intval($_POST['variant_id'] ?? 0),
+            'duration_id' => intval($_POST['duration_id'] ?? 0),
+            'price_id'    => sanitize_text_field($_POST['price_id'] ?? ''),
+        ];
+
+        $checkout_url = self::get_checkout_page_url();
+        if (!$checkout_url) {
+            $checkout_url = site_url('/zahlung/');
+        }
+        $checkout_url = add_query_arg($params, $checkout_url);
+        wp_safe_redirect($checkout_url);
+        exit;
+    }
+
+    /**
+     * Find the page containing the checkout shortcode and return its URL.
+     * Returns null if no such page is found.
+     */
+    public static function get_checkout_page_url() {
+        $pages = get_posts([
+            'post_type'      => 'page',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+        ]);
+
+        foreach ($pages as $page) {
+            if (has_shortcode($page->post_content, 'stripe_elements_form')) {
+                return get_permalink($page->ID);
+            }
+        }
+
+        return null;
     }
 }

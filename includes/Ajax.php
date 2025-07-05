@@ -48,17 +48,39 @@ class Ajax {
         // Find best matching Stripe link
         $link = $this->find_best_stripe_link($variant_id, $extra_ids_raw, $duration_id, $condition_id, $product_color_id, $frame_color_id);
         
-        // Get shipping cost from category
-        $category = $wpdb->get_row($wpdb->prepare(
-            "SELECT shipping_cost FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
-            $variant->category_id
-        ));
         
         if ($variant && $duration) {
-            $variant_price = floatval($variant->base_price);
+            $variant_price = 0;
+            $used_price_id = '';
+            $duration_price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+
+            $price_id_to_use = $duration_price_id ?: $variant->stripe_price_id;
+
+            if (!empty($price_id_to_use)) {
+                $price_res = StripeService::get_price_amount($price_id_to_use);
+                if (is_wp_error($price_res)) {
+                    wp_send_json_error('Price fetch failed');
+                }
+                $variant_price = floatval($price_res);
+                $used_price_id = $price_id_to_use;
+            } else {
+                $variant_price = floatval($variant->base_price);
+            }
             $extras_price = 0;
             foreach ($extras as $ex) {
-                $extras_price += floatval($ex->price);
+                if (!empty($ex->stripe_price_id)) {
+                    $pr = StripeService::get_price_amount($ex->stripe_price_id);
+                    if (is_wp_error($pr)) {
+                        wp_send_json_error('Price fetch failed');
+                    }
+                    $extras_price += floatval($pr);
+                } else {
+                    $extras_price += floatval($ex->price);
+                }
             }
 
             // Apply condition price modifier to whole price like before
@@ -70,8 +92,12 @@ class Ajax {
 
             $base_price = $variant_price + $extras_price;
             $discount = floatval($duration->discount);
-            $final_price = ($variant_price * (1 - $discount)) + $extras_price;
-            $shipping_cost = $category ? floatval($category->shipping_cost) : 0;
+            // Do not apply the discount to the calculated price. It is only used
+            // for displaying the badge on the duration option.
+            $final_price = $base_price;
+            $shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
+                ? floatval(constant('FEDERWIEGEN_SHIPPING_COST'))
+                : 0;
             
             wp_send_json_success(array(
                 'base_price' => $base_price,
@@ -79,6 +105,7 @@ class Ajax {
                 'discount' => $discount,
                 'shipping_cost' => $shipping_cost,
                 'stripe_link' => $link ?: '#',
+                'price_id' => $used_price_id,
                 'available' => $variant->available ? true : false,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: ''
@@ -283,6 +310,12 @@ class Ajax {
                         ));
                         if ($extra) {
                             $extra->available = intval($option->available);
+                            if (!empty($extra->stripe_price_id)) {
+                                $amount = StripeService::get_price_amount($extra->stripe_price_id);
+                                if (!is_wp_error($amount)) {
+                                    $extra->price = $amount;
+                                }
+                            }
                             $extras[] = $extra;
                         }
                         break;
@@ -338,7 +371,15 @@ class Ajax {
                     "SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE category_id = %d ORDER BY sort_order",
                     $variant->category_id
                 ));
-                foreach ($extras as $e) { $e->available = 1; }
+                foreach ($extras as $e) {
+                    $e->available = 1;
+                    if (!empty($e->stripe_price_id)) {
+                        $amount = StripeService::get_price_amount($e->stripe_price_id);
+                        if (!is_wp_error($amount)) {
+                            $e->price = $amount;
+                        }
+                    }
+                }
             }
         }
 
@@ -831,12 +872,13 @@ function federwiegen_create_payment_intent() {
     try {
         $preis = intval($body['preis']);
         $beschreibung = sprintf(
-            '%s | Extra: %s | Abo: %s | Zustand: %s | Farbe: %s',
+            '%s | Extra: %s | Abo: %s | Zustand: %s | Produktfarbe: %s | Gestellfarbe: %s',
             sanitize_text_field($body['produkt']),
             sanitize_text_field($body['extra']),
             sanitize_text_field($body['dauer_name'] ?? $body['dauer']),
             sanitize_text_field($body['zustand']),
-            sanitize_text_field($body['farbe'])
+            sanitize_text_field($body['produktfarbe'] ?? $body['farbe']),
+            sanitize_text_field($body['gestellfarbe'] ?? '')
         );
 
         $intent = StripeService::create_payment_intent([
@@ -851,6 +893,8 @@ function federwiegen_create_payment_intent() {
                 'dauer_name'  => $body['dauer_name'] ?? '',
                 'zustand'     => $body['zustand'],
                 'farbe'       => $body['farbe'],
+                'produktfarbe' => $body['produktfarbe'] ?? '',
+                'gestellfarbe' => $body['gestellfarbe'] ?? '',
             ],
         ]);
         if (is_wp_error($intent)) {
@@ -872,26 +916,27 @@ function federwiegen_create_subscription() {
     $body = json_decode(file_get_contents('php://input'), true);
 
     try {
-        $mietdauer = intval($body['dauer']);
+        global $wpdb;
+        $duration_id = intval($body['duration_id'] ?? $body['dauer']);
+        $variant_id = intval($body['variant_id'] ?? 0);
+        $price_id = sanitize_text_field($body['price_id'] ?? '');
 
-        $price_id = $body['price_id'] ?? '';
-        if (!$price_id) {
-            switch ($mietdauer) {
-                case 1:
-                    $price_id = 'price_1QutK3RxDui5dUOqWEiBal7P';
-                    break;
-                case 2:
-                    $price_id = 'price_1RgsfURxDui5dUOqCrHj06pj';
-                    break;
-                case 4:
-                    $price_id = 'price_1RgslZRxDui5dUOqDKCSmqkU';
-                    break;
-                case 6:
-                    $price_id = 'price_1RgssSRxDui5dUOqOUj6o0ZB';
-                    break;
-                default:
-                    wp_send_json_error(['message' => 'Ungültige Mietdauer']);
+        if (!$price_id && $variant_id && $duration_id) {
+            $price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+            if (!$price_id) {
+                $price_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                    $variant_id
+                ));
             }
+        }
+
+        if (!$price_id) {
+            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
 
         $customer = StripeService::create_customer([
@@ -910,12 +955,23 @@ function federwiegen_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
+        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $items = [[ 'price' => $price_id ]];
+        if ($shipping_price_id) {
+            $items[] = ['price' => $shipping_price_id];
+        }
+
         $subscription = StripeService::create_subscription([
             'customer' => $customer->id,
-            'items' => [[ 'price' => $price_id ]],
+            'items' => $items,
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
-                'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
+                'payment_method_types' => ['card', 'paypal'],
+                'payment_method_options' => [
+                    'paypal' => [
+                        'payment_method_configuration' => FEDERWIEGEN_PMC_ID,
+                    ],
+                ],
             ],
             'expand' => ['latest_invoice.payment_intent'],
             'metadata' => [
@@ -925,6 +981,8 @@ function federwiegen_create_subscription() {
                 'dauer_name'  => $body['dauer_name'] ?? '',
                 'zustand'     => $body['zustand'] ?? '',
                 'farbe'       => $body['farbe'] ?? '',
+                'produktfarbe' => $body['produktfarbe'] ?? '',
+                'gestellfarbe' => $body['gestellfarbe'] ?? '',
                 'fullname'    => $body['fullname'] ?? '',
                 'email'       => $body['email'] ?? '',
                 'phone'       => $body['phone'] ?? '',

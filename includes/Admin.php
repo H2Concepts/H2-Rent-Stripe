@@ -109,31 +109,14 @@ class Admin {
             array($this, 'analytics_page')
         );
 
+        // New settings menu with Stripe integration tab
         add_submenu_page(
             'federwiegen-verleih',
-            'Popup',
-            'Popup',
+            'Einstellungen',
+            'Einstellungen',
             'manage_options',
-            'federwiegen-popup',
-            array($this, 'popup_page')
-        );
-        
-        add_submenu_page(
-            'federwiegen-verleih',
-            'Branding',
-            'Branding',
-            'manage_options',
-            'federwiegen-branding',
-            array($this, 'branding_page')
-        );
-        
-        add_submenu_page(
-            'federwiegen-verleih',
-            'Debug',
-            'Debug',
-            'manage_options',
-            'federwiegen-debug',
-            array($this, 'debug_page')
+            'federwiegen-settings',
+            array($this, 'settings_page')
         );
     }
     
@@ -309,7 +292,6 @@ class Admin {
             $button_icon = esc_url_raw($_POST['button_icon']);
             $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : array();
             $payment_icons = implode(',', $payment_icons);
-            $shipping_cost = floatval($_POST['shipping_cost']);
             $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? '');
             $shipping_label = sanitize_text_field($_POST['shipping_label']);
             $price_label = sanitize_text_field($_POST['price_label']);
@@ -351,7 +333,6 @@ class Admin {
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
-                        'shipping_cost' => $shipping_cost,
                         'shipping_provider' => $shipping_provider,
                         'price_label' => $price_label,
                         'shipping_label' => $shipping_label,
@@ -367,7 +348,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -399,7 +380,6 @@ class Admin {
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
-                        'shipping_cost' => $shipping_cost,
                         'shipping_provider' => $shipping_provider,
                         'price_label' => $price_label,
                         'shipping_label' => $shipping_label,
@@ -414,7 +394,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%f','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {
@@ -577,15 +557,8 @@ class Admin {
         include FEDERWIEGEN_PLUGIN_PATH . 'admin/analytics-page.php';
     }
     
-    public function branding_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/branding-page.php';
+    public function settings_page() {
+        include FEDERWIEGEN_PLUGIN_PATH . 'admin/settings-page.php';
     }
 
-    public function debug_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/debug-page.php';
-    }
-
-    public function popup_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/popup-page.php';
-    }
 }

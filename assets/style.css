@@ -1214,21 +1214,33 @@ body.federwiegen-popup-open {
 }
 
 /* Checkout styles */
-.federwiegen-checkout {
-    max-width: 600px;
+.federwiegen-checkout-wrapper {
+    max-width: 1100px;
     margin: 0 auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.federwiegen-checkout-left,
+.federwiegen-checkout-right {
     background: #fff;
     padding: 2rem;
     border-radius: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
-.federwiegen-checkout h2 {
-    font-size: 1.75rem;
-    font-weight: bold;
-    text-align: center;
+@media (max-width: 768px) {
+    .federwiegen-checkout-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+.federwiegen-checkout-left h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
     color: #2a372a;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .federwiegen-checkout-summary {
@@ -1268,7 +1280,7 @@ body.federwiegen-popup-open {
     margin-right: 0.5rem;
 }
 
-#card-element {
+#payment-element {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;

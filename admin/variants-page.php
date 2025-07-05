@@ -24,6 +24,12 @@ foreach ($image_columns as $column) {
     }
 }
 
+// Ensure stripe_price_id column exists
+$price_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
+if (empty($price_column_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+}
+
 // Ensure category_id column exists
 $category_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
 if (empty($category_column_exists)) {
@@ -49,8 +55,7 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $description = sanitize_textarea_field($_POST['description']);
-    $base_price = floatval($_POST['base_price']);
-    $price_from = isset($_POST['price_from']) ? floatval($_POST['price_from']) : 0;
+    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
     $delivery_time = sanitize_text_field($_POST['delivery_time']);
@@ -69,8 +74,7 @@ if (isset($_POST['submit'])) {
             'category_id' => $category_id,
             'name' => $name,
             'description' => $description,
-            'base_price' => $base_price,
-            'price_from' => $price_from,
+            'stripe_price_id' => $stripe_price_id,
             'available' => $available,
             'availability_note' => $availability_note,
             'delivery_time' => $delivery_time,
@@ -82,7 +86,7 @@ if (isset($_POST['submit'])) {
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
-            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s')),
+            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s')),
             array('%d')
         );
         
@@ -97,8 +101,7 @@ if (isset($_POST['submit'])) {
             'category_id' => $category_id,
             'name' => $name,
             'description' => $description,
-            'base_price' => $base_price,
-            'price_from' => $price_from,
+            'stripe_price_id' => $stripe_price_id,
             'available' => $available,
             'availability_note' => $availability_note,
             'delivery_time' => $delivery_time,
@@ -109,7 +112,7 @@ if (isset($_POST['submit'])) {
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
-            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s'))
+            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s'))
         );
         
         if ($result !== false) {

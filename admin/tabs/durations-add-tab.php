@@ -38,6 +38,18 @@
                 </div>
             </div>
         </div>
+
+        <!-- Price IDs per Variant -->
+        <div class="federwiegen-form-section">
+            <h4>💳 Preis IDs pro Ausführung</h4>
+            <?php foreach ($variants as $variant): ?>
+            <div class="federwiegen-form-group">
+                <label><?php echo esc_html($variant->name); ?></label>
+                <input type="text" name="variant_price_id[<?php echo $variant->id; ?>]" placeholder="<?php echo esc_attr($variant->stripe_price_id); ?>">
+                <small>Leer lassen, um Standard zu verwenden</small>
+            </div>
+            <?php endforeach; ?>
+        </div>
         
         
         <!-- Actions -->

@@ -21,8 +21,8 @@
                     <input type="text" name="name" required placeholder="z.B. Himmel, Zubehör-Set">
                 </div>
                 <div class="federwiegen-form-group">
-                    <label>Preis (€) *</label>
-                    <input type="number" name="price" step="0.01" min="0" required placeholder="9.99">
+                    <label>Stripe Preis ID *</label>
+                    <input type="text" name="stripe_price_id" required placeholder="price_123...">
                 </div>
             </div>
         </div>

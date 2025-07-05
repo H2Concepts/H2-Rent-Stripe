@@ -22,12 +22,8 @@
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                 </div>
                 <div class="federwiegen-form-group">
-                    <label>Grundpreis (€) *</label>
-                    <input type="number" name="base_price" value="<?php echo $edit_item->base_price; ?>" step="0.01" min="0" required>
-                </div>
-                <div class="federwiegen-form-group">
-                    <label>Preis ab (€)</label>
-                    <input type="number" name="price_from" value="<?php echo $edit_item->price_from; ?>" step="0.01" min="0">
+                    <label>Stripe Preis ID *</label>
+                    <input type="text" name="stripe_price_id" value="<?php echo esc_attr($edit_item->stripe_price_id); ?>" required>
                 </div>
             </div>
             

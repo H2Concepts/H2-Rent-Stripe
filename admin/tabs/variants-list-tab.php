@@ -65,8 +65,17 @@
                 <p class="federwiegen-variant-description"><?php echo esc_html($variant->description); ?></p>
                 
                 <div class="federwiegen-variant-meta">
+                    <?php
+                        $price = 0;
+                        if (!empty($variant->stripe_price_id)) {
+                            $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                            if (!is_wp_error($p)) {
+                                $price = $p;
+                            }
+                        }
+                    ?>
                     <div class="federwiegen-variant-price">
-                        <strong><?php echo number_format($variant->base_price, 2, ',', '.'); ?>€</strong>
+                        <strong><?php echo number_format($price, 2, ',', '.'); ?>€</strong>
                         <small>/Monat</small>
                     </div>
                     

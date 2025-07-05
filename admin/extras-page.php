@@ -20,6 +20,11 @@ $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'image_u
 if (empty($column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN image_url TEXT AFTER price");
 }
+// Ensure stripe_price_id column exists
+$price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
+if (empty($price_id_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+}
 
 // Ensure category_id column exists
 $category_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
@@ -32,7 +37,7 @@ if (isset($_POST['submit'])) {
     \FederwiegenVerleih\Admin::verify_admin_action();
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
-    $price = floatval($_POST['price']);
+    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
     $image_url = esc_url_raw($_POST['image_url']);
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
@@ -44,13 +49,13 @@ if (isset($_POST['submit'])) {
             array(
                 'category_id' => $category_id,
                 'name' => $name,
-                'price' => $price,
+                'stripe_price_id' => $stripe_price_id,
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%f', '%s', '%d', '%d'),
+            array('%d', '%s', '%s', '%s', '%d', '%d'),
             array('%d')
         );
         
@@ -66,12 +71,12 @@ if (isset($_POST['submit'])) {
             array(
                 'category_id' => $category_id,
                 'name' => $name,
-                'price' => $price,
+                'stripe_price_id' => $stripe_price_id,
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%f', '%s', '%d', '%d')
+            array('%d', '%s', '%s', '%s', '%d', '%d')
         );
         
         if ($result !== false) {

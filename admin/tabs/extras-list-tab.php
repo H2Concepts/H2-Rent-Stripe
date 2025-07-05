@@ -44,8 +44,12 @@
                 
                 <div class="federwiegen-extra-meta">
                     <div class="federwiegen-extra-price">
-                        <strong><?php echo number_format($extra->price, 2, ',', '.'); ?>€</strong>
-                        <small>/Monat</small>
+                        <?php if (!empty($extra->stripe_price_id)) {
+                            $p = \FederwiegenVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                            if (!is_wp_error($p)) {
+                                echo '<strong>' . number_format($p, 2, ',', '.') . "€</strong><small>/Monat</small>";
+                            }
+                        } ?>
                     </div>
                     
                     <div class="federwiegen-extra-info">

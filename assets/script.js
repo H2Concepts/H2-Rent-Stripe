@@ -14,6 +14,8 @@ jQuery(document).ready(function($) {
     let touchStartX = 0;
     let touchEndX = 0;
     let currentPrice = 0;
+    let currentShippingCost = 0;
+    let currentPriceId = '';
     let colorNotificationTimeout = null;
 
     // Get category ID from container
@@ -152,15 +154,22 @@ jQuery(document).ready(function($) {
             .map(function() { return $(this).text().trim(); }).get().join(',');
         const durationName = $('.federwiegen-option[data-type="duration"].selected .federwiegen-duration-name').text().trim();
         const conditionName = $('.federwiegen-option[data-type="condition"].selected .federwiegen-condition-name').text().trim();
-        const colorName = $('.federwiegen-option[data-type="product-color"].selected').data('color-name') || '';
+        const productColorName = $('.federwiegen-option[data-type="product-color"].selected').data('color-name') || '';
+        const frameColorName = $('.federwiegen-option[data-type="frame-color"].selected').data('color-name') || '';
 
         $('#federwiegen-field-produkt').val(variantName);
         $('#federwiegen-field-extra').val(extraNames);
         $('#federwiegen-field-dauer').val(selectedDuration);
         $('#federwiegen-field-dauer-name').val(durationName);
         $('#federwiegen-field-zustand').val(conditionName);
-        $('#federwiegen-field-farbe').val(colorName);
+        $('#federwiegen-field-farbe').val(productColorName);
+        $('#federwiegen-field-produktfarbe').val(productColorName);
+        $('#federwiegen-field-gestellfarbe').val(frameColorName);
         $('#federwiegen-field-preis').val(Math.round(currentPrice * 100));
+        $('#federwiegen-field-shipping').val(Math.round(currentShippingCost * 100));
+        $('#federwiegen-field-variant-id').val(selectedVariant);
+        $('#federwiegen-field-duration-id').val(selectedDuration);
+        $('#federwiegen-field-price-id').val(currentPriceId);
 
         $('#federwiegen-order-form').submit();
     });
@@ -585,22 +594,20 @@ jQuery(document).ready(function($) {
                     if (response.success) {
                         const data = response.data;
                         currentPrice = data.final_price;
+                        currentShippingCost = data.shipping_cost || 0;
                         
                         // Update price display
                         $('#federwiegen-final-price').text(formatPrice(data.final_price) + '€');
                         
-                        if (data.discount > 0) {
-                            $('#federwiegen-original-price').text(formatPrice(data.base_price) + '€').show();
-                            const savings = data.base_price - data.final_price;
-                            const saveSuffix = federwiegen_ajax.price_period === 'month' ? ' pro Monat!' : '!';
-                            $('#federwiegen-savings').text(`Sie sparen ${formatPrice(savings)}€${saveSuffix}`).show();
-                        } else {
-                            $('#federwiegen-original-price').hide();
-                            $('#federwiegen-savings').hide();
-                        }
+                        // The discount percentage is used only for the badge.
+                        // Prices come directly from Stripe, so don't show any
+                        // original price or savings calculation.
+                        $('#federwiegen-original-price').hide();
+                        $('#federwiegen-savings').hide();
 
                         // Update button based on availability
                         currentStripeLink = data.stripe_link;
+                        currentPriceId = data.price_id || '';
                         const isAvailable = data.available !== false;
 
                         $('#federwiegen-rent-button').prop('disabled', !isAvailable);
