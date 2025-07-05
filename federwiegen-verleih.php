@@ -134,8 +134,11 @@ function federwiegen_stripe_elements_form() {
           <?php if (!empty($_GET['zustand'])): ?>
           <li>Zustand: <?php echo esc_html($_GET['zustand']); ?></li>
           <?php endif; ?>
-          <?php if (!empty($_GET['farbe'])): ?>
-          <li>Farbe: <?php echo esc_html($_GET['farbe']); ?></li>
+          <?php if (!empty($_GET['produktfarbe'])): ?>
+          <li>Produktfarbe: <?php echo esc_html($_GET['produktfarbe']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['gestellfarbe'])): ?>
+          <li>Gestellfarbe: <?php echo esc_html($_GET['gestellfarbe']); ?></li>
           <?php endif; ?>
           <?php if ($preis_cents): ?>
           <li>Preis: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
@@ -165,6 +168,8 @@ function federwiegen_stripe_elements_form() {
         dauer_name: getUrlParameter('dauer_name'),
         zustand: getUrlParameter('zustand'),
         farbe: getUrlParameter('farbe'),
+        produktfarbe: getUrlParameter('produktfarbe'),
+        gestellfarbe: getUrlParameter('gestellfarbe'),
         preis: getUrlParameter('preis'),
         shipping: getUrlParameter('shipping'),
         variant_id: getUrlParameter('variant_id'),
@@ -213,6 +218,8 @@ function federwiegen_stripe_elements_form() {
           dauer_name: baseData.dauer_name,
           zustand: baseData.zustand,
           farbe: baseData.farbe,
+          produktfarbe: baseData.produktfarbe,
+          gestellfarbe: baseData.gestellfarbe,
           preis: baseData.preis,
           shipping: baseData.shipping,
           variant_id: baseData.variant_id,

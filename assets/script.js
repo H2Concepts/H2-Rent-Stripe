@@ -154,14 +154,17 @@ jQuery(document).ready(function($) {
             .map(function() { return $(this).text().trim(); }).get().join(',');
         const durationName = $('.federwiegen-option[data-type="duration"].selected .federwiegen-duration-name').text().trim();
         const conditionName = $('.federwiegen-option[data-type="condition"].selected .federwiegen-condition-name').text().trim();
-        const colorName = $('.federwiegen-option[data-type="product-color"].selected').data('color-name') || '';
+        const productColorName = $('.federwiegen-option[data-type="product-color"].selected').data('color-name') || '';
+        const frameColorName = $('.federwiegen-option[data-type="frame-color"].selected').data('color-name') || '';
 
         $('#federwiegen-field-produkt').val(variantName);
         $('#federwiegen-field-extra').val(extraNames);
         $('#federwiegen-field-dauer').val(selectedDuration);
         $('#federwiegen-field-dauer-name').val(durationName);
         $('#federwiegen-field-zustand').val(conditionName);
-        $('#federwiegen-field-farbe').val(colorName);
+        $('#federwiegen-field-farbe').val(productColorName);
+        $('#federwiegen-field-produktfarbe').val(productColorName);
+        $('#federwiegen-field-gestellfarbe').val(frameColorName);
         $('#federwiegen-field-preis').val(Math.round(currentPrice * 100));
         $('#federwiegen-field-shipping').val(Math.round(currentShippingCost * 100));
         $('#federwiegen-field-variant-id').val(selectedVariant);

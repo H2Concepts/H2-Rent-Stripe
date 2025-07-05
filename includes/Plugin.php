@@ -331,6 +331,8 @@ class Plugin {
             'dauer_name'  => sanitize_text_field($_POST['dauer_name'] ?? ''),
             'zustand'     => sanitize_text_field($_POST['zustand'] ?? ''),
             'farbe'       => sanitize_text_field($_POST['farbe'] ?? ''),
+            'produktfarbe' => sanitize_text_field($_POST['produktfarbe'] ?? ''),
+            'gestellfarbe' => sanitize_text_field($_POST['gestellfarbe'] ?? ''),
             'preis'       => intval($_POST['preis'] ?? 0),
             'shipping'    => intval($_POST['shipping'] ?? 0),
             'variant_id'  => intval($_POST['variant_id'] ?? 0),

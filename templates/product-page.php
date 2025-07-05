@@ -360,6 +360,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="dauer_name" id="federwiegen-field-dauer-name">
                         <input type="hidden" name="zustand" id="federwiegen-field-zustand">
                         <input type="hidden" name="farbe" id="federwiegen-field-farbe">
+                        <input type="hidden" name="produktfarbe" id="federwiegen-field-produktfarbe">
+                        <input type="hidden" name="gestellfarbe" id="federwiegen-field-gestellfarbe">
                         <input type="hidden" name="preis" id="federwiegen-field-preis">
                         <input type="hidden" name="shipping" id="federwiegen-field-shipping">
                         <input type="hidden" name="variant_id" id="federwiegen-field-variant-id">

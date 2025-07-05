@@ -858,12 +858,13 @@ function federwiegen_create_payment_intent() {
     try {
         $preis = intval($body['preis']);
         $beschreibung = sprintf(
-            '%s | Extra: %s | Abo: %s | Zustand: %s | Farbe: %s',
+            '%s | Extra: %s | Abo: %s | Zustand: %s | Produktfarbe: %s | Gestellfarbe: %s',
             sanitize_text_field($body['produkt']),
             sanitize_text_field($body['extra']),
             sanitize_text_field($body['dauer_name'] ?? $body['dauer']),
             sanitize_text_field($body['zustand']),
-            sanitize_text_field($body['farbe'])
+            sanitize_text_field($body['produktfarbe'] ?? $body['farbe']),
+            sanitize_text_field($body['gestellfarbe'] ?? '')
         );
 
         $intent = StripeService::create_payment_intent([
@@ -878,6 +879,8 @@ function federwiegen_create_payment_intent() {
                 'dauer_name'  => $body['dauer_name'] ?? '',
                 'zustand'     => $body['zustand'],
                 'farbe'       => $body['farbe'],
+                'produktfarbe' => $body['produktfarbe'] ?? '',
+                'gestellfarbe' => $body['gestellfarbe'] ?? '',
             ],
         ]);
         if (is_wp_error($intent)) {
@@ -959,6 +962,8 @@ function federwiegen_create_subscription() {
                 'dauer_name'  => $body['dauer_name'] ?? '',
                 'zustand'     => $body['zustand'] ?? '',
                 'farbe'       => $body['farbe'] ?? '',
+                'produktfarbe' => $body['produktfarbe'] ?? '',
+                'gestellfarbe' => $body['gestellfarbe'] ?? '',
                 'fullname'    => $body['fullname'] ?? '',
                 'email'       => $body['email'] ?? '',
                 'phone'       => $body['phone'] ?? '',
