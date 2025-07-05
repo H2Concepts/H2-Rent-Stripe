@@ -201,8 +201,9 @@ function federwiegen_stripe_elements_form() {
             })
           });
           const result = await res.json();
-          if (!result.client_secret) {
-            document.getElementById('payment-message').textContent = 'Fehler: Kein client_secret erhalten.';
+          if (!result.client_secret || result.success === false) {
+            const msg = (result.data && result.data.message) || result.message || 'Fehler: Kein client_secret erhalten.';
+            document.getElementById('payment-message').textContent = msg;
             return;
           }
 
