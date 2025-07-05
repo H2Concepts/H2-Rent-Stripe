@@ -310,6 +310,12 @@ class Ajax {
                         ));
                         if ($extra) {
                             $extra->available = intval($option->available);
+                            if (!empty($extra->stripe_price_id)) {
+                                $amount = StripeService::get_price_amount($extra->stripe_price_id);
+                                if (!is_wp_error($amount)) {
+                                    $extra->price = $amount;
+                                }
+                            }
                             $extras[] = $extra;
                         }
                         break;
@@ -365,7 +371,15 @@ class Ajax {
                     "SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE category_id = %d ORDER BY sort_order",
                     $variant->category_id
                 ));
-                foreach ($extras as $e) { $e->available = 1; }
+                foreach ($extras as $e) {
+                    $e->available = 1;
+                    if (!empty($e->stripe_price_id)) {
+                        $amount = StripeService::get_price_amount($e->stripe_price_id);
+                        if (!is_wp_error($amount)) {
+                            $e->price = $amount;
+                        }
+                    }
+                }
             }
         }
 
