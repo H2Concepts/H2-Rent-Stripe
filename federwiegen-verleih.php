@@ -113,14 +113,21 @@ function federwiegen_stripe_elements_form() {
 
       <div class="federwiegen-checkout-right">
         <h3>Bestellübersicht</h3>
+        <?php
+          $preis_cents = isset($_GET['preis']) ? intval($_GET['preis']) : 0;
+          $shipping_cents = isset($_GET['shipping']) ? intval($_GET['shipping']) : 0;
+          $total_first_cents = $preis_cents + $shipping_cents;
+        ?>
         <ul class="federwiegen-checkout-summary">
           <li>Produkt: <?php echo esc_html($_GET['produkt'] ?? ''); ?></li>
           <li>Extra: <?php echo esc_html($_GET['extra'] ?? ''); ?></li>
           <li>Mietdauer: <?php echo esc_html($_GET['dauer_name'] ?? ($_GET['dauer'] ?? '')); ?></li>
           <li>Zustand: <?php echo esc_html($_GET['zustand'] ?? ''); ?></li>
           <li>Farbe: <?php echo esc_html($_GET['farbe'] ?? ''); ?></li>
-          <li>Preis: <?php echo isset($_GET['preis']) ? number_format($_GET['preis'] / 100, 2, ',', '.') . ' €' : ''; ?></li>
-          <li>Versand: <?php echo isset($_GET['shipping']) ? number_format($_GET['shipping'] / 100, 2, ',', '.') . ' €' : ''; ?></li>
+          <li>Preis: <?php echo $preis_cents ? number_format($preis_cents / 100, 2, ',', '.') . ' €' : ''; ?></li>
+          <li>Versand: <?php echo $shipping_cents ? number_format($shipping_cents / 100, 2, ',', '.') . ' €' : ''; ?></li>
+          <li>Gesamt 1. Monat: <?php echo number_format($total_first_cents / 100, 2, ',', '.'); ?> €</li>
+          <li>Jeder weitere Monat: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
         </ul>
       </div>
     </div>
