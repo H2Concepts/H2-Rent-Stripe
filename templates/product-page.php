@@ -203,10 +203,15 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <h4><?php echo esc_html($variant->name); ?></h4>
                                 <p><?php echo esc_html($variant->description); ?></p>
                                 <?php
-                                    $display_price = ($variant->price_from > 0) ? $variant->price_from : $variant->base_price;
-                                    $prefix = ($variant->price_from > 0) ? 'ab ' : '';
+                                    $display_price = 0;
+                                    if (!empty($variant->stripe_price_id)) {
+                                        $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                        if (!is_wp_error($p)) {
+                                            $display_price = $p;
+                                        }
+                                    }
                                 ?>
-                                <p class="federwiegen-option-price"><?php echo $prefix . number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
+                                <p class="federwiegen-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="federwiegen-availability-notice">
                                         <span class="federwiegen-unavailable-badge">❌ Nicht verfügbar</span>

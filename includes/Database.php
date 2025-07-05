@@ -24,6 +24,7 @@ class Database {
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'federwiegen_variants';
         $columns_to_add = array(
+            'stripe_price_id' => 'VARCHAR(255) DEFAULT ""',
             'price_from' => 'DECIMAL(10,2) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
@@ -38,7 +39,8 @@ class Database {
         foreach ($columns_to_add as $column => $type) {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE '$column'");
             if (empty($column_exists)) {
-                $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER base_price");
+                $after = $column === 'stripe_price_id' ? 'name' : 'base_price';
+                $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER $after");
             }
         }
         
@@ -502,6 +504,7 @@ class Database {
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
             description text,
+            stripe_price_id varchar(255) DEFAULT '',
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             image_url_1 text,
@@ -778,9 +781,9 @@ class Database {
         $existing_variants = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
         if ($existing_variants == 0) {
             $variants = array(
-                array('Federwiege + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 89.00),
-                array('Federwiege + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', 79.00),
-                array('Wiege + Gestell & Motor mit App-Steuerung', 'Premium-Variante mit smarter App-Steuerung', 119.00)
+                array('Federwiege + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 'price_1QutK3RxDui5dUOqWEiBal7P'),
+                array('Federwiege + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', ''),
+                array('Wiege + Gestell & Motor mit App-Steuerung', 'Premium-Variante mit smarter App-Steuerung', '')
             );
             
             foreach ($variants as $index => $variant) {
@@ -790,7 +793,7 @@ class Database {
                         'category_id' => 1,
                         'name' => $variant[0],
                         'description' => $variant[1],
-                        'base_price' => $variant[2],
+                        'stripe_price_id' => $variant[2],
                         'price_from' => 0,
                         'image_url_1' => '',
                         'image_url_2' => '',

@@ -237,7 +237,7 @@ class Plugin {
         }
 
         $variants = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY base_price",
+            "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order",
             $category->id
         ));
 
@@ -245,8 +245,20 @@ class Plugin {
             return;
         }
 
-        $min_price = $variants[0]->base_price;
-        $max_price = end($variants)->base_price;
+        $prices = array();
+        foreach ($variants as $v) {
+            if (!empty($v->stripe_price_id)) {
+                $p = StripeService::get_price_amount($v->stripe_price_id);
+                if (!is_wp_error($p)) {
+                    $prices[] = $p;
+                }
+            }
+        }
+        if (empty($prices)) {
+            return;
+        }
+        $min_price = min($prices);
+        $max_price = max($prices);
 
         $schema = [
             '@context' => 'https://schema.org',

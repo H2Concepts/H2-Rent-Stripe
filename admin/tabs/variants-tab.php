@@ -7,8 +7,7 @@ if (isset($_POST['submit_variant'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $description = sanitize_textarea_field($_POST['description']);
-    $base_price = floatval($_POST['base_price']);
-    $price_from = isset($_POST['price_from']) ? floatval($_POST['price_from']) : 0;
+    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
     $sort_order = intval($_POST['sort_order']);
@@ -25,8 +24,7 @@ if (isset($_POST['submit_variant'])) {
             'category_id' => $category_id,
             'name' => $name,
             'description' => $description,
-            'base_price' => $base_price,
-            'price_from' => $price_from,
+            'stripe_price_id' => $stripe_price_id,
             'available' => $available,
             'availability_note' => $availability_note,
             'sort_order' => $sort_order
@@ -36,7 +34,7 @@ if (isset($_POST['submit_variant'])) {
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
-            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%d'), array_fill(0, 5, '%s')),
+            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%d'), array_fill(0, 5, '%s')),
             array('%d')
         );
         
@@ -49,8 +47,7 @@ if (isset($_POST['submit_variant'])) {
             'category_id' => $category_id,
             'name' => $name,
             'description' => $description,
-            'base_price' => $base_price,
-            'price_from' => $price_from,
+            'stripe_price_id' => $stripe_price_id,
             'available' => $available,
             'availability_note' => $availability_note,
             'sort_order' => $sort_order
@@ -59,7 +56,7 @@ if (isset($_POST['submit_variant'])) {
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
-            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%d'), array_fill(0, 5, '%s'))
+            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%d'), array_fill(0, 5, '%s'))
         );
         
         if ($result !== false) {
@@ -108,12 +105,8 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                 </div>
                 
                 <div class="federwiegen-form-group">
-                    <label>Grundpreis (€) *</label>
-                    <input type="number" name="base_price" value="<?php echo $edit_item ? $edit_item->base_price : ''; ?>" step="0.01" min="0" required>
-                </div>
-                <div class="federwiegen-form-group">
-                    <label>Preis ab (€)</label>
-                    <input type="number" name="price_from" value="<?php echo $edit_item ? $edit_item->price_from : ''; ?>" step="0.01" min="0">
+                    <label>Stripe Preis ID *</label>
+                    <input type="text" name="stripe_price_id" value="<?php echo $edit_item ? esc_attr($edit_item->stripe_price_id) : ''; ?>" required>
                 </div>
                 
                 <div class="federwiegen-form-group full-width">
@@ -213,7 +206,16 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                     <h5><?php echo esc_html($variant->name); ?></h5>
                     <p><?php echo esc_html($variant->description); ?></p>
                     <div class="federwiegen-item-meta">
-                        <span class="federwiegen-price"><?php echo number_format($variant->base_price, 2, ',', '.'); ?>€</span>
+                        <?php
+                            $price = 0;
+                            if (!empty($variant->stripe_price_id)) {
+                                $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                if (!is_wp_error($p)) {
+                                    $price = $p;
+                                }
+                            }
+                        ?>
+                        <span class="federwiegen-price"><?php echo number_format($price, 2, ',', '.'); ?>€</span>
                         <span class="federwiegen-status <?php echo $variant->available ? 'available' : 'unavailable'; ?>">
                             <?php echo $variant->available ? '✅ Verfügbar' : '❌ Nicht verfügbar'; ?>
                         </span>

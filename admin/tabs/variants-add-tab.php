@@ -21,12 +21,8 @@
                     <input type="text" name="name" required placeholder="z.B. Premium Federwiege">
                 </div>
                 <div class="federwiegen-form-group">
-                    <label>Grundpreis (€) *</label>
-                    <input type="number" name="base_price" step="0.01" min="0" required placeholder="29.99">
-                </div>
-                <div class="federwiegen-form-group">
-                    <label>Preis ab (€)</label>
-                    <input type="number" name="price_from" step="0.01" min="0" placeholder="">
+                    <label>Stripe Preis ID *</label>
+                    <input type="text" name="stripe_price_id" required placeholder="price_123...">
                 </div>
             </div>
             

@@ -50,7 +50,16 @@ class Ajax {
         
         
         if ($variant && $duration) {
-            $variant_price = floatval($variant->base_price);
+            $variant_price = 0;
+            if (!empty($variant->stripe_price_id)) {
+                $price_res = StripeService::get_price_amount($variant->stripe_price_id);
+                if (is_wp_error($price_res)) {
+                    wp_send_json_error('Price fetch failed');
+                }
+                $variant_price = floatval($price_res);
+            } else {
+                $variant_price = floatval($variant->base_price);
+            }
             $extras_price = 0;
             foreach ($extras as $ex) {
                 $extras_price += floatval($ex->price);
