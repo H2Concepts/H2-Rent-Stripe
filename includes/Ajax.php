@@ -1061,11 +1061,6 @@ function federwiegen_create_checkout_session() {
             'shipping_address_collection' => [ 'allowed_countries' => ['DE'] ],
             'return_url' => site_url('/?session_id={CHECKOUT_SESSION_ID}'),
         ];
-        if ($shipping_rate_id) {
-            $session_args['shipping_options'] = [
-                [ 'shipping_rate' => $shipping_rate_id ]
-            ];
-        }
 
         $session = \Stripe\Checkout\Session::create($session_args);
 
