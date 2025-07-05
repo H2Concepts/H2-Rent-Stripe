@@ -50,11 +50,16 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         if ($customer_id && $shipping_price_id) {
             try {
-                \Stripe\InvoiceItem::create([
+                $invoice_item = \Stripe\InvoiceItem::create([
                     'customer'    => $customer_id,
                     'price'       => $shipping_price_id,
                     'description' => 'Versandkosten (einmalig)',
+                ]);
+
+                \Stripe\Invoice::create([
+                    'customer'     => $customer_id,
                     'subscription' => $subscription_id,
+                    'auto_advance' => true,
                 ]);
             } catch (\Exception $e) {
             }
