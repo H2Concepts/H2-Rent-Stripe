@@ -134,13 +134,26 @@ function federwiegen_stripe_elements_form() {
             shipping_price_id: SHIPPING_PRICE_ID
           })
         });
-        const { client_secret } = await res.json();
-        return client_secret;
+        const data = await res.json();
+        if (!data.client_secret) {
+          const msg = data.data && data.data.message ? data.data.message : 'Fehler beim Abrufen des Client Secret';
+          console.error(msg);
+          throw new Error(msg);
+        }
+        return data.client_secret;
       };
 
       (async () => {
-        const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
-        checkout.mount('#checkout');
+        try {
+          const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
+          if (document.getElementById('checkout')) {
+            checkout.mount('#checkout');
+          } else {
+            console.error('Checkout-Element fehlt');
+          }
+        } catch (err) {
+          console.error(err);
+        }
       })();
     </script>
     </div>
