@@ -1056,7 +1056,6 @@ function federwiegen_create_checkout_session() {
             'line_items' => $line_items,
             'mode' => 'subscription',
             'ui_mode' => 'custom',
-            'customer_creation' => 'always',
             'billing_address_collection' => 'required',
             'shipping_address_collection' => [ 'allowed_countries' => ['DE'] ],
             'return_url' => site_url('/?session_id={CHECKOUT_SESSION_ID}'),
