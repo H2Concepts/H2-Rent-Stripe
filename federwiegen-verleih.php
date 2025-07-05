@@ -187,7 +187,7 @@ function federwiegen_stripe_elements_form() {
       const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
 
       const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
-      const elements = stripe.elements();
+      let elements = null;
       let clientSecret = null;
 
       async function initStripePaymentElement() {
@@ -204,7 +204,7 @@ function federwiegen_stripe_elements_form() {
           }
 
           clientSecret = result.client_secret;
-          elements.update({ clientSecret });
+          elements = stripe.elements({ clientSecret });
           const paymentElement = elements.create('payment');
           paymentElement.mount('#payment-element');
 
