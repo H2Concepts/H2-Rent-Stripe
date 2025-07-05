@@ -24,6 +24,8 @@ define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
 define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_1QKQDzRxDui5dUOqdlAFIJcr');
 // Display amount for shipping in Euros
 define('FEDERWIEGEN_SHIPPING_COST', 9.99);
+// Payment Method Configuration ID for PayPal
+define('FEDERWIEGEN_PMC_ID', 'pmc_1QKPcvRxDui5dUOqaNaxNjsL');
 
 // Control whether default demo data is inserted on activation
 if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
