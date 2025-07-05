@@ -1,21 +1,5 @@
 <?php
 
-if (isset($_POST['jetzt_mieten'])) {
-    $params = [
-        'produkt' => sanitize_text_field($_POST['produkt']),
-        'extra'   => sanitize_text_field($_POST['extra']),
-        'dauer'   => intval($_POST['dauer']),
-        'dauer_name' => sanitize_text_field($_POST['dauer_name']),
-        'zustand' => sanitize_text_field($_POST['zustand']),
-        'farbe'   => sanitize_text_field($_POST['farbe']),
-        'preis'   => intval($_POST['preis'])
-    ];
-
-    $zahlung_url = site_url('/zahlung/') . '?' . http_build_query($params);
-    wp_redirect($zahlung_url);
-    exit;
-}
-
 global $wpdb;
 
 // Get category data
@@ -63,7 +47,9 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 }
 
 // Shipping
-$shipping_cost = isset($category) ? ($category->shipping_cost ?? 0) : 0;
+$shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
+    ? constant('FEDERWIEGEN_SHIPPING_COST')
+    : 0;
 $shipping_provider = isset($category) ? ($category->shipping_provider ?? '') : '';
 $price_label = isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis';
 $shipping_label = isset($category) ? ($category->shipping_label ?? 'Einmalige Versandkosten:') : 'Einmalige Versandkosten:';
@@ -217,10 +203,15 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <h4><?php echo esc_html($variant->name); ?></h4>
                                 <p><?php echo esc_html($variant->description); ?></p>
                                 <?php
-                                    $display_price = ($variant->price_from > 0) ? $variant->price_from : $variant->base_price;
-                                    $prefix = ($variant->price_from > 0) ? 'ab ' : '';
+                                    $display_price = 0;
+                                    if (!empty($variant->stripe_price_id)) {
+                                        $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                        if (!is_wp_error($p)) {
+                                            $display_price = $p;
+                                        }
+                                    }
                                 ?>
-                                <p class="federwiegen-option-price"><?php echo $prefix . number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
+                                <p class="federwiegen-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="federwiegen-availability-notice">
                                         <span class="federwiegen-unavailable-badge">❌ Nicht verfügbar</span>
@@ -248,9 +239,12 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                              data-available="true">
                             <div class="federwiegen-option-content">
                                 <span class="federwiegen-extra-name"><?php echo esc_html($extra->name); ?></span>
-                                <?php if ($extra->price > 0): ?>
-                                <div class="federwiegen-extra-price">+<?php echo number_format($extra->price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></div>
-                                <?php endif; ?>
+                                <?php if (!empty($extra->stripe_price_id)) {
+                                    $p = \FederwiegenVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                                    if (!is_wp_error($p) && $p > 0) {
+                                        echo '<div class="federwiegen-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
+                                    }
+                                } ?>
                             </div>
                             <div class="federwiegen-option-check">✓</div>
                         </div>
@@ -367,6 +361,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="zustand" id="federwiegen-field-zustand">
                         <input type="hidden" name="farbe" id="federwiegen-field-farbe">
                         <input type="hidden" name="preis" id="federwiegen-field-preis">
+                        <input type="hidden" name="shipping" id="federwiegen-field-shipping">
                         <input type="hidden" name="jetzt_mieten" value="1">
                     <div class="federwiegen-availability-wrapper" id="federwiegen-availability-wrapper" style="display:none;">
                         <div id="federwiegen-availability-status" class="federwiegen-availability-status available">

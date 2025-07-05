@@ -14,6 +14,7 @@ jQuery(document).ready(function($) {
     let touchStartX = 0;
     let touchEndX = 0;
     let currentPrice = 0;
+    let currentShippingCost = 0;
     let colorNotificationTimeout = null;
 
     // Get category ID from container
@@ -161,6 +162,7 @@ jQuery(document).ready(function($) {
         $('#federwiegen-field-zustand').val(conditionName);
         $('#federwiegen-field-farbe').val(colorName);
         $('#federwiegen-field-preis').val(Math.round(currentPrice * 100));
+        $('#federwiegen-field-shipping').val(Math.round(currentShippingCost * 100));
 
         $('#federwiegen-order-form').submit();
     });
@@ -585,6 +587,7 @@ jQuery(document).ready(function($) {
                     if (response.success) {
                         const data = response.data;
                         currentPrice = data.final_price;
+                        currentShippingCost = data.shipping_cost || 0;
                         
                         // Update price display
                         $('#federwiegen-final-price').text(formatPrice(data.final_price) + '€');

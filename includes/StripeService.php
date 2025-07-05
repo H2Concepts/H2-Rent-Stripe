@@ -54,6 +54,19 @@ class StripeService {
         return \Stripe\Subscription::create($params);
     }
 
+    public static function get_price_amount($price_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+        try {
+            $price = \Stripe\Price::retrieve($price_id);
+            return $price->unit_amount / 100;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_price', $e->getMessage());
+        }
+    }
+
     public static function get_publishable_key() {
         return get_option('federwiegen_stripe_publishable_key', '');
     }

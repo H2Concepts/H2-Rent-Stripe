@@ -1,12 +1,17 @@
 <?php
 // Extras Tab Content
 $table_name = $wpdb->prefix . 'federwiegen_extras';
+// Ensure stripe_price_id column exists
+$price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
+if (empty($price_id_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+}
 
 // Handle form submissions
 if (isset($_POST['submit_extra'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
-    $price = floatval($_POST['price']);
+    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
     $image_url = esc_url_raw($_POST['image_url']);
     $sort_order = intval($_POST['sort_order']);
 
@@ -17,12 +22,12 @@ if (isset($_POST['submit_extra'])) {
             array(
                 'category_id' => $category_id,
                 'name' => $name,
-                'price' => $price,
+                'stripe_price_id' => $stripe_price_id,
                 'image_url' => $image_url,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%f', '%s', '%d'),
+            array('%d', '%s', '%s', '%s', '%d'),
             array('%d')
         );
         
@@ -36,11 +41,11 @@ if (isset($_POST['submit_extra'])) {
             array(
                 'category_id' => $category_id,
                 'name' => $name,
-                'price' => $price,
+                'stripe_price_id' => $stripe_price_id,
                 'image_url' => $image_url,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%f', '%s', '%d')
+            array('%d', '%s', '%s', '%s', '%d')
         );
         
         if ($result !== false) {
@@ -89,8 +94,8 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 </div>
                 
                 <div class="federwiegen-form-group">
-                    <label>Preis (€) *</label>
-                    <input type="number" name="price" value="<?php echo $edit_item ? $edit_item->price : ''; ?>" step="0.01" min="0" required>
+                    <label>Stripe Preis ID *</label>
+                    <input type="text" name="stripe_price_id" value="<?php echo $edit_item ? esc_attr($edit_item->stripe_price_id) : ''; ?>" required>
                 </div>
                 
                 <div class="federwiegen-form-group full-width">
@@ -153,7 +158,12 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 <div class="federwiegen-item-content">
                     <h5><?php echo esc_html($extra->name); ?></h5>
                     <div class="federwiegen-item-meta">
-                        <span class="federwiegen-price"><?php echo number_format($extra->price, 2, ',', '.'); ?>€</span>
+                        <?php if (!empty($extra->stripe_price_id)) {
+                            $p = \FederwiegenVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                            if (!is_wp_error($p)) {
+                                echo '<span class="federwiegen-price">' . number_format($p, 2, ',', '.') . '€</span>';
+                            }
+                        } ?>
                     </div>
                 </div>
                 

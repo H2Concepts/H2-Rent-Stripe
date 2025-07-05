@@ -20,6 +20,10 @@ define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
+// Stripe price ID for the one-time shipping charge
+define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_1QKQDzRxDui5dUOqdlAFIJcr');
+// Display amount for shipping in Euros
+define('FEDERWIEGEN_SHIPPING_COST', 9.99);
 
 // Control whether default demo data is inserted on activation
 if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
@@ -42,52 +46,108 @@ add_shortcode('stripe_elements_form', 'federwiegen_stripe_elements_form');
 function federwiegen_stripe_elements_form() {
     ob_start(); ?>
 
-    <div class="federwiegen-checkout">
-    <h2>Deine Bestellung</h2>
-    <ul class="federwiegen-checkout-summary">
-      <li>Produkt: <?php echo esc_html($_GET['produkt'] ?? ''); ?></li>
-      <li>Extra: <?php echo esc_html($_GET['extra'] ?? ''); ?></li>
-      <li>Abo: <?php echo esc_html($_GET['dauer_name'] ?? ($_GET['dauer'] ?? '')); ?></li>
-      <li>Zustand: <?php echo esc_html($_GET['zustand'] ?? ''); ?></li>
-      <li>Farbe: <?php echo esc_html($_GET['farbe'] ?? ''); ?></li>
-      <li>Preis: <?php echo isset($_GET['preis']) ? number_format($_GET['preis'] / 100, 2, ',', '.') . ' €' : ''; ?></li>
-    </ul>
+    <div class="federwiegen-checkout-wrapper">
+      <div class="federwiegen-checkout-left">
+        <form id="checkout-form" class="federwiegen-checkout-form">
+          <div class="checkout-section">
+            <h3>1. Kontaktinformationen</h3>
+            <p>Wir werden diese E-Mail verwenden, um Ihnen Details und Aktualisierungen zu Ihrer Bestellung zu senden.</p>
+            <label for="email">E-Mail-Adresse*</label>
+            <input type="email" id="email" name="email" required>
+          </div>
 
-    <form id="checkout-form" class="federwiegen-checkout-form">
-      <h3>Lieferadresse</h3>
+          <div class="checkout-section">
+            <h3>2. Versandadresse</h3>
+            <p>Geben Sie die Adresse ein, an die Ihre Bestellung geliefert werden soll.</p>
+            <label for="country">Land*</label>
+            <input type="text" id="country" name="country" value="DE" required>
 
-      <label for="fullname">Vollständiger Name*</label>
-      <input type="text" id="fullname" name="fullname" required>
+            <label for="fullname">Vollständiger Name*</label>
+            <input type="text" id="fullname" name="fullname" required>
 
-      <label for="email">E-Mail-Adresse*</label>
-      <input type="email" id="email" name="email" required>
+            <label for="street">Adresse*</label>
+            <input type="text" id="street" name="street" required>
 
-      <label for="phone">Telefonnummer*</label>
-      <input type="tel" id="phone" name="phone" required>
+            <label for="city">Stadt*</label>
+            <input type="text" id="city" name="city" required>
 
-      <label for="street">Straße &amp; Hausnummer*</label>
-      <input type="text" id="street" name="street" required>
+            <label for="postal">PLZ*</label>
+            <input type="text" id="postal" name="postal" required>
 
-      <label for="postal">PLZ*</label>
-      <input type="text" id="postal" name="postal" required>
+            <label for="phone">Telefon*</label>
+            <input type="tel" id="phone" name="phone" required>
 
-      <label for="city">Ort*</label>
-      <input type="text" id="city" name="city" required>
+            <label class="checkbox">
+              <input type="checkbox" id="same-address" checked>
+              Dieselbe Adresse für die Rechnungsstellung verwenden
+            </label>
 
-      <label for="country">Land*</label>
-      <input type="text" id="country" name="country" value="DE" required>
+            <div id="billing-fields" style="display: none;">
+              <h4>Rechnungsadresse</h4>
+              <label for="bill_country">Land*</label>
+              <input type="text" id="bill_country" name="bill_country" value="DE">
 
-      <label class="checkbox">
-        <input type="checkbox" id="agb" required>
-        Ich akzeptiere die <a href="/agb" target="_blank">Allgemeinen Geschäftsbedingungen</a>*
-      </label>
+              <label for="bill_fullname">Vollständiger Name*</label>
+              <input type="text" id="bill_fullname" name="bill_fullname">
 
-      <h3>Zahlung</h3>
-      <div id="card-element"></div>
+              <label for="bill_street">Adresse*</label>
+              <input type="text" id="bill_street" name="bill_street">
 
-      <button id="submit">Jetzt bezahlen</button>
-      <div id="payment-message"></div>
-    </form>
+              <label for="bill_city">Stadt*</label>
+              <input type="text" id="bill_city" name="bill_city">
+
+              <label for="bill_postal">PLZ*</label>
+              <input type="text" id="bill_postal" name="bill_postal">
+            </div>
+          </div>
+
+          <div class="checkout-section">
+            <h3>3. Zahlungsoptionen</h3>
+            <div id="card-element"></div>
+            <label class="checkbox">
+              <input type="checkbox" id="agb" required>
+              Ich akzeptiere die <a href="/agb" target="_blank">Allgemeinen Geschäftsbedingungen</a>*
+            </label>
+            <button id="submit">Jetzt bezahlen</button>
+            <div id="payment-message"></div>
+          </div>
+        </form>
+      </div>
+
+      <div class="federwiegen-checkout-right">
+        <h3>Bestellübersicht</h3>
+        <?php
+          $preis_cents = isset($_GET['preis']) ? intval($_GET['preis']) : 0;
+          $shipping_cents = isset($_GET['shipping']) ? intval($_GET['shipping']) : 0;
+          $total_first_cents = $preis_cents + $shipping_cents;
+        ?>
+        <ul class="federwiegen-checkout-summary">
+          <?php if (!empty($_GET['produkt'])): ?>
+          <li>Produkt: <?php echo esc_html($_GET['produkt']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['extra'])): ?>
+          <li>Extra: <?php echo esc_html($_GET['extra']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['dauer']) || !empty($_GET['dauer_name'])): ?>
+          <li>Mietdauer: <?php echo esc_html($_GET['dauer_name'] ?? $_GET['dauer']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['zustand'])): ?>
+          <li>Zustand: <?php echo esc_html($_GET['zustand']); ?></li>
+          <?php endif; ?>
+          <?php if (!empty($_GET['farbe'])): ?>
+          <li>Farbe: <?php echo esc_html($_GET['farbe']); ?></li>
+          <?php endif; ?>
+          <?php if ($preis_cents): ?>
+          <li>Preis: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
+          <?php endif; ?>
+          <?php if ($shipping_cents): ?>
+          <li>Versand: <?php echo number_format($shipping_cents / 100, 2, ',', '.'); ?> €</li>
+          <?php endif; ?>
+          <li>Gesamt 1. Monat: <?php echo number_format($total_first_cents / 100, 2, ',', '.'); ?> €</li>
+          <li>Jeder weitere Monat: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
+        </ul>
+      </div>
+    </div>
 
     <script src="https://js.stripe.com/v3/"></script>
     <script>
@@ -120,13 +180,22 @@ function federwiegen_stripe_elements_form() {
         dauer_name: getUrlParameter('dauer_name'),
         zustand: getUrlParameter('zustand'),
         farbe: getUrlParameter('farbe'),
-        preis: getUrlParameter('preis')
+        preis: getUrlParameter('preis'),
+        shipping: getUrlParameter('shipping')
       };
 
+      const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
+
       const stripe = Stripe('<?php echo esc_js(\FederwiegenVerleih\StripeService::get_publishable_key()); ?>');
-      let elements = stripe.elements();
-      let card = elements.create('card');
+      const elements = stripe.elements();
+      const card = elements.create('card');
       card.mount('#card-element');
+
+      const sameAddressCheckbox = document.getElementById('same-address');
+      const billingFields = document.getElementById('billing-fields');
+      sameAddressCheckbox.addEventListener('change', () => {
+        billingFields.style.display = sameAddressCheckbox.checked ? 'none' : 'block';
+      });
 
       const form = document.getElementById('checkout-form');
       form.addEventListener('submit', async (event) => {
@@ -145,6 +214,11 @@ function federwiegen_stripe_elements_form() {
           postal: document.getElementById('postal').value,
           city: document.getElementById('city').value,
           country: document.getElementById('country').value,
+          bill_fullname: document.getElementById('bill_fullname').value,
+          bill_street: document.getElementById('bill_street').value,
+          bill_postal: document.getElementById('bill_postal').value,
+          bill_city: document.getElementById('bill_city').value,
+          bill_country: document.getElementById('bill_country').value,
           produkt: baseData.produkt,
           extra: baseData.extra,
           dauer: baseData.dauer,
@@ -152,7 +226,9 @@ function federwiegen_stripe_elements_form() {
           zustand: baseData.zustand,
           farbe: baseData.farbe,
           preis: baseData.preis,
-          price_id: getPriceId(baseData.dauer)
+          shipping: baseData.shipping,
+          price_id: getPriceId(baseData.dauer),
+          shipping_price_id: SHIPPING_PRICE_ID
         };
 
         const messageEl = document.getElementById('payment-message');
@@ -168,8 +244,31 @@ function federwiegen_stripe_elements_form() {
             throw new Error('Serverfehler');
           }
           const responseData = await res.json();
+          const shipping = {
+            name: document.getElementById('fullname').value,
+            phone: document.getElementById('phone').value,
+            address: {
+              line1: document.getElementById('street').value,
+              postal_code: document.getElementById('postal').value,
+              city: document.getElementById('city').value,
+              country: document.getElementById('country').value,
+            }
+          };
+
+          const billing = {
+            name: document.getElementById('bill_fullname').value || shipping.name,
+            email: document.getElementById('email').value,
+            address: {
+              line1: document.getElementById('bill_street').value || shipping.address.line1,
+              postal_code: document.getElementById('bill_postal').value || shipping.address.postal_code,
+              city: document.getElementById('bill_city').value || shipping.address.city,
+              country: document.getElementById('bill_country').value || shipping.address.country,
+            }
+          };
+
           const { error, paymentIntent } = await stripe.confirmCardPayment(responseData.client_secret, {
-            payment_method: { card: card }
+            payment_method: { card: card, billing_details: billing },
+            shipping: shipping
           });
           if (error) {
             messageEl.textContent = error.message;

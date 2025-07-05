@@ -48,17 +48,29 @@ class Ajax {
         // Find best matching Stripe link
         $link = $this->find_best_stripe_link($variant_id, $extra_ids_raw, $duration_id, $condition_id, $product_color_id, $frame_color_id);
         
-        // Get shipping cost from category
-        $category = $wpdb->get_row($wpdb->prepare(
-            "SELECT shipping_cost FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
-            $variant->category_id
-        ));
         
         if ($variant && $duration) {
-            $variant_price = floatval($variant->base_price);
+            $variant_price = 0;
+            if (!empty($variant->stripe_price_id)) {
+                $price_res = StripeService::get_price_amount($variant->stripe_price_id);
+                if (is_wp_error($price_res)) {
+                    wp_send_json_error('Price fetch failed');
+                }
+                $variant_price = floatval($price_res);
+            } else {
+                $variant_price = floatval($variant->base_price);
+            }
             $extras_price = 0;
             foreach ($extras as $ex) {
-                $extras_price += floatval($ex->price);
+                if (!empty($ex->stripe_price_id)) {
+                    $pr = StripeService::get_price_amount($ex->stripe_price_id);
+                    if (is_wp_error($pr)) {
+                        wp_send_json_error('Price fetch failed');
+                    }
+                    $extras_price += floatval($pr);
+                } else {
+                    $extras_price += floatval($ex->price);
+                }
             }
 
             // Apply condition price modifier to whole price like before
@@ -71,7 +83,9 @@ class Ajax {
             $base_price = $variant_price + $extras_price;
             $discount = floatval($duration->discount);
             $final_price = ($variant_price * (1 - $discount)) + $extras_price;
-            $shipping_cost = $category ? floatval($category->shipping_cost) : 0;
+            $shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
+                ? floatval(constant('FEDERWIEGEN_SHIPPING_COST'))
+                : 0;
             
             wp_send_json_success(array(
                 'base_price' => $base_price,
@@ -910,9 +924,15 @@ function federwiegen_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
+        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $items = [[ 'price' => $price_id ]];
+        if ($shipping_price_id) {
+            $items[] = ['price' => $shipping_price_id];
+        }
+
         $subscription = StripeService::create_subscription([
             'customer' => $customer->id,
-            'items' => [[ 'price' => $price_id ]],
+            'items' => $items,
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
                 'payment_method_types' => ['card', 'paypal', 'sepa_debit'],

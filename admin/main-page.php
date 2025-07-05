@@ -111,7 +111,7 @@ foreach ($branding_results as $result) {
                 </div>
             </a>
             
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-branding'); ?>" class="federwiegen-nav-card">
+            <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=branding'); ?>" class="federwiegen-nav-card">
                 <div class="federwiegen-nav-icon">🎨</div>
                 <div class="federwiegen-nav-content">
                     <h4>Branding</h4>
