@@ -195,7 +195,10 @@ function federwiegen_stripe_elements_form() {
           const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_subscription"); ?>', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...baseData })
+            body: JSON.stringify({
+              ...baseData,
+              shipping_price_id: SHIPPING_PRICE_ID
+            })
           });
           const result = await res.json();
           if (!result.client_secret) {
