@@ -968,12 +968,8 @@ function federwiegen_create_subscription() {
         }
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
-        $items = [[ 'price' => $price_id ]];
-        if ($shipping_price_id) {
-            $items[] = ['price' => $shipping_price_id];
-        }
-
-        $subscription = StripeService::create_subscription([
+        $items = [[ 'price' => $price_id, 'quantity' => 1 ]];
+        $sub_params = [
             'customer' => $customer->id,
             'items' => $items,
             'payment_behavior' => 'default_incomplete',
@@ -1003,7 +999,14 @@ function federwiegen_create_subscription() {
                 'city'        => $body['city'] ?? '',
                 'country'     => $body['country'] ?? '',
             ],
-        ]);
+        ];
+        if ($shipping_price_id) {
+            $sub_params['add_invoice_items'] = [
+                [ 'price' => $shipping_price_id, 'quantity' => 1 ]
+            ];
+        }
+
+        $subscription = StripeService::create_subscription($sub_params);
 
         if (is_wp_error($subscription)) {
             throw new \Exception($subscription->get_error_message());
@@ -1051,16 +1054,21 @@ function federwiegen_create_checkout_session() {
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
         $line_items = [[ 'price' => $price_id, 'quantity' => 1 ]];
-        if ($shipping_price_id) {
-            $line_items[] = ['price' => $shipping_price_id, 'quantity' => 1];
-        }
-
-        $session = \Stripe\Checkout\Session::create([
+        $session_args = [
             'line_items' => $line_items,
             'mode' => 'subscription',
             'ui_mode' => 'custom',
             'return_url' => site_url('/?session_id={CHECKOUT_SESSION_ID}'),
-        ]);
+        ];
+        if ($shipping_price_id) {
+            $session_args['subscription_data'] = [
+                'add_invoice_items' => [
+                    [ 'price' => $shipping_price_id, 'quantity' => 1 ]
+                ]
+            ];
+        }
+
+        $session = \Stripe\Checkout\Session::create($session_args);
 
         wp_send_json(['checkoutSessionClientSecret' => $session->client_secret]);
     } catch (\Exception $e) {
