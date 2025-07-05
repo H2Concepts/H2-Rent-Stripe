@@ -8,7 +8,8 @@ if (isset($_POST['jetzt_mieten'])) {
         'dauer_name' => sanitize_text_field($_POST['dauer_name']),
         'zustand' => sanitize_text_field($_POST['zustand']),
         'farbe'   => sanitize_text_field($_POST['farbe']),
-        'preis'   => intval($_POST['preis'])
+        'preis'   => intval($_POST['preis']),
+        'shipping' => intval($_POST['shipping'])
     ];
 
     $zahlung_url = site_url('/zahlung/') . '?' . http_build_query($params);
@@ -367,6 +368,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="zustand" id="federwiegen-field-zustand">
                         <input type="hidden" name="farbe" id="federwiegen-field-farbe">
                         <input type="hidden" name="preis" id="federwiegen-field-preis">
+                        <input type="hidden" name="shipping" id="federwiegen-field-shipping">
                         <input type="hidden" name="jetzt_mieten" value="1">
                     <div class="federwiegen-availability-wrapper" id="federwiegen-availability-wrapper" style="display:none;">
                         <div id="federwiegen-availability-status" class="federwiegen-availability-status available">

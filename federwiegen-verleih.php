@@ -20,6 +20,7 @@ define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
+define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_versand_once');
 
 // Control whether default demo data is inserted on activation
 if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
@@ -119,6 +120,7 @@ function federwiegen_stripe_elements_form() {
           <li>Zustand: <?php echo esc_html($_GET['zustand'] ?? ''); ?></li>
           <li>Farbe: <?php echo esc_html($_GET['farbe'] ?? ''); ?></li>
           <li>Preis: <?php echo isset($_GET['preis']) ? number_format($_GET['preis'] / 100, 2, ',', '.') . ' €' : ''; ?></li>
+          <li>Versand: <?php echo isset($_GET['shipping']) ? number_format($_GET['shipping'] / 100, 2, ',', '.') . ' €' : ''; ?></li>
         </ul>
       </div>
     </div>
@@ -154,8 +156,11 @@ function federwiegen_stripe_elements_form() {
         dauer_name: getUrlParameter('dauer_name'),
         zustand: getUrlParameter('zustand'),
         farbe: getUrlParameter('farbe'),
-        preis: getUrlParameter('preis')
+        preis: getUrlParameter('preis'),
+        shipping: getUrlParameter('shipping')
       };
+
+      const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
 
       const stripe = Stripe('<?php echo esc_js(\FederwiegenVerleih\StripeService::get_publishable_key()); ?>');
       const elements = stripe.elements();
@@ -197,7 +202,9 @@ function federwiegen_stripe_elements_form() {
           zustand: baseData.zustand,
           farbe: baseData.farbe,
           preis: baseData.preis,
-          price_id: getPriceId(baseData.dauer)
+          shipping: baseData.shipping,
+          price_id: getPriceId(baseData.dauer),
+          shipping_price_id: SHIPPING_PRICE_ID
         };
 
         const messageEl = document.getElementById('payment-message');

@@ -910,9 +910,15 @@ function federwiegen_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
+        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $items = [[ 'price' => $price_id ]];
+        if ($shipping_price_id) {
+            $items[] = ['price' => $shipping_price_id];
+        }
+
         $subscription = StripeService::create_subscription([
             'customer' => $customer->id,
-            'items' => [[ 'price' => $price_id ]],
+            'items' => $items,
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
                 'payment_method_types' => ['card', 'paypal', 'sepa_debit'],
