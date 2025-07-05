@@ -20,7 +20,10 @@ define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
-define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_versand_once');
+// Stripe price ID for the one-time shipping charge
+define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_1QKQDzRxDui5dUOqdlAFIJcr');
+// Display amount for shipping in Euros
+define('FEDERWIEGEN_SHIPPING_COST', 9.99);
 
 // Control whether default demo data is inserted on activation
 if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {

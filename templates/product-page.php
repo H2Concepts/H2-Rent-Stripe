@@ -47,7 +47,9 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 }
 
 // Shipping
-$shipping_cost = isset($category) ? ($category->shipping_cost ?? 0) : 0;
+$shipping_cost = defined('FEDERWIEGEN_SHIPPING_COST')
+    ? constant('FEDERWIEGEN_SHIPPING_COST')
+    : (isset($category) ? ($category->shipping_cost ?? 0) : 0);
 $shipping_provider = isset($category) ? ($category->shipping_provider ?? '') : '';
 $price_label = isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis';
 $shipping_label = isset($category) ? ($category->shipping_label ?? 'Einmalige Versandkosten:') : 'Einmalige Versandkosten:';
