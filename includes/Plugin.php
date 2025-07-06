@@ -342,6 +342,14 @@ class Plugin {
                 'shipping_address_collection' => ['allowed_countries' => ['DE']],
                 'success_url' => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
                 'cancel_url'  => home_url('/abbrechen'),
+                'consent_collection' => [
+                    'terms_of_service' => 'required',
+                ],
+                'custom_text' => [
+                    'terms_of_service_acceptance' => [
+                        'message' => 'Ich akzeptiere die <a href="' . home_url('/agb') . '" target="_blank">Allgemeinen Gesch\xC3\xA4ftsbedingungen (AGB)</a>.',
+                    ],
+                ],
             ];
 
             if ($shipping_price_id) {
