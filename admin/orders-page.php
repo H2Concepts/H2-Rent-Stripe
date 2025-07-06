@@ -40,10 +40,6 @@ if (!empty($notice)) {
                 <span class="dashicons dashicons-category"></span>
                 Kategorien
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-analytics'); ?>" class="federwiegen-nav-item">
-                <span class="dashicons dashicons-chart-bar"></span>
-                Analytics
-            </a>
             <a href="<?php echo admin_url('admin.php?page=federwiegen-links'); ?>" class="federwiegen-nav-item">
                 <span class="dashicons dashicons-admin-links"></span>
                 Stripe Links

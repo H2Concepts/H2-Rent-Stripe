@@ -35,7 +35,7 @@ if (!empty($_POST['delete_notifications']) && is_array($_POST['delete_notificati
     }
 }
 
-$where_clause = $selected_category > 0 ? $wpdb->prepare('WHERE n.category_id = %d', $selected_category) : '';
+$where_clause = '';
 $notifications = $wpdb->get_results(
     "SELECT n.*, v.name AS variant_name,
         d.name AS duration_name,
@@ -115,7 +115,7 @@ $notifications = $wpdb->get_results(
                             ?>
                         </td>
                         <td>
-                            <a href="<?php echo admin_url('admin.php?page=federwiegen-analytics&tab=notifications&category=' . $selected_category . '&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
+                            <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>

@@ -51,6 +51,10 @@ foreach ($branding_results as $result) {
            class="federwiegen-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
             🔧 Debug
         </a>
+        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=notifications'); ?>"
+           class="federwiegen-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>">
+            📧 Benachrichtigungen
+        </a>
     </div>
     
     <!-- Tab Content -->
@@ -68,6 +72,9 @@ foreach ($branding_results as $result) {
                 break;
             case 'debug':
                 include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
+                break;
+            case 'notifications':
+                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';
                 break;
             default:
                 include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/branding-tab.php';

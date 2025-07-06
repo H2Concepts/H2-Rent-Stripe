@@ -108,10 +108,6 @@ foreach ($results as $result) {
                 <span class="dashicons dashicons-images-alt2"></span>
                 Ausführungen
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-analytics'); ?>" class="federwiegen-nav-item">
-                <span class="dashicons dashicons-chart-bar"></span>
-                Analytics
-            </a>
         </div>
     </div>
     

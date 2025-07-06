@@ -100,14 +100,6 @@ class Admin {
             array($this, 'orders_page')
         );
         
-        add_submenu_page(
-            'federwiegen-verleih',
-            'Analytics',
-            'Analytics',
-            'manage_options',
-            'federwiegen-analytics',
-            array($this, 'analytics_page')
-        );
 
         // New settings menu with Stripe integration tab
         add_submenu_page(
@@ -184,10 +176,6 @@ class Admin {
             // Enqueue WordPress media scripts for image upload
             wp_enqueue_media();
             
-            // Enqueue Chart.js for analytics
-            if (strpos($hook, 'federwiegen-analytics') !== false) {
-                wp_enqueue_script('chart-js', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '3.9.1', true);
-            }
         }
     }
     
@@ -293,6 +281,7 @@ class Admin {
             $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : array();
             $payment_icons = implode(',', $payment_icons);
             $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? '');
+            $shipping_price_id = sanitize_text_field($_POST['shipping_price_id'] ?? '');
             $shipping_label = sanitize_text_field($_POST['shipping_label']);
             $price_label = sanitize_text_field($_POST['price_label']);
             $price_period = sanitize_text_field($_POST['price_period']);
@@ -334,6 +323,7 @@ class Admin {
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
                         'shipping_provider' => $shipping_provider,
+                        'shipping_price_id' => $shipping_price_id,
                         'price_label' => $price_label,
                         'shipping_label' => $shipping_label,
                         'price_period' => $price_period,
@@ -348,7 +338,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -381,6 +371,7 @@ class Admin {
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
                         'shipping_provider' => $shipping_provider,
+                        'shipping_price_id' => $shipping_price_id,
                         'price_label' => $price_label,
                         'shipping_label' => $shipping_label,
                         'price_period' => $price_period,
@@ -394,7 +385,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {
@@ -510,10 +501,13 @@ class Admin {
         $where_clause = implode(' AND ', $where_conditions);
 
         $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT o.*, c.name as category_name, v.name as variant_name,
-                    GROUP_CONCAT(e.name SEPARATOR ', ') AS extra_names,
-                    d.name as duration_name, cond.name as condition_name,
-                    pc.name as product_color_name, fc.name as frame_color_name
+            "SELECT o.*, c.name as category_name,
+                    COALESCE(v.name, o.produkt_name) as variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                    COALESCE(d.name, o.dauer_text) as duration_name,
+                    COALESCE(cond.name, o.zustand_text) as condition_name,
+                    COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
              FROM {$wpdb->prefix}federwiegen_orders o
              LEFT JOIN {$wpdb->prefix}federwiegen_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON o.variant_id = v.id
@@ -553,9 +547,6 @@ class Admin {
         ));
     }
     
-    public function analytics_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/analytics-page.php';
-    }
     
     public function settings_page() {
         include FEDERWIEGEN_PLUGIN_PATH . 'admin/settings-page.php';

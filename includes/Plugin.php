@@ -324,29 +324,43 @@ class Plugin {
             return;
         }
 
-        $params = [
-            'produkt'     => sanitize_text_field($_POST['produkt'] ?? ''),
-            'extra'       => sanitize_text_field($_POST['extra'] ?? ''),
-            'dauer'       => intval($_POST['dauer'] ?? 0),
-            'dauer_name'  => sanitize_text_field($_POST['dauer_name'] ?? ''),
-            'zustand'     => sanitize_text_field($_POST['zustand'] ?? ''),
-            'farbe'       => sanitize_text_field($_POST['farbe'] ?? ''),
-            'produktfarbe' => sanitize_text_field($_POST['produktfarbe'] ?? ''),
-            'gestellfarbe' => sanitize_text_field($_POST['gestellfarbe'] ?? ''),
-            'preis'       => intval($_POST['preis'] ?? 0),
-            'shipping'    => intval($_POST['shipping'] ?? 0),
-            'variant_id'  => intval($_POST['variant_id'] ?? 0),
-            'duration_id' => intval($_POST['duration_id'] ?? 0),
-            'price_id'    => sanitize_text_field($_POST['price_id'] ?? ''),
-        ];
+        $price_id = sanitize_text_field($_POST['price_id'] ?? '');
+        $shipping_price_id = sanitize_text_field($_POST['shipping_price_id'] ?? '');
 
-        $checkout_url = self::get_checkout_page_url();
-        if (!$checkout_url) {
-            $checkout_url = site_url('/zahlung/');
+        $init = StripeService::init();
+        if (is_wp_error($init)) {
+            wp_die($init->get_error_message());
         }
-        $checkout_url = add_query_arg($params, $checkout_url);
-        wp_safe_redirect($checkout_url);
-        exit;
+
+        try {
+            $session_args = [
+                'mode' => 'subscription',
+                'payment_method_types' => ['card', 'paypal'],
+                'line_items' => [[
+                    'price' => $price_id,
+                    'quantity' => 1,
+                ]],
+                'billing_address_collection' => 'required',
+                'shipping_address_collection' => ['allowed_countries' => ['DE']],
+                'success_url' => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
+                'cancel_url'  => home_url('/abbrechen'),
+            ];
+
+            if ($shipping_price_id) {
+                $session_args['line_items'][] = [
+                    'price' => $shipping_price_id,
+                    'quantity' => 1,
+                ];
+            }
+
+            $session = \Stripe\Checkout\Session::create($session_args);
+            // wp_safe_redirect() does not allow external URLs like Stripe's
+            // checkout page, so use wp_redirect instead.
+            wp_redirect($session->url);
+            exit;
+        } catch (\Exception $e) {
+            wp_die($e->getMessage());
+        }
     }
 
     /**

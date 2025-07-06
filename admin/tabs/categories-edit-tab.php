@@ -218,6 +218,10 @@
                         </div>
                     </div>
                     <div class="federwiegen-form-group">
+                        <label>Stripe Versandkosten Preis ID</label>
+                        <input type="text" name="shipping_price_id" value="<?php echo esc_attr($edit_item->shipping_price_id ?? ''); ?>" placeholder="price_123...">
+                    </div>
+                    <div class="federwiegen-form-group">
                         <label>Text Versandkosten</label>
                         <input type="text" name="shipping_label" value="<?php echo isset($edit_item->shipping_label) ? esc_attr($edit_item->shipping_label) : ''; ?>" placeholder="Einmalige Versandkosten:">
                     </div>
