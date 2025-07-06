@@ -1086,7 +1086,6 @@ function federwiegen_create_checkout_session() {
             'mode'                     => 'subscription',
             'payment_method_types'     => ['card', 'paypal'],
             'line_items'               => $line_items,
-            'customer_email'           => $customer_email,
             'subscription_data'        => [ 'metadata' => $metadata ],
             'metadata'                 => $metadata,
             'billing_address_collection' => 'required',
@@ -1094,6 +1093,9 @@ function federwiegen_create_checkout_session() {
             'success_url'              => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
             'cancel_url'               => home_url('/abbrechen'),
         ];
+        if (!empty($customer_email)) {
+            $session_args['customer_email'] = $customer_email;
+        }
 
         $session = \Stripe\Checkout\Session::create($session_args);
 
