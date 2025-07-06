@@ -32,7 +32,7 @@ if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
 // find the class when it was called directly, so ensure the file exists and
 // require it explicitly before registering.
 if (!class_exists('FederwiegenVerleih\\Autoloader')) {
-    $autoloader = FEDERWIEGEN_PLUGIN_DIR . 'includes/Autoloader.php';
+    $autoloader = plugin_dir_path(__FILE__) . 'includes/Autoloader.php';
     if (file_exists($autoloader)) {
         require_once $autoloader;
     }
@@ -41,7 +41,13 @@ if (!class_exists('FederwiegenVerleih\\Autoloader')) {
 if (class_exists('FederwiegenVerleih\\Autoloader')) {
     \FederwiegenVerleih\Autoloader::register();
 }
-require_once FEDERWIEGEN_PLUGIN_DIR . 'includes/Webhook.php';
+
+$webhook_file = plugin_dir_path(__FILE__) . 'includes/Webhook.php';
+if (file_exists($webhook_file)) {
+    require_once $webhook_file;
+} else {
+    error_log('Webhook.php not found at ' . $webhook_file);
+}
 
 // Register activation and deactivation hooks
 register_activation_hook(__FILE__, ['FederwiegenVerleih\\Plugin', 'activate_plugin']);
