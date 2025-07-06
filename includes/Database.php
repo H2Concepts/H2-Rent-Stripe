@@ -224,10 +224,9 @@ class Database {
                 'company_name' => 'H2 Concepts',
                 'company_url' => 'https://h2concepts.de',
                 'admin_logo' => '',
-                'admin_color_primary' => '#5f7f5f',
+                'admin_color_primary'   => '#5f7f5f',
                 'admin_color_secondary' => '#4a674a',
-                'admin_color_text' => '#ffffff',
-                'admin_color_text' => '#ffffff',
+                'admin_color_text'      => '#ffffff',
                 'footer_text' => 'Powered by H2 Concepts'
             );
             
