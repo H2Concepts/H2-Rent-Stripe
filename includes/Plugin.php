@@ -354,7 +354,9 @@ class Plugin {
             }
 
             $session = \Stripe\Checkout\Session::create($session_args);
-            wp_safe_redirect($session->url);
+            // wp_safe_redirect() does not allow external URLs like Stripe's
+            // checkout page, so use wp_redirect instead.
+            wp_redirect($session->url);
             exit;
         } catch (\Exception $e) {
             wp_die($e->getMessage());
