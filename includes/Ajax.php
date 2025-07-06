@@ -776,7 +776,7 @@ function federwiegen_create_subscription() {
                 'payment_method_types' => ['card', 'paypal'],
                 'payment_method_options' => [
                     'paypal' => [
-                        'payment_method_configuration' => FEDERWIEGEN_PMC_ID,
+                        'payment_method_configuration' => StripeService::get_payment_method_configuration_id(),
                     ],
                 ],
             ],
