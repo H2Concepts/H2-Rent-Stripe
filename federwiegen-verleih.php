@@ -3,7 +3,7 @@
   * Plugin Name: Rent Plugin
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.6.4
+* Version: 2.7.2
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,16 +14,12 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.6.4';
+const FEDERWIEGEN_PLUGIN_VERSION = '2.8.0';
 const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
 define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
-// Stripe price ID for the one-time shipping charge
-define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_1QKQDzRxDui5dUOqdlAFIJcr');
-// Display amount for shipping in Euros
-define('FEDERWIEGEN_SHIPPING_COST', 9.99);
 // Payment Method Configuration ID for PayPal
 define('FEDERWIEGEN_PMC_ID', 'pmc_1QKPcvRxDui5dUOqaNaxNjsL');
 
@@ -34,6 +30,7 @@ if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
 
 require_once FEDERWIEGEN_PLUGIN_DIR . 'includes/Autoloader.php';
 FederwiegenVerleih\Autoloader::register();
+require_once FEDERWIEGEN_PLUGIN_DIR . 'includes/Webhook.php';
 
 // Register activation and deactivation hooks
 register_activation_hook(__FILE__, ['FederwiegenVerleih\\Plugin', 'activate_plugin']);
@@ -55,70 +52,16 @@ function federwiegen_stripe_elements_form() {
 
     <div class="federwiegen-checkout-wrapper">
       <div class="federwiegen-checkout-left">
-        <form id="checkout-form" class="federwiegen-checkout-form">
-          <div class="checkout-section">
-            <h3>1. Kontaktinformationen</h3>
-            <p>Wir werden diese E-Mail verwenden, um Ihnen Details und Aktualisierungen zu Ihrer Bestellung zu senden.</p>
-            <label for="email">E-Mail-Adresse*</label>
-            <input type="email" id="email" name="email" required>
-          </div>
-
-          <div class="checkout-section">
-            <h3>2. Versandadresse</h3>
-            <p>Geben Sie die Adresse ein, an die Ihre Bestellung geliefert werden soll.</p>
-            <label for="country">Land*</label>
-            <input type="text" id="country" name="country" value="DE" required>
-
-            <label for="fullname">Vollständiger Name*</label>
-            <input type="text" id="fullname" name="fullname" required>
-
-            <label for="street">Adresse*</label>
-            <input type="text" id="street" name="street" required>
-
-            <label for="city">Stadt*</label>
-            <input type="text" id="city" name="city" required>
-
-            <label for="postal">PLZ*</label>
-            <input type="text" id="postal" name="postal" required>
-
-            <label for="phone">Telefon*</label>
-            <input type="tel" id="phone" name="phone" required>
-
-            <label class="checkbox">
-              <input type="checkbox" id="same-address" checked>
-              Dieselbe Adresse für die Rechnungsstellung verwenden
-            </label>
-
-            <div id="billing-fields" style="display: none;">
-              <h4>Rechnungsadresse</h4>
-              <label for="bill_country">Land*</label>
-              <input type="text" id="bill_country" name="bill_country" value="DE">
-
-              <label for="bill_fullname">Vollständiger Name*</label>
-              <input type="text" id="bill_fullname" name="bill_fullname">
-
-              <label for="bill_street">Adresse*</label>
-              <input type="text" id="bill_street" name="bill_street">
-
-              <label for="bill_city">Stadt*</label>
-              <input type="text" id="bill_city" name="bill_city">
-
-              <label for="bill_postal">PLZ*</label>
-              <input type="text" id="bill_postal" name="bill_postal">
-            </div>
-          </div>
-
-          <div class="checkout-section">
-            <h3>3. Zahlungsoptionen</h3>
-            <div id="payment-element"></div>
-            <label class="checkbox">
-              <input type="checkbox" id="agb" required>
-              Ich akzeptiere die <a href="/agb" target="_blank">Allgemeinen Geschäftsbedingungen</a>*
-            </label>
-            <button id="submit">Jetzt bezahlen</button>
-            <div id="payment-message"></div>
-          </div>
-        </form>
+        <div class="checkout-section">
+          <label for="email">E-Mail-Adresse</label>
+          <input type="text" id="email" />
+          <div id="email-errors"></div>
+        </div>
+        <div id="billing-address" class="checkout-section"></div>
+        <div id="shipping-address" class="checkout-section"></div>
+        <div id="payment-element"></div>
+        <button id="pay-button">Jetzt bezahlen</button>
+        <div id="confirm-errors"></div>
       </div>
 
       <div class="federwiegen-checkout-right">
@@ -126,6 +69,12 @@ function federwiegen_stripe_elements_form() {
         <?php
           $preis_cents = isset($_GET['preis']) ? intval($_GET['preis']) : 0;
           $shipping_cents = isset($_GET['shipping']) ? intval($_GET['shipping']) : 0;
+          if (!$shipping_cents && !empty($_GET['shipping_price_id'])) {
+              $amount = \FederwiegenVerleih\StripeService::get_price_amount(sanitize_text_field($_GET['shipping_price_id']));
+              if (!is_wp_error($amount)) {
+                  $shipping_cents = intval(round($amount * 100));
+              }
+          }
           $total_first_cents = $preis_cents + $shipping_cents;
         ?>
         <ul class="federwiegen-checkout-summary">
@@ -156,10 +105,16 @@ function federwiegen_stripe_elements_form() {
           <li>Gesamt 1. Monat: <?php echo number_format($total_first_cents / 100, 2, ',', '.'); ?> €</li>
           <li>Jeder weitere Monat: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
         </ul>
+        <div>
+          <h3> Totals </h3>
+          <div id="subtotal"></div>
+          <div id="shipping"></div>
+          <div id="total"></div>
+        </div>
       </div>
     </div>
 
-    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://js.stripe.com/basil/stripe.js"></script>
     <script>
       function getUrlParameter(name) {
         name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
@@ -184,98 +139,75 @@ function federwiegen_stripe_elements_form() {
         price_id: getUrlParameter('price_id')
       };
 
-      const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
+      const SHIPPING_PRICE_ID = getUrlParameter('shipping_price_id');
 
       const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
-      let elements = null;
-      let clientSecret = null;
 
-      async function initStripePaymentElement() {
-        try {
-          const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_subscription"); ?>', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...baseData,
-              shipping_price_id: SHIPPING_PRICE_ID
-            })
+      const fetchClientSecret = () => {
+        return fetch('<?php echo admin_url("admin-ajax.php?action=create_checkout_session"); ?>', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...baseData,
+            shipping_price_id: SHIPPING_PRICE_ID
+          })
+        })
+          .then((response) => response.json())
+          .then((json) => {
+            if (json.checkoutSessionClientSecret) {
+              return json.checkoutSessionClientSecret;
+            }
+            throw new Error(json.message || 'Fehler beim Erstellen der Checkout-Sitzung');
           });
-          const result = await res.json();
-          if (!result.client_secret || result.success === false) {
-            const msg = (result.data && result.data.message) || result.message || 'Fehler: Kein client_secret erhalten.';
-            document.getElementById('payment-message').textContent = msg;
-            return;
-          }
+      };
 
-          clientSecret = result.client_secret;
-          elements = stripe.elements({ clientSecret });
-          const paymentElement = elements.create('payment');
-          paymentElement.mount('#payment-element');
+      stripe.initCheckout({ fetchClientSecret }).then((checkout) => {
+        const emailInput = document.getElementById('email');
+        const emailErrors = document.getElementById('email-errors');
 
-          form.addEventListener('submit', handleSubmit);
-        } catch (e) {
-          document.getElementById('payment-message').textContent = e.message;
-        }
-      }
-
-      const sameAddressCheckbox = document.getElementById('same-address');
-      const billingFields = document.getElementById('billing-fields');
-      sameAddressCheckbox.addEventListener('change', () => {
-        billingFields.style.display = sameAddressCheckbox.checked ? 'none' : 'block';
-      });
-
-      const form = document.getElementById('checkout-form');
-
-      async function handleSubmit(event) {
-        event.preventDefault();
-
-        if (!document.getElementById('agb').checked) {
-          alert('Bitte akzeptiere die AGB.');
-          return;
-        }
-
-        const shipping = {
-          name: document.getElementById('fullname').value,
-          phone: document.getElementById('phone').value,
-          address: {
-            line1: document.getElementById('street').value,
-            postal_code: document.getElementById('postal').value,
-            city: document.getElementById('city').value,
-            country: document.getElementById('country').value,
-          }
-        };
-
-        const billing = {
-          name: document.getElementById('bill_fullname').value || shipping.name,
-          email: document.getElementById('email').value,
-          address: {
-            line1: document.getElementById('bill_street').value || shipping.address.line1,
-            postal_code: document.getElementById('bill_postal').value || shipping.address.postal_code,
-            city: document.getElementById('bill_city').value || shipping.address.city,
-            country: document.getElementById('bill_country').value || shipping.address.country,
-          }
-        };
-
-        const messageEl = document.getElementById('payment-message');
-        messageEl.textContent = '';
-
-        const { error, paymentIntent } = await stripe.confirmPayment({
-          elements,
-          confirmParams: {
-            payment_method_data: { billing_details: billing },
-            shipping: shipping
-          },
-          redirect: 'if_required',
-          clientSecret
+        emailInput.addEventListener('input', () => {
+          emailErrors.textContent = '';
         });
-        if (error) {
-          messageEl.textContent = error.message;
-        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-          messageEl.textContent = 'Zahlung erfolgreich!';
-        }
-      }
 
-      initStripePaymentElement();
+        emailInput.addEventListener('blur', () => {
+          const newEmail = emailInput.value;
+          checkout.updateEmail(newEmail).then((result) => {
+            if (result.error) {
+              emailErrors.textContent = result.error.message;
+            }
+          });
+        });
+
+        const billingAddressElement = checkout.createBillingAddressElement();
+        billingAddressElement.mount('#billing-address');
+
+        const shippingAddressElement = checkout.createShippingAddressElement();
+        shippingAddressElement.mount('#shipping-address');
+
+        const paymentElement = checkout.createPaymentElement();
+        paymentElement.mount('#payment-element');
+
+        const subtotal = document.getElementById('subtotal');
+        const total = document.getElementById('total');
+
+        checkout.on('change', (session) => {
+          subtotal.textContent = `Subtotal: ${session.total.subtotal.amount}`;
+          total.textContent = `Total: ${session.total.total.amount}`;
+        });
+
+        const button = document.getElementById('pay-button');
+        const errors = document.getElementById('confirm-errors');
+        button.addEventListener('click', () => {
+          errors.textContent = '';
+          checkout.confirm().then((result) => {
+            if (result.type === 'error') {
+              errors.textContent = result.error.message;
+            }
+          });
+        });
+      }).catch((err) => {
+        document.getElementById('confirm-errors').textContent = err.message;
+      });
     </script>
     </div>
 
