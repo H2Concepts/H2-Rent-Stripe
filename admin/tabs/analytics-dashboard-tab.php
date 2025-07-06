@@ -2,7 +2,9 @@
 // Analytics Dashboard Tab Content
 
 // Get statistics for selected category or all categories
-$where_clause = $selected_category > 0 ? "WHERE o.category_id = %d" : "";
+// Ensure the WHERE clause always starts with a valid condition so additional
+// filters can simply append with AND without breaking the SQL syntax.
+$where_clause = $selected_category > 0 ? "WHERE o.category_id = %d" : "WHERE 1=1";
 $where_values = $selected_category > 0 ? array($selected_category) : array();
 
 // Get basic stats
