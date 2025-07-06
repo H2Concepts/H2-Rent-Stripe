@@ -7,6 +7,7 @@ This WordPress plugin enables the rental of configurable products with built-in 
 - Admin pages to manage product categories, variants, extras, rental durations and more
 - Shortcode `[federwiegen_product]` to embed a product page on the front‑end
 - Calculates prices dynamically and links to your Stripe checkout URLs
+- Supports Stripe promotion codes so customers can redeem coupons
 - Tracks user interactions for analytics
 - Generates SEO meta tags, Open Graph tags and schema markup
 

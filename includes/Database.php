@@ -364,6 +364,7 @@ class Database {
                 final_price decimal(10,2) NOT NULL,
                 stripe_session_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
+                discount_amount decimal(10,2) DEFAULT 0,
                 produkt_name varchar(255) DEFAULT '',
                 zustand_text varchar(255) DEFAULT '',
                 produktfarbe_text varchar(255) DEFAULT '',
@@ -391,6 +392,7 @@ class Database {
                 'produkt_name'      => "varchar(255) DEFAULT ''",
                 'stripe_session_id' => "varchar(255) DEFAULT ''",
                 'amount_total'      => 'int DEFAULT 0',
+                'discount_amount'   => 'decimal(10,2) DEFAULT 0',
                 'extra_text'        => 'text',
                 'dauer_text'        => "varchar(255) DEFAULT ''",
                 'status'            => "varchar(20) DEFAULT 'offen'"

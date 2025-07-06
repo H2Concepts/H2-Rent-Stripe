@@ -889,6 +889,7 @@ function federwiegen_create_checkout_session() {
         $session_args = [
             'mode'                     => 'subscription',
             'payment_method_types'     => ['card', 'paypal'],
+            'allow_promotion_codes'    => true,
             'line_items'               => $line_items,
             'subscription_data'        => [ 'metadata' => $metadata ],
             'metadata'                 => $metadata,
@@ -930,6 +931,7 @@ function federwiegen_create_checkout_session() {
                 'customer_email'   => $customer_email,
                 'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
                 'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+                'discount_amount'  => 0,
                 'status'           => 'offen',
                 'created_at'       => current_time('mysql', 1)
             ]

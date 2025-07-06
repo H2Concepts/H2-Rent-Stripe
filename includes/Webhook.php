@@ -53,11 +53,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             $session->id
         ));
 
+        $discount_amount = ($session->total_details->amount_discount ?? 0) / 100;
+
         $data = [
             'customer_email'    => $email,
             'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
             'final_price'       => ($session->amount_total ?? 0) / 100,
             'amount_total'      => $session->amount_total ?? 0,
+            'discount_amount'   => $discount_amount,
             'produkt_name'      => $produkt_name,
             'zustand_text'      => $zustand,
             'produktfarbe_text' => $produktfarbe,

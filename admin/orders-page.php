@@ -139,6 +139,7 @@ if (!empty($notice)) {
                         <th>Kunde</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
+                        <th style="width: 80px;">Rabatt</th>
                         <th style="width: 100px;">Status</th>
                         <th style="width: 120px;">Aktionen</th>
                     </tr>
@@ -186,6 +187,13 @@ if (!empty($notice)) {
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
                             <small style="color: #666;">/Monat</small>
+                        </td>
+                        <td>
+                            <?php if ($order->discount_amount > 0): ?>
+                                <span style="color:#0073aa; font-weight:bold;">-<?php echo number_format($order->discount_amount, 2, ',', '.'); ?>€</span>
+                            <?php else: ?>
+                                <span style="color:#666;">–</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($order->status === 'offen'): ?>
@@ -321,6 +329,7 @@ function showOrderDetails(orderId) {
                 <p><strong>Bestellnummer:</strong> #${order.id}</p>
                 <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
                 <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€/Monat</p>
+                <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-'+parseFloat(order.discount_amount).toFixed(2).replace('.', ',')+'€' : '–'}</p>
             </div>
             <div>
                 <h4>👤 Kundendaten</h4>
