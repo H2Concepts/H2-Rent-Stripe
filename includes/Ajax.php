@@ -896,8 +896,8 @@ function federwiegen_create_checkout_session() {
             'metadata'                 => $metadata,
             'billing_address_collection' => 'required',
             'shipping_address_collection' => ['allowed_countries' => ['DE']],
-            'success_url'              => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
-            'cancel_url'               => home_url('/abbrechen'),
+            'success_url'              => get_option('federwiegen_success_url', home_url('/danke?session_id={CHECKOUT_SESSION_ID}')),
+            'cancel_url'               => get_option('federwiegen_cancel_url', home_url('/abbrechen')),
             'consent_collection'       => [
                 'terms_of_service' => 'required',
             ],
