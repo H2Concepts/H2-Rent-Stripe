@@ -38,6 +38,10 @@ You may also toggle this behaviour with the `federwiegen_load_default_data` filt
 
 Use the `category` attribute to select a specific product category by shortcode.
 
+If you need to customise the link to your terms of service (AGB), enter the URL
+under **Einstellungen → Stripe Integration**. The text on the checkout page uses
+this link directly as UTF‑8 and is not encoded again.
+
 ## Development
 
 The plugin code is organised in the `includes`, `admin`, `templates` and `assets` directories. Activation and deactivation hooks are registered in `federwiegen-verleih.php`. Core functionality lives in `includes/` where an autoloader loads the classes.
