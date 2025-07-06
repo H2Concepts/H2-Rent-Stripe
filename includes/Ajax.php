@@ -45,8 +45,6 @@ class Ajax {
             ));
         }
         
-        // Find best matching Stripe link
-        $link = $this->find_best_stripe_link($variant_id, $extra_ids_raw, $duration_id, $condition_id, $product_color_id, $frame_color_id);
         
         
         if ($variant && $duration) {
@@ -114,7 +112,6 @@ class Ajax {
                 'final_price' => $final_price,
                 'discount' => $discount,
                 'shipping_cost' => $shipping_cost,
-                'stripe_link' => $link ?: '#',
                 'price_id' => $used_price_id,
                 'available' => $variant->available ? true : false,
                 'availability_note' => $variant->availability_note ?: '',
@@ -125,71 +122,6 @@ class Ajax {
         }
     }
     
-    private function find_best_stripe_link($variant_id, $extra_ids_raw, $duration_id, $condition_id = null, $product_color_id = null, $frame_color_id = null) {
-        $extra_ids_array = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
-        sort($extra_ids_array);
-        $extra_ids_sorted = implode(',', $extra_ids_array);
-        $extra_id = !empty($extra_ids_array) ? $extra_ids_array[0] : 0;
-        global $wpdb;
-        
-        // Try to find exact match first
-        $exact_link = $wpdb->get_var($wpdb->prepare(
-            "SELECT stripe_link FROM {$wpdb->prefix}federwiegen_links
-             WHERE variant_id = %d AND extra_id = %d AND extra_ids = %s AND duration_id = %d
-             AND condition_id = %d AND product_color_id = %d AND frame_color_id = %d",
-            $variant_id, $extra_id, $extra_ids_sorted, $duration_id, $condition_id, $product_color_id, $frame_color_id
-        ));
-        
-        if ($exact_link) {
-            return $exact_link;
-        }
-        
-        // Try without frame color
-        $link = $wpdb->get_var($wpdb->prepare(
-            "SELECT stripe_link FROM {$wpdb->prefix}federwiegen_links
-             WHERE variant_id = %d AND extra_id = %d AND extra_ids = %s AND duration_id = %d
-             AND condition_id = %d AND product_color_id = %d AND frame_color_id IS NULL",
-            $variant_id, $extra_id, $extra_ids_sorted, $duration_id, $condition_id, $product_color_id
-        ));
-        
-        if ($link) {
-            return $link;
-        }
-        
-        // Try without product color
-        $link = $wpdb->get_var($wpdb->prepare(
-            "SELECT stripe_link FROM {$wpdb->prefix}federwiegen_links
-             WHERE variant_id = %d AND extra_id = %d AND extra_ids = %s AND duration_id = %d
-             AND condition_id = %d AND product_color_id IS NULL AND frame_color_id = %d",
-            $variant_id, $extra_id, $extra_ids_sorted, $duration_id, $condition_id, $frame_color_id
-        ));
-        
-        if ($link) {
-            return $link;
-        }
-        
-        // Try without both colors
-        $link = $wpdb->get_var($wpdb->prepare(
-            "SELECT stripe_link FROM {$wpdb->prefix}federwiegen_links
-             WHERE variant_id = %d AND extra_id = %d AND extra_ids = %s AND duration_id = %d
-             AND condition_id = %d AND product_color_id IS NULL AND frame_color_id IS NULL",
-            $variant_id, $extra_id, $extra_ids_sorted, $duration_id, $condition_id
-        ));
-        
-        if ($link) {
-            return $link;
-        }
-        
-        // Try without condition
-        $link = $wpdb->get_var($wpdb->prepare(
-            "SELECT stripe_link FROM {$wpdb->prefix}federwiegen_links
-             WHERE variant_id = %d AND extra_id = %d AND extra_ids = %s AND duration_id = %d
-             AND condition_id IS NULL AND product_color_id IS NULL AND frame_color_id IS NULL",
-            $variant_id, $extra_id, $extra_ids_sorted, $duration_id
-        ));
-        
-        return $link;
-    }
     
     public function ajax_get_variant_images() {
         check_ajax_referer('federwiegen_nonce', 'nonce');
@@ -401,143 +333,6 @@ class Ajax {
         ));
     }
     
-    public function ajax_submit_order() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
-        
-        $category_id = intval($_POST['category_id']);
-        $variant_id = intval($_POST['variant_id']);
-        $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
-        $extra_ids_array = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
-        sort($extra_ids_array);
-        $extra_ids_raw = implode(',', $extra_ids_array);
-        $extra_id = !empty($extra_ids_array) ? $extra_ids_array[0] : 0;
-        $duration_id = intval($_POST['duration_id']);
-        $condition_id = isset($_POST['condition_id']) ? intval($_POST['condition_id']) : null;
-        $product_color_id = isset($_POST['product_color_id']) ? intval($_POST['product_color_id']) : null;
-        $frame_color_id = isset($_POST['frame_color_id']) ? intval($_POST['frame_color_id']) : null;
-        $final_price = floatval($_POST['final_price']);
-        $stripe_link = esc_url_raw($_POST['stripe_link']);
-        
-        global $wpdb;
-        
-        // Insert order
-        $result = $wpdb->insert(
-            $wpdb->prefix . 'federwiegen_orders',
-            array(
-                'category_id' => $category_id,
-                'variant_id' => $variant_id,
-                'extra_id' => $extra_id,
-                'extra_ids' => $extra_ids_raw,
-                'duration_id' => $duration_id,
-                'condition_id' => $condition_id,
-                'product_color_id' => $product_color_id,
-                'frame_color_id' => $frame_color_id,
-                'final_price' => $final_price,
-                'stripe_link' => $stripe_link,
-                'customer_name' => '',
-                'customer_email' => '',
-                'user_ip' => $this->get_user_ip(),
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
-            ),
-            array('%d', '%d', '%d', '%s', '%d', '%d', '%d', '%d', '%f', '%s', '%s', '%s', '%s', '%s')
-        );
-        
-        if ($result) {
-            $order_id = $wpdb->insert_id;
-
-            $category_name  = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
-                $category_id
-            ));
-            $variant_name   = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
-                $variant_id
-            ));
-            $duration_name  = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_durations WHERE id = %d",
-                $duration_id
-            ));
-
-            $extras_names = '';
-            if (!empty($extra_ids_array)) {
-                $placeholders = implode(',', array_fill(0, count($extra_ids_array), '%d'));
-                $extras = $wpdb->get_col(
-                    $wpdb->prepare(
-                        "SELECT name FROM {$wpdb->prefix}federwiegen_extras WHERE id IN ($placeholders)",
-                        ...$extra_ids_array
-                    )
-                );
-                $extras_names = implode(', ', $extras);
-            }
-
-            $condition_name = '';
-            if ($condition_id) {
-                $condition_name = $wpdb->get_var(
-                    $wpdb->prepare(
-                        "SELECT name FROM {$wpdb->prefix}federwiegen_conditions WHERE id = %d",
-                        $condition_id
-                    )
-                );
-            }
-
-            $product_color_name = '';
-            if ($product_color_id) {
-                $product_color_name = $wpdb->get_var(
-                    $wpdb->prepare(
-                        "SELECT name FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
-                        $product_color_id
-                    )
-                );
-            }
-
-            $frame_color_name = '';
-            if ($frame_color_id) {
-                $frame_color_name = $wpdb->get_var(
-                    $wpdb->prepare(
-                        "SELECT name FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
-                        $frame_color_id
-                    )
-                );
-            }
-
-            $admins       = get_users(['role' => 'administrator']);
-            $admin_emails = wp_list_pluck($admins, 'user_email');
-
-            $subject = 'Neue Bestellung #' . $order_id;
-            $message = "Es wurde eine neue Bestellung aufgegeben.\n";
-            if ($category_name) {
-                $message .= 'Kategorie: ' . $category_name . "\n";
-            }
-            if ($variant_name) {
-                $message .= 'Ausführung: ' . $variant_name . "\n";
-            }
-            if ($duration_name) {
-                $message .= 'Mietdauer: ' . $duration_name . "\n";
-            }
-            if ($condition_name) {
-                $message .= 'Zustand: ' . $condition_name . "\n";
-            }
-            if ($product_color_name) {
-                $message .= 'Produktfarbe: ' . $product_color_name . "\n";
-            }
-            if ($frame_color_name) {
-                $message .= 'Gestellfarbe: ' . $frame_color_name . "\n";
-            }
-            if ($extras_names) {
-                $message .= 'Extras: ' . $extras_names . "\n";
-            }
-            $message .= 'Preis: ' . number_format($final_price, 2, ',', '.') . "€/Monat\n";
-            $message .= 'Stripe Link: ' . $stripe_link . "\n";
-
-            if (!empty($admin_emails)) {
-                wp_mail($admin_emails, $subject, $message);
-            }
-
-            wp_send_json_success(array('order_id' => $order_id));
-        } else {
-            wp_send_json_error('Failed to save order');
-        }
-    }
     
     public function ajax_track_interaction() {
         check_ajax_referer('federwiegen_nonce', 'nonce');
@@ -1123,7 +918,6 @@ function federwiegen_create_checkout_session() {
                 'product_color_id' => $product_color_id ?: null,
                 'frame_color_id'   => $frame_color_id ?: null,
                 'final_price'      => $final_price,
-                'stripe_link'      => '',
                 'stripe_session_id'=> $session->id,
                 'amount_total'     => 0,
                 'produkt_name'     => $metadata['produkt'],

@@ -71,10 +71,6 @@ foreach ($branding_results as $result) {
            class="federwiegen-tab <?php echo $active_tab === 'durations' ? 'active' : ''; ?>">
             ⏰ Mietdauern
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-pricing&category=' . $selected_category . '&tab=links'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'links' ? 'active' : ''; ?>">
-            🔗 Stripe Links
-        </a>
     </div>
     
     <!-- Tab Content -->
@@ -83,9 +79,6 @@ foreach ($branding_results as $result) {
         switch ($active_tab) {
             case 'durations':
                 include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/durations-tab.php';
-                break;
-            case 'links':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/links-tab.php';
                 break;
             default:
                 include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/durations-tab.php';

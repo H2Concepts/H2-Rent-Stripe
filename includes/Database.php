@@ -9,8 +9,7 @@ class Database {
         $tables_to_update = array(
             'federwiegen_variants',
             'federwiegen_extras', 
-            'federwiegen_durations',
-            'federwiegen_links'
+            'federwiegen_durations'
         );
         
         foreach ($tables_to_update as $table_suffix) {
@@ -363,7 +362,6 @@ class Database {
                 product_color_id mediumint(9) DEFAULT NULL,
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
-                stripe_link text NOT NULL,
                 stripe_session_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
                 produkt_name varchar(255) DEFAULT '',
@@ -479,39 +477,6 @@ class Database {
             }
         }
         
-        // Update links table with new columns
-        $table_links = $wpdb->prefix . 'federwiegen_links';
-        $new_link_columns = array(
-            'extra_ids'       => 'varchar(255)',
-            'condition_id'    => 'mediumint(9)',
-            'product_color_id'=> 'mediumint(9)',
-            'frame_color_id'  => 'mediumint(9)'
-        );
-        
-        foreach ($new_link_columns as $column => $type) {
-            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_links LIKE '$column'");
-            if (empty($column_exists)) {
-                $wpdb->query("ALTER TABLE $table_links ADD COLUMN $column $type AFTER duration_id");
-            }
-        }
-
-        // Migrate existing link records to populate extra_ids if empty
-        $wpdb->query("UPDATE $table_links SET extra_ids = '' WHERE extra_ids IS NULL AND extra_id = 0");
-        $wpdb->query("UPDATE $table_links SET extra_ids = CAST(extra_id AS CHAR) WHERE (extra_ids IS NULL OR extra_ids = '') AND extra_id > 0");
-
-        // Ensure unique index includes extra_ids
-        $index_info = $wpdb->get_results("SHOW INDEX FROM $table_links WHERE Key_name = 'category_variant_extra_duration'");
-        $has_extra_ids = false;
-        foreach ($index_info as $row) {
-            if ($row->Column_name === 'extra_ids') {
-                $has_extra_ids = true;
-                break;
-            }
-        }
-        if (!$has_extra_ids && !empty($index_info)) {
-            $wpdb->query("ALTER TABLE $table_links DROP INDEX category_variant_extra_duration");
-            $wpdb->query("ALTER TABLE $table_links ADD UNIQUE KEY category_variant_extra_duration (category_id, variant_id, extra_id, extra_ids(191), duration_id, condition_id, product_color_id, frame_color_id)");
-        }
 
         // Add availability column to variant options table if it doesn't exist
         $table_variant_options = $wpdb->prefix . 'federwiegen_variant_options';
@@ -622,22 +587,6 @@ class Database {
         ) $charset_collate;";
         
         // Links table (with category_id and new option columns)
-        $table_links = $wpdb->prefix . 'federwiegen_links';
-        $sql_links = "CREATE TABLE $table_links (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            category_id mediumint(9) DEFAULT 1,
-            variant_id mediumint(9) NOT NULL,
-            extra_id mediumint(9) NOT NULL,
-            extra_ids varchar(255) DEFAULT NULL,
-            duration_id mediumint(9) NOT NULL,
-            condition_id mediumint(9) DEFAULT NULL,
-            product_color_id mediumint(9) DEFAULT NULL,
-            frame_color_id mediumint(9) DEFAULT NULL,
-            stripe_link text NOT NULL,
-            PRIMARY KEY (id),
-            UNIQUE KEY category_variant_extra_duration (category_id, variant_id, extra_id, extra_ids(191), duration_id, condition_id, product_color_id, frame_color_id)
-        ) $charset_collate;";
-        
         // Analytics table for tracking (with new option columns)
         $table_analytics = $wpdb->prefix . 'federwiegen_analytics';
         $sql_analytics = "CREATE TABLE $table_analytics (
@@ -746,7 +695,6 @@ class Database {
             product_color_id mediumint(9) DEFAULT NULL,
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
-            stripe_link text NOT NULL,
             stripe_session_id varchar(255) DEFAULT '',
             amount_total int DEFAULT 0,
             customer_name varchar(255) DEFAULT '',
@@ -771,7 +719,6 @@ class Database {
         dbDelta($sql_variants);
         dbDelta($sql_extras);
         dbDelta($sql_durations);
-        dbDelta($sql_links);
         dbDelta($sql_analytics);
         dbDelta($sql_branding);
         dbDelta($sql_conditions);

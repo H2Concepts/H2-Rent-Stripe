@@ -82,14 +82,6 @@ class Admin {
             array($this, 'variant_options_page')
         );
         
-        add_submenu_page(
-            'federwiegen-verleih',
-            'Stripe Links',
-            'Stripe Links',
-            'manage_options',
-            'federwiegen-links',
-            array($this, 'links_page')
-        );
         
         add_submenu_page(
             'federwiegen-verleih',
@@ -447,9 +439,6 @@ class Admin {
         include FEDERWIEGEN_PLUGIN_PATH . 'admin/variant-options-page.php';
     }
     
-    public function links_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/links-page.php';
-    }
 
     public function orders_page() {
         global $wpdb;

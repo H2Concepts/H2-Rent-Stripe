@@ -5,7 +5,6 @@ jQuery(document).ready(function($) {
     let selectedCondition = null;
     let selectedProductColor = null;
     let selectedFrameColor = null;
-    let currentStripeLink = '#';
     let currentVariantImages = [];
     let currentMainImageIndex = 0;
     let currentProductColorImage = null;
@@ -623,7 +622,6 @@ jQuery(document).ready(function($) {
                         $('#federwiegen-savings').hide();
 
                         // Update button based on availability
-                        currentStripeLink = data.stripe_link;
                         currentPriceId = data.price_id || '';
                         const isAvailable = data.available !== false;
 
@@ -678,7 +676,6 @@ jQuery(document).ready(function($) {
             $('#federwiegen-notify').hide();
             $('#federwiegen-notify-success').hide();
             $('.federwiegen-notify-form').show();
-            currentStripeLink = '#';
             currentPrice = 0;
 
             $('#federwiegen-availability-wrapper').hide();
@@ -774,39 +771,6 @@ jQuery(document).ready(function($) {
         }, 3000);
     }
 
-    function submitOrder(stripeWindow) {
-        const finalPrice = currentPrice;
-
-        $.ajax({
-            url: federwiegen_ajax.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'submit_order',
-                category_id: currentCategoryId,
-                variant_id: selectedVariant,
-                extra_ids: selectedExtras.join(','),
-                duration_id: selectedDuration,
-                condition_id: selectedCondition,
-                product_color_id: selectedProductColor,
-                frame_color_id: selectedFrameColor,
-                final_price: finalPrice,
-                stripe_link: currentStripeLink,
-                nonce: federwiegen_ajax.nonce
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Redirect to Stripe using previously opened window
-                    if (stripeWindow) {
-                        stripeWindow.location = currentStripeLink;
-                    } else {
-                        window.open(currentStripeLink, '_blank');
-                    }
-                } else if (stripeWindow) {
-                    stripeWindow.close();
-                }
-            }
-        });
-    }
 
     function trackInteraction(eventType, data = {}) {
         if (!currentCategoryId) return;

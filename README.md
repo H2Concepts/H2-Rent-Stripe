@@ -29,8 +29,7 @@ You may also toggle this behaviour with the `federwiegen_load_default_data` filt
 ## Usage
 
 1. Configure your categories, variants, extras and durations in the new **Federwiegen** admin menu.
-2. For each combination create the corresponding Stripe link under **Stripe Links**.
-3. Add the shortcode to a page or post:
+2. Add the shortcode to a page or post:
 
 ```php
 [federwiegen_product category="STANDARD"]

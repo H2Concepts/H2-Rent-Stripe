@@ -10,7 +10,6 @@ $categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwie
 $variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
 $extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_extras");
 $durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_durations");
-$links_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_links");
 
 // Get recent categories
 $recent_categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY id DESC LIMIT 3");
@@ -53,10 +52,6 @@ foreach ($branding_results as $result) {
             <div class="federwiegen-stat-number"><?php echo $durations_count; ?></div>
             <div class="federwiegen-stat-label">Mietdauern</div>
         </div>
-        <div class="federwiegen-stat-item">
-            <div class="federwiegen-stat-number"><?php echo $links_count; ?></div>
-            <div class="federwiegen-stat-label">Stripe Links</div>
-        </div>
     </div>
     
     <!-- Hauptnavigation -->
@@ -95,15 +90,6 @@ foreach ($branding_results as $result) {
                 </div>
             </a>
             
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-links'); ?>" class="federwiegen-nav-card">
-                <div class="federwiegen-nav-icon">🔗</div>
-                <div class="federwiegen-nav-content">
-                    <h4>Stripe Links</h4>
-                    <p>Zahlungsverknüpfungen</p>
-                </div>
-            </a>
-            
-            
             <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=branding'); ?>" class="federwiegen-nav-card">
                 <div class="federwiegen-nav-icon">🎨</div>
                 <div class="federwiegen-nav-content">
@@ -125,7 +111,6 @@ foreach ($branding_results as $result) {
                 <code>[federwiegen_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
                 <div class="federwiegen-category-actions">
                     <a href="<?php echo admin_url('admin.php?page=federwiegen-variants&category=' . $category->id); ?>" class="button button-small">Ausführungen</a>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-links&category=' . $category->id); ?>" class="button button-small">Stripe Links</a>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -146,11 +131,6 @@ foreach ($branding_results as $result) {
                 <h4>2. Ausführungen hinzufügen</h4>
                 <p>Fügen Sie Produktvarianten mit Bildern hinzu</p>
                 <a href="<?php echo admin_url('admin.php?page=federwiegen-variants'); ?>" class="button">Ausführungen →</a>
-            </div>
-            <div class="federwiegen-help-card">
-                <h4>3. Stripe Links konfigurieren</h4>
-                <p>Verknüpfen Sie Produktkombinationen mit Zahlungslinks</p>
-                <a href="<?php echo admin_url('admin.php?page=federwiegen-links'); ?>" class="button">Stripe Links →</a>
             </div>
         </div>
     </div>
