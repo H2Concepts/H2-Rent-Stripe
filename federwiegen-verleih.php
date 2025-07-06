@@ -1,9 +1,9 @@
 <?php
  /**
-  * Plugin Name: Rent Plugin
+ * Plugin Name: H2 Concepts Rental Pro
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.8.21
+* Version: 2.8.24
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,14 +14,12 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.8.21';
+const FEDERWIEGEN_PLUGIN_VERSION = '2.8.24';
 const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
 define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
-// Payment Method Configuration ID for PayPal
-define('FEDERWIEGEN_PMC_ID', 'pmc_1QKPcvRxDui5dUOqaNaxNjsL');
 
 // Control whether default demo data is inserted on activation
 if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {

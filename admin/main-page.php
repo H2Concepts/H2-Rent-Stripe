@@ -29,7 +29,7 @@ foreach ($branding_results as $result) {
             🏠
         </div>
         <div class="federwiegen-admin-title-compact">
-            <h1><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rent Plugin'); ?></h1>
+            <h1><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></h1>
             <p>Dashboard & Übersicht</p>
         </div>
     </div>
@@ -192,7 +192,7 @@ foreach ($branding_results as $result) {
 .federwiegen-stat-number {
     font-size: 2rem;
     font-weight: bold;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     margin-bottom: 5px;
 }
 
@@ -234,8 +234,8 @@ foreach ($branding_results as $result) {
 }
 
 .federwiegen-nav-card:hover {
-    background: #5f7f5f;
-    color: white;
+    background: var(--federwiegen-primary);
+    color: var(--federwiegen-text);
     text-decoration: none;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -285,7 +285,7 @@ foreach ($branding_results as $result) {
 
 .federwiegen-category-card h4 {
     margin: 0 0 10px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
 }
 
 .federwiegen-category-card p {
@@ -336,7 +336,7 @@ foreach ($branding_results as $result) {
 
 .federwiegen-help-card h4 {
     margin: 0 0 10px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
 }
 
 .federwiegen-help-card p {

@@ -37,6 +37,7 @@ $feature_2_description = isset($category) ? $category->feature_2_description : '
 $feature_3_icon = isset($category) ? $category->feature_3_icon : '';
 $feature_3_title = isset($category) ? $category->feature_3_title : '';
 $feature_3_description = isset($category) ? $category->feature_3_description : '';
+$show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 
 // Button
 $button_text = isset($category) ? $category->button_text : '';
@@ -134,20 +135,6 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php echo wp_kses_post(wpautop($product_description)); ?>
                     </div>
                     
-                    <div class="federwiegen-features">
-                        <div class="federwiegen-feature">
-                            <span class="federwiegen-feature-icon">🛡️</span>
-                            <span>Sicherheitsgeprüft</span>
-                        </div>
-                        <div class="federwiegen-feature">
-                            <span class="federwiegen-feature-icon">❤️</span>
-                            <span>Baby-gerecht</span>
-                        </div>
-                        <div class="federwiegen-feature">
-                            <span class="federwiegen-feature-icon">📱</span>
-                            <span>App-Steuerung</span>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -436,6 +423,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
     </div>
 
     <!-- Features Section -->
+    <?php if ($show_features): ?>
     <div class="federwiegen-features-section">
         <h3><?php echo esc_html($features_title); ?></h3>
         <div class="federwiegen-features-grid">
@@ -474,6 +462,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <div id="federwiegen-exit-popup" class="federwiegen-exit-popup" style="display:none;">

@@ -7,7 +7,7 @@ class Admin {
         $menu_title = $branding['plugin_name'] ?? 'Federwiegen';
         
         add_menu_page(
-            $branding['plugin_name'] ?? 'Rent Plugin',
+            $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
             $menu_title,
             'manage_options',
             'federwiegen-verleih',
@@ -211,21 +211,30 @@ class Admin {
         $branding = $this->get_branding_settings();
         $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         $secondary_color = $branding['admin_color_secondary'] ?? '#4a674a';
+        $text_color = $branding['admin_color_text'] ?? '#ffffff';
         
         echo '<style>
+            :root {
+                --federwiegen-primary: ' . esc_attr($primary_color) . ';
+                --federwiegen-secondary: ' . esc_attr($secondary_color) . ';
+                --federwiegen-text: ' . esc_attr($text_color) . ';
+            }
+
             .button-primary {
-                background: ' . esc_attr($primary_color) . ' !important;
-                border-color: ' . esc_attr($secondary_color) . ' !important;
+                background: var(--federwiegen-primary) !important;
+                border-color: var(--federwiegen-secondary) !important;
+                color: var(--federwiegen-text) !important;
             }
-            
+
             .button-primary:hover {
-                background: ' . esc_attr($secondary_color) . ' !important;
+                background: var(--federwiegen-secondary) !important;
+                color: var(--federwiegen-text) !important;
             }
-            
+
             .nav-tab-active {
-                background: ' . esc_attr($primary_color) . ';
-                color: #fff;
-                border-color: ' . esc_attr($secondary_color) . ';
+                background: var(--federwiegen-primary);
+                color: var(--federwiegen-text);
+                border-color: var(--federwiegen-secondary);
             }
         </style>';
        }
@@ -281,6 +290,7 @@ class Admin {
             $layout_style = sanitize_text_field($_POST['layout_style']);
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip']);
             $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip']);
+            $show_features = isset($_POST['show_features']) ? 1 : 0;
             $show_tooltips = isset($_POST['show_tooltips']) ? 1 : 0;
             $show_rating = isset($_POST['show_rating']) ? 1 : 0;
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
@@ -323,6 +333,7 @@ class Admin {
                         'layout_style' => $layout_style,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
+                        'show_features' => $show_features,
                         'show_tooltips' => $show_tooltips,
                         'show_rating' => $show_rating,
                         'rating_value' => $rating_value,
@@ -330,7 +341,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -371,13 +382,14 @@ class Admin {
                         'layout_style' => $layout_style,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
+                        'show_features' => $show_features,
                         'show_tooltips' => $show_tooltips,
                         'show_rating' => $show_rating,
                         'rating_value' => $rating_value,
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {
@@ -512,8 +524,12 @@ class Admin {
         ));
 
         $total_orders = count($orders);
-        $total_revenue = array_sum(array_column($orders, 'final_price'));
-        $avg_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
+        $completed_orders = array_filter($orders, function ($o) {
+            return $o->status === 'abgeschlossen';
+        });
+        $total_revenue = array_sum(array_column($completed_orders, 'final_price'));
+        $completed_count = count($completed_orders);
+        $avg_order_value = $completed_count > 0 ? $total_revenue / $completed_count : 0;
 
         $branding = [];
         $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");

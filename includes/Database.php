@@ -101,6 +101,7 @@ class Database {
                 layout_style varchar(50) DEFAULT 'default',
                 duration_tooltip text DEFAULT '',
                 condition_tooltip text DEFAULT '',
+                show_features tinyint(1) DEFAULT 1,
                 show_tooltips tinyint(1) DEFAULT 1,
                 show_rating tinyint(1) DEFAULT 0,
                 rating_value decimal(3,1) DEFAULT 0,
@@ -140,6 +141,7 @@ class Database {
                 'layout_style' => 'VARCHAR(50) DEFAULT "default"',
                 'duration_tooltip' => 'TEXT',
                 'condition_tooltip' => 'TEXT',
+                'show_features' => 'TINYINT(1) DEFAULT 1',
                 'show_tooltips' => 'TINYINT(1) DEFAULT 1',
                 'show_rating' => 'TINYINT(1) DEFAULT 0',
                 'rating_value' => 'DECIMAL(3,1) DEFAULT 0',
@@ -217,13 +219,14 @@ class Database {
             
             // Insert default branding settings
             $default_branding = array(
-                'plugin_name' => 'H2 Concepts Rent Plugin',
+                'plugin_name' => 'H2 Concepts Rental Pro',
                 'plugin_description' => 'Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration',
                 'company_name' => 'H2 Concepts',
                 'company_url' => 'https://h2concepts.de',
                 'admin_logo' => '',
-                'admin_color_primary' => '#5f7f5f',
+                'admin_color_primary'   => '#5f7f5f',
                 'admin_color_secondary' => '#4a674a',
+                'admin_color_text'      => '#ffffff',
                 'footer_text' => 'Powered by H2 Concepts'
             );
             
@@ -391,10 +394,16 @@ class Database {
                 'gestellfarbe_text' => "varchar(255) DEFAULT ''",
                 'produkt_name'      => "varchar(255) DEFAULT ''",
                 'stripe_session_id' => "varchar(255) DEFAULT ''",
+                'stripe_subscription_id' => "varchar(255) DEFAULT ''",
                 'amount_total'      => 'int DEFAULT 0',
                 'discount_amount'   => 'decimal(10,2) DEFAULT 0',
                 'extra_text'        => 'text',
                 'dauer_text'        => "varchar(255) DEFAULT ''",
+                'customer_phone'    => "varchar(50) DEFAULT ''",
+                'customer_street'   => "varchar(255) DEFAULT ''",
+                'customer_postal'   => "varchar(20) DEFAULT ''",
+                'customer_city'     => "varchar(100) DEFAULT ''",
+                'customer_country'  => "varchar(2) DEFAULT ''",
                 'status'            => "varchar(20) DEFAULT 'offen'"
             );
 
@@ -698,9 +707,15 @@ class Database {
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
             stripe_session_id varchar(255) DEFAULT '',
+            stripe_subscription_id varchar(255) DEFAULT '',
             amount_total int DEFAULT 0,
             customer_name varchar(255) DEFAULT '',
             customer_email varchar(255) DEFAULT '',
+            customer_phone varchar(50) DEFAULT '',
+            customer_street varchar(255) DEFAULT '',
+            customer_postal varchar(20) DEFAULT '',
+            customer_city varchar(100) DEFAULT '',
+            customer_country varchar(2) DEFAULT '',
             produkt_name varchar(255) DEFAULT '',
             zustand_text varchar(255) DEFAULT '',
             produktfarbe_text varchar(255) DEFAULT '',
@@ -805,6 +820,7 @@ class Database {
                     'layout_style' => 'default',
                     'duration_tooltip' => '',
                     'condition_tooltip' => '',
+                    'show_features' => 1,
                     'show_tooltips' => 1,
                     'show_rating' => 0,
                     'rating_value' => 0,

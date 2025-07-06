@@ -168,7 +168,7 @@
 .federwiegen-variant-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    border-color: #5f7f5f;
+    border-color: var(--federwiegen-primary);
 }
 
 .federwiegen-variant-images {
@@ -274,7 +274,7 @@
 }
 
 .federwiegen-variant-price strong {
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     font-size: 1.2rem;
 }
 

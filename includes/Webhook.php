@@ -35,6 +35,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
+        $subscription_id = $session->subscription ?? '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
 
         $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
@@ -45,7 +46,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
         $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
         $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
-        $email         = sanitize_email($session->customer_details->email ?? '');
+
+        $email  = sanitize_email($session->customer_details->email ?? '');
+        $phone  = sanitize_text_field($session->customer_details->phone ?? '');
+        $addr   = $session->customer_details->address ?? null;
+        $street = sanitize_text_field($addr->line1 ?? '');
+        $postal = sanitize_text_field($addr->postal_code ?? '');
+        $city   = sanitize_text_field($addr->city ?? '');
+        $country = sanitize_text_field($addr->country ?? '');
 
         global $wpdb;
         $existing_id = $wpdb->get_var($wpdb->prepare(
@@ -58,6 +66,11 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $data = [
             'customer_email'    => $email,
             'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
+            'customer_phone'    => $phone,
+            'customer_street'   => $street,
+            'customer_postal'   => $postal,
+            'customer_city'     => $city,
+            'customer_country'  => $country,
             'final_price'       => ($session->amount_total ?? 0) / 100,
             'amount_total'      => $session->amount_total ?? 0,
             'discount_amount'   => $discount_amount,
@@ -69,6 +82,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'dauer_text'        => $dauer,
             'user_ip'           => $user_ip,
             'user_agent'        => $user_agent,
+            'stripe_subscription_id' => $subscription_id,
             'status'            => 'abgeschlossen',
             'created_at'        => current_time('mysql', 1),
         ];
@@ -81,6 +95,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             );
         } else {
             $data['stripe_session_id'] = $session->id;
+            $data['stripe_subscription_id'] = $subscription_id;
             $wpdb->insert("{$wpdb->prefix}federwiegen_orders", $data);
         }
 
@@ -88,6 +103,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $subject     = 'Neue Stripe-Bestellung mit Details';
         $message     = "Neue Bestellung:\n\n";
         $message    .= "E-Mail: $email\n";
+        if ($phone) {
+            $message .= "Telefon: $phone\n";
+        }
+        if ($street) {
+            $message .= "Adresse: $street, $postal $city, $country\n";
+        }
         if ($produkt_name) {
             $message .= "Produkt: $produkt_name\n";
         }
@@ -97,6 +118,16 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $message    .= "Session-ID: {$session->id}\n";
 
         wp_mail($admin_email, $subject, $message);
+    } elseif ($event->type === 'customer.subscription.deleted') {
+        $subscription = $event->data->object;
+        $subscription_id = $subscription->id;
+        global $wpdb;
+        $wpdb->update(
+            "{$wpdb->prefix}federwiegen_orders",
+            [ 'status' => 'gekündigt' ],
+            [ 'stripe_subscription_id' => $subscription_id ]
+        );
+        return new WP_REST_Response(['status' => 'subscription cancelled'], 200);
     }
 
     return new WP_REST_Response(['status' => 'ok'], 200);

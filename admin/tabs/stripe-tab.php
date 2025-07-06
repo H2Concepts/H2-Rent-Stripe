@@ -5,6 +5,7 @@ if (isset($_POST['submit_stripe'])) {
     \FederwiegenVerleih\Admin::verify_admin_action();
     update_option('federwiegen_stripe_publishable_key', sanitize_text_field($_POST['stripe_publishable_key'] ?? ''));
     update_option('federwiegen_stripe_secret_key', sanitize_text_field($_POST['stripe_secret_key'] ?? ''));
+    update_option('federwiegen_stripe_pmc_id', sanitize_text_field($_POST['stripe_pmc_id'] ?? ''));
     update_option('federwiegen_tos_url', esc_url_raw($_POST['tos_url'] ?? ''));
     update_option('federwiegen_success_url', esc_url_raw($_POST['success_url'] ?? ''));
     update_option('federwiegen_cancel_url', esc_url_raw($_POST['cancel_url'] ?? ''));
@@ -16,6 +17,7 @@ if (isset($_POST['submit_stripe'])) {
 
 $stripe_publishable_key = get_option('federwiegen_stripe_publishable_key', '');
 $stripe_secret_key   = get_option('federwiegen_stripe_secret_key', '');
+$stripe_pmc_id       = get_option('federwiegen_stripe_pmc_id', '');
 $tos_url             = get_option('federwiegen_tos_url', home_url('/agb'));
 $success_url         = get_option('federwiegen_success_url', home_url('/danke'));
 $cancel_url          = get_option('federwiegen_cancel_url', home_url('/abbrechen'));
@@ -37,6 +39,10 @@ $ct_after_submit     = get_option('federwiegen_ct_after_submit', '');
                 <div class="federwiegen-form-group">
                     <label>Secret Key</label>
                     <input type="text" name="stripe_secret_key" value="<?php echo esc_attr($stripe_secret_key); ?>">
+                </div>
+                <div class="federwiegen-form-group">
+                    <label>PayPal Payment Method Configuration ID</label>
+                    <input type="text" name="stripe_pmc_id" value="<?php echo esc_attr($stripe_pmc_id); ?>">
                 </div>
             </div>
         </div>

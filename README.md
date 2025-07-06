@@ -1,4 +1,4 @@
-# H2 Concepts Rent Plugin
+# H2 Concepts Rental Pro
 
 This WordPress plugin enables the rental of configurable products with built-in Stripe integration. It was initially developed for renting baby swings ("Federwiegen") but can be adapted to other products.
 
@@ -8,10 +8,12 @@ This WordPress plugin enables the rental of configurable products with built-in 
 - Shortcode `[federwiegen_product]` to embed a product page on the front‑end
 - Calculates prices dynamically and links to your Stripe checkout URLs
 - Supports Stripe promotion codes so customers can redeem coupons
-- Collects customer phone numbers during checkout
+- Collects customer phone numbers and addresses during checkout
 - Custom checkout texts can be configured in the Stripe settings
 - Tracks user interactions for analytics
 - Generates SEO meta tags, Open Graph tags and schema markup
+- Shows cancelled subscriptions as "gekündigt" in the orders overview
+- Revenue statistics only include orders marked as "abgeschlossen"
 
 ## Installation
 
@@ -40,7 +42,7 @@ You may also toggle this behaviour with the `federwiegen_load_default_data` filt
 
 Use the `category` attribute to select a specific product category by shortcode.
 
-Under **Einstellungen → Stripe Integration** you can specify the link to your terms of service (AGB) and set the success and cancel URLs that Stripe should use. You may also define optional custom texts shown next to the shipping address fields, on the submit button and after the form is submitted. The success URL you enter is automatically appended with `?session_id=CHECKOUT_SESSION_ID` so you only need to provide the base path. The text on the checkout page uses your AGB link directly as UTF‑8 and is not encoded again.
+Under **Einstellungen → Stripe Integration** you can specify the link to your terms of service (AGB) and set the success and cancel URLs that Stripe should use. You may also define optional custom texts shown next to the shipping address fields, on the submit button and after the form is submitted. You can also store the PayPal Payment Method Configuration ID used for subscriptions. The success URL you enter is automatically appended with `?session_id=CHECKOUT_SESSION_ID` so you only need to provide the base path. The text on the checkout page uses your AGB link directly as UTF‑8 and is not encoded again. In the Branding tab you can now choose a primary, secondary and text color for the admin pages. In the category settings you can also choose whether the features section should appear on the product page.
 
 ## Development
 

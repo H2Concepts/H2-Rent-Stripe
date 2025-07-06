@@ -162,7 +162,7 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
 <style>
 .federwiegen-discount-badge {
     background: #e3e8e3;
-    color: #4a674a;
+    color: var(--federwiegen-secondary);
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;

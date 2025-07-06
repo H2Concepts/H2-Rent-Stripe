@@ -70,4 +70,8 @@ class StripeService {
     public static function get_publishable_key() {
         return get_option('federwiegen_stripe_publishable_key', '');
     }
+
+    public static function get_payment_method_configuration_id() {
+        return get_option('federwiegen_stripe_pmc_id', '');
+    }
 }

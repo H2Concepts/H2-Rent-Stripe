@@ -14,6 +14,15 @@ if (!empty($notice)) {
         echo '<div class="notice notice-error is-dismissible"><p>❌ Fehler beim Löschen der Bestellung.</p></div>';
     }
 }
+
+// Branding colors
+global $wpdb;
+$branding = [];
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+foreach ($branding_results as $result) {
+    $branding[$result->setting_key] = $result->setting_value;
+}
+$primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 ?>
 
 <div class="wrap">
@@ -83,28 +92,34 @@ if (!empty($notice)) {
     </div>
     
     <!-- Summary Statistics -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: #5f7f5f;">📋 Gesamt-Bestellungen</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #2a372a;"><?php echo number_format($total_orders); ?></div>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Im gewählten Zeitraum</p>
+    <div class="federwiegen-summary-grid">
+        <div class="federwiegen-summary-card">
+            <h3>📋 Gesamt-Bestellungen</h3>
+            <div class="federwiegen-summary-value" style="color:#2a372a;">
+                <?php echo number_format($total_orders); ?>
+            </div>
+            <p class="federwiegen-summary-note">Im gewählten Zeitraum</p>
         </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: #5f7f5f;">💰 Gesamt-Umsatz</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #4a674a;"><?php echo number_format($total_revenue, 2, ',', '.'); ?>€</div>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Monatlicher Mietumsatz</p>
+
+        <div class="federwiegen-summary-card">
+            <h3>💰 Gesamt-Umsatz</h3>
+            <div class="federwiegen-summary-value" style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;">
+                <?php echo number_format($total_revenue, 2, ',', '.'); ?>€
+            </div>
+            <p class="federwiegen-summary-note">Monatlicher Mietumsatz</p>
         </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: #5f7f5f;">📊 Durchschnittswert</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #dc3232;"><?php echo number_format($avg_order_value, 2, ',', '.'); ?>€</div>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Pro Bestellung</p>
+
+        <div class="federwiegen-summary-card">
+            <h3>📊 Durchschnittswert</h3>
+            <div class="federwiegen-summary-value" style="color:#dc3232;">
+                <?php echo number_format($avg_order_value, 2, ',', '.'); ?>€
+            </div>
+            <p class="federwiegen-summary-note">Pro Bestellung</p>
         </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: #5f7f5f;">📅 Zeitraum</h3>
-            <div style="font-size: 1.2rem; font-weight: bold; color: #2a372a;">
+
+        <div class="federwiegen-summary-card">
+            <h3>📅 Zeitraum</h3>
+            <div class="federwiegen-summary-range">
                 <?php echo date('d.m.Y', strtotime($date_from)); ?><br>
                 <small>bis</small><br>
                 <?php echo date('d.m.Y', strtotime($date_to)); ?>
@@ -137,6 +152,8 @@ if (!empty($notice)) {
                         <th style="width: 80px;">ID</th>
                         <th style="width: 120px;">Datum</th>
                         <th>Kunde</th>
+                        <th>Telefon</th>
+                        <th>Adresse</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
                         <th style="width: 80px;">Rabatt</th>
@@ -163,6 +180,17 @@ if (!empty($notice)) {
                             <small style="color: #666;">IP: <?php echo esc_html($order->user_ip); ?></small>
                         </td>
                         <td>
+                            <?php echo esc_html($order->customer_phone); ?>
+                        </td>
+                        <td>
+                            <?php
+                                $addr = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
+                                if ($addr || $order->customer_country) {
+                                    echo esc_html(trim($addr . ', ' . $order->customer_country));
+                                }
+                            ?>
+                        </td>
+                        <td>
                             <div style="line-height: 1.4;">
                                 <strong><?php echo esc_html($order->category_name); ?></strong><br>
                                 <span style="color: #666;">📦 <?php echo esc_html($order->variant_name); ?></span><br>
@@ -183,7 +211,7 @@ if (!empty($notice)) {
                             </div>
                         </td>
                         <td>
-                            <strong style="color: #4a674a; font-size: 16px;">
+                            <strong style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>; font-size: 16px;">
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
                             <small style="color: #666;">/Monat</small>
@@ -198,6 +226,8 @@ if (!empty($notice)) {
                         <td>
                             <?php if ($order->status === 'offen'): ?>
                                 <span style="color: #dc3232; font-weight: bold;">🕓 Offen</span>
+                            <?php elseif ($order->status === 'gekündigt'): ?>
+                                <span style="color: #757575; font-weight: bold;">❌ Gekündigt</span>
                             <?php else: ?>
                                 <span style="color: #2e7d32; font-weight: bold;">✅ Abgeschlossen</span>
                             <?php endif; ?>
@@ -250,7 +280,7 @@ if (!empty($notice)) {
                 <h4>🎯 Was wird erfasst:</h4>
                 <ul>
                     <li><strong>Produktauswahl:</strong> Alle gewählten Optionen</li>
-                    <li><strong>Kundendaten:</strong> E-Mail und Name (falls angegeben)</li>
+                    <li><strong>Kundendaten:</strong> E-Mail, Name, Telefon und Adresse (falls angegeben)</li>
                     <li><strong>Preisberechnung:</strong> Finaler Mietpreis pro Monat</li>
                     <li><strong>Zeitstempel:</strong> Exakte Bestellzeit</li>
                     <li><strong>Tracking-Daten:</strong> IP-Adresse und Browser</li>
@@ -335,6 +365,8 @@ function showOrderDetails(orderId) {
                 <h4>👤 Kundendaten</h4>
                 <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
                 <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
+                <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
+                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
                 <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
             </div>
         </div>

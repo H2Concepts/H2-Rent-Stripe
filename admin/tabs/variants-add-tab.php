@@ -131,7 +131,7 @@
 
 .federwiegen-form-section h4 {
     margin: 0 0 15px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     font-size: 1rem;
 }
 
@@ -169,7 +169,7 @@
 
 .federwiegen-form-group input:focus,
 .federwiegen-form-group textarea:focus {
-    border-color: #5f7f5f;
+    border-color: var(--federwiegen-primary);
     box-shadow: 0 0 0 2px rgba(95, 127, 95, 0.1);
     outline: none;
 }

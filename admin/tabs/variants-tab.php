@@ -255,7 +255,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 
 .federwiegen-form-card h4 {
     margin: 0 0 20px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
 }
 
 .federwiegen-form-grid {
@@ -421,7 +421,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 
 .federwiegen-price {
     font-weight: 600;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     font-size: 16px;
 }
 
