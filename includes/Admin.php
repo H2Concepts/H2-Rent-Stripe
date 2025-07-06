@@ -524,8 +524,12 @@ class Admin {
         ));
 
         $total_orders = count($orders);
-        $total_revenue = array_sum(array_column($orders, 'final_price'));
-        $avg_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
+        $completed_orders = array_filter($orders, function ($o) {
+            return $o->status === 'abgeschlossen';
+        });
+        $total_revenue = array_sum(array_column($completed_orders, 'final_price'));
+        $completed_count = count($completed_orders);
+        $avg_order_value = $completed_count > 0 ? $total_revenue / $completed_count : 0;
 
         $branding = [];
         $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");

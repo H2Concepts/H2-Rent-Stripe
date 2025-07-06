@@ -92,28 +92,34 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     </div>
     
     <!-- Summary Statistics -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: <?php echo esc_attr($primary_color); ?>;">📋 Gesamt-Bestellungen</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #2a372a;"><?php echo number_format($total_orders); ?></div>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Im gewählten Zeitraum</p>
+    <div class="federwiegen-summary-grid">
+        <div class="federwiegen-summary-card">
+            <h3>📋 Gesamt-Bestellungen</h3>
+            <div class="federwiegen-summary-value" style="color:#2a372a;">
+                <?php echo number_format($total_orders); ?>
+            </div>
+            <p class="federwiegen-summary-note">Im gewählten Zeitraum</p>
         </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: <?php echo esc_attr($primary_color); ?>;">💰 Gesamt-Umsatz</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;"><?php echo number_format($total_revenue, 2, ',', '.'); ?>€</div>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Monatlicher Mietumsatz</p>
+
+        <div class="federwiegen-summary-card">
+            <h3>💰 Gesamt-Umsatz</h3>
+            <div class="federwiegen-summary-value" style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;">
+                <?php echo number_format($total_revenue, 2, ',', '.'); ?>€
+            </div>
+            <p class="federwiegen-summary-note">Monatlicher Mietumsatz</p>
         </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: <?php echo esc_attr($primary_color); ?>;">📊 Durchschnittswert</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #dc3232;"><?php echo number_format($avg_order_value, 2, ',', '.'); ?>€</div>
-            <p style="margin: 5px 0 0 0; color: #666; font-size: 0.9rem;">Pro Bestellung</p>
+
+        <div class="federwiegen-summary-card">
+            <h3>📊 Durchschnittswert</h3>
+            <div class="federwiegen-summary-value" style="color:#dc3232;">
+                <?php echo number_format($avg_order_value, 2, ',', '.'); ?>€
+            </div>
+            <p class="federwiegen-summary-note">Pro Bestellung</p>
         </div>
-        
-        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; text-align: center;">
-            <h3 style="margin: 0 0 10px 0; color: <?php echo esc_attr($primary_color); ?>;">📅 Zeitraum</h3>
-            <div style="font-size: 1.2rem; font-weight: bold; color: #2a372a;">
+
+        <div class="federwiegen-summary-card">
+            <h3>📅 Zeitraum</h3>
+            <div class="federwiegen-summary-range">
                 <?php echo date('d.m.Y', strtotime($date_from)); ?><br>
                 <small>bis</small><br>
                 <?php echo date('d.m.Y', strtotime($date_to)); ?>

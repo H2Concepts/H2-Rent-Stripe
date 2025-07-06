@@ -13,6 +13,7 @@ This WordPress plugin enables the rental of configurable products with built-in 
 - Tracks user interactions for analytics
 - Generates SEO meta tags, Open Graph tags and schema markup
 - Shows cancelled subscriptions as "gekündigt" in the orders overview
+- Revenue statistics only include orders marked as "abgeschlossen"
 
 ## Installation
 
