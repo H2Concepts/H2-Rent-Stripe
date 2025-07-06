@@ -364,7 +364,14 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
                 stripe_link text NOT NULL,
+                stripe_session_id varchar(255) DEFAULT '',
+                amount_total int DEFAULT 0,
                 produkt_name varchar(255) DEFAULT '',
+                zustand_text varchar(255) DEFAULT '',
+                produktfarbe_text varchar(255) DEFAULT '',
+                gestellfarbe_text varchar(255) DEFAULT '',
+                extra_text text,
+                dauer_text varchar(255) DEFAULT '',
                 customer_name varchar(255) DEFAULT '',
                 customer_email varchar(255) DEFAULT '',
                 user_ip varchar(45) DEFAULT NULL,
@@ -383,7 +390,11 @@ class Database {
                 'zustand_text'      => "varchar(255) DEFAULT ''",
                 'produktfarbe_text' => "varchar(255) DEFAULT ''",
                 'gestellfarbe_text' => "varchar(255) DEFAULT ''",
-                'produkt_name'      => "varchar(255) DEFAULT ''"
+                'produkt_name'      => "varchar(255) DEFAULT ''",
+                'stripe_session_id' => "varchar(255) DEFAULT ''",
+                'amount_total'      => 'int DEFAULT 0',
+                'extra_text'        => 'text',
+                'dauer_text'        => "varchar(255) DEFAULT ''"
             );
 
             foreach ($new_order_columns as $column => $type) {

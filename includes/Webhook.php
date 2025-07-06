@@ -43,40 +43,22 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $email         = sanitize_email($session->customer_details->email ?? '');
 
         global $wpdb;
-        $order_id = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT id FROM {$wpdb->prefix}federwiegen_orders WHERE customer_email = %s ORDER BY id DESC LIMIT 1",
-                $email
-            )
+        $wpdb->insert(
+            "{$wpdb->prefix}federwiegen_orders",
+            [
+                'stripe_session_id' => $session->id,
+                'customer_email'    => $email,
+                'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
+                'amount_total'      => $session->amount_total ?? 0,
+                'produkt_name'      => $produkt_name,
+                'zustand_text'      => $zustand,
+                'produktfarbe_text' => $produktfarbe,
+                'gestellfarbe_text' => $gestellfarbe,
+                'extra_text'        => sanitize_text_field($metadata['extra'] ?? ''),
+                'dauer_text'        => sanitize_text_field($metadata['dauer_name'] ?? ''),
+                'created_at'        => current_time('mysql', 1),
+            ]
         );
-
-        if ($order_id) {
-            $wpdb->update(
-                "{$wpdb->prefix}federwiegen_orders",
-                [
-                    'produkt_name'      => $produkt_name,
-                    'zustand_text'      => $zustand,
-                    'produktfarbe_text' => $produktfarbe,
-                    'gestellfarbe_text' => $gestellfarbe,
-                ],
-                ['id' => $order_id],
-                ['%s', '%s', '%s', '%s'],
-                ['%d']
-            );
-        } else {
-            $wpdb->insert(
-                "{$wpdb->prefix}federwiegen_stripe_metadata",
-                [
-                    'session_id'     => $session->id,
-                    'email'          => $email,
-                    'produkt_name'   => $produkt_name,
-                    'zustand'        => $zustand,
-                    'produktfarbe'   => $produktfarbe,
-                    'gestellfarbe'   => $gestellfarbe,
-                    'created_at'     => current_time('mysql', 1),
-                ]
-            );
-        }
 
         $admin_email = get_option('admin_email');
         $subject     = 'Neue Stripe-Bestellung mit Details';
