@@ -970,6 +970,7 @@ function federwiegen_create_subscription() {
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+
         $items = [[ 'price' => $price_id, 'quantity' => 1 ]];
         $sub_params = [
             'customer' => $customer->id,
@@ -1038,6 +1039,16 @@ function federwiegen_create_checkout_session() {
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
 
+        $metadata = [
+            'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
+            'extra'         => sanitize_text_field($body['extra'] ?? ''),
+            'dauer'         => sanitize_text_field($body['dauer'] ?? ''),
+            'dauer_name'    => sanitize_text_field($body['dauer_name'] ?? ''),
+            'zustand'       => sanitize_text_field($body['zustand'] ?? ''),
+            'produktfarbe'  => sanitize_text_field($body['produktfarbe'] ?? ''),
+            'gestellfarbe'  => sanitize_text_field($body['gestellfarbe'] ?? ''),
+        ];
+
         $session_args = [
             'mode' => 'subscription',
             'payment_method_types' => ['card', 'paypal'],
@@ -1045,6 +1056,7 @@ function federwiegen_create_checkout_session() {
                 'price' => $price_id,
                 'quantity' => 1,
             ]],
+            'metadata' => $metadata,
             'billing_address_collection' => 'required',
             'shipping_address_collection' => ['allowed_countries' => ['DE']],
             'success_url' => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
