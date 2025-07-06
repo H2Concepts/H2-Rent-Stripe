@@ -1036,8 +1036,9 @@ function federwiegen_create_checkout_session() {
         }
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
-        $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
-        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $extra_ids_raw     = sanitize_text_field($body['extra_ids'] ?? '');
+        $extra_ids         = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $customer_email    = sanitize_email($body['email'] ?? '');
 
         $metadata = [
             'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
@@ -1047,21 +1048,21 @@ function federwiegen_create_checkout_session() {
             'zustand'       => sanitize_text_field($body['zustand'] ?? ''),
             'produktfarbe'  => sanitize_text_field($body['produktfarbe'] ?? ''),
             'gestellfarbe'  => sanitize_text_field($body['gestellfarbe'] ?? ''),
+            'email'         => $customer_email,
         ];
 
-        $session_args = [
-            'mode' => 'subscription',
-            'payment_method_types' => ['card', 'paypal'],
-            'line_items' => [[
-                'price' => $price_id,
+        $line_items = [[
+            'price'    => $price_id,
+            'quantity' => 1,
+        ]];
+
+        if ($shipping_price_id) {
+            $line_items[] = [
+                'price'    => $shipping_price_id,
                 'quantity' => 1,
-            ]],
-            'metadata' => $metadata,
-            'billing_address_collection' => 'required',
-            'shipping_address_collection' => ['allowed_countries' => ['DE']],
-            'success_url' => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
-            'cancel_url'  => home_url('/abbrechen'),
-        ];
+            ];
+        }
+
         if (!empty($extra_ids)) {
             global $wpdb;
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
@@ -1073,20 +1074,26 @@ function federwiegen_create_checkout_session() {
             );
             foreach ($extra_prices as $price) {
                 if (!empty($price)) {
-                    $session_args['line_items'][] = [
-                        'price' => $price,
+                    $line_items[] = [
+                        'price'    => $price,
                         'quantity' => 1,
                     ];
                 }
             }
         }
 
-        if ($shipping_price_id) {
-            $session_args['line_items'][] = [
-                'price' => $shipping_price_id,
-                'quantity' => 1,
-            ];
-        }
+        $session_args = [
+            'mode'                     => 'subscription',
+            'payment_method_types'     => ['card', 'paypal'],
+            'line_items'               => $line_items,
+            'customer_email'           => $customer_email,
+            'subscription_data'        => [ 'metadata' => $metadata ],
+            'metadata'                 => $metadata,
+            'billing_address_collection' => 'required',
+            'shipping_address_collection' => ['allowed_countries' => ['DE']],
+            'success_url'              => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
+            'cancel_url'               => home_url('/abbrechen'),
+        ];
 
         $session = \Stripe\Checkout\Session::create($session_args);
 

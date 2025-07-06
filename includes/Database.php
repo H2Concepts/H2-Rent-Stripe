@@ -378,7 +378,10 @@ class Database {
             dbDelta($sql);
         } else {
             $new_order_columns = array(
-                'extra_ids' => 'varchar(255)'
+                'extra_ids'         => 'varchar(255)',
+                'zustand_text'      => "varchar(255) DEFAULT ''",
+                'produktfarbe_text' => "varchar(255) DEFAULT ''",
+                'gestellfarbe_text' => "varchar(255) DEFAULT ''"
             );
 
             foreach ($new_order_columns as $column => $type) {
@@ -387,6 +390,26 @@ class Database {
                     $wpdb->query("ALTER TABLE $table_orders ADD COLUMN $column $type AFTER extra_id");
                 }
             }
+        }
+
+        // Create metadata table if it doesn't exist
+        $table_metadata = $wpdb->prefix . 'federwiegen_stripe_metadata';
+        $metadata_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_metadata'");
+        if (!$metadata_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_metadata (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                session_id varchar(255) NOT NULL,
+                email varchar(255) DEFAULT '',
+                zustand varchar(255) DEFAULT '',
+                produktfarbe varchar(255) DEFAULT '',
+                gestellfarbe varchar(255) DEFAULT '',
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
         }
 
         // Create notifications table if it doesn't exist
@@ -701,6 +724,9 @@ class Database {
             stripe_link text NOT NULL,
             customer_name varchar(255) DEFAULT '',
             customer_email varchar(255) DEFAULT '',
+            zustand_text varchar(255) DEFAULT '',
+            produktfarbe_text varchar(255) DEFAULT '',
+            gestellfarbe_text varchar(255) DEFAULT '',
             user_ip varchar(45) DEFAULT NULL,
             user_agent text DEFAULT NULL,
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
@@ -723,6 +749,21 @@ class Database {
         dbDelta($sql_variant_options);
         dbDelta($sql_duration_prices);
         dbDelta($sql_orders);
+
+        // Metadata table for storing Stripe session details
+        $table_meta = $wpdb->prefix . 'federwiegen_stripe_metadata';
+        $sql_meta = "CREATE TABLE $table_meta (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            session_id varchar(255) NOT NULL,
+            email varchar(255) DEFAULT '',
+            zustand varchar(255) DEFAULT '',
+            produktfarbe varchar(255) DEFAULT '',
+            gestellfarbe varchar(255) DEFAULT '',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+
+        dbDelta($sql_meta);
 
         // Notifications table
         $table_notifications = $wpdb->prefix . 'federwiegen_notifications';
