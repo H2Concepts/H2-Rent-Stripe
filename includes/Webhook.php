@@ -35,6 +35,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
+        $subscription_id = $session->subscription ?? '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
 
         $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
@@ -69,6 +70,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'dauer_text'        => $dauer,
             'user_ip'           => $user_ip,
             'user_agent'        => $user_agent,
+            'stripe_subscription_id' => $subscription_id,
             'status'            => 'abgeschlossen',
             'created_at'        => current_time('mysql', 1),
         ];
@@ -81,6 +83,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             );
         } else {
             $data['stripe_session_id'] = $session->id;
+            $data['stripe_subscription_id'] = $subscription_id;
             $wpdb->insert("{$wpdb->prefix}federwiegen_orders", $data);
         }
 
@@ -97,6 +100,16 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $message    .= "Session-ID: {$session->id}\n";
 
         wp_mail($admin_email, $subject, $message);
+    } elseif ($event->type === 'customer.subscription.deleted') {
+        $subscription = $event->data->object;
+        $subscription_id = $subscription->id;
+        global $wpdb;
+        $wpdb->update(
+            "{$wpdb->prefix}federwiegen_orders",
+            [ 'status' => 'gekündigt' ],
+            [ 'stripe_subscription_id' => $subscription_id ]
+        );
+        return new WP_REST_Response(['status' => 'subscription cancelled'], 200);
     }
 
     return new WP_REST_Response(['status' => 'ok'], 200);

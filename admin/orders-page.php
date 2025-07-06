@@ -207,6 +207,8 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         <td>
                             <?php if ($order->status === 'offen'): ?>
                                 <span style="color: #dc3232; font-weight: bold;">🕓 Offen</span>
+                            <?php elseif ($order->status === 'gekündigt'): ?>
+                                <span style="color: #757575; font-weight: bold;">❌ Gekündigt</span>
                             <?php else: ?>
                                 <span style="color: #2e7d32; font-weight: bold;">✅ Abgeschlossen</span>
                             <?php endif; ?>
