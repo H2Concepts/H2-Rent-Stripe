@@ -36,7 +36,6 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
-        file_put_contents(__DIR__ . '/webhook_meta_debug.log', print_r($metadata, true));
 
         $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
         $zustand       = sanitize_text_field($metadata['zustand'] ?? '');
@@ -55,7 +54,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 'stripe_session_id' => $session->id,
                 'customer_email'    => $email,
                 'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
-                'amount_total'      => $session->amount_total ?? 0,
+                'final_price'       => ($session->amount_total ?? 0) / 100,
                 'produkt_name'      => $produkt_name,
                 'zustand_text'      => $zustand,
                 'produktfarbe_text' => $produktfarbe,
