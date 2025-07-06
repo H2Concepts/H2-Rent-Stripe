@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /* Federwiegen Verleih Plugin Styles */
 .federwiegen-container {
     max-width: 100%;
@@ -1126,12 +1127,12 @@
 }
 
 .federwiegen-star-rating::before {
-    content: '★★★★★';
+    content: "\2605\2605\2605\2605\2605";
     letter-spacing: 3px;
 }
 
 .federwiegen-star-rating::after {
-    content: '★★★★★';
+    content: "\2605\2605\2605\2605\2605";
     letter-spacing: 3px;
     color: #ffc107;
     position: absolute;
