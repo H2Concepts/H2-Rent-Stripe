@@ -38,7 +38,7 @@ You may also toggle this behaviour with the `federwiegen_load_default_data` filt
 
 Use the `category` attribute to select a specific product category by shortcode.
 
-Under **Einstellungen → Stripe Integration** you can specify the link to your terms of service (AGB) and set the success and cancel URLs that Stripe should use. The text on the checkout page uses your AGB link directly as UTF‑8 and is not encoded again.
+Under **Einstellungen → Stripe Integration** you can specify the link to your terms of service (AGB) and set the success and cancel URLs that Stripe should use. The success URL you enter is automatically appended with `?session_id=CHECKOUT_SESSION_ID` so you only need to provide the base path. The text on the checkout page uses your AGB link directly as UTF‑8 and is not encoded again.
 
 ## Development
 

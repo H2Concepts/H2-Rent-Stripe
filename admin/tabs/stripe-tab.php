@@ -14,7 +14,7 @@ if (isset($_POST['submit_stripe'])) {
 $stripe_publishable_key = get_option('federwiegen_stripe_publishable_key', '');
 $stripe_secret_key   = get_option('federwiegen_stripe_secret_key', '');
 $tos_url             = get_option('federwiegen_tos_url', home_url('/agb'));
-$success_url         = get_option('federwiegen_success_url', home_url('/danke?session_id={CHECKOUT_SESSION_ID}'));
+$success_url         = get_option('federwiegen_success_url', home_url('/danke'));
 $cancel_url          = get_option('federwiegen_cancel_url', home_url('/abbrechen'));
 ?>
 
@@ -47,7 +47,8 @@ $cancel_url          = get_option('federwiegen_cancel_url', home_url('/abbrechen
             <div class="federwiegen-form-grid">
                 <div class="federwiegen-form-group">
                     <label>Success URL</label>
-                    <input type="text" name="success_url" value="<?php echo esc_attr($success_url); ?>" placeholder="<?php echo esc_attr(home_url('/danke?session_id={CHECKOUT_SESSION_ID}')); ?>">
+                    <input type="text" name="success_url" value="<?php echo esc_attr($success_url); ?>" placeholder="<?php echo esc_attr(home_url('/danke')); ?>">
+                    <p class="description">Der Parameter <code>?session_id=CHECKOUT_SESSION_ID</code> wird automatisch angehängt.</p>
                 </div>
                 <div class="federwiegen-form-group">
                     <label>Cancel URL</label>
