@@ -48,24 +48,38 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $email         = sanitize_email($session->customer_details->email ?? '');
 
         global $wpdb;
-        $wpdb->insert(
-            "{$wpdb->prefix}federwiegen_orders",
-            [
-                'stripe_session_id' => $session->id,
-                'customer_email'    => $email,
-                'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
-                'final_price'       => ($session->amount_total ?? 0) / 100,
-                'produkt_name'      => $produkt_name,
-                'zustand_text'      => $zustand,
-                'produktfarbe_text' => $produktfarbe,
-                'gestellfarbe_text' => $gestellfarbe,
-                'extra_text'        => $extra,
-                'dauer_text'        => $dauer,
-                'user_ip'           => $user_ip,
-                'user_agent'        => $user_agent,
-                'created_at'        => current_time('mysql', 1),
-            ]
-        );
+        $existing_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}federwiegen_orders WHERE stripe_session_id = %s",
+            $session->id
+        ));
+
+        $data = [
+            'customer_email'    => $email,
+            'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
+            'final_price'       => ($session->amount_total ?? 0) / 100,
+            'amount_total'      => $session->amount_total ?? 0,
+            'produkt_name'      => $produkt_name,
+            'zustand_text'      => $zustand,
+            'produktfarbe_text' => $produktfarbe,
+            'gestellfarbe_text' => $gestellfarbe,
+            'extra_text'        => $extra,
+            'dauer_text'        => $dauer,
+            'user_ip'           => $user_ip,
+            'user_agent'        => $user_agent,
+            'status'            => 'abgeschlossen',
+            'created_at'        => current_time('mysql', 1),
+        ];
+
+        if ($existing_id) {
+            $wpdb->update(
+                "{$wpdb->prefix}federwiegen_orders",
+                $data,
+                ['id' => $existing_id]
+            );
+        } else {
+            $data['stripe_session_id'] = $session->id;
+            $wpdb->insert("{$wpdb->prefix}federwiegen_orders", $data);
+        }
 
         $admin_email = get_option('admin_email');
         $subject     = 'Neue Stripe-Bestellung mit Details';

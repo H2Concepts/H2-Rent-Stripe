@@ -143,6 +143,7 @@ if (!empty($notice)) {
                         <th>Kunde</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
+                        <th style="width: 100px;">Status</th>
                         <th style="width: 120px;">Aktionen</th>
                     </tr>
                 </thead>
@@ -189,6 +190,13 @@ if (!empty($notice)) {
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
                             <small style="color: #666;">/Monat</small>
+                        </td>
+                        <td>
+                            <?php if ($order->status === 'offen'): ?>
+                                <span style="color: #dc3232; font-weight: bold;">🕓 Offen</span>
+                            <?php else: ?>
+                                <span style="color: #2e7d32; font-weight: bold;">✅ Abgeschlossen</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <button type="button" class="button button-small" onclick="showOrderDetails(<?php echo $order->id; ?>)" title="Details anzeigen">

@@ -1038,6 +1038,13 @@ function federwiegen_create_checkout_session() {
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
         $extra_ids_raw     = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids         = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $category_id       = intval($body['category_id'] ?? 0);
+        $variant_id        = intval($body['variant_id'] ?? 0);
+        $duration_id       = intval($body['duration_id'] ?? 0);
+        $condition_id      = intval($body['condition_id'] ?? 0);
+        $product_color_id  = intval($body['product_color_id'] ?? 0);
+        $frame_color_id    = intval($body['frame_color_id'] ?? 0);
+        $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
 
         $metadata = [
@@ -1100,6 +1107,39 @@ function federwiegen_create_checkout_session() {
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
+
+        // store preliminary order with status "offen"
+        global $wpdb;
+        $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
+        $wpdb->insert(
+            $wpdb->prefix . 'federwiegen_orders',
+            [
+                'category_id'      => $category_id,
+                'variant_id'       => $variant_id,
+                'extra_id'         => $extra_id,
+                'extra_ids'        => $extra_ids_raw,
+                'duration_id'      => $duration_id,
+                'condition_id'     => $condition_id ?: null,
+                'product_color_id' => $product_color_id ?: null,
+                'frame_color_id'   => $frame_color_id ?: null,
+                'final_price'      => $final_price,
+                'stripe_link'      => '',
+                'stripe_session_id'=> $session->id,
+                'amount_total'     => 0,
+                'produkt_name'     => $metadata['produkt'],
+                'zustand_text'     => $metadata['zustand'],
+                'produktfarbe_text'=> $metadata['produktfarbe'],
+                'gestellfarbe_text'=> $metadata['gestellfarbe'],
+                'extra_text'       => $metadata['extra'],
+                'dauer_text'       => $metadata['dauer_name'],
+                'customer_name'    => '',
+                'customer_email'   => $customer_email,
+                'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
+                'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+                'status'           => 'offen',
+                'created_at'       => current_time('mysql', 1)
+            ]
+        );
 
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
