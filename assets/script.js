@@ -163,10 +163,11 @@ jQuery(document).ready(function($) {
 
         const priceId = currentPriceId;
         const shippingId = $('#federwiegen-field-shipping-price-id').val() || '';
+        const extras = selectedExtras.join(',');
         fetch(federwiegen_ajax.ajax_url + '?action=create_checkout_session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ price_id: priceId, shipping_price_id: shippingId })
+            body: JSON.stringify({ price_id: priceId, shipping_price_id: shippingId, extra_ids: extras })
         })
         .then(res => res.json())
         .then(data => { if (data.url) { window.location.href = data.url; } });

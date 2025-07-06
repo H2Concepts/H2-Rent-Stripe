@@ -968,6 +968,8 @@ function federwiegen_create_subscription() {
         }
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
         $items = [[ 'price' => $price_id, 'quantity' => 1 ]];
         $sub_params = [
             'customer' => $customer->id,
@@ -1051,6 +1053,25 @@ function federwiegen_create_checkout_session() {
                 'price' => $shipping_price_id,
                 'quantity' => 1,
             ];
+        }
+
+        if (!empty($extra_ids)) {
+            global $wpdb;
+            $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+            $extra_prices = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_extras WHERE id IN ($placeholders)",
+                    ...$extra_ids
+                )
+            );
+            foreach ($extra_prices as $price) {
+                if (!empty($price)) {
+                    $session_args['line_items'][] = [
+                        'price' => $price,
+                        'quantity' => 1,
+                    ];
+                }
+            }
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
