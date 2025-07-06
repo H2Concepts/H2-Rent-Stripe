@@ -35,8 +35,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
-        $raw_meta = $session->metadata ?? [];
-        $metadata = is_array($raw_meta) ? $raw_meta : (array) $raw_meta;
+        $metadata = [];
+        if (!empty($session->metadata)) {
+            foreach ($session->metadata as $key => $value) {
+                $metadata[$key] = (string) $value;
+            }
+        }
+        file_put_contents(__DIR__ . '/webhook_meta_debug.log', print_r($metadata, true));
 
         $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
         $zustand       = sanitize_text_field($metadata['zustand'] ?? '');
