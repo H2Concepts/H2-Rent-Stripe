@@ -513,9 +513,11 @@ class Admin {
         $where_clause = implode(' AND ', $where_conditions);
 
         $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT o.*, c.name as category_name, v.name as variant_name,
-                    GROUP_CONCAT(e.name SEPARATOR ', ') AS extra_names,
-                    d.name as duration_name, cond.name as condition_name,
+            "SELECT o.*, c.name as category_name,
+                    COALESCE(v.name, o.produkt_name) as variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                    COALESCE(d.name, o.dauer_text) as duration_name,
+                    cond.name as condition_name,
                     pc.name as product_color_name, fc.name as frame_color_name
              FROM {$wpdb->prefix}federwiegen_orders o
              LEFT JOIN {$wpdb->prefix}federwiegen_categories c ON o.category_id = c.id

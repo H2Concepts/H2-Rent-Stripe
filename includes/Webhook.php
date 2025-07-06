@@ -34,12 +34,18 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     }
 
     if ($event->type === 'checkout.session.completed') {
-        $session   = $event->data->object;
-        $metadata      = (array) ($session->metadata ?? []);
+        $session  = $event->data->object;
+        $raw_meta = $session->metadata ?? [];
+        $metadata = is_array($raw_meta) ? $raw_meta : (array) $raw_meta;
+
         $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
         $zustand       = sanitize_text_field($metadata['zustand'] ?? '');
         $produktfarbe  = sanitize_text_field($metadata['produktfarbe'] ?? '');
         $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
+        $extra         = sanitize_text_field($metadata['extra'] ?? '');
+        $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
+        $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
+        $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
         $email         = sanitize_email($session->customer_details->email ?? '');
 
         global $wpdb;
@@ -54,8 +60,10 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 'zustand_text'      => $zustand,
                 'produktfarbe_text' => $produktfarbe,
                 'gestellfarbe_text' => $gestellfarbe,
-                'extra_text'        => sanitize_text_field($metadata['extra'] ?? ''),
-                'dauer_text'        => sanitize_text_field($metadata['dauer_name'] ?? ''),
+                'extra_text'        => $extra,
+                'dauer_text'        => $dauer,
+                'user_ip'           => $user_ip,
+                'user_agent'        => $user_agent,
                 'created_at'        => current_time('mysql', 1),
             ]
         );

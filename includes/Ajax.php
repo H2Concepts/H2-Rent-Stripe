@@ -1049,6 +1049,8 @@ function federwiegen_create_checkout_session() {
             'produktfarbe'  => sanitize_text_field($body['produktfarbe'] ?? ''),
             'gestellfarbe'  => sanitize_text_field($body['gestellfarbe'] ?? ''),
             'email'         => $customer_email,
+            'user_ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
+            'user_agent'    => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
         ];
 
         $line_items = [[
