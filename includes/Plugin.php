@@ -325,7 +325,7 @@ class Plugin {
         }
 
         $price_id = sanitize_text_field($_POST['price_id'] ?? '');
-        $shipping_rate_id = sanitize_text_field($_POST['shipping_price_id'] ?? '');
+        $shipping_price_id = sanitize_text_field($_POST['shipping_price_id'] ?? '');
 
         $init = StripeService::init();
         if (is_wp_error($init)) {
@@ -346,9 +346,10 @@ class Plugin {
                 'cancel_url'  => home_url('/abbrechen'),
             ];
 
-            if ($shipping_rate_id) {
-                $session_args['shipping_options'] = [
-                    ['shipping_rate' => $shipping_rate_id],
+            if ($shipping_price_id) {
+                $session_args['line_items'][] = [
+                    'price' => $shipping_price_id,
+                    'quantity' => 1,
                 ];
             }
 

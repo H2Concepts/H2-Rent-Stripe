@@ -102,7 +102,7 @@ class Ajax {
                     $variant->category_id
                 ));
                 if ($category && !empty($category->shipping_price_id)) {
-                    $price_res = StripeService::get_shipping_rate_amount($category->shipping_price_id);
+                    $price_res = StripeService::get_price_amount($category->shipping_price_id);
                     if (!is_wp_error($price_res)) {
                         $shipping_cost = floatval($price_res);
                     }
@@ -1032,7 +1032,7 @@ function federwiegen_create_checkout_session() {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
 
-        $shipping_rate_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
 
         $session_args = [
             'mode' => 'subscription',
@@ -1046,9 +1046,10 @@ function federwiegen_create_checkout_session() {
             'success_url' => home_url('/danke?session_id={CHECKOUT_SESSION_ID}'),
             'cancel_url'  => home_url('/abbrechen'),
         ];
-        if ($shipping_rate_id) {
-            $session_args['shipping_options'] = [
-                ['shipping_rate' => $shipping_rate_id],
+        if ($shipping_price_id) {
+            $session_args['line_items'][] = [
+                'price' => $shipping_price_id,
+                'quantity' => 1,
             ];
         }
 

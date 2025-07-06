@@ -49,7 +49,7 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 $shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
 $shipping_cost = 0;
 if (!empty($shipping_price_id)) {
-    $amount = \FederwiegenVerleih\StripeService::get_shipping_rate_amount($shipping_price_id);
+    $amount = \FederwiegenVerleih\StripeService::get_price_amount($shipping_price_id);
     if (!is_wp_error($amount)) {
         $shipping_cost = $amount;
     }
