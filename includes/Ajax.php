@@ -1035,6 +1035,8 @@ function federwiegen_create_checkout_session() {
         }
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
 
         $session_args = [
             'mode' => 'subscription',
