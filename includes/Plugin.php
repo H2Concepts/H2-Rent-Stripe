@@ -331,6 +331,7 @@ class Plugin {
         }
 
         try {
+            $tos_url = get_option('federwiegen_tos_url', home_url('/agb'));
             $session_args = [
                 'mode' => 'subscription',
                 'payment_method_types' => ['card', 'paypal'],
@@ -347,7 +348,7 @@ class Plugin {
                 ],
                 'custom_text' => [
                     'terms_of_service_acceptance' => [
-                        'message' => 'Ich akzeptiere die <a href="' . home_url('/agb') . '" target="_blank">Allgemeinen Gesch\xC3\xA4ftsbedingungen (AGB)</a>.',
+                        'message' => 'Ich akzeptiere die <a href="' . esc_url($tos_url) . '" target="_blank">Allgemeinen Gesch\xC3\xA4ftsbedingungen (AGB)</a>.',
                     ],
                 ],
             ];
