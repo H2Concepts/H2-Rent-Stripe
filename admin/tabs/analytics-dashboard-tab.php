@@ -22,13 +22,13 @@ $avg_order_value = $total_orders > 0 ? $total_revenue / $total_orders : 0;
 
 // Get popular variants - FIXED QUERY
 $popular_variants = $wpdb->get_results($wpdb->prepare(
-    "SELECT v.name, COUNT(*) as order_count 
+    "SELECT COALESCE(v.name, o.produkt_name) AS variant_name, COUNT(*) AS order_count
      FROM {$wpdb->prefix}federwiegen_orders o
      LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON o.variant_id = v.id
      " . $where_clause . "
-     AND v.name IS NOT NULL
-     GROUP BY o.variant_id, v.name 
-     ORDER BY order_count DESC 
+     AND COALESCE(v.name, o.produkt_name) IS NOT NULL
+     GROUP BY COALESCE(v.name, o.produkt_name)
+     ORDER BY order_count DESC
      LIMIT 5",
     ...$where_values
 ));
@@ -48,9 +48,10 @@ $popular_extras = $wpdb->get_results($wpdb->prepare(
 
 // Get recent orders
 $recent_orders = $wpdb->get_results($wpdb->prepare(
-    "SELECT o.*, v.name as variant_name,
-            GROUP_CONCAT(e.name SEPARATOR ', ') AS extra_names,
-            d.name as duration_name
+    "SELECT o.*,
+            COALESCE(v.name, o.produkt_name) AS variant_name,
+            COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+            COALESCE(d.name, o.dauer_text) AS duration_name
      FROM {$wpdb->prefix}federwiegen_orders o
      LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON o.variant_id = v.id
      LEFT JOIN {$wpdb->prefix}federwiegen_extras e ON FIND_IN_SET(e.id, o.extra_ids)
@@ -123,7 +124,7 @@ $monthly_revenue = $wpdb->get_results($wpdb->prepare(
                 <div class="federwiegen-chart-list">
                     <?php foreach ($popular_variants as $variant): ?>
                     <div class="federwiegen-chart-item">
-                        <span class="federwiegen-chart-label"><?php echo esc_html($variant->name); ?></span>
+                        <span class="federwiegen-chart-label"><?php echo esc_html($variant->variant_name); ?></span>
                         <div class="federwiegen-chart-bar">
                             <div class="federwiegen-chart-fill" style="width: <?php echo min(100, ($variant->order_count / max(1, $popular_variants[0]->order_count)) * 100); ?>%;"></div>
                         </div>
