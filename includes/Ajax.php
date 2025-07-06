@@ -1056,13 +1056,6 @@ function federwiegen_create_checkout_session() {
             'quantity' => 1,
         ]];
 
-        if ($shipping_price_id) {
-            $line_items[] = [
-                'price'    => $shipping_price_id,
-                'quantity' => 1,
-            ];
-        }
-
         if (!empty($extra_ids)) {
             global $wpdb;
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
@@ -1080,6 +1073,13 @@ function federwiegen_create_checkout_session() {
                     ];
                 }
             }
+        }
+
+        if ($shipping_price_id) {
+            $line_items[] = [
+                'price'    => $shipping_price_id,
+                'quantity' => 1,
+            ];
         }
 
         $session_args = [

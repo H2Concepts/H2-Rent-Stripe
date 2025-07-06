@@ -364,6 +364,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
                 stripe_link text NOT NULL,
+                produkt_name varchar(255) DEFAULT '',
                 customer_name varchar(255) DEFAULT '',
                 customer_email varchar(255) DEFAULT '',
                 user_ip varchar(45) DEFAULT NULL,
@@ -381,7 +382,8 @@ class Database {
                 'extra_ids'         => 'varchar(255)',
                 'zustand_text'      => "varchar(255) DEFAULT ''",
                 'produktfarbe_text' => "varchar(255) DEFAULT ''",
-                'gestellfarbe_text' => "varchar(255) DEFAULT ''"
+                'gestellfarbe_text' => "varchar(255) DEFAULT ''",
+                'produkt_name'      => "varchar(255) DEFAULT ''"
             );
 
             foreach ($new_order_columns as $column => $type) {
@@ -401,6 +403,7 @@ class Database {
                 id mediumint(9) NOT NULL AUTO_INCREMENT,
                 session_id varchar(255) NOT NULL,
                 email varchar(255) DEFAULT '',
+                produkt_name varchar(255) DEFAULT '',
                 zustand varchar(255) DEFAULT '',
                 produktfarbe varchar(255) DEFAULT '',
                 gestellfarbe varchar(255) DEFAULT '',
@@ -410,6 +413,16 @@ class Database {
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
+        } else {
+            $meta_columns = [
+                'produkt_name' => "varchar(255) DEFAULT ''",
+            ];
+            foreach ($meta_columns as $column => $type) {
+                $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_metadata LIKE '$column'");
+                if (empty($exists)) {
+                    $wpdb->query("ALTER TABLE $table_metadata ADD COLUMN $column $type");
+                }
+            }
         }
 
         // Create notifications table if it doesn't exist
@@ -724,6 +737,7 @@ class Database {
             stripe_link text NOT NULL,
             customer_name varchar(255) DEFAULT '',
             customer_email varchar(255) DEFAULT '',
+            produkt_name varchar(255) DEFAULT '',
             zustand_text varchar(255) DEFAULT '',
             produktfarbe_text varchar(255) DEFAULT '',
             gestellfarbe_text varchar(255) DEFAULT '',
@@ -756,6 +770,7 @@ class Database {
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             session_id varchar(255) NOT NULL,
             email varchar(255) DEFAULT '',
+            produkt_name varchar(255) DEFAULT '',
             zustand varchar(255) DEFAULT '',
             produktfarbe varchar(255) DEFAULT '',
             gestellfarbe varchar(255) DEFAULT '',

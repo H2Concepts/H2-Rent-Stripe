@@ -35,11 +35,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session   = $event->data->object;
-        $metadata  = (array) ($session->metadata ?? []);
-        $zustand   = sanitize_text_field($metadata['zustand'] ?? '');
+        $metadata      = (array) ($session->metadata ?? []);
+        $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
+        $zustand       = sanitize_text_field($metadata['zustand'] ?? '');
         $produktfarbe  = sanitize_text_field($metadata['produktfarbe'] ?? '');
         $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
-        $email     = sanitize_email($session->customer_details->email ?? '');
+        $email         = sanitize_email($session->customer_details->email ?? '');
 
         global $wpdb;
         $order_id = $wpdb->get_var(
@@ -53,12 +54,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             $wpdb->update(
                 "{$wpdb->prefix}federwiegen_orders",
                 [
+                    'produkt_name'      => $produkt_name,
                     'zustand_text'      => $zustand,
                     'produktfarbe_text' => $produktfarbe,
                     'gestellfarbe_text' => $gestellfarbe,
                 ],
                 ['id' => $order_id],
-                ['%s', '%s', '%s'],
+                ['%s', '%s', '%s', '%s'],
                 ['%d']
             );
         } else {
@@ -67,6 +69,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 [
                     'session_id'     => $session->id,
                     'email'          => $email,
+                    'produkt_name'   => $produkt_name,
                     'zustand'        => $zustand,
                     'produktfarbe'   => $produktfarbe,
                     'gestellfarbe'   => $gestellfarbe,
@@ -79,6 +82,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $subject     = 'Neue Stripe-Bestellung mit Details';
         $message     = "Neue Bestellung:\n\n";
         $message    .= "E-Mail: $email\n";
+        if ($produkt_name) {
+            $message .= "Produkt: $produkt_name\n";
+        }
         $message    .= "Zustand: $zustand\n";
         $message    .= "Produktfarbe: $produktfarbe\n";
         $message    .= "Gestellfarbe: $gestellfarbe\n";
