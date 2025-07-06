@@ -7,6 +7,9 @@ This WordPress plugin enables the rental of configurable products with built-in 
 - Admin pages to manage product categories, variants, extras, rental durations and more
 - Shortcode `[federwiegen_product]` to embed a product page on the front‑end
 - Calculates prices dynamically and links to your Stripe checkout URLs
+- Supports Stripe promotion codes so customers can redeem coupons
+- Collects customer phone numbers during checkout
+- Custom checkout texts can be configured in the Stripe settings
 - Tracks user interactions for analytics
 - Generates SEO meta tags, Open Graph tags and schema markup
 
@@ -29,14 +32,15 @@ You may also toggle this behaviour with the `federwiegen_load_default_data` filt
 ## Usage
 
 1. Configure your categories, variants, extras and durations in the new **Federwiegen** admin menu.
-2. For each combination create the corresponding Stripe link under **Stripe Links**.
-3. Add the shortcode to a page or post:
+2. Add the shortcode to a page or post:
 
 ```php
 [federwiegen_product category="STANDARD"]
 ```
 
 Use the `category` attribute to select a specific product category by shortcode.
+
+Under **Einstellungen → Stripe Integration** you can specify the link to your terms of service (AGB) and set the success and cancel URLs that Stripe should use. You may also define optional custom texts shown next to the shipping address fields, on the submit button and after the form is submitted. The success URL you enter is automatically appended with `?session_id=CHECKOUT_SESSION_ID` so you only need to provide the base path. The text on the checkout page uses your AGB link directly as UTF‑8 and is not encoded again.
 
 ## Development
 

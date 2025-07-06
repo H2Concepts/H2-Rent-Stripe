@@ -3,7 +3,7 @@
   * Plugin Name: Rent Plugin
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.6.4
+* Version: 2.8.21
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,16 +14,12 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.6.4';
+const FEDERWIEGEN_PLUGIN_VERSION = '2.8.21';
 const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
 define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
 define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
 define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
-// Stripe price ID for the one-time shipping charge
-define('FEDERWIEGEN_SHIPPING_PRICE_ID', 'price_1QKQDzRxDui5dUOqdlAFIJcr');
-// Display amount for shipping in Euros
-define('FEDERWIEGEN_SHIPPING_COST', 9.99);
 // Payment Method Configuration ID for PayPal
 define('FEDERWIEGEN_PMC_ID', 'pmc_1QKPcvRxDui5dUOqaNaxNjsL');
 
@@ -32,8 +28,26 @@ if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
     define('FEDERWIEGEN_LOAD_DEFAULT_DATA', false);
 }
 
-require_once FEDERWIEGEN_PLUGIN_DIR . 'includes/Autoloader.php';
-FederwiegenVerleih\Autoloader::register();
+// Load the autoloader for the plugin classes. Some installations failed to
+// find the class when it was called directly, so ensure the file exists and
+// require it explicitly before registering.
+if (!class_exists('FederwiegenVerleih\\Autoloader')) {
+    $autoloader = plugin_dir_path(__FILE__) . 'includes/Autoloader.php';
+    if (file_exists($autoloader)) {
+        require_once $autoloader;
+    }
+}
+
+if (class_exists('FederwiegenVerleih\\Autoloader')) {
+    \FederwiegenVerleih\Autoloader::register();
+}
+
+$webhook_file = plugin_dir_path(__FILE__) . 'includes/Webhook.php';
+if (file_exists($webhook_file)) {
+    require_once $webhook_file;
+} else {
+    error_log('Webhook.php not found at ' . $webhook_file);
+}
 
 // Register activation and deactivation hooks
 register_activation_hook(__FILE__, ['FederwiegenVerleih\\Plugin', 'activate_plugin']);
@@ -44,240 +58,19 @@ add_action('plugins_loaded', function () {
     new \FederwiegenVerleih\Plugin();
 });
 
-add_shortcode('stripe_elements_form', 'federwiegen_stripe_elements_form');
-function federwiegen_stripe_elements_form() {
-    $publishable_key = \FederwiegenVerleih\StripeService::get_publishable_key();
-    if (empty($publishable_key)) {
-        return '<p>Stripe API-Schl\xC3\xBCssel fehlt. Bitte in den Plugin-Einstellungen eintragen.</p>';
-    }
 
+add_shortcode('stripe_elements_form', 'federwiegen_simple_checkout_button');
+function federwiegen_simple_checkout_button() {
     ob_start(); ?>
-
-    <div class="federwiegen-checkout-wrapper">
-      <div class="federwiegen-checkout-left">
-        <form id="checkout-form" class="federwiegen-checkout-form">
-          <div class="checkout-section">
-            <h3>1. Kontaktinformationen</h3>
-            <p>Wir werden diese E-Mail verwenden, um Ihnen Details und Aktualisierungen zu Ihrer Bestellung zu senden.</p>
-            <label for="email">E-Mail-Adresse*</label>
-            <input type="email" id="email" name="email" required>
-          </div>
-
-          <div class="checkout-section">
-            <h3>2. Versandadresse</h3>
-            <p>Geben Sie die Adresse ein, an die Ihre Bestellung geliefert werden soll.</p>
-            <label for="country">Land*</label>
-            <input type="text" id="country" name="country" value="DE" required>
-
-            <label for="fullname">Vollständiger Name*</label>
-            <input type="text" id="fullname" name="fullname" required>
-
-            <label for="street">Adresse*</label>
-            <input type="text" id="street" name="street" required>
-
-            <label for="city">Stadt*</label>
-            <input type="text" id="city" name="city" required>
-
-            <label for="postal">PLZ*</label>
-            <input type="text" id="postal" name="postal" required>
-
-            <label for="phone">Telefon*</label>
-            <input type="tel" id="phone" name="phone" required>
-
-            <label class="checkbox">
-              <input type="checkbox" id="same-address" checked>
-              Dieselbe Adresse für die Rechnungsstellung verwenden
-            </label>
-
-            <div id="billing-fields" style="display: none;">
-              <h4>Rechnungsadresse</h4>
-              <label for="bill_country">Land*</label>
-              <input type="text" id="bill_country" name="bill_country" value="DE">
-
-              <label for="bill_fullname">Vollständiger Name*</label>
-              <input type="text" id="bill_fullname" name="bill_fullname">
-
-              <label for="bill_street">Adresse*</label>
-              <input type="text" id="bill_street" name="bill_street">
-
-              <label for="bill_city">Stadt*</label>
-              <input type="text" id="bill_city" name="bill_city">
-
-              <label for="bill_postal">PLZ*</label>
-              <input type="text" id="bill_postal" name="bill_postal">
-            </div>
-          </div>
-
-          <div class="checkout-section">
-            <h3>3. Zahlungsoptionen</h3>
-            <div id="payment-element"></div>
-            <label class="checkbox">
-              <input type="checkbox" id="agb" required>
-              Ich akzeptiere die <a href="/agb" target="_blank">Allgemeinen Geschäftsbedingungen</a>*
-            </label>
-            <button id="submit">Jetzt bezahlen</button>
-            <div id="payment-message"></div>
-          </div>
-        </form>
-      </div>
-
-      <div class="federwiegen-checkout-right">
-        <h3>Bestellübersicht</h3>
-        <?php
-          $preis_cents = isset($_GET['preis']) ? intval($_GET['preis']) : 0;
-          $shipping_cents = isset($_GET['shipping']) ? intval($_GET['shipping']) : 0;
-          $total_first_cents = $preis_cents + $shipping_cents;
-        ?>
-        <ul class="federwiegen-checkout-summary">
-          <?php if (!empty($_GET['produkt'])): ?>
-          <li>Produkt: <?php echo esc_html($_GET['produkt']); ?></li>
-          <?php endif; ?>
-          <?php if (!empty($_GET['extra'])): ?>
-          <li>Extra: <?php echo esc_html($_GET['extra']); ?></li>
-          <?php endif; ?>
-          <?php if (!empty($_GET['dauer']) || !empty($_GET['dauer_name'])): ?>
-          <li>Mietdauer: <?php echo esc_html($_GET['dauer_name'] ?? $_GET['dauer']); ?></li>
-          <?php endif; ?>
-          <?php if (!empty($_GET['zustand'])): ?>
-          <li>Zustand: <?php echo esc_html($_GET['zustand']); ?></li>
-          <?php endif; ?>
-          <?php if (!empty($_GET['produktfarbe'])): ?>
-          <li>Produktfarbe: <?php echo esc_html($_GET['produktfarbe']); ?></li>
-          <?php endif; ?>
-          <?php if (!empty($_GET['gestellfarbe'])): ?>
-          <li>Gestellfarbe: <?php echo esc_html($_GET['gestellfarbe']); ?></li>
-          <?php endif; ?>
-          <?php if ($preis_cents): ?>
-          <li>Preis: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
-          <?php endif; ?>
-          <?php if ($shipping_cents): ?>
-          <li>Versand: <?php echo number_format($shipping_cents / 100, 2, ',', '.'); ?> €</li>
-          <?php endif; ?>
-          <li>Gesamt 1. Monat: <?php echo number_format($total_first_cents / 100, 2, ',', '.'); ?> €</li>
-          <li>Jeder weitere Monat: <?php echo number_format($preis_cents / 100, 2, ',', '.'); ?> €</li>
-        </ul>
-      </div>
-    </div>
-
-    <script src="https://js.stripe.com/v3/"></script>
+    <button id="mieten-button">Jetzt mieten</button>
     <script>
-      function getUrlParameter(name) {
-        name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
-        const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        const results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-      }
-
-      const baseData = {
-        produkt: getUrlParameter('produkt'),
-        extra: getUrlParameter('extra'),
-        dauer: getUrlParameter('dauer'),
-        dauer_name: getUrlParameter('dauer_name'),
-        zustand: getUrlParameter('zustand'),
-        farbe: getUrlParameter('farbe'),
-        produktfarbe: getUrlParameter('produktfarbe'),
-        gestellfarbe: getUrlParameter('gestellfarbe'),
-        preis: getUrlParameter('preis'),
-        shipping: getUrlParameter('shipping'),
-        variant_id: getUrlParameter('variant_id'),
-        duration_id: getUrlParameter('duration_id'),
-        price_id: getUrlParameter('price_id')
-      };
-
-      const SHIPPING_PRICE_ID = '<?php echo esc_js(FEDERWIEGEN_SHIPPING_PRICE_ID); ?>';
-
-      const stripe = Stripe('<?php echo esc_js($publishable_key); ?>');
-      let elements = null;
-      let clientSecret = null;
-
-      async function initStripePaymentElement() {
-        try {
-          const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_subscription"); ?>', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              ...baseData,
-              shipping_price_id: SHIPPING_PRICE_ID
-            })
-          });
-          const result = await res.json();
-          if (!result.client_secret || result.success === false) {
-            const msg = (result.data && result.data.message) || result.message || 'Fehler: Kein client_secret erhalten.';
-            document.getElementById('payment-message').textContent = msg;
-            return;
-          }
-
-          clientSecret = result.client_secret;
-          elements = stripe.elements({ clientSecret });
-          const paymentElement = elements.create('payment');
-          paymentElement.mount('#payment-element');
-
-          form.addEventListener('submit', handleSubmit);
-        } catch (e) {
-          document.getElementById('payment-message').textContent = e.message;
+    document.getElementById('mieten-button').addEventListener('click', async () => {
+        const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_checkout_session"); ?>');
+        const data = await res.json();
+        if (data.url) {
+            window.location.href = data.url;
         }
-      }
-
-      const sameAddressCheckbox = document.getElementById('same-address');
-      const billingFields = document.getElementById('billing-fields');
-      sameAddressCheckbox.addEventListener('change', () => {
-        billingFields.style.display = sameAddressCheckbox.checked ? 'none' : 'block';
-      });
-
-      const form = document.getElementById('checkout-form');
-
-      async function handleSubmit(event) {
-        event.preventDefault();
-
-        if (!document.getElementById('agb').checked) {
-          alert('Bitte akzeptiere die AGB.');
-          return;
-        }
-
-        const shipping = {
-          name: document.getElementById('fullname').value,
-          phone: document.getElementById('phone').value,
-          address: {
-            line1: document.getElementById('street').value,
-            postal_code: document.getElementById('postal').value,
-            city: document.getElementById('city').value,
-            country: document.getElementById('country').value,
-          }
-        };
-
-        const billing = {
-          name: document.getElementById('bill_fullname').value || shipping.name,
-          email: document.getElementById('email').value,
-          address: {
-            line1: document.getElementById('bill_street').value || shipping.address.line1,
-            postal_code: document.getElementById('bill_postal').value || shipping.address.postal_code,
-            city: document.getElementById('bill_city').value || shipping.address.city,
-            country: document.getElementById('bill_country').value || shipping.address.country,
-          }
-        };
-
-        const messageEl = document.getElementById('payment-message');
-        messageEl.textContent = '';
-
-        const { error, paymentIntent } = await stripe.confirmPayment({
-          elements,
-          confirmParams: {
-            payment_method_data: { billing_details: billing },
-            shipping: shipping
-          },
-          redirect: 'if_required',
-          clientSecret
-        });
-        if (error) {
-          messageEl.textContent = error.message;
-        } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-          messageEl.textContent = 'Zahlung erfolgreich!';
-        }
-      }
-
-      initStripePaymentElement();
+    });
     </script>
-    </div>
-
     <?php return ob_get_clean();
 }
