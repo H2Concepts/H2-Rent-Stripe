@@ -344,8 +344,8 @@
     cursor: pointer;
 }
 .federwiegen-subtab.active {
-    background: #5f7f5f;
-    color: #fff;
+    background: var(--federwiegen-primary);
+    color: var(--federwiegen-text);
     font-weight: 600;
 }
 .federwiegen-subtab-content {

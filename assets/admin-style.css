@@ -156,8 +156,8 @@
 }
 
 .federwiegen-nav-item:hover {
-    background: #5f7f5f;
-    color: white;
+    background: var(--federwiegen-primary);
+    color: var(--federwiegen-text);
     text-decoration: none;
 }
 
@@ -176,7 +176,7 @@
 }
 
 .federwiegen-breadcrumb a {
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     text-decoration: none;
 }
 
@@ -240,13 +240,13 @@
 
 .federwiegen-tab:hover {
     background: #f8f9fa;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     text-decoration: none;
 }
 
 .federwiegen-tab.active {
-    background: #5f7f5f;
-    color: white;
+    background: var(--federwiegen-primary);
+    color: var(--federwiegen-text);
     font-weight: 600;
 }
 
@@ -284,7 +284,7 @@
 
 .federwiegen-form-card h4 {
     margin: 0 0 20px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
 }
 
 .federwiegen-form-grid {
@@ -449,7 +449,7 @@
 
 .federwiegen-price {
     font-weight: 600;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     font-size: 16px;
 }
 
@@ -561,7 +561,7 @@
 
 .federwiegen-feature-group h5 {
     margin: 0 0 10px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     font-size: 0.9rem;
 }
 
@@ -733,7 +733,7 @@
 }
 
 .federwiegen-toggle-label input:checked + .federwiegen-toggle-slider {
-    background: #5f7f5f;
+    background: var(--federwiegen-primary);
 }
 
 .federwiegen-toggle-label input:checked + .federwiegen-toggle-slider::before {

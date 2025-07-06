@@ -9,6 +9,7 @@ if (isset($_POST['submit_branding'])) {
     $company_url = esc_url_raw($_POST['company_url']);
     $admin_color_primary = sanitize_hex_color($_POST['admin_color_primary']);
     $admin_color_secondary = sanitize_hex_color($_POST['admin_color_secondary']);
+    $admin_color_text = sanitize_hex_color($_POST['admin_color_text']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
     $table_name = $wpdb->prefix . 'federwiegen_branding';
@@ -20,6 +21,7 @@ if (isset($_POST['submit_branding'])) {
         'company_url' => $company_url,
         'admin_color_primary' => $admin_color_primary,
         'admin_color_secondary' => $admin_color_secondary,
+        'admin_color_text' => $admin_color_text,
         'footer_text' => $footer_text
     );
 
@@ -149,6 +151,12 @@ if (isset($_POST['submit_branding'])) {
                         <input type="color" name="admin_color_secondary" value="<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>" class="federwiegen-color-picker">
                         <small>Sekundärfarbe für Hover-Effekte und Verläufe</small>
                     </div>
+
+                    <div class="federwiegen-form-group">
+                        <label>Textfarbe</label>
+                        <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="federwiegen-color-picker">
+                        <small>Farbe für Text auf Buttons und Tabs</small>
+                    </div>
                     
                     <div class="federwiegen-form-group full-width">
                         <label>Footer-Text</label>
@@ -180,7 +188,7 @@ if (isset($_POST['submit_branding'])) {
                             <small><?php echo esc_html($branding['company_name'] ?? 'H2 Concepts'); ?></small>
                         </div>
                     </div>
-                    <button class="federwiegen-demo-button" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
+                    <button class="federwiegen-demo-button" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: <?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
                         Beispiel Button
                     </button>
                 </div>
@@ -264,7 +272,7 @@ if (isset($_POST['submit_branding'])) {
 
 .federwiegen-form-section h4 {
     margin: 0 0 15px 0;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
 }
 
 .federwiegen-color-picker {
@@ -324,7 +332,7 @@ if (isset($_POST['submit_branding'])) {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--federwiegen-text);
     font-size: 16px;
 }
 

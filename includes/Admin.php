@@ -211,21 +211,30 @@ class Admin {
         $branding = $this->get_branding_settings();
         $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         $secondary_color = $branding['admin_color_secondary'] ?? '#4a674a';
+        $text_color = $branding['admin_color_text'] ?? '#ffffff';
         
         echo '<style>
+            :root {
+                --federwiegen-primary: ' . esc_attr($primary_color) . ';
+                --federwiegen-secondary: ' . esc_attr($secondary_color) . ';
+                --federwiegen-text: ' . esc_attr($text_color) . ';
+            }
+
             .button-primary {
-                background: ' . esc_attr($primary_color) . ' !important;
-                border-color: ' . esc_attr($secondary_color) . ' !important;
+                background: var(--federwiegen-primary) !important;
+                border-color: var(--federwiegen-secondary) !important;
+                color: var(--federwiegen-text) !important;
             }
-            
+
             .button-primary:hover {
-                background: ' . esc_attr($secondary_color) . ' !important;
+                background: var(--federwiegen-secondary) !important;
+                color: var(--federwiegen-text) !important;
             }
-            
+
             .nav-tab-active {
-                background: ' . esc_attr($primary_color) . ';
-                color: #fff;
-                border-color: ' . esc_attr($secondary_color) . ';
+                background: var(--federwiegen-primary);
+                color: var(--federwiegen-text);
+                border-color: var(--federwiegen-secondary);
             }
         </style>';
        }

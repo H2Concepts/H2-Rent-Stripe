@@ -14,6 +14,7 @@ if (isset($_POST['submit_branding'])) {
     $company_url = esc_url_raw($_POST['company_url']);
     $admin_color_primary = sanitize_hex_color($_POST['admin_color_primary']);
     $admin_color_secondary = sanitize_hex_color($_POST['admin_color_secondary']);
+    $admin_color_text = sanitize_hex_color($_POST['admin_color_text']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
     $table_name = $wpdb->prefix . 'federwiegen_branding';
@@ -25,6 +26,7 @@ if (isset($_POST['submit_branding'])) {
         'company_url' => $company_url,
         'admin_color_primary' => $admin_color_primary,
         'admin_color_secondary' => $admin_color_secondary,
+        'admin_color_text' => $admin_color_text,
         'footer_text' => $footer_text
     );
 
@@ -191,6 +193,13 @@ foreach ($results as $result) {
                 </td>
             </tr>
             <tr>
+                <th scope="row">Textfarbe</th>
+                <td>
+                    <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="color-picker">
+                    <p class="description">Farbe für Text auf Buttons und Tabs</p>
+                </td>
+            </tr>
+            <tr>
                 <th scope="row">Footer-Text</th>
                 <td>
                     <input type="text" name="footer_text" value="<?php echo esc_attr($branding['footer_text'] ?? 'Powered by H2 Concepts'); ?>" class="regular-text">
@@ -209,7 +218,7 @@ foreach ($results as $result) {
                 <h4>🎯 Aktuelle Einstellungen:</h4>
                 <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                        <div style="width: 40px; height: 40px; background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">
+                        <div style="width: 40px; height: 40px; background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: <?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>; font-size: 16px;">
                             🏷️
                         </div>
                         <div>
@@ -217,7 +226,7 @@ foreach ($results as $result) {
                             <small style="color: #666;"><?php echo esc_html($branding['company_name'] ?? 'H2 Concepts'); ?></small>
                         </div>
                     </div>
-                    <button style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
+                    <button style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: <?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
                         Beispiel Button
                     </button>
                 </div>

@@ -110,7 +110,7 @@
 .federwiegen-duration-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    border-color: #5f7f5f;
+    border-color: var(--federwiegen-primary);
 }
 
 .federwiegen-duration-header {
@@ -154,7 +154,7 @@
 .federwiegen-duration-months strong {
     display: block;
     font-size: 2rem;
-    color: #5f7f5f;
+    color: var(--federwiegen-primary);
     font-weight: 700;
 }
 
