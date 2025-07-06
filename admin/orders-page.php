@@ -191,10 +191,6 @@ if (!empty($notice)) {
                             <small style="color: #666;">/Monat</small>
                         </td>
                         <td>
-                            <a href="<?php echo esc_url($order->stripe_link); ?>" target="_blank" class="button button-small" title="Stripe Link öffnen">
-                                💳 Stripe
-                            </a>
-                            <br><br>
                             <button type="button" class="button button-small" onclick="showOrderDetails(<?php echo $order->id; ?>)" title="Details anzeigen">
                                 👁️ Details
                             </button>
@@ -244,7 +240,6 @@ if (!empty($notice)) {
                     <li><strong>Produktauswahl:</strong> Alle gewählten Optionen</li>
                     <li><strong>Kundendaten:</strong> E-Mail und Name (falls angegeben)</li>
                     <li><strong>Preisberechnung:</strong> Finaler Mietpreis pro Monat</li>
-                    <li><strong>Stripe-Link:</strong> Direkter Link zur Zahlung</li>
                     <li><strong>Zeitstempel:</strong> Exakte Bestellzeit</li>
                     <li><strong>Tracking-Daten:</strong> IP-Adresse und Browser</li>
                 </ul>
@@ -321,7 +316,6 @@ function showOrderDetails(orderId) {
                 <h4>📋 Bestellinformationen</h4>
                 <p><strong>Bestellnummer:</strong> #${order.id}</p>
                 <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
-                <p><strong>Kategorie:</strong> ${order.category_name}</p>
                 <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€/Monat</p>
             </div>
             <div>
@@ -354,8 +348,6 @@ function showOrderDetails(orderId) {
     detailsHtml += `
         </ul>
         
-        <h4>🔗 Stripe-Link</h4>
-        <p><a href="${order.stripe_link}" target="_blank">${order.stripe_link}</a></p>
         
         <h4>🖥️ Technische Daten</h4>
         <p><strong>User Agent:</strong> ${order.user_agent}</p>
