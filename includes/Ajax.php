@@ -903,7 +903,7 @@ function federwiegen_create_checkout_session() {
             ],
             'custom_text' => [
                 'terms_of_service_acceptance' => [
-                    'message' => 'Ich akzeptiere die <a href="' . esc_url($tos_url) . '" target="_blank">Allgemeinen Geschäftsbedingungen (AGB)</a>.',
+                    'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
                 ],
             ],
         ];
