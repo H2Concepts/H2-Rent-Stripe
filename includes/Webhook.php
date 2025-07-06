@@ -13,12 +13,11 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
-    // Ensure the Stripe library is loaded and secret key is set
     $init = StripeService::init();
     if (is_wp_error($init)) {
         return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
     }
-    // Explicitly set the API key again at the very beginning as requested
+
     $secret_key = get_option('federwiegen_stripe_secret_key', '');
     if ($secret_key) {
         \Stripe\Stripe::setApiKey($secret_key);
@@ -27,8 +26,6 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     $payload = $request->get_body();
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
     $secret = defined('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') ? constant('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') : '';
-
-
 
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
@@ -39,8 +36,8 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     }
 
     if ($event->type === 'checkout.session.completed') {
-        $session        = $event->data->object;
-        $customer_id    = $session->customer;
+        $session         = $event->data->object;
+        $customer_id     = $session->customer;
         $subscription_id = $session->subscription;
 
         $metadata = $session->metadata ?? [];
@@ -48,20 +45,77 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             ? ($metadata['shipping_price_id'] ?? '')
             : (is_object($metadata) ? ($metadata->shipping_price_id ?? '') : '');
 
-        if ($customer_id && $shipping_price_id) {
+        if ($customer_id && $shipping_price_id && $subscription_id) {
             try {
-                $invoice_item = \Stripe\InvoiceItem::create([
-                    'customer'    => $customer_id,
-                    'price'       => $shipping_price_id,
-                    'description' => 'Versandkosten (einmalig)',
+                $invoices = \Stripe\Invoice::all([
+                    'subscription' => $subscription_id,
+                    'limit' => 1,
                 ]);
 
-                \Stripe\Invoice::create([
-                    'customer'     => $customer_id,
-                    'subscription' => $subscription_id,
-                    'auto_advance' => true,
-                ]);
+                if (count($invoices->data)) {
+                    $invoice = $invoices->data[0];
+
+                    // Hole das Price-Objekt (für Fallback mit price_data)
+                    $price_object = \Stripe\Price::retrieve($shipping_price_id);
+
+                    if ($invoice->status === 'draft') {
+                        try {
+                            \Stripe\InvoiceItem::create([
+                                'customer' => $customer_id,
+                                'price'    => $shipping_price_id,
+                                'description' => 'Versandkosten (einmalig)',
+                                'invoice' => $invoice->id,
+                            ]);
+                        } catch (\Stripe\Exception\InvalidRequestException $e) {
+                            if (str_contains($e->getMessage(), 'Received unknown parameter: price')) {
+                                \Stripe\InvoiceItem::create([
+                                    'customer' => $customer_id,
+                                    'price_data' => [
+                                        'currency'     => $price_object->currency,
+                                        'unit_amount'  => $price_object->unit_amount,
+                                        'product'      => $price_object->product,
+                                    ],
+                                    'description' => 'Versandkosten (einmalig)',
+                                    'invoice' => $invoice->id,
+                                ]);
+                            } else {
+                                throw $e;
+                            }
+                        }
+
+                        \Stripe\Invoice::finalizeInvoice($invoice->id);
+                    } else {
+                        try {
+                            \Stripe\InvoiceItem::create([
+                                'customer' => $customer_id,
+                                'price'    => $shipping_price_id,
+                                'description' => 'Versandkosten (einmalig)',
+                            ]);
+                        } catch (\Stripe\Exception\InvalidRequestException $e) {
+                            if (str_contains($e->getMessage(), 'Received unknown parameter: price')) {
+                                \Stripe\InvoiceItem::create([
+                                    'customer' => $customer_id,
+                                    'price_data' => [
+                                        'currency'     => $price_object->currency,
+                                        'unit_amount'  => $price_object->unit_amount,
+                                        'product'      => $price_object->product,
+                                    ],
+                                    'description' => 'Versandkosten (einmalig)',
+                                ]);
+                            } else {
+                                throw $e;
+                            }
+                        }
+
+                        \Stripe\Invoice::create([
+                            'customer'     => $customer_id,
+                            'subscription' => $subscription_id,
+                            'auto_advance' => true,
+                        ]);
+                    }
+                }
             } catch (\Exception $e) {
+                error_log('Stripe Webhook Error: ' . $e->getMessage());
             }
         }
     }
