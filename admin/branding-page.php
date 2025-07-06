@@ -145,7 +145,7 @@ foreach ($results as $result) {
             <tr>
                 <th scope="row">Plugin-Name</th>
                 <td>
-                    <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rent Plugin'); ?>" class="regular-text" required>
+                    <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" class="regular-text" required>
                     <p class="description">Name des Plugins im Admin-Menü</p>
                 </td>
             </tr>
@@ -222,7 +222,7 @@ foreach ($results as $result) {
                             🏷️
                         </div>
                         <div>
-                            <strong><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rent Plugin'); ?></strong><br>
+                            <strong><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></strong><br>
                             <small style="color: #666;"><?php echo esc_html($branding['company_name'] ?? 'H2 Concepts'); ?></small>
                         </div>
                     </div>

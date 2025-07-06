@@ -7,7 +7,7 @@ class Admin {
         $menu_title = $branding['plugin_name'] ?? 'Federwiegen';
         
         add_menu_page(
-            $branding['plugin_name'] ?? 'Rent Plugin',
+            $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
             $menu_title,
             'manage_options',
             'federwiegen-verleih',
@@ -290,6 +290,7 @@ class Admin {
             $layout_style = sanitize_text_field($_POST['layout_style']);
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip']);
             $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip']);
+            $show_features = isset($_POST['show_features']) ? 1 : 0;
             $show_tooltips = isset($_POST['show_tooltips']) ? 1 : 0;
             $show_rating = isset($_POST['show_rating']) ? 1 : 0;
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
@@ -332,6 +333,7 @@ class Admin {
                         'layout_style' => $layout_style,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
+                        'show_features' => $show_features,
                         'show_tooltips' => $show_tooltips,
                         'show_rating' => $show_rating,
                         'rating_value' => $rating_value,
@@ -339,7 +341,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -380,13 +382,14 @@ class Admin {
                         'layout_style' => $layout_style,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
+                        'show_features' => $show_features,
                         'show_tooltips' => $show_tooltips,
                         'show_rating' => $show_rating,
                         'rating_value' => $rating_value,
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {

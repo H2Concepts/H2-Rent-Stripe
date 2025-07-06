@@ -106,7 +106,7 @@ if (isset($_POST['submit_branding'])) {
                 <div class="federwiegen-form-grid">
                     <div class="federwiegen-form-group">
                         <label>Plugin-Name *</label>
-                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rent Plugin'); ?>" required>
+                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" required>
                         <small>Name des Plugins im Admin-Menü</small>
                     </div>
                     
@@ -184,7 +184,7 @@ if (isset($_POST['submit_branding'])) {
                             🏷️
                         </div>
                         <div class="federwiegen-demo-content">
-                            <strong><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rent Plugin'); ?></strong><br>
+                            <strong><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></strong><br>
                             <small><?php echo esc_html($branding['company_name'] ?? 'H2 Concepts'); ?></small>
                         </div>
                     </div>

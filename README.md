@@ -1,4 +1,4 @@
-# H2 Concepts Rent Plugin
+# H2 Concepts Rental Pro
 
 This WordPress plugin enables the rental of configurable products with built-in Stripe integration. It was initially developed for renting baby swings ("Federwiegen") but can be adapted to other products.
 

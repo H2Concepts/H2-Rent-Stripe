@@ -112,6 +112,9 @@
         <div class="federwiegen-form-section">
             <h4>🌟 Features-Sektion</h4>
             <div class="federwiegen-form-group">
+                <label><input type="checkbox" name="show_features" value="1" checked> Features-Sektion anzeigen</label>
+            </div>
+            <div class="federwiegen-form-group">
                 <label>Features-Überschrift</label>
                 <input type="text" name="features_title" placeholder="z.B. Warum unser Produkt?">
             </div>

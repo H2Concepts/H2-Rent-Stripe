@@ -234,6 +234,9 @@
         <div class="federwiegen-form-section">
             <h4>🌟 Features-Sektion</h4>
             <div class="federwiegen-form-group">
+                <label><input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>> Features-Sektion anzeigen</label>
+            </div>
+            <div class="federwiegen-form-group">
                 <label>Features-Überschrift</label>
                 <input type="text" name="features_title" value="<?php echo esc_attr($edit_item->features_title); ?>">
             </div>
