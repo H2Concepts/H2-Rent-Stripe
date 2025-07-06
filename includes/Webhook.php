@@ -46,7 +46,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
         $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
         $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
-        $email         = sanitize_email($session->customer_details->email ?? '');
+
+        $email  = sanitize_email($session->customer_details->email ?? '');
+        $phone  = sanitize_text_field($session->customer_details->phone ?? '');
+        $addr   = $session->customer_details->address ?? null;
+        $street = sanitize_text_field($addr->line1 ?? '');
+        $postal = sanitize_text_field($addr->postal_code ?? '');
+        $city   = sanitize_text_field($addr->city ?? '');
+        $country = sanitize_text_field($addr->country ?? '');
 
         global $wpdb;
         $existing_id = $wpdb->get_var($wpdb->prepare(
@@ -59,6 +66,11 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $data = [
             'customer_email'    => $email,
             'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
+            'customer_phone'    => $phone,
+            'customer_street'   => $street,
+            'customer_postal'   => $postal,
+            'customer_city'     => $city,
+            'customer_country'  => $country,
             'final_price'       => ($session->amount_total ?? 0) / 100,
             'amount_total'      => $session->amount_total ?? 0,
             'discount_amount'   => $discount_amount,
@@ -91,6 +103,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $subject     = 'Neue Stripe-Bestellung mit Details';
         $message     = "Neue Bestellung:\n\n";
         $message    .= "E-Mail: $email\n";
+        if ($phone) {
+            $message .= "Telefon: $phone\n";
+        }
+        if ($street) {
+            $message .= "Adresse: $street, $postal $city, $country\n";
+        }
         if ($produkt_name) {
             $message .= "Produkt: $produkt_name\n";
         }

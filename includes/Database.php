@@ -399,6 +399,11 @@ class Database {
                 'discount_amount'   => 'decimal(10,2) DEFAULT 0',
                 'extra_text'        => 'text',
                 'dauer_text'        => "varchar(255) DEFAULT ''",
+                'customer_phone'    => "varchar(50) DEFAULT ''",
+                'customer_street'   => "varchar(255) DEFAULT ''",
+                'customer_postal'   => "varchar(20) DEFAULT ''",
+                'customer_city'     => "varchar(100) DEFAULT ''",
+                'customer_country'  => "varchar(2) DEFAULT ''",
                 'status'            => "varchar(20) DEFAULT 'offen'"
             );
 
@@ -706,6 +711,11 @@ class Database {
             amount_total int DEFAULT 0,
             customer_name varchar(255) DEFAULT '',
             customer_email varchar(255) DEFAULT '',
+            customer_phone varchar(50) DEFAULT '',
+            customer_street varchar(255) DEFAULT '',
+            customer_postal varchar(20) DEFAULT '',
+            customer_city varchar(100) DEFAULT '',
+            customer_country varchar(2) DEFAULT '',
             produkt_name varchar(255) DEFAULT '',
             zustand_text varchar(255) DEFAULT '',
             produktfarbe_text varchar(255) DEFAULT '',

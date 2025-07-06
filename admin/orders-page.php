@@ -152,6 +152,8 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         <th style="width: 80px;">ID</th>
                         <th style="width: 120px;">Datum</th>
                         <th>Kunde</th>
+                        <th>Telefon</th>
+                        <th>Adresse</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
                         <th style="width: 80px;">Rabatt</th>
@@ -176,6 +178,17 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 <a href="mailto:<?php echo esc_attr($order->customer_email); ?>"><?php echo esc_html($order->customer_email); ?></a><br>
                             <?php endif; ?>
                             <small style="color: #666;">IP: <?php echo esc_html($order->user_ip); ?></small>
+                        </td>
+                        <td>
+                            <?php echo esc_html($order->customer_phone); ?>
+                        </td>
+                        <td>
+                            <?php
+                                $addr = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
+                                if ($addr || $order->customer_country) {
+                                    echo esc_html(trim($addr . ', ' . $order->customer_country));
+                                }
+                            ?>
                         </td>
                         <td>
                             <div style="line-height: 1.4;">
@@ -267,7 +280,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                 <h4>🎯 Was wird erfasst:</h4>
                 <ul>
                     <li><strong>Produktauswahl:</strong> Alle gewählten Optionen</li>
-                    <li><strong>Kundendaten:</strong> E-Mail und Name (falls angegeben)</li>
+                    <li><strong>Kundendaten:</strong> E-Mail, Name, Telefon und Adresse (falls angegeben)</li>
                     <li><strong>Preisberechnung:</strong> Finaler Mietpreis pro Monat</li>
                     <li><strong>Zeitstempel:</strong> Exakte Bestellzeit</li>
                     <li><strong>Tracking-Daten:</strong> IP-Adresse und Browser</li>
@@ -352,6 +365,8 @@ function showOrderDetails(orderId) {
                 <h4>👤 Kundendaten</h4>
                 <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
                 <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
+                <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
+                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
                 <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
             </div>
         </div>
