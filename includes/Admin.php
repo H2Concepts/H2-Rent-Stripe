@@ -517,8 +517,9 @@ class Admin {
                     COALESCE(v.name, o.produkt_name) as variant_name,
                     COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
                     COALESCE(d.name, o.dauer_text) as duration_name,
-                    cond.name as condition_name,
-                    pc.name as product_color_name, fc.name as frame_color_name
+                    COALESCE(cond.name, o.zustand_text) as condition_name,
+                    COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
              FROM {$wpdb->prefix}federwiegen_orders o
              LEFT JOIN {$wpdb->prefix}federwiegen_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON o.variant_id = v.id
