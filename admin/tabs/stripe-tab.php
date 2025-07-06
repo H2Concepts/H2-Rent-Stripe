@@ -8,6 +8,9 @@ if (isset($_POST['submit_stripe'])) {
     update_option('federwiegen_tos_url', esc_url_raw($_POST['tos_url'] ?? ''));
     update_option('federwiegen_success_url', esc_url_raw($_POST['success_url'] ?? ''));
     update_option('federwiegen_cancel_url', esc_url_raw($_POST['cancel_url'] ?? ''));
+    update_option('federwiegen_ct_shipping', wp_kses_post($_POST['ct_shipping'] ?? ''));
+    update_option('federwiegen_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
+    update_option('federwiegen_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
@@ -16,6 +19,9 @@ $stripe_secret_key   = get_option('federwiegen_stripe_secret_key', '');
 $tos_url             = get_option('federwiegen_tos_url', home_url('/agb'));
 $success_url         = get_option('federwiegen_success_url', home_url('/danke'));
 $cancel_url          = get_option('federwiegen_cancel_url', home_url('/abbrechen'));
+$ct_shipping         = get_option('federwiegen_ct_shipping', '');
+$ct_submit           = get_option('federwiegen_ct_submit', '');
+$ct_after_submit     = get_option('federwiegen_ct_after_submit', '');
 ?>
 
 <div class="federwiegen-branding-tab">
@@ -55,6 +61,22 @@ $cancel_url          = get_option('federwiegen_cancel_url', home_url('/abbrechen
                     <input type="text" name="cancel_url" value="<?php echo esc_attr($cancel_url); ?>" placeholder="<?php echo esc_attr(home_url('/abbrechen')); ?>">
                 </div>
             </div>
+        </div>
+        <div class="federwiegen-form-section">
+            <h4>💬 Custom Checkout Texte</h4>
+            <div class="federwiegen-form-group">
+                <label>Nachricht unter Versandadresse</label>
+                <textarea name="ct_shipping" rows="2" class="large-text"><?php echo esc_textarea($ct_shipping); ?></textarea>
+            </div>
+            <div class="federwiegen-form-group">
+                <label>Nachricht auf dem Bezahl-Button</label>
+                <textarea name="ct_submit" rows="2" class="large-text"><?php echo esc_textarea($ct_submit); ?></textarea>
+            </div>
+            <div class="federwiegen-form-group">
+                <label>Text nach Absenden</label>
+                <textarea name="ct_after_submit" rows="2" class="large-text"><?php echo esc_textarea($ct_after_submit); ?></textarea>
+            </div>
+            <p class="description">Bleibt ein Feld leer, wird kein Text angezeigt.</p>
         </div>
         <?php submit_button('💾 Stripe Einstellungen speichern', 'primary', 'submit_stripe'); ?>
     </form>

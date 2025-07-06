@@ -887,6 +887,24 @@ function federwiegen_create_checkout_session() {
         }
 
         $tos_url = get_option('federwiegen_tos_url', home_url('/agb'));
+        $custom_text = [
+            'terms_of_service_acceptance' => [
+                'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
+            ],
+        ];
+        $ct_shipping = get_option('federwiegen_ct_shipping', '');
+        if ($ct_shipping !== '') {
+            $custom_text['shipping_address'] = [ 'message' => $ct_shipping ];
+        }
+        $ct_submit = get_option('federwiegen_ct_submit', '');
+        if ($ct_submit !== '') {
+            $custom_text['submit'] = [ 'message' => $ct_submit ];
+        }
+        $ct_after = get_option('federwiegen_ct_after_submit', '');
+        if ($ct_after !== '') {
+            $custom_text['after_submit'] = [ 'message' => $ct_after ];
+        }
+
         $session_args = [
             'mode'                     => 'subscription',
             'payment_method_types'     => ['card', 'paypal'],
@@ -904,11 +922,7 @@ function federwiegen_create_checkout_session() {
             'consent_collection'       => [
                 'terms_of_service' => 'required',
             ],
-            'custom_text' => [
-                'terms_of_service_acceptance' => [
-                    'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
-                ],
-            ],
+            'custom_text'              => $custom_text,
         ];
         if (!empty($customer_email)) {
             $session_args['customer_email'] = $customer_email;
