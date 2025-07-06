@@ -341,6 +341,9 @@ class Plugin {
                 ]],
                 'billing_address_collection' => 'required',
                 'shipping_address_collection' => ['allowed_countries' => ['DE']],
+                'phone_number_collection' => [
+                    'enabled' => true,
+                ],
                 'success_url' => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('federwiegen_success_url', home_url('/danke'))),
                 'cancel_url'  => get_option('federwiegen_cancel_url', home_url('/abbrechen')),
                 'consent_collection' => [

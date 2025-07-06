@@ -8,6 +8,7 @@ This WordPress plugin enables the rental of configurable products with built-in 
 - Shortcode `[federwiegen_product]` to embed a product page on the front‑end
 - Calculates prices dynamically and links to your Stripe checkout URLs
 - Supports Stripe promotion codes so customers can redeem coupons
+- Collects customer phone numbers during checkout
 - Tracks user interactions for analytics
 - Generates SEO meta tags, Open Graph tags and schema markup
 
