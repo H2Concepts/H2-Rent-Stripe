@@ -99,22 +99,21 @@ class Admin {
     public function enqueue_frontend_assets() {
         global $post;
 
-        $slug    = get_query_var('produkt_slug');
-        $archive = get_query_var('produkt_archive');
+        $slug = get_query_var('produkt_slug');
 
-        if (!is_singular() && empty($slug) && empty($archive)) {
+        if (!is_singular() && empty($slug)) {
             return;
         }
 
-        if (empty($slug) && empty($archive)) {
+        if (empty($slug)) {
             $content = $post->post_content ?? '';
-            if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form')) {
+            if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form') && !has_shortcode($content, 'produkt_shop_grid')) {
                 return;
             }
         }
 
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
-        if (!$archive) {
+        if (!empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'))) {
             wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
         }
 
@@ -129,10 +128,6 @@ class Admin {
             $inline_css .= "\n" . $custom_css;
         }
         wp_add_inline_style('produkt-style', $inline_css);
-
-        if ($archive) {
-            return;
-        }
 
         global $wpdb;
         $category = null;
