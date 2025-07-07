@@ -15,6 +15,7 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
+    $custom_css = sanitize_textarea_field($_POST['custom_css']);
 
     $table_name = $wpdb->prefix . 'produkt_branding';
 
@@ -30,7 +31,8 @@ if (isset($_POST['submit_branding'])) {
         'front_text_color' => $front_text_color,
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
-        'footer_text' => $footer_text
+        'footer_text' => $footer_text,
+        'custom_css' => $custom_css
     );
 
     $success_count = 0;
@@ -194,6 +196,12 @@ if (isset($_POST['submit_branding'])) {
                         <label>Footer-Text</label>
                         <input type="text" name="footer_text" value="<?php echo esc_attr($branding['footer_text'] ?? 'Powered by H2 Concepts'); ?>">
                         <small>Text im Admin-Footer (z.B. "Powered by Ihr Firmenname")</small>
+                    </div>
+
+                    <div class="produkt-form-group full-width">
+                        <label>Custom CSS</label>
+                        <textarea name="custom_css" rows="4"><?php echo esc_textarea($branding['custom_css'] ?? ''); ?></textarea>
+                        <small>Eigene CSS-Regeln für die Produktseite</small>
                     </div>
                 </div>
             </div>

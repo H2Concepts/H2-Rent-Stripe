@@ -124,7 +124,11 @@ class Admin {
         $text_color   = $branding['front_text_color'] ?? '#4a674a';
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';
         $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
+        $custom_css = $branding['custom_css'] ?? '';
         $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};}";
+        if (!empty($custom_css)) {
+            $inline_css .= "\n" . $custom_css;
+        }
         wp_add_inline_style('produkt-style', $inline_css);
 
         global $wpdb;

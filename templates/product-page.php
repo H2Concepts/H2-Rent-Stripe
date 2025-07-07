@@ -152,7 +152,6 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <p class="produkt-savings" id="produkt-savings" style="display: none;"></p>
                         <p class="produkt-vat-note"><?php echo $vat_included ? 'inkl. MwSt.' : 'Kein Ausweis der Umsatzsteuer gemäß § 19 UStG.'; ?></p>
                     </div>
-                    <div class="produkt-price-icon">💶</div>
                 </div>
 
                 <?php if (!empty($shipping_price_id)): ?>
