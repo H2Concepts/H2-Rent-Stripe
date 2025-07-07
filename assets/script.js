@@ -931,26 +931,23 @@ jQuery(document).ready(function($) {
             });
         });
 
-        const accordionButtons = document.querySelectorAll('.produkt-accordion-header');
-        accordionButtons.forEach((btn) => {
-            btn.addEventListener('click', function () {
-                const item = this.parentElement;
-                const content = this.nextElementSibling;
-                const isActive = item.classList.contains('active');
+    }
+});
 
-                document.querySelectorAll('.produkt-accordion-item').forEach((el) => {
-                    el.classList.remove('active');
-                    const c = el.querySelector('.produkt-accordion-content');
-                    if (c) {
-                        c.style.maxHeight = null;
-                    }
-                });
+document.addEventListener("DOMContentLoaded", function () {
+    const accordionHeaders = document.querySelectorAll(".produkt-accordion-header");
 
-                if (!isActive) {
-                    item.classList.add('active');
-                    content.style.maxHeight = content.scrollHeight + 'px';
+    accordionHeaders.forEach(header => {
+        header.addEventListener("click", () => {
+            const item = header.closest(".produkt-accordion-item");
+            item.classList.toggle("active");
+
+            accordionHeaders.forEach(other => {
+                const otherItem = other.closest(".produkt-accordion-item");
+                if (other !== header) {
+                    otherItem.classList.remove("active");
                 }
             });
         });
-    }
+    });
 });
