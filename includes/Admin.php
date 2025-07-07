@@ -613,9 +613,17 @@ class Admin {
     }
 
     public function render_product_meta_box($post) {
-        $value = get_post_meta($post->ID, 'produkt_category_id', true);
-        echo '<label for="produkt_category_id">Kategorie-ID:</label>';
-        echo '<input type="number" name="produkt_category_id" value="' . esc_attr($value) . '" />';
+        global $wpdb;
+        $value = intval(get_post_meta($post->ID, 'produkt_category_id', true));
+        $categories = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order");
+        echo '<label for="produkt_category_id">Kategorie:</label>';
+        echo '<select name="produkt_category_id" id="produkt_category_id">';
+        echo '<option value="">- Kategorie wählen -</option>';
+        foreach ((array) $categories as $c) {
+            $selected = selected($value, $c->id, false);
+            echo '<option value="' . intval($c->id) . '" ' . $selected . '>' . esc_html($c->name) . '</option>';
+        }
+        echo '</select>';
     }
 
     public function save_product_meta($post_id) {
