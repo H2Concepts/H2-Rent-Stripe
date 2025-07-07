@@ -1335,8 +1335,8 @@ body.produkt-popup-open {
 .produkt-accordion-content {
     overflow: hidden;
     max-height: 0;
-    padding: 0 0;
-    transition: max-height 0.3s ease, padding 0.3s ease;
+    transition: max-height 0.4s ease;
+    padding: 0;
 }
 
 .produkt-accordion-item.active .produkt-accordion-content {

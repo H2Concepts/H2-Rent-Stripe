@@ -940,14 +940,23 @@ document.addEventListener("DOMContentLoaded", function () {
     accordionHeaders.forEach(header => {
         header.addEventListener("click", () => {
             const item = header.closest(".produkt-accordion-item");
-            item.classList.toggle("active");
+            const content = item.querySelector(".produkt-accordion-content");
 
-            accordionHeaders.forEach(other => {
-                const otherItem = other.closest(".produkt-accordion-item");
-                if (other !== header) {
-                    otherItem.classList.remove("active");
-                }
-            });
+            if (item.classList.contains("active")) {
+                item.classList.remove("active");
+                content.style.maxHeight = null;
+            } else {
+                document.querySelectorAll(".produkt-accordion-item.active").forEach(openItem => {
+                    openItem.classList.remove("active");
+                    const openContent = openItem.querySelector(".produkt-accordion-content");
+                    if (openContent) {
+                        openContent.style.maxHeight = null;
+                    }
+                });
+
+                item.classList.add("active");
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
         });
     });
 });
