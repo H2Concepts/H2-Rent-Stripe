@@ -177,8 +177,12 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
-    $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;">';
-    $message .= '<h2 style="color:#007cba;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h2>';
+    $site_title = get_bloginfo('name');
+    $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">';
+    $message .= '<div style="max-width:600px;margin:auto;">';
+    $message .= '<div style="background:#007cba;color:#fff;padding:20px;text-align:center;font-size:20px;font-weight:bold;">' . esc_html($site_title) . '</div>';
+    $message .= '<div style="padding:20px;">';
+    $message .= '<h2 style="color:#007cba;margin-top:0;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h2>';
     $message .= '<p>Hallo ' . esc_html($first . ' ' . $last) . ',</p>';
     $message .= '<p>herzlichen Dank für Ihre Bestellung!<br>Wir freuen uns sehr, Sie als neuen Kunden begrüßen zu dürfen.</p>';
 
@@ -211,6 +215,9 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $message .= '</table>';
 
     $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
+    $message .= '</div>';
+    $message .= '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">Kleine Helden Verleih GbR<br>Kadir Üner &amp; Tim Braunleder<br>Siegenkamp 28<br>52499 Baesweiler</div>';
+    $message .= '</div>';
     $message .= '</body></html>';
 
     $headers = ['Content-Type: text/html; charset=UTF-8'];
@@ -230,8 +237,12 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
 
-    $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;">';
-    $message .= '<h2 style="color:#007cba;">Neue Bestellung eingegangen</h2>';
+    $site_title = get_bloginfo('name');
+    $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">';
+    $message .= '<div style="max-width:600px;margin:auto;">';
+    $message .= '<div style="background:#007cba;color:#fff;padding:20px;text-align:center;font-size:20px;font-weight:bold;">' . esc_html($site_title) . '</div>';
+    $message .= '<div style="padding:20px;">';
+    $message .= '<h2 style="color:#007cba;margin-top:0;">Neue Bestellung eingegangen</h2>';
 
     $message .= '<h3>Bestelldetails</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
@@ -263,6 +274,9 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $message .= '</table>';
 
     $message .= '<p>Session-ID: ' . esc_html($session_id) . '</p>';
+    $message .= '</div>';
+    $message .= '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">Kleine Helden Verleih GbR<br>Kadir Üner &amp; Tim Braunleder<br>Siegenkamp 28<br>52499 Baesweiler</div>';
+    $message .= '</div>';
     $message .= '</body></html>';
 
     $headers = ['Content-Type: text/html; charset=UTF-8'];
