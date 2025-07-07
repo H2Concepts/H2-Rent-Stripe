@@ -23,6 +23,10 @@ $variants = $wpdb->get_results($wpdb->prepare(
     "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
     $selected_category
 ));
+$variant_status = array();
+foreach ($variants as $v) {
+    $variant_status[$v->id] = 1;
+}
 $variant_images_db = array();
 
 // Get active tab
@@ -106,6 +110,27 @@ if (isset($_POST['submit'])) {
                 $wpdb->insert($table_variant_img, array('color_id' => $color_id, 'variant_id' => $variant_id, 'image_url' => $img));
             }
         }
+
+        $table_links = $wpdb->prefix . 'produkt_variant_options';
+        foreach ($variants as $v) {
+            $available = isset($_POST['variant_available'][$v->id]) ? 1 : 0;
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $table_links WHERE variant_id = %d AND option_type = %s AND option_id = %d",
+                $v->id,
+                ($color_type === 'frame' ? 'frame_color' : 'product_color'),
+                $color_id
+            ));
+            if ($exists) {
+                $wpdb->update($table_links, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
+            } else {
+                $wpdb->insert($table_links, [
+                    'variant_id' => $v->id,
+                    'option_type' => ($color_type === 'frame' ? 'frame_color' : 'product_color'),
+                    'option_id' => $color_id,
+                    'available' => $available
+                ], ['%d','%s','%d','%d']);
+            }
+        }
     }
 }
 
@@ -133,6 +158,15 @@ if (isset($_GET['edit'])) {
             "SELECT variant_id, image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d",
             $edit_item->id
         ), OBJECT_K);
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = %s AND option_id = %d",
+            $edit_item->color_type === 'frame' ? 'frame_color' : 'product_color',
+            $edit_item->id
+        ), OBJECT_K);
+        $variant_status = [];
+        foreach ($variants as $v) {
+            $variant_status[$v->id] = isset($rows[$v->id]) ? intval($rows[$v->id]->available) : 1;
+        }
     }
 }
 
@@ -257,6 +291,11 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                         <input type="url" name="variant_images[<?php echo $variant->id; ?>]" id="variant_image_<?php echo $variant->id; ?>" value="">
                                         <button type="button" class="button produkt-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
                                     </div>
+                                    <label class="produkt-toggle-label" style="margin-top:5px;display:block;">
+                                        <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" checked>
+                                        <span class="produkt-toggle-slider"></span>
+                                        <span>Verfügbar</span>
+                                    </label>
                                 </div>
                                 <?php endforeach; ?>
                                 
@@ -340,6 +379,11 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                         <img src="<?php echo esc_url($img_val); ?>" alt="Variant Image" style="max-width:150px;height:auto;">
                                     </div>
                                     <?php endif; ?>
+                                    <label class="produkt-toggle-label" style="margin-top:5px;display:block;">
+                                        <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" <?php echo ($variant_status[$variant->id] ?? 1) ? 'checked' : ''; ?>>
+                                        <span class="produkt-toggle-slider"></span>
+                                        <span>Verfügbar</span>
+                                    </label>
                                 </div>
                                 <?php endforeach; ?>
                                 

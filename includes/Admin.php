@@ -73,14 +73,6 @@ class Admin {
             array($this, 'colors_page')
         );
         
-        add_submenu_page(
-            'produkt-verleih',
-            'Ausführungs-Optionen',
-            'Ausführungs-Optionen',
-            'manage_options',
-            'produkt-variant-options',
-            array($this, 'variant_options_page')
-        );
         
         
         add_submenu_page(
@@ -478,11 +470,6 @@ class Admin {
         include PRODUKT_PLUGIN_PATH . 'admin/colors-page.php';
     }
     
-    public function variant_options_page() {
-        include PRODUKT_PLUGIN_PATH . 'admin/variant-options-page.php';
-    }
-    
-
     public function orders_page() {
         global $wpdb;
         $notice = '';

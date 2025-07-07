@@ -12,6 +12,16 @@ $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categorie
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
 
+// Get variants for the selected category
+$variants = $wpdb->get_results($wpdb->prepare(
+    "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+    $selected_category
+));
+$variant_status = array();
+foreach ($variants as $v) {
+    $variant_status[$v->id] = 1;
+}
+
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
@@ -60,6 +70,7 @@ if (isset($_POST['submit'])) {
         );
         
         if ($result !== false) {
+            $extra_id = intval($_POST['id']);
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich aktualisiert!</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -80,9 +91,32 @@ if (isset($_POST['submit'])) {
         );
         
         if ($result !== false) {
+            $extra_id = $wpdb->insert_id;
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        }
+    }
+
+    if (isset($extra_id)) {
+        $table_links = $wpdb->prefix . 'produkt_variant_options';
+        foreach ($variants as $v) {
+            $available = isset($_POST['variant_available'][$v->id]) ? 1 : 0;
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $table_links WHERE variant_id = %d AND option_type = 'extra' AND option_id = %d",
+                $v->id,
+                $extra_id
+            ));
+            if ($exists) {
+                $wpdb->update($table_links, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
+            } else {
+                $wpdb->insert($table_links, [
+                    'variant_id' => $v->id,
+                    'option_type' => 'extra',
+                    'option_id' => $extra_id,
+                    'available' => $available
+                ], ['%d','%s','%d','%d']);
+            }
         }
     }
 }
@@ -103,6 +137,21 @@ if (isset($_GET['edit'])) {
     $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['edit'])));
     if ($edit_item) {
         $selected_category = $edit_item->category_id;
+        // Refresh variants for the newly selected category
+        $variants = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+            $selected_category
+        ));
+
+        // Load existing availability per variant
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'extra' AND option_id = %d",
+            $edit_item->id
+        ), OBJECT_K);
+        $variant_status = [];
+        foreach ($variants as $v) {
+            $variant_status[$v->id] = isset($rows[$v->id]) ? intval($rows[$v->id]->available) : 1;
+        }
     }
 }
 

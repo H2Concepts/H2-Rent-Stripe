@@ -57,6 +57,23 @@
                 </div>
             </div>
         </div>
+
+        <?php if (!empty($variants)): ?>
+        <div class="produkt-form-section">
+            <h4>🔗 Verfügbarkeit je Ausführung</h4>
+            <div class="produkt-form-row">
+                <?php foreach ($variants as $variant): ?>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" <?php echo ($variant_status[$variant->id] ?? 1) ? 'checked' : ''; ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span><?php echo esc_html($variant->name); ?></span>
+                    </label>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <!-- Actions -->
         <div class="produkt-form-actions">
