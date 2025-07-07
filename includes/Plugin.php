@@ -20,6 +20,7 @@ class Plugin {
     }
 
     public function init() {
+        $this->register_product_post_type();
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
@@ -56,6 +57,45 @@ class Plugin {
         }
     }
 
+    public function register_product_post_type() {
+        $labels = [
+            'name' => 'produkte',
+            'singular_name' => 'produkt',
+        ];
+        $args = [
+            'labels' => $labels,
+            'public' => true,
+            'has_archive' => true,
+            'rewrite' => ['slug' => 'shop'],
+            'supports' => ['title', 'editor', 'thumbnail'],
+        ];
+        register_post_type('produkt', $args);
+    }
+
+    public static function create_sample_product() {
+        if (!post_type_exists('produkt')) {
+            return;
+        }
+
+        $existing = get_posts([
+            'post_type' => 'produkt',
+            'posts_per_page' => 1,
+            'post_status' => 'publish',
+        ]);
+
+        if (empty($existing)) {
+            $post_id = wp_insert_post([
+                'post_type' => 'produkt',
+                'post_title' => 'Beispielprodukt',
+                'post_status' => 'publish',
+            ]);
+
+            if ($post_id && !is_wp_error($post_id)) {
+                update_post_meta($post_id, 'is_plugin_starter', true);
+            }
+        }
+    }
+
     public function activate() {
         $this->db->create_tables();
         $load_sample = defined('PRODUKT_LOAD_DEFAULT_DATA') ? PRODUKT_LOAD_DEFAULT_DATA : false;
@@ -72,12 +112,16 @@ class Plugin {
 
     public static function activate_plugin() {
         $plugin = new self();
+        $plugin->register_product_post_type();
         $plugin->activate();
+        self::create_sample_product();
+        flush_rewrite_rules();
     }
 
     public static function deactivate_plugin() {
         $plugin = new self();
         $plugin->deactivate();
+        flush_rewrite_rules();
     }
 
     public function product_shortcode($atts) {

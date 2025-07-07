@@ -72,3 +72,11 @@ function produkt_simple_checkout_button() {
     </script>
     <?php return ob_get_clean();
 }
+
+add_filter('template_include', function($template) {
+    if (is_singular('produkt')) {
+        return plugin_dir_path(__FILE__) . 'templates/single-produkt.php';
+    }
+    return $template;
+});
+
