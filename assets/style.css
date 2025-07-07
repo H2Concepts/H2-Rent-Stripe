@@ -204,7 +204,7 @@
 .produkt-price-box {
     flex: 1;
     background: linear-gradient(135deg, #e3e8e3 0%, #f6f7f6 100%);
-    border: 2px solid #c7d2c7;
+    border: 2px solid var(--produkt-border-color);
     border-radius: 0.75rem;
     padding: 1.5rem;
     position: relative;
