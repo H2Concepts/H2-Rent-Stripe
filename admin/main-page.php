@@ -11,8 +11,20 @@ $variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_va
 $extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
 $durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
 
-// Get recent categories
-$recent_categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY id DESC LIMIT 3");
+// Get recently edited products (latest entries)
+$recent_products = $wpdb->get_results(
+    "SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY id DESC LIMIT 4"
+);
+
+// Get recent orders
+$recent_orders = $wpdb->get_results(
+    "SELECT o.*, c.name AS category_name, v.name AS variant_name
+       FROM {$wpdb->prefix}produkt_orders o
+       LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+       LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+      ORDER BY o.created_at DESC
+      LIMIT 4"
+);
 
 // Get branding settings
 $branding = array();
@@ -100,17 +112,38 @@ foreach ($branding_results as $result) {
         </div>
     </div>
     
-    <!-- Schnellzugriff -->
-    <?php if (!empty($recent_categories)): ?>
-    <div class="produkt-quick-access">
-        <h3>⚡ Schnellzugriff</h3>
+    <!-- Zuletzt bearbeitete Produkte -->
+    <?php if (!empty($recent_products)): ?>
+    <div class="produkt-recent-section">
+        <h3>🛒 Letzte Produkte</h3>
         <div class="produkt-category-cards">
-            <?php foreach ($recent_categories as $category): ?>
+            <?php foreach ($recent_products as $prod): ?>
+            <?php $prod_url = home_url('/shop/' . sanitize_title($prod->product_title)); ?>
             <div class="produkt-category-card">
-                <h4><?php echo esc_html($category->name); ?></h4>
-                <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
+                <h4><?php echo esc_html($prod->name); ?></h4>
+                <code><?php echo esc_url($prod_url); ?></code>
                 <div class="produkt-category-actions">
-                    <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $category->id); ?>" class="button button-small">Ausführungen</a>
+                    <a href="<?php echo esc_url($prod_url); ?>" class="button button-small" target="_blank">Seite ansehen</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $prod->id); ?>" class="button button-small">Bearbeiten</a>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Letzte Bestellungen -->
+    <?php if (!empty($recent_orders)): ?>
+    <div class="produkt-recent-section">
+        <h3>📦 Letzte Bestellungen</h3>
+        <div class="produkt-category-cards">
+            <?php foreach ($recent_orders as $order): ?>
+            <div class="produkt-category-card">
+                <h4>#<?php echo $order->id; ?> – <?php echo esc_html($order->category_name); ?></h4>
+                <p style="margin-bottom:5px;"><?php echo date('d.m.Y', strtotime($order->created_at)); ?>, <?php echo esc_html($order->customer_name); ?></p>
+                <p style="margin-bottom:10px;">Variante: <?php echo esc_html($order->variant_name); ?> – <?php echo number_format($order->final_price, 2, ',', '.'); ?>€</p>
+                <div class="produkt-category-actions">
+                    <a href="<?php echo admin_url('admin.php?page=produkt-orders&delete_order=' . $order->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Bestellung wirklich löschen?');">Löschen</a>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -257,7 +290,7 @@ foreach ($branding_results as $result) {
     opacity: 0.8;
 }
 
-.produkt-quick-access {
+.produkt-recent-section {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -265,7 +298,7 @@ foreach ($branding_results as $result) {
     margin-bottom: 30px;
 }
 
-.produkt-quick-access h3 {
+.produkt-recent-section h3 {
     margin: 0 0 20px 0;
     color: #3c434a;
 }
