@@ -144,7 +144,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         </div>
         <?php else: ?>
         
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
@@ -225,11 +225,11 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         </td>
                         <td>
                             <?php if ($order->status === 'offen'): ?>
-                                <span style="color: #dc3232; font-weight: bold;">🕓 Offen</span>
+                                <span class="badge badge-warning">Offen</span>
                             <?php elseif ($order->status === 'gekündigt'): ?>
-                                <span style="color: #757575; font-weight: bold;">❌ Gekündigt</span>
+                                <span class="badge badge-danger">Gekündigt</span>
                             <?php else: ?>
-                                <span style="color: #2e7d32; font-weight: bold;">✅ Abgeschlossen</span>
+                                <span class="badge badge-success">Abgeschlossen</span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -310,12 +310,13 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 </div>
 
 <!-- Order Details Modal -->
-<div id="order-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; padding: 30px; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;">
+<div id="order-details-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button type="button" class="modal-close" onclick="closeOrderDetails()">&times;</button>
         <h3 style="margin-top: 0;">📋 Bestelldetails</h3>
         <div id="order-details-content"></div>
         <div style="text-align: right; margin-top: 20px;">
-            <button type="button" class="button button-primary" onclick="closeOrderDetails()">Schließen</button>
+            <button type="button" class="button-primary" onclick="closeOrderDetails()">Schließen</button>
         </div>
     </div>
 </div>

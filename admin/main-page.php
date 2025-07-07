@@ -36,19 +36,19 @@ foreach ($branding_results as $result) {
     
     <!-- Kompakte Statistiken -->
     <div class="produkt-stats-compact">
-        <div class="produkt-stat-item">
+        <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $categories_count; ?></div>
             <div class="produkt-stat-label">Kategorien</div>
         </div>
-        <div class="produkt-stat-item">
+        <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $variants_count; ?></div>
             <div class="produkt-stat-label">Ausführungen</div>
         </div>
-        <div class="produkt-stat-item">
+        <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $extras_count; ?></div>
             <div class="produkt-stat-label">Extras</div>
         </div>
-        <div class="produkt-stat-item">
+        <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $durations_count; ?></div>
             <div class="produkt-stat-label">Mietdauern</div>
         </div>
@@ -181,7 +181,7 @@ foreach ($branding_results as $result) {
     margin-bottom: 30px;
 }
 
-.produkt-stat-item {
+.stat-card {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
