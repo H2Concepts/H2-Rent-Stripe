@@ -107,13 +107,17 @@ class Admin {
     public function enqueue_frontend_assets() {
         global $post;
 
-        if (!is_singular()) {
+        $slug = get_query_var('produkt_slug');
+
+        if (!is_singular() && empty($slug)) {
             return;
         }
 
-        $content = $post->post_content ?? '';
-        if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form')) {
-            return;
+        if (empty($slug)) {
+            $content = $post->post_content ?? '';
+            if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form')) {
+                return;
+            }
         }
 
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
@@ -132,16 +136,26 @@ class Admin {
         wp_add_inline_style('produkt-style', $inline_css);
 
         global $wpdb;
-        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
-        preg_match($pattern, $post->post_content, $matches);
-        $category_shortcode = isset($matches[1]) ? $matches[1] : '';
-
         $category = null;
-        if (!empty($category_shortcode)) {
-            $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
-                $category_shortcode
-            ));
+        if ($slug) {
+            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                    $category = $cat;
+                    break;
+                }
+            }
+        } else {
+            $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+            preg_match($pattern, $post->post_content, $matches);
+            $category_shortcode = isset($matches[1]) ? $matches[1] : '';
+
+            if (!empty($category_shortcode)) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                    $category_shortcode
+                ));
+            }
         }
         if (!$category) {
             $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
