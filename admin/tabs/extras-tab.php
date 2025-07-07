@@ -136,7 +136,7 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
         
         <?php if (empty($extras)): ?>
         <div class="produkt-empty-state">
-            <p>Noch keine Extras für diese Kategorie vorhanden.</p>
+            <p>Noch keine Extras für dieses Produkt vorhanden.</p>
             <p><strong>Tipp:</strong> Fügen Sie oben ein neues Extra hinzu!</p>
         </div>
         <?php else: ?>

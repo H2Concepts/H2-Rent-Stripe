@@ -9,8 +9,8 @@ if (!defined('ABSPATH')) {
     <div class="produkt-admin-header-compact">
         <div class="produkt-admin-logo-compact">🏷️</div>
         <div class="produkt-admin-title-compact">
-            <h1>Kategorien verwalten</h1>
-            <p>Produktkategorien & SEO-Einstellungen</p>
+            <h1>Produkte verwalten</h1>
+            <p>Produkte & SEO-Einstellungen</p>
         </div>
     </div>
     
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
     <div class="produkt-breadcrumb">
         <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
-        <strong>Kategorien</strong>
+        <strong>Produkte</strong>
     </div>
     
     <!-- Tab Navigation -->
@@ -29,7 +29,7 @@ if (!defined('ABSPATH')) {
         </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" 
            class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
-            ➕ Neue Kategorie
+            ➕ Neues Produkt
         </a>
         <?php if ($edit_item): ?>
         <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $edit_item->id); ?>" 

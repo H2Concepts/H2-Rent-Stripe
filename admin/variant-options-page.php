@@ -136,7 +136,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
         <form method="get" action="">
             <input type="hidden" name="page" value="produkt-variant-options">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-            <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
+            <label for="category-select"><strong>🏷️ Produkt:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
                 <?php foreach ($categories as $category): ?>
                 <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
@@ -181,7 +181,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                 ?>
                 <div class="produkt-tab-section">
                     <h3>⚠️ Keine Ausführungen vorhanden</h3>
-                    <p>Bevor Sie Optionen zuordnen können, müssen Sie erst Ausführungen für diese Kategorie erstellen.</p>
+                    <p>Bevor Sie Optionen zuordnen können, müssen Sie erst Ausführungen für dieses Produkt erstellen.</p>
                     <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category); ?>" class="button button-primary">Ausführungen verwalten</a>
                 </div>
                 <?php
@@ -334,11 +334,11 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                     <p>Verknüpfen Sie Zustände, Farben und Extras mit spezifischen Ausführungen.</p>
                     
                     <div class="produkt-list-card">
-                        <h4>Zuordnungen für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekannte Kategorie'; ?></h4>
+                        <h4>Zuordnungen für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h4>
                         
                         <?php if (empty($variant_options)): ?>
                         <div class="produkt-empty-state">
-                            <p>Noch keine Zuordnungen für diese Kategorie vorhanden.</p>
+                            <p>Noch keine Zuordnungen für dieses Produkt vorhanden.</p>
                             <?php if (!empty($variants)): ?>
                             <p><strong>Tipp:</strong> Fügen Sie eine neue Zuordnung hinzu!</p>
                             <?php endif; ?>

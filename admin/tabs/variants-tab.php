@@ -170,7 +170,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
         
         <?php if (empty($variants)): ?>
         <div class="produkt-empty-state">
-            <p>Noch keine Ausführungen für diese Kategorie vorhanden.</p>
+            <p>Noch keine Ausführungen für dieses Produkt vorhanden.</p>
             <p><strong>Tipp:</strong> Fügen Sie oben eine neue Ausführung hinzu!</p>
         </div>
         <?php else: ?>

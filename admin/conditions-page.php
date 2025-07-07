@@ -115,7 +115,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
         <form method="get" action="">
             <input type="hidden" name="page" value="produkt-conditions">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-            <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
+            <label for="category-select"><strong>🏷️ Produkt:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
                 <?php foreach ($categories as $category): ?>
                 <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
@@ -261,11 +261,11 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                     <p>Verwalten Sie Produktzustände (Neu/Aufbereitet) mit individuellen Preisanpassungen.</p>
                     
                     <div class="produkt-list-card">
-                        <h4>Zustände für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekannte Kategorie'; ?></h4>
+                        <h4>Zustände für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h4>
                         
                         <?php if (empty($conditions)): ?>
                         <div class="produkt-empty-state">
-                            <p>Noch keine Zustände für diese Kategorie vorhanden.</p>
+                            <p>Noch keine Zustände für dieses Produkt vorhanden.</p>
                             <p><strong>Tipp:</strong> Fügen Sie einen neuen Zustand hinzu!</p>
                         </div>
                         <?php else: ?>

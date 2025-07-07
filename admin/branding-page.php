@@ -112,7 +112,7 @@ foreach ($results as $result) {
             </a>
             <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-category"></span>
-                Kategorien
+                Produkte
             </a>
             <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-images-alt2"></span>

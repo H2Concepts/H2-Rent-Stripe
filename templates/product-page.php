@@ -410,8 +410,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php endif; ?>
                     <?php else: ?>
                     <div style="padding: 20px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; text-align: center;">
-                        <h4>⚠️ Kategorie noch nicht vollständig konfiguriert</h4>
-                        <p>Für diese Produktkategorie sind noch nicht alle erforderlichen Daten hinterlegt.</p>
+                        <h4>⚠️ Produkt noch nicht vollständig konfiguriert</h4>
+                        <p>Für dieses Produkt sind noch nicht alle erforderlichen Daten hinterlegt.</p>
                         <p><strong>Bitte konfigurieren Sie die fehlenden Daten im Admin-Bereich.</strong></p>
                     </div>
                     <?php endif; ?>

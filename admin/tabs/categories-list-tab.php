@@ -4,19 +4,19 @@
 
 <div class="produkt-categories-list">
     <div class="produkt-list-header">
-        <h3>📋 Alle Kategorien</h3>
+        <h3>📋 Alle Produkte</h3>
         <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="button button-primary">
-            ➕ Neue Kategorie hinzufügen
+            ➕ Neues Produkt hinzufügen
         </a>
     </div>
     
     <?php if (empty($categories)): ?>
     <div class="produkt-empty-state">
         <div class="produkt-empty-icon">🏷️</div>
-        <h4>Noch keine Kategorien vorhanden</h4>
-        <p>Erstellen Sie Ihre erste Produktkategorie.</p>
+        <h4>Noch keine Produkte vorhanden</h4>
+        <p>Erstellen Sie Ihr erstes Produkt.</p>
         <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="button button-primary">
-            ➕ Erste Kategorie erstellen
+            ➕ Erstes Produkt erstellen
         </a>
     </div>
     <?php else: ?>
@@ -61,7 +61,7 @@
                     </a>
                     <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $category->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                        class="button button-small produkt-delete-button"
-                       onclick="return confirm('Sind Sie sicher, dass Sie diese Kategorie löschen möchten?\n\n\"<?php echo esc_js($category->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')">
+                       onclick="return confirm('Sind Sie sicher, dass Sie dieses Produkt löschen möchten?\n\n\"<?php echo esc_js($category->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')">
                         🗑️ Löschen
                     </a>
                 </div>

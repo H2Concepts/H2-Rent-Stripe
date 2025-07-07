@@ -4,7 +4,7 @@
 
 <div class="produkt-variants-list">
     <div class="produkt-list-header">
-        <h3>📋 Ausführungen für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekannte Kategorie'; ?></h3>
+        <h3>📋 Ausführungen für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h3>
         <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&tab=add'); ?>" class="button button-primary">
             ➕ Neue Ausführung hinzufügen
         </a>
@@ -14,7 +14,7 @@
     <div class="produkt-empty-state">
         <div class="produkt-empty-icon">📦</div>
         <h4>Noch keine Ausführungen vorhanden</h4>
-        <p>Erstellen Sie Ihre erste Produktausführung für diese Kategorie.</p>
+        <p>Erstellen Sie Ihre erste Produktausführung für dieses Produkt.</p>
         <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&tab=add'); ?>" class="button button-primary">
             ➕ Erste Ausführung erstellen
         </a>

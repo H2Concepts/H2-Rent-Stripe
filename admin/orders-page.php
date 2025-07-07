@@ -47,7 +47,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
             </a>
             <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-category"></span>
-                Kategorien
+                Produkte
             </a>
         </div>
     </div>
@@ -59,9 +59,9 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
             <input type="hidden" name="page" value="produkt-orders">
             
             <div>
-                <label for="category-select"><strong>Kategorie:</strong></label>
+                <label for="category-select"><strong>Produkt:</strong></label>
                 <select name="category" id="category-select" style="min-width: 200px;">
-                    <option value="0" <?php selected($selected_category, 0); ?>>Alle Kategorien</option>
+                    <option value="0" <?php selected($selected_category, 0); ?>>Alle Produkte</option>
                     <?php foreach ($categories as $category): ?>
                     <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
                         <?php echo esc_html($category->name); ?>
@@ -85,7 +85,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         
         <?php if ($current_category): ?>
         <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
-            <strong>📝 Aktuelle Kategorie:</strong> <?php echo esc_html($current_category->name); ?>
+            <strong>📝 Aktuelle Produkt:</strong> <?php echo esc_html($current_category->name); ?>
             <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
@@ -140,7 +140,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         <?php if (empty($orders)): ?>
         <div style="text-align: center; padding: 40px;">
             <p style="font-size: 18px; color: #666;">Keine Bestellungen im gewählten Zeitraum gefunden.</p>
-            <p>Versuchen Sie einen anderen Zeitraum oder eine andere Kategorie.</p>
+            <p>Versuchen Sie einen anderen Zeitraum oder eine andere Produkt.</p>
         </div>
         <?php else: ?>
         
@@ -271,7 +271,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
             </button>
         </div>
         <p style="margin-top: 10px; color: #666; font-size: 13px;">
-            Exportiert werden alle Bestellungen im aktuell gewählten Filter-Zeitraum und der ausgewählten Kategorie.
+            Exportiert werden alle Bestellungen im aktuell gewählten Filter-Zeitraum und der ausgewählten Produkt.
         </p>
     </div>
     
@@ -303,7 +303,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         </div>
         
         <div style="margin-top: 15px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;">
-            <strong>💡 Tipp:</strong> Nutzen Sie die Filterfunktionen um spezifische Zeiträume oder Kategorien zu analysieren. Die Export-Funktion hilft bei der weiteren Datenverarbeitung in Excel oder anderen Tools.
+            <strong>💡 Tipp:</strong> Nutzen Sie die Filterfunktionen um spezifische Zeiträume oder Produkte zu analysieren. Die Export-Funktion hilft bei der weiteren Datenverarbeitung in Excel oder anderen Tools.
         </div>
         
         <div style="margin-top: 10px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">

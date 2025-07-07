@@ -4,8 +4,8 @@
 
 <div class="produkt-add-category">
     <div class="produkt-form-header">
-        <h3>➕ Neue Kategorie hinzufügen</h3>
-        <p>Erstellen Sie eine neue Produktkategorie mit SEO-Einstellungen und individueller Konfiguration.</p>
+        <h3>➕ Neues Produkt hinzufügen</h3>
+        <p>Erstellen Sie ein neues Produkt mit SEO-Einstellungen und individueller Konfiguration.</p>
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
@@ -15,7 +15,7 @@
             <h4>📝 Grunddaten</h4>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
-                    <label>Kategorie-Name *</label>
+                    <label>Produkt-Name *</label>
                     <input type="text" name="name" required placeholder="z.B. Nonomo Produkt">
                 </div>
                 <div class="produkt-form-group">
@@ -256,7 +256,7 @@
         <!-- Actions -->
         <div class="produkt-form-actions">
             <button type="submit" name="submit_category" class="button button-primary button-large">
-                ✅ Kategorie erstellen
+                ✅ Produkt erstellen
             </button>
             <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=list'); ?>" class="button button-large">
                 ❌ Abbrechen

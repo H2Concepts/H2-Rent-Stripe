@@ -38,7 +38,7 @@ foreach ($branding_results as $result) {
     <div class="produkt-stats-compact">
         <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $categories_count; ?></div>
-            <div class="produkt-stat-label">Kategorien</div>
+            <div class="produkt-stat-label">Produkte</div>
         </div>
         <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $variants_count; ?></div>
@@ -61,8 +61,8 @@ foreach ($branding_results as $result) {
             <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-card">
                 <div class="produkt-nav-icon">🏷️</div>
                 <div class="produkt-nav-content">
-                    <h4>Kategorien</h4>
-                    <p>Produktkategorien & SEO-Einstellungen</p>
+                    <h4>Produkte</h4>
+                    <p>Produkte & SEO-Einstellungen</p>
                 </div>
             </a>
             
@@ -123,9 +123,9 @@ foreach ($branding_results as $result) {
         <h3>💡 Erste Schritte</h3>
         <div class="produkt-help-cards">
             <div class="produkt-help-card">
-                <h4>1. Kategorie erstellen</h4>
-                <p>Erstellen Sie eine neue Produktkategorie mit SEO-Einstellungen</p>
-                <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="button">Kategorien →</a>
+                <h4>1. Produkt erstellen</h4>
+                <p>Erstellen Sie ein neues Produkt mit SEO-Einstellungen</p>
+                <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="button">Produkte →</a>
             </div>
             <div class="produkt-help-card">
                 <h4>2. Ausführungen hinzufügen</h4>

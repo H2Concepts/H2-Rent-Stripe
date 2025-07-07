@@ -129,7 +129,7 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
         
         <?php if (empty($durations)): ?>
         <div class="produkt-empty-state">
-            <p>Noch keine Mietdauern für diese Kategorie vorhanden.</p>
+            <p>Noch keine Mietdauern für dieses Produkt vorhanden.</p>
             <p><strong>Tipp:</strong> Fügen Sie oben eine neue Mietdauer hinzu!</p>
         </div>
         <?php else: ?>

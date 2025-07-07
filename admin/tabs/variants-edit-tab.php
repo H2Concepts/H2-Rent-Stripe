@@ -5,7 +5,7 @@
 <div class="produkt-edit-variant">
     <div class="produkt-form-header">
         <h3>✏️ Ausführung bearbeiten</h3>
-        <p>Bearbeiten Sie die Ausführung "<?php echo esc_html($edit_item->name); ?>" für die Kategorie "<?php echo $current_category ? esc_html($current_category->name) : 'Unbekannt'; ?>"</p>
+        <p>Bearbeiten Sie die Ausführung "<?php echo esc_html($edit_item->name); ?>" für das Produkt "<?php echo $current_category ? esc_html($current_category->name) : 'Unbekannt'; ?>"</p>
     </div>
     
     <form method="post" action="" class="produkt-compact-form">

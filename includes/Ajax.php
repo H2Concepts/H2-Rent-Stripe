@@ -537,7 +537,7 @@ class Ajax {
         $message     = "Ein Kunde möchte informiert werden, sobald das Produkt wieder verfügbar ist.\n";
         $message    .= 'E-Mail: ' . $email . "\n";
         if ($category_name) {
-            $message .= 'Kategorie: ' . $category_name . "\n";
+            $message .= 'Produkt: ' . $category_name . "\n";
         }
         if ($variant_name) {
             $message .= 'Ausführung: ' . $variant_name . "\n";

@@ -141,7 +141,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id 
         <form method="get" action="">
             <input type="hidden" name="page" value="produkt-durations">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-            <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
+            <label for="category-select"><strong>🏷️ Produkt:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
                 <?php foreach ($categories as $category): ?>
                 <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>

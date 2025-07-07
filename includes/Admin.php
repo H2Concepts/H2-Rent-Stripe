@@ -16,11 +16,11 @@ class Admin {
             30
         );
         
-        // Submenu: Kategorien
+        // Submenu: Produkte
         add_submenu_page(
             'produkt-verleih',
-            'Kategorien',
-            'Kategorien',
+            'Produkte',
+            'Produkte',
             'manage_options',
             'produkt-categories',
             array($this, 'categories_page')
@@ -361,7 +361,7 @@ class Admin {
                 );
 
                 if ($result !== false) {
-                    echo '<div class="notice notice-success"><p>✅ Kategorie erfolgreich aktualisiert!</p></div>';
+                    echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
                 }
@@ -409,7 +409,7 @@ class Admin {
                 );
 
                 if ($result !== false) {
-                    echo '<div class="notice notice-success"><p>✅ Kategorie erfolgreich hinzugefügt!</p></div>';
+                    echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich hinzugefügt!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
                 }
@@ -421,7 +421,7 @@ class Admin {
             $table_name = $wpdb->prefix . 'produkt_categories';
             $result = $wpdb->delete($table_name, ['id' => $category_id], ['%d']);
             if ($result !== false) {
-                echo '<div class="notice notice-success"><p>✅ Kategorie gelöscht!</p></div>';
+                echo '<div class="notice notice-success"><p>✅ Produkt gelöscht!</p></div>';
             } else {
                 echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
             }

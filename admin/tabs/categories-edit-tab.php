@@ -4,8 +4,8 @@
 
 <div class="produkt-edit-category">
     <div class="produkt-form-header">
-        <h3>✏️ Kategorie bearbeiten</h3>
-        <p>Bearbeiten Sie die Kategorie "<?php echo esc_html($edit_item->name); ?>" mit allen Einstellungen und Inhalten.</p>
+        <h3>✏️ Produkt bearbeiten</h3>
+        <p>Bearbeiten Sie das Produkt "<?php echo esc_html($edit_item->name); ?>" mit allen Einstellungen und Inhalten.</p>
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
@@ -28,7 +28,7 @@
             <h4>📝 Grunddaten</h4>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
-                    <label>Kategorie-Name *</label>
+                    <label>Produkt-Name *</label>
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                 </div>
                 <div class="produkt-form-group">
@@ -321,7 +321,7 @@
            </a>
             <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                class="button button-large produkt-delete-button"
-               onclick="return confirm('Sind Sie sicher, dass Sie diese Kategorie löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')"
+               onclick="return confirm('Sind Sie sicher, dass Sie dieses Produkt löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')"
                style="margin-left: auto;">
                 🗑️ Löschen
             </a>

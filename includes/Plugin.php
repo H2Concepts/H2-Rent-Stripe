@@ -103,7 +103,7 @@ class Plugin {
         }
 
         if (!$category) {
-            return '<p>Keine aktive Produktkategorie gefunden.</p>';
+            return '<p>Kein aktives Produkt gefunden.</p>';
         }
 
         $page_title = !empty($atts['title']) ? $atts['title'] : $category->page_title;

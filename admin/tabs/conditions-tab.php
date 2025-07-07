@@ -124,7 +124,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
         
         <?php if (empty($conditions)): ?>
         <div class="produkt-empty-state">
-            <p>Noch keine Zustände für diese Kategorie vorhanden.</p>
+            <p>Noch keine Zustände für dieses Produkt vorhanden.</p>
             <p><strong>Tipp:</strong> Fügen Sie oben einen neuen Zustand hinzu!</p>
         </div>
         <?php else: ?>
