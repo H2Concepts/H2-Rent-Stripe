@@ -57,10 +57,28 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         global $wpdb;
         $existing_order = $wpdb->get_row($wpdb->prepare(
-            "SELECT id, status, created_at FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+            "SELECT id, status, created_at, category_id, shipping_cost FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
             $session->id
         ));
         $existing_id = $existing_order->id ?? 0;
+        $shipping_cost = 0;
+        if ($existing_id) {
+            $shipping_cost = floatval($existing_order->shipping_cost);
+            if (!$shipping_cost && !empty($existing_order->category_id)) {
+                $shipping_cost = (float) $wpdb->get_var($wpdb->prepare(
+                    "SELECT shipping_cost FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    $existing_order->category_id
+                ));
+            }
+        } else {
+            $shipping_price_id = $metadata['shipping_price_id'] ?? '';
+            if ($shipping_price_id) {
+                $amt = StripeService::get_price_amount($shipping_price_id);
+                if (!is_wp_error($amt)) {
+                    $shipping_cost = floatval($amt);
+                }
+            }
+        }
 
         $discount_amount = ($session->total_details->amount_discount ?? 0) / 100;
 
@@ -72,7 +90,8 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'customer_postal'   => $postal,
             'customer_city'     => $city,
             'customer_country'  => $country,
-            'final_price'       => ($session->amount_total ?? 0) / 100,
+            'final_price'       => (($session->amount_total ?? 0) / 100) - $shipping_cost,
+            'shipping_cost'     => $shipping_cost,
             'amount_total'      => $session->amount_total ?? 0,
             'discount_amount'   => $discount_amount,
             'produkt_name'      => $produkt_name,
@@ -131,6 +150,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $message    .= "Zustand: $zustand\n";
         $message    .= "Produktfarbe: $produktfarbe\n";
         $message    .= "Gestellfarbe: $gestellfarbe\n";
+        if ($shipping_cost > 0) {
+            $message    .= "Versand: $shipping_cost EUR (einmalig)\n";
+        }
         $message    .= "Session-ID: {$session->id}\n";
 
         wp_mail($admin_email, $subject, $message);
@@ -172,6 +194,8 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date = date_i18n('d.m.Y', strtotime($order['created_at']));
     $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
+    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
@@ -202,7 +226,10 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $message .= '<table style="width:100%;border-collapse:collapse;">';
     $message .= '<tr style="background:#f8f9fa;"><th style="text-align:left;padding:6px;">Produkt</th><th style="text-align:left;padding:6px;">Menge</th><th style="text-align:left;padding:6px;">Variante</th><th style="text-align:left;padding:6px;">Extras</th><th style="text-align:left;padding:6px;">Farbe</th><th style="text-align:left;padding:6px;">Gestell</th><th style="text-align:left;padding:6px;">Mietdauer</th><th style="text-align:left;padding:6px;">Preis</th></tr>';
     $message .= '<tr><td style="padding:6px;">' . esc_html($order['produkt_name']) . '</td><td style="padding:6px;">1</td><td style="padding:6px;">' . esc_html($order['zustand_text']) . '</td><td style="padding:6px;">' . esc_html($order['extra_text']) . '</td><td style="padding:6px;">' . esc_html($order['produktfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['gestellfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['dauer_text']) . '</td><td style="padding:6px;">' . esc_html($price) . '</td></tr>';
-    $message .= '<tr><td colspan="8" style="text-align:right;padding:6px;">Gesamtsumme: <strong>' . esc_html($price) . '</strong></td></tr>';
+    if ($order['shipping_cost'] > 0) {
+        $message .= '<tr><td colspan="7" style="text-align:right;padding:6px;">Versand (einmalig):</td><td style="padding:6px;">' . esc_html($shipping) . '</td></tr>';
+    }
+    $message .= '<tr><td colspan="8" style="text-align:right;padding:6px;">Gesamtsumme: <strong>' . esc_html($total_first) . '</strong></td></tr>';
     $message .= '</table>';
 
     $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
