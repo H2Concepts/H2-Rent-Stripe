@@ -1,6 +1,6 @@
 <?php
 // Durations Tab Content
-$table_name = $wpdb->prefix . 'federwiegen_durations';
+$table_name = $wpdb->prefix . 'produkt_durations';
 
 // Ensure category_id column exists
 $category_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
@@ -80,7 +80,7 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
     <!-- Form -->
     <div class="produkt-form-card">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                 <h4>Mietdauer bearbeiten</h4>

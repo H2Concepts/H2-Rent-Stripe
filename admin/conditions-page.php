@@ -4,10 +4,10 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
-$table_name = $wpdb->prefix . 'federwiegen_conditions';
+$table_name = $wpdb->prefix . 'produkt_conditions';
 
 // Get all categories for dropdown
-$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
@@ -17,7 +17,7 @@ $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
 // Handle form submissions
 if (isset($_POST['submit'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $description = sanitize_textarea_field($_POST['description']);
@@ -68,7 +68,7 @@ if (isset($_POST['submit'])) {
 }
 
 // Handle delete
-if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'federwiegen_admin_action')) {
+if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
     $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Zustand gelöscht!</p></div>';
@@ -87,7 +87,7 @@ if (isset($_GET['edit'])) {
 }
 
 // Get current category info
-$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", $selected_category));
+$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
 // Get all conditions for selected category
 $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
@@ -128,7 +128,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
         
         <?php if ($current_category): ?>
         <div class="produkt-category-info">
-            <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
@@ -163,7 +163,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                     
                     <div class="produkt-form-card">
                         <form method="post" action="">
-                            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                             <div class="produkt-form-grid">
                                 <div class="produkt-form-group">
                                     <label>Name *</label>
@@ -210,7 +210,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                     
                     <div class="produkt-form-card">
                         <form method="post" action="">
-                            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                             <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                             
                             <div class="produkt-form-grid">
@@ -294,7 +294,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                                 
                                 <div class="produkt-item-actions">
                                     <a href="<?php echo admin_url('admin.php?page=produkt-conditions&category=' . $selected_category . '&tab=edit&edit=' . $condition->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-conditions&category=' . $selected_category . '&tab=list&delete=' . $condition->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-conditions&category=' . $selected_category . '&tab=list&delete=' . $condition->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                                 </div>
                             </div>
                             <?php endforeach; ?>

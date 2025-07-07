@@ -5,7 +5,7 @@
 if (isset($_GET['delete_notification'])) {
     $notification_id = intval($_GET['delete_notification']);
     $result = $wpdb->delete(
-        $wpdb->prefix . 'federwiegen_notifications',
+        $wpdb->prefix . 'produkt_notifications',
         array('id' => $notification_id),
         array('%d')
     );
@@ -23,7 +23,7 @@ if (!empty($_POST['delete_notifications']) && is_array($_POST['delete_notificati
     if ($ids) {
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $query = $wpdb->prepare(
-            "DELETE FROM {$wpdb->prefix}federwiegen_notifications WHERE id IN ($placeholders)",
+            "DELETE FROM {$wpdb->prefix}produkt_notifications WHERE id IN ($placeholders)",
             ...$ids
         );
         $result = $wpdb->query($query);
@@ -43,14 +43,14 @@ $notifications = $wpdb->get_results(
         pc.name AS product_color_name,
         fc.name AS frame_color_name,
         (SELECT GROUP_CONCAT(e.name SEPARATOR ', ')
-            FROM {$wpdb->prefix}federwiegen_extras e
+            FROM {$wpdb->prefix}produkt_extras e
             WHERE FIND_IN_SET(e.id, n.extra_ids)) AS extras_names
-     FROM {$wpdb->prefix}federwiegen_notifications n
-     LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON n.variant_id = v.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_durations d ON n.duration_id = d.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_conditions c ON n.condition_id = c.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_colors pc ON n.product_color_id = pc.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_colors fc ON n.frame_color_id = fc.id
+     FROM {$wpdb->prefix}produkt_notifications n
+     LEFT JOIN {$wpdb->prefix}produkt_variants v ON n.variant_id = v.id
+     LEFT JOIN {$wpdb->prefix}produkt_durations d ON n.duration_id = d.id
+     LEFT JOIN {$wpdb->prefix}produkt_conditions c ON n.condition_id = c.id
+     LEFT JOIN {$wpdb->prefix}produkt_colors pc ON n.product_color_id = pc.id
+     LEFT JOIN {$wpdb->prefix}produkt_colors fc ON n.frame_color_id = fc.id
      $where_clause ORDER BY n.created_at DESC"
 );
 ?>

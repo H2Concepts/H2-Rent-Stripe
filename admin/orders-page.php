@@ -18,7 +18,7 @@ if (!empty($notice)) {
 // Branding colors
 global $wpdb;
 $branding = [];
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -86,7 +86,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         <?php if ($current_category): ?>
         <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
             <strong>📝 Aktuelle Kategorie:</strong> <?php echo esc_html($current_category->name); ?>
-            <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>

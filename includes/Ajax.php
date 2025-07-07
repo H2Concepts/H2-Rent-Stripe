@@ -1,10 +1,10 @@
 <?php
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 class Ajax {
     
     public function ajax_get_product_price() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
         
         $variant_id = intval($_POST['variant_id']);
         $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
@@ -18,7 +18,7 @@ class Ajax {
         global $wpdb;
         
         $variant = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+            "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
         
@@ -26,21 +26,21 @@ class Ajax {
         if (!empty($extra_ids)) {
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
             $query = $wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE id IN ($placeholders)",
+                "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
                 ...$extra_ids
             );
             $extras = $wpdb->get_results($query);
         }
         
         $duration = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}federwiegen_durations WHERE id = %d",
+            "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
             $duration_id
         ));
         
         $condition = null;
         if ($condition_id) {
             $condition = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_conditions WHERE id = %d",
+                "SELECT * FROM {$wpdb->prefix}produkt_conditions WHERE id = %d",
                 $condition_id
             ));
         }
@@ -51,7 +51,7 @@ class Ajax {
             $variant_price = 0;
             $used_price_id = '';
             $duration_price_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
                 $duration_id,
                 $variant_id
             ));
@@ -96,7 +96,7 @@ class Ajax {
             $shipping_cost = 0;
             if ($variant) {
                 $category = $wpdb->get_row($wpdb->prepare(
-                    "SELECT shipping_price_id FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
+                    "SELECT shipping_price_id FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
                     $variant->category_id
                 ));
                 if ($category && !empty($category->shipping_price_id)) {
@@ -124,14 +124,14 @@ class Ajax {
     
     
     public function ajax_get_variant_images() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
         
         $variant_id = intval($_POST['variant_id']);
         
         global $wpdb;
         
         $variant = $wpdb->get_row($wpdb->prepare(
-            "SELECT image_url_1, image_url_2, image_url_3, image_url_4, image_url_5 FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+            "SELECT image_url_1, image_url_2, image_url_3, image_url_4, image_url_5 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
         
@@ -153,7 +153,7 @@ class Ajax {
     }
     
     public function ajax_get_extra_image() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
         
         $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
         $extra_ids_array = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
@@ -164,7 +164,7 @@ class Ajax {
         global $wpdb;
         
         $extra = $wpdb->get_row($wpdb->prepare(
-            "SELECT image_url FROM {$wpdb->prefix}federwiegen_extras WHERE id = %d",
+            "SELECT image_url FROM {$wpdb->prefix}produkt_extras WHERE id = %d",
             $extra_id
         ));
         
@@ -178,7 +178,7 @@ class Ajax {
     }
     
     public function ajax_get_variant_options() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
         
         $variant_id = intval($_POST['variant_id']);
         
@@ -186,7 +186,7 @@ class Ajax {
         
         // Get variant-specific options
         $variant_options = $wpdb->get_results($wpdb->prepare(
-            "SELECT option_type, option_id, available FROM {$wpdb->prefix}federwiegen_variant_options WHERE variant_id = %d",
+            "SELECT option_type, option_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d",
             $variant_id
         ));
         
@@ -201,7 +201,7 @@ class Ajax {
                 switch ($option->option_type) {
                     case 'condition':
                         $condition = $wpdb->get_row($wpdb->prepare(
-                            "SELECT * FROM {$wpdb->prefix}federwiegen_conditions WHERE id = %d",
+                            "SELECT * FROM {$wpdb->prefix}produkt_conditions WHERE id = %d",
                             $option->option_id
                         ));
                         if ($condition) {
@@ -211,13 +211,13 @@ class Ajax {
                         break;
                     case 'product_color':
                         $color = $wpdb->get_row($wpdb->prepare(
-                            "SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
+                            "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
                             $option->option_id
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
                             $image = $wpdb->get_var($wpdb->prepare(
-                                "SELECT image_url FROM {$wpdb->prefix}federwiegen_color_variant_images WHERE color_id = %d AND variant_id = %d",
+                                "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
                                 $color->id,
                                 $variant_id
                             ));
@@ -229,13 +229,13 @@ class Ajax {
                         break;
                     case 'frame_color':
                         $color = $wpdb->get_row($wpdb->prepare(
-                            "SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
+                            "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
                             $option->option_id
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
                             $image = $wpdb->get_var($wpdb->prepare(
-                                "SELECT image_url FROM {$wpdb->prefix}federwiegen_color_variant_images WHERE color_id = %d AND variant_id = %d",
+                                "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
                                 $color->id,
                                 $variant_id
                             ));
@@ -247,7 +247,7 @@ class Ajax {
                         break;
                     case 'extra':
                         $extra = $wpdb->get_row($wpdb->prepare(
-                            "SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE id = %d",
+                            "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE id = %d",
                             $option->option_id
                         ));
                         if ($extra) {
@@ -266,25 +266,25 @@ class Ajax {
         } else {
             // No specific options defined, get all available options for the category
             $variant = $wpdb->get_row($wpdb->prepare(
-                "SELECT category_id FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                "SELECT category_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
                 $variant_id
             ));
             
             if ($variant) {
                 $conditions = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}federwiegen_conditions WHERE category_id = %d ORDER BY sort_order",
+                    "SELECT * FROM {$wpdb->prefix}produkt_conditions WHERE category_id = %d ORDER BY sort_order",
                     $variant->category_id
                 ));
                 foreach ($conditions as $c) { $c->available = 1; }
                 
                 $product_colors = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order",
+                    "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order",
                     $variant->category_id
                 ));
                 foreach ($product_colors as $c) {
                     $c->available = 1;
                     $image = $wpdb->get_var($wpdb->prepare(
-                        "SELECT image_url FROM {$wpdb->prefix}federwiegen_color_variant_images WHERE color_id = %d AND variant_id = %d",
+                        "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
                         $c->id,
                         $variant_id
                     ));
@@ -294,13 +294,13 @@ class Ajax {
                 }
 
                 $frame_colors = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order",
+                    "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order",
                     $variant->category_id
                 ));
                 foreach ($frame_colors as $c) {
                     $c->available = 1;
                     $image = $wpdb->get_var($wpdb->prepare(
-                        "SELECT image_url FROM {$wpdb->prefix}federwiegen_color_variant_images WHERE color_id = %d AND variant_id = %d",
+                        "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
                         $c->id,
                         $variant_id
                     ));
@@ -310,7 +310,7 @@ class Ajax {
                 }
 
                 $extras = $wpdb->get_results($wpdb->prepare(
-                    "SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE category_id = %d ORDER BY sort_order",
+                    "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order",
                     $variant->category_id
                 ));
                 foreach ($extras as $e) {
@@ -335,7 +335,7 @@ class Ajax {
     
     
     public function ajax_track_interaction() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
         
         $category_id = intval($_POST['category_id']);
         $event_type = sanitize_text_field($_POST['event_type']);
@@ -353,7 +353,7 @@ class Ajax {
         global $wpdb;
         
         $result = $wpdb->insert(
-            $wpdb->prefix . 'federwiegen_analytics',
+            $wpdb->prefix . 'produkt_analytics',
             array(
                 'category_id' => $category_id,
                 'event_type' => $event_type,
@@ -389,7 +389,7 @@ class Ajax {
 
     private function ensure_notifications_table() {
         global $wpdb;
-        $table = $wpdb->prefix . 'federwiegen_notifications';
+        $table = $wpdb->prefix . 'produkt_notifications';
         $exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
         if (!$exists) {
             $charset_collate = $wpdb->get_charset_collate();
@@ -416,7 +416,7 @@ class Ajax {
     }
     
     public function ajax_notify_availability() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
 
         $this->ensure_notifications_table();
 
@@ -449,7 +449,7 @@ class Ajax {
         if ($variant_id) {
             $variant = $wpdb->get_row(
                 $wpdb->prepare(
-                    "SELECT v.name, v.category_id, c.name AS category_name FROM {$wpdb->prefix}federwiegen_variants v LEFT JOIN {$wpdb->prefix}federwiegen_categories c ON v.category_id = c.id WHERE v.id = %d",
+                    "SELECT v.name, v.category_id, c.name AS category_name FROM {$wpdb->prefix}produkt_variants v LEFT JOIN {$wpdb->prefix}produkt_categories c ON v.category_id = c.id WHERE v.id = %d",
                     $variant_id
                 )
             );
@@ -463,7 +463,7 @@ class Ajax {
         if ($condition_id) {
             $condition_name = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_conditions WHERE id = %d",
+                    "SELECT name FROM {$wpdb->prefix}produkt_conditions WHERE id = %d",
                     $condition_id
                 )
             );
@@ -472,7 +472,7 @@ class Ajax {
         if ($product_color_id) {
             $product_color_name = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
+                    "SELECT name FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
                     $product_color_id
                 )
             );
@@ -481,7 +481,7 @@ class Ajax {
         if ($frame_color_id) {
             $frame_color_name = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
+                    "SELECT name FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
                     $frame_color_id
                 )
             );
@@ -491,7 +491,7 @@ class Ajax {
             $placeholders = implode(',', array_fill(0, count($extra_ids_array), '%d'));
             $extras_names = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_extras WHERE id IN ($placeholders)",
+                    "SELECT name FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
                     ...$extra_ids_array
                 )
             );
@@ -501,7 +501,7 @@ class Ajax {
         if (!$category_name && $category_id) {
             $category_name = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d",
+                    "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
                     $category_id
                 )
             );
@@ -510,7 +510,7 @@ class Ajax {
         if ($duration_id) {
             $duration_name = $wpdb->get_var(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_durations WHERE id = %d",
+                    "SELECT name FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
                     $duration_id
                 )
             );
@@ -518,7 +518,7 @@ class Ajax {
 
         // Save notification request
         $wpdb->insert(
-            $wpdb->prefix . 'federwiegen_notifications',
+            $wpdb->prefix . 'produkt_notifications',
             [
                 'category_id'      => $category_id,
                 'variant_id'       => $variant_id,
@@ -564,7 +564,7 @@ class Ajax {
     }
 
     public function ajax_exit_intent_feedback() {
-        check_ajax_referer('federwiegen_nonce', 'nonce');
+        check_ajax_referer('produkt_nonce', 'nonce');
 
         $option          = isset($_POST['option']) ? sanitize_text_field($_POST['option']) : '';
         $variant_id      = isset($_POST['variant_id']) ? intval($_POST['variant_id']) : 0;
@@ -586,35 +586,35 @@ class Ajax {
 
         if ($variant_id) {
             $variant_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                "SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
                 $variant_id
             ));
         }
 
         if ($duration_id) {
             $duration_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_durations WHERE id = %d",
+                "SELECT name FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
                 $duration_id
             ));
         }
 
         if ($condition_id) {
             $condition_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_conditions WHERE id = %d",
+                "SELECT name FROM {$wpdb->prefix}produkt_conditions WHERE id = %d",
                 $condition_id
             ));
         }
 
         if ($product_color_id) {
             $product_color_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
+                "SELECT name FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
                 $product_color_id
             ));
         }
 
         if ($frame_color_id) {
             $frame_color_name = $wpdb->get_var($wpdb->prepare(
-                "SELECT name FROM {$wpdb->prefix}federwiegen_colors WHERE id = %d",
+                "SELECT name FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
                 $frame_color_id
             ));
         }
@@ -623,7 +623,7 @@ class Ajax {
             $placeholders = implode(',', array_fill(0, count($extra_ids_array), '%d'));
             $extras_names = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT name FROM {$wpdb->prefix}federwiegen_extras WHERE id IN ($placeholders)",
+                    "SELECT name FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
                     ...$extra_ids_array
                 )
             );
@@ -661,14 +661,14 @@ class Ajax {
     }
 }
 
-add_action('wp_ajax_create_payment_intent', __NAMESPACE__ . '\\federwiegen_create_payment_intent');
-add_action('wp_ajax_nopriv_create_payment_intent', __NAMESPACE__ . '\\federwiegen_create_payment_intent');
-add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
-add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\federwiegen_create_subscription');
-add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\federwiegen_create_checkout_session');
-add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\federwiegen_create_checkout_session');
+add_action('wp_ajax_create_payment_intent', __NAMESPACE__ . '\\produkt_create_payment_intent');
+add_action('wp_ajax_nopriv_create_payment_intent', __NAMESPACE__ . '\\produkt_create_payment_intent');
+add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\produkt_create_subscription');
+add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\produkt_create_subscription');
+add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
+add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
 
-function federwiegen_create_payment_intent() {
+function produkt_create_payment_intent() {
     $init = StripeService::init();
     if (is_wp_error($init)) {
         wp_send_json_error(['message' => $init->get_error_message()]);
@@ -714,7 +714,7 @@ function federwiegen_create_payment_intent() {
     }
 }
 
-function federwiegen_create_subscription() {
+function produkt_create_subscription() {
     $init = StripeService::init();
     if (is_wp_error($init)) {
         wp_send_json_error(['message' => $init->get_error_message()]);
@@ -730,13 +730,13 @@ function federwiegen_create_subscription() {
 
         if (!$price_id && $variant_id && $duration_id) {
             $price_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
                 $duration_id,
                 $variant_id
             ));
             if (!$price_id) {
                 $price_id = $wpdb->get_var($wpdb->prepare(
-                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE id = %d",
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
                     $variant_id
                 ));
             }
@@ -817,7 +817,7 @@ function federwiegen_create_subscription() {
     }
 }
 
-function federwiegen_create_checkout_session() {
+function produkt_create_checkout_session() {
     try {
         $init = StripeService::init();
         if (is_wp_error($init)) {
@@ -865,7 +865,7 @@ function federwiegen_create_checkout_session() {
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
             $extra_prices = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT stripe_price_id FROM {$wpdb->prefix}federwiegen_extras WHERE id IN ($placeholders)",
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
                     ...$extra_ids
                 )
             );
@@ -886,21 +886,21 @@ function federwiegen_create_checkout_session() {
             ];
         }
 
-        $tos_url = get_option('federwiegen_tos_url', home_url('/agb'));
+        $tos_url = get_option('produkt_tos_url', home_url('/agb'));
         $custom_text = [
             'terms_of_service_acceptance' => [
                 'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
             ],
         ];
-        $ct_shipping = get_option('federwiegen_ct_shipping', '');
+        $ct_shipping = get_option('produkt_ct_shipping', '');
         if ($ct_shipping !== '') {
             $custom_text['shipping_address'] = [ 'message' => $ct_shipping ];
         }
-        $ct_submit = get_option('federwiegen_ct_submit', '');
+        $ct_submit = get_option('produkt_ct_submit', '');
         if ($ct_submit !== '') {
             $custom_text['submit'] = [ 'message' => $ct_submit ];
         }
-        $ct_after = get_option('federwiegen_ct_after_submit', '');
+        $ct_after = get_option('produkt_ct_after_submit', '');
         if ($ct_after !== '') {
             $custom_text['after_submit'] = [ 'message' => $ct_after ];
         }
@@ -917,8 +917,8 @@ function federwiegen_create_checkout_session() {
             'phone_number_collection'     => [
                 'enabled' => true,
             ],
-            'success_url'              => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('federwiegen_success_url', home_url('/danke'))),
-            'cancel_url'               => get_option('federwiegen_cancel_url', home_url('/abbrechen')),
+            'success_url'              => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
+            'cancel_url'               => get_option('produkt_cancel_url', home_url('/abbrechen')),
             'consent_collection'       => [
                 'terms_of_service' => 'required',
             ],
@@ -934,7 +934,7 @@ function federwiegen_create_checkout_session() {
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
         $wpdb->insert(
-            $wpdb->prefix . 'federwiegen_orders',
+            $wpdb->prefix . 'produkt_orders',
             [
                 'category_id'      => $category_id,
                 'variant_id'       => $variant_id,

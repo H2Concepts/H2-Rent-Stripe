@@ -1,6 +1,6 @@
 <?php
 // Extras Tab Content
-$table_name = $wpdb->prefix . 'federwiegen_extras';
+$table_name = $wpdb->prefix . 'produkt_extras';
 // Ensure stripe_price_id column exists
 $price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
 if (empty($price_id_exists)) {
@@ -79,7 +79,7 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
     <!-- Form -->
     <div class="produkt-form-card">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
                 <h4>Extra bearbeiten</h4>
@@ -159,7 +159,7 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                     <h5><?php echo esc_html($extra->name); ?></h5>
                     <div class="produkt-item-meta">
                         <?php if (!empty($extra->stripe_price_id)) {
-                            $p = \FederwiegenVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                            $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
                             if (!is_wp_error($p)) {
                                 echo '<span class="produkt-price">' . number_format($p, 2, ',', '.') . '€</span>';
                             }

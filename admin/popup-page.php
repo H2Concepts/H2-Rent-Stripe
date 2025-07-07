@@ -18,6 +18,6 @@ if (!defined('ABSPATH')) {
     </div>
 
     <div class="produkt-tab-content">
-        <?php include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/popup-tab.php'; ?>
+        <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/popup-tab.php'; ?>
     </div>
 </div>

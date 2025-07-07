@@ -40,7 +40,7 @@
                 <h4><?php echo esc_html($category->name); ?></h4>
                 
                 <div class="produkt-category-shortcode">
-                    <code>[federwiegen_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
+                    <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
                 </div>
                 
                 <div class="produkt-category-meta">
@@ -59,7 +59,7 @@
                     <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $category->id); ?>" class="button button-small">
                         ✏️ Bearbeiten
                     </a>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $category->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>"
+                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $category->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                        class="button button-small produkt-delete-button"
                        onclick="return confirm('Sind Sie sicher, dass Sie diese Kategorie löschen möchten?\n\n\"<?php echo esc_js($category->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')">
                         🗑️ Löschen

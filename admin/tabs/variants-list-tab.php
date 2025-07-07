@@ -68,7 +68,7 @@
                     <?php
                         $price = 0;
                         if (!empty($variant->stripe_price_id)) {
-                            $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                            $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                             if (!is_wp_error($p)) {
                                 $price = $p;
                             }
@@ -93,7 +93,7 @@
                     <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&tab=edit&edit=' . $variant->id); ?>" class="button button-small">
                         ✏️ Bearbeiten
                    </a>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&delete=' . $variant->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>"
+                    <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&delete=' . $variant->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                        class="button button-small produkt-delete-button"
                        onclick="return confirm('Sind Sie sicher, dass Sie diese Ausführung löschen möchten?\n\n\"<?php echo esc_js($variant->name); ?>\" wird unwiderruflich gelöscht!')">
                         🗑️ Löschen

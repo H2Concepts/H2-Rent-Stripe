@@ -12,7 +12,7 @@ if (isset($_POST['submit_branding'])) {
     $admin_color_text = sanitize_hex_color($_POST['admin_color_text']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
-    $table_name = $wpdb->prefix . 'federwiegen_branding';
+    $table_name = $wpdb->prefix . 'produkt_branding';
 
     $settings = array(
         'plugin_name' => $plugin_name,
@@ -98,7 +98,7 @@ if (isset($_POST['submit_branding'])) {
     </div>
     
     <form method="post" action="" class="produkt-branding-form">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-sections">
             <!-- Plugin Information -->
             <div class="produkt-form-section">

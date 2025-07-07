@@ -10,7 +10,7 @@ $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'brandin
 
 // Get branding settings
 $branding = array();
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -62,22 +62,22 @@ foreach ($branding_results as $result) {
         <?php
         switch ($active_tab) {
             case 'branding':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
                 break;
             case 'popup':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/popup-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/popup-tab.php';
                 break;
             case 'stripe':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/stripe-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/stripe-tab.php';
                 break;
             case 'debug':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
                 break;
             case 'notifications':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';
                 break;
             default:
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
         }
         ?>
     </div>

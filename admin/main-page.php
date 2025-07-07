@@ -6,17 +6,17 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 // Get categories count
-$categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_categories");
-$variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
-$extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_extras");
-$durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_durations");
+$categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
+$variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants");
+$extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
+$durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
 
 // Get recent categories
-$recent_categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY id DESC LIMIT 3");
+$recent_categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY id DESC LIMIT 3");
 
 // Get branding settings
 $branding = array();
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -108,7 +108,7 @@ foreach ($branding_results as $result) {
             <?php foreach ($recent_categories as $category): ?>
             <div class="produkt-category-card">
                 <h4><?php echo esc_html($category->name); ?></h4>
-                <code>[federwiegen_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
+                <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
                 <div class="produkt-category-actions">
                     <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $category->id); ?>" class="button button-small">Ausführungen</a>
                 </div>

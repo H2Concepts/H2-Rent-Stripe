@@ -45,7 +45,7 @@
                 <div class="produkt-extra-meta">
                     <div class="produkt-extra-price">
                         <?php if (!empty($extra->stripe_price_id)) {
-                            $p = \FederwiegenVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                            $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
                             if (!is_wp_error($p)) {
                                 echo '<strong>' . number_format($p, 2, ',', '.') . "€</strong><small>/Monat</small>";
                             }
@@ -61,7 +61,7 @@
                     <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&tab=edit&edit=' . $extra->id); ?>" class="button button-small">
                         ✏️ Bearbeiten
                     </a>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&delete=' . $extra->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>"
+                    <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&delete=' . $extra->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                        class="button button-small produkt-delete-button"
                        onclick="return confirm('Sind Sie sicher, dass Sie dieses Extra löschen möchten?\n\n\"<?php echo esc_js($extra->name); ?>\" wird unwiderruflich gelöscht!')">
                         🗑️ Löschen

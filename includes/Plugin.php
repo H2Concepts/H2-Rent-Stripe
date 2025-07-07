@@ -1,5 +1,5 @@
 <?php
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 class Plugin {
     private $db;
@@ -21,7 +21,7 @@ class Plugin {
 
     public function init() {
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
-        add_shortcode('federwiegen_product', [$this, 'product_shortcode']);
+        add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -49,21 +49,21 @@ class Plugin {
     }
 
     public function check_for_updates() {
-        $current_version = get_option('federwiegen_version', '1.0.0');
-        if (version_compare($current_version, FEDERWIEGEN_VERSION, '<')) {
+        $current_version = get_option('produkt_version', '1.0.0');
+        if (version_compare($current_version, PRODUKT_VERSION, '<')) {
             $this->db->update_database();
-            update_option('federwiegen_version', FEDERWIEGEN_VERSION);
+            update_option('produkt_version', PRODUKT_VERSION);
         }
     }
 
     public function activate() {
         $this->db->create_tables();
-        $load_sample = defined('FEDERWIEGEN_LOAD_DEFAULT_DATA') ? FEDERWIEGEN_LOAD_DEFAULT_DATA : false;
-        $load_sample = apply_filters('federwiegen_load_default_data', $load_sample);
+        $load_sample = defined('PRODUKT_LOAD_DEFAULT_DATA') ? PRODUKT_LOAD_DEFAULT_DATA : false;
+        $load_sample = apply_filters('produkt_load_default_data', $load_sample);
         if ($load_sample) {
             $this->db->insert_default_data();
         }
-        update_option('federwiegen_version', FEDERWIEGEN_VERSION);
+        update_option('produkt_version', PRODUKT_VERSION);
     }
 
     public function deactivate() {
@@ -92,14 +92,14 @@ class Plugin {
         $category = null;
         if (!empty($atts['category'])) {
             $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE shortcode = %s OR name = %s",
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s OR name = %s",
                 $atts['category'],
                 $atts['category']
             ));
         }
 
         if (!$category) {
-            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order LIMIT 1");
+            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
 
         if (!$category) {
@@ -110,31 +110,31 @@ class Plugin {
         $page_description = !empty($atts['description']) ? $atts['description'] : $category->page_description;
 
         ob_start();
-        include FEDERWIEGEN_PLUGIN_PATH . 'templates/product-page.php';
+        include PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
         return ob_get_clean();
     }
 
     public function add_meta_tags() {
         global $post, $wpdb;
 
-        if (!is_singular() || !has_shortcode($post->post_content, 'federwiegen_product')) {
+        if (!is_singular() || !has_shortcode($post->post_content, 'produkt_product')) {
             return;
         }
 
-        $pattern = '/\[federwiegen_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
         preg_match($pattern, $post->post_content, $matches);
         $category_shortcode = isset($matches[1]) ? $matches[1] : '';
 
         $category = null;
         if (!empty($category_shortcode)) {
             $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE shortcode = %s",
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
                 $category_shortcode
             ));
         }
 
         if (!$category) {
-            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order LIMIT 1");
+            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
 
         if (!$category) {
@@ -158,24 +158,24 @@ class Plugin {
     public function add_open_graph_tags() {
         global $post, $wpdb;
 
-        if (!is_singular() || !has_shortcode($post->post_content, 'federwiegen_product')) {
+        if (!is_singular() || !has_shortcode($post->post_content, 'produkt_product')) {
             return;
         }
 
-        $pattern = '/\[federwiegen_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
         preg_match($pattern, $post->post_content, $matches);
         $category_shortcode = isset($matches[1]) ? $matches[1] : '';
 
         $category = null;
         if (!empty($category_shortcode)) {
             $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE shortcode = %s",
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
                 $category_shortcode
             ));
         }
 
         if (!$category) {
-            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order LIMIT 1");
+            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
 
         if (!$category) {
@@ -210,24 +210,24 @@ class Plugin {
     public function add_schema_markup() {
         global $post, $wpdb;
 
-        if (!is_singular() || !has_shortcode($post->post_content, 'federwiegen_product')) {
+        if (!is_singular() || !has_shortcode($post->post_content, 'produkt_product')) {
             return;
         }
 
-        $pattern = '/\[federwiegen_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
         preg_match($pattern, $post->post_content, $matches);
         $category_shortcode = isset($matches[1]) ? $matches[1] : '';
 
         $category = null;
         if (!empty($category_shortcode)) {
             $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE shortcode = %s",
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
                 $category_shortcode
             ));
         }
 
         if (!$category) {
-            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order LIMIT 1");
+            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
 
         if (!$category) {
@@ -235,7 +235,7 @@ class Plugin {
         }
 
         $variants = $wpdb->get_results($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order",
+            "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order",
             $category->id
         ));
 
@@ -294,7 +294,7 @@ class Plugin {
         }
 
         $total_interactions = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_analytics WHERE category_id = %d AND event_type = 'rent_button_click'",
+            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_analytics WHERE category_id = %d AND event_type = 'rent_button_click'",
             $category->id
         ));
 
@@ -331,7 +331,7 @@ class Plugin {
         }
 
         try {
-            $tos_url = get_option('federwiegen_tos_url', home_url('/agb'));
+            $tos_url = get_option('produkt_tos_url', home_url('/agb'));
             $session_args = [
                 'mode' => 'subscription',
                 'payment_method_types' => ['card', 'paypal'],
@@ -344,8 +344,8 @@ class Plugin {
                 'phone_number_collection' => [
                     'enabled' => true,
                 ],
-                'success_url' => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('federwiegen_success_url', home_url('/danke'))),
-                'cancel_url'  => get_option('federwiegen_cancel_url', home_url('/abbrechen')),
+                'success_url' => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
+                'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
                 'consent_collection' => [
                     'terms_of_service' => 'required',
                 ],

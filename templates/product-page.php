@@ -7,17 +7,17 @@ $category_id = isset($category) ? $category->id : 1;
 
 // Get all data for this category
 $variants = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order",
+    "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
 
 $extras = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE category_id = %d ORDER BY sort_order",
+    "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
 
 $durations = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM {$wpdb->prefix}federwiegen_durations WHERE category_id = %d ORDER BY sort_order",
+    "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
 
@@ -50,7 +50,7 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 $shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
 $shipping_cost = 0;
 if (!empty($shipping_price_id)) {
-    $amount = \FederwiegenVerleih\StripeService::get_price_amount($shipping_price_id);
+    $amount = \ProduktVerleih\StripeService::get_price_amount($shipping_price_id);
     if (!is_wp_error($amount)) {
         $shipping_cost = $amount;
     }
@@ -75,17 +75,17 @@ $rating_link = isset($category) ? ($category->rating_link ?? '') : '';
 
 // Get initial conditions and colors (will be updated via AJAX when variant is selected)
 $initial_conditions = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM {$wpdb->prefix}federwiegen_conditions WHERE category_id = %d ORDER BY sort_order",
+    "SELECT * FROM {$wpdb->prefix}produkt_conditions WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
 
 $initial_product_colors = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order",
+    "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order",
     $category_id
 ));
 
 $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
-    "SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order",
+    "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order",
     $category_id
 ));
 ?>
@@ -165,7 +165,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <span class="produkt-final-price"><?php echo number_format($shipping_cost, 2, ',', '.'); ?>€</span>
                     </div>
                     <?php if (!empty($shipping_provider)): ?>
-                        <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
+                        <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
@@ -198,7 +198,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <?php
                                     $display_price = 0;
                                     if (!empty($variant->stripe_price_id)) {
-                                        $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                        $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                                         if (!is_wp_error($p)) {
                                             $display_price = $p;
                                         }
@@ -233,7 +233,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
                                 <?php if (!empty($extra->stripe_price_id)) {
-                                    $p = \FederwiegenVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                                    $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
                                     if (!is_wp_error($p) && $p > 0) {
                                         echo '<div class="produkt-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
                                     }
@@ -405,7 +405,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if (!empty($payment_icons)): ?>
                     <div class="produkt-payment-icons">
                         <?php foreach ($payment_icons as $icon): ?>
-                            <img src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/payment-icons/' . $icon . '.svg'); ?>" alt="<?php echo esc_attr($icon); ?>">
+                            <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $icon . '.svg'); ?>" alt="<?php echo esc_attr($icon); ?>">
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>

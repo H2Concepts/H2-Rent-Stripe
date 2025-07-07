@@ -2,33 +2,33 @@
 // Stripe Integration Tab Content
 
 if (isset($_POST['submit_stripe'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
-    update_option('federwiegen_stripe_publishable_key', sanitize_text_field($_POST['stripe_publishable_key'] ?? ''));
-    update_option('federwiegen_stripe_secret_key', sanitize_text_field($_POST['stripe_secret_key'] ?? ''));
-    update_option('federwiegen_stripe_pmc_id', sanitize_text_field($_POST['stripe_pmc_id'] ?? ''));
-    update_option('federwiegen_tos_url', esc_url_raw($_POST['tos_url'] ?? ''));
-    update_option('federwiegen_success_url', esc_url_raw($_POST['success_url'] ?? ''));
-    update_option('federwiegen_cancel_url', esc_url_raw($_POST['cancel_url'] ?? ''));
-    update_option('federwiegen_ct_shipping', wp_kses_post($_POST['ct_shipping'] ?? ''));
-    update_option('federwiegen_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
-    update_option('federwiegen_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
+    \ProduktVerleih\Admin::verify_admin_action();
+    update_option('produkt_stripe_publishable_key', sanitize_text_field($_POST['stripe_publishable_key'] ?? ''));
+    update_option('produkt_stripe_secret_key', sanitize_text_field($_POST['stripe_secret_key'] ?? ''));
+    update_option('produkt_stripe_pmc_id', sanitize_text_field($_POST['stripe_pmc_id'] ?? ''));
+    update_option('produkt_tos_url', esc_url_raw($_POST['tos_url'] ?? ''));
+    update_option('produkt_success_url', esc_url_raw($_POST['success_url'] ?? ''));
+    update_option('produkt_cancel_url', esc_url_raw($_POST['cancel_url'] ?? ''));
+    update_option('produkt_ct_shipping', wp_kses_post($_POST['ct_shipping'] ?? ''));
+    update_option('produkt_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
+    update_option('produkt_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
-$stripe_publishable_key = get_option('federwiegen_stripe_publishable_key', '');
-$stripe_secret_key   = get_option('federwiegen_stripe_secret_key', '');
-$stripe_pmc_id       = get_option('federwiegen_stripe_pmc_id', '');
-$tos_url             = get_option('federwiegen_tos_url', home_url('/agb'));
-$success_url         = get_option('federwiegen_success_url', home_url('/danke'));
-$cancel_url          = get_option('federwiegen_cancel_url', home_url('/abbrechen'));
-$ct_shipping         = get_option('federwiegen_ct_shipping', '');
-$ct_submit           = get_option('federwiegen_ct_submit', '');
-$ct_after_submit     = get_option('federwiegen_ct_after_submit', '');
+$stripe_publishable_key = get_option('produkt_stripe_publishable_key', '');
+$stripe_secret_key   = get_option('produkt_stripe_secret_key', '');
+$stripe_pmc_id       = get_option('produkt_stripe_pmc_id', '');
+$tos_url             = get_option('produkt_tos_url', home_url('/agb'));
+$success_url         = get_option('produkt_success_url', home_url('/danke'));
+$cancel_url          = get_option('produkt_cancel_url', home_url('/abbrechen'));
+$ct_shipping         = get_option('produkt_ct_shipping', '');
+$ct_submit           = get_option('produkt_ct_submit', '');
+$ct_after_submit     = get_option('produkt_ct_after_submit', '');
 ?>
 
 <div class="produkt-branding-tab">
     <form method="post" action="">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-section">
             <h4>🔑 Stripe API Keys</h4>
             <div class="produkt-form-grid">

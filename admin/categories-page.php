@@ -44,18 +44,18 @@ if (!defined('ABSPATH')) {
         <?php
         switch ($active_tab) {
             case 'add':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/categories-add-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-add-tab.php';
                 break;
             case 'edit':
                 if ($edit_item) {
-                    include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/categories-edit-tab.php';
+                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-edit-tab.php';
                 } else {
-                    include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
+                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
                 }
                 break;
             case 'list':
             default:
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
         }
         ?>
     </div>

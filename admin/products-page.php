@@ -6,20 +6,20 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 // Get all categories for dropdown
-$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
 
 // Get current category info
-$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", $selected_category));
+$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'variants';
 
 // Get branding settings
 $branding = array();
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -60,7 +60,7 @@ foreach ($branding_results as $result) {
         
         <?php if ($current_category): ?>
         <div class="produkt-category-info">
-            <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
@@ -90,19 +90,19 @@ foreach ($branding_results as $result) {
         <?php
         switch ($active_tab) {
             case 'variants':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/variants-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-tab.php';
                 break;
             case 'extras':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/extras-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/extras-tab.php';
                 break;
             case 'conditions':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/conditions-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/conditions-tab.php';
                 break;
             case 'colors':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/colors-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/colors-tab.php';
                 break;
             default:
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/variants-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-tab.php';
         }
         ?>
     </div>

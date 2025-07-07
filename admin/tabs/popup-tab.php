@@ -2,7 +2,7 @@
 // Popup Tab Content
 
 if (isset($_POST['submit_popup'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $settings = [
         'enabled' => isset($_POST['popup_enabled']) ? 1 : 0,
         'days'    => max(1, intval($_POST['popup_days'] ?? 7)),
@@ -10,12 +10,12 @@ if (isset($_POST['submit_popup'])) {
         'content' => wp_kses_post($_POST['popup_content'] ?? ''),
         'options' => sanitize_textarea_field($_POST['popup_options'] ?? '')
     ];
-    update_option('federwiegen_popup_settings', $settings);
+    update_option('produkt_popup_settings', $settings);
 
     echo '<div class="notice notice-success"><p>✅ Popup-Einstellungen gespeichert!</p></div>';
 }
 
-$popup_settings = get_option('federwiegen_popup_settings', []);
+$popup_settings = get_option('produkt_popup_settings', []);
 $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
 $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
 $popup_title   = $popup_settings['title'] ?? '';
@@ -25,7 +25,7 @@ $popup_options = $popup_settings['options'] ?? '';
 
 <div class="produkt-branding-tab">
     <form method="post" action="">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-section">
             <h4>📣 Popup Inhalt</h4>
             <div class="produkt-form-grid">

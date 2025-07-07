@@ -163,7 +163,7 @@ jQuery(document).ready(function($) {
         const priceId = currentPriceId;
         const shippingId = $('#produkt-field-shipping-price-id').val() || '';
         const extras = selectedExtras.join(',');
-        fetch(federwiegen_ajax.ajax_url + '?action=create_checkout_session', {
+        fetch(produkt_ajax.ajax_url + '?action=create_checkout_session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -391,12 +391,12 @@ jQuery(document).ready(function($) {
     function updateVariantOptions(variantId) {
         // Get variant-specific options via AJAX
         $.ajax({
-            url: federwiegen_ajax.ajax_url,
+            url: produkt_ajax.ajax_url,
             type: 'POST',
             data: {
                 action: 'get_variant_options',
                 variant_id: variantId,
-                nonce: federwiegen_ajax.nonce
+                nonce: produkt_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {
@@ -476,7 +476,7 @@ jQuery(document).ready(function($) {
                     </div>
                 `;
             } else if (optionType === 'extra') {
-                const priceSuffix = federwiegen_ajax.price_period === 'month' ? '/Monat' : '';
+                const priceSuffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
                 const priceHtml = option.price > 0 ? `+${parseFloat(option.price).toFixed(2).replace('.', ',')}€${priceSuffix}` : '';
                 optionHtml = `
                     <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="extra" data-id="${option.id}" data-extra-image="${option.image_url || ''}" data-available="${option.available == 0 ? 'false' : 'true'}">
@@ -594,7 +594,7 @@ jQuery(document).ready(function($) {
 
             // Make AJAX request
             $.ajax({
-                url: federwiegen_ajax.ajax_url,
+                url: produkt_ajax.ajax_url,
                 type: 'POST',
                 data: {
                     action: 'get_product_price',
@@ -604,7 +604,7 @@ jQuery(document).ready(function($) {
                     condition_id: selectedCondition,
                     product_color_id: selectedProductColor,
                     frame_color_id: selectedFrameColor,
-                    nonce: federwiegen_ajax.nonce
+                    nonce: produkt_ajax.nonce
                 },
                 success: function(response) {
                     if (response.success) {
@@ -695,7 +695,7 @@ jQuery(document).ready(function($) {
                 <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
                     <div class="produkt-mobile-sticky-content">
                         <div class="produkt-mobile-price-info">
-                            <div class="produkt-mobile-price-label">${federwiegen_ajax.price_label}</div>
+                            <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
                             <div class="produkt-mobile-price-value" id="mobile-price-value">0,00€</div>
                         </div>
                         <button class="produkt-mobile-button" disabled>
@@ -733,7 +733,7 @@ jQuery(document).ready(function($) {
 
     function updateMobileStickyPrice(price, isAvailable) {
         if (window.innerWidth <= 768) {
-            const suffix = federwiegen_ajax.price_period === 'month' ? '/Monat' : '';
+            const suffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
             $('#mobile-price-value').text(formatPrice(price) + '€' + suffix);
             $('.produkt-mobile-button').prop('disabled', !isAvailable);
         }
@@ -776,7 +776,7 @@ jQuery(document).ready(function($) {
         if (!currentCategoryId) return;
         
         $.ajax({
-            url: federwiegen_ajax.ajax_url,
+            url: produkt_ajax.ajax_url,
             type: 'POST',
             data: {
                 action: 'track_interaction',
@@ -788,7 +788,7 @@ jQuery(document).ready(function($) {
                 condition_id: data.condition_id || null,
                 product_color_id: data.product_color_id || null,
                 frame_color_id: data.frame_color_id || null,
-                nonce: federwiegen_ajax.nonce
+                nonce: produkt_ajax.nonce
             }
         });
     }
@@ -811,7 +811,7 @@ jQuery(document).ready(function($) {
         if (!email) return;
 
         $.ajax({
-            url: federwiegen_ajax.ajax_url,
+            url: produkt_ajax.ajax_url,
             type: 'POST',
             data: {
                 action: 'notify_availability',
@@ -823,7 +823,7 @@ jQuery(document).ready(function($) {
                 condition_id: selectedCondition,
                 product_color_id: selectedProductColor,
                 frame_color_id: selectedFrameColor,
-                nonce: federwiegen_ajax.nonce
+                nonce: produkt_ajax.nonce
             },
             success: function(response) {
                 if (response.success) {
@@ -836,12 +836,12 @@ jQuery(document).ready(function($) {
 
     // Exit intent popup
     let exitShown = false;
-    const popupData = federwiegen_ajax.popup_settings || {};
+    const popupData = produkt_ajax.popup_settings || {};
     const popup = $('#produkt-exit-popup');
     if (popup.length) {
         popup.appendTo('body');
     }
-    const hideUntil = parseInt(localStorage.getItem('federwiegen_exit_hide_until') || '0', 10);
+    const hideUntil = parseInt(localStorage.getItem('produkt_exit_hide_until') || '0', 10);
 
     function showPopup() {
         if (exitShown) return;
@@ -855,7 +855,7 @@ jQuery(document).ready(function($) {
         $('body').removeClass('produkt-popup-open');
         const days = parseInt(popupData.days || '7', 10);
         const expire = Date.now() + days * 86400000;
-        localStorage.setItem('federwiegen_exit_hide_until', expire.toString());
+        localStorage.setItem('produkt_exit_hide_until', expire.toString());
     }
 
     if (popup.length && popupData.enabled && popupData.title && Date.now() > hideUntil) {
@@ -909,7 +909,7 @@ jQuery(document).ready(function($) {
 
         $('#produkt-exit-send').on('click', function(){
             const opt = $('#produkt-exit-select').val() || '';
-            $.post(federwiegen_ajax.ajax_url, {
+            $.post(produkt_ajax.ajax_url, {
                 action: 'exit_intent_feedback',
                 option: opt,
                 variant_id: selectedVariant || '',
@@ -918,7 +918,7 @@ jQuery(document).ready(function($) {
                 condition_id: selectedCondition || '',
                 product_color_id: selectedProductColor || '',
                 frame_color_id: selectedFrameColor || '',
-                nonce: federwiegen_ajax.nonce
+                nonce: produkt_ajax.nonce
             }, function(){
                 hidePopup();
             });

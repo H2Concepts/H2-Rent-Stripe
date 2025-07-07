@@ -7,7 +7,7 @@ global $wpdb;
 
 // Handle form submissions
 if (isset($_POST['submit_branding'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $plugin_name = sanitize_text_field($_POST['plugin_name']);
     $plugin_description = sanitize_textarea_field($_POST['plugin_description']);
     $company_name = sanitize_text_field($_POST['company_name']);
@@ -17,7 +17,7 @@ if (isset($_POST['submit_branding'])) {
     $admin_color_text = sanitize_hex_color($_POST['admin_color_text']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
-    $table_name = $wpdb->prefix . 'federwiegen_branding';
+    $table_name = $wpdb->prefix . 'produkt_branding';
 
     $settings = array(
         'plugin_name' => $plugin_name,
@@ -76,7 +76,7 @@ if (isset($_POST['submit_branding'])) {
 
 // Get current branding settings
 $branding = array();
-$results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -139,7 +139,7 @@ foreach ($results as $result) {
     </div>
     
     <form method="post" action="">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <h2>🏢 Plugin-Informationen</h2>
         <table class="form-table">
             <tr>

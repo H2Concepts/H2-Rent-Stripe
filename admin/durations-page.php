@@ -4,11 +4,11 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
-$table_name = $wpdb->prefix . 'federwiegen_durations';
-$table_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+$table_name = $wpdb->prefix . 'produkt_durations';
+$table_prices = $wpdb->prefix . 'produkt_duration_prices';
 
 // Get all categories for dropdown
-$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
@@ -24,7 +24,7 @@ if (empty($category_column_exists)) {
 
 // Handle form submissions
 if (isset($_POST['submit'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $months_minimum = intval($_POST['months_minimum']);
@@ -93,7 +93,7 @@ if (isset($_POST['submit'])) {
 }
 
 // Handle delete
-if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'federwiegen_admin_action')) {
+if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
     $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Mietdauer gelöscht!</p></div>';
@@ -112,11 +112,11 @@ if (isset($_GET['edit'])) {
 }
 
 // Get current category info
-$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", $selected_category));
+$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
 // Get all durations for selected category
 $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY sort_order, months_minimum", $selected_category));
-$variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
+$variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
 ?>
 
 <div class="wrap">
@@ -154,7 +154,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id 
         
         <?php if ($current_category): ?>
         <div class="produkt-category-info">
-            <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
@@ -182,18 +182,18 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id 
         <?php
         switch ($active_tab) {
             case 'add':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/durations-add-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-add-tab.php';
                 break;
             case 'edit':
                 if ($edit_item) {
-                    include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/durations-edit-tab.php';
+                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-edit-tab.php';
                 } else {
-                    include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php';
+                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php';
                 }
                 break;
             case 'list':
             default:
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php';
         }
         ?>
     </div>

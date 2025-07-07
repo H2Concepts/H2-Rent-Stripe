@@ -58,7 +58,7 @@
                     <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&tab=edit&edit=' . $duration->id); ?>" class="button button-small">
                         ✏️ Bearbeiten
                     </a>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&delete=' . $duration->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>"
+                    <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&delete=' . $duration->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                        class="button button-small produkt-delete-button"
                        onclick="return confirm('Sind Sie sicher, dass Sie diese Mietdauer löschen möchten?\n\n\"<?php echo esc_js($duration->name); ?>\" wird unwiderruflich gelöscht!')">
                         🗑️ Löschen

@@ -14,30 +14,30 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const FEDERWIEGEN_PLUGIN_VERSION = '2.8.24';
-const FEDERWIEGEN_PLUGIN_DIR = __DIR__ . '/';
-define('FEDERWIEGEN_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('FEDERWIEGEN_PLUGIN_PATH', FEDERWIEGEN_PLUGIN_DIR);
-define('FEDERWIEGEN_VERSION', FEDERWIEGEN_PLUGIN_VERSION);
-define('FEDERWIEGEN_PLUGIN_FILE', __FILE__);
+const PRODUKT_PLUGIN_VERSION = '2.8.24';
+const PRODUKT_PLUGIN_DIR = __DIR__ . '/';
+define('PRODUKT_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);
+define('PRODUKT_VERSION', PRODUKT_PLUGIN_VERSION);
+define('PRODUKT_PLUGIN_FILE', __FILE__);
 
 // Control whether default demo data is inserted on activation
-if (!defined('FEDERWIEGEN_LOAD_DEFAULT_DATA')) {
-    define('FEDERWIEGEN_LOAD_DEFAULT_DATA', false);
+if (!defined('PRODUKT_LOAD_DEFAULT_DATA')) {
+    define('PRODUKT_LOAD_DEFAULT_DATA', false);
 }
 
 // Load the autoloader for the plugin classes. Some installations failed to
 // find the class when it was called directly, so ensure the file exists and
 // require it explicitly before registering.
-if (!class_exists('FederwiegenVerleih\\Autoloader')) {
+if (!class_exists('ProduktVerleih\\Autoloader')) {
     $autoloader = plugin_dir_path(__FILE__) . 'includes/Autoloader.php';
     if (file_exists($autoloader)) {
         require_once $autoloader;
     }
 }
 
-if (class_exists('FederwiegenVerleih\\Autoloader')) {
-    \FederwiegenVerleih\Autoloader::register();
+if (class_exists('ProduktVerleih\\Autoloader')) {
+    \ProduktVerleih\Autoloader::register();
 }
 
 $webhook_file = plugin_dir_path(__FILE__) . 'includes/Webhook.php';
@@ -48,17 +48,17 @@ if (file_exists($webhook_file)) {
 }
 
 // Register activation and deactivation hooks
-register_activation_hook(__FILE__, ['FederwiegenVerleih\\Plugin', 'activate_plugin']);
-register_deactivation_hook(__FILE__, ['FederwiegenVerleih\\Plugin', 'deactivate_plugin']);
+register_activation_hook(__FILE__, ['ProduktVerleih\\Plugin', 'activate_plugin']);
+register_deactivation_hook(__FILE__, ['ProduktVerleih\\Plugin', 'deactivate_plugin']);
 
 // Initialize the plugin after WordPress has loaded
 add_action('plugins_loaded', function () {
-    new \FederwiegenVerleih\Plugin();
+    new \ProduktVerleih\Plugin();
 });
 
 
-add_shortcode('stripe_elements_form', 'federwiegen_simple_checkout_button');
-function federwiegen_simple_checkout_button() {
+add_shortcode('stripe_elements_form', 'produkt_simple_checkout_button');
+function produkt_simple_checkout_button() {
     ob_start(); ?>
     <button id="mieten-button">Jetzt mieten</button>
     <script>

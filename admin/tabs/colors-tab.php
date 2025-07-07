@@ -1,6 +1,6 @@
 <?php
 // Colors Tab Content
-$table_name = $wpdb->prefix . 'federwiegen_colors';
+$table_name = $wpdb->prefix . 'produkt_colors';
 
 // Handle form submissions
 if (isset($_POST['submit_color'])) {
@@ -73,12 +73,12 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
 
 <div class="produkt-tab-section">
     <h3>🎨 Farben</h3>
-    <p>Verwalten Sie Produkt- und Gestellfarben für Ihre Federwiegen.</p>
+    <p>Verwalten Sie Produkt- und Gestellfarben für Ihre Produkt.</p>
     
     <!-- Form -->
     <div class="produkt-form-card">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                 <h4>Farbe bearbeiten</h4>

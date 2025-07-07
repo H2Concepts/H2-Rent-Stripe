@@ -1,11 +1,11 @@
 # H2 Concepts Rental Pro
 
-This WordPress plugin enables the rental of configurable products with built-in Stripe integration. It was initially developed for renting baby swings ("Federwiegen") but can be adapted to other products.
+This WordPress plugin enables the rental of configurable products with built-in Stripe integration. It was initially developed for renting baby swings ("Produkt") but can be adapted to other products.
 
 ## Features
 
 - Admin pages to manage product categories, variants, extras, rental durations and more
-- Shortcode `[federwiegen_product]` to embed a product page on the front‑end
+- Shortcode `[produkt_product]` to embed a product page on the front‑end
 - Calculates prices dynamically and links to your Stripe checkout URLs
 - Supports Stripe promotion codes so customers can redeem coupons
 - Collects customer phone numbers and addresses during checkout
@@ -26,18 +26,18 @@ This WordPress plugin enables the rental of configurable products with built-in 
 By default no sample data is inserted. To load the example records define the following constant **before** activating the plugin (for example in `wp-config.php`):
 
 ```php
-define('FEDERWIEGEN_LOAD_DEFAULT_DATA', true);
+define('PRODUKT_LOAD_DEFAULT_DATA', true);
 ```
 
-You may also toggle this behaviour with the `federwiegen_load_default_data` filter.
+You may also toggle this behaviour with the `produkt_load_default_data` filter.
 
 ## Usage
 
-1. Configure your categories, variants, extras and durations in the new **Federwiegen** admin menu.
+1. Configure your categories, variants, extras and durations in the new **Produkt** admin menu.
 2. Add the shortcode to a page or post:
 
 ```php
-[federwiegen_product category="STANDARD"]
+[produkt_product category="STANDARD"]
 ```
 
 Use the `category` attribute to select a specific product category by shortcode.

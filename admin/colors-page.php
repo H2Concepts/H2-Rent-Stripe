@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
-$table_name = $wpdb->prefix . 'federwiegen_colors';
+$table_name = $wpdb->prefix . 'produkt_colors';
 
 // Ensure image_url column exists
 $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'image_url'");
@@ -13,14 +13,14 @@ if (empty($column_exists)) {
 }
 
 // Get all categories for dropdown
-$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
 
 // Get variants for the selected category
 $variants = $wpdb->get_results($wpdb->prepare(
-    "SELECT id, name FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order, name",
+    "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
     $selected_category
 ));
 $variant_images_db = array();
@@ -30,7 +30,7 @@ $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
 // Handle form submissions
 if (isset($_POST['submit'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $color_code = sanitize_hex_color($_POST['color_code']);
@@ -91,7 +91,7 @@ if (isset($_POST['submit'])) {
 
     if (isset($color_id)) {
         $variant_images = $_POST['variant_images'] ?? array();
-        $table_variant_img = $wpdb->prefix . 'federwiegen_color_variant_images';
+        $table_variant_img = $wpdb->prefix . 'produkt_color_variant_images';
         foreach ($variant_images as $variant_id => $img) {
             $variant_id = intval($variant_id);
             $img = esc_url_raw($img);
@@ -110,7 +110,7 @@ if (isset($_POST['submit'])) {
 }
 
 // Handle delete
-if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'federwiegen_admin_action')) {
+if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
     $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Farbe gelöscht!</p></div>';
@@ -126,18 +126,18 @@ if (isset($_GET['edit'])) {
     if ($edit_item) {
         $selected_category = $edit_item->category_id;
         $variants = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, name FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order, name",
+            "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
             $selected_category
         ));
         $variant_images_db = $wpdb->get_results($wpdb->prepare(
-            "SELECT variant_id, image_url FROM {$wpdb->prefix}federwiegen_color_variant_images WHERE color_id = %d",
+            "SELECT variant_id, image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d",
             $edit_item->id
         ), OBJECT_K);
     }
 }
 
 // Get current category info
-$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", $selected_category));
+$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
 // Get all colors for selected category, separated by type
 $product_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order, name", $selected_category));
@@ -179,7 +179,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
         
         <?php if ($current_category): ?>
         <div class="produkt-category-info">
-            <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
@@ -214,7 +214,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                     
                     <div class="produkt-form-card">
                         <form method="post" action="">
-                            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                             <div class="produkt-form-grid">
                                 <div class="produkt-form-group">
                                     <label>Farbtyp *</label>
@@ -284,7 +284,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                     
                     <div class="produkt-form-card">
                         <form method="post" action="">
-                            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                             <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                             
                             <div class="produkt-form-grid">
@@ -366,7 +366,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                 ?>
                 <div class="produkt-tab-section">
                     <h3>🎨 Farben</h3>
-                    <p>Verwalten Sie Produkt- und Gestellfarben für Ihre Federwiegen.</p>
+                    <p>Verwalten Sie Produkt- und Gestellfarben für Ihre Produkt.</p>
                     
                     <!-- Product Colors -->
                     <div class="produkt-list-card" style="margin-bottom: 30px;">
@@ -398,7 +398,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                 
                                 <div class="produkt-item-actions">
                                     <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -436,7 +436,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                 
                                 <div class="produkt-item-actions">
                                     <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                                 </div>
                             </div>
                             <?php endforeach; ?>

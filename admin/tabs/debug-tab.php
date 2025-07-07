@@ -3,7 +3,7 @@
 
 // Force database update if requested
 if (isset($_POST['force_update'])) {
-    $table_variants = $wpdb->prefix . 'federwiegen_variants';
+    $table_variants = $wpdb->prefix . 'produkt_variants';
     
     // Check if image_url column exists
     $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'image_url'");
@@ -22,7 +22,7 @@ if (isset($_POST['force_update'])) {
 }
 
 // Get table structure
-$table_variants = $wpdb->prefix . 'federwiegen_variants';
+$table_variants = $wpdb->prefix . 'produkt_variants';
 
 $variants_columns = $wpdb->get_results("SHOW COLUMNS FROM $table_variants");
 
@@ -38,7 +38,7 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
     
     <div class="produkt-debug-actions">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="force_update" class="button button-primary" onclick="return confirm('Sind Sie sicher? Dies führt Datenbankänderungen durch.')">
                 🔄 Datenbank reparieren
             </button>
@@ -90,8 +90,8 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
                     <li><strong>WordPress Version:</strong> <?php echo get_bloginfo('version'); ?></li>
                     <li><strong>PHP Version:</strong> <?php echo PHP_VERSION; ?></li>
                     <li><strong>MySQL Version:</strong> <?php echo $wpdb->db_version(); ?></li>
-                    <li><strong>Plugin Version:</strong> <?php echo defined('FEDERWIEGEN_VERSION') ? FEDERWIEGEN_VERSION : 'Unbekannt'; ?></li>
-                    <li><strong>Gespeicherte Version:</strong> <?php echo get_option('federwiegen_version', 'nicht gesetzt'); ?></li>
+                    <li><strong>Plugin Version:</strong> <?php echo defined('PRODUKT_VERSION') ? PRODUKT_VERSION : 'Unbekannt'; ?></li>
+                    <li><strong>Gespeicherte Version:</strong> <?php echo get_option('produkt_version', 'nicht gesetzt'); ?></li>
                 </ul>
             </div>
         </div>

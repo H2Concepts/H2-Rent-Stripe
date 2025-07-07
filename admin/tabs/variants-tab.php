@@ -1,6 +1,6 @@
 <?php
 // Variants Tab Content
-$table_name = $wpdb->prefix . 'federwiegen_variants';
+$table_name = $wpdb->prefix . 'produkt_variants';
 
 // Handle form submissions
 if (isset($_POST['submit_variant'])) {
@@ -90,7 +90,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
     <!-- Form -->
     <div class="produkt-form-card">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
                 <h4>Ausführung bearbeiten</h4>
@@ -209,7 +209,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                         <?php
                             $price = 0;
                             if (!empty($variant->stripe_price_id)) {
-                                $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                                 if (!is_wp_error($p)) {
                                     $price = $p;
                                 }

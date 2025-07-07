@@ -9,14 +9,14 @@
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <!-- Grunddaten -->
         <div class="produkt-form-section">
             <h4>📝 Grunddaten</h4>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Kategorie-Name *</label>
-                    <input type="text" name="name" required placeholder="z.B. Nonomo Federwiegen">
+                    <input type="text" name="name" required placeholder="z.B. Nonomo Produkt">
                 </div>
                 <div class="produkt-form-group">
                     <label>Shortcode-Bezeichnung *</label>
@@ -72,7 +72,7 @@
                         <?php foreach ($shipping_providers as $key => $label): ?>
                             <label>
                                 <input type="radio" name="shipping_provider" value="<?php echo esc_attr($key); ?>" <?php checked($key, 'dhl'); ?>>
-                                <img src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/shipping-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
+                                <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
                             </label>
                         <?php endforeach; ?>
                     </div>
@@ -203,7 +203,7 @@
                     <?php foreach ($payment_methods as $key => $label): ?>
                         <label>
                             <input type="checkbox" name="payment_icons[]" value="<?php echo esc_attr($key); ?>">
-                            <img src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/payment-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
+                            <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
                         </label>
                     <?php endforeach; ?>
                 </div>

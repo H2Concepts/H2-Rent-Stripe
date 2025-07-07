@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 // Get all categories for dropdown
-$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
@@ -15,17 +15,17 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
 // Ensure all new columns exist in variant_options table
-$links_table = $wpdb->prefix . 'federwiegen_variant_options';
+$links_table = $wpdb->prefix . 'produkt_variant_options';
 
 // Handle form submissions
 if (isset($_POST['submit'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $variant_id = intval($_POST['variant_id']);
     $option_type = sanitize_text_field($_POST['option_type']);
     $option_id = intval($_POST['option_id']);
     $available = isset($_POST['available']) ? 1 : 0;
 
-    $table_name = $wpdb->prefix . 'federwiegen_variant_options';
+    $table_name = $wpdb->prefix . 'produkt_variant_options';
 
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
@@ -69,8 +69,8 @@ if (isset($_POST['submit'])) {
 }
 
 // Handle delete
-if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'federwiegen_admin_action')) {
-    $result = $wpdb->delete($wpdb->prefix . 'federwiegen_variant_options', array('id' => intval($_GET['delete'])), array('%d'));
+if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
+    $result = $wpdb->delete($wpdb->prefix . 'produkt_variant_options', array('id' => intval($_GET['delete'])), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Zuordnung gelöscht!</p></div>';
     } else {
@@ -81,18 +81,18 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
 // Get item for editing
 $edit_item = null;
 if (isset($_GET['edit'])) {
-    $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_variant_options WHERE id = %d", intval($_GET['edit'])));
+    $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_variant_options WHERE id = %d", intval($_GET['edit'])));
 }
 
 // Get current category info
-$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", $selected_category));
+$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
 // Get all data for dropdowns (filtered by category)
-$variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_variants WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
-$conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_conditions WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
-$product_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order, name", $selected_category));
-$frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order, name", $selected_category));
-$extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_extras WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
+$variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
+$conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_conditions WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
+$product_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order, name", $selected_category));
+$frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order, name", $selected_category));
+$extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
 
 // Get all variant options with names (filtered by category)
 $variant_options = $wpdb->get_results($wpdb->prepare("
@@ -103,12 +103,12 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                WHEN vo.option_type = 'frame_color' THEN fc.name
                WHEN vo.option_type = 'extra' THEN e.name
            END as option_name
-    FROM {$wpdb->prefix}federwiegen_variant_options vo
-    LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON vo.variant_id = v.id
-    LEFT JOIN {$wpdb->prefix}federwiegen_conditions c ON vo.option_type = 'condition' AND vo.option_id = c.id
-    LEFT JOIN {$wpdb->prefix}federwiegen_colors pc ON vo.option_type = 'product_color' AND vo.option_id = pc.id
-    LEFT JOIN {$wpdb->prefix}federwiegen_colors fc ON vo.option_type = 'frame_color' AND vo.option_id = fc.id
-    LEFT JOIN {$wpdb->prefix}federwiegen_extras e ON vo.option_type = 'extra' AND vo.option_id = e.id
+    FROM {$wpdb->prefix}produkt_variant_options vo
+    LEFT JOIN {$wpdb->prefix}produkt_variants v ON vo.variant_id = v.id
+    LEFT JOIN {$wpdb->prefix}produkt_conditions c ON vo.option_type = 'condition' AND vo.option_id = c.id
+    LEFT JOIN {$wpdb->prefix}produkt_colors pc ON vo.option_type = 'product_color' AND vo.option_id = pc.id
+    LEFT JOIN {$wpdb->prefix}produkt_colors fc ON vo.option_type = 'frame_color' AND vo.option_id = fc.id
+    LEFT JOIN {$wpdb->prefix}produkt_extras e ON vo.option_type = 'extra' AND vo.option_id = e.id
     WHERE v.category_id = %d
     ORDER BY v.name, vo.option_type, option_name
 ", $selected_category));
@@ -149,7 +149,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
         
         <?php if ($current_category): ?>
         <div class="produkt-category-info">
-            <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
@@ -193,7 +193,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                     
                     <div class="produkt-form-card">
                         <form method="post" action="">
-                            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                             <div class="produkt-form-grid">
                                 <div class="produkt-form-group">
                                     <label>Ausführung *</label>
@@ -262,7 +262,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                     
                     <div class="produkt-form-card">
                         <form method="post" action="">
-                            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                             <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                             
                             <div class="produkt-form-grid">
@@ -388,7 +388,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                                         </div>
                                         <div style="display: flex; gap: 5px;">
                                             <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=edit&edit=' . $option->id); ?>" class="button button-small">✏️</a>
-                                            <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=list&delete=' . $option->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">🗑️</a>
+                                            <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=list&delete=' . $option->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">🗑️</a>
                                         </div>
                                     </div>
                                 </div>

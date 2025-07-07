@@ -9,7 +9,7 @@
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
 
         <div class="produkt-subtab-nav">
@@ -169,7 +169,7 @@
                     <?php foreach ($payment_methods as $key => $label): ?>
                         <label>
                             <input type="checkbox" name="payment_icons[]" value="<?php echo esc_attr($key); ?>" <?php checked(in_array($key, $selected_icons)); ?>>
-                            <img src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/payment-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
+                            <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
                         </label>
                     <?php endforeach; ?>
                 </div>
@@ -212,7 +212,7 @@
                             <?php foreach ($shipping_providers as $key => $label): ?>
                                 <label>
                                     <input type="radio" name="shipping_provider" value="<?php echo esc_attr($key); ?>" <?php checked($edit_item->shipping_provider ?? '', $key); ?>>
-                                    <img src="<?php echo esc_url(FEDERWIEGEN_PLUGIN_URL . 'assets/shipping-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
+                                    <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
                                 </label>
                             <?php endforeach; ?>
                         </div>
@@ -319,7 +319,7 @@
             <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=list'); ?>" class="button button-large">
                 ❌ Abbrechen
            </a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>"
+            <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                class="button button-large produkt-delete-button"
                onclick="return confirm('Sind Sie sicher, dass Sie diese Kategorie löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')"
                style="margin-left: auto;">
