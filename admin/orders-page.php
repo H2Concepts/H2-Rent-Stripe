@@ -349,6 +349,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 function showOrderDetails(orderId) {
     // Find order data from PHP
     const orders = <?php echo json_encode($orders); ?>;
+    const orderLogs = <?php echo json_encode($order_logs); ?>;
     const order = orders.find(o => o.id == orderId);
     
     if (!order) return;
@@ -393,11 +394,21 @@ function showOrderDetails(orderId) {
     
     detailsHtml += `
         </ul>
-        
-        
+
+
         <h4>🖥️ Technische Daten</h4>
         <p><strong>User Agent:</strong> ${order.user_agent}</p>
     `;
+
+    const logs = orderLogs[order.id] || [];
+    if (logs.length) {
+        detailsHtml += '<h4>📑 Verlauf</h4><ul>';
+        logs.forEach(l => {
+            const date = new Date(l.created_at).toLocaleString('de-DE');
+            detailsHtml += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
+        });
+        detailsHtml += '</ul>';
+    }
     
     document.getElementById('order-details-content').innerHTML = detailsHtml;
     document.getElementById('order-details-modal').style.display = 'block';

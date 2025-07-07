@@ -97,16 +97,22 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 $data,
                 ['id' => $existing_id]
             );
+            if ($send_welcome) {
+                produkt_add_order_log($existing_id, 'status_updated', 'offen -> abgeschlossen');
+            }
         } else {
             $data['stripe_session_id'] = $session->id;
             $data['stripe_subscription_id'] = $subscription_id;
             $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);
             $existing_id = $wpdb->insert_id;
+            produkt_add_order_log($existing_id, 'order_created');
             $send_welcome = true;
         }
 
         if ($send_welcome) {
+            produkt_add_order_log($existing_id, 'checkout_completed');
             send_produkt_welcome_email($data, $existing_id);
+            produkt_add_order_log($existing_id, 'welcome_email_sent');
         }
 
         $admin_email = get_option('admin_email');
@@ -137,6 +143,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             [ 'status' => 'gekündigt' ],
             [ 'stripe_subscription_id' => $subscription_id ]
         );
+        $order_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_orders WHERE stripe_subscription_id = %s",
+            $subscription_id
+        ));
+        if ($order_id) {
+            produkt_add_order_log((int) $order_id, 'subscription_cancelled');
+        }
         return new WP_REST_Response(['status' => 'subscription cancelled'], 200);
     }
 
@@ -148,38 +161,29 @@ function send_produkt_welcome_email(array $order, int $order_id) {
         return;
     }
 
-    global $wpdb;
-    $branding = [];
-    $results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
-    foreach ($results as $row) {
-        $branding[$row->setting_key] = $row->setting_value;
-    }
-    $company = $branding['company_name'] ?? get_bloginfo('name');
-
     $full_name = trim($order['customer_name']);
     if (strpos($full_name, ' ') !== false) {
-        list($first, $last) = explode(' ', $full_name, 2);
+        [$first, $last] = explode(' ', $full_name, 2);
     } else {
         $first = $full_name;
         $last  = '';
     }
 
-    $subject = 'Herzlich willkommen und vielen Dank f\xC3\xBCr Ihre Bestellung bei ' . $company . '!';
+    $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date = date_i18n('d.m.Y', strtotime($order['created_at']));
-    $price = number_format((float) $order['final_price'], 2, ',', '.') . '\xE2\x82\xAC';
+    $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;">';
-    $message .= '<h2 style="color:#007cba;">Herzlich willkommen und vielen Dank f\xC3\xBCr Ihre Bestellung bei ' . esc_html($company) . '!</h2>';
+    $message .= '<h2 style="color:#007cba;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h2>';
     $message .= '<p>Hallo ' . esc_html($first . ' ' . $last) . ',</p>';
-    $message .= '<p>herzlichen Dank f\xC3\xBCr Ihre Bestellung bei ' . esc_html($company) . '!<br>Wir freuen uns sehr, Sie als neuen Kunden begr\xC3\xBC\xC3\x9Fen zu d\xC3\xBCrfen.</p>';
+    $message .= '<p>herzlichen Dank für Ihre Bestellung!<br>Wir freuen uns sehr, Sie als neuen Kunden begrüßen zu dürfen.</p>';
 
-    $message .= '<h3>Ihre Bestell\xC3\xBCbersicht</h3>';
+    $message .= '<h3>Ihre Bestellübersicht</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($order_id) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestelldatum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Abgeschlossen</td></tr>';
     $message .= '</table>';
 
     $message .= '<h3>Ihre Kundendaten</h3>';
@@ -196,14 +200,31 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     $message .= '<h3>Ihre Produktdaten</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr style="background:#f8f9fa;"><th style="text-align:left;padding:6px;">Produkt</th><th style="text-align:left;padding:6px;">Menge</th><th style="text-align:left;padding:6px;">Variante</th><th style="text-align:left;padding:6px;">Preis</th></tr>';
-    $message .= '<tr><td style="padding:6px;">' . esc_html($order['produkt_name']) . '</td><td style="padding:6px;">1</td><td style="padding:6px;">' . esc_html($order['zustand_text']) . '</td><td style="padding:6px;">' . esc_html($price) . '</td></tr>';
-    $message .= '<tr><td colspan="4" style="text-align:right;padding:6px;">Gesamtsumme: <strong>' . esc_html($price) . '</strong></td></tr>';
+    $message .= '<tr style="background:#f8f9fa;"><th style="text-align:left;padding:6px;">Produkt</th><th style="text-align:left;padding:6px;">Menge</th><th style="text-align:left;padding:6px;">Variante</th><th style="text-align:left;padding:6px;">Extras</th><th style="text-align:left;padding:6px;">Farbe</th><th style="text-align:left;padding:6px;">Gestell</th><th style="text-align:left;padding:6px;">Mietdauer</th><th style="text-align:left;padding:6px;">Preis</th></tr>';
+    $message .= '<tr><td style="padding:6px;">' . esc_html($order['produkt_name']) . '</td><td style="padding:6px;">1</td><td style="padding:6px;">' . esc_html($order['zustand_text']) . '</td><td style="padding:6px;">' . esc_html($order['extra_text']) . '</td><td style="padding:6px;">' . esc_html($order['produktfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['gestellfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['dauer_text']) . '</td><td style="padding:6px;">' . esc_html($price) . '</td></tr>';
+    $message .= '<tr><td colspan="8" style="text-align:right;padding:6px;">Gesamtsumme: <strong>' . esc_html($price) . '</strong></td></tr>';
     $message .= '</table>';
 
-    $message .= '<p>Bitte pr\xC3\xBCfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder \xC3\x84nderungsw\xC3\xBCnsche haben.</p>';
+    $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
     $message .= '</body></html>';
 
     $headers = ['Content-Type: text/html; charset=UTF-8'];
+    $from_name  = get_bloginfo('name');
+    $from_email = get_option('admin_email');
+    $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
     wp_mail($order['customer_email'], $subject, $message, $headers);
+}
+
+function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {
+    global $wpdb;
+    $wpdb->insert(
+        $wpdb->prefix . 'produkt_order_logs',
+        [
+            'order_id'   => $order_id,
+            'event'      => $event,
+            'message'    => $message,
+            'created_at' => current_time('mysql', true),
+        ],
+        ['%d', '%s', '%s', '%s']
+    );
 }
