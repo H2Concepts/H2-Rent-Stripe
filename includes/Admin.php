@@ -134,17 +134,30 @@ class Admin {
         wp_add_inline_style('produkt-style', $inline_css);
 
         global $wpdb;
-        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
-        preg_match($pattern, $post->post_content, $matches);
-        $category_shortcode = isset($matches[1]) ? $matches[1] : '';
-
         $category = null;
-        if (!empty($category_shortcode)) {
-            $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
-                $category_shortcode
-            ));
+        if (is_singular('produkt')) {
+            $cat_id = intval(get_post_meta($post->ID, 'produkt_category_id', true));
+            if ($cat_id) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    $cat_id
+                ));
+            }
         }
+
+        if (!$category) {
+            $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+            preg_match($pattern, $post->post_content, $matches);
+            $category_shortcode = isset($matches[1]) ? $matches[1] : '';
+
+            if (!empty($category_shortcode)) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                    $category_shortcode
+                ));
+            }
+        }
+
         if (!$category) {
             $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
@@ -584,6 +597,31 @@ class Admin {
     
     public function settings_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/settings-page.php';
+    }
+
+    /**
+     * Add meta box for selecting the product category on produkt posts.
+     */
+    public function add_product_meta_boxes() {
+        add_meta_box(
+            'produkt_config_box',
+            'Produkt-Konfiguration',
+            [$this, 'render_product_meta_box'],
+            'produkt',
+            'side'
+        );
+    }
+
+    public function render_product_meta_box($post) {
+        $value = get_post_meta($post->ID, 'produkt_category_id', true);
+        echo '<label for="produkt_category_id">Kategorie-ID:</label>';
+        echo '<input type="number" name="produkt_category_id" value="' . esc_attr($value) . '" />';
+    }
+
+    public function save_product_meta($post_id) {
+        if (isset($_POST['produkt_category_id'])) {
+            update_post_meta($post_id, 'produkt_category_id', intval($_POST['produkt_category_id']));
+        }
     }
 
 }

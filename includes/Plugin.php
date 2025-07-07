@@ -25,6 +25,8 @@ class Plugin {
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
+        add_action('add_meta_boxes', [$this->admin, 'add_product_meta_boxes']);
+        add_action('save_post_produkt', [$this->admin, 'save_product_meta']);
 
         add_action('wp_ajax_get_product_price', [$this->ajax, 'ajax_get_product_price']);
         add_action('wp_ajax_nopriv_get_product_price', [$this->ajax, 'ajax_get_product_price']);
@@ -165,16 +167,28 @@ class Plugin {
             return;
         }
 
-        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
-        preg_match($pattern, $post->post_content, $matches);
-        $category_shortcode = isset($matches[1]) ? $matches[1] : '';
-
         $category = null;
-        if (!empty($category_shortcode)) {
-            $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
-                $category_shortcode
-            ));
+        if (is_singular('produkt')) {
+            $cat_id = intval(get_post_meta($post->ID, 'produkt_category_id', true));
+            if ($cat_id) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    $cat_id
+                ));
+            }
+        }
+
+        if (!$category) {
+            $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+            preg_match($pattern, $post->post_content, $matches);
+            $category_shortcode = isset($matches[1]) ? $matches[1] : '';
+
+            if (!empty($category_shortcode)) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                    $category_shortcode
+                ));
+            }
         }
 
         if (!$category) {
@@ -206,16 +220,28 @@ class Plugin {
             return;
         }
 
-        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
-        preg_match($pattern, $post->post_content, $matches);
-        $category_shortcode = isset($matches[1]) ? $matches[1] : '';
-
         $category = null;
-        if (!empty($category_shortcode)) {
-            $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
-                $category_shortcode
-            ));
+        if (is_singular('produkt')) {
+            $cat_id = intval(get_post_meta($post->ID, 'produkt_category_id', true));
+            if ($cat_id) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    $cat_id
+                ));
+            }
+        }
+
+        if (!$category) {
+            $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+            preg_match($pattern, $post->post_content, $matches);
+            $category_shortcode = isset($matches[1]) ? $matches[1] : '';
+
+            if (!empty($category_shortcode)) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                    $category_shortcode
+                ));
+            }
         }
 
         if (!$category) {
@@ -258,16 +284,28 @@ class Plugin {
             return;
         }
 
-        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
-        preg_match($pattern, $post->post_content, $matches);
-        $category_shortcode = isset($matches[1]) ? $matches[1] : '';
-
         $category = null;
-        if (!empty($category_shortcode)) {
-            $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
-                $category_shortcode
-            ));
+        if (is_singular('produkt')) {
+            $cat_id = intval(get_post_meta($post->ID, 'produkt_category_id', true));
+            if ($cat_id) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    $cat_id
+                ));
+            }
+        }
+
+        if (!$category) {
+            $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+            preg_match($pattern, $post->post_content, $matches);
+            $category_shortcode = isset($matches[1]) ? $matches[1] : '';
+
+            if (!empty($category_shortcode)) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                    $category_shortcode
+                ));
+            }
         }
 
         if (!$category) {
