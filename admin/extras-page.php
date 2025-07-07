@@ -115,25 +115,25 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
 
 <div class="wrap">
     <!-- Kompakter Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">🎁</div>
-        <div class="federwiegen-admin-title-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">🎁</div>
+        <div class="produkt-admin-title-compact">
             <h1>Extras verwalten</h1>
             <p>Zusatzoptionen mit Bildern</p>
         </div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="federwiegen-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>">Dashboard</a> 
+    <div class="produkt-breadcrumb">
+        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
         <strong>Extras</strong>
     </div>
     
     <!-- Category Selection -->
-    <div class="federwiegen-category-selector">
+    <div class="produkt-category-selector">
         <form method="get" action="">
-            <input type="hidden" name="page" value="federwiegen-extras">
+            <input type="hidden" name="page" value="produkt-extras">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
             <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
@@ -147,32 +147,32 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
         </form>
         
         <?php if ($current_category): ?>
-        <div class="federwiegen-category-info">
+        <div class="produkt-category-info">
             <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="federwiegen-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-extras&category=' . $selected_category . '&tab=list'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
+    <div class="produkt-tab-nav">
+        <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&tab=list'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
             📋 Übersicht
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-extras&category=' . $selected_category . '&tab=add'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&tab=add'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
             ➕ Neues Extra
         </a>
         <?php if ($edit_item): ?>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-extras&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
             ✏️ Bearbeiten
         </a>
         <?php endif; ?>
     </div>
     
     <!-- Tab Content -->
-    <div class="federwiegen-tab-content">
+    <div class="produkt-tab-content">
         <?php
         switch ($active_tab) {
             case 'add':

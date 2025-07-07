@@ -27,25 +27,25 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 
 <div class="wrap">
     <!-- Standard Admin Header -->
-    <div class="federwiegen-admin-header">
-        <div class="federwiegen-admin-logo">
+    <div class="produkt-admin-header">
+        <div class="produkt-admin-logo">
             📋
         </div>
-        <div class="federwiegen-admin-title">
+        <div class="produkt-admin-title">
             <h1>Bestellungen</h1>
             <p>Übersicht aller Kundenbestellungen mit detaillierten Produktinformationen</p>
         </div>
     </div>
     
     <!-- Navigation -->
-    <div class="federwiegen-admin-nav">
+    <div class="produkt-admin-nav">
         <h3>🧭 Schnellnavigation</h3>
-        <div class="federwiegen-nav-grid">
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>" class="federwiegen-nav-item">
+        <div class="produkt-nav-grid">
+            <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-dashboard"></span>
                 Dashboard
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-categories'); ?>" class="federwiegen-nav-item">
+            <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-category"></span>
                 Kategorien
             </a>
@@ -56,7 +56,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     <div style="background: #f0f8ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
         <h3>🔍 Filter & Zeitraum</h3>
         <form method="get" action="" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-            <input type="hidden" name="page" value="federwiegen-orders">
+            <input type="hidden" name="page" value="produkt-orders">
             
             <div>
                 <label for="category-select"><strong>Kategorie:</strong></label>
@@ -92,34 +92,34 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     </div>
     
     <!-- Summary Statistics -->
-    <div class="federwiegen-summary-grid">
-        <div class="federwiegen-summary-card">
+    <div class="produkt-summary-grid">
+        <div class="produkt-summary-card">
             <h3>📋 Gesamt-Bestellungen</h3>
-            <div class="federwiegen-summary-value" style="color:#2a372a;">
+            <div class="produkt-summary-value" style="color:#2a372a;">
                 <?php echo number_format($total_orders); ?>
             </div>
-            <p class="federwiegen-summary-note">Im gewählten Zeitraum</p>
+            <p class="produkt-summary-note">Im gewählten Zeitraum</p>
         </div>
 
-        <div class="federwiegen-summary-card">
+        <div class="produkt-summary-card">
             <h3>💰 Gesamt-Umsatz</h3>
-            <div class="federwiegen-summary-value" style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;">
+            <div class="produkt-summary-value" style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;">
                 <?php echo number_format($total_revenue, 2, ',', '.'); ?>€
             </div>
-            <p class="federwiegen-summary-note">Monatlicher Mietumsatz</p>
+            <p class="produkt-summary-note">Monatlicher Mietumsatz</p>
         </div>
 
-        <div class="federwiegen-summary-card">
+        <div class="produkt-summary-card">
             <h3>📊 Durchschnittswert</h3>
-            <div class="federwiegen-summary-value" style="color:#dc3232;">
+            <div class="produkt-summary-value" style="color:#dc3232;">
                 <?php echo number_format($avg_order_value, 2, ',', '.'); ?>€
             </div>
-            <p class="federwiegen-summary-note">Pro Bestellung</p>
+            <p class="produkt-summary-note">Pro Bestellung</p>
         </div>
 
-        <div class="federwiegen-summary-card">
+        <div class="produkt-summary-card">
             <h3>📅 Zeitraum</h3>
-            <div class="federwiegen-summary-range">
+            <div class="produkt-summary-range">
                 <?php echo date('d.m.Y', strtotime($date_from)); ?><br>
                 <small>bis</small><br>
                 <?php echo date('d.m.Y', strtotime($date_to)); ?>
@@ -237,7 +237,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 👁️ Details
                             </button>
                              <br><br>
-                            <a href="<?php echo admin_url('admin.php?page=federwiegen-orders&category=' . $selected_category . '&delete_order=' . $order->id . '&date_from=' . $date_from . '&date_to=' . $date_to); ?>"
+                            <a href="<?php echo admin_url('admin.php?page=produkt-orders&category=' . $selected_category . '&delete_order=' . $order->id . '&date_from=' . $date_from . '&date_to=' . $date_to); ?>"
                                class="button button-small"
                                style="color: #dc3232;"
                                onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo $order->id; ?> wird unwiderruflich gelöscht!')">

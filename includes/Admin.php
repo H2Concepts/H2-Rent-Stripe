@@ -10,7 +10,7 @@ class Admin {
             $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
             $menu_title,
             'manage_options',
-            'federwiegen-verleih',
+            'produkt-verleih',
             array($this, 'admin_page'),
             'dashicons-heart',
             30
@@ -18,88 +18,88 @@ class Admin {
         
         // Submenu: Kategorien
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Kategorien',
             'Kategorien',
             'manage_options',
-            'federwiegen-categories',
+            'produkt-categories',
             array($this, 'categories_page')
         );
         
         // Submenu: Produktverwaltung
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Ausführungen',
             'Ausführungen',
             'manage_options',
-            'federwiegen-variants',
+            'produkt-variants',
             array($this, 'variants_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Extras',
             'Extras',
             'manage_options',
-            'federwiegen-extras',
+            'produkt-extras',
             array($this, 'extras_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Mietdauer',
             'Mietdauer',
             'manage_options',
-            'federwiegen-durations',
+            'produkt-durations',
             array($this, 'durations_page')
         );
         
         // New submenu items
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Zustand',
             'Zustand',
             'manage_options',
-            'federwiegen-conditions',
+            'produkt-conditions',
             array($this, 'conditions_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Farben',
             'Farben',
             'manage_options',
-            'federwiegen-colors',
+            'produkt-colors',
             array($this, 'colors_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Ausführungs-Optionen',
             'Ausführungs-Optionen',
             'manage_options',
-            'federwiegen-variant-options',
+            'produkt-variant-options',
             array($this, 'variant_options_page')
         );
         
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Bestellungen',
             'Bestellungen',
             'manage_options',
-            'federwiegen-orders',
+            'produkt-orders',
             array($this, 'orders_page')
         );
         
 
         // New settings menu with Stripe integration tab
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Einstellungen',
             'Einstellungen',
             'manage_options',
-            'federwiegen-settings',
+            'produkt-settings',
             array($this, 'settings_page')
         );
     }
@@ -116,8 +116,8 @@ class Admin {
             return;
         }
 
-        wp_enqueue_style('federwiegen-style', FEDERWIEGEN_PLUGIN_URL . 'assets/style.css', array(), FEDERWIEGEN_VERSION);
-        wp_enqueue_script('federwiegen-script', FEDERWIEGEN_PLUGIN_URL . 'assets/script.js', array('jquery'), FEDERWIEGEN_VERSION, true);
+        wp_enqueue_style('produkt-style', FEDERWIEGEN_PLUGIN_URL . 'assets/style.css', array(), FEDERWIEGEN_VERSION);
+        wp_enqueue_script('produkt-script', FEDERWIEGEN_PLUGIN_URL . 'assets/script.js', array('jquery'), FEDERWIEGEN_VERSION, true);
 
         global $wpdb;
         $pattern = '/\[federwiegen_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
@@ -144,7 +144,7 @@ class Admin {
         $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
         $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
 
-        wp_localize_script('federwiegen-script', 'federwiegen_ajax', array(
+        wp_localize_script('produkt-script', 'federwiegen_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('federwiegen_nonce'),
             'price_period' => $category->price_period ?? 'month',
@@ -162,8 +162,8 @@ class Admin {
     
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'federwiegen') !== false) {
-            wp_enqueue_style('federwiegen-admin-style', FEDERWIEGEN_PLUGIN_URL . 'assets/admin-style.css', array(), FEDERWIEGEN_VERSION);
-            wp_enqueue_script('federwiegen-admin-script', FEDERWIEGEN_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), FEDERWIEGEN_VERSION, true);
+            wp_enqueue_style('produkt-admin-style', FEDERWIEGEN_PLUGIN_URL . 'assets/admin-style.css', array(), FEDERWIEGEN_VERSION);
+            wp_enqueue_script('produkt-admin-script', FEDERWIEGEN_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), FEDERWIEGEN_VERSION, true);
             
             // Enqueue WordPress media scripts for image upload
             wp_enqueue_media();
@@ -215,26 +215,26 @@ class Admin {
         
         echo '<style>
             :root {
-                --federwiegen-primary: ' . esc_attr($primary_color) . ';
-                --federwiegen-secondary: ' . esc_attr($secondary_color) . ';
-                --federwiegen-text: ' . esc_attr($text_color) . ';
+                --produkt-primary: ' . esc_attr($primary_color) . ';
+                --produkt-secondary: ' . esc_attr($secondary_color) . ';
+                --produkt-text: ' . esc_attr($text_color) . ';
             }
 
             .button-primary {
-                background: var(--federwiegen-primary) !important;
-                border-color: var(--federwiegen-secondary) !important;
-                color: var(--federwiegen-text) !important;
+                background: var(--produkt-primary) !important;
+                border-color: var(--produkt-secondary) !important;
+                color: var(--produkt-text) !important;
             }
 
             .button-primary:hover {
-                background: var(--federwiegen-secondary) !important;
-                color: var(--federwiegen-text) !important;
+                background: var(--produkt-secondary) !important;
+                color: var(--produkt-text) !important;
             }
 
             .nav-tab-active {
-                background: var(--federwiegen-primary);
-                color: var(--federwiegen-text);
-                border-color: var(--federwiegen-secondary);
+                background: var(--produkt-primary);
+                color: var(--produkt-text);
+                border-color: var(--produkt-secondary);
             }
         </style>';
        }

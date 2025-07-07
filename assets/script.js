@@ -18,7 +18,7 @@ jQuery(document).ready(function($) {
     let colorNotificationTimeout = null;
 
     // Get category ID from container
-    const container = $('.federwiegen-container');
+    const container = $('.produkt-container');
     if (container.length) {
         currentCategoryId = container.data('category-id');
         const sc = parseFloat(container.data('shipping-cost'));
@@ -28,13 +28,13 @@ jQuery(document).ready(function($) {
     }
 
     // Remove old inline color labels if they exist
-    $('.federwiegen-color-name').remove();
+    $('.produkt-color-name').remove();
 
     // Initialize mobile sticky price bar
     initMobileStickyPrice();
 
     // Handle option selection
-    $('.federwiegen-option').on('click', function() {
+    $('.produkt-option').on('click', function() {
         const type = $(this).data('type');
         const id = $(this).data('id');
 
@@ -52,25 +52,25 @@ jQuery(document).ready(function($) {
             } else if (type === 'extra') {
                 selectedExtras = [id];
             }
-            $(`.federwiegen-option[data-type="${type}"]`).removeClass('selected');
-            $('#federwiegen-rent-button').prop('disabled', true);
-            $('.federwiegen-mobile-button').prop('disabled', true);
-            $('#federwiegen-button-help').hide();
-            $('#federwiegen-unavailable-help').show();
-            $('#federwiegen-notify').show();
-            $('.federwiegen-notify-form').show();
-            $('#federwiegen-notify-success').hide();
-            $('#federwiegen-availability-wrapper').show();
-            $('#federwiegen-availability-status').addClass('unavailable').removeClass('available');
-            $('#federwiegen-availability-status .status-text').text('Nicht auf Lager');
-            $('#federwiegen-delivery-box').hide();
+            $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
+            $('#produkt-rent-button').prop('disabled', true);
+            $('.produkt-mobile-button').prop('disabled', true);
+            $('#produkt-button-help').hide();
+            $('#produkt-unavailable-help').show();
+            $('#produkt-notify').show();
+            $('.produkt-notify-form').show();
+            $('#produkt-notify-success').hide();
+            $('#produkt-availability-wrapper').show();
+            $('#produkt-availability-status').addClass('unavailable').removeClass('available');
+            $('#produkt-availability-status .status-text').text('Nicht auf Lager');
+            $('#produkt-delivery-box').hide();
             scrollToNotify();
             return;
         }
 
         // Remove selection from same type (except extras which allow multiple)
         if (type !== 'extra') {
-            $(`.federwiegen-option[data-type="${type}"]`).removeClass('selected');
+            $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
             $(this).addClass('selected');
         } else {
             $(this).toggleClass('selected');
@@ -98,11 +98,11 @@ jQuery(document).ready(function($) {
             selectedExtras = [];
             selectedDuration = null;
 
-            $('.federwiegen-option[data-type="condition"]').removeClass('selected');
-            $('.federwiegen-option[data-type="product-color"]').removeClass('selected');
-            $('.federwiegen-option[data-type="frame-color"]').removeClass('selected');
-            $('.federwiegen-option[data-type="extra"]').removeClass('selected');
-            $('.federwiegen-option[data-type="duration"]').removeClass('selected');
+            $('.produkt-option[data-type="condition"]').removeClass('selected');
+            $('.produkt-option[data-type="product-color"]').removeClass('selected');
+            $('.produkt-option[data-type="frame-color"]').removeClass('selected');
+            $('.produkt-option[data-type="extra"]').removeClass('selected');
+            $('.produkt-option[data-type="duration"]').removeClass('selected');
 
             updateExtraImage(null);
             updateColorImage(null);
@@ -136,7 +136,7 @@ jQuery(document).ready(function($) {
     });
 
      // Handle rent button click -> redirect with parameters
-    $('#federwiegen-rent-button, .federwiegen-mobile-button').on('click', function(e) {
+    $('#produkt-rent-button, .produkt-mobile-button').on('click', function(e) {
         if ($(this).prop('disabled')) {
             return;
         }
@@ -152,16 +152,16 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        const variantName = $('.federwiegen-option[data-type="variant"].selected h4').text().trim();
-        const extraNames = $('.federwiegen-option[data-type="extra"].selected .federwiegen-extra-name')
+        const variantName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+        const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
             .map(function() { return $(this).text().trim(); }).get().join(',');
-        const durationName = $('.federwiegen-option[data-type="duration"].selected .federwiegen-duration-name').text().trim();
-        const conditionName = $('.federwiegen-option[data-type="condition"].selected .federwiegen-condition-name').text().trim();
-        const productColorName = $('.federwiegen-option[data-type="product-color"].selected').data('color-name') || '';
-        const frameColorName = $('.federwiegen-option[data-type="frame-color"].selected').data('color-name') || '';
+        const durationName = $('.produkt-option[data-type="duration"].selected .produkt-duration-name').text().trim();
+        const conditionName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+        const productColorName = $('.produkt-option[data-type="product-color"].selected').data('color-name') || '';
+        const frameColorName = $('.produkt-option[data-type="frame-color"].selected').data('color-name') || '';
 
         const priceId = currentPriceId;
-        const shippingId = $('#federwiegen-field-shipping-price-id').val() || '';
+        const shippingId = $('#produkt-field-shipping-price-id').val() || '';
         const extras = selectedExtras.join(',');
         fetch(federwiegen_ajax.ajax_url + '?action=create_checkout_session', {
             method: 'POST',
@@ -191,13 +191,13 @@ jQuery(document).ready(function($) {
     });
 
     // Handle thumbnail clicks
-    $(document).on('click', '.federwiegen-thumbnail', function() {
+    $(document).on('click', '.produkt-thumbnail', function() {
         const index = $(this).data('index');
         showMainImage(index);
     });
 
     // Touch events for swipe navigation
-    const mainImageContainer = document.getElementById('federwiegen-main-image-container');
+    const mainImageContainer = document.getElementById('produkt-main-image-container');
     if (mainImageContainer) {
         mainImageContainer.addEventListener('touchstart', function(e) {
             touchStartX = e.changedTouches[0].screenX;
@@ -245,8 +245,8 @@ jQuery(document).ready(function($) {
     }
 
     function rebuildImageGallery() {
-        const mainImageContainer = $('#federwiegen-main-image-container');
-        const thumbnailsContainer = $('#federwiegen-thumbnails');
+        const mainImageContainer = $('#produkt-main-image-container');
+        const thumbnailsContainer = $('#produkt-thumbnails');
 
         if (currentVariantImages.length > 0) {
             showMainImage(currentMainImageIndex);
@@ -255,7 +255,7 @@ jQuery(document).ready(function($) {
                 let thumbnailsHtml = '';
                 currentVariantImages.forEach((imageUrl, index) => {
                     thumbnailsHtml += `
-                        <div class="federwiegen-thumbnail ${index === currentMainImageIndex ? 'active' : ''}" data-index="${index}">
+                        <div class="produkt-thumbnail ${index === currentMainImageIndex ? 'active' : ''}" data-index="${index}">
                             <img src="${imageUrl}" alt="Bild ${index + 1}">
                         </div>
                     `;
@@ -279,36 +279,36 @@ jQuery(document).ready(function($) {
     function showMainImage(index) {
         if (currentVariantImages[index]) {
             currentMainImageIndex = index;
-            const mainImageContainer = $('#federwiegen-main-image-container');
+            const mainImageContainer = $('#produkt-main-image-container');
             
             // Update main image with fade effect
-            const imageHtml = `<img src="${currentVariantImages[index]}" alt="Federwiege" id="federwiegen-main-image" class="federwiegen-main-image federwiegen-fade-in">`;
+            const imageHtml = `<img src="${currentVariantImages[index]}" alt="Produkt" id="produkt-main-image" class="produkt-main-image produkt-fade-in">`;
             
             // Find and replace only the main image, keep extra overlay
-            const existingMainImage = mainImageContainer.find('#federwiegen-main-image, #federwiegen-placeholder');
+            const existingMainImage = mainImageContainer.find('#produkt-main-image, #produkt-placeholder');
             if (existingMainImage.length > 0) {
                 existingMainImage.fadeOut(200, function() {
                     $(this).replaceWith(imageHtml);
-                    $('#federwiegen-main-image').fadeIn(200);
+                    $('#produkt-main-image').fadeIn(200);
                 });
             } else {
                 mainImageContainer.prepend(imageHtml);
-                $('#federwiegen-main-image').fadeIn(200);
+                $('#produkt-main-image').fadeIn(200);
             }
             
             // Update thumbnail active state
-            $('.federwiegen-thumbnail').removeClass('active');
-            $(`.federwiegen-thumbnail[data-index="${index}"]`).addClass('active');
+            $('.produkt-thumbnail').removeClass('active');
+            $(`.produkt-thumbnail[data-index="${index}"]`).addClass('active');
         }
     }
 
     function showDefaultImage() {
-        const mainImageContainer = $('#federwiegen-main-image-container');
+        const mainImageContainer = $('#produkt-main-image-container');
         
-        let imageHtml = '<div class="federwiegen-placeholder-image federwiegen-fade-in" id="federwiegen-placeholder">👶</div>';
+        let imageHtml = '<div class="produkt-placeholder-image produkt-fade-in" id="produkt-placeholder">👶</div>';
         
         // Find and replace only the main image, keep extra overlay
-        const existingMainImage = mainImageContainer.find('#federwiegen-main-image, #federwiegen-placeholder');
+        const existingMainImage = mainImageContainer.find('#produkt-main-image, #produkt-placeholder');
         if (existingMainImage.length > 0) {
             existingMainImage.replaceWith(imageHtml);
         } else {
@@ -317,19 +317,19 @@ jQuery(document).ready(function($) {
     }
 
     function showSwipeIndicator() {
-        const mainImageContainer = $('#federwiegen-main-image-container');
-        if (mainImageContainer.find('.federwiegen-swipe-indicator').length === 0) {
-            mainImageContainer.append('<div class="federwiegen-swipe-indicator">Wischen für mehr Bilder</div>');
+        const mainImageContainer = $('#produkt-main-image-container');
+        if (mainImageContainer.find('.produkt-swipe-indicator').length === 0) {
+            mainImageContainer.append('<div class="produkt-swipe-indicator">Wischen für mehr Bilder</div>');
         }
     }
 
     function hideSwipeIndicator() {
-        $('.federwiegen-swipe-indicator').remove();
+        $('.produkt-swipe-indicator').remove();
     }
 
     function updateExtraImage(extraOption) {
-        const extraOverlay = $('#federwiegen-extra-overlay');
-        const extraImage = $('#federwiegen-extra-image');
+        const extraOverlay = $('#produkt-extra-overlay');
+        const extraImage = $('#produkt-extra-image');
 
         let imageUrl = '';
         if (extraOption && extraOption.hasClass('selected')) {
@@ -337,7 +337,7 @@ jQuery(document).ready(function($) {
         }
         if (!imageUrl) {
             // fallback to first selected extra with image
-            $('.federwiegen-option[data-type="extra"].selected').each(function () {
+            $('.produkt-option[data-type="extra"].selected').each(function () {
                 const url = $(this).data('extra-image');
                 if (url && url.trim() !== '') {
                     imageUrl = url;
@@ -370,7 +370,7 @@ jQuery(document).ready(function($) {
             }
         }
 
-        const variantOption = $('.federwiegen-option[data-type="variant"].selected');
+        const variantOption = $('.produkt-option[data-type="variant"].selected');
         if (variantOption.length) {
             const baseImages = variantOption.data('images');
             const variantImages = baseImages ? baseImages.filter(img => img && img.trim() !== '') : [];
@@ -403,16 +403,16 @@ jQuery(document).ready(function($) {
                     const data = response.data;
                     
                     // Update conditions
-                    updateOptionsDisplay('#condition-section', '.federwiegen-options.conditions', data.conditions, 'condition');
+                    updateOptionsDisplay('#condition-section', '.produkt-options.conditions', data.conditions, 'condition');
                     
                     // Update product colors
-                    updateOptionsDisplay('#product-color-section', '.federwiegen-options.product-colors', data.product_colors, 'product-color');
+                    updateOptionsDisplay('#product-color-section', '.produkt-options.product-colors', data.product_colors, 'product-color');
 
                     // Update frame colors
-                    updateOptionsDisplay('#frame-color-section', '.federwiegen-options.frame-colors', data.frame_colors, 'frame-color');
+                    updateOptionsDisplay('#frame-color-section', '.produkt-options.frame-colors', data.frame_colors, 'frame-color');
 
                     // Update extras
-                    updateOptionsDisplay('#extras-section', '.federwiegen-options.extras', data.extras, 'extra');
+                    updateOptionsDisplay('#extras-section', '.produkt-options.extras', data.extras, 'extra');
 
                     // Reset selections for variant-specific options
                     selectedCondition = null;
@@ -422,7 +422,7 @@ jQuery(document).ready(function($) {
                     $('#selected-frame-color-name').text('');
                     selectedExtras = [];
                     selectedDuration = null;
-                    $('.federwiegen-options.durations .federwiegen-option').removeClass('selected');
+                    $('.produkt-options.durations .produkt-option').removeClass('selected');
                     updateExtraImage(null);
                     updateColorImage(null);
 
@@ -451,26 +451,26 @@ jQuery(document).ready(function($) {
             
             if (optionType === 'condition') {
                 const badgeHtml = option.price_modifier != 0 ?
-                    `<span class="federwiegen-condition-badge">${option.price_modifier > 0 ? '+' : ''}${Math.round(option.price_modifier * 100)}%</span>` : '';
+                    `<span class="produkt-condition-badge">${option.price_modifier > 0 ? '+' : ''}${Math.round(option.price_modifier * 100)}%</span>` : '';
 
                 optionHtml = `
-                    <div class="federwiegen-option ${option.available == 0 ? 'unavailable' : ''}" data-type="condition" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}">
-                        <div class="federwiegen-option-content">
-                            <div class="federwiegen-condition-header">
-                                <span class="federwiegen-condition-name">${option.name}</span>
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="condition" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}">
+                        <div class="produkt-option-content">
+                            <div class="produkt-condition-header">
+                                <span class="produkt-condition-name">${option.name}</span>
                                 ${badgeHtml}
                             </div>
-                            <p class="federwiegen-condition-info">${option.description}</p>
+                            <p class="produkt-condition-info">${option.description}</p>
                         </div>
-                        <div class="federwiegen-option-check">✓</div>
+                        <div class="produkt-option-check">✓</div>
                     </div>
                 `;
             } else if (optionType === 'product-color' || optionType === 'frame-color') {
                 optionHtml = `
-                    <div class="federwiegen-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
-                        <div class="federwiegen-option-content">
-                            <div class="federwiegen-color-display">
-                                <div class="federwiegen-color-preview" style="background-color: ${option.color_code};"></div>
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
+                        <div class="produkt-option-content">
+                            <div class="produkt-color-display">
+                                <div class="produkt-color-preview" style="background-color: ${option.color_code};"></div>
                             </div>
                         </div>
                     </div>
@@ -479,12 +479,12 @@ jQuery(document).ready(function($) {
                 const priceSuffix = federwiegen_ajax.price_period === 'month' ? '/Monat' : '';
                 const priceHtml = option.price > 0 ? `+${parseFloat(option.price).toFixed(2).replace('.', ',')}€${priceSuffix}` : '';
                 optionHtml = `
-                    <div class="federwiegen-option ${option.available == 0 ? 'unavailable' : ''}" data-type="extra" data-id="${option.id}" data-extra-image="${option.image_url || ''}" data-available="${option.available == 0 ? 'false' : 'true'}">
-                        <div class="federwiegen-option-content">
-                            <span class="federwiegen-extra-name">${option.name}</span>
-                            ${priceHtml ? `<div class="federwiegen-extra-price">${priceHtml}</div>` : ''}
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="extra" data-id="${option.id}" data-extra-image="${option.image_url || ''}" data-available="${option.available == 0 ? 'false' : 'true'}">
+                        <div class="produkt-option-content">
+                            <span class="produkt-extra-name">${option.name}</span>
+                            ${priceHtml ? `<div class="produkt-extra-price">${priceHtml}</div>` : ''}
                         </div>
-                        <div class="federwiegen-option-check">✓</div>
+                        <div class="produkt-option-check">✓</div>
                     </div>
                 `;
             }
@@ -493,10 +493,10 @@ jQuery(document).ready(function($) {
         });
 
         // Remove any leftover inline color names
-        container.find('.federwiegen-color-name').remove();
+        container.find('.produkt-color-name').remove();
 
         // Re-bind click events for new options
-        container.find('.federwiegen-option').on('click', function() {
+        container.find('.produkt-option').on('click', function() {
             const type = $(this).data('type');
             const id = $(this).data('id');
 
@@ -511,18 +511,18 @@ jQuery(document).ready(function($) {
                 } else if (type === 'extra') {
                     selectedExtras = [id];
                 }
-                $(`.federwiegen-option[data-type="${type}"]`).removeClass('selected');
-                $('#federwiegen-rent-button').prop('disabled', true);
-                $('.federwiegen-mobile-button').prop('disabled', true);
-                $('#federwiegen-button-help').hide();
-                $('#federwiegen-unavailable-help').show();
-                $('#federwiegen-notify').show();
-                $('.federwiegen-notify-form').show();
-                $('#federwiegen-notify-success').hide();
-                $('#federwiegen-availability-wrapper').show();
-                $('#federwiegen-availability-status').addClass('unavailable').removeClass('available');
-                $('#federwiegen-availability-status .status-text').text('Nicht auf Lager');
-                $('#federwiegen-delivery-box').hide();
+                $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
+                $('#produkt-rent-button').prop('disabled', true);
+                $('.produkt-mobile-button').prop('disabled', true);
+                $('#produkt-button-help').hide();
+                $('#produkt-unavailable-help').show();
+                $('#produkt-notify').show();
+                $('.produkt-notify-form').show();
+                $('#produkt-notify-success').hide();
+                $('#produkt-availability-wrapper').show();
+                $('#produkt-availability-status').addClass('unavailable').removeClass('available');
+                $('#produkt-availability-status .status-text').text('Nicht auf Lager');
+                $('#produkt-delivery-box').hide();
                 scrollToNotify();
                 return;
             }
@@ -537,7 +537,7 @@ jQuery(document).ready(function($) {
                 }
                 updateExtraImage($(this));
             } else {
-                $(`.federwiegen-option[data-type="${type}"]`).removeClass('selected');
+                $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
                 $(this).addClass('selected');
 
                 if (type === 'condition') {
@@ -570,18 +570,18 @@ jQuery(document).ready(function($) {
     function updatePriceAndButton() {
         // Check if all required selections are made
         const requiredSelections = [];
-        if ($('.federwiegen-options.variants').length > 0) requiredSelections.push(selectedVariant);
-        if ($('.federwiegen-options.extras').length > 0) requiredSelections.push(true);
-        if ($('.federwiegen-options.durations').length > 0) requiredSelections.push(selectedDuration);
+        if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
+        if ($('.produkt-options.extras').length > 0) requiredSelections.push(true);
+        if ($('.produkt-options.durations').length > 0) requiredSelections.push(selectedDuration);
         
         // Check for visible optional sections
-        if ($('#condition-section').is(':visible') && $('.federwiegen-options.conditions .federwiegen-option').length > 0) {
+        if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
             requiredSelections.push(selectedCondition);
         }
-        if ($('#product-color-section').is(':visible') && $('.federwiegen-options.product-colors .federwiegen-option').length > 0) {
+        if ($('#product-color-section').is(':visible') && $('.produkt-options.product-colors .produkt-option').length > 0) {
             requiredSelections.push(selectedProductColor);
         }
-        if ($('#frame-color-section').is(':visible') && $('.federwiegen-options.frame-colors .federwiegen-option').length > 0) {
+        if ($('#frame-color-section').is(':visible') && $('.produkt-options.frame-colors .produkt-option').length > 0) {
             requiredSelections.push(selectedFrameColor);
         }
         
@@ -589,8 +589,8 @@ jQuery(document).ready(function($) {
         
         if (allSelected) {
             // Show loading state
-            $('#federwiegen-price-display').show();
-            $('#federwiegen-final-price').text('Lädt...');
+            $('#produkt-price-display').show();
+            $('#produkt-final-price').text('Lädt...');
 
             // Make AJAX request
             $.ajax({
@@ -613,47 +613,47 @@ jQuery(document).ready(function($) {
                         currentShippingCost = data.shipping_cost || 0;
                         
                         // Update price display
-                        $('#federwiegen-final-price').text(formatPrice(data.final_price) + '€');
+                        $('#produkt-final-price').text(formatPrice(data.final_price) + '€');
                         
                         // The discount percentage is used only for the badge.
                         // Prices come directly from Stripe, so don't show any
                         // original price or savings calculation.
-                        $('#federwiegen-original-price').hide();
-                        $('#federwiegen-savings').hide();
+                        $('#produkt-original-price').hide();
+                        $('#produkt-savings').hide();
 
                         // Update button based on availability
                         currentPriceId = data.price_id || '';
                         const isAvailable = data.available !== false;
 
-                        $('#federwiegen-rent-button').prop('disabled', !isAvailable);
-                        $('.federwiegen-mobile-button').prop('disabled', !isAvailable);
+                        $('#produkt-rent-button').prop('disabled', !isAvailable);
+                        $('.produkt-mobile-button').prop('disabled', !isAvailable);
 
-                        $('#federwiegen-availability-wrapper').show();
+                        $('#produkt-availability-wrapper').show();
                         if (isAvailable) {
-                            $('#federwiegen-availability-status').removeClass('unavailable').addClass('available');
-                            $('#federwiegen-availability-status .status-text').text('Sofort verfügbar');
-                            $('#federwiegen-delivery-time').text(data.delivery_time || '');
-                            $('#federwiegen-delivery-box').show();
+                            $('#produkt-availability-status').removeClass('unavailable').addClass('available');
+                            $('#produkt-availability-status .status-text').text('Sofort verfügbar');
+                            $('#produkt-delivery-time').text(data.delivery_time || '');
+                            $('#produkt-delivery-box').show();
                         } else {
-                            $('#federwiegen-availability-status').addClass('unavailable').removeClass('available');
-                            $('#federwiegen-availability-status .status-text').text('Nicht auf Lager');
-                            $('#federwiegen-delivery-box').hide();
+                            $('#produkt-availability-status').addClass('unavailable').removeClass('available');
+                            $('#produkt-availability-status .status-text').text('Nicht auf Lager');
+                            $('#produkt-delivery-box').hide();
                         }
 
                         if (isAvailable) {
-                            $('#federwiegen-button-help').hide();
-                            $('#federwiegen-unavailable-help').hide();
-                            $('#federwiegen-notify').hide();
-                            $('.federwiegen-notify-form').show();
-                            $('#federwiegen-notify-success').hide();
+                            $('#produkt-button-help').hide();
+                            $('#produkt-unavailable-help').hide();
+                            $('#produkt-notify').hide();
+                            $('.produkt-notify-form').show();
+                            $('#produkt-notify-success').hide();
                         } else {
-                            $('#federwiegen-button-help').hide();
-                            $('#federwiegen-unavailable-help').show();
-                            $('#federwiegen-notify').show();
-                            $('.federwiegen-notify-form').show();
-                            $('#federwiegen-notify-success').hide();
+                            $('#produkt-button-help').hide();
+                            $('#produkt-unavailable-help').show();
+                            $('#produkt-notify').show();
+                            $('.produkt-notify-form').show();
+                            $('#produkt-notify-success').hide();
                             if (data.availability_note) {
-                                $('#federwiegen-unavailable-help').text(data.availability_note);
+                                $('#produkt-unavailable-help').text(data.availability_note);
                             }
                             scrollToNotify();
                         }
@@ -663,22 +663,22 @@ jQuery(document).ready(function($) {
                     }
                 },
                 error: function() {
-                    $('#federwiegen-final-price').text('Fehler');
+                    $('#produkt-final-price').text('Fehler');
                 }
             });
         } else {
             // Hide price display and disable button
-            $('#federwiegen-price-display').hide();
-            $('#federwiegen-rent-button').prop('disabled', true);
-            $('.federwiegen-mobile-button').prop('disabled', true);
-            $('#federwiegen-button-help').show();
-            $('#federwiegen-unavailable-help').hide();
-            $('#federwiegen-notify').hide();
-            $('#federwiegen-notify-success').hide();
-            $('.federwiegen-notify-form').show();
+            $('#produkt-price-display').hide();
+            $('#produkt-rent-button').prop('disabled', true);
+            $('.produkt-mobile-button').prop('disabled', true);
+            $('#produkt-button-help').show();
+            $('#produkt-unavailable-help').hide();
+            $('#produkt-notify').hide();
+            $('#produkt-notify-success').hide();
+            $('.produkt-notify-form').show();
             currentPrice = 0;
 
-            $('#federwiegen-availability-wrapper').hide();
+            $('#produkt-availability-wrapper').hide();
             
             // Hide mobile sticky price
             hideMobileStickyPrice();
@@ -688,17 +688,17 @@ jQuery(document).ready(function($) {
     function initMobileStickyPrice() {
         if (window.innerWidth <= 768) {
             // Determine button label from main button
-            const mainLabel = $('#federwiegen-rent-button span').text().trim() || 'Jetzt Mieten';
+            const mainLabel = $('#produkt-rent-button span').text().trim() || 'Jetzt Mieten';
 
             // Create mobile sticky price bar
             const stickyHtml = `
-                <div class="federwiegen-mobile-sticky-price" id="mobile-sticky-price">
-                    <div class="federwiegen-mobile-sticky-content">
-                        <div class="federwiegen-mobile-price-info">
-                            <div class="federwiegen-mobile-price-label">${federwiegen_ajax.price_label}</div>
-                            <div class="federwiegen-mobile-price-value" id="mobile-price-value">0,00€</div>
+                <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
+                    <div class="produkt-mobile-sticky-content">
+                        <div class="produkt-mobile-price-info">
+                            <div class="produkt-mobile-price-label">${federwiegen_ajax.price_label}</div>
+                            <div class="produkt-mobile-price-value" id="mobile-price-value">0,00€</div>
                         </div>
-                        <button class="federwiegen-mobile-button" disabled>
+                        <button class="produkt-mobile-button" disabled>
                             ${mainLabel}
                         </button>
                     </div>
@@ -709,7 +709,7 @@ jQuery(document).ready(function($) {
             // Show/hide based on scroll position
             $(window).scroll(function() {
                 const scrollTop = $(this).scrollTop();
-                const priceDisplay = $('#federwiegen-price-display');
+                const priceDisplay = $('#produkt-price-display');
                 
                 if (priceDisplay.is(':visible') && currentPrice > 0) {
                     const priceDisplayTop = priceDisplay.offset().top;
@@ -735,7 +735,7 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             const suffix = federwiegen_ajax.price_period === 'month' ? '/Monat' : '';
             $('#mobile-price-value').text(formatPrice(price) + '€' + suffix);
-            $('.federwiegen-mobile-button').prop('disabled', !isAvailable);
+            $('.produkt-mobile-button').prop('disabled', !isAvailable);
         }
     }
 
@@ -752,12 +752,12 @@ jQuery(document).ready(function($) {
     function showGalleryNotification() {
         if (window.innerWidth > 768) return;
 
-        let toast = $('#federwiegen-color-toast');
+        let toast = $('#produkt-color-toast');
         if (!toast.length) {
-            toast = $('<div id="federwiegen-color-toast" class="federwiegen-color-toast">Ein Bild zur Farbe wurde der Produktgalerie hinzugefügt</div>');
+            toast = $('<div id="produkt-color-toast" class="produkt-color-toast">Ein Bild zur Farbe wurde der Produktgalerie hinzugefügt</div>');
             $('body').append(toast);
             toast.on('click', function() {
-                const gallery = $('#federwiegen-image-gallery');
+                const gallery = $('#produkt-image-gallery');
                 if (gallery.length) {
                     $('html, body').animate({ scrollTop: gallery.offset().top - 100 }, 500);
                 }
@@ -798,16 +798,16 @@ jQuery(document).ready(function($) {
     }
 
     function scrollToNotify() {
-        const target = $('#federwiegen-notify');
+        const target = $('#produkt-notify');
         if (target.length) {
             $('html, body').animate({ scrollTop: target.offset().top - 100 }, 500);
         }
     }
 
     // Notify when product becomes available
-    $('#federwiegen-notify-submit').on('click', function(e) {
+    $('#produkt-notify-submit').on('click', function(e) {
         e.preventDefault();
-        const email = $('#federwiegen-notify-email').val().trim();
+        const email = $('#produkt-notify-email').val().trim();
         if (!email) return;
 
         $.ajax({
@@ -827,8 +827,8 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    $('.federwiegen-notify-form').hide();
-                    $('#federwiegen-notify-success').show();
+                    $('.produkt-notify-form').hide();
+                    $('#produkt-notify-success').show();
                 }
             }
         });
@@ -837,7 +837,7 @@ jQuery(document).ready(function($) {
     // Exit intent popup
     let exitShown = false;
     const popupData = federwiegen_ajax.popup_settings || {};
-    const popup = $('#federwiegen-exit-popup');
+    const popup = $('#produkt-exit-popup');
     if (popup.length) {
         popup.appendTo('body');
     }
@@ -846,27 +846,27 @@ jQuery(document).ready(function($) {
     function showPopup() {
         if (exitShown) return;
         popup.css('display', 'flex');
-        $('body').addClass('federwiegen-popup-open');
+        $('body').addClass('produkt-popup-open');
         exitShown = true;
     }
 
     function hidePopup() {
         popup.hide();
-        $('body').removeClass('federwiegen-popup-open');
+        $('body').removeClass('produkt-popup-open');
         const days = parseInt(popupData.days || '7', 10);
         const expire = Date.now() + days * 86400000;
         localStorage.setItem('federwiegen_exit_hide_until', expire.toString());
     }
 
     if (popup.length && popupData.enabled && popupData.title && Date.now() > hideUntil) {
-        $('#federwiegen-exit-title').text(popupData.title);
-        $('#federwiegen-exit-message').html(popupData.content);
+        $('#produkt-exit-title').text(popupData.title);
+        $('#produkt-exit-message').html(popupData.content);
         if (popupData.options && popupData.options.length) {
             popupData.options.forEach(opt => {
-                $('#federwiegen-exit-select').append(`<option value="${opt}">${opt}</option>`);
+                $('#produkt-exit-select').append(`<option value="${opt}">${opt}</option>`);
             });
-            $('#federwiegen-exit-select-wrapper').show();
-            $('#federwiegen-exit-send').show();
+            $('#produkt-exit-select-wrapper').show();
+            $('#produkt-exit-send').show();
         }
 
         $(document).on('mouseleave', function(e){
@@ -905,10 +905,10 @@ jQuery(document).ready(function($) {
             resetInactivity();
         }
 
-        $('.federwiegen-exit-popup-close').on('click', hidePopup);
+        $('.produkt-exit-popup-close').on('click', hidePopup);
 
-        $('#federwiegen-exit-send').on('click', function(){
-            const opt = $('#federwiegen-exit-select').val() || '';
+        $('#produkt-exit-send').on('click', function(){
+            const opt = $('#produkt-exit-select').val() || '';
             $.post(federwiegen_ajax.ajax_url, {
                 action: 'exit_intent_feedback',
                 option: opt,

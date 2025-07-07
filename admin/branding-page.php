@@ -84,29 +84,29 @@ foreach ($results as $result) {
 
 <div class="wrap">
     <!-- Standard Admin Header (nicht gebrandet) -->
-    <div class="federwiegen-admin-header">
-        <div class="federwiegen-admin-logo">
+    <div class="produkt-admin-header">
+        <div class="produkt-admin-logo">
             🎨
         </div>
-        <div class="federwiegen-admin-title">
+        <div class="produkt-admin-title">
             <h1>Plugin Branding</h1>
             <p>Passen Sie das Erscheinungsbild und die Informationen des Plugins an</p>
         </div>
     </div>
     
     <!-- Navigation -->
-    <div class="federwiegen-admin-nav">
+    <div class="produkt-admin-nav">
         <h3>🧭 Schnellnavigation</h3>
-        <div class="federwiegen-nav-grid">
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>" class="federwiegen-nav-item">
+        <div class="produkt-nav-grid">
+            <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-dashboard"></span>
                 Dashboard
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-categories'); ?>" class="federwiegen-nav-item">
+            <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-category"></span>
                 Kategorien
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-variants'); ?>" class="federwiegen-nav-item">
+            <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-images-alt2"></span>
                 Ausführungen
             </a>

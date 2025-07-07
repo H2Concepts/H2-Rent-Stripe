@@ -55,19 +55,19 @@ $notifications = $wpdb->get_results(
 );
 ?>
 
-<div class="federwiegen-notifications-tab">
-    <div class="federwiegen-orders-card">
-        <div class="federwiegen-orders-header">
+<div class="produkt-notifications-tab">
+    <div class="produkt-orders-card">
+        <div class="produkt-orders-header">
             <h4>📧 Benachrichtigungsanfragen</h4>
             <?php if (!empty($notifications)): ?>
-            <div class="federwiegen-bulk-actions">
+            <div class="produkt-bulk-actions">
                 <button type="button" class="button" onclick="toggleSelectAllNotifications()">Alle auswählen</button>
                 <button type="button" class="button" onclick="deleteSelectedNotifications()" style="color: #dc3232;">Ausgewählte löschen</button>
             </div>
             <?php endif; ?>
         </div>
         <?php if (empty($notifications)): ?>
-            <div class="federwiegen-empty-state">
+            <div class="produkt-empty-state">
                 <p>Keine Einträge vorhanden.</p>
             </div>
         <?php else: ?>
@@ -115,7 +115,7 @@ $notifications = $wpdb->get_results(
                             ?>
                         </td>
                         <td>
-                            <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
+                            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>

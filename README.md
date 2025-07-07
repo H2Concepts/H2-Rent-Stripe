@@ -46,6 +46,6 @@ Under **Einstellungen → Stripe Integration** you can specify the link to your 
 
 ## Development
 
-The plugin code is organised in the `includes`, `admin`, `templates` and `assets` directories. Activation and deactivation hooks are registered in `federwiegen-verleih.php`. Core functionality lives in `includes/` where an autoloader loads the classes.
+The plugin code is organised in the `includes`, `admin`, `templates` and `assets` directories. Activation and deactivation hooks are registered in `produkt-verleih.php`. Core functionality lives in `includes/` where an autoloader loads the classes.
 
 

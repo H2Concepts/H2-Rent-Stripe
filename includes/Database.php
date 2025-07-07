@@ -859,8 +859,8 @@ class Database {
         $existing_variants = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
         if ($existing_variants == 0) {
             $variants = array(
-                array('Federwiege + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 'price_1QutK3RxDui5dUOqWEiBal7P'),
-                array('Federwiege + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', ''),
+                array('Produkt + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 'price_1QutK3RxDui5dUOqWEiBal7P'),
+                array('Produkt + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', ''),
                 array('Wiege + Gestell & Motor mit App-Steuerung', 'Premium-Variante mit smarter App-Steuerung', '')
             );
             

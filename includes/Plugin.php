@@ -151,7 +151,7 @@ class Plugin {
             echo '<meta name="description" content="' . esc_attr($meta_description) . '">' . "\n";
         }
 
-        echo '<meta name="keywords" content="Federwiege mieten, Babywiege, Federwiege Verleih, Baby Schlaf, Federwiege günstig">' . "\n";
+        echo '<meta name="keywords" content="Produkt mieten, Babywiege, Produkt Verleih, Baby Schlaf, Produkt günstig">' . "\n";
         echo '<meta name="robots" content="index, follow">' . "\n";
     }
 

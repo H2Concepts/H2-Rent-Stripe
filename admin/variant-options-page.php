@@ -116,25 +116,25 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
 
 <div class="wrap">
     <!-- Kompakter Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">🔗</div>
-        <div class="federwiegen-admin-title-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">🔗</div>
+        <div class="produkt-admin-title-compact">
             <h1>Ausführungs-Optionen</h1>
             <p>Zustände, Farben & Extras verknüpfen</p>
         </div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="federwiegen-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>">Dashboard</a> 
+    <div class="produkt-breadcrumb">
+        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
         <strong>Ausführungs-Optionen</strong>
     </div>
     
     <!-- Category Selection -->
-    <div class="federwiegen-category-selector">
+    <div class="produkt-category-selector">
         <form method="get" action="">
-            <input type="hidden" name="page" value="federwiegen-variant-options">
+            <input type="hidden" name="page" value="produkt-variant-options">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
             <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
@@ -148,54 +148,54 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
         </form>
         
         <?php if ($current_category): ?>
-        <div class="federwiegen-category-info">
+        <div class="produkt-category-info">
             <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="federwiegen-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=list'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
+    <div class="produkt-tab-nav">
+        <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=list'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
             📋 Übersicht
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=add'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=add'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
             ➕ Neue Zuordnung
         </a>
         <?php if ($edit_item): ?>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
             ✏️ Bearbeiten
         </a>
         <?php endif; ?>
     </div>
     
     <!-- Tab Content -->
-    <div class="federwiegen-tab-content">
+    <div class="produkt-tab-content">
         <?php
         switch ($active_tab) {
             case 'add':
                 if (empty($variants)):
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>⚠️ Keine Ausführungen vorhanden</h3>
                     <p>Bevor Sie Optionen zuordnen können, müssen Sie erst Ausführungen für diese Kategorie erstellen.</p>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-variants&category=' . $selected_category); ?>" class="button button-primary">Ausführungen verwalten</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category); ?>" class="button button-primary">Ausführungen verwalten</a>
                 </div>
                 <?php
                 else:
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>🔗 Neue Zuordnung hinzufügen</h3>
                     <p>Verknüpfen Sie Zustände, Farben und Extras mit spezifischen Ausführungen.</p>
                     
-                    <div class="federwiegen-form-card">
+                    <div class="produkt-form-card">
                         <form method="post" action="">
                             <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
-                            <div class="federwiegen-form-grid">
-                                <div class="federwiegen-form-group">
+                            <div class="produkt-form-grid">
+                                <div class="produkt-form-group">
                                     <label>Ausführung *</label>
                                     <select name="variant_id" required>
                                         <option value="">Bitte wählen...</option>
@@ -207,7 +207,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                                     </select>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Option-Typ *</label>
                                     <select name="option_type" id="option_type" required onchange="updateOptionsList()">
                                         <option value="">Bitte wählen...</option>
@@ -226,25 +226,25 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                                     </select>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Option *</label>
                                     <select name="option_id" id="option_id" required>
                                         <option value="">Erst Option-Typ wählen...</option>
                                     </select>
                                 </div>
 
-                                <div class="federwiegen-form-group">
-                                    <label class="federwiegen-toggle-label">
+                                <div class="produkt-form-group">
+                                    <label class="produkt-toggle-label">
                                         <input type="checkbox" name="available" value="1" checked>
-                                        <span class="federwiegen-toggle-slider"></span>
+                                        <span class="produkt-toggle-slider"></span>
                                         <span>Verfügbar</span>
                                     </label>
                                 </div>
                             </div>
                             
-                            <div class="federwiegen-form-actions">
+                            <div class="produkt-form-actions">
                                 <?php submit_button('Hinzufügen', 'primary', 'submit', false); ?>
-                                <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
                             </div>
                         </form>
                     </div>
@@ -256,17 +256,17 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
             case 'edit':
                 if ($edit_item):
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>🔗 Zuordnung bearbeiten</h3>
                     <p>Bearbeiten Sie die Verknüpfung zwischen Ausführung und Option (Zustand/Farbe/Extra).</p>
                     
-                    <div class="federwiegen-form-card">
+                    <div class="produkt-form-card">
                         <form method="post" action="">
                             <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
                             <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                             
-                            <div class="federwiegen-form-grid">
-                                <div class="federwiegen-form-group">
+                            <div class="produkt-form-grid">
+                                <div class="produkt-form-group">
                                     <label>Ausführung *</label>
                                     <select name="variant_id" required>
                                         <option value="">Bitte wählen...</option>
@@ -278,7 +278,7 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                                     </select>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Option-Typ *</label>
                                     <select name="option_type" id="option_type" required onchange="updateOptionsList()">
                                         <option value="">Bitte wählen...</option>
@@ -297,47 +297,47 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                                     </select>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Option *</label>
                                     <select name="option_id" id="option_id" required>
                                         <option value="">Erst Option-Typ wählen...</option>
                                     </select>
                                 </div>
 
-                                <div class="federwiegen-form-group">
-                                    <label class="federwiegen-toggle-label">
+                                <div class="produkt-form-group">
+                                    <label class="produkt-toggle-label">
                                         <input type="checkbox" name="available" value="1" <?php echo ($edit_item->available ?? 1) ? 'checked' : ''; ?>>
-                                        <span class="federwiegen-toggle-slider"></span>
+                                        <span class="produkt-toggle-slider"></span>
                                         <span>Verfügbar</span>
                                     </label>
                                 </div>
                             </div>
                             
-                            <div class="federwiegen-form-actions">
+                            <div class="produkt-form-actions">
                                 <?php submit_button('Aktualisieren', 'primary', 'submit', false); ?>
-                                <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
                             </div>
                         </form>
                     </div>
                 </div>
                 <?php
                 else:
-                    echo '<div class="federwiegen-tab-section"><p>Zuordnung nicht gefunden.</p></div>';
+                    echo '<div class="produkt-tab-section"><p>Zuordnung nicht gefunden.</p></div>';
                 endif;
                 break;
                 
             case 'list':
             default:
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>🔗 Ausführungs-Optionen</h3>
                     <p>Verknüpfen Sie Zustände, Farben und Extras mit spezifischen Ausführungen.</p>
                     
-                    <div class="federwiegen-list-card">
+                    <div class="produkt-list-card">
                         <h4>Zuordnungen für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekannte Kategorie'; ?></h4>
                         
                         <?php if (empty($variant_options)): ?>
-                        <div class="federwiegen-empty-state">
+                        <div class="produkt-empty-state">
                             <p>Noch keine Zuordnungen für diese Kategorie vorhanden.</p>
                             <?php if (!empty($variants)): ?>
                             <p><strong>Tipp:</strong> Fügen Sie eine neue Zuordnung hinzu!</p>
@@ -381,14 +381,14 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
                                                 ?>
                                             </strong>
                                             <?php if ($option->available ?? 1): ?>
-                                                <span class="federwiegen-status-badge available">✅ Verfügbar</span>
+                                                <span class="produkt-status-badge available">✅ Verfügbar</span>
                                             <?php else: ?>
-                                                <span class="federwiegen-status-badge unavailable">❌ Nicht verfügbar</span>
+                                                <span class="produkt-status-badge unavailable">❌ Nicht verfügbar</span>
                                             <?php endif; ?>
                                         </div>
                                         <div style="display: flex; gap: 5px;">
-                                            <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=edit&edit=' . $option->id); ?>" class="button button-small">✏️</a>
-                                            <a href="<?php echo admin_url('admin.php?page=federwiegen-variant-options&category=' . $selected_category . '&tab=list&delete=' . $option->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">🗑️</a>
+                                            <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=edit&edit=' . $option->id); ?>" class="button button-small">✏️</a>
+                                            <a href="<?php echo admin_url('admin.php?page=produkt-variant-options&category=' . $selected_category . '&tab=list&delete=' . $option->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">🗑️</a>
                                         </div>
                                     </div>
                                 </div>
@@ -407,20 +407,20 @@ $variant_options = $wpdb->get_results($wpdb->prepare("
 </div>
 
 <style>
-.federwiegen-status-badge {
+.produkt-status-badge {
     padding: 4px 8px;
     border-radius: 12px;
     font-size: 11px;
     font-weight: 500;
 }
 
-.federwiegen-status-badge.available {
+.produkt-status-badge.available {
     background: #d4edda;
     color: #155724;
     border: 1px solid #c3e6cb;
 }
 
-.federwiegen-status-badge.unavailable {
+.produkt-status-badge.unavailable {
     background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;

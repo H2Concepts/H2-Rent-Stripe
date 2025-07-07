@@ -146,25 +146,25 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
 
 <div class="wrap">
     <!-- Kompakter Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">🎨</div>
-        <div class="federwiegen-admin-title-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">🎨</div>
+        <div class="produkt-admin-title-compact">
             <h1>Farben verwalten</h1>
             <p>Produkt- & Gestellfarben</p>
         </div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="federwiegen-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>">Dashboard</a> 
+    <div class="produkt-breadcrumb">
+        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
         <strong>Farben</strong>
     </div>
     
     <!-- Category Selection -->
-    <div class="federwiegen-category-selector">
+    <div class="produkt-category-selector">
         <form method="get" action="">
-            <input type="hidden" name="page" value="federwiegen-colors">
+            <input type="hidden" name="page" value="produkt-colors">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
             <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
@@ -178,45 +178,45 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
         </form>
         
         <?php if ($current_category): ?>
-        <div class="federwiegen-category-info">
+        <div class="produkt-category-info">
             <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="federwiegen-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=list'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
+    <div class="produkt-tab-nav">
+        <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
             📋 Übersicht
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=add'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=add'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
             ➕ Neue Farbe
         </a>
         <?php if ($edit_item): ?>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
             ✏️ Bearbeiten
         </a>
         <?php endif; ?>
     </div>
     
     <!-- Tab Content -->
-    <div class="federwiegen-tab-content">
+    <div class="produkt-tab-content">
         <?php
         switch ($active_tab) {
             case 'add':
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>🎨 Neue Farbe hinzufügen</h3>
                     <p>Erstellen Sie eine neue Produkt- oder Gestellfarbe.</p>
                     
-                    <div class="federwiegen-form-card">
+                    <div class="produkt-form-card">
                         <form method="post" action="">
                             <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
-                            <div class="federwiegen-form-grid">
-                                <div class="federwiegen-form-group">
+                            <div class="produkt-form-grid">
+                                <div class="produkt-form-group">
                                     <label>Farbtyp *</label>
                                     <select name="color_type" required>
                                         <option value="product">🎨 Produktfarbe</option>
@@ -224,38 +224,38 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                     </select>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Farbname *</label>
                                     <input type="text" name="name" required>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Farbcode *</label>
-                                    <div class="federwiegen-color-input">
+                                    <div class="produkt-color-input">
                                         <input type="color" name="color_code" value="#FFFFFF" required>
-                                        <span class="federwiegen-color-swatch" style="background-color:#FFFFFF;"></span>
+                                        <span class="produkt-color-swatch" style="background-color:#FFFFFF;"></span>
                                     </div>
                                 </div>
 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Farb-Bild</label>
-                                    <div class="federwiegen-upload-area">
+                                    <div class="produkt-upload-area">
                                         <input type="url" name="image_url" id="image_url" placeholder="https://example.com/farbe.jpg">
-                                        <button type="button" class="button federwiegen-media-button" data-target="image_url">📁 Aus Mediathek wählen</button>
+                                        <button type="button" class="button produkt-media-button" data-target="image_url">📁 Aus Mediathek wählen</button>
                                     </div>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Sortierung</label>
                                     <input type="number" name="sort_order" value="0" min="0">
                                 </div>
 
                                 <?php foreach ($variants as $variant): ?>
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Bild für <?php echo esc_html($variant->name); ?></label>
-                                    <div class="federwiegen-upload-area">
+                                    <div class="produkt-upload-area">
                                         <input type="url" name="variant_images[<?php echo $variant->id; ?>]" id="variant_image_<?php echo $variant->id; ?>" value="">
-                                        <button type="button" class="button federwiegen-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
+                                        <button type="button" class="button produkt-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
@@ -265,9 +265,9 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                             
                             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
                             
-                            <div class="federwiegen-form-actions">
+                            <div class="produkt-form-actions">
                                 <?php submit_button('Hinzufügen', 'primary', 'submit', false); ?>
-                                <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
                             </div>
                         </form>
                     </div>
@@ -278,17 +278,17 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
             case 'edit':
                 if ($edit_item):
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>🎨 Farbe bearbeiten</h3>
                     <p>Bearbeiten Sie die Eigenschaften der Farbe.</p>
                     
-                    <div class="federwiegen-form-card">
+                    <div class="produkt-form-card">
                         <form method="post" action="">
                             <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
                             <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                             
-                            <div class="federwiegen-form-grid">
-                                <div class="federwiegen-form-group">
+                            <div class="produkt-form-grid">
+                                <div class="produkt-form-group">
                                     <label>Farbtyp *</label>
                                     <select name="color_type" required>
                                         <option value="product" <?php selected($edit_item->color_type, 'product'); ?>>🎨 Produktfarbe</option>
@@ -296,47 +296,47 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                     </select>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Farbname *</label>
                                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Farbcode *</label>
-                                    <div class="federwiegen-color-input">
+                                    <div class="produkt-color-input">
                                         <input type="color" name="color_code" value="<?php echo esc_attr($edit_item->color_code); ?>" required>
-                                        <span class="federwiegen-color-swatch" style="background-color: <?php echo esc_attr($edit_item->color_code); ?>;"></span>
+                                        <span class="produkt-color-swatch" style="background-color: <?php echo esc_attr($edit_item->color_code); ?>;"></span>
                                     </div>
                                 </div>
 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Farb-Bild</label>
-                                    <div class="federwiegen-upload-area">
+                                    <div class="produkt-upload-area">
                                         <input type="url" name="image_url" id="image_url" value="<?php echo esc_attr($edit_item->image_url ?? ''); ?>">
-                                        <button type="button" class="button federwiegen-media-button" data-target="image_url">📁 Aus Mediathek wählen</button>
+                                        <button type="button" class="button produkt-media-button" data-target="image_url">📁 Aus Mediathek wählen</button>
                                     </div>
                                     <?php if (!empty($edit_item->image_url)): ?>
-                                    <div class="federwiegen-image-preview" style="margin-top:10px;">
+                                    <div class="produkt-image-preview" style="margin-top:10px;">
                                         <img src="<?php echo esc_url($edit_item->image_url); ?>" alt="Farb-Bild" style="max-width:150px; height:auto;">
                                     </div>
                                     <?php endif; ?>
                                 </div>
                                 
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Sortierung</label>
                                     <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
                                 </div>
 
                                 <?php foreach ($variants as $variant): ?>
-                                <div class="federwiegen-form-group">
+                                <div class="produkt-form-group">
                                     <label>Bild für <?php echo esc_html($variant->name); ?></label>
-                                    <div class="federwiegen-upload-area">
+                                    <div class="produkt-upload-area">
                                         <?php $img_val = isset($variant_images_db[$variant->id]) ? $variant_images_db[$variant->id]->image_url : ''; ?>
                                         <input type="url" name="variant_images[<?php echo $variant->id; ?>]" id="variant_image_<?php echo $variant->id; ?>" value="<?php echo esc_attr($img_val); ?>">
-                                        <button type="button" class="button federwiegen-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
+                                        <button type="button" class="button produkt-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
                                     </div>
                                     <?php if (!empty($img_val)): ?>
-                                    <div class="federwiegen-image-preview" style="margin-top:10px;">
+                                    <div class="produkt-image-preview" style="margin-top:10px;">
                                         <img src="<?php echo esc_url($img_val); ?>" alt="Variant Image" style="max-width:150px;height:auto;">
                                     </div>
                                     <?php endif; ?>
@@ -348,40 +348,40 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                             
                             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
                             
-                            <div class="federwiegen-form-actions">
+                            <div class="produkt-form-actions">
                                 <?php submit_button('Aktualisieren', 'primary', 'submit', false); ?>
-                                <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
                             </div>
                         </form>
                     </div>
                 </div>
                 <?php
                 else:
-                    echo '<div class="federwiegen-tab-section"><p>Farbe nicht gefunden.</p></div>';
+                    echo '<div class="produkt-tab-section"><p>Farbe nicht gefunden.</p></div>';
                 endif;
                 break;
                 
             case 'list':
             default:
                 ?>
-                <div class="federwiegen-tab-section">
+                <div class="produkt-tab-section">
                     <h3>🎨 Farben</h3>
                     <p>Verwalten Sie Produkt- und Gestellfarben für Ihre Federwiegen.</p>
                     
                     <!-- Product Colors -->
-                    <div class="federwiegen-list-card" style="margin-bottom: 30px;">
+                    <div class="produkt-list-card" style="margin-bottom: 30px;">
                         <h4>🎨 Produktfarben</h4>
                         
                         <?php if (empty($product_colors)): ?>
-                        <div class="federwiegen-empty-state">
+                        <div class="produkt-empty-state">
                             <p>Noch keine Produktfarben vorhanden.</p>
                         </div>
                         <?php else: ?>
                         
-                        <div class="federwiegen-items-grid">
+                        <div class="produkt-items-grid">
                             <?php foreach ($product_colors as $color): ?>
-                            <div class="federwiegen-item-card">
-                                <div class="federwiegen-item-content">
+                            <div class="produkt-item-card">
+                                <div class="produkt-item-content">
                                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
                                         <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd; background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
                                         <div>
@@ -392,13 +392,13 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                             <img src="<?php echo esc_url($color->image_url); ?>" alt="<?php echo esc_attr($color->name); ?>" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">
                                         <?php endif; ?>
                                     </div>
-                                    <div class="federwiegen-item-meta">
+                                    <div class="produkt-item-meta">
                                     </div>
                                 </div>
                                 
-                                <div class="federwiegen-item-actions">
-                                    <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                <div class="produkt-item-actions">
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -408,19 +408,19 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                     </div>
                     
                     <!-- Frame Colors -->
-                    <div class="federwiegen-list-card">
+                    <div class="produkt-list-card">
                         <h4>🖼️ Gestellfarben</h4>
                         
                         <?php if (empty($frame_colors)): ?>
-                        <div class="federwiegen-empty-state">
+                        <div class="produkt-empty-state">
                             <p>Noch keine Gestellfarben vorhanden.</p>
                         </div>
                         <?php else: ?>
                         
-                        <div class="federwiegen-items-grid">
+                        <div class="produkt-items-grid">
                             <?php foreach ($frame_colors as $color): ?>
-                            <div class="federwiegen-item-card">
-                                <div class="federwiegen-item-content">
+                            <div class="produkt-item-card">
+                                <div class="produkt-item-content">
                                     <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
                                         <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd; background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
                                         <div>
@@ -431,12 +431,12 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                             <img src="<?php echo esc_url($color->image_url); ?>" alt="<?php echo esc_attr($color->name); ?>" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">
                                         <?php endif; ?>
                                     </div>
-                                    <div class="federwiegen-item-meta"></div>
+                                    <div class="produkt-item-meta"></div>
                                 </div>
                                 
-                                <div class="federwiegen-item-actions">
-                                    <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=federwiegen-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                <div class="produkt-item-actions">
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
+                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                                 </div>
                             </div>
                             <?php endforeach; ?>
@@ -453,7 +453,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.federwiegen-media-button').forEach(function(button) {
+    document.querySelectorAll('.produkt-media-button').forEach(function(button) {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const targetId = this.getAttribute('data-target');

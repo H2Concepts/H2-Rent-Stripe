@@ -27,25 +27,25 @@ foreach ($branding_results as $result) {
 
 <div class="wrap">
     <!-- Kompakter Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">💰</div>
-        <div class="federwiegen-admin-title-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">💰</div>
+        <div class="produkt-admin-title-compact">
             <h1>Preise & Links</h1>
             <p>Mietdauern & Stripe-Verknüpfungen</p>
         </div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="federwiegen-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>">Dashboard</a> 
+    <div class="produkt-breadcrumb">
+        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
         <strong>Preise & Links</strong>
     </div>
     
     <!-- Category Selection -->
-    <div class="federwiegen-category-selector">
+    <div class="produkt-category-selector">
         <form method="get" action="">
-            <input type="hidden" name="page" value="federwiegen-pricing">
+            <input type="hidden" name="page" value="produkt-pricing">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
             <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
@@ -59,22 +59,22 @@ foreach ($branding_results as $result) {
         </form>
         
         <?php if ($current_category): ?>
-        <div class="federwiegen-category-info">
+        <div class="produkt-category-info">
             <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="federwiegen-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-pricing&category=' . $selected_category . '&tab=durations'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'durations' ? 'active' : ''; ?>">
+    <div class="produkt-tab-nav">
+        <a href="<?php echo admin_url('admin.php?page=produkt-pricing&category=' . $selected_category . '&tab=durations'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'durations' ? 'active' : ''; ?>">
             ⏰ Mietdauern
         </a>
     </div>
     
     <!-- Tab Content -->
-    <div class="federwiegen-tab-content">
+    <div class="produkt-tab-content">
         <?php
         switch ($active_tab) {
             case 'durations':

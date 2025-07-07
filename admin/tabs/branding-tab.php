@@ -70,13 +70,13 @@ if (isset($_POST['submit_branding'])) {
 }
 ?>
 
-<div class="federwiegen-branding-tab">
-    <div class="federwiegen-branding-info">
+<div class="produkt-branding-tab">
+    <div class="produkt-branding-info">
         <h3>🎨 White-Label Features</h3>
         <p>Personalisieren Sie das Plugin mit Ihrem eigenen Branding. Diese Einstellungen ändern das Erscheinungsbild im Admin-Bereich und können für White-Label-Lösungen verwendet werden.</p>
         
-        <div class="federwiegen-branding-features">
-            <div class="federwiegen-feature-column">
+        <div class="produkt-branding-features">
+            <div class="produkt-feature-column">
                 <h4>🌟 Anpassbare Elemente:</h4>
                 <ul>
                     <li><strong>Plugin-Name:</strong> Eigener Name im Admin-Menü</li>
@@ -85,7 +85,7 @@ if (isset($_POST['submit_branding'])) {
                     <li><strong>Firmeninformationen:</strong> Kontaktdaten und Website</li>
                 </ul>
             </div>
-            <div class="federwiegen-feature-column">
+            <div class="produkt-feature-column">
                 <h4>💼 Professionelle Vorteile:</h4>
                 <ul>
                     <li><strong>Markenidentität:</strong> Konsistentes Erscheinungsbild</li>
@@ -97,20 +97,20 @@ if (isset($_POST['submit_branding'])) {
         </div>
     </div>
     
-    <form method="post" action="" class="federwiegen-branding-form">
+    <form method="post" action="" class="produkt-branding-form">
         <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
-        <div class="federwiegen-form-sections">
+        <div class="produkt-form-sections">
             <!-- Plugin Information -->
-            <div class="federwiegen-form-section">
+            <div class="produkt-form-section">
                 <h4>🏢 Plugin-Informationen</h4>
-                <div class="federwiegen-form-grid">
-                    <div class="federwiegen-form-group">
+                <div class="produkt-form-grid">
+                    <div class="produkt-form-group">
                         <label>Plugin-Name *</label>
                         <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" required>
                         <small>Name des Plugins im Admin-Menü</small>
                     </div>
                     
-                    <div class="federwiegen-form-group full-width">
+                    <div class="produkt-form-group full-width">
                         <label>Plugin-Beschreibung</label>
                         <textarea name="plugin_description" rows="3"><?php echo esc_textarea($branding['plugin_description'] ?? 'Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration'); ?></textarea>
                         <small>Beschreibung des Plugins</small>
@@ -119,16 +119,16 @@ if (isset($_POST['submit_branding'])) {
             </div>
             
             <!-- Company Information -->
-            <div class="federwiegen-form-section">
+            <div class="produkt-form-section">
                 <h4>🏢 Firmen-Informationen</h4>
-                <div class="federwiegen-form-grid">
-                    <div class="federwiegen-form-group">
+                <div class="produkt-form-grid">
+                    <div class="produkt-form-group">
                         <label>Firmenname *</label>
                         <input type="text" name="company_name" value="<?php echo esc_attr($branding['company_name'] ?? 'H2 Concepts'); ?>" required>
                         <small>Name Ihres Unternehmens</small>
                     </div>
                     
-                    <div class="federwiegen-form-group">
+                    <div class="produkt-form-group">
                         <label>Firmen-Website *</label>
                         <input type="url" name="company_url" value="<?php echo esc_attr($branding['company_url'] ?? 'https://h2concepts.de'); ?>" required>
                         <small>URL Ihrer Firmen-Website</small>
@@ -137,28 +137,28 @@ if (isset($_POST['submit_branding'])) {
             </div>
             
             <!-- Design Settings -->
-            <div class="federwiegen-form-section">
+            <div class="produkt-form-section">
                 <h4>🎨 Design-Anpassungen</h4>
-                <div class="federwiegen-form-grid">
-                    <div class="federwiegen-form-group">
+                <div class="produkt-form-grid">
+                    <div class="produkt-form-group">
                         <label>Primärfarbe</label>
-                        <input type="color" name="admin_color_primary" value="<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>" class="federwiegen-color-picker">
+                        <input type="color" name="admin_color_primary" value="<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
                         <small>Hauptfarbe für Buttons und Akzente</small>
                     </div>
                     
-                    <div class="federwiegen-form-group">
+                    <div class="produkt-form-group">
                         <label>Sekundärfarbe</label>
-                        <input type="color" name="admin_color_secondary" value="<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>" class="federwiegen-color-picker">
+                        <input type="color" name="admin_color_secondary" value="<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>" class="produkt-color-picker">
                         <small>Sekundärfarbe für Hover-Effekte und Verläufe</small>
                     </div>
 
-                    <div class="federwiegen-form-group">
+                    <div class="produkt-form-group">
                         <label>Textfarbe</label>
-                        <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="federwiegen-color-picker">
+                        <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="produkt-color-picker">
                         <small>Farbe für Text auf Buttons und Tabs</small>
                     </div>
                     
-                    <div class="federwiegen-form-group full-width">
+                    <div class="produkt-form-group full-width">
                         <label>Footer-Text</label>
                         <input type="text" name="footer_text" value="<?php echo esc_attr($branding['footer_text'] ?? 'Powered by H2 Concepts'); ?>">
                         <small>Text im Admin-Footer (z.B. "Powered by Ihr Firmenname")</small>
@@ -167,34 +167,34 @@ if (isset($_POST['submit_branding'])) {
             </div>
         </div>
         
-        <div class="federwiegen-form-actions">
+        <div class="produkt-form-actions">
             <?php submit_button('💾 Branding-Einstellungen speichern', 'primary', 'submit_branding', false); ?>
         </div>
     </form>
     
     <!-- Preview Section -->
-    <div class="federwiegen-preview-section">
+    <div class="produkt-preview-section">
         <h4>🎨 Design-Vorschau</h4>
-        <div class="federwiegen-preview-grid">
-            <div class="federwiegen-preview-card">
+        <div class="produkt-preview-grid">
+            <div class="produkt-preview-card">
                 <h5>🎯 Aktuelle Einstellungen:</h5>
-                <div class="federwiegen-preview-demo">
-                    <div class="federwiegen-demo-header">
-                        <div class="federwiegen-demo-logo" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>;">
+                <div class="produkt-preview-demo">
+                    <div class="produkt-demo-header">
+                        <div class="produkt-demo-logo" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>;">
                             🏷️
                         </div>
-                        <div class="federwiegen-demo-content">
+                        <div class="produkt-demo-content">
                             <strong><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></strong><br>
                             <small><?php echo esc_html($branding['company_name'] ?? 'H2 Concepts'); ?></small>
                         </div>
                     </div>
-                    <button class="federwiegen-demo-button" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: <?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
+                    <button class="produkt-demo-button" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: <?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
                         Beispiel Button
                     </button>
                 </div>
             </div>
             
-            <div class="federwiegen-preview-card">
+            <div class="produkt-preview-card">
                 <h5>📋 Verwendung:</h5>
                 <ul>
                     <li><strong>Admin-Header:</strong> Firmenname wird in der Plugin-Oberfläche angezeigt</li>
@@ -203,7 +203,7 @@ if (isset($_POST['submit_branding'])) {
                     <li><strong>Footer:</strong> Eigener Copyright-Text</li>
                 </ul>
                 
-                <div class="federwiegen-tip">
+                <div class="produkt-tip">
                     <strong>💡 Tipp:</strong> Verwenden Sie Farben aus Ihrem Corporate Design für ein konsistentes Erscheinungsbild.
                 </div>
             </div>
@@ -212,70 +212,70 @@ if (isset($_POST['submit_branding'])) {
 </div>
 
 <style>
-.federwiegen-branding-tab {
+.produkt-branding-tab {
     display: flex;
     flex-direction: column;
     gap: 30px;
 }
 
-.federwiegen-branding-info {
+.produkt-branding-info {
     background: #fff3cd;
     border: 1px solid #ffeaa7;
     border-radius: 8px;
     padding: 20px;
 }
 
-.federwiegen-branding-info h3 {
+.produkt-branding-info h3 {
     margin: 0 0 15px 0;
     color: #856404;
 }
 
-.federwiegen-branding-features {
+.produkt-branding-features {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-top: 15px;
 }
 
-.federwiegen-feature-column h4 {
+.produkt-feature-column h4 {
     margin: 0 0 10px 0;
     color: #856404;
 }
 
-.federwiegen-feature-column ul {
+.produkt-feature-column ul {
     margin: 0;
     padding-left: 20px;
 }
 
-.federwiegen-branding-form {
+.produkt-branding-form {
     background: white;
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 25px;
 }
 
-.federwiegen-form-sections {
+.produkt-form-sections {
     display: flex;
     flex-direction: column;
     gap: 25px;
 }
 
-.federwiegen-form-section {
+.produkt-form-section {
     border-bottom: 1px solid #f0f0f0;
     padding-bottom: 20px;
 }
 
-.federwiegen-form-section:last-child {
+.produkt-form-section:last-child {
     border-bottom: none;
     padding-bottom: 0;
 }
 
-.federwiegen-form-section h4 {
+.produkt-form-section h4 {
     margin: 0 0 15px 0;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
 }
 
-.federwiegen-color-picker {
+.produkt-color-picker {
     width: 60px;
     height: 40px;
     border: 1px solid #ddd;
@@ -283,60 +283,60 @@ if (isset($_POST['submit_branding'])) {
     cursor: pointer;
 }
 
-.federwiegen-preview-section {
+.produkt-preview-section {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 20px;
 }
 
-.federwiegen-preview-section h4 {
+.produkt-preview-section h4 {
     margin: 0 0 20px 0;
     color: #3c434a;
 }
 
-.federwiegen-preview-grid {
+.produkt-preview-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
 
-.federwiegen-preview-card {
+.produkt-preview-card {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 15px;
 }
 
-.federwiegen-preview-card h5 {
+.produkt-preview-card h5 {
     margin: 0 0 15px 0;
     color: #3c434a;
 }
 
-.federwiegen-preview-demo {
+.produkt-preview-demo {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.federwiegen-demo-header {
+.produkt-demo-header {
     display: flex;
     align-items: center;
     gap: 15px;
 }
 
-.federwiegen-demo-logo {
+.produkt-demo-logo {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--federwiegen-text);
+    color: var(--produkt-text);
     font-size: 16px;
 }
 
-.federwiegen-tip {
+.produkt-tip {
     margin-top: 15px;
     padding: 10px;
     background: #d4edda;
@@ -346,8 +346,8 @@ if (isset($_POST['submit_branding'])) {
 }
 
 @media (max-width: 768px) {
-    .federwiegen-branding-features,
-    .federwiegen-preview-grid {
+    .produkt-branding-features,
+    .produkt-preview-grid {
         grid-template-columns: 1fr;
     }
 }

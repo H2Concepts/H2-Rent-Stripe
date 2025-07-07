@@ -27,25 +27,25 @@ foreach ($branding_results as $result) {
 
 <div class="wrap">
     <!-- Kompakter Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">📦</div>
-        <div class="federwiegen-admin-title-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">📦</div>
+        <div class="produkt-admin-title-compact">
             <h1>Produkte verwalten</h1>
             <p>Ausführungen, Extras, Farben & Zustände</p>
         </div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="federwiegen-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>">Dashboard</a> 
+    <div class="produkt-breadcrumb">
+        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
         <strong>Produkte</strong>
     </div>
     
     <!-- Category Selection -->
-    <div class="federwiegen-category-selector">
+    <div class="produkt-category-selector">
         <form method="get" action="">
-            <input type="hidden" name="page" value="federwiegen-products">
+            <input type="hidden" name="page" value="produkt-products">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
             <label for="category-select"><strong>🏷️ Kategorie:</strong></label>
             <select name="category" id="category-select" onchange="this.form.submit()">
@@ -59,34 +59,34 @@ foreach ($branding_results as $result) {
         </form>
         
         <?php if ($current_category): ?>
-        <div class="federwiegen-category-info">
+        <div class="produkt-category-info">
             <code>[federwiegen_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
         <?php endif; ?>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="federwiegen-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=variants'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'variants' ? 'active' : ''; ?>">
+    <div class="produkt-tab-nav">
+        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=variants'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'variants' ? 'active' : ''; ?>">
             🖼️ Ausführungen
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=extras'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'extras' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=extras'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'extras' ? 'active' : ''; ?>">
             🎁 Extras
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=conditions'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'conditions' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=conditions'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'conditions' ? 'active' : ''; ?>">
             🔄 Zustände
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=colors'); ?>" 
-           class="federwiegen-tab <?php echo $active_tab === 'colors' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=colors'); ?>" 
+           class="produkt-tab <?php echo $active_tab === 'colors' ? 'active' : ''; ?>">
             🎨 Farben
         </a>
     </div>
     
     <!-- Tab Content -->
-    <div class="federwiegen-tab-content">
+    <div class="produkt-tab-content">
         <?php
         switch ($active_tab) {
             case 'variants':
