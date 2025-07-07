@@ -25,7 +25,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     $payload    = $request->get_body();
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
-    $secret     = defined('PRODUKT_STRIPE_WEBHOOK_SECRET') ? constant('PRODUKT_STRIPE_WEBHOOK_SECRET') : '';
+    $secret     = get_option('produkt_stripe_webhook_secret', '');
 
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
