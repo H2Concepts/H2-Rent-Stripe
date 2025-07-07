@@ -112,7 +112,9 @@ class Admin {
         }
 
         $content = $post->post_content ?? '';
-        if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form')) {
+        if (!has_shortcode($content, 'produkt_product') &&
+            !has_shortcode($content, 'stripe_elements_form') &&
+            !is_singular('produkt')) {
             return;
         }
 

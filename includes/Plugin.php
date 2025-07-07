@@ -161,7 +161,7 @@ class Plugin {
     public function add_meta_tags() {
         global $post, $wpdb;
 
-        if (!is_singular() || !has_shortcode($post->post_content, 'produkt_product')) {
+        if (!is_singular() || (!has_shortcode($post->post_content, 'produkt_product') && !is_singular('produkt'))) {
             return;
         }
 
@@ -202,7 +202,7 @@ class Plugin {
     public function add_open_graph_tags() {
         global $post, $wpdb;
 
-        if (!is_singular() || !has_shortcode($post->post_content, 'produkt_product')) {
+        if (!is_singular() || (!has_shortcode($post->post_content, 'produkt_product') && !is_singular('produkt'))) {
             return;
         }
 
@@ -254,7 +254,7 @@ class Plugin {
     public function add_schema_markup() {
         global $post, $wpdb;
 
-        if (!is_singular() || !has_shortcode($post->post_content, 'produkt_product')) {
+        if (!is_singular() || (!has_shortcode($post->post_content, 'produkt_product') && !is_singular('produkt'))) {
             return;
         }
 
