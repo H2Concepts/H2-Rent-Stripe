@@ -291,7 +291,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                         <input type="url" name="variant_images[<?php echo $variant->id; ?>]" id="variant_image_<?php echo $variant->id; ?>" value="">
                                         <button type="button" class="button produkt-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
                                     </div>
-                                    <label class="produkt-toggle-label" style="margin-top:5px;display:block;">
+                                    <label class="produkt-toggle-label">
                                         <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" checked>
                                         <span class="produkt-toggle-slider"></span>
                                         <span>Verfügbar</span>
@@ -379,7 +379,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                         <img src="<?php echo esc_url($img_val); ?>" alt="Variant Image" style="max-width:150px;height:auto;">
                                     </div>
                                     <?php endif; ?>
-                                    <label class="produkt-toggle-label" style="margin-top:5px;display:block;">
+                                    <label class="produkt-toggle-label">
                                         <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" <?php echo ($variant_status[$variant->id] ?? 1) ? 'checked' : ''; ?>>
                                         <span class="produkt-toggle-slider"></span>
                                         <span>Verfügbar</span>

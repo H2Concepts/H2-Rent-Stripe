@@ -25,6 +25,15 @@ class Admin {
             'produkt-categories',
             array($this, 'categories_page')
         );
+
+        add_submenu_page(
+            'produkt-verleih',
+            'Produkte',
+            'Produkte',
+            'manage_options',
+            'produkt-products',
+            array($this, 'products_page')
+        );
         
         // Submenu: Produktverwaltung
         add_submenu_page(
@@ -469,6 +478,10 @@ class Admin {
     public function colors_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/colors-page.php';
     }
+
+    public function products_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/products-grid-page.php';
+    }
     
     public function orders_page() {
         global $wpdb;
@@ -597,6 +610,22 @@ class Admin {
             'produkt',
             'side'
         );
+
+        add_meta_box(
+            'produkt_seo_box',
+            'Produkt SEO',
+            [$this, 'render_product_seo_box'],
+            'produkt',
+            'normal'
+        );
+
+        add_meta_box(
+            'produkt_rating_box',
+            'Produktbewertung',
+            [$this, 'render_product_rating_box'],
+            'produkt',
+            'side'
+        );
     }
 
     public function render_product_meta_box($post) {
@@ -613,9 +642,39 @@ class Admin {
         echo '</select>';
     }
 
+    public function render_product_seo_box($post) {
+        $meta_title = get_post_meta($post->ID, 'produkt_meta_title', true);
+        $meta_desc  = get_post_meta($post->ID, 'produkt_meta_description', true);
+        echo '<p><label>SEO-Titel<br><input type="text" name="produkt_meta_title" value="' . esc_attr($meta_title) . '" style="width:100%"></label></p>';
+        echo '<p><label>SEO-Beschreibung<br><textarea name="produkt_meta_description" rows="3" style="width:100%">' . esc_textarea($meta_desc) . '</textarea></label></p>';
+    }
+
+    public function render_product_rating_box($post) {
+        $show = get_post_meta($post->ID, 'produkt_show_rating', true);
+        $value = get_post_meta($post->ID, 'produkt_rating_value', true);
+        $link  = get_post_meta($post->ID, 'produkt_rating_link', true);
+        echo '<p><label><input type="checkbox" name="produkt_show_rating" value="1" ' . checked($show, 1, false) . '> Bewertung anzeigen</label></p>';
+        echo '<p><label>Sterne (1-5)<br><input type="number" step="0.1" min="1" max="5" name="produkt_rating_value" value="' . esc_attr($value) . '"></label></p>';
+        echo '<p><label>Bewertungs-Link<br><input type="url" name="produkt_rating_link" value="' . esc_attr($link) . '" style="width:100%"></label></p>';
+    }
+
     public function save_product_meta($post_id) {
         if (isset($_POST['produkt_category_id'])) {
             update_post_meta($post_id, 'produkt_category_id', intval($_POST['produkt_category_id']));
+        }
+        if (isset($_POST['produkt_meta_title'])) {
+            update_post_meta($post_id, 'produkt_meta_title', sanitize_text_field($_POST['produkt_meta_title']));
+        }
+        if (isset($_POST['produkt_meta_description'])) {
+            update_post_meta($post_id, 'produkt_meta_description', sanitize_textarea_field($_POST['produkt_meta_description']));
+        }
+        $show_rating = isset($_POST['produkt_show_rating']) ? 1 : 0;
+        update_post_meta($post_id, 'produkt_show_rating', $show_rating);
+        if (isset($_POST['produkt_rating_value'])) {
+            update_post_meta($post_id, 'produkt_rating_value', floatval($_POST['produkt_rating_value']));
+        }
+        if (isset($_POST['produkt_rating_link'])) {
+            update_post_meta($post_id, 'produkt_rating_link', esc_url_raw($_POST['produkt_rating_link']));
         }
     }
 

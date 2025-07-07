@@ -40,12 +40,9 @@ $feature_3_description = isset($category) ? $category->feature_3_description : '
 $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 
 // Button
-$button_text = isset($category) ? $category->button_text : '';
-$button_icon = isset($category) ? $category->button_icon : '';
-$payment_icons = [];
-if (isset($category) && property_exists($category, 'payment_icons')) {
-    $payment_icons = array_filter(array_map('trim', explode(',', $category->payment_icons)));
-}
+$button_text = get_option('produkt_button_text', isset($category) ? $category->button_text : '');
+$button_icon = get_option('produkt_button_icon', isset($category) ? $category->button_icon : '');
+$payment_icons = array_filter(array_map('trim', explode(',', get_option('produkt_payment_icons', isset($category) ? ($category->payment_icons ?? '') : ''))));
 
 $shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
 $shipping_cost = 0;
@@ -55,23 +52,23 @@ if (!empty($shipping_price_id)) {
         $shipping_cost = $amount;
     }
 }
-$shipping_provider = isset($category) ? ($category->shipping_provider ?? '') : '';
-$price_label = isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis';
-$shipping_label = isset($category) ? ($category->shipping_label ?? 'Einmalige Versandkosten:') : 'Einmalige Versandkosten:';
-$price_period = isset($category) ? ($category->price_period ?? 'month') : 'month';
-$vat_included = isset($category) ? ($category->vat_included ?? 0) : 0;
+$shipping_provider = get_option('produkt_shipping_provider', isset($category) ? ($category->shipping_provider ?? '') : '');
+$price_label = get_option('produkt_price_label', isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis');
+$shipping_label = get_option('produkt_shipping_label', isset($category) ? ($category->shipping_label ?? 'Einmalige Versandkosten:') : 'Einmalige Versandkosten:');
+$price_period = get_option('produkt_price_period', isset($category) ? ($category->price_period ?? 'month') : 'month');
+$vat_included = get_option('produkt_vat_included', isset($category) ? ($category->vat_included ?? 0) : 0);
 
 // Layout
 $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'default';
 
 // Tooltips
-$duration_tooltip = isset($category) ? ($category->duration_tooltip ?? '') : '';
-$condition_tooltip = isset($category) ? ($category->condition_tooltip ?? '') : '';
-$show_tooltips = isset($category) ? ($category->show_tooltips ?? 1) : 1;
-$show_rating = isset($category) ? ($category->show_rating ?? 0) : 0;
-$rating_value = isset($category) ? floatval(str_replace(',', '.', $category->rating_value ?? 0)) : 0;
+$duration_tooltip = get_option('produkt_duration_tooltip', isset($category) ? ($category->duration_tooltip ?? '') : '');
+$condition_tooltip = get_option('produkt_condition_tooltip', isset($category) ? ($category->condition_tooltip ?? '') : '');
+$show_tooltips = get_option('produkt_show_tooltips', isset($category) ? ($category->show_tooltips ?? 1) : 1);
+$show_rating = intval(get_post_meta(get_the_ID(), 'produkt_show_rating', true));
+$rating_value = floatval(get_post_meta(get_the_ID(), 'produkt_rating_value', true));
 $rating_display = number_format($rating_value, 1, ',', '');
-$rating_link = isset($category) ? ($category->rating_link ?? '') : '';
+$rating_link = get_post_meta(get_the_ID(), 'produkt_rating_link', true);
 
 // Get initial conditions and colors (will be updated via AJAX when variant is selected)
 $initial_conditions = $wpdb->get_results($wpdb->prepare(
