@@ -931,8 +931,14 @@ jQuery(document).ready(function($) {
             });
         });
 
-        $('.produkt-accordion-header').on('click', function(){
-            $(this).parent().toggleClass('active');
+        $('.produkt-accordions').on('click', '.produkt-accordion-header', function(){
+            const item = $(this).closest('.produkt-accordion-item');
+            if(item.hasClass('active')) {
+                item.removeClass('active');
+            } else {
+                $('.produkt-accordion-item').removeClass('active');
+                item.addClass('active');
+            }
         });
     }
 });

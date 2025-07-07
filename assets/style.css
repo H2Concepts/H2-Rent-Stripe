@@ -2,7 +2,7 @@
 /* Produkt Verleih Plugin Styles */
 :root {
     --produkt-button-bg: #5f7f5f;
-    --produkt-text-color: #4a674a;
+    --produkt-text-color: #000000;
     --produkt-border-color: #a4b8a4;
     --produkt-button-text: #ffffff;
 }
@@ -1314,6 +1314,14 @@ body.produkt-popup-open {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: #000000;
+    box-shadow: none;
+}
+
+.produkt-accordion-header::after {
+    content: '+';
+    font-weight: 400;
+    margin-left: auto;
 }
 
 .produkt-accordion-content {
@@ -1323,4 +1331,8 @@ body.produkt-popup-open {
 
 .produkt-accordion-item.active .produkt-accordion-content {
     display: block;
+}
+
+.produkt-accordion-item.active .produkt-accordion-header::after {
+    content: '-';
 }

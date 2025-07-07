@@ -186,10 +186,12 @@ class Admin {
         if (strpos($hook, 'produkt') !== false) {
             wp_enqueue_style('produkt-admin-style', PRODUKT_PLUGIN_URL . 'assets/admin-style.css', array(), PRODUKT_VERSION);
             wp_enqueue_script('produkt-admin-script', PRODUKT_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), PRODUKT_VERSION, true);
-            
+
             // Enqueue WordPress media scripts for image upload
             wp_enqueue_media();
-            
+
+            // Ensure WordPress editor scripts are available for dynamic accordions
+            wp_enqueue_editor();
         }
     }
     
