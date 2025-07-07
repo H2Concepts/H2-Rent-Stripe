@@ -320,6 +320,17 @@ class Admin {
             $rating_link = esc_url_raw($_POST['rating_link']);
             $sort_order = intval($_POST['sort_order']);
 
+            $accordion_titles = isset($_POST['accordion_titles']) ? array_map('sanitize_text_field', (array) $_POST['accordion_titles']) : array();
+            $accordion_contents = isset($_POST['accordion_contents']) ? array_map('wp_kses_post', (array) $_POST['accordion_contents']) : array();
+            $acc_data = array();
+            foreach ($accordion_titles as $k => $t) {
+                $content = $accordion_contents[$k] ?? '';
+                if ($t !== '' || $content !== '') {
+                    $acc_data[] = array('title' => $t, 'content' => $content);
+                }
+            }
+            $accordion_data = json_encode($acc_data);
+
             $table_name = $wpdb->prefix . 'produkt_categories';
 
             if (isset($_POST['id']) && $_POST['id']) {
@@ -346,6 +357,7 @@ class Admin {
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
+                        'accordion_data' => $accordion_data,
                         'shipping_provider' => $shipping_provider,
                         'shipping_price_id' => $shipping_price_id,
                         'price_label' => $price_label,
@@ -363,7 +375,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -395,6 +407,7 @@ class Admin {
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
+                        'accordion_data' => $accordion_data,
                         'shipping_provider' => $shipping_provider,
                         'shipping_price_id' => $shipping_price_id,
                         'price_label' => $price_label,
@@ -411,7 +424,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {

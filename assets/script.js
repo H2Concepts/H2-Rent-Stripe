@@ -930,5 +930,9 @@ jQuery(document).ready(function($) {
                 hidePopup();
             });
         });
+
+        $('.produkt-accordion-header').on('click', function(){
+            $(this).parent().toggleClass('active');
+        });
     }
 });

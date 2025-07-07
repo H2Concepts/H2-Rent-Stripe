@@ -270,6 +270,32 @@
             <?php endfor; ?>
         </div>
 
+        <div class="produkt-form-section">
+            <h4>📑 Accordion</h4>
+            <div id="accordion-container">
+                <?php
+                $accordion_data = !empty($edit_item->accordion_data) ? json_decode($edit_item->accordion_data, true) : [];
+                if (!is_array($accordion_data) || empty($accordion_data)) {
+                    $accordion_data = [['title' => '', 'content' => '']];
+                }
+                foreach ($accordion_data as $idx => $acc): ?>
+                <div class="produkt-accordion-group">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="accordion_titles[]" value="<?php echo esc_attr($acc['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-accordion">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <?php wp_editor($acc['content'], 'accordion_content_' . $idx . '_edit', ['textarea_name' => 'accordion_contents[]', 'textarea_rows' => 3, 'media_buttons' => false]); ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-accordion" class="button">+ Accordion hinzufügen</button>
+        </div>
+
         </div><!-- end tab-features -->
 
         <div id="tab-tooltips" class="produkt-subtab-content">
@@ -399,6 +425,35 @@ document.addEventListener('DOMContentLoaded', function() {
             var content = document.getElementById('tab-' + target);
             if (content) content.classList.add('active');
         });
+    });
+
+    var accordionIndex = document.querySelectorAll('#accordion-container .produkt-accordion-group').length;
+    document.getElementById('add-accordion').addEventListener('click', function(e){
+        e.preventDefault();
+        var id = 'accordion_content_' + accordionIndex + '_new';
+        var wrapper = document.createElement('div');
+        wrapper.className = 'produkt-accordion-group';
+        wrapper.innerHTML = '<div class="produkt-form-row">' +
+            '<div class="produkt-form-group" style="flex:1;">' +
+            '<label>Titel</label>' +
+            '<input type="text" name="accordion_titles[]" />' +
+            '</div>' +
+            '<button type="button" class="button produkt-remove-accordion">-</button>' +
+            '</div>' +
+            '<div class="produkt-form-group"><textarea id="' + id + '" name="accordion_contents[]" rows="3"></textarea></div>';
+        document.getElementById('accordion-container').appendChild(wrapper);
+        if (typeof wp !== 'undefined' && wp.editor && wp.editor.initialize) {
+            wp.editor.initialize(id, { tinymce: true, quicktags: true });
+        }
+        accordionIndex++;
+    });
+
+    document.getElementById('accordion-container').addEventListener('click', function(e){
+        if(e.target.classList.contains('produkt-remove-accordion')){
+            e.preventDefault();
+            var group = e.target.closest('.produkt-accordion-group');
+            if(group){ group.remove(); }
+        }
     });
 });
 </script>

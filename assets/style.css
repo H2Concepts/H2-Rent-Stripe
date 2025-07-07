@@ -42,7 +42,7 @@
 
 .produkt-content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1.2fr 1fr;
     gap: 2rem;
     margin-bottom: 4rem;
 }
@@ -1292,4 +1292,35 @@ body.produkt-popup-open {
     margin-top: 0.5rem;
     font-weight: 500;
     color: var(--produkt-text-color);
+}
+
+/* Accordion styles */
+.produkt-accordions {
+    margin-top: 1rem;
+}
+
+.produkt-accordion-item {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.produkt-accordion-header {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 0.75rem 0;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.produkt-accordion-content {
+    display: none;
+    padding-bottom: 0.75rem;
+}
+
+.produkt-accordion-item.active .produkt-accordion-content {
+    display: block;
 }

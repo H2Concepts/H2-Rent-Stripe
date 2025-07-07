@@ -46,6 +46,8 @@ $payment_icons = [];
 if (isset($category) && property_exists($category, 'payment_icons')) {
     $payment_icons = array_filter(array_map('trim', explode(',', $category->payment_icons)));
 }
+$accordions = isset($category) && property_exists($category, 'accordion_data') ? json_decode($category->accordion_data, true) : [];
+if (!is_array($accordions)) { $accordions = []; }
 
 $shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
 $shipping_cost = 0;
@@ -405,6 +407,16 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <div class="produkt-payment-icons">
                         <?php foreach ($payment_icons as $icon): ?>
                             <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $icon . '.svg'); ?>" alt="<?php echo esc_attr($icon); ?>">
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($accordions)): ?>
+                    <div class="produkt-accordions">
+                        <?php foreach ($accordions as $acc): ?>
+                        <div class="produkt-accordion-item">
+                            <button type="button" class="produkt-accordion-header"><?php echo esc_html($acc['title']); ?></button>
+                            <div class="produkt-accordion-content"><?php echo wp_kses_post(wpautop($acc['content'])); ?></div>
+                        </div>
                         <?php endforeach; ?>
                     </div>
                     <?php endif; ?>

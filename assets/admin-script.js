@@ -88,4 +88,36 @@ jQuery(document).ready(function($) {
             swatch.css('background-color', $(this).val());
         }
     });
+
+    // Accordion fields
+    var accordionIndex = $('#accordion-container .produkt-accordion-group').length;
+    $('#add-accordion').on('click', function(e) {
+        e.preventDefault();
+        var id = 'accordion_content_' + accordionIndex;
+        var html = '<div class="produkt-accordion-group">' +
+            '<div class="produkt-form-row">' +
+            '<div class="produkt-form-group" style="flex:1;">' +
+            '<label>Titel</label>' +
+            '<input type="text" name="accordion_titles[]" />' +
+            '</div>' +
+            '<button type="button" class="button produkt-remove-accordion">-</button>' +
+            '</div>' +
+            '<div class="produkt-form-group">' +
+            '<textarea id="' + id + '" name="accordion_contents[]" rows="3"></textarea>' +
+            '</div>' +
+            '</div>';
+        $('#accordion-container').append(html);
+        if (typeof wp !== 'undefined' && wp.editor && wp.editor.initialize) {
+            wp.editor.initialize(id, { tinymce: true, quicktags: true });
+        }
+        accordionIndex++;
+    });
+
+    $('#accordion-container').on('click', '.produkt-remove-accordion', function(e) {
+        e.preventDefault();
+        var group = $(this).closest('.produkt-accordion-group');
+        if (group.length) {
+            group.remove();
+        }
+    });
 });
