@@ -13,12 +13,15 @@ $durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_d
 
 // Get recently edited products (latest entries)
 $recent_products = $wpdb->get_results(
-    "SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY id DESC LIMIT 4"
+    "SELECT id, name, product_title, default_image, shipping_provider, meta_title
+       FROM {$wpdb->prefix}produkt_categories
+       ORDER BY id DESC
+       LIMIT 4"
 );
 
 // Get recent orders
 $recent_orders = $wpdb->get_results(
-    "SELECT o.*, c.name AS category_name, v.name AS variant_name
+    "SELECT o.*, c.name AS category_name, c.product_title, v.name AS variant_name
        FROM {$wpdb->prefix}produkt_orders o
        LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
        LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
@@ -120,8 +123,21 @@ foreach ($branding_results as $result) {
             <?php foreach ($recent_products as $prod): ?>
             <?php $prod_url = home_url('/shop/' . sanitize_title($prod->product_title)); ?>
             <div class="produkt-category-card">
+                <?php if (!empty($prod->default_image)): ?>
+                    <img src="<?php echo esc_url($prod->default_image); ?>" class="produkt-recent-image" alt="<?php echo esc_attr($prod->name); ?>">
+                <?php endif; ?>
                 <h4><?php echo esc_html($prod->name); ?></h4>
                 <code><?php echo esc_url($prod_url); ?></code>
+                <p class="produkt-seo-status">
+                    <?php if (!empty($prod->meta_title)): ?>
+                        <span class="badge badge-success">SEO konfiguriert</span>
+                    <?php else: ?>
+                        <span class="badge badge-warning">SEO fehlt</span>
+                    <?php endif; ?>
+                </p>
+                <?php if (!empty($prod->shipping_provider)): ?>
+                    <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $prod->shipping_provider . '.svg'); ?>" class="produkt-shipping-icon" alt="<?php echo esc_attr(strtoupper($prod->shipping_provider)); ?>">
+                <?php endif; ?>
                 <div class="produkt-category-actions">
                     <a href="<?php echo esc_url($prod_url); ?>" class="button button-small" target="_blank">Seite ansehen</a>
                     <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $prod->id); ?>" class="button button-small">Bearbeiten</a>
@@ -140,8 +156,24 @@ foreach ($branding_results as $result) {
             <?php foreach ($recent_orders as $order): ?>
             <div class="produkt-category-card">
                 <h4>#<?php echo $order->id; ?> – <?php echo esc_html($order->category_name); ?></h4>
-                <p style="margin-bottom:5px;"><?php echo date('d.m.Y', strtotime($order->created_at)); ?>, <?php echo esc_html($order->customer_name); ?></p>
-                <p style="margin-bottom:10px;">Variante: <?php echo esc_html($order->variant_name); ?> – <?php echo number_format($order->final_price, 2, ',', '.'); ?>€</p>
+                <p style="margin-bottom:5px;">
+                    <?php echo date('d.m.Y', strtotime($order->created_at)); ?>,
+                    <?php echo esc_html($order->customer_name); ?>
+                    (<?php echo esc_html($order->customer_postal . ' ' . $order->customer_city); ?>)
+                </p>
+                <p style="margin-bottom:10px;">
+                    Produkt: <?php echo esc_html($order->product_title); ?><br>
+                    Variante: <?php echo esc_html($order->variant_name); ?> – <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
+                </p>
+                <p>
+                    <?php if ($order->status === 'offen'): ?>
+                        <span class="badge badge-warning">Offen</span>
+                    <?php elseif ($order->status === 'gekündigt'): ?>
+                        <span class="badge badge-danger">Gekündigt</span>
+                    <?php else: ?>
+                        <span class="badge badge-success">Abgeschlossen</span>
+                    <?php endif; ?>
+                </p>
                 <div class="produkt-category-actions">
                     <a href="<?php echo admin_url('admin.php?page=produkt-orders&delete_order=' . $order->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Bestellung wirklich löschen?');">Löschen</a>
                 </div>
@@ -333,6 +365,21 @@ foreach ($branding_results as $result) {
     border-radius: 4px;
     font-size: 0.8rem;
     display: block;
+    margin-bottom: 10px;
+}
+.produkt-recent-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.produkt-shipping-icon {
+    width: 32px;
+    height: auto;
+    margin-bottom: 10px;
+}
+.produkt-seo-status {
     margin-bottom: 10px;
 }
 
