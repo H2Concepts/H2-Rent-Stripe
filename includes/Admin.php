@@ -553,6 +553,16 @@ class Admin {
             $branding[$result->setting_key] = $result->setting_value;
         }
 
+        $order_logs = [];
+        foreach ($orders as $o) {
+            $order_logs[$o->id] = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
+                    $o->id
+                )
+            );
+        }
+
         $this->load_template('orders', compact(
             'categories',
             'selected_category',
@@ -560,6 +570,7 @@ class Admin {
             'date_to',
             'current_category',
             'orders',
+            'order_logs',
             'total_orders',
             'total_revenue',
             'avg_order_value',

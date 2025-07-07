@@ -144,7 +144,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         </div>
         <?php else: ?>
         
-        <div style="overflow-x: auto;">
+        <div class="table-responsive">
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
@@ -215,6 +215,9 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
                             <small style="color: #666;">/Monat</small>
+                            <?php if ($order->shipping_cost > 0): ?>
+                                <br><span style="color:#666;">+ <?php echo number_format($order->shipping_cost, 2, ',', '.'); ?>€ einmalig</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($order->discount_amount > 0): ?>
@@ -225,11 +228,11 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         </td>
                         <td>
                             <?php if ($order->status === 'offen'): ?>
-                                <span style="color: #dc3232; font-weight: bold;">🕓 Offen</span>
+                                <span class="badge badge-warning">Offen</span>
                             <?php elseif ($order->status === 'gekündigt'): ?>
-                                <span style="color: #757575; font-weight: bold;">❌ Gekündigt</span>
+                                <span class="badge badge-danger">Gekündigt</span>
                             <?php else: ?>
-                                <span style="color: #2e7d32; font-weight: bold;">✅ Abgeschlossen</span>
+                                <span class="badge badge-success">Abgeschlossen</span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -310,12 +313,13 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 </div>
 
 <!-- Order Details Modal -->
-<div id="order-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
-    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 8px; padding: 30px; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;">
+<div id="order-details-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button type="button" class="modal-close" onclick="closeOrderDetails()">&times;</button>
         <h3 style="margin-top: 0;">📋 Bestelldetails</h3>
         <div id="order-details-content"></div>
         <div style="text-align: right; margin-top: 20px;">
-            <button type="button" class="button button-primary" onclick="closeOrderDetails()">Schließen</button>
+            <button type="button" class="button-primary" onclick="closeOrderDetails()">Schließen</button>
         </div>
     </div>
 </div>
@@ -348,6 +352,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 function showOrderDetails(orderId) {
     // Find order data from PHP
     const orders = <?php echo json_encode($orders); ?>;
+    const orderLogs = <?php echo json_encode($order_logs); ?>;
     const order = orders.find(o => o.id == orderId);
     
     if (!order) return;
@@ -359,6 +364,7 @@ function showOrderDetails(orderId) {
                 <p><strong>Bestellnummer:</strong> #${order.id}</p>
                 <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
                 <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€/Monat</p>
+                ${order.shipping_cost > 0 ? `<p><strong>Versand:</strong> ${parseFloat(order.shipping_cost).toFixed(2).replace('.', ',')}€ (einmalig)</p>` : ''}
                 <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-'+parseFloat(order.discount_amount).toFixed(2).replace('.', ',')+'€' : '–'}</p>
             </div>
             <div>
@@ -392,11 +398,21 @@ function showOrderDetails(orderId) {
     
     detailsHtml += `
         </ul>
-        
-        
+
+
         <h4>🖥️ Technische Daten</h4>
         <p><strong>User Agent:</strong> ${order.user_agent}</p>
     `;
+
+    const logs = orderLogs[order.id] || [];
+    if (logs.length) {
+        detailsHtml += '<h4>📑 Verlauf</h4><ul>';
+        logs.forEach(l => {
+            const date = new Date(l.created_at).toLocaleString('de-DE');
+            detailsHtml += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
+        });
+        detailsHtml += '</ul>';
+    }
     
     document.getElementById('order-details-content').innerHTML = detailsHtml;
     document.getElementById('order-details-modal').style.display = 'block';

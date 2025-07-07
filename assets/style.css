@@ -743,7 +743,7 @@
     height: 0.6rem;
     border-radius: 50%;
     margin-right: 0.4rem;
-    background: var(--produkt-text-color);
+    background: #28a745;
 }
 
 .produkt-availability-status.unavailable {

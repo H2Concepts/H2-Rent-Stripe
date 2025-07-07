@@ -831,6 +831,13 @@ function produkt_create_checkout_session() {
         }
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        $shipping_cost = 0;
+        if ($shipping_price_id) {
+            $sc = StripeService::get_price_amount($shipping_price_id);
+            if (!is_wp_error($sc)) {
+                $shipping_cost = floatval($sc);
+            }
+        }
         $extra_ids_raw     = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids         = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
         $category_id       = intval($body['category_id'] ?? 0);
@@ -854,6 +861,9 @@ function produkt_create_checkout_session() {
             'user_ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent'    => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
         ];
+        if ($shipping_price_id) {
+            $metadata['shipping_price_id'] = $shipping_price_id;
+        }
 
         $line_items = [[
             'price'    => $price_id,
@@ -945,6 +955,7 @@ function produkt_create_checkout_session() {
                 'product_color_id' => $product_color_id ?: null,
                 'frame_color_id'   => $frame_color_id ?: null,
                 'final_price'      => $final_price,
+                'shipping_cost'    => $shipping_cost,
                 'stripe_session_id'=> $session->id,
                 'amount_total'     => 0,
                 'produkt_name'     => $metadata['produkt'],

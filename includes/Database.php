@@ -384,7 +384,9 @@ class Database {
                 product_color_id mediumint(9) DEFAULT NULL,
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
+                shipping_cost decimal(10,2) DEFAULT 0,
                 stripe_session_id varchar(255) DEFAULT '',
+                stripe_subscription_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
                 discount_amount decimal(10,2) DEFAULT 0,
                 produkt_name varchar(255) DEFAULT '',
@@ -423,6 +425,7 @@ class Database {
                 'customer_postal'   => "varchar(20) DEFAULT ''",
                 'customer_city'     => "varchar(100) DEFAULT ''",
                 'customer_country'  => "varchar(2) DEFAULT ''",
+                'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
                 'status'            => "varchar(20) DEFAULT 'offen'"
             );
 
@@ -513,6 +516,25 @@ class Database {
         $availability_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'available'");
         if (empty($availability_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN available TINYINT(1) DEFAULT 1 AFTER option_id");
+        }
+
+        // Create order logs table if it doesn't exist
+        $table_logs = $wpdb->prefix . 'produkt_order_logs';
+        $logs_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_logs'");
+        if (!$logs_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_logs (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                order_id mediumint(9) NOT NULL,
+                event varchar(50) NOT NULL,
+                message text DEFAULT '',
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY order_id (order_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
         }
     }
     
@@ -725,6 +747,7 @@ class Database {
             product_color_id mediumint(9) DEFAULT NULL,
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
+            shipping_cost decimal(10,2) DEFAULT 0,
             stripe_session_id varchar(255) DEFAULT '',
             stripe_subscription_id varchar(255) DEFAULT '',
             amount_total int DEFAULT 0,
@@ -800,6 +823,20 @@ class Database {
         ) $charset_collate;";
 
         dbDelta($sql_notifications);
+
+        // Order logs table
+        $table_logs = $wpdb->prefix . 'produkt_order_logs';
+        $sql_logs = "CREATE TABLE $table_logs (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            order_id mediumint(9) NOT NULL,
+            event varchar(50) NOT NULL,
+            message text DEFAULT '',
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY order_id (order_id)
+        ) $charset_collate;";
+
+        dbDelta($sql_logs);
     }
     
     public function insert_default_data() {
