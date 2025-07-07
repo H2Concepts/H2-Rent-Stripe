@@ -1333,12 +1333,14 @@ body.produkt-popup-open {
 }
 
 .produkt-accordion-content {
-    display: none;
-    padding-bottom: 0.75rem;
+    overflow: hidden;
+    max-height: 0;
+    padding: 0 0;
+    transition: max-height 0.3s ease, padding 0.3s ease;
 }
 
 .produkt-accordion-item.active .produkt-accordion-content {
-    display: block;
+    padding: 0 0 0.75rem;
 }
 
 .produkt-accordion-item.active .produkt-accordion-header::after {

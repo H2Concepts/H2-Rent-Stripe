@@ -931,14 +931,26 @@ jQuery(document).ready(function($) {
             });
         });
 
-        $(document).on('click', '.produkt-accordion-header', function(){
-            const item = $(this).closest('.produkt-accordion-item');
-            if(item.hasClass('active')) {
-                item.removeClass('active');
-            } else {
-                $('.produkt-accordion-item').removeClass('active');
-                item.addClass('active');
-            }
+        const accordionButtons = document.querySelectorAll('.produkt-accordion-header');
+        accordionButtons.forEach((btn) => {
+            btn.addEventListener('click', function () {
+                const item = this.parentElement;
+                const content = this.nextElementSibling;
+                const isActive = item.classList.contains('active');
+
+                document.querySelectorAll('.produkt-accordion-item').forEach((el) => {
+                    el.classList.remove('active');
+                    const c = el.querySelector('.produkt-accordion-content');
+                    if (c) {
+                        c.style.maxHeight = null;
+                    }
+                });
+
+                if (!isActive) {
+                    item.classList.add('active');
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                }
+            });
         });
     }
 });
