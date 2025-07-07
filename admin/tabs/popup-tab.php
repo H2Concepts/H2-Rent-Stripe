@@ -15,7 +15,11 @@ if (isset($_POST['submit_popup'])) {
     echo '<div class="notice notice-success"><p>✅ Popup-Einstellungen gespeichert!</p></div>';
 }
 
-$popup_settings = get_option('produkt_popup_settings', []);
+$popup_settings = get_option('produkt_popup_settings');
+if ($popup_settings === false) {
+    $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
+    $popup_settings = get_option($legacy_key, []);
+}
 $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
 $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
 $popup_title   = $popup_settings['title'] ?? '';

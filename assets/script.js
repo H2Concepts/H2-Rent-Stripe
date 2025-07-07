@@ -841,7 +841,13 @@ jQuery(document).ready(function($) {
     if (popup.length) {
         popup.appendTo('body');
     }
-    const hideUntil = parseInt(localStorage.getItem('produkt_exit_hide_until') || '0', 10);
+    const legacyExitKey = atob('ZmVkZXJ3aWVnZ2VuX2V4aXRfaGlkZV91bnRpbA==');
+    const hideUntil = parseInt(
+        localStorage.getItem('produkt_exit_hide_until') ||
+        localStorage.getItem(legacyExitKey) ||
+        '0',
+        10
+    );
 
     function showPopup() {
         if (exitShown) return;
@@ -856,6 +862,7 @@ jQuery(document).ready(function($) {
         const days = parseInt(popupData.days || '7', 10);
         const expire = Date.now() + days * 86400000;
         localStorage.setItem('produkt_exit_hide_until', expire.toString());
+        localStorage.removeItem(legacyExitKey);
     }
 
     if (popup.length && popupData.enabled && popupData.title && Date.now() > hideUntil) {

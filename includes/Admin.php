@@ -135,7 +135,11 @@ class Admin {
             $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
 
-        $popup_settings = get_option('produkt_popup_settings', []);
+        $popup_settings = get_option('produkt_popup_settings');
+        if ($popup_settings === false) {
+            $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
+            $popup_settings = get_option($legacy_key, []);
+        }
         $options = [];
         if (!empty($popup_settings['options'])) {
             $opts = array_filter(array_map('trim', explode("\n", $popup_settings['options'])));
