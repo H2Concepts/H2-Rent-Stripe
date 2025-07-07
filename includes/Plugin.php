@@ -51,6 +51,7 @@ class Plugin {
 
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
+        add_filter('display_post_states', [$this, 'mark_shop_page'], 10, 2);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -471,8 +472,20 @@ class Plugin {
                 'post_status'  => 'publish',
                 'post_type'    => 'page'
             ];
-            wp_insert_post($page_data);
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
         }
+
+        update_option(PRODUKT_SHOP_PAGE_OPTION, $page_id);
+    }
+
+    public function mark_shop_page($states, $post) {
+        $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
+        if ($post->ID == $shop_page_id) {
+            $states[] = __('Shop-Seite', 'h2-concepts');
+        }
+        return $states;
     }
 
     /**
