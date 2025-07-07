@@ -42,6 +42,11 @@
                 <div class="produkt-category-shortcode">
                     <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
                 </div>
+
+                <?php $product_url = home_url('/shop/' . sanitize_title($category->product_title)); ?>
+                <div class="produkt-category-url">
+                    <code><?php echo esc_url($product_url); ?></code>
+                </div>
                 
                 <div class="produkt-category-meta">
                     <div class="produkt-category-info">
@@ -56,6 +61,9 @@
                 </div>
                 
                 <div class="produkt-category-actions">
+                    <a href="<?php echo esc_url($product_url); ?>" class="button button-small" target="_blank">
+                        🔍 Seite ansehen
+                    </a>
                     <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $category->id); ?>" class="button button-small">
                         ✏️ Bearbeiten
                     </a>
@@ -178,6 +186,22 @@
 }
 
 .produkt-category-shortcode code {
+    background: none;
+    padding: 0;
+    font-size: 0.8rem;
+    color: var(--produkt-primary);
+    font-weight: 500;
+}
+
+.produkt-category-url {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 15px;
+}
+
+.produkt-category-url code {
     background: none;
     padding: 0;
     font-size: 0.8rem;
