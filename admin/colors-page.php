@@ -24,6 +24,7 @@ $variants = $wpdb->get_results($wpdb->prepare(
     $selected_category
 ));
 $variant_images_db = array();
+$variant_availability = array();
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
@@ -106,6 +107,31 @@ if (isset($_POST['submit'])) {
                 $wpdb->insert($table_variant_img, array('color_id' => $color_id, 'variant_id' => $variant_id, 'image_url' => $img));
             }
         }
+
+        $variant_inputs = $_POST['variant_available'] ?? array();
+        $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
+        $all_variants = $wpdb->get_results($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+            $category_id
+        ));
+        foreach ($all_variants as $v) {
+            $available = isset($variant_inputs[$v->id]) ? 1 : 0;
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                $v->id,
+                $color_id
+            ));
+            if ($exists) {
+                $wpdb->update($table_variant_options, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
+            } else {
+                $wpdb->insert($table_variant_options, [
+                    'variant_id' => $v->id,
+                    'option_type' => 'product_color',
+                    'option_id' => $color_id,
+                    'available' => $available
+                ], ['%d','%s','%d','%d']);
+            }
+        }
     }
 }
 
@@ -133,6 +159,13 @@ if (isset($_GET['edit'])) {
             "SELECT variant_id, image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d",
             $edit_item->id
         ), OBJECT_K);
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'product_color' AND option_id = %d",
+            $edit_item->id
+        ));
+        foreach ($rows as $row) {
+            $variant_availability[$row->variant_id] = intval($row->available);
+        }
     }
 }
 
@@ -259,8 +292,20 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
-                                
-                                
+
+                                <?php if (!empty($variants)): ?>
+                                <div class="produkt-form-group" style="flex-wrap:wrap;gap:15px;">
+                                    <label style="width:100%;font-weight:600;">Verfügbarkeit je Ausführung</label>
+                                    <?php foreach ($variants as $v): ?>
+                                    <label class="produkt-toggle-label" style="min-width:160px;">
+                                        <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" checked>
+                                        <span class="produkt-toggle-slider"></span>
+                                        <span><?php echo esc_html($v->name); ?></span>
+                                    </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <?php endif; ?>
+
                             </div>
                             
                             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
@@ -342,8 +387,21 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
                                     <?php endif; ?>
                                 </div>
                                 <?php endforeach; ?>
-                                
-                                
+
+                                <?php if (!empty($variants)): ?>
+                                <div class="produkt-form-group" style="flex-wrap:wrap;gap:15px;">
+                                    <label style="width:100%;font-weight:600;">Verfügbarkeit je Ausführung</label>
+                                    <?php foreach ($variants as $v): ?>
+                                    <?php $checked = isset($variant_availability[$v->id]) ? $variant_availability[$v->id] : 1; ?>
+                                    <label class="produkt-toggle-label" style="min-width:160px;">
+                                        <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" <?php echo $checked ? 'checked' : ''; ?>>
+                                        <span class="produkt-toggle-slider"></span>
+                                        <span><?php echo esc_html($v->name); ?></span>
+                                    </label>
+                                    <?php endforeach; ?>
+                                </div>
+                                <?php endif; ?>
+
                             </div>
                             
                             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">

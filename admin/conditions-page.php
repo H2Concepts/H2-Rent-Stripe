@@ -15,6 +15,12 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
+// Variants for toggle section
+$variants = $wpdb->get_results($wpdb->prepare(
+    "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+    $selected_category
+));
+
 // Handle form submissions
 if (isset($_POST['submit'])) {
     \ProduktVerleih\Admin::verify_admin_action();
@@ -41,6 +47,7 @@ if (isset($_POST['submit'])) {
         );
         
         if ($result !== false) {
+            $condition_id = intval($_POST['id']);
             echo '<div class="notice notice-success"><p>✅ Zustand erfolgreich aktualisiert!</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -60,9 +67,37 @@ if (isset($_POST['submit'])) {
         );
         
         if ($result !== false) {
+            $condition_id = $wpdb->insert_id;
             echo '<div class="notice notice-success"><p>✅ Zustand erfolgreich hinzugefügt!</p></div>';
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        }
+    }
+
+    if (isset($condition_id)) {
+        $variant_inputs = $_POST['variant_available'] ?? array();
+        $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
+        $all_variants = $wpdb->get_results($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+            $category_id
+        ));
+        foreach ($all_variants as $v) {
+            $available = isset($variant_inputs[$v->id]) ? 1 : 0;
+            $exists = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = 'condition' AND option_id = %d",
+                $v->id,
+                $condition_id
+            ));
+            if ($exists) {
+                $wpdb->update($table_variant_options, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
+            } else {
+                $wpdb->insert($table_variant_options, [
+                    'variant_id' => $v->id,
+                    'option_type' => 'condition',
+                    'option_id' => $condition_id,
+                    'available' => $available
+                ], ['%d','%s','%d','%d']);
+            }
         }
     }
 }
@@ -79,10 +114,19 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
 
 // Get item for editing
 $edit_item = null;
+$variant_availability = array();
 if (isset($_GET['edit'])) {
     $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['edit'])));
     if ($edit_item) {
         $selected_category = $edit_item->category_id;
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'condition' AND option_id = %d",
+            $edit_item->id
+        ));
+        $variant_availability = array();
+        foreach ($rows as $row) {
+            $variant_availability[$row->variant_id] = intval($row->available);
+        }
     }
 }
 
@@ -185,9 +229,23 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                                     <label>Sortierung</label>
                                     <input type="number" name="sort_order" value="0" min="0">
                                 </div>
-                                
-            
+
                             </div>
+
+                            <?php if (!empty($variants)): ?>
+                            <div class="produkt-form-group" style="flex-wrap:wrap;gap:15px;">
+                                <label style="width:100%;font-weight:600;">Verfügbarkeit je Ausführung</label>
+                                <?php foreach ($variants as $v): ?>
+                                <label class="produkt-toggle-label" style="min-width:160px;">
+                                    <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" checked>
+                                    <span class="produkt-toggle-slider"></span>
+                                    <span><?php echo esc_html($v->name); ?></span>
+                                </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+
+                            <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
                             
                             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
                             
@@ -234,9 +292,24 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                                     <label>Sortierung</label>
                                     <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
                                 </div>
-                                
-                               
+
                             </div>
+
+                            <?php if (!empty($variants)): ?>
+                            <div class="produkt-form-group" style="flex-wrap:wrap;gap:15px;">
+                                <label style="width:100%;font-weight:600;">Verfügbarkeit je Ausführung</label>
+                                <?php foreach ($variants as $v): ?>
+                                <?php $checked = isset($variant_availability[$v->id]) ? $variant_availability[$v->id] : 1; ?>
+                                <label class="produkt-toggle-label" style="min-width:160px;">
+                                    <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" <?php echo $checked ? 'checked' : ''; ?>>
+                                    <span class="produkt-toggle-slider"></span>
+                                    <span><?php echo esc_html($v->name); ?></span>
+                                </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <?php endif; ?>
+
+                            <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
                             
                             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
                             
