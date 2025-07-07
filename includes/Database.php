@@ -1,5 +1,5 @@
 <?php
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 class Database {
     public function update_database() {
@@ -7,9 +7,9 @@ class Database {
         
         // Add category_id column to all tables if it doesn't exist
         $tables_to_update = array(
-            'federwiegen_variants',
-            'federwiegen_extras', 
-            'federwiegen_durations'
+            'produkt_variants',
+            'produkt_extras', 
+            'produkt_durations'
         );
         
         foreach ($tables_to_update as $table_suffix) {
@@ -21,7 +21,7 @@ class Database {
         }
         
         // Add image columns to variants table if they don't exist
-        $table_variants = $wpdb->prefix . 'federwiegen_variants';
+        $table_variants = $wpdb->prefix . 'produkt_variants';
         $columns_to_add = array(
             'stripe_price_id' => 'VARCHAR(255) DEFAULT ""',
             'price_from' => 'DECIMAL(10,2) DEFAULT 0',
@@ -52,7 +52,7 @@ class Database {
         }
         
         // Add image_url and stripe_price_id columns to extras table if they don't exist
-        $table_extras = $wpdb->prefix . 'federwiegen_extras';
+        $table_extras = $wpdb->prefix . 'produkt_extras';
         $extra_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'image_url'");
         if (empty($extra_column_exists)) {
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN image_url TEXT AFTER price");
@@ -63,7 +63,7 @@ class Database {
         }
         
         // Create categories table if it doesn't exist
-        $table_categories = $wpdb->prefix . 'federwiegen_categories';
+        $table_categories = $wpdb->prefix . 'produkt_categories';
         $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_categories'");
         
         if (!$table_exists) {
@@ -157,7 +157,7 @@ class Database {
         }
         
         // Create analytics table if it doesn't exist
-        $table_analytics = $wpdb->prefix . 'federwiegen_analytics';
+        $table_analytics = $wpdb->prefix . 'produkt_analytics';
         $analytics_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_analytics'");
         
         if (!$analytics_exists) {
@@ -201,7 +201,7 @@ class Database {
         }
         
         // Create branding settings table if it doesn't exist
-        $table_branding = $wpdb->prefix . 'federwiegen_branding';
+        $table_branding = $wpdb->prefix . 'produkt_branding';
         $branding_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_branding'");
         
         if (!$branding_exists) {
@@ -227,7 +227,12 @@ class Database {
                 'admin_color_primary'   => '#5f7f5f',
                 'admin_color_secondary' => '#4a674a',
                 'admin_color_text'      => '#ffffff',
-                'footer_text' => 'Powered by H2 Concepts'
+                'front_button_color'    => '#5f7f5f',
+                'front_text_color'      => '#4a674a',
+                'front_border_color'    => '#a4b8a4',
+                'front_button_text_color' => '#ffffff',
+                'footer_text' => 'Powered by H2 Concepts',
+                'custom_css' => ''
             );
             
             foreach ($default_branding as $key => $value) {
@@ -240,9 +245,23 @@ class Database {
                 );
             }
         }
+
+        // Ensure new branding settings exist
+        $branding_defaults = array(
+            'front_button_color'       => '#5f7f5f',
+            'front_text_color'         => '#4a674a',
+            'front_border_color'       => '#a4b8a4',
+            'front_button_text_color'  => '#ffffff'
+        );
+        foreach ($branding_defaults as $key => $value) {
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_branding WHERE setting_key = %s", $key));
+            if (!$exists) {
+                $wpdb->insert($table_branding, array('setting_key' => $key, 'setting_value' => $value));
+            }
+        }
         
         // Create conditions table if it doesn't exist
-        $table_conditions = $wpdb->prefix . 'federwiegen_conditions';
+        $table_conditions = $wpdb->prefix . 'produkt_conditions';
         $conditions_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_conditions'");
         
         if (!$conditions_exists) {
@@ -264,7 +283,7 @@ class Database {
         }
         
         // Create colors table if it doesn't exist
-        $table_colors = $wpdb->prefix . 'federwiegen_colors';
+        $table_colors = $wpdb->prefix . 'produkt_colors';
         $colors_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_colors'");
 
         if (!$colors_exists) {
@@ -292,7 +311,7 @@ class Database {
         }
 
         // Create color variant images table if it doesn't exist
-        $table_color_variant_images = $wpdb->prefix . 'federwiegen_color_variant_images';
+        $table_color_variant_images = $wpdb->prefix . 'produkt_color_variant_images';
         $color_variant_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_color_variant_images'");
 
         if (!$color_variant_exists) {
@@ -311,7 +330,7 @@ class Database {
         }
         
         // Create variant options table if it doesn't exist
-        $table_variant_options = $wpdb->prefix . 'federwiegen_variant_options';
+        $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
         $variant_options_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_variant_options'");
         
         if (!$variant_options_exists) {
@@ -330,7 +349,7 @@ class Database {
         }
 
         // Create duration price table if it doesn't exist
-        $table_duration_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+        $table_duration_prices = $wpdb->prefix . 'produkt_duration_prices';
         $duration_prices_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_duration_prices'");
 
         if (!$duration_prices_exists) {
@@ -349,7 +368,7 @@ class Database {
         }
         
         // Create orders table if it doesn't exist
-        $table_orders = $wpdb->prefix . 'federwiegen_orders';
+        $table_orders = $wpdb->prefix . 'produkt_orders';
         $orders_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_orders'");
         
         if (!$orders_exists) {
@@ -416,7 +435,7 @@ class Database {
         }
 
         // Create metadata table if it doesn't exist
-        $table_metadata = $wpdb->prefix . 'federwiegen_stripe_metadata';
+        $table_metadata = $wpdb->prefix . 'produkt_stripe_metadata';
         $metadata_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_metadata'");
         if (!$metadata_exists) {
             $charset_collate = $wpdb->get_charset_collate();
@@ -447,7 +466,7 @@ class Database {
         }
 
         // Create notifications table if it doesn't exist
-        $table_notifications = $wpdb->prefix . 'federwiegen_notifications';
+        $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $notifications_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_notifications'");
 
         if (!$notifications_exists) {
@@ -490,7 +509,7 @@ class Database {
         
 
         // Add availability column to variant options table if it doesn't exist
-        $table_variant_options = $wpdb->prefix . 'federwiegen_variant_options';
+        $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
         $availability_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'available'");
         if (empty($availability_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN available TINYINT(1) DEFAULT 1 AFTER option_id");
@@ -503,7 +522,7 @@ class Database {
         $charset_collate = $wpdb->get_charset_collate();
         
         // Categories table for different product categories (with SEO fields)
-        $table_categories = $wpdb->prefix . 'federwiegen_categories';
+        $table_categories = $wpdb->prefix . 'produkt_categories';
         $sql_categories = "CREATE TABLE $table_categories (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
@@ -548,7 +567,7 @@ class Database {
         ) $charset_collate;";
         
         // Variants table (updated with multiple image fields, category_id and availability)
-        $table_variants = $wpdb->prefix . 'federwiegen_variants';
+        $table_variants = $wpdb->prefix . 'produkt_variants';
         $sql_variants = "CREATE TABLE $table_variants (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
@@ -571,7 +590,7 @@ class Database {
         ) $charset_collate;";
         
         // Extras table (updated with image field, category_id and Stripe price)
-        $table_extras = $wpdb->prefix . 'federwiegen_extras';
+        $table_extras = $wpdb->prefix . 'produkt_extras';
         $sql_extras = "CREATE TABLE $table_extras (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
@@ -585,7 +604,7 @@ class Database {
         ) $charset_collate;";
         
         // Durations table (with category_id)
-        $table_durations = $wpdb->prefix . 'federwiegen_durations';
+        $table_durations = $wpdb->prefix . 'produkt_durations';
         $sql_durations = "CREATE TABLE $table_durations (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
@@ -599,7 +618,7 @@ class Database {
         
         // Links table (with category_id and new option columns)
         // Analytics table for tracking (with new option columns)
-        $table_analytics = $wpdb->prefix . 'federwiegen_analytics';
+        $table_analytics = $wpdb->prefix . 'produkt_analytics';
         $sql_analytics = "CREATE TABLE $table_analytics (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) NOT NULL,
@@ -621,7 +640,7 @@ class Database {
         ) $charset_collate;";
         
         // Branding settings table
-        $table_branding = $wpdb->prefix . 'federwiegen_branding';
+        $table_branding = $wpdb->prefix . 'produkt_branding';
         $sql_branding = "CREATE TABLE $table_branding (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             setting_key varchar(255) NOT NULL,
@@ -631,7 +650,7 @@ class Database {
         ) $charset_collate;";
         
         // Conditions table
-        $table_conditions = $wpdb->prefix . 'federwiegen_conditions';
+        $table_conditions = $wpdb->prefix . 'produkt_conditions';
         $sql_conditions = "CREATE TABLE $table_conditions (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
@@ -645,7 +664,7 @@ class Database {
         ) $charset_collate;";
         
         // Colors table
-        $table_colors = $wpdb->prefix . 'federwiegen_colors';
+        $table_colors = $wpdb->prefix . 'produkt_colors';
         $sql_colors = "CREATE TABLE $table_colors (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
@@ -660,7 +679,7 @@ class Database {
         ) $charset_collate;";
 
         // Color variant images table
-        $table_color_variant_images = $wpdb->prefix . 'federwiegen_color_variant_images';
+        $table_color_variant_images = $wpdb->prefix . 'produkt_color_variant_images';
         $sql_color_variant_images = "CREATE TABLE $table_color_variant_images (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             color_id mediumint(9) NOT NULL,
@@ -671,7 +690,7 @@ class Database {
         ) $charset_collate;";
         
         // Variant options table
-        $table_variant_options = $wpdb->prefix . 'federwiegen_variant_options';
+        $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
         $sql_variant_options = "CREATE TABLE $table_variant_options (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             variant_id mediumint(9) NOT NULL,
@@ -683,7 +702,7 @@ class Database {
         ) $charset_collate;";
 
         // Variant price IDs per duration
-        $table_duration_prices = $wpdb->prefix . 'federwiegen_duration_prices';
+        $table_duration_prices = $wpdb->prefix . 'produkt_duration_prices';
         $sql_duration_prices = "CREATE TABLE $table_duration_prices (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             duration_id mediumint(9) NOT NULL,
@@ -694,7 +713,7 @@ class Database {
         ) $charset_collate;";
         
         // Orders table
-        $table_orders = $wpdb->prefix . 'federwiegen_orders';
+        $table_orders = $wpdb->prefix . 'produkt_orders';
         $sql_orders = "CREATE TABLE $table_orders (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) NOT NULL,
@@ -746,7 +765,7 @@ class Database {
         dbDelta($sql_orders);
 
         // Metadata table for storing Stripe session details
-        $table_meta = $wpdb->prefix . 'federwiegen_stripe_metadata';
+        $table_meta = $wpdb->prefix . 'produkt_stripe_metadata';
         $sql_meta = "CREATE TABLE $table_meta (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             session_id varchar(255) NOT NULL,
@@ -762,7 +781,7 @@ class Database {
         dbDelta($sql_meta);
 
         // Notifications table
-        $table_notifications = $wpdb->prefix . 'federwiegen_notifications';
+        $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $sql_notifications = "CREATE TABLE $table_notifications (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) NOT NULL,
@@ -787,13 +806,13 @@ class Database {
         global $wpdb;
         
         // Insert default category
-        $existing_categories = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_categories");
+        $existing_categories = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
         if ($existing_categories == 0) {
             $wpdb->insert(
-                $wpdb->prefix . 'federwiegen_categories',
+                $wpdb->prefix . 'produkt_categories',
                 array(
-                     'name' => 'Standard Federwiegen',
-                    'shortcode' => 'federwiegen_product',
+                     'name' => 'Standard Produkt',
+                    'shortcode' => 'produkt_product',
                     'page_title' => '',
                     'page_description' => '',
                     'meta_title' => '',
@@ -831,7 +850,7 @@ class Database {
         }
         
         // Insert default branding settings
-        $existing_branding = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_branding");
+        $existing_branding = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_branding");
         if ($existing_branding == 0) {
             $default_branding = array(
                 'plugin_name' => '',
@@ -841,12 +860,18 @@ class Database {
                 'admin_logo' => '',
                 'admin_color_primary' => '#5f7f5f',
                 'admin_color_secondary' => '#4a674a',
-                'footer_text' => ''
+                'admin_color_text' => '#ffffff',
+                'front_button_color'    => '#5f7f5f',
+                'front_text_color'      => '#4a674a',
+                'front_border_color'    => '#a4b8a4',
+                'front_button_text_color' => '#ffffff',
+                'footer_text' => '',
+                'custom_css' => ''
             );
             
             foreach ($default_branding as $key => $value) {
                 $wpdb->insert(
-                    $wpdb->prefix . 'federwiegen_branding',
+                    $wpdb->prefix . 'produkt_branding',
                     array(
                         'setting_key' => $key,
                         'setting_value' => $value
@@ -856,17 +881,17 @@ class Database {
         }
         
         // Insert default variants only if table is empty
-        $existing_variants = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
+        $existing_variants = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants");
         if ($existing_variants == 0) {
             $variants = array(
-                array('Federwiege + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 'price_1QutK3RxDui5dUOqWEiBal7P'),
-                array('Federwiege + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', ''),
+                array('Produkt + Gestell & Motor', 'Komplettset mit stabilem Gestell und leisem Motor', 'price_1QutK3RxDui5dUOqWEiBal7P'),
+                array('Produkt + Türklammer & Motor', 'Platzsparende Lösung mit praktischer Türklammer', ''),
                 array('Wiege + Gestell & Motor mit App-Steuerung', 'Premium-Variante mit smarter App-Steuerung', '')
             );
             
             foreach ($variants as $index => $variant) {
                 $wpdb->insert(
-                    $wpdb->prefix . 'federwiegen_variants',
+                    $wpdb->prefix . 'produkt_variants',
                     array(
                         'category_id' => 1,
                         'name' => $variant[0],
@@ -888,7 +913,7 @@ class Database {
         }
         
         // Insert default extras only if table is empty
-        $existing_extras = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_extras");
+        $existing_extras = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
         if ($existing_extras == 0) {
             $extras = array(
                 array('Kein Extra', '' , 0.00),
@@ -897,7 +922,7 @@ class Database {
             
             foreach ($extras as $index => $extra) {
                 $wpdb->insert(
-                    $wpdb->prefix . 'federwiegen_extras',
+                    $wpdb->prefix . 'produkt_extras',
                     array(
                         'category_id' => 1,
                         'name' => $extra[0],
@@ -911,7 +936,7 @@ class Database {
         }
         
         // Insert default durations only if table is empty
-        $existing_durations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_durations");
+        $existing_durations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
         if ($existing_durations == 0) {
             $durations = array(
                 array('Flexible Abo', 1, 0.00),
@@ -922,7 +947,7 @@ class Database {
             
             foreach ($durations as $index => $duration) {
                 $wpdb->insert(
-                    $wpdb->prefix . 'federwiegen_durations',
+                    $wpdb->prefix . 'produkt_durations',
                     array(
                         'category_id' => 1,
                         'name' => $duration[0],

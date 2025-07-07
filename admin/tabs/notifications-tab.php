@@ -5,7 +5,7 @@
 if (isset($_GET['delete_notification'])) {
     $notification_id = intval($_GET['delete_notification']);
     $result = $wpdb->delete(
-        $wpdb->prefix . 'federwiegen_notifications',
+        $wpdb->prefix . 'produkt_notifications',
         array('id' => $notification_id),
         array('%d')
     );
@@ -23,7 +23,7 @@ if (!empty($_POST['delete_notifications']) && is_array($_POST['delete_notificati
     if ($ids) {
         $placeholders = implode(',', array_fill(0, count($ids), '%d'));
         $query = $wpdb->prepare(
-            "DELETE FROM {$wpdb->prefix}federwiegen_notifications WHERE id IN ($placeholders)",
+            "DELETE FROM {$wpdb->prefix}produkt_notifications WHERE id IN ($placeholders)",
             ...$ids
         );
         $result = $wpdb->query($query);
@@ -43,31 +43,31 @@ $notifications = $wpdb->get_results(
         pc.name AS product_color_name,
         fc.name AS frame_color_name,
         (SELECT GROUP_CONCAT(e.name SEPARATOR ', ')
-            FROM {$wpdb->prefix}federwiegen_extras e
+            FROM {$wpdb->prefix}produkt_extras e
             WHERE FIND_IN_SET(e.id, n.extra_ids)) AS extras_names
-     FROM {$wpdb->prefix}federwiegen_notifications n
-     LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON n.variant_id = v.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_durations d ON n.duration_id = d.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_conditions c ON n.condition_id = c.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_colors pc ON n.product_color_id = pc.id
-     LEFT JOIN {$wpdb->prefix}federwiegen_colors fc ON n.frame_color_id = fc.id
+     FROM {$wpdb->prefix}produkt_notifications n
+     LEFT JOIN {$wpdb->prefix}produkt_variants v ON n.variant_id = v.id
+     LEFT JOIN {$wpdb->prefix}produkt_durations d ON n.duration_id = d.id
+     LEFT JOIN {$wpdb->prefix}produkt_conditions c ON n.condition_id = c.id
+     LEFT JOIN {$wpdb->prefix}produkt_colors pc ON n.product_color_id = pc.id
+     LEFT JOIN {$wpdb->prefix}produkt_colors fc ON n.frame_color_id = fc.id
      $where_clause ORDER BY n.created_at DESC"
 );
 ?>
 
-<div class="federwiegen-notifications-tab">
-    <div class="federwiegen-orders-card">
-        <div class="federwiegen-orders-header">
+<div class="produkt-notifications-tab">
+    <div class="produkt-orders-card">
+        <div class="produkt-orders-header">
             <h4>📧 Benachrichtigungsanfragen</h4>
             <?php if (!empty($notifications)): ?>
-            <div class="federwiegen-bulk-actions">
+            <div class="produkt-bulk-actions">
                 <button type="button" class="button" onclick="toggleSelectAllNotifications()">Alle auswählen</button>
                 <button type="button" class="button" onclick="deleteSelectedNotifications()" style="color: #dc3232;">Ausgewählte löschen</button>
             </div>
             <?php endif; ?>
         </div>
         <?php if (empty($notifications)): ?>
-            <div class="federwiegen-empty-state">
+            <div class="produkt-empty-state">
                 <p>Keine Einträge vorhanden.</p>
             </div>
         <?php else: ?>
@@ -115,7 +115,7 @@ $notifications = $wpdb->get_results(
                             ?>
                         </td>
                         <td>
-                            <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
+                            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
                         </td>
                     </tr>
                     <?php endforeach; ?>

@@ -10,7 +10,7 @@ $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'brandin
 
 // Get branding settings
 $branding = array();
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -18,66 +18,66 @@ foreach ($branding_results as $result) {
 
 <div class="wrap">
     <!-- Kompakter Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">⚙️</div>
-        <div class="federwiegen-admin-title-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">⚙️</div>
+        <div class="produkt-admin-title-compact">
             <h1>Einstellungen</h1>
             <p>Branding & Konfiguration</p>
         </div>
     </div>
     
     <!-- Breadcrumb Navigation -->
-    <div class="federwiegen-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>">Dashboard</a> 
+    <div class="produkt-breadcrumb">
+        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
         <span>→</span> 
         <strong>Einstellungen</strong>
     </div>
     
     <!-- Tab Navigation -->
-    <div class="federwiegen-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=branding'); ?>"
-           class="federwiegen-tab <?php echo $active_tab === 'branding' ? 'active' : ''; ?>">
+    <div class="produkt-tab-nav">
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=branding'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'branding' ? 'active' : ''; ?>">
             🎨 Branding
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=popup'); ?>"
-           class="federwiegen-tab <?php echo $active_tab === 'popup' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=popup'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'popup' ? 'active' : ''; ?>">
             📣 Popup
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=stripe'); ?>"
-           class="federwiegen-tab <?php echo $active_tab === 'stripe' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=stripe'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'stripe' ? 'active' : ''; ?>">
             💳 Stripe Integration
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=debug'); ?>"
-           class="federwiegen-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=debug'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
             🔧 Debug
         </a>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=notifications'); ?>"
-           class="federwiegen-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>">
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>">
             📧 Benachrichtigungen
         </a>
     </div>
     
     <!-- Tab Content -->
-    <div class="federwiegen-tab-content">
+    <div class="produkt-tab-content">
         <?php
         switch ($active_tab) {
             case 'branding':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
                 break;
             case 'popup':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/popup-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/popup-tab.php';
                 break;
             case 'stripe':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/stripe-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/stripe-tab.php';
                 break;
             case 'debug':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
                 break;
             case 'notifications':
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';
                 break;
             default:
-                include FEDERWIEGEN_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
         }
         ?>
     </div>

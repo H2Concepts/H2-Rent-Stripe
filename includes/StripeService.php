@@ -1,5 +1,5 @@
 <?php
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 class StripeService {
     private static function load_library() {
@@ -14,7 +14,7 @@ class StripeService {
     }
 
     private static function set_secret_key() {
-        $secret = get_option('federwiegen_stripe_secret_key', '');
+        $secret = get_option('produkt_stripe_secret_key', '');
         if (empty($secret)) {
             return new \WP_Error('stripe_secret', 'Stripe secret key not set');
         }
@@ -68,10 +68,10 @@ class StripeService {
     }
 
     public static function get_publishable_key() {
-        return get_option('federwiegen_stripe_publishable_key', '');
+        return get_option('produkt_stripe_publishable_key', '');
     }
 
     public static function get_payment_method_configuration_id() {
-        return get_option('federwiegen_stripe_pmc_id', '');
+        return get_option('produkt_stripe_pmc_id', '');
     }
 }

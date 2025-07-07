@@ -7,7 +7,7 @@ global $wpdb;
 
 // Handle form submissions
 if (isset($_POST['submit_branding'])) {
-    \FederwiegenVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Admin::verify_admin_action();
     $plugin_name = sanitize_text_field($_POST['plugin_name']);
     $plugin_description = sanitize_textarea_field($_POST['plugin_description']);
     $company_name = sanitize_text_field($_POST['company_name']);
@@ -15,9 +15,13 @@ if (isset($_POST['submit_branding'])) {
     $admin_color_primary = sanitize_hex_color($_POST['admin_color_primary']);
     $admin_color_secondary = sanitize_hex_color($_POST['admin_color_secondary']);
     $admin_color_text = sanitize_hex_color($_POST['admin_color_text']);
+    $front_button_color = sanitize_hex_color($_POST['front_button_color']);
+    $front_text_color   = sanitize_hex_color($_POST['front_text_color']);
+    $front_border_color = sanitize_hex_color($_POST['front_border_color']);
+    $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
-    $table_name = $wpdb->prefix . 'federwiegen_branding';
+    $table_name = $wpdb->prefix . 'produkt_branding';
 
     $settings = array(
         'plugin_name' => $plugin_name,
@@ -27,6 +31,10 @@ if (isset($_POST['submit_branding'])) {
         'admin_color_primary' => $admin_color_primary,
         'admin_color_secondary' => $admin_color_secondary,
         'admin_color_text' => $admin_color_text,
+        'front_button_color' => $front_button_color,
+        'front_text_color'   => $front_text_color,
+        'front_border_color' => $front_border_color,
+        'front_button_text_color' => $front_button_text_color,
         'footer_text' => $footer_text
     );
 
@@ -76,7 +84,7 @@ if (isset($_POST['submit_branding'])) {
 
 // Get current branding settings
 $branding = array();
-$results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -84,29 +92,29 @@ foreach ($results as $result) {
 
 <div class="wrap">
     <!-- Standard Admin Header (nicht gebrandet) -->
-    <div class="federwiegen-admin-header">
-        <div class="federwiegen-admin-logo">
+    <div class="produkt-admin-header">
+        <div class="produkt-admin-logo">
             🎨
         </div>
-        <div class="federwiegen-admin-title">
+        <div class="produkt-admin-title">
             <h1>Plugin Branding</h1>
             <p>Passen Sie das Erscheinungsbild und die Informationen des Plugins an</p>
         </div>
     </div>
     
     <!-- Navigation -->
-    <div class="federwiegen-admin-nav">
+    <div class="produkt-admin-nav">
         <h3>🧭 Schnellnavigation</h3>
-        <div class="federwiegen-nav-grid">
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-verleih'); ?>" class="federwiegen-nav-item">
+        <div class="produkt-nav-grid">
+            <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-dashboard"></span>
                 Dashboard
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-categories'); ?>" class="federwiegen-nav-item">
+            <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-category"></span>
                 Kategorien
             </a>
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-variants'); ?>" class="federwiegen-nav-item">
+            <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="produkt-nav-item">
                 <span class="dashicons dashicons-images-alt2"></span>
                 Ausführungen
             </a>
@@ -139,7 +147,7 @@ foreach ($results as $result) {
     </div>
     
     <form method="post" action="">
-        <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <h2>🏢 Plugin-Informationen</h2>
         <table class="form-table">
             <tr>
@@ -197,6 +205,35 @@ foreach ($results as $result) {
                 <td>
                     <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="color-picker">
                     <p class="description">Farbe für Text auf Buttons und Tabs</p>
+                </td>
+            </tr>
+
+            <tr>
+                <th scope="row">Button-Farbe (Frontend)</th>
+                <td>
+                    <input type="color" name="front_button_color" value="<?php echo esc_attr($branding['front_button_color'] ?? '#5f7f5f'); ?>" class="color-picker">
+                    <p class="description">Hauptfarbe der Handlungs-Buttons</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Textfarbe (Frontend)</th>
+                <td>
+                    <input type="color" name="front_text_color" value="<?php echo esc_attr($branding['front_text_color'] ?? '#4a674a'); ?>" class="color-picker">
+                    <p class="description">Farbe für Preis- und Hinweistexte</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Border-Farbe</th>
+                <td>
+                    <input type="color" name="front_border_color" value="<?php echo esc_attr($branding['front_border_color'] ?? '#a4b8a4'); ?>" class="color-picker">
+                    <p class="description">Rahmenfarbe für Optionen</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Button-Textfarbe</th>
+                <td>
+                    <input type="color" name="front_button_text_color" value="<?php echo esc_attr($branding['front_button_text_color'] ?? '#ffffff'); ?>" class="color-picker">
+                    <p class="description">Textfarbe der Buttons im Frontend</p>
                 </td>
             </tr>
             <tr>

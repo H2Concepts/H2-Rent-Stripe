@@ -1,6 +1,6 @@
 <?php
 // Durations Tab Content
-$table_name = $wpdb->prefix . 'federwiegen_durations';
+$table_name = $wpdb->prefix . 'produkt_durations';
 
 // Ensure category_id column exists
 $category_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
@@ -73,14 +73,14 @@ if (isset($_GET['edit_duration'])) {
 $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY sort_order, months_minimum", $selected_category));
 ?>
 
-<div class="federwiegen-tab-section">
+<div class="produkt-tab-section">
     <h3>⏰ Mietdauern</h3>
     <p>Definieren Sie verschiedene Mietdauern mit automatischen Rabatten bei längeren Laufzeiten.</p>
     
     <!-- Form -->
-    <div class="federwiegen-form-card">
+    <div class="produkt-form-card">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
                 <h4>Mietdauer bearbeiten</h4>
@@ -88,24 +88,24 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
                 <h4>Neue Mietdauer hinzufügen</h4>
             <?php endif; ?>
             
-            <div class="federwiegen-form-grid">
-                <div class="federwiegen-form-group">
+            <div class="produkt-form-grid">
+                <div class="produkt-form-group">
                     <label>Name *</label>
                     <input type="text" name="name" value="<?php echo $edit_item ? esc_attr($edit_item->name) : ''; ?>" required>
                 </div>
                 
-                <div class="federwiegen-form-group">
+                <div class="produkt-form-group">
                     <label>Mindestmonate *</label>
                     <input type="number" name="months_minimum" value="<?php echo $edit_item ? $edit_item->months_minimum : ''; ?>" min="1" required>
                 </div>
                 
-                <div class="federwiegen-form-group">
+                <div class="produkt-form-group">
                     <label>Rabatt (%)</label>
                     <input type="number" name="discount" value="<?php echo $edit_item ? ($edit_item->discount * 100) : ''; ?>" step="0.01" min="0" max="100">
                     <small>z.B. 10 für 10% Rabatt</small>
                 </div>
                 
-                <div class="federwiegen-form-group">
+                <div class="produkt-form-group">
                     <label>Sortierung</label>
                     <input type="number" name="sort_order" value="<?php echo $edit_item ? $edit_item->sort_order : '0'; ?>" min="0">
                 </div>
@@ -114,42 +114,42 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
             
             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
             
-            <div class="federwiegen-form-actions">
+            <div class="produkt-form-actions">
                 <?php submit_button($edit_item ? 'Aktualisieren' : 'Hinzufügen', 'primary', 'submit_duration', false); ?>
                 <?php if ($edit_item): ?>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-pricing&category=' . $selected_category . '&tab=durations'); ?>" class="button">Abbrechen</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-pricing&category=' . $selected_category . '&tab=durations'); ?>" class="button">Abbrechen</a>
                 <?php endif; ?>
             </div>
         </form>
     </div>
     
     <!-- List -->
-    <div class="federwiegen-list-card">
+    <div class="produkt-list-card">
         <h4>Vorhandene Mietdauern</h4>
         
         <?php if (empty($durations)): ?>
-        <div class="federwiegen-empty-state">
+        <div class="produkt-empty-state">
             <p>Noch keine Mietdauern für diese Kategorie vorhanden.</p>
             <p><strong>Tipp:</strong> Fügen Sie oben eine neue Mietdauer hinzu!</p>
         </div>
         <?php else: ?>
         
-        <div class="federwiegen-simple-list">
+        <div class="produkt-simple-list">
             <?php foreach ($durations as $duration): ?>
-            <div class="federwiegen-simple-item">
-                <div class="federwiegen-simple-content">
+            <div class="produkt-simple-item">
+                <div class="produkt-simple-content">
                     <h5><?php echo esc_html($duration->name); ?></h5>
-                    <div class="federwiegen-simple-meta">
+                    <div class="produkt-simple-meta">
                         <span>Mindestlaufzeit: <?php echo $duration->months_minimum; ?> Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?></span>
                         <?php if ($duration->discount > 0): ?>
-                            <span class="federwiegen-discount-badge">-<?php echo round($duration->discount * 100); ?>% Rabatt</span>
+                            <span class="produkt-discount-badge">-<?php echo round($duration->discount * 100); ?>% Rabatt</span>
                         <?php endif; ?>
                     </div>
                 </div>
                 
-                <div class="federwiegen-simple-actions">
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-pricing&category=' . $selected_category . '&tab=durations&edit_duration=' . $duration->id); ?>" class="button button-small">Bearbeiten</a>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-pricing&category=' . $selected_category . '&tab=durations&delete_duration=' . $duration->id); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                <div class="produkt-simple-actions">
+                    <a href="<?php echo admin_url('admin.php?page=produkt-pricing&category=' . $selected_category . '&tab=durations&edit_duration=' . $duration->id); ?>" class="button button-small">Bearbeiten</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-pricing&category=' . $selected_category . '&tab=durations&delete_duration=' . $duration->id); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -160,9 +160,9 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
 </div>
 
 <style>
-.federwiegen-discount-badge {
+.produkt-discount-badge {
     background: #e3e8e3;
-    color: var(--federwiegen-secondary);
+    color: var(--produkt-secondary);
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;

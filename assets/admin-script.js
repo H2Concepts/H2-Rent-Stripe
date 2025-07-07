@@ -78,12 +78,12 @@ jQuery(document).ready(function($) {
 
     // Update color preview swatches
     $('input[type="color"]').each(function() {
-        var swatch = $(this).siblings('.federwiegen-color-swatch');
+        var swatch = $(this).siblings('.produkt-color-swatch');
         if (swatch.length) {
             swatch.css('background-color', $(this).val());
         }
     }).on('input change', function() {
-        var swatch = $(this).siblings('.federwiegen-color-swatch');
+        var swatch = $(this).siblings('.produkt-color-swatch');
         if (swatch.length) {
             swatch.css('background-color', $(this).val());
         }

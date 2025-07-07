@@ -1,7 +1,7 @@
 <?php
 
 
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 class Autoloader
 {

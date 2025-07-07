@@ -1,11 +1,11 @@
 <?php
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 use WP_REST_Request;
 use WP_REST_Response;
 
 add_action('rest_api_init', function () {
-    register_rest_route('federwiegen/v1', '/stripe-webhook', [
+    register_rest_route('produkt/v1', '/stripe-webhook', [
         'methods'  => 'POST',
         'callback' => __NAMESPACE__ . '\\handle_stripe_webhook',
         'permission_callback' => '__return_true',
@@ -18,14 +18,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
     }
 
-    $secret_key = get_option('federwiegen_stripe_secret_key', '');
+    $secret_key = get_option('produkt_stripe_secret_key', '');
     if ($secret_key) {
         \Stripe\Stripe::setApiKey($secret_key);
     }
 
     $payload    = $request->get_body();
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
-    $secret     = defined('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') ? constant('FEDERWIEGEN_STRIPE_WEBHOOK_SECRET') : '';
+    $secret     = get_option('produkt_stripe_webhook_secret', '');
 
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
@@ -57,7 +57,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         global $wpdb;
         $existing_id = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}federwiegen_orders WHERE stripe_session_id = %s",
+            "SELECT id FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
             $session->id
         ));
 
@@ -89,14 +89,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         if ($existing_id) {
             $wpdb->update(
-                "{$wpdb->prefix}federwiegen_orders",
+                "{$wpdb->prefix}produkt_orders",
                 $data,
                 ['id' => $existing_id]
             );
         } else {
             $data['stripe_session_id'] = $session->id;
             $data['stripe_subscription_id'] = $subscription_id;
-            $wpdb->insert("{$wpdb->prefix}federwiegen_orders", $data);
+            $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);
         }
 
         $admin_email = get_option('admin_email');
@@ -123,7 +123,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $subscription_id = $subscription->id;
         global $wpdb;
         $wpdb->update(
-            "{$wpdb->prefix}federwiegen_orders",
+            "{$wpdb->prefix}produkt_orders",
             [ 'status' => 'gekündigt' ],
             [ 'stripe_subscription_id' => $subscription_id ]
         );

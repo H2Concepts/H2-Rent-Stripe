@@ -6,17 +6,17 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 // Get categories count
-$categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_categories");
-$variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_variants");
-$extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_extras");
-$durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}federwiegen_durations");
+$categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
+$variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants");
+$extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
+$durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
 
 // Get recent categories
-$recent_categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY id DESC LIMIT 3");
+$recent_categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY id DESC LIMIT 3");
 
 // Get branding settings
 $branding = array();
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
@@ -24,75 +24,75 @@ foreach ($branding_results as $result) {
 
 <div class="wrap">
     <!-- Kompakter Admin Header -->
-    <div class="federwiegen-admin-header-compact">
-        <div class="federwiegen-admin-logo-compact">
+    <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">
             🏠
         </div>
-        <div class="federwiegen-admin-title-compact">
+        <div class="produkt-admin-title-compact">
             <h1><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></h1>
             <p>Dashboard & Übersicht</p>
         </div>
     </div>
     
     <!-- Kompakte Statistiken -->
-    <div class="federwiegen-stats-compact">
-        <div class="federwiegen-stat-item">
-            <div class="federwiegen-stat-number"><?php echo $categories_count; ?></div>
-            <div class="federwiegen-stat-label">Kategorien</div>
+    <div class="produkt-stats-compact">
+        <div class="produkt-stat-item">
+            <div class="produkt-stat-number"><?php echo $categories_count; ?></div>
+            <div class="produkt-stat-label">Kategorien</div>
         </div>
-        <div class="federwiegen-stat-item">
-            <div class="federwiegen-stat-number"><?php echo $variants_count; ?></div>
-            <div class="federwiegen-stat-label">Ausführungen</div>
+        <div class="produkt-stat-item">
+            <div class="produkt-stat-number"><?php echo $variants_count; ?></div>
+            <div class="produkt-stat-label">Ausführungen</div>
         </div>
-        <div class="federwiegen-stat-item">
-            <div class="federwiegen-stat-number"><?php echo $extras_count; ?></div>
-            <div class="federwiegen-stat-label">Extras</div>
+        <div class="produkt-stat-item">
+            <div class="produkt-stat-number"><?php echo $extras_count; ?></div>
+            <div class="produkt-stat-label">Extras</div>
         </div>
-        <div class="federwiegen-stat-item">
-            <div class="federwiegen-stat-number"><?php echo $durations_count; ?></div>
-            <div class="federwiegen-stat-label">Mietdauern</div>
+        <div class="produkt-stat-item">
+            <div class="produkt-stat-number"><?php echo $durations_count; ?></div>
+            <div class="produkt-stat-label">Mietdauern</div>
         </div>
     </div>
     
     <!-- Hauptnavigation -->
-    <div class="federwiegen-main-nav">
+    <div class="produkt-main-nav">
         <h3>🧭 Hauptbereiche</h3>
-        <div class="federwiegen-nav-cards">
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-categories'); ?>" class="federwiegen-nav-card">
-                <div class="federwiegen-nav-icon">🏷️</div>
-                <div class="federwiegen-nav-content">
+        <div class="produkt-nav-cards">
+            <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-card">
+                <div class="produkt-nav-icon">🏷️</div>
+                <div class="produkt-nav-content">
                     <h4>Kategorien</h4>
                     <p>Produktkategorien & SEO-Einstellungen</p>
                 </div>
             </a>
             
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-variants'); ?>" class="federwiegen-nav-card">
-                <div class="federwiegen-nav-icon">📦</div>
-                <div class="federwiegen-nav-content">
+            <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="produkt-nav-card">
+                <div class="produkt-nav-icon">📦</div>
+                <div class="produkt-nav-content">
                     <h4>Ausführungen</h4>
                     <p>Produktvarianten mit Bildern</p>
                 </div>
             </a>
             
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-extras'); ?>" class="federwiegen-nav-card">
-                <div class="federwiegen-nav-icon">🎁</div>
-                <div class="federwiegen-nav-content">
+            <a href="<?php echo admin_url('admin.php?page=produkt-extras'); ?>" class="produkt-nav-card">
+                <div class="produkt-nav-icon">🎁</div>
+                <div class="produkt-nav-content">
                     <h4>Extras</h4>
                     <p>Zusatzoptionen & Zubehör</p>
                 </div>
             </a>
             
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-durations'); ?>" class="federwiegen-nav-card">
-                <div class="federwiegen-nav-icon">⏰</div>
-                <div class="federwiegen-nav-content">
+            <a href="<?php echo admin_url('admin.php?page=produkt-durations'); ?>" class="produkt-nav-card">
+                <div class="produkt-nav-icon">⏰</div>
+                <div class="produkt-nav-content">
                     <h4>Mietdauern</h4>
                     <p>Laufzeiten & Rabatte</p>
                 </div>
             </a>
             
-            <a href="<?php echo admin_url('admin.php?page=federwiegen-settings&tab=branding'); ?>" class="federwiegen-nav-card">
-                <div class="federwiegen-nav-icon">🎨</div>
-                <div class="federwiegen-nav-content">
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=branding'); ?>" class="produkt-nav-card">
+                <div class="produkt-nav-icon">🎨</div>
+                <div class="produkt-nav-content">
                     <h4>Branding</h4>
                     <p>Design & Anpassungen</p>
                 </div>
@@ -102,15 +102,15 @@ foreach ($branding_results as $result) {
     
     <!-- Schnellzugriff -->
     <?php if (!empty($recent_categories)): ?>
-    <div class="federwiegen-quick-access">
+    <div class="produkt-quick-access">
         <h3>⚡ Schnellzugriff</h3>
-        <div class="federwiegen-category-cards">
+        <div class="produkt-category-cards">
             <?php foreach ($recent_categories as $category): ?>
-            <div class="federwiegen-category-card">
+            <div class="produkt-category-card">
                 <h4><?php echo esc_html($category->name); ?></h4>
-                <code>[federwiegen_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
-                <div class="federwiegen-category-actions">
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-variants&category=' . $category->id); ?>" class="button button-small">Ausführungen</a>
+                <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
+                <div class="produkt-category-actions">
+                    <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $category->id); ?>" class="button button-small">Ausführungen</a>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -119,25 +119,25 @@ foreach ($branding_results as $result) {
     <?php endif; ?>
     
     <!-- Hilfe & Tipps -->
-    <div class="federwiegen-help-section">
+    <div class="produkt-help-section">
         <h3>💡 Erste Schritte</h3>
-        <div class="federwiegen-help-cards">
-            <div class="federwiegen-help-card">
+        <div class="produkt-help-cards">
+            <div class="produkt-help-card">
                 <h4>1. Kategorie erstellen</h4>
                 <p>Erstellen Sie eine neue Produktkategorie mit SEO-Einstellungen</p>
-                <a href="<?php echo admin_url('admin.php?page=federwiegen-categories'); ?>" class="button">Kategorien →</a>
+                <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="button">Kategorien →</a>
             </div>
-            <div class="federwiegen-help-card">
+            <div class="produkt-help-card">
                 <h4>2. Ausführungen hinzufügen</h4>
                 <p>Fügen Sie Produktvarianten mit Bildern hinzu</p>
-                <a href="<?php echo admin_url('admin.php?page=federwiegen-variants'); ?>" class="button">Ausführungen →</a>
+                <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="button">Ausführungen →</a>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-.federwiegen-admin-header-compact {
+.produkt-admin-header-compact {
     background: transparent;
     color: #3c434a;
     padding: 15px 20px;
@@ -149,7 +149,7 @@ foreach ($branding_results as $result) {
     border: 1px solid #ddd;
 }
 
-.federwiegen-admin-logo-compact {
+.produkt-admin-logo-compact {
     width: 50px;
     height: 50px;
     background: rgba(60, 67, 74, 0.1);
@@ -161,27 +161,27 @@ foreach ($branding_results as $result) {
     color: #3c434a;
 }
 
-.federwiegen-admin-title-compact h1 {
+.produkt-admin-title-compact h1 {
     margin: 0;
     color: #3c434a;
     font-size: 24px;
 }
 
-.federwiegen-admin-title-compact p {
+.produkt-admin-title-compact p {
     margin: 5px 0 0 0;
     opacity: 0.7;
     font-size: 14px;
     color: #3c434a;
 }
 
-.federwiegen-stats-compact {
+.produkt-stats-compact {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 15px;
     margin-bottom: 30px;
 }
 
-.federwiegen-stat-item {
+.produkt-stat-item {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -189,19 +189,19 @@ foreach ($branding_results as $result) {
     text-align: center;
 }
 
-.federwiegen-stat-number {
+.produkt-stat-number {
     font-size: 2rem;
     font-weight: bold;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
     margin-bottom: 5px;
 }
 
-.federwiegen-stat-label {
+.produkt-stat-label {
     font-size: 0.9rem;
     color: #666;
 }
 
-.federwiegen-main-nav {
+.produkt-main-nav {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -209,18 +209,18 @@ foreach ($branding_results as $result) {
     margin-bottom: 30px;
 }
 
-.federwiegen-main-nav h3 {
+.produkt-main-nav h3 {
     margin: 0 0 20px 0;
     color: #3c434a;
 }
 
-.federwiegen-nav-cards {
+.produkt-nav-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
 }
 
-.federwiegen-nav-card {
+.produkt-nav-card {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -233,31 +233,31 @@ foreach ($branding_results as $result) {
     transition: all 0.2s ease;
 }
 
-.federwiegen-nav-card:hover {
-    background: var(--federwiegen-primary);
-    color: var(--federwiegen-text);
+.produkt-nav-card:hover {
+    background: var(--produkt-primary);
+    color: var(--produkt-text);
     text-decoration: none;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.federwiegen-nav-icon {
+.produkt-nav-icon {
     font-size: 2rem;
     min-width: 50px;
 }
 
-.federwiegen-nav-content h4 {
+.produkt-nav-content h4 {
     margin: 0 0 5px 0;
     font-size: 1.1rem;
 }
 
-.federwiegen-nav-content p {
+.produkt-nav-content p {
     margin: 0;
     font-size: 0.9rem;
     opacity: 0.8;
 }
 
-.federwiegen-quick-access {
+.produkt-quick-access {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -265,36 +265,36 @@ foreach ($branding_results as $result) {
     margin-bottom: 30px;
 }
 
-.federwiegen-quick-access h3 {
+.produkt-quick-access h3 {
     margin: 0 0 20px 0;
     color: #3c434a;
 }
 
-.federwiegen-category-cards {
+.produkt-category-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 15px;
 }
 
-.federwiegen-category-card {
+.produkt-category-card {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 15px;
 }
 
-.federwiegen-category-card h4 {
+.produkt-category-card h4 {
     margin: 0 0 10px 0;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
 }
 
-.federwiegen-category-card p {
+.produkt-category-card p {
     margin: 0 0 10px 0;
     font-size: 0.9rem;
     color: #666;
 }
 
-.federwiegen-category-card code {
+.produkt-category-card code {
     background: #e9ecef;
     padding: 4px 8px;
     border-radius: 4px;
@@ -303,30 +303,30 @@ foreach ($branding_results as $result) {
     margin-bottom: 10px;
 }
 
-.federwiegen-category-actions {
+.produkt-category-actions {
     display: flex;
     gap: 10px;
 }
 
-.federwiegen-help-section {
+.produkt-help-section {
     background: #f0f8ff;
     border: 1px solid #b3d9ff;
     border-radius: 8px;
     padding: 20px;
 }
 
-.federwiegen-help-section h3 {
+.produkt-help-section h3 {
     margin: 0 0 20px 0;
     color: #3c434a;
 }
 
-.federwiegen-help-cards {
+.produkt-help-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
 }
 
-.federwiegen-help-card {
+.produkt-help-card {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -334,33 +334,33 @@ foreach ($branding_results as $result) {
     text-align: center;
 }
 
-.federwiegen-help-card h4 {
+.produkt-help-card h4 {
     margin: 0 0 10px 0;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
 }
 
-.federwiegen-help-card p {
+.produkt-help-card p {
     margin: 0 0 15px 0;
     font-size: 0.9rem;
     color: #666;
 }
 
 @media (max-width: 768px) {
-    .federwiegen-stats-compact {
+    .produkt-stats-compact {
         grid-template-columns: repeat(3, 1fr);
     }
     
-    .federwiegen-nav-cards {
+    .produkt-nav-cards {
         grid-template-columns: 1fr;
     }
     
-    .federwiegen-nav-card {
+    .produkt-nav-card {
         flex-direction: column;
         text-align: center;
     }
     
-    .federwiegen-category-cards,
-    .federwiegen-help-cards {
+    .produkt-category-cards,
+    .produkt-help-cards {
         grid-template-columns: 1fr;
     }
 }

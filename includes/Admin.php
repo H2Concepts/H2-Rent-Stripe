@@ -1,16 +1,16 @@
 <?php
-namespace FederwiegenVerleih;
+namespace ProduktVerleih;
 
 class Admin {
     public function add_admin_menu() {
         $branding = $this->get_branding_settings();
-        $menu_title = $branding['plugin_name'] ?? 'Federwiegen';
+        $menu_title = $branding['plugin_name'] ?? 'Produkt';
         
         add_menu_page(
             $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
             $menu_title,
             'manage_options',
-            'federwiegen-verleih',
+            'produkt-verleih',
             array($this, 'admin_page'),
             'dashicons-heart',
             30
@@ -18,88 +18,88 @@ class Admin {
         
         // Submenu: Kategorien
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Kategorien',
             'Kategorien',
             'manage_options',
-            'federwiegen-categories',
+            'produkt-categories',
             array($this, 'categories_page')
         );
         
         // Submenu: Produktverwaltung
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Ausführungen',
             'Ausführungen',
             'manage_options',
-            'federwiegen-variants',
+            'produkt-variants',
             array($this, 'variants_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Extras',
             'Extras',
             'manage_options',
-            'federwiegen-extras',
+            'produkt-extras',
             array($this, 'extras_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Mietdauer',
             'Mietdauer',
             'manage_options',
-            'federwiegen-durations',
+            'produkt-durations',
             array($this, 'durations_page')
         );
         
         // New submenu items
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Zustand',
             'Zustand',
             'manage_options',
-            'federwiegen-conditions',
+            'produkt-conditions',
             array($this, 'conditions_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Farben',
             'Farben',
             'manage_options',
-            'federwiegen-colors',
+            'produkt-colors',
             array($this, 'colors_page')
         );
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Ausführungs-Optionen',
             'Ausführungs-Optionen',
             'manage_options',
-            'federwiegen-variant-options',
+            'produkt-variant-options',
             array($this, 'variant_options_page')
         );
         
         
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Bestellungen',
             'Bestellungen',
             'manage_options',
-            'federwiegen-orders',
+            'produkt-orders',
             array($this, 'orders_page')
         );
         
 
         // New settings menu with Stripe integration tab
         add_submenu_page(
-            'federwiegen-verleih',
+            'produkt-verleih',
             'Einstellungen',
             'Einstellungen',
             'manage_options',
-            'federwiegen-settings',
+            'produkt-settings',
             array($this, 'settings_page')
         );
     }
@@ -112,30 +112,46 @@ class Admin {
         }
 
         $content = $post->post_content ?? '';
-        if (!has_shortcode($content, 'federwiegen_product') && !has_shortcode($content, 'stripe_elements_form')) {
+        if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form')) {
             return;
         }
 
-        wp_enqueue_style('federwiegen-style', FEDERWIEGEN_PLUGIN_URL . 'assets/style.css', array(), FEDERWIEGEN_VERSION);
-        wp_enqueue_script('federwiegen-script', FEDERWIEGEN_PLUGIN_URL . 'assets/script.js', array('jquery'), FEDERWIEGEN_VERSION, true);
+        wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
+        wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
+
+        $branding = $this->get_branding_settings();
+        $button_color = $branding['front_button_color'] ?? '#5f7f5f';
+        $text_color   = $branding['front_text_color'] ?? '#4a674a';
+        $border_color = $branding['front_border_color'] ?? '#a4b8a4';
+        $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
+        $custom_css = $branding['custom_css'] ?? '';
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};}";
+        if (!empty($custom_css)) {
+            $inline_css .= "\n" . $custom_css;
+        }
+        wp_add_inline_style('produkt-style', $inline_css);
 
         global $wpdb;
-        $pattern = '/\[federwiegen_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+        $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
         preg_match($pattern, $post->post_content, $matches);
         $category_shortcode = isset($matches[1]) ? $matches[1] : '';
 
         $category = null;
         if (!empty($category_shortcode)) {
             $category = $wpdb->get_row($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE shortcode = %s",
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
                 $category_shortcode
             ));
         }
         if (!$category) {
-            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order LIMIT 1");
+            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
         }
 
-        $popup_settings = get_option('federwiegen_popup_settings', []);
+        $popup_settings = get_option('produkt_popup_settings');
+        if ($popup_settings === false) {
+            $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
+            $popup_settings = get_option($legacy_key, []);
+        }
         $options = [];
         if (!empty($popup_settings['options'])) {
             $opts = array_filter(array_map('trim', explode("\n", $popup_settings['options'])));
@@ -144,9 +160,9 @@ class Admin {
         $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
         $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
 
-        wp_localize_script('federwiegen-script', 'federwiegen_ajax', array(
+        wp_localize_script('produkt-script', 'produkt_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('federwiegen_nonce'),
+            'nonce' => wp_create_nonce('produkt_nonce'),
             'price_period' => $category->price_period ?? 'month',
             'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
             'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
@@ -161,9 +177,9 @@ class Admin {
     }
     
     public function enqueue_admin_assets($hook) {
-        if (strpos($hook, 'federwiegen') !== false) {
-            wp_enqueue_style('federwiegen-admin-style', FEDERWIEGEN_PLUGIN_URL . 'assets/admin-style.css', array(), FEDERWIEGEN_VERSION);
-            wp_enqueue_script('federwiegen-admin-script', FEDERWIEGEN_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), FEDERWIEGEN_VERSION, true);
+        if (strpos($hook, 'produkt') !== false) {
+            wp_enqueue_style('produkt-admin-style', PRODUKT_PLUGIN_URL . 'assets/admin-style.css', array(), PRODUKT_VERSION);
+            wp_enqueue_script('produkt-admin-script', PRODUKT_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), PRODUKT_VERSION, true);
             
             // Enqueue WordPress media scripts for image upload
             wp_enqueue_media();
@@ -175,7 +191,7 @@ class Admin {
         global $wpdb;
         
         $settings = array();
-        $results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+        $results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
         foreach ($results as $result) {
             $settings[$result->setting_key] = $result->setting_value;
         }
@@ -187,13 +203,13 @@ class Admin {
         if (!empty($vars)) {
             extract($vars);
         }
-        include FEDERWIEGEN_PLUGIN_PATH . "admin/{$slug}-page.php";
+        include PRODUKT_PLUGIN_PATH . "admin/{$slug}-page.php";
     }
     
     public function custom_admin_footer($text) {
         $branding = $this->get_branding_settings();
         
-        if (isset($_GET['page']) && strpos($_GET['page'], 'federwiegen') !== false) {
+        if (isset($_GET['page']) && strpos($_GET['page'], 'produkt') !== false) {
             $footer_text = $branding['footer_text'] ?? 'Powered by H2 Concepts';
             $company_url = $branding['company_url'] ?? '#';
             $company_name = $branding['company_name'] ?? 'H2 Concepts';
@@ -205,7 +221,7 @@ class Admin {
     }
     
     public function custom_admin_styles() {
-        if (!isset($_GET['page']) || strpos($_GET['page'], 'federwiegen') === false) {
+        if (!isset($_GET['page']) || strpos($_GET['page'], 'produkt') === false) {
             return;
         }
         $branding = $this->get_branding_settings();
@@ -215,26 +231,26 @@ class Admin {
         
         echo '<style>
             :root {
-                --federwiegen-primary: ' . esc_attr($primary_color) . ';
-                --federwiegen-secondary: ' . esc_attr($secondary_color) . ';
-                --federwiegen-text: ' . esc_attr($text_color) . ';
+                --produkt-primary: ' . esc_attr($primary_color) . ';
+                --produkt-secondary: ' . esc_attr($secondary_color) . ';
+                --produkt-text: ' . esc_attr($text_color) . ';
             }
 
             .button-primary {
-                background: var(--federwiegen-primary) !important;
-                border-color: var(--federwiegen-secondary) !important;
-                color: var(--federwiegen-text) !important;
+                background: var(--produkt-primary) !important;
+                border-color: var(--produkt-secondary) !important;
+                color: var(--produkt-text) !important;
             }
 
             .button-primary:hover {
-                background: var(--federwiegen-secondary) !important;
-                color: var(--federwiegen-text) !important;
+                background: var(--produkt-secondary) !important;
+                color: var(--produkt-text) !important;
             }
 
             .nav-tab-active {
-                background: var(--federwiegen-primary);
-                color: var(--federwiegen-text);
-                border-color: var(--federwiegen-secondary);
+                background: var(--produkt-primary);
+                color: var(--produkt-text);
+                border-color: var(--produkt-secondary);
             }
         </style>';
        }
@@ -242,15 +258,15 @@ class Admin {
     /**
      * Verify nonce and user capabilities for admin form submissions.
      */
-    public static function verify_admin_action($nonce_field = 'federwiegen_admin_nonce') {
+    public static function verify_admin_action($nonce_field = 'produkt_admin_nonce') {
         if (!current_user_can('manage_options')) {
             wp_die(__('Insufficient permissions.', 'h2-concepts'));
         }
-        check_admin_referer('federwiegen_admin_action', $nonce_field);
+        check_admin_referer('produkt_admin_action', $nonce_field);
     }
     
     public function admin_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/main-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/main-page.php';
     }
     
     public function categories_page() {
@@ -298,7 +314,7 @@ class Admin {
             $rating_link = esc_url_raw($_POST['rating_link']);
             $sort_order = intval($_POST['sort_order']);
 
-            $table_name = $wpdb->prefix . 'federwiegen_categories';
+            $table_name = $wpdb->prefix . 'produkt_categories';
 
             if (isset($_POST['id']) && $_POST['id']) {
                 $result = $wpdb->update(
@@ -400,9 +416,9 @@ class Admin {
             }
         }
 
-        if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'federwiegen_admin_action')) {
+        if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
             $category_id = intval($_GET['delete']);
-            $table_name = $wpdb->prefix . 'federwiegen_categories';
+            $table_name = $wpdb->prefix . 'produkt_categories';
             $result = $wpdb->delete($table_name, ['id' => $category_id], ['%d']);
             if ($result !== false) {
                 echo '<div class="notice notice-success"><p>✅ Kategorie gelöscht!</p></div>';
@@ -413,13 +429,13 @@ class Admin {
 
         $edit_item = null;
         if (isset($_GET['edit'])) {
-            $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", intval($_GET['edit'])));
+            $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", intval($_GET['edit'])));
         }
 
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
         $branding = [];
-        $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+        $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
         foreach ($branding_results as $result) {
             $branding[$result->setting_key] = $result->setting_value;
         }
@@ -428,27 +444,27 @@ class Admin {
     }
     
     public function variants_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/variants-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/variants-page.php';
     }
     
     public function extras_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/extras-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/extras-page.php';
     }
     
     public function durations_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/durations-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/durations-page.php';
     }
     
     public function conditions_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/conditions-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/conditions-page.php';
     }
     
     public function colors_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/colors-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/colors-page.php';
     }
     
     public function variant_options_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/variant-options-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/variant-options-page.php';
     }
     
 
@@ -460,7 +476,7 @@ class Admin {
         if (isset($_GET['delete_order'])) {
             $order_id = intval($_GET['delete_order']);
             $deleted = $wpdb->delete(
-                $wpdb->prefix . 'federwiegen_orders',
+                $wpdb->prefix . 'produkt_orders',
                 array('id' => $order_id),
                 array('%d')
             );
@@ -474,7 +490,7 @@ class Admin {
             if ($ids) {
                 $placeholders = implode(',', array_fill(0, count($ids), '%d'));
                 $query = $wpdb->prepare(
-                    "DELETE FROM {$wpdb->prefix}federwiegen_orders WHERE id IN ($placeholders)",
+                    "DELETE FROM {$wpdb->prefix}produkt_orders WHERE id IN ($placeholders)",
                     ...$ids
                 );
                 $deleted = $wpdb->query($query);
@@ -482,7 +498,7 @@ class Admin {
             }
         }
 
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}federwiegen_categories ORDER BY sort_order, name");
+        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
         $selected_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
 
         $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : date('Y-m-d', strtotime('-30 days'));
@@ -490,7 +506,7 @@ class Admin {
 
         $current_category = null;
         if ($selected_category > 0) {
-            $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}federwiegen_categories WHERE id = %d", $selected_category));
+            $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
         }
 
         $where_conditions = ["o.created_at BETWEEN %s AND %s"];
@@ -509,14 +525,14 @@ class Admin {
                     COALESCE(cond.name, o.zustand_text) as condition_name,
                     COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
                     COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
-             FROM {$wpdb->prefix}federwiegen_orders o
-             LEFT JOIN {$wpdb->prefix}federwiegen_categories c ON o.category_id = c.id
-             LEFT JOIN {$wpdb->prefix}federwiegen_variants v ON o.variant_id = v.id
-             LEFT JOIN {$wpdb->prefix}federwiegen_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             LEFT JOIN {$wpdb->prefix}federwiegen_durations d ON o.duration_id = d.id
-             LEFT JOIN {$wpdb->prefix}federwiegen_conditions cond ON o.condition_id = cond.id
-             LEFT JOIN {$wpdb->prefix}federwiegen_colors pc ON o.product_color_id = pc.id
-             LEFT JOIN {$wpdb->prefix}federwiegen_colors fc ON o.frame_color_id = fc.id
+             FROM {$wpdb->prefix}produkt_orders o
+             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+             LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+             LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+             LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+             LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
              WHERE $where_clause
              GROUP BY o.id
              ORDER BY o.created_at DESC",
@@ -532,7 +548,7 @@ class Admin {
         $avg_order_value = $completed_count > 0 ? $total_revenue / $completed_count : 0;
 
         $branding = [];
-        $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}federwiegen_branding");
+        $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
         foreach ($branding_results as $result) {
             $branding[$result->setting_key] = $result->setting_value;
         }
@@ -554,7 +570,7 @@ class Admin {
     
     
     public function settings_page() {
-        include FEDERWIEGEN_PLUGIN_PATH . 'admin/settings-page.php';
+        include PRODUKT_PLUGIN_PATH . 'admin/settings-page.php';
     }
 
 }

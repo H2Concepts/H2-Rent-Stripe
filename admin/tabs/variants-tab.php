@@ -1,6 +1,6 @@
 <?php
 // Variants Tab Content
-$table_name = $wpdb->prefix . 'federwiegen_variants';
+$table_name = $wpdb->prefix . 'produkt_variants';
 
 // Handle form submissions
 if (isset($_POST['submit_variant'])) {
@@ -83,14 +83,14 @@ if (isset($_GET['edit_variant'])) {
 $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY sort_order, name", $selected_category));
 ?>
 
-<div class="federwiegen-tab-section">
+<div class="produkt-tab-section">
     <h3>🖼️ Ausführungen mit Bildergalerie</h3>
     <p>Verwalten Sie Produktausführungen mit bis zu 5 Bildern pro Ausführung und Verfügbarkeitsstatus.</p>
     
     <!-- Form -->
-    <div class="federwiegen-form-card">
+    <div class="produkt-form-card">
         <form method="post" action="">
-            <?php wp_nonce_field('federwiegen_admin_action', 'federwiegen_admin_nonce'); ?>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
                 <h4>Ausführung bearbeiten</h4>
@@ -98,36 +98,36 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                 <h4>Neue Ausführung hinzufügen</h4>
             <?php endif; ?>
             
-            <div class="federwiegen-form-grid">
-                <div class="federwiegen-form-group">
+            <div class="produkt-form-grid">
+                <div class="produkt-form-group">
                     <label>Name *</label>
                     <input type="text" name="name" value="<?php echo $edit_item ? esc_attr($edit_item->name) : ''; ?>" required>
                 </div>
                 
-                <div class="federwiegen-form-group">
+                <div class="produkt-form-group">
                     <label>Stripe Preis ID *</label>
                     <input type="text" name="stripe_price_id" value="<?php echo $edit_item ? esc_attr($edit_item->stripe_price_id) : ''; ?>" required>
                 </div>
                 
-                <div class="federwiegen-form-group full-width">
+                <div class="produkt-form-group full-width">
                     <label>Beschreibung</label>
                     <textarea name="description" rows="3"><?php echo $edit_item ? esc_textarea($edit_item->description) : ''; ?></textarea>
                 </div>
                 
-                <div class="federwiegen-form-group">
-                    <label class="federwiegen-toggle-label">
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label">
                         <input type="checkbox" name="available" value="1" <?php echo (!$edit_item || $edit_item->available) ? 'checked' : ''; ?>>
-                        <span class="federwiegen-toggle-slider"></span>
+                        <span class="produkt-toggle-slider"></span>
                         <span>Verfügbar</span>
                     </label>
                 </div>
                 
-                <div class="federwiegen-form-group">
+                <div class="produkt-form-group">
                     <label>Verfügbarkeits-Hinweis</label>
                     <input type="text" name="availability_note" value="<?php echo $edit_item ? esc_attr($edit_item->availability_note ?? '') : ''; ?>" placeholder="z.B. 'Wieder verfügbar ab 15.03.2024'">
                 </div>
                 
-                <div class="federwiegen-form-group">
+                <div class="produkt-form-group">
                     <label>Sortierung</label>
                     <input type="number" name="sort_order" value="<?php echo $edit_item ? $edit_item->sort_order : '0'; ?>" min="0">
                 </div>
@@ -136,16 +136,16 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
             
             <!-- Images Section -->
             <h5>📸 Produktbilder (bis zu 5 Bilder)</h5>
-            <div class="federwiegen-images-grid">
+            <div class="produkt-images-grid">
                 <?php for ($i = 1; $i <= 5; $i++): ?>
-                <div class="federwiegen-image-upload">
+                <div class="produkt-image-upload">
                     <label><?php echo $i === 1 ? '🌟 Hauptbild' : 'Bild ' . $i; ?></label>
-                    <div class="federwiegen-media-upload">
+                    <div class="produkt-media-upload">
                         <input type="url" name="image_url_<?php echo $i; ?>" id="image_url_<?php echo $i; ?>" value="<?php echo $edit_item ? esc_attr($edit_item->{'image_url_' . $i} ?? '') : ''; ?>" placeholder="https://example.com/bild<?php echo $i; ?>.jpg">
-                        <button type="button" class="button federwiegen-media-button" data-target="image_url_<?php echo $i; ?>">📁 Wählen</button>
+                        <button type="button" class="button produkt-media-button" data-target="image_url_<?php echo $i; ?>">📁 Wählen</button>
                     </div>
                     <?php if ($edit_item && !empty($edit_item->{'image_url_' . $i})): ?>
-                        <div class="federwiegen-image-preview">
+                        <div class="produkt-image-preview">
                             <img src="<?php echo esc_url($edit_item->{'image_url_' . $i}); ?>" alt="Bild <?php echo $i; ?>">
                         </div>
                     <?php endif; ?>
@@ -155,30 +155,30 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
             
             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
             
-            <div class="federwiegen-form-actions">
+            <div class="produkt-form-actions">
                 <?php submit_button($edit_item ? 'Aktualisieren' : 'Hinzufügen', 'primary', 'submit_variant', false); ?>
                 <?php if ($edit_item): ?>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=variants'); ?>" class="button">Abbrechen</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=variants'); ?>" class="button">Abbrechen</a>
                 <?php endif; ?>
             </div>
         </form>
     </div>
     
     <!-- List -->
-    <div class="federwiegen-list-card">
+    <div class="produkt-list-card">
         <h4>Vorhandene Ausführungen</h4>
         
         <?php if (empty($variants)): ?>
-        <div class="federwiegen-empty-state">
+        <div class="produkt-empty-state">
             <p>Noch keine Ausführungen für diese Kategorie vorhanden.</p>
             <p><strong>Tipp:</strong> Fügen Sie oben eine neue Ausführung hinzu!</p>
         </div>
         <?php else: ?>
         
-        <div class="federwiegen-items-grid">
+        <div class="produkt-items-grid">
             <?php foreach ($variants as $variant): ?>
-            <div class="federwiegen-item-card">
-                <div class="federwiegen-item-images">
+            <div class="produkt-item-card">
+                <div class="produkt-item-images">
                     <?php 
                     $image_count = 0;
                     for ($i = 1; $i <= 5; $i++): 
@@ -188,7 +188,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                             $image_count++;
                             if ($i === 1): // Show main image larger
                     ?>
-                                <img src="<?php echo esc_url($image_url); ?>" class="federwiegen-main-image" alt="Hauptbild">
+                                <img src="<?php echo esc_url($image_url); ?>" class="produkt-main-image" alt="Hauptbild">
                     <?php 
                             endif;
                         endif;
@@ -196,35 +196,35 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                     
                     if ($image_count === 0):
                     ?>
-                        <div class="federwiegen-placeholder">👶</div>
+                        <div class="produkt-placeholder">👶</div>
                     <?php else: ?>
-                        <div class="federwiegen-image-count"><?php echo $image_count; ?> Bild<?php echo $image_count > 1 ? 'er' : ''; ?></div>
+                        <div class="produkt-image-count"><?php echo $image_count; ?> Bild<?php echo $image_count > 1 ? 'er' : ''; ?></div>
                     <?php endif; ?>
                 </div>
                 
-                <div class="federwiegen-item-content">
+                <div class="produkt-item-content">
                     <h5><?php echo esc_html($variant->name); ?></h5>
                     <p><?php echo esc_html($variant->description); ?></p>
-                    <div class="federwiegen-item-meta">
+                    <div class="produkt-item-meta">
                         <?php
                             $price = 0;
                             if (!empty($variant->stripe_price_id)) {
-                                $p = \FederwiegenVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                                 if (!is_wp_error($p)) {
                                     $price = $p;
                                 }
                             }
                         ?>
-                        <span class="federwiegen-price"><?php echo number_format($price, 2, ',', '.'); ?>€</span>
-                        <span class="federwiegen-status <?php echo $variant->available ? 'available' : 'unavailable'; ?>">
+                        <span class="produkt-price"><?php echo number_format($price, 2, ',', '.'); ?>€</span>
+                        <span class="produkt-status <?php echo $variant->available ? 'available' : 'unavailable'; ?>">
                             <?php echo $variant->available ? '✅ Verfügbar' : '❌ Nicht verfügbar'; ?>
                         </span>
                     </div>
                 </div>
                 
-                <div class="federwiegen-item-actions">
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=variants&edit_variant=' . $variant->id); ?>" class="button button-small">Bearbeiten</a>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-products&category=' . $selected_category . '&tab=variants&delete_variant=' . $variant->id); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                <div class="produkt-item-actions">
+                    <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=variants&edit_variant=' . $variant->id); ?>" class="button button-small">Bearbeiten</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=variants&delete_variant=' . $variant->id); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -235,17 +235,17 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 </div>
 
 <style>
-.federwiegen-tab-section h3 {
+.produkt-tab-section h3 {
     margin: 0 0 10px 0;
     color: #3c434a;
 }
 
-.federwiegen-tab-section > p {
+.produkt-tab-section > p {
     margin: 0 0 30px 0;
     color: #666;
 }
 
-.federwiegen-form-card {
+.produkt-form-card {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 8px;
@@ -253,121 +253,121 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
     margin-bottom: 30px;
 }
 
-.federwiegen-form-card h4 {
+.produkt-form-card h4 {
     margin: 0 0 20px 0;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
 }
 
-.federwiegen-form-grid {
+.produkt-form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     margin-bottom: 25px;
 }
 
-.federwiegen-form-group {
+.produkt-form-group {
     display: flex;
     flex-direction: column;
 }
 
-.federwiegen-form-group.full-width {
+.produkt-form-group.full-width {
     grid-column: 1 / -1;
 }
 
-.federwiegen-form-group label {
+.produkt-form-group label {
     font-weight: 600;
     margin-bottom: 5px;
     color: #3c434a;
 }
 
-.federwiegen-form-group input,
-.federwiegen-form-group textarea {
+.produkt-form-group input,
+.produkt-form-group textarea {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.federwiegen-form-group input[type="checkbox"] {
+.produkt-form-group input[type="checkbox"] {
     width: auto;
     margin-right: 8px;
 }
 
-.federwiegen-images-grid {
+.produkt-images-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     margin: 20px 0;
 }
 
-.federwiegen-image-upload label {
+.produkt-image-upload label {
     font-weight: 600;
     margin-bottom: 8px;
     color: #3c434a;
 }
 
-.federwiegen-media-upload {
+.produkt-media-upload {
     display: flex;
     gap: 10px;
 }
 
-.federwiegen-media-upload input {
+.produkt-media-upload input {
     flex: 1;
 }
 
-.federwiegen-image-preview {
+.produkt-image-preview {
     margin-top: 10px;
 }
 
-.federwiegen-image-preview img {
+.produkt-image-preview img {
     max-width: 100px;
     height: auto;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
-.federwiegen-form-actions {
+.produkt-form-actions {
     display: flex;
     gap: 10px;
     align-items: center;
 }
 
-.federwiegen-list-card {
+.produkt-list-card {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 25px;
 }
 
-.federwiegen-list-card h4 {
+.produkt-list-card h4 {
     margin: 0 0 20px 0;
     color: #3c434a;
 }
 
-.federwiegen-empty-state {
+.produkt-empty-state {
     text-align: center;
     padding: 40px;
     color: #666;
 }
 
-.federwiegen-items-grid {
+.produkt-items-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 20px;
 }
 
-.federwiegen-item-card {
+.produkt-item-card {
     border: 1px solid #e9ecef;
     border-radius: 8px;
     overflow: hidden;
     transition: transform 0.2s ease;
 }
 
-.federwiegen-item-card:hover {
+.produkt-item-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.federwiegen-item-images {
+.produkt-item-images {
     position: relative;
     height: 150px;
     background: #f8f9fa;
@@ -376,18 +376,18 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
     justify-content: center;
 }
 
-.federwiegen-main-image {
+.produkt-main-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.federwiegen-placeholder {
+.produkt-placeholder {
     font-size: 3rem;
     color: #ccc;
 }
 
-.federwiegen-image-count {
+.produkt-image-count {
     position: absolute;
     bottom: 8px;
     right: 8px;
@@ -398,44 +398,44 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
     font-size: 12px;
 }
 
-.federwiegen-item-content {
+.produkt-item-content {
     padding: 15px;
 }
 
-.federwiegen-item-content h5 {
+.produkt-item-content h5 {
     margin: 0 0 8px 0;
     color: #3c434a;
 }
 
-.federwiegen-item-content p {
+.produkt-item-content p {
     margin: 0 0 12px 0;
     color: #666;
     font-size: 14px;
 }
 
-.federwiegen-item-meta {
+.produkt-item-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.federwiegen-price {
+.produkt-price {
     font-weight: 600;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
     font-size: 16px;
 }
 
-.federwiegen-status.available {
+.produkt-status.available {
     color: #46b450;
     font-size: 12px;
 }
 
-.federwiegen-status.unavailable {
+.produkt-status.unavailable {
     color: #dc3232;
     font-size: 12px;
 }
 
-.federwiegen-item-actions {
+.produkt-item-actions {
     padding: 15px;
     background: #f8f9fa;
     display: flex;
@@ -443,15 +443,15 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 }
 
 @media (max-width: 768px) {
-    .federwiegen-form-grid {
+    .produkt-form-grid {
         grid-template-columns: 1fr;
     }
     
-    .federwiegen-images-grid {
+    .produkt-images-grid {
         grid-template-columns: 1fr;
     }
     
-    .federwiegen-items-grid {
+    .produkt-items-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -460,7 +460,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // WordPress Media Library Integration
-    document.querySelectorAll('.federwiegen-media-button').forEach(function(button) {
+    document.querySelectorAll('.produkt-media-button').forEach(function(button) {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             

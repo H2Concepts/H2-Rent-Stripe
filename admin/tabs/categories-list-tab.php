@@ -2,33 +2,33 @@
 // Categories List Tab Content
 ?>
 
-<div class="federwiegen-categories-list">
-    <div class="federwiegen-list-header">
+<div class="produkt-categories-list">
+    <div class="produkt-list-header">
         <h3>📋 Alle Kategorien</h3>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-categories&tab=add'); ?>" class="button button-primary">
+        <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="button button-primary">
             ➕ Neue Kategorie hinzufügen
         </a>
     </div>
     
     <?php if (empty($categories)): ?>
-    <div class="federwiegen-empty-state">
-        <div class="federwiegen-empty-icon">🏷️</div>
+    <div class="produkt-empty-state">
+        <div class="produkt-empty-icon">🏷️</div>
         <h4>Noch keine Kategorien vorhanden</h4>
         <p>Erstellen Sie Ihre erste Produktkategorie.</p>
-        <a href="<?php echo admin_url('admin.php?page=federwiegen-categories&tab=add'); ?>" class="button button-primary">
+        <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="button button-primary">
             ➕ Erste Kategorie erstellen
         </a>
     </div>
     <?php else: ?>
     
-    <div class="federwiegen-categories-grid">
+    <div class="produkt-categories-grid">
         <?php foreach ($categories as $category): ?>
-        <div class="federwiegen-category-card">
-            <div class="federwiegen-category-image">
+        <div class="produkt-category-card">
+            <div class="produkt-category-image">
                 <?php if (!empty($category->default_image)): ?>
                     <img src="<?php echo esc_url($category->default_image); ?>" alt="<?php echo esc_attr($category->name); ?>">
                 <?php else: ?>
-                    <div class="federwiegen-category-placeholder">
+                    <div class="produkt-category-placeholder">
                         <span>🏷️</span>
                         <small>Kein Bild</small>
                     </div>
@@ -36,15 +36,15 @@
                 
             </div>
             
-            <div class="federwiegen-category-content">
+            <div class="produkt-category-content">
                 <h4><?php echo esc_html($category->name); ?></h4>
                 
-                <div class="federwiegen-category-shortcode">
-                    <code>[federwiegen_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
+                <div class="produkt-category-shortcode">
+                    <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
                 </div>
                 
-                <div class="federwiegen-category-meta">
-                    <div class="federwiegen-category-info">
+                <div class="produkt-category-meta">
+                    <div class="produkt-category-info">
                         <small>Sortierung: <?php echo $category->sort_order; ?></small>
                         <?php if (!empty($category->meta_title)): ?>
                             <small>SEO: ✅ Konfiguriert</small>
@@ -55,12 +55,12 @@
                     
                 </div>
                 
-                <div class="federwiegen-category-actions">
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-categories&tab=edit&edit=' . $category->id); ?>" class="button button-small">
+                <div class="produkt-category-actions">
+                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $category->id); ?>" class="button button-small">
                         ✏️ Bearbeiten
                     </a>
-                    <a href="<?php echo admin_url('admin.php?page=federwiegen-categories&delete=' . $category->id . '&fw_nonce=' . wp_create_nonce('federwiegen_admin_action')); ?>"
-                       class="button button-small federwiegen-delete-button"
+                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $category->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
+                       class="button button-small produkt-delete-button"
                        onclick="return confirm('Sind Sie sicher, dass Sie diese Kategorie löschen möchten?\n\n\"<?php echo esc_js($category->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')">
                         🗑️ Löschen
                     </a>
@@ -74,11 +74,11 @@
 </div>
 
 <style>
-.federwiegen-categories-list {
+.produkt-categories-list {
     padding: 0;
 }
 
-.federwiegen-list-header {
+.produkt-list-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -87,18 +87,18 @@
     border-bottom: 1px solid #e9ecef;
 }
 
-.federwiegen-list-header h3 {
+.produkt-list-header h3 {
     margin: 0;
     color: #3c434a;
 }
 
-.federwiegen-categories-grid {
+.produkt-categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 20px;
 }
 
-.federwiegen-category-card {
+.produkt-category-card {
     background: white;
     border: 1px solid #e9ecef;
     border-radius: 12px;
@@ -107,13 +107,13 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.federwiegen-category-card:hover {
+.produkt-category-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    border-color: var(--federwiegen-primary);
+    border-color: var(--produkt-primary);
 }
 
-.federwiegen-category-image {
+.produkt-category-image {
     position: relative;
     height: 150px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -122,13 +122,13 @@
     justify-content: center;
 }
 
-.federwiegen-category-image img {
+.produkt-category-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-.federwiegen-category-placeholder {
+.produkt-category-placeholder {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -136,29 +136,29 @@
     color: #6c757d;
 }
 
-.federwiegen-category-placeholder span {
+.produkt-category-placeholder span {
     font-size: 3rem;
     opacity: 0.5;
 }
 
-.federwiegen-category-status {
+.produkt-category-status {
     position: absolute;
     top: 8px;
     right: 8px;
 }
 
-.federwiegen-category-content {
+.produkt-category-content {
     padding: 20px;
 }
 
-.federwiegen-category-content h4 {
+.produkt-category-content h4 {
     margin: 0 0 8px 0;
     color: #2a372a;
     font-size: 1.1rem;
     font-weight: 600;
 }
 
-.federwiegen-category-description {
+.produkt-category-description {
     margin: 0 0 12px 0;
     color: #6c757d;
     font-size: 0.9rem;
@@ -169,7 +169,7 @@
     overflow: hidden;
 }
 
-.federwiegen-category-shortcode {
+.produkt-category-shortcode {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
     border-radius: 4px;
@@ -177,15 +177,15 @@
     margin-bottom: 15px;
 }
 
-.federwiegen-category-shortcode code {
+.produkt-category-shortcode code {
     background: none;
     padding: 0;
     font-size: 0.8rem;
-    color: var(--federwiegen-primary);
+    color: var(--produkt-primary);
     font-weight: 500;
 }
 
-.federwiegen-category-meta {
+.produkt-category-meta {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -194,46 +194,46 @@
     border-top: 1px solid #f8f9fa;
 }
 
-.federwiegen-category-info {
+.produkt-category-info {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.federwiegen-category-info small {
+.produkt-category-info small {
     color: #6c757d;
     font-size: 0.8rem;
 }
 
-.federwiegen-category-shipping {
+.produkt-category-shipping {
     text-align: right;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
-.federwiegen-category-shipping strong {
-    color: var(--federwiegen-primary);
+.produkt-category-shipping strong {
+    color: var(--produkt-primary);
     font-size: 1rem;
 }
 
-.federwiegen-category-shipping small {
+.produkt-category-shipping small {
     color: #6c757d;
     font-size: 0.8rem;
 }
 
-.federwiegen-category-shipping img {
+.produkt-category-shipping img {
     width: 32px;
     height: auto;
     margin-top: 4px;
 }
 
-.federwiegen-category-actions {
+.produkt-category-actions {
     display: flex;
     gap: 8px;
 }
 
-.federwiegen-category-actions .button {
+.produkt-category-actions .button {
     flex: 1;
     text-align: center;
     font-size: 0.85rem;
@@ -241,17 +241,17 @@
 }
 
 @media (max-width: 768px) {
-    .federwiegen-list-header {
+    .produkt-list-header {
         flex-direction: column;
         align-items: stretch;
         gap: 15px;
     }
     
-    .federwiegen-categories-grid {
+    .produkt-categories-grid {
         grid-template-columns: 1fr;
     }
     
-    .federwiegen-category-actions {
+    .produkt-category-actions {
         flex-direction: column;
     }
 }
