@@ -99,13 +99,14 @@ class Admin {
     public function enqueue_frontend_assets() {
         global $post;
 
-        $slug = get_query_var('produkt_slug');
+        $slug    = get_query_var('produkt_slug');
+        $archive = get_query_var('produkt_archive');
 
-        if (!is_singular() && empty($slug)) {
+        if (!is_singular() && empty($slug) && empty($archive)) {
             return;
         }
 
-        if (empty($slug)) {
+        if (empty($slug) && empty($archive)) {
             $content = $post->post_content ?? '';
             if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form')) {
                 return;
@@ -113,7 +114,9 @@ class Admin {
         }
 
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
-        wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
+        if (!$archive) {
+            wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
+        }
 
         $branding = $this->get_branding_settings();
         $button_color = $branding['front_button_color'] ?? '#5f7f5f';
@@ -126,6 +129,10 @@ class Admin {
             $inline_css .= "\n" . $custom_css;
         }
         wp_add_inline_style('produkt-style', $inline_css);
+
+        if ($archive) {
+            return;
+        }
 
         global $wpdb;
         $category = null;

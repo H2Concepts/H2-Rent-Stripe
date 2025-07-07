@@ -26,8 +26,14 @@ class Plugin {
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
-        add_filter('query_vars', function ($vars) { $vars[] = 'produkt_slug'; return $vars; });
+        add_rewrite_rule('^shop/?$', 'index.php?produkt_archive=1', 'top');
+        add_filter('query_vars', function ($vars) {
+            $vars[] = 'produkt_slug';
+            $vars[] = 'produkt_archive';
+            return $vars;
+        });
         add_action('template_redirect', [$this, 'maybe_display_product_page']);
+        add_action('template_redirect', [$this, 'maybe_display_product_archive']);
 
         add_action('wp_ajax_get_product_price', [$this->ajax, 'ajax_get_product_price']);
         add_action('wp_ajax_nopriv_get_product_price', [$this->ajax, 'ajax_get_product_price']);
@@ -69,6 +75,7 @@ class Plugin {
         }
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/?$', 'index.php?produkt_archive=1', 'top');
         flush_rewrite_rules();
     }
 
@@ -444,6 +451,25 @@ class Plugin {
 
         get_header();
         include PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
+        get_footer();
+        exit;
+    }
+
+    public function maybe_display_product_archive() {
+        $archive = get_query_var('produkt_archive');
+        if (empty($archive)) {
+            return;
+        }
+
+        global $wpdb;
+        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
+
+        add_filter('pre_get_document_title', function () {
+            return 'Shop';
+        });
+
+        get_header();
+        include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
         get_footer();
         exit;
     }
