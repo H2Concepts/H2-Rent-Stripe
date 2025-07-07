@@ -1318,6 +1318,14 @@ body.produkt-popup-open {
     box-shadow: none;
 }
 
+.produkt-accordion-header:hover,
+.produkt-accordion-header:focus,
+.produkt-accordion-header:active {
+    background: transparent;
+    color: #000000;
+    box-shadow: none;
+}
+
 .produkt-accordion-header::after {
     content: '+';
     font-weight: 400;

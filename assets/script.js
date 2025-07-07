@@ -931,7 +931,7 @@ jQuery(document).ready(function($) {
             });
         });
 
-        $('.produkt-accordions').on('click', '.produkt-accordion-header', function(){
+        $(document).on('click', '.produkt-accordion-header', function(){
             const item = $(this).closest('.produkt-accordion-item');
             if(item.hasClass('active')) {
                 item.removeClass('active');

@@ -110,6 +110,7 @@ if (isset($_POST['submit'])) {
 
         $variant_inputs = $_POST['variant_available'] ?? array();
         $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
+        $option_type = $color_type === 'frame' ? 'frame_color' : 'product_color';
         $all_variants = $wpdb->get_results($wpdb->prepare(
             "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
             $category_id
@@ -117,8 +118,9 @@ if (isset($_POST['submit'])) {
         foreach ($all_variants as $v) {
             $available = isset($variant_inputs[$v->id]) ? 1 : 0;
             $exists = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
                 $v->id,
+                $option_type,
                 $color_id
             ));
             if ($exists) {
@@ -126,7 +128,7 @@ if (isset($_POST['submit'])) {
             } else {
                 $wpdb->insert($table_variant_options, [
                     'variant_id' => $v->id,
-                    'option_type' => 'product_color',
+                    'option_type' => $option_type,
                     'option_id' => $color_id,
                     'available' => $available
                 ], ['%d','%s','%d','%d']);
@@ -159,8 +161,10 @@ if (isset($_GET['edit'])) {
             "SELECT variant_id, image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d",
             $edit_item->id
         ), OBJECT_K);
+        $option_type = $edit_item->color_type === 'frame' ? 'frame_color' : 'product_color';
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'product_color' AND option_id = %d",
+            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = %s AND option_id = %d",
+            $option_type,
             $edit_item->id
         ));
         foreach ($rows as $row) {
