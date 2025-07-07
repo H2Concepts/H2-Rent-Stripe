@@ -227,6 +227,10 @@ class Database {
                 'admin_color_primary'   => '#5f7f5f',
                 'admin_color_secondary' => '#4a674a',
                 'admin_color_text'      => '#ffffff',
+                'front_button_color'    => '#5f7f5f',
+                'front_text_color'      => '#4a674a',
+                'front_border_color'    => '#a4b8a4',
+                'front_button_text_color' => '#ffffff',
                 'footer_text' => 'Powered by H2 Concepts'
             );
             
@@ -238,6 +242,20 @@ class Database {
                         'setting_value' => $value
                     )
                 );
+            }
+        }
+
+        // Ensure new branding settings exist
+        $branding_defaults = array(
+            'front_button_color'       => '#5f7f5f',
+            'front_text_color'         => '#4a674a',
+            'front_border_color'       => '#a4b8a4',
+            'front_button_text_color'  => '#ffffff'
+        );
+        foreach ($branding_defaults as $key => $value) {
+            $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_branding WHERE setting_key = %s", $key));
+            if (!$exists) {
+                $wpdb->insert($table_branding, array('setting_key' => $key, 'setting_value' => $value));
             }
         }
         
@@ -841,6 +859,11 @@ class Database {
                 'admin_logo' => '',
                 'admin_color_primary' => '#5f7f5f',
                 'admin_color_secondary' => '#4a674a',
+                'admin_color_text' => '#ffffff',
+                'front_button_color'    => '#5f7f5f',
+                'front_text_color'      => '#4a674a',
+                'front_border_color'    => '#a4b8a4',
+                'front_button_text_color' => '#ffffff',
                 'footer_text' => ''
             );
             

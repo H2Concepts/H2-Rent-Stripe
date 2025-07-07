@@ -10,6 +10,10 @@ if (isset($_POST['submit_branding'])) {
     $admin_color_primary = sanitize_hex_color($_POST['admin_color_primary']);
     $admin_color_secondary = sanitize_hex_color($_POST['admin_color_secondary']);
     $admin_color_text = sanitize_hex_color($_POST['admin_color_text']);
+    $front_button_color = sanitize_hex_color($_POST['front_button_color']);
+    $front_text_color   = sanitize_hex_color($_POST['front_text_color']);
+    $front_border_color = sanitize_hex_color($_POST['front_border_color']);
+    $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
     $table_name = $wpdb->prefix . 'produkt_branding';
@@ -22,6 +26,10 @@ if (isset($_POST['submit_branding'])) {
         'admin_color_primary' => $admin_color_primary,
         'admin_color_secondary' => $admin_color_secondary,
         'admin_color_text' => $admin_color_text,
+        'front_button_color' => $front_button_color,
+        'front_text_color' => $front_text_color,
+        'front_border_color' => $front_border_color,
+        'front_button_text_color' => $front_button_text_color,
         'footer_text' => $footer_text
     );
 
@@ -156,6 +164,30 @@ if (isset($_POST['submit_branding'])) {
                         <label>Textfarbe</label>
                         <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="produkt-color-picker">
                         <small>Farbe für Text auf Buttons und Tabs</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Farbe (Frontend)</label>
+                        <input type="color" name="front_button_color" value="<?php echo esc_attr($branding['front_button_color'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
+                        <small>Hauptfarbe der Handlungs-Buttons</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Textfarbe (Frontend)</label>
+                        <input type="color" name="front_text_color" value="<?php echo esc_attr($branding['front_text_color'] ?? '#4a674a'); ?>" class="produkt-color-picker">
+                        <small>Farbe für Preis- und Hinweistexte</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Border-Farbe</label>
+                        <input type="color" name="front_border_color" value="<?php echo esc_attr($branding['front_border_color'] ?? '#a4b8a4'); ?>" class="produkt-color-picker">
+                        <small>Rahmenfarbe für Optionen</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Textfarbe</label>
+                        <input type="color" name="front_button_text_color" value="<?php echo esc_attr($branding['front_button_text_color'] ?? '#ffffff'); ?>" class="produkt-color-picker">
+                        <small>Textfarbe der Buttons im Frontend</small>
                     </div>
                     
                     <div class="produkt-form-group full-width">

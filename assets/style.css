@@ -1,5 +1,11 @@
 @charset "UTF-8";
 /* Produkt Verleih Plugin Styles */
+:root {
+    --produkt-button-bg: #5f7f5f;
+    --produkt-text-color: #4a674a;
+    --produkt-border-color: #a4b8a4;
+    --produkt-button-text: #ffffff;
+}
 .produkt-container {
     max-width: 100%;
     margin: 0 auto;
@@ -89,7 +95,7 @@
 
 .produkt-placeholder-image {
     font-size: 3rem;
-    color: #5f7f5f;
+    color: var(--produkt-button-bg);
 }
 
 .produkt-extra-overlay {
@@ -102,7 +108,7 @@
     border-radius: 8px;
     padding: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border: 2px solid #5f7f5f;
+    border: 2px solid var(--produkt-button-bg);
     z-index: 10;
 }
 
@@ -136,7 +142,7 @@
 }
 
 .produkt-thumbnail.active {
-    border-color: #5f7f5f;
+    border-color: var(--produkt-button-bg);
     opacity: 1;
     box-shadow: 0 2px 8px rgba(95, 127, 95, 0.3);
 }
@@ -153,7 +159,7 @@
     left: 50%;
     transform: translateX(-50%);
     background: rgba(0, 0, 0, 0.7);
-    color: white;
+    color: var(--produkt-button-text);
     padding: 5px 10px;
     border-radius: 15px;
     font-size: 0.8rem;
@@ -233,7 +239,7 @@
 .produkt-final-price {
     font-size: 1.875rem;
     font-weight: bold;
-    color: #4a674a;
+    color: var(--produkt-text-color);
 }
 
 .produkt-price-period {
@@ -243,7 +249,7 @@
 
 .produkt-savings {
     font-size: 0.875rem;
-    color: #4a674a;
+    color: var(--produkt-text-color);
     font-weight: 500;
 }
 
@@ -317,7 +323,7 @@
     visibility: hidden;
     width: 300px;
     background-color: #333;
-    color: #fff;
+    color: var(--produkt-button-text);
     text-align: left;
     border-radius: 6px;
     padding: 10px;
@@ -467,14 +473,14 @@
 }
 
 .produkt-option:hover {
-    border-color: #a4b8a4;
+    border-color: var(--produkt-border-color);
     background: #fafafa;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .produkt-option.selected {
-    border-color: #5f7f5f;
+    border-color: var(--produkt-button-bg);
     background: #f6f7f6;
     box-shadow: 0 4px 12px rgba(95, 127, 95, 0.2);
     transform: translateY(-1px);
@@ -516,7 +522,7 @@
 }
 
 .produkt-option-price {
-    color: #4a674a !important;
+    color: var(--produkt-text-color) !important;
     font-weight: 500 !important;
     font-size: 0.85rem !important;
 }
@@ -550,7 +556,7 @@
 }
 
 .produkt-extra-price {
-    color: #4a674a;
+    color: var(--produkt-text-color);
     font-weight: 500;
     font-size: 0.85rem;
     margin-top: 0.25rem;
@@ -572,7 +578,7 @@
 
 .produkt-discount-badge {
     background: #e3e8e3;
-    color: #4a674a;
+    color: var(--produkt-text-color);
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;
@@ -602,7 +608,7 @@
 
 .produkt-condition-badge {
     background: #e3e8e3;
-    color: #4a674a;
+    color: var(--produkt-text-color);
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;
@@ -641,7 +647,7 @@
 }
 
 .produkt-option.selected .produkt-color-preview {
-    border-color: #5f7f5f;
+    border-color: var(--produkt-button-bg);
 }
 
 .produkt-option.unavailable .produkt-color-preview::after {
@@ -705,7 +711,7 @@
 }
 
 .produkt-option-check {
-    color: #5f7f5f;
+    color: var(--produkt-button-bg);
     font-weight: bold;
     opacity: 0;
     transition: opacity 0.2s ease;
@@ -733,7 +739,7 @@
     align-items: center;
     font-size: 0.9rem;
     font-weight: 500;
-    color: #4a674a;
+    color: var(--produkt-text-color);
 }
 
 .produkt-availability-status .status-dot {
@@ -741,7 +747,7 @@
     height: 0.6rem;
     border-radius: 50%;
     margin-right: 0.4rem;
-    background: #4a674a;
+    background: var(--produkt-text-color);
 }
 
 .produkt-availability-status.unavailable {
@@ -776,13 +782,13 @@
 }
 
 .produkt-rent-button:enabled {
-    background: #5f7f5f;
-    color: white;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .produkt-rent-button:enabled:hover {
-    background: #4a674a;
+    background: var(--produkt-text-color);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
 }
@@ -849,8 +855,8 @@
 }
 
 .produkt-notify-form button {
-    background: #5f7f5f;
-    color: #fff;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
     border: none;
     padding: 10px 30px;
     border-radius: 999px;
@@ -864,7 +870,7 @@
 }
 
 .produkt-notify-success {
-    color: #4a674a;
+    color: var(--produkt-text-color);
     font-size: 0.875rem;
     margin-top: 0.5rem;
 }
@@ -964,12 +970,12 @@
 .produkt-mobile-price-value {
     font-size: 1.25rem;
     font-weight: bold;
-    color: #4a674a;
+    color: var(--produkt-text-color);
 }
 
 .produkt-mobile-button {
-    background: #5f7f5f;
-    color: white;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
@@ -980,7 +986,7 @@
 }
 
 .produkt-mobile-button:hover {
-    background: #4a674a;
+    background: var(--produkt-text-color);
 }
 
 .produkt-mobile-button:disabled {
@@ -994,8 +1000,8 @@
     top: 10px;
     left: 10px;
     right: 10px;
-    background: #4a674a;
-    color: #fff;
+    background: var(--produkt-text-color);
+    color: var(--produkt-button-text);
     padding: 12px;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -1173,8 +1179,8 @@
 }
 
 .produkt-exit-popup-content button {
-    background: #5f7f5f;
-    color: #fff;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
     border: none;
     padding: 10px 40px;
     border-radius: 999px;
@@ -1272,8 +1278,8 @@ body.produkt-popup-open {
 }
 
 #submit {
-    background: #5f7f5f;
-    color: #fff;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
     border: none;
     padding: 12px 40px;
     border-radius: 999px;
@@ -1289,5 +1295,5 @@ body.produkt-popup-open {
 #payment-message {
     margin-top: 0.5rem;
     font-weight: 500;
-    color: #4a674a;
+    color: var(--produkt-text-color);
 }

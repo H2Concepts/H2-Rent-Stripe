@@ -119,6 +119,14 @@ class Admin {
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
         wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
 
+        $branding = $this->get_branding_settings();
+        $button_color = $branding['front_button_color'] ?? '#5f7f5f';
+        $text_color   = $branding['front_text_color'] ?? '#4a674a';
+        $border_color = $branding['front_border_color'] ?? '#a4b8a4';
+        $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};}";
+        wp_add_inline_style('produkt-style', $inline_css);
+
         global $wpdb;
         $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
         preg_match($pattern, $post->post_content, $matches);
