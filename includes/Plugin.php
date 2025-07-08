@@ -137,7 +137,10 @@ class Plugin {
 
     public function render_product_grid($atts = []) {
         global $wpdb;
-        $atts = shortcode_atts(['shop_category' => 0], $atts);
+        $atts = shortcode_atts([
+            'shop_category' => 0,
+            'title' => '',
+        ], $atts);
         $query = "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1";
         if ($atts['shop_category']) {
             $query .= $wpdb->prepare(" AND shop_cat_id = %d", $atts['shop_category']);
@@ -155,6 +158,8 @@ class Plugin {
             $min = $this->db->get_min_price_for_product($cat->id);
             $cat->min_price = is_numeric($min) ? floatval($min) : null;
         }
+
+        $archive_title = $atts['title'];
 
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
@@ -474,7 +479,10 @@ class Plugin {
             add_filter('pre_get_document_title', function () use ($shopcat) {
                 return $shopcat->name;
             });
-            $html = $this->render_product_grid(['shop_category' => $shopcat->id]);
+            $html = $this->render_product_grid([
+                'shop_category' => $shopcat->id,
+                'title' => $shopcat->name,
+            ]);
             get_header();
             echo $html;
             get_footer();

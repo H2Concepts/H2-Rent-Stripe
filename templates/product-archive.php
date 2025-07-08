@@ -2,6 +2,11 @@
 if (!defined('ABSPATH')) { exit; }
 ?>
 <div class="produkt-shop-archive produkt-container">
+    <?php if (!empty($archive_title)): ?>
+    <header class="entry-header ast-no-thumbnail">
+        <h1 class="entry-title" itemprop="headline"><?php echo esc_html($archive_title); ?></h1>
+    </header>
+    <?php endif; ?>
     <div class="produkt-shop-grid">
         <?php foreach ($categories as $cat): ?>
         <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
