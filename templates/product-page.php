@@ -128,8 +128,6 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
                         <?php if (!empty($rating_link)): ?>
                             <a href="<?php echo esc_url($rating_link); ?>" target="_blank">Bewertungen ansehen</a>
-                        <?php else: ?>
-                            <span>Bewertungen ansehen</span>
                         <?php endif; ?>
                     </div>
                     <?php endif; ?>
