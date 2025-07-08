@@ -15,27 +15,18 @@ class Admin {
             'dashicons-heart',
             30
         );
-        
-        // Submenu: Produkte
+
+        // Explicit dashboard submenu for order control
         add_submenu_page(
             'produkt-verleih',
-            'Produkte',
-            'Produkte',
+            'Dashboard',
+            'Dashboard',
             'manage_options',
-            'produkt-categories',
-            array($this, 'categories_page')
-        );
-        
-        // Submenu: Produktverwaltung
-        add_submenu_page(
             'produkt-verleih',
-            'Ausführungen',
-            'Ausführungen',
-            'manage_options',
-            'produkt-variants',
-            array($this, 'variants_page')
+            array($this, 'admin_page')
         );
 
+        // Shop categories
         add_submenu_page(
             'produkt-verleih',
             'Kategorien',
@@ -44,37 +35,66 @@ class Admin {
             'produkt-shopcats',
             array($this, 'shop_categories_page')
         );
-        
+
+        // Products overview
         add_submenu_page(
             'produkt-verleih',
+            'Produkte',
+            'Produkte',
+            'manage_options',
+            'produkt-categories',
+            array($this, 'categories_page')
+        );
+
+        // New parent submenu for product settings
+        add_submenu_page(
+            'produkt-verleih',
+            'Produkt',
+            'Produkt',
+            'manage_options',
+            'produkt-products',
+            array($this, 'products_page')
+        );
+
+        // Submenus under "Produkt"
+        add_submenu_page(
+            'produkt-products',
+            'Ausführungen',
+            'Ausführungen',
+            'manage_options',
+            'produkt-variants',
+            array($this, 'variants_page')
+        );
+
+        add_submenu_page(
+            'produkt-products',
             'Extras',
             'Extras',
             'manage_options',
             'produkt-extras',
             array($this, 'extras_page')
         );
-        
+
         add_submenu_page(
-            'produkt-verleih',
+            'produkt-products',
             'Mietdauer',
             'Mietdauer',
             'manage_options',
             'produkt-durations',
             array($this, 'durations_page')
         );
-        
-        // New submenu items
+
         add_submenu_page(
-            'produkt-verleih',
+            'produkt-products',
             'Zustand',
             'Zustand',
             'manage_options',
             'produkt-conditions',
             array($this, 'conditions_page')
         );
-        
+
         add_submenu_page(
-            'produkt-verleih',
+            'produkt-products',
             'Farben',
             'Farben',
             'manage_options',
@@ -286,6 +306,10 @@ class Admin {
     
     public function admin_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/main-page.php';
+    }
+
+    public function products_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/products-page.php';
     }
     
     public function categories_page() {
