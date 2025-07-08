@@ -1051,9 +1051,18 @@ class Database {
         }
 
         $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
-        $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)";
+
+        $sql   = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)";
         $query = $wpdb->prepare($sql, ...$variant_ids);
         $price_ids = $wpdb->get_col($query);
+
+        // Fallback: if no duration prices were found, check the variants table
+        if (empty($price_ids)) {
+            $sql   = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders)";
+            $query = $wpdb->prepare($sql, ...$variant_ids);
+            $fallbacks = $wpdb->get_col($query);
+            $price_ids = array_merge((array) $price_ids, (array) $fallbacks);
+        }
 
         return array_filter((array) $price_ids);
     }
