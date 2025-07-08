@@ -9,8 +9,17 @@ if (!defined('ABSPATH')) { exit; }
         <?php foreach ($categories as $cat): ?>
         <?php
             $path = '/shop/';
+            $group_slug = '';
             if (!empty($current_group)) {
-                $path .= sanitize_title($current_group->slug ?: $current_group->name) . '/';
+                $group_slug = sanitize_title($current_group->slug ?: $current_group->name);
+            } elseif (!empty($cat->group_id)) {
+                $group_slug = $wpdb->get_var($wpdb->prepare(
+                    "SELECT slug FROM {$wpdb->prefix}produkt_groups WHERE id = %d",
+                    $cat->group_id
+                ));
+            }
+            if (!empty($group_slug)) {
+                $path .= $group_slug . '/';
             }
             $path .= sanitize_title($cat->shortcode ?: $cat->product_title);
             $url = home_url($path);
