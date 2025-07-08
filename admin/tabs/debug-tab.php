@@ -21,6 +21,13 @@ if (isset($_POST['force_update'])) {
     
 }
 
+// Uninstall plugin if requested
+if (isset($_POST['plugin_uninstall'])) {
+    \ProduktVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\Plugin::uninstall_plugin();
+    echo '<div class="notice notice-success"><p>✅ Plugin-Daten wurden entfernt. Bitte deaktivieren Sie das Plugin manuell.</p></div>';
+}
+
 // Get table structure
 $table_variants = $wpdb->prefix . 'produkt_variants';
 
@@ -41,6 +48,12 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="force_update" class="button button-primary" onclick="return confirm('Sind Sie sicher? Dies führt Datenbankänderungen durch.')">
                 🔄 Datenbank reparieren
+            </button>
+        </form>
+        <form method="post" action="" style="margin-top:10px;">
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+            <button type="submit" name="plugin_uninstall" class="button button-secondary" onclick="return confirm('Plugin und alle Daten wirklich löschen?')">
+                🗑️ Plugin-Daten löschen
             </button>
         </form>
     </div>
