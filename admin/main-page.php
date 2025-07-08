@@ -10,6 +10,7 @@ $categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_
 $variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants");
 $extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
 $durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
+$colors_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_colors");
 
 // Get recently edited products (latest entries)
 $recent_products = $wpdb->get_results(
@@ -66,6 +67,10 @@ foreach ($branding_results as $result) {
         <div class="stat-card">
             <div class="produkt-stat-number"><?php echo $durations_count; ?></div>
             <div class="produkt-stat-label">Mietdauern</div>
+        </div>
+        <div class="stat-card">
+            <div class="produkt-stat-number"><?php echo $colors_count; ?></div>
+            <div class="produkt-stat-label">Farben</div>
         </div>
     </div>
     
@@ -327,7 +332,7 @@ foreach ($branding_results as $result) {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 30px;
+    margin: 0 auto 30px;
 }
 
 .produkt-recent-section h3 {
@@ -337,8 +342,9 @@ foreach ($branding_results as $result) {
 
 .produkt-category-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 15px;
+    margin: 0 auto;
 }
 
 .produkt-category-card {

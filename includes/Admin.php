@@ -15,6 +15,17 @@ class Admin {
             'dashicons-heart',
             30
         );
+
+        // Explicitly register a Dashboard submenu so the first item shows
+        // "Dashboard" instead of repeating the plugin name
+        add_submenu_page(
+            'produkt-verleih',
+            'Dashboard',
+            'Dashboard',
+            'manage_options',
+            'produkt-verleih',
+            array($this, 'admin_page')
+        );
         
         // Submenu: Produkte
         add_submenu_page(
