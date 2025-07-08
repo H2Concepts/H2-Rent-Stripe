@@ -300,10 +300,11 @@ class Admin {
             $name = sanitize_text_field($_POST['name']);
             $raw_slug = $_POST['shortcode'] ?? $_POST['name'] ?? '';
             $slug = sanitize_title($raw_slug);
+
+            // Fallback, falls slug leer bleibt
             if (empty($slug)) {
                 $slug = 'kategorie-' . uniqid();
             }
-            $shortcode = $slug;
             $meta_title = sanitize_text_field($_POST['meta_title']);
             $meta_description = sanitize_textarea_field($_POST['meta_description']);
             $product_title = sanitize_text_field($_POST['product_title']);
@@ -358,7 +359,7 @@ class Admin {
                     $table_name,
                     [
                         'name' => $name,
-                        'shortcode' => $shortcode,
+                        'shortcode' => $slug,
                         'meta_title' => $meta_title,
                         'meta_description' => $meta_description,
                         'product_title' => $product_title,
@@ -408,7 +409,7 @@ class Admin {
                     $table_name,
                     [
                         'name' => $name,
-                        'shortcode' => $shortcode,
+                        'shortcode' => $slug,
                         'meta_title' => $meta_title,
                         'meta_description' => $meta_description,
                         'product_title' => $product_title,
