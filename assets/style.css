@@ -1372,9 +1372,21 @@ body.produkt-popup-open {
 }
 .produkt-shop-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     justify-items: stretch;
+}
+
+@media (max-width: 768px) {
+    .produkt-shop-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .produkt-shop-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .produkt-shop-card {

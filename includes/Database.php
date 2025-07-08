@@ -539,6 +539,9 @@ class Database {
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
+
+        // Recalculate stored minimum prices after any schema updates
+        $this->recalc_all_min_prices();
     }
     
     public function create_tables() {
