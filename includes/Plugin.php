@@ -12,8 +12,13 @@ class Plugin {
         $this->admin = new Admin();
 
         add_action('init', [$this, 'init']);
-        // Run database update check as early as possible
-        $this->check_for_updates();
+        // Run database update check as early as possible unless plugin is
+        // currently being activated. During activation the tables don't exist
+        // yet and are created later in the activation routine, so running the
+        // update here would cause errors.
+        if (!defined('PRODUKT_PLUGIN_ACTIVATING')) {
+            $this->check_for_updates();
+        }
         add_action('wp_head', [$this, 'add_meta_tags']);
         add_action('wp_head', [$this, 'add_schema_markup']);
         add_action('wp_head', [$this, 'add_open_graph_tags']);
@@ -83,6 +88,12 @@ class Plugin {
     }
 
     public static function activate_plugin() {
+        // Indicate that the plugin is currently being activated so the
+        // constructor skips the update routine which expects the tables to
+        // already exist.
+        if (!defined('PRODUKT_PLUGIN_ACTIVATING')) {
+            define('PRODUKT_PLUGIN_ACTIVATING', true);
+        }
         $plugin = new self();
         $plugin->activate();
     }
