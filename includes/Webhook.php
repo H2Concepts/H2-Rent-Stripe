@@ -18,19 +18,28 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
     }
 
-    $secret_key = get_option('produkt_stripe_secret_key', '');
-    if ($secret_key) {
-        \Stripe\Stripe::setApiKey($secret_key);
-    }
-
     $payload    = $request->get_body();
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
     $secret     = get_option('produkt_stripe_webhook_secret', '');
 
-    try {
-        $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
-    } catch (\UnexpectedValueException | \Stripe\Exception\SignatureVerificationException $e) {
-        return new WP_REST_Response(['error' => 'Webhook verification failed'], 400);
+    if (StripeService::uses_library()) {
+        $secret_key = get_option('produkt_stripe_secret_key', '');
+        if ($secret_key) {
+            \Stripe\Stripe::setApiKey($secret_key);
+        }
+        try {
+            $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
+        } catch (\UnexpectedValueException | \Stripe\Exception\SignatureVerificationException $e) {
+            return new WP_REST_Response(['error' => 'Webhook verification failed'], 400);
+        }
+    } else {
+        if (!StripeService::verify_signature($payload, $sig_header, $secret)) {
+            return new WP_REST_Response(['error' => 'Webhook verification failed'], 400);
+        }
+        $event = json_decode($payload);
+        if (!$event) {
+            return new WP_REST_Response(['error' => 'Invalid payload'], 400);
+        }
     }
 
     if ($event->type === 'checkout.session.completed') {
