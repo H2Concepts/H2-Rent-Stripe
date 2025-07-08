@@ -91,6 +91,53 @@ class StripeService {
         return $amount;
     }
 
+    /**
+     * Retrieve the lowest price among multiple Stripe price IDs with caching.
+     *
+     * @param array $price_ids Array of Stripe price IDs
+     * @param int   $expiration Cache lifetime in seconds
+     * @return float|null|\WP_Error Formatted amount or WP_Error on failure
+     */
+    public static function get_lowest_price_cached($price_ids, $expiration = 43200) {
+        if (empty($price_ids) || !is_array($price_ids)) {
+            return null;
+        }
+
+        $cache_key = 'produkt_lowest_stripe_price_' . md5(implode('_', $price_ids));
+        $cached    = get_transient($cache_key);
+
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        $lowest = null;
+        foreach ($price_ids as $price_id) {
+            try {
+                $price = \Stripe\Price::retrieve($price_id);
+                if (!isset($price->unit_amount)) {
+                    continue;
+                }
+                $amount = $price->unit_amount / 100;
+                if ($lowest === null || $amount < $lowest) {
+                    $lowest = $amount;
+                }
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
+
+        if ($lowest !== null) {
+            set_transient($cache_key, $lowest, $expiration);
+        }
+
+        return $lowest;
+    }
+
     public static function get_publishable_key() {
         return get_option('produkt_stripe_publishable_key', '');
     }

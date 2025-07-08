@@ -6,21 +6,33 @@ if (!defined('ABSPATH')) { exit; }
         <?php foreach ($categories as $cat): ?>
         <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
         <?php
-            $variant = $wpdb->get_row($wpdb->prepare(
-                "SELECT stripe_price_id, base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order LIMIT 1",
+            $variants = $wpdb->get_results($wpdb->prepare(
+                "SELECT stripe_price_id, base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
                 $cat->id
             ));
-            $price = null;
-            if ($variant) {
+
+            $price_ids = [];
+            $fallback  = null;
+            foreach ($variants as $variant) {
                 if (!empty($variant->stripe_price_id)) {
-                    $amount = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id);
-                    if (!is_wp_error($amount)) {
-                        $price = $amount;
-                    }
+                    $price_ids[] = $variant->stripe_price_id;
                 }
-                if ($price === null) {
-                    $price = $variant->base_price;
+                $base = floatval($variant->base_price);
+                if ($fallback === null || $base < $fallback) {
+                    $fallback = $base;
                 }
+            }
+
+            $price = null;
+            if (!empty($price_ids)) {
+                $amount = \ProduktVerleih\StripeService::get_lowest_price_cached($price_ids);
+                if (!is_wp_error($amount)) {
+                    $price = $amount;
+                }
+            }
+
+            if ($price === null && $fallback !== null) {
+                $price = $fallback;
             }
         ?>
         <a class="produkt-shop-card-link" href="<?php echo esc_url($url); ?>">
