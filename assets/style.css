@@ -1315,7 +1315,7 @@ body.produkt-popup-open {
 
 /* Accordion styles */
 .produkt-accordions {
-    margin-top: 1rem;
+    margin-top: 2rem;
 }
 
 .produkt-accordion-item {
@@ -1327,7 +1327,7 @@ body.produkt-popup-open {
     background: transparent;
     border: none;
     padding: 0.75rem 0;
-    font-weight: 600;
+    font-weight: 700;
     text-align: left;
     cursor: pointer;
     display: flex;
