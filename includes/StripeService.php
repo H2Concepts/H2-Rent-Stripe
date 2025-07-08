@@ -67,6 +67,30 @@ class StripeService {
         }
     }
 
+    /**
+     * Retrieve the Stripe price amount while caching results using a transient.
+     *
+     * @param string $price_id
+     * @param int    $expiration Number of seconds to cache the value
+     * @return float|\WP_Error
+     */
+    public static function get_cached_price_amount($price_id, $expiration = 43200) {
+        $cache_key = 'produkt_stripe_price_' . $price_id;
+        $cached    = get_transient($cache_key);
+
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $amount = self::get_price_amount($price_id);
+
+        if (!is_wp_error($amount)) {
+            set_transient($cache_key, $amount, $expiration);
+        }
+
+        return $amount;
+    }
+
     public static function get_publishable_key() {
         return get_option('produkt_stripe_publishable_key', '');
     }

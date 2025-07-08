@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) { exit; }
             $price = null;
             if ($variant) {
                 if (!empty($variant->stripe_price_id)) {
-                    $amount = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                    $amount = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id);
                     if (!is_wp_error($amount)) {
                         $price = $amount;
                     }
