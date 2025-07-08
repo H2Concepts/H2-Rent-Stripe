@@ -473,6 +473,9 @@ class Admin {
 
         $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'branding'));
     }
+
+    }
+
     
     public function variants_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/variants-page.php';
