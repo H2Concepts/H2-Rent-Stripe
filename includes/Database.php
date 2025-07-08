@@ -349,6 +349,26 @@ class Database {
             dbDelta($sql);
         }
 
+        // Create variant durations table if it doesn't exist
+        $table_variant_durations = $wpdb->prefix . 'produkt_variant_durations';
+        $variant_durations_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_variant_durations'");
+
+        if (!$variant_durations_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_variant_durations (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                variant_id mediumint(9) NOT NULL,
+                duration_id mediumint(9) NOT NULL,
+                available tinyint(1) DEFAULT 1,
+                sort_order int(11) DEFAULT 0,
+                PRIMARY KEY (id),
+                UNIQUE KEY variant_duration (variant_id, duration_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create duration price table if it doesn't exist
         $table_duration_prices = $wpdb->prefix . 'produkt_duration_prices';
         $duration_prices_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_duration_prices'");
@@ -726,6 +746,18 @@ class Database {
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";
 
+        // Variant durations table
+        $table_variant_durations = $wpdb->prefix . 'produkt_variant_durations';
+        $sql_variant_durations = "CREATE TABLE $table_variant_durations (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            variant_id mediumint(9) NOT NULL,
+            duration_id mediumint(9) NOT NULL,
+            available tinyint(1) DEFAULT 1,
+            sort_order int(11) DEFAULT 0,
+            PRIMARY KEY (id),
+            UNIQUE KEY variant_duration (variant_id, duration_id)
+        ) $charset_collate;";
+
         // Variant price IDs per duration
         $table_duration_prices = $wpdb->prefix . 'produkt_duration_prices';
         $sql_duration_prices = "CREATE TABLE $table_duration_prices (
@@ -787,6 +819,7 @@ class Database {
         dbDelta($sql_colors);
         dbDelta($sql_color_variant_images);
         dbDelta($sql_variant_options);
+        dbDelta($sql_variant_durations);
         dbDelta($sql_duration_prices);
         dbDelta($sql_orders);
 
@@ -1016,6 +1049,7 @@ class Database {
             'produkt_colors',
             'produkt_color_variant_images',
             'produkt_variant_options',
+            'produkt_variant_durations',
             'produkt_duration_prices',
             'produkt_orders',
             'produkt_order_logs',
