@@ -531,54 +531,88 @@ function mein_plugin_get_guenstigster_preis($category_id) {
     global $wpdb;
 
     $cache_key = 'guenstiger_preis_' . intval($category_id);
-    $cached = get_transient($cache_key);
+    $cached    = get_transient($cache_key);
     if ($cached !== false) {
         return $cached;
     }
 
-    $produkte = $wpdb->get_results($wpdb->prepare(
-        "SELECT price_ids FROM {$wpdb->prefix}produkt_items WHERE category_id = %d",
+    $table_variants = $wpdb->prefix . 'produkt_variants';
+    $table_durations = $wpdb->prefix . 'produkt_durations';
+    $table_prices   = $wpdb->prefix . 'produkt_duration_prices';
+
+    $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_variants));
+    if (!$table_exists) {
+        return false;
+    }
+
+    $variants = $wpdb->get_results($wpdb->prepare(
+        "SELECT id, stripe_price_id, base_price FROM $table_variants WHERE category_id = %d AND active = 1",
         $category_id
     ));
 
-    if (!$produkte) {
+    if (!$variants) {
         return false;
     }
+
+    $duration_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT id FROM $table_durations WHERE category_id = %d AND active = 1 ORDER BY months_minimum DESC LIMIT 1",
+        $category_id
+    ));
 
     $secret = get_option('produkt_stripe_secret_key', '');
-    if (empty($secret)) {
-        return false;
+    $use_stripe = !empty($secret) && class_exists('\\Stripe\\StripeClient');
+    $stripe = null;
+    if ($use_stripe) {
+        $stripe = new \Stripe\StripeClient($secret);
     }
 
-    $stripe = new \Stripe\StripeClient($secret);
     $cheapest = null;
-    $currency = '';
-    $interval = '';
+    $currency = 'EUR';
+    $interval = 'month';
 
-    foreach ($produkte as $produkt) {
-        $ids = json_decode($produkt->price_ids, true);
-        if (!is_array($ids) || empty($ids)) {
-            continue;
+    foreach ($variants as $v) {
+        $price_id = null;
+        if ($duration_id) {
+            $price_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM $table_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $v->id
+            ));
         }
 
-        $last_id = end($ids);
+        if (!$price_id && !empty($v->stripe_price_id)) {
+            $price_id = $v->stripe_price_id;
+        }
 
-        try {
-            $price = $stripe->prices->retrieve($last_id);
-            $amount = $price->unit_amount / 100;
-            if ($cheapest === null || $amount < $cheapest) {
-                $cheapest = $amount;
-                $currency = strtoupper($price->currency);
-                $interval = $price->recurring['interval'] ?? null;
+        $amount = null;
+        $curr   = $currency;
+        $intv   = $interval;
+
+        if ($price_id && $stripe) {
+            try {
+                $price = $stripe->prices->retrieve($price_id);
+                $amount = $price->unit_amount / 100;
+                $curr   = strtoupper($price->currency);
+                $intv   = $price->recurring['interval'] ?? $intv;
+            } catch (\Exception $e) {
+                $amount = null;
             }
-        } catch (\Exception $e) {
-            continue;
+        }
+
+        if ($amount === null) {
+            $amount = floatval($v->base_price);
+        }
+
+        if ($cheapest === null || $amount < $cheapest) {
+            $cheapest = $amount;
+            $currency = $curr;
+            $interval = $intv;
         }
     }
 
     if ($cheapest !== null) {
         $result = [
-            'amount' => $cheapest,
+            'amount'   => $cheapest,
             'currency' => $currency,
             'interval' => $interval,
         ];
