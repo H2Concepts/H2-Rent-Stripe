@@ -60,11 +60,12 @@ class Ajax {
 
             if (!empty($price_id_to_use)) {
                 $price_res = StripeService::get_price_amount($price_id_to_use);
-                if (is_wp_error($price_res)) {
-                    wp_send_json_error('Price fetch failed');
+                if (!is_wp_error($price_res)) {
+                    $variant_price = floatval($price_res);
+                    $used_price_id = $price_id_to_use;
+                } else {
+                    $variant_price = floatval($variant->base_price);
                 }
-                $variant_price = floatval($price_res);
-                $used_price_id = $price_id_to_use;
             } else {
                 $variant_price = floatval($variant->base_price);
             }
@@ -72,10 +73,11 @@ class Ajax {
             foreach ($extras as $ex) {
                 if (!empty($ex->stripe_price_id)) {
                     $pr = StripeService::get_price_amount($ex->stripe_price_id);
-                    if (is_wp_error($pr)) {
-                        wp_send_json_error('Price fetch failed');
+                    if (!is_wp_error($pr)) {
+                        $extras_price += floatval($pr);
+                    } else {
+                        $extras_price += floatval($ex->price);
                     }
-                    $extras_price += floatval($pr);
                 } else {
                     $extras_price += floatval($ex->price);
                 }
@@ -96,13 +98,16 @@ class Ajax {
             $shipping_cost = 0;
             if ($variant) {
                 $category = $wpdb->get_row($wpdb->prepare(
-                    "SELECT shipping_price_id FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    "SELECT shipping_price_id, shipping_cost FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
                     $variant->category_id
                 ));
-                if ($category && !empty($category->shipping_price_id)) {
-                    $price_res = StripeService::get_price_amount($category->shipping_price_id);
-                    if (!is_wp_error($price_res)) {
-                        $shipping_cost = floatval($price_res);
+                if ($category) {
+                    $shipping_cost = floatval($category->shipping_cost);
+                    if (!empty($category->shipping_price_id)) {
+                        $price_res = StripeService::get_price_amount($category->shipping_price_id);
+                        if (!is_wp_error($price_res)) {
+                            $shipping_cost = floatval($price_res);
+                        }
                     }
                 }
             }
@@ -832,6 +837,18 @@ function produkt_create_checkout_session() {
 
         $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
         $shipping_cost = 0;
+        if ($category_id) {
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT shipping_cost, shipping_price_id FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                $category_id
+            ));
+            if ($category) {
+                $shipping_cost = floatval($category->shipping_cost);
+                if (!$shipping_price_id && !empty($category->shipping_price_id)) {
+                    $shipping_price_id = $category->shipping_price_id;
+                }
+            }
+        }
         if ($shipping_price_id) {
             $sc = StripeService::get_price_amount($shipping_price_id);
             if (!is_wp_error($sc)) {

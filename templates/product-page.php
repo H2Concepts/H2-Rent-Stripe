@@ -51,6 +51,7 @@ if (!is_array($accordions)) { $accordions = []; }
 
 $shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
 $shipping_cost = 0;
+$shipping_cost = isset($category) ? floatval($category->shipping_cost ?? 0) : 0;
 if (!empty($shipping_price_id)) {
     $amount = \ProduktVerleih\StripeService::get_price_amount($shipping_price_id);
     if (!is_wp_error($amount)) {
@@ -202,7 +203,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <h4><?php echo esc_html($variant->name); ?></h4>
                                 <p><?php echo esc_html($variant->description); ?></p>
                                 <?php
-                                    $display_price = 0;
+                                    $display_price = floatval($variant->base_price);
                                     if (!empty($variant->stripe_price_id)) {
                                         $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                                         if (!is_wp_error($p)) {
@@ -238,12 +239,18 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                              data-available="true">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
-                                <?php if (!empty($extra->stripe_price_id)) {
-                                    $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
-                                    if (!is_wp_error($p) && $p > 0) {
-                                        echo '<div class="produkt-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
+                                <?php
+                                    $extra_price = floatval($extra->price);
+                                    if (!empty($extra->stripe_price_id)) {
+                                        $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                                        if (!is_wp_error($p) && $p > 0) {
+                                            $extra_price = $p;
+                                        }
                                     }
-                                } ?>
+                                    if ($extra_price > 0) {
+                                        echo '<div class="produkt-extra-price">+' . number_format($extra_price, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
+                                    }
+                                ?>
                             </div>
                             <div class="produkt-option-check">✓</div>
                         </div>
