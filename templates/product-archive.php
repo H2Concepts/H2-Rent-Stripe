@@ -25,15 +25,17 @@ if (!defined('ABSPATH')) { exit; }
 
             $price = null;
             if (!empty($price_ids)) {
-                $amount = \ProduktVerleih\StripeService::get_lowest_price_cached($price_ids);
+                $amount = \ProduktVerleih\StripeService::get_lowest_price_formatted($price_ids);
                 if (!is_wp_error($amount)) {
                     $price = $amount;
                 }
             }
 
             if ($price === null && $fallback !== null) {
-                $price = $fallback;
+                $price = number_format((float) $fallback, 2, ',', '.');
             }
+
+            $prefix = count($price_ids) > 1 ? 'ab ' : '';
         ?>
         <a class="produkt-shop-card-link" href="<?php echo esc_url($url); ?>">
             <div class="produkt-shop-card">
@@ -49,7 +51,7 @@ if (!defined('ABSPATH')) { exit; }
                     </div>
                 <?php endif; ?>
                 <?php if ($price !== null): ?>
-                    <div class="produkt-card-price"><?php echo number_format((float)$price, 2, ',', '.'); ?>€</div>
+                    <div class="produkt-card-price"><?php echo esc_html($prefix . $price); ?>€</div>
                 <?php endif; ?>
             </div>
         </a>
