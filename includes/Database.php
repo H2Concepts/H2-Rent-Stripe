@@ -975,7 +975,7 @@ class Database {
                 );
             }
         }
-        
+
         // Insert default durations only if table is empty
         $existing_durations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
         if ($existing_durations == 0) {
@@ -998,6 +998,35 @@ class Database {
                     )
                 );
             }
+        }
+    }
+
+    /**
+     * Drop all plugin tables from the database.
+     */
+    public function drop_tables() {
+        global $wpdb;
+
+        $tables = array(
+            'produkt_categories',
+            'produkt_variants',
+            'produkt_extras',
+            'produkt_durations',
+            'produkt_conditions',
+            'produkt_colors',
+            'produkt_color_variant_images',
+            'produkt_variant_options',
+            'produkt_duration_prices',
+            'produkt_orders',
+            'produkt_order_logs',
+            'produkt_analytics',
+            'produkt_branding',
+            'produkt_notifications',
+            'produkt_stripe_metadata'
+        );
+
+        foreach ($tables as $table) {
+            $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}$table");
         }
     }
 }
