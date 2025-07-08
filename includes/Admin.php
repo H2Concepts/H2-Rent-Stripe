@@ -94,7 +94,6 @@ class Admin {
             'produkt-settings',
             array($this, 'settings_page')
         );
-    }
     
     public function enqueue_frontend_assets() {
         global $post;
@@ -182,7 +181,6 @@ class Admin {
                 'options' => $options
             )
         ));
-    }
     
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'produkt') !== false) {
@@ -195,7 +193,6 @@ class Admin {
             // Ensure WordPress editor scripts are available for dynamic accordions
             wp_enqueue_editor();
         }
-    }
     
     private function get_branding_settings() {
         global $wpdb;
@@ -207,14 +204,12 @@ class Admin {
         }
         
         return $settings;
-    }
 
     private function load_template(string $slug, array $vars = []) {
         if (!empty($vars)) {
             extract($vars);
         }
         include PRODUKT_PLUGIN_PATH . "admin/{$slug}-page.php";
-    }
     
     public function custom_admin_footer($text) {
         $branding = $this->get_branding_settings();
@@ -228,7 +223,6 @@ class Admin {
         }
         
         return $text;
-    }
     
     public function custom_admin_styles() {
         if (!isset($_GET['page']) || strpos($_GET['page'], 'produkt') === false) {
@@ -273,11 +267,9 @@ class Admin {
             wp_die(__('Insufficient permissions.', 'h2-concepts'));
         }
         check_admin_referer('produkt_admin_action', $nonce_field);
-    }
     
     public function admin_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/main-page.php';
-    }
     
     public function categories_page() {
         global $wpdb;
@@ -473,26 +465,22 @@ class Admin {
 
         $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'branding'));
     }
-
-    }
-
-    
     public function variants_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/variants-page.php';
     }
-    
+
     public function extras_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/extras-page.php';
     }
-    
+
     public function durations_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/durations-page.php';
     }
-    
+
     public function conditions_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/conditions-page.php';
     }
-    
+
     public function colors_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/colors-page.php';
     }
@@ -606,11 +594,9 @@ class Admin {
             'branding',
             'notice'
         ));
-    }
     
     
     public function settings_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/settings-page.php';
-    }
 
 }

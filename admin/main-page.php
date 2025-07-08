@@ -13,7 +13,7 @@ $durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_d
 
 // Get recently edited products (latest entries)
 $recent_products = $wpdb->get_results(
-    "SELECT id, name, product_title, default_image, shipping_provider, meta_title
+    "SELECT id, name, slug, product_title, default_image, shipping_provider, meta_title
        FROM {$wpdb->prefix}produkt_categories
        ORDER BY id DESC
        LIMIT 4"
