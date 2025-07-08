@@ -298,7 +298,12 @@ class Admin {
         if (isset($_POST['submit_category'])) {
             self::verify_admin_action();
             $name = sanitize_text_field($_POST['name']);
-            $shortcode = sanitize_text_field($_POST['shortcode']);
+            $raw_slug = $_POST['shortcode'] ?? $_POST['name'] ?? '';
+            $slug = sanitize_title($raw_slug);
+            if (empty($slug)) {
+                $slug = 'kategorie-' . uniqid();
+            }
+            $shortcode = $slug;
             $meta_title = sanitize_text_field($_POST['meta_title']);
             $meta_description = sanitize_textarea_field($_POST['meta_description']);
             $product_title = sanitize_text_field($_POST['product_title']);
