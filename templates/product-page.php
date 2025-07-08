@@ -40,7 +40,7 @@ $feature_3_description = isset($category) ? $category->feature_3_description : '
 $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 
 // Button
-$button_text = isset($category) ? $category->button_text : '';
+$button_text = isset($category) ? ($category->button_text ?: 'Jetzt Mieten') : 'Jetzt Mieten';
 $button_icon = isset($category) ? $category->button_icon : '';
 $payment_icons = [];
 if (isset($category) && property_exists($category, 'payment_icons')) {
@@ -157,7 +157,6 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 <?php if (!empty($shipping_price_id)): ?>
                 <div class="produkt-price-box produkt-shipping-box">
                     <p class="produkt-price-label">
-                        <span class="produkt-shipping-icon">🚚</span>
                         <?php echo esc_html($shipping_label); ?>
                     </p>
                     <div class="produkt-price-wrapper">
