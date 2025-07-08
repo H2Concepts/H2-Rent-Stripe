@@ -327,7 +327,8 @@ foreach ($branding_results as $result) {
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 30px;
+    margin: 0 auto 30px;
+    max-width: 1220px;
 }
 
 .produkt-recent-section h3 {
@@ -337,8 +338,10 @@ foreach ($branding_results as $result) {
 
 .produkt-category-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 15px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .produkt-category-card {
