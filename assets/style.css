@@ -1097,7 +1097,7 @@
 
 .produkt-rating-number {
     font-family: "Roca",sans-serif;
-    font-size: 16px;
+    font-size: 13px;
 }
 
 .produkt-star-rating {
@@ -1125,6 +1125,10 @@
     top: 0;
     width: calc(var(--rating) / 5 * 100%);
     overflow: hidden;
+}
+
+.produkt-star-black::after {
+    color: #000;
 }
 
 /* Exit Intent Popup */
@@ -1352,12 +1356,30 @@ body.produkt-popup-open {
     gap: 20px;
 }
 
+@media (min-width: 992px) {
+    .produkt-shop-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+.produkt-shop-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
 .produkt-shop-card {
     background: #fff;
-    border: 1px solid var(--produkt-border-color);
+    border: none;
     border-radius: 8px;
     padding: 15px;
     text-align: center;
+    transition: box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.produkt-shop-card:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 .produkt-shop-image {
@@ -1378,6 +1400,24 @@ body.produkt-popup-open {
     font-size: 0.9rem;
     color: #000000;
     margin-bottom: 15px;
+}
+
+.produkt-group-title {
+    text-align: center;
+    font-size: 1.75rem;
+    margin-bottom: 20px;
+}
+
+.produkt-card-price {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 10px;
+    color: #000;
+}
+
+/* Smaller star size for cards in the archive grid */
+.produkt-shop-card .produkt-star-rating {
+    --star-size: 16px;
 }
 
 .produkt-shop-button {

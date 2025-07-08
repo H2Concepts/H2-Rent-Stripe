@@ -36,6 +36,14 @@
                     <input type="text" name="shortcode" value="<?php echo esc_attr($edit_item->shortcode); ?>" required pattern="[a-z0-9_-]+">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+                <div class="produkt-form-group">
+                    <label>Kategorie</label>
+                    <select name="group_id">
+                        <?php foreach ($groups as $g): ?>
+                        <option value="<?php echo $g->id; ?>" <?php selected($edit_item->group_id, $g->id); ?>><?php echo esc_html($g->name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
         </div>
         
