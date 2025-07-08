@@ -1128,6 +1128,10 @@
     overflow: hidden;
 }
 
+.produkt-star-rating.yellow::after {
+    color: #FFD700;
+}
+
 .produkt-star-rating.small {
     --star-size: 16px;
 }

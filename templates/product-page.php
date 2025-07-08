@@ -127,7 +127,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if ($show_rating && $rating_value > 0): ?>
                     <div class="produkt-rating">
                         <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
-                        <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
+                        <span class="produkt-star-rating yellow" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
                         <?php if (!empty($rating_link)): ?>
                             <a href="<?php echo esc_url($rating_link); ?>" target="_blank">Bewertungen ansehen</a>
                         <?php endif; ?>
