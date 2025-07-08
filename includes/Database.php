@@ -12,12 +12,15 @@ class Database {
             'produkt_extras',
             'produkt_durations'
         ];
+        $missing = false;
         foreach ($required_tables as $tbl) {
             $table_name = $wpdb->prefix . $tbl;
             if (!$wpdb->get_var("SHOW TABLES LIKE '$table_name'")) {
-                $this->create_tables();
-                return;
+                $missing = true;
             }
+        }
+        if ($missing) {
+            $this->create_tables();
         }
         
         // Add category_id column to all tables if it doesn't exist
@@ -637,6 +640,7 @@ class Database {
             layout_style varchar(50) DEFAULT 'default',
             duration_tooltip text DEFAULT '',
             condition_tooltip text DEFAULT '',
+            show_features tinyint(1) DEFAULT 1,
             show_tooltips tinyint(1) DEFAULT 1,
             show_rating tinyint(1) DEFAULT 0,
             rating_value decimal(3,1) DEFAULT 0,
