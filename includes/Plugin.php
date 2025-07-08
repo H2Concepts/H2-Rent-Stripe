@@ -27,7 +27,7 @@ class Plugin {
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
         add_rewrite_rule('^shop/([^/]+)/([^/]+)/?$', 'index.php?produkt_group=$matches[1]&produkt_slug=$matches[2]', 'top');
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_group=$matches[1]', 'top');
         add_filter('query_vars', function ($vars) {
             $vars[] = 'produkt_slug';
             $vars[] = 'produkt_group';
@@ -76,7 +76,7 @@ class Plugin {
         }
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/([^/]+)/([^/]+)/?$', 'index.php?produkt_group=$matches[1]&produkt_slug=$matches[2]', 'top');
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_group=$matches[1]', 'top');
         $this->create_shop_page();
         flush_rewrite_rules();
     }
@@ -212,6 +212,7 @@ class Plugin {
         global $post, $wpdb;
 
         $slug = get_query_var('produkt_slug');
+        $group_part = get_query_var('produkt_group');
 
         if (!is_singular() && empty($slug)) {
             return;
@@ -290,6 +291,7 @@ class Plugin {
         global $post, $wpdb;
 
         $slug = get_query_var('produkt_slug');
+        $group_part = get_query_var('produkt_group');
 
         if (!is_singular() && empty($slug)) {
             return;
