@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) { exit; }
     <div class="produkt-shop-grid">
         <?php foreach ($categories as $cat): ?>
         <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
-        <div class="produkt-shop-card">
+        <a class="produkt-shop-card" href="<?php echo esc_url($url); ?>">
             <?php if (!empty($cat->default_image)): ?>
                 <img class="produkt-shop-image" src="<?php echo esc_url($cat->default_image); ?>" alt="<?php echo esc_attr($cat->product_title); ?>">
             <?php endif; ?>
@@ -24,8 +24,7 @@ if (!defined('ABSPATH')) { exit; }
                 </div>
             <?php endif; ?>
 
-            <a class="produkt-shop-button" href="<?php echo esc_url($url); ?>">Jetzt ansehen</a>
-        </div>
+        </a>
         <?php endforeach; ?>
     </div>
 </div>

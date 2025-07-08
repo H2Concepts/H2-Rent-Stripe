@@ -133,21 +133,28 @@ class Plugin {
         // Fetch minimum price and variant count for each category
         foreach ($categories as $cat) {
             $variants = $wpdb->get_results($wpdb->prepare(
-                "SELECT base_price, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
+                "SELECT base_price, price_from, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
                 $cat->id
             ));
 
             $prices = array();
             foreach ($variants as $variant) {
+                $price_val = 0;
                 if (!empty($variant->stripe_price_id)) {
                     $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                     if (!is_wp_error($p)) {
-                        $prices[] = $p;
-                    } else {
-                        $prices[] = floatval($variant->base_price);
+                        $price_val = $p;
                     }
-                } else {
-                    $prices[] = floatval($variant->base_price);
+                }
+                if ($price_val <= 0) {
+                    if (!empty($variant->price_from) && floatval($variant->price_from) > 0) {
+                        $price_val = floatval($variant->price_from);
+                    } else {
+                        $price_val = floatval($variant->base_price);
+                    }
+                }
+                if ($price_val > 0) {
+                    $prices[] = $price_val;
                 }
             }
 
