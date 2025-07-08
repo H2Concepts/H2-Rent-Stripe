@@ -20,11 +20,30 @@ class Database {
             }
         }
 
-        // Ensure min_price column exists in categories table
+        // Ensure additional columns exist in categories table
         $cat_table = $wpdb->prefix . 'produkt_categories';
         $min_price_exists = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'min_price'");
         if (!$min_price_exists) {
             $wpdb->query("ALTER TABLE $cat_table ADD COLUMN min_price DECIMAL(10,2) DEFAULT NULL");
+        }
+        $shop_col = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'shop_cat_id'");
+        if (!$shop_col) {
+            $wpdb->query("ALTER TABLE $cat_table ADD COLUMN shop_cat_id MEDIUMINT(9) DEFAULT 0 AFTER id");
+        }
+
+        // Ensure shop categories table exists
+        $table_shopcats = $wpdb->prefix . 'produkt_shopcats';
+        $exists_shop = $wpdb->get_var("SHOW TABLES LIKE '$table_shopcats'");
+        if (!$exists_shop) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_shopcats (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                name varchar(255) NOT NULL,
+                slug varchar(255) NOT NULL UNIQUE,
+                PRIMARY KEY (id)
+            ) $charset_collate;";
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
         }
         
         // Add image columns to variants table if they don't exist
@@ -560,6 +579,7 @@ class Database {
         $table_categories = $wpdb->prefix . 'produkt_categories';
         $sql_categories = "CREATE TABLE $table_categories (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
+            shop_cat_id mediumint(9) DEFAULT 0,
             name varchar(255) NOT NULL,
             shortcode varchar(100) NOT NULL UNIQUE,
             page_title varchar(255) DEFAULT '',
@@ -599,6 +619,15 @@ class Database {
             rating_link text DEFAULT '',
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+
+        // Shop categories to group products
+        $table_shopcats = $wpdb->prefix . 'produkt_shopcats';
+        $sql_shopcats = "CREATE TABLE $table_shopcats (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            slug varchar(255) NOT NULL UNIQUE,
             PRIMARY KEY (id)
         ) $charset_collate;";
         
@@ -789,6 +818,7 @@ class Database {
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_categories);
+        dbDelta($sql_shopcats);
         dbDelta($sql_variants);
         dbDelta($sql_extras);
         dbDelta($sql_durations);
@@ -863,6 +893,7 @@ class Database {
                 $wpdb->prefix . 'produkt_categories',
                 array(
                      'name' => 'Standard Produkt',
+                    'shop_cat_id' => 0,
                     'shortcode' => 'produkt_product',
                     'page_title' => '',
                     'page_description' => '',

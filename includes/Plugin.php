@@ -135,9 +135,15 @@ class Plugin {
         return ob_get_clean();
     }
 
-    public function render_product_grid() {
+    public function render_product_grid($atts = []) {
         global $wpdb;
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
+        $atts = shortcode_atts(['shop_category' => 0], $atts);
+        $query = "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1";
+        if ($atts['shop_category']) {
+            $query .= $wpdb->prepare(" AND shop_cat_id = %d", $atts['shop_category']);
+        }
+        $query .= " ORDER BY sort_order";
+        $categories = $wpdb->get_results($query);
 
         // Fetch variant count and cheapest price info for each category
         foreach ($categories as $cat) {
@@ -457,6 +463,24 @@ class Plugin {
         }
 
         global $wpdb;
+
+        // First check if slug matches a shop category
+        $shopcat = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_shopcats WHERE slug = %s",
+            $slug
+        ));
+
+        if ($shopcat) {
+            add_filter('pre_get_document_title', function () use ($shopcat) {
+                return $shopcat->name;
+            });
+            $html = $this->render_product_grid(['shop_category' => $shopcat->id]);
+            get_header();
+            echo $html;
+            get_footer();
+            exit;
+        }
+
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
         $category = null;
         foreach ($categories as $cat) {

@@ -35,6 +35,15 @@ class Admin {
             'produkt-variants',
             array($this, 'variants_page')
         );
+
+        add_submenu_page(
+            'produkt-verleih',
+            'Kategorien',
+            'Kategorien',
+            'manage_options',
+            'produkt-shopcats',
+            array($this, 'shop_categories_page')
+        );
         
         add_submenu_page(
             'produkt-verleih',
@@ -323,6 +332,7 @@ class Admin {
             $rating_value = $rating_value_input !== '' ? min(5, max(0, floatval($rating_value_input))) : 0;
             $rating_link = esc_url_raw($_POST['rating_link']);
             $sort_order = intval($_POST['sort_order']);
+            $shop_cat_id = isset($_POST['shop_cat_id']) ? intval($_POST['shop_cat_id']) : 0;
 
             $accordion_titles = isset($_POST['accordion_titles']) ? array_map('sanitize_text_field', (array) $_POST['accordion_titles']) : array();
             $accordion_contents = isset($_POST['accordion_contents']) ? array_map('wp_kses_post', (array) $_POST['accordion_contents']) : array();
@@ -377,9 +387,10 @@ class Admin {
                         'rating_value' => $rating_value,
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
+                        'shop_cat_id' => $shop_cat_id,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d','%d'),
                 );
 
                 if ($result !== false) {
@@ -429,8 +440,9 @@ class Admin {
                         'rating_value' => $rating_value,
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
+                        'shop_cat_id' => $shop_cat_id,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d','%d')
                 );
 
                 if ($result !== false) {
@@ -488,6 +500,10 @@ class Admin {
     
     public function colors_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/colors-page.php';
+    }
+
+    public function shop_categories_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/shopcats-page.php';
     }
     
     public function orders_page() {

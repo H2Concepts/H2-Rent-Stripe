@@ -1,5 +1,7 @@
 <?php
 // Categories Add Tab Content
+global $wpdb;
+$shopcats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_shopcats ORDER BY name");
 ?>
 
 <div class="produkt-add-category">
@@ -23,6 +25,15 @@
                     <input type="text" name="shortcode" required pattern="[a-z0-9_-]+" placeholder="z.B. nonomo-premium">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+            </div>
+            <div class="produkt-form-group">
+                <label>Shop-Kategorie</label>
+                <select name="shop_cat_id">
+                    <option value="0">Keine</option>
+                    <?php foreach ($shopcats as $sc): ?>
+                        <option value="<?php echo $sc->id; ?>"><?php echo esc_html($sc->name); ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
         </div>
         
