@@ -975,7 +975,7 @@ class Database {
                 );
             }
         }
-        
+
         // Insert default durations only if table is empty
         $existing_durations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
         if ($existing_durations == 0) {
@@ -999,5 +999,62 @@ class Database {
                 );
             }
         }
+    }
+
+    /**
+     * Drop all plugin tables from the database.
+     */
+    public function drop_tables() {
+        global $wpdb;
+
+        $tables = array(
+            'produkt_categories',
+            'produkt_variants',
+            'produkt_extras',
+            'produkt_durations',
+            'produkt_conditions',
+            'produkt_colors',
+            'produkt_color_variant_images',
+            'produkt_variant_options',
+            'produkt_duration_prices',
+            'produkt_orders',
+            'produkt_order_logs',
+            'produkt_analytics',
+            'produkt_branding',
+            'produkt_notifications',
+            'produkt_stripe_metadata'
+        );
+
+        foreach ($tables as $table) {
+            $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}$table");
+        }
+    }
+
+    /**
+     * Get all Stripe price IDs for every variant and duration in a category.
+     *
+     * @param int $category_id
+     * @return array
+     */
+    public static function getAllStripePriceIdsByCategory($category_id) {
+        global $wpdb;
+
+        $variant_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+                $category_id
+            )
+        );
+
+        if (empty($variant_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)";
+        $query = $wpdb->prepare($sql, ...$variant_ids);
+        $price_ids = $wpdb->get_col($query);
+
+        return array_filter((array) $price_ids);
     }
 }
