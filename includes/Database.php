@@ -4,6 +4,21 @@ namespace ProduktVerleih;
 class Database {
     public function update_database() {
         global $wpdb;
+
+        // If core tables are missing, create them first and skip further checks
+        $required_tables = [
+            'produkt_categories',
+            'produkt_variants',
+            'produkt_extras',
+            'produkt_durations'
+        ];
+        foreach ($required_tables as $tbl) {
+            $table_name = $wpdb->prefix . $tbl;
+            if (!$wpdb->get_var("SHOW TABLES LIKE '$table_name'")) {
+                $this->create_tables();
+                return;
+            }
+        }
         
         // Add category_id column to all tables if it doesn't exist
         $tables_to_update = array(
@@ -14,6 +29,9 @@ class Database {
         
         foreach ($tables_to_update as $table_suffix) {
             $table_name = $wpdb->prefix . $table_suffix;
+            if (!$wpdb->get_var("SHOW TABLES LIKE '$table_name'")) {
+                continue;
+            }
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
             if (empty($column_exists)) {
                 $wpdb->query("ALTER TABLE $table_name ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
@@ -22,13 +40,15 @@ class Database {
 
         // Ensure additional columns exist in categories table
         $cat_table = $wpdb->prefix . 'produkt_categories';
-        $min_price_exists = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'min_price'");
-        if (!$min_price_exists) {
-            $wpdb->query("ALTER TABLE $cat_table ADD COLUMN min_price DECIMAL(10,2) DEFAULT NULL");
-        }
-        $shop_col = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'shop_cat_id'");
-        if (!$shop_col) {
-            $wpdb->query("ALTER TABLE $cat_table ADD COLUMN shop_cat_id MEDIUMINT(9) DEFAULT 0 AFTER id");
+        if ($wpdb->get_var("SHOW TABLES LIKE '$cat_table'")) {
+            $min_price_exists = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'min_price'");
+            if (!$min_price_exists) {
+                $wpdb->query("ALTER TABLE $cat_table ADD COLUMN min_price DECIMAL(10,2) DEFAULT NULL");
+            }
+            $shop_col = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'shop_cat_id'");
+            if (!$shop_col) {
+                $wpdb->query("ALTER TABLE $cat_table ADD COLUMN shop_cat_id MEDIUMINT(9) DEFAULT 0 AFTER id");
+            }
         }
 
         // Ensure shop categories table exists
@@ -48,7 +68,8 @@ class Database {
         
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';
-        $columns_to_add = array(
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table_variants'")) {
+            $columns_to_add = array(
             'stripe_price_id' => 'VARCHAR(255) DEFAULT ""',
             'price_from' => 'DECIMAL(10,2) DEFAULT 0',
             'image_url_1' => 'TEXT',
@@ -59,33 +80,36 @@ class Database {
             'available' => 'TINYINT(1) DEFAULT 1',
             'availability_note' => 'VARCHAR(255) DEFAULT ""',
             'delivery_time' => 'VARCHAR(255) DEFAULT ""'
-        );
-        
-        foreach ($columns_to_add as $column => $type) {
-            $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE '$column'");
-            if (empty($column_exists)) {
-                $after = $column === 'stripe_price_id' ? 'name' : 'base_price';
-                $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER $after");
+            );
+
+            foreach ($columns_to_add as $column => $type) {
+                $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE '$column'");
+                if (empty($column_exists)) {
+                    $after = $column === 'stripe_price_id' ? 'name' : 'base_price';
+                    $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER $after");
+                }
             }
-        }
-        
-        // Remove old single image_url column if it exists
-        $old_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'image_url'");
-        if (!empty($old_column_exists)) {
-            // Migrate data from old column to new column
-            $wpdb->query("UPDATE $table_variants SET image_url_1 = image_url WHERE image_url IS NOT NULL AND image_url != ''");
-            $wpdb->query("ALTER TABLE $table_variants DROP COLUMN image_url");
+
+            // Remove old single image_url column if it exists
+            $old_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'image_url'");
+            if (!empty($old_column_exists)) {
+                // Migrate data from old column to new column
+                $wpdb->query("UPDATE $table_variants SET image_url_1 = image_url WHERE image_url IS NOT NULL AND image_url != ''");
+                $wpdb->query("ALTER TABLE $table_variants DROP COLUMN image_url");
+            }
         }
         
         // Add image_url and stripe_price_id columns to extras table if they don't exist
         $table_extras = $wpdb->prefix . 'produkt_extras';
-        $extra_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'image_url'");
-        if (empty($extra_column_exists)) {
-            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN image_url TEXT AFTER price");
-        }
-        $price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id'");
-        if (empty($price_id_exists)) {
-            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+        if ($wpdb->get_var("SHOW TABLES LIKE '$table_extras'")) {
+            $extra_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'image_url'");
+            if (empty($extra_column_exists)) {
+                $wpdb->query("ALTER TABLE $table_extras ADD COLUMN image_url TEXT AFTER price");
+            }
+            $price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id'");
+            if (empty($price_id_exists)) {
+                $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+            }
         }
         
         // Create categories table if it doesn't exist
