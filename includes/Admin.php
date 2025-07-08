@@ -142,11 +142,17 @@ class Admin {
         global $wpdb;
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
                 }
             }
         } else {

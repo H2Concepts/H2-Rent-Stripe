@@ -26,9 +26,11 @@ class Plugin {
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
+        add_rewrite_rule('^shop/([^/]+)/([^/]+)/?$', 'index.php?produkt_group=$matches[1]&produkt_slug=$matches[2]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_filter('query_vars', function ($vars) {
             $vars[] = 'produkt_slug';
+            $vars[] = 'produkt_group';
             return $vars;
         });
         add_action('template_redirect', [$this, 'maybe_display_product_page']);
@@ -73,6 +75,7 @@ class Plugin {
             $this->db->insert_default_data();
         }
         update_option('produkt_version', PRODUKT_VERSION);
+        add_rewrite_rule('^shop/([^/]+)/([^/]+)/?$', 'index.php?produkt_group=$matches[1]&produkt_slug=$matches[2]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         $this->create_shop_page();
         flush_rewrite_rules();
@@ -149,6 +152,7 @@ class Plugin {
         global $post, $wpdb;
 
         $slug = get_query_var('produkt_slug');
+        $group_part = get_query_var('produkt_group');
 
         if (!is_singular() && empty($slug)) {
             return;
@@ -156,11 +160,17 @@ class Plugin {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
                 }
             }
         } else {
@@ -209,11 +219,17 @@ class Plugin {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
                 }
             }
         } else {
@@ -240,7 +256,15 @@ class Plugin {
         $og_title = !empty($category->meta_title) ? $category->meta_title : $category->page_title;
         $og_description = !empty($category->meta_description) ? $category->meta_description : $category->page_description;
         $og_image = !empty($category->default_image) ? $category->default_image : '';
-        $og_url = $slug ? home_url('/shop/' . sanitize_title($slug)) : get_permalink($post->ID);
+        $group_part = get_query_var('produkt_group');
+        $path = '/shop/';
+        if ($slug) {
+            if ($group_part) {
+                $path .= sanitize_title($group_part) . '/';
+            }
+            $path .= sanitize_title($slug);
+        }
+        $og_url = $slug ? home_url($path) : get_permalink($post->ID);
 
         echo '<!-- Open Graph Tags -->' . "\n";
         echo '<meta property="og:type" content="product">' . "\n";
@@ -273,11 +297,17 @@ class Plugin {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
                 }
             }
         } else {
@@ -348,7 +378,7 @@ class Plugin {
                     'unitText' => 'pro Monat'
                 ],
                 'availability' => 'https://schema.org/InStock',
-                'url' => $slug ? home_url('/shop/' . sanitize_title($slug)) : get_permalink($post->ID),
+                'url' => $slug ? home_url(($group_part ? '/shop/' . sanitize_title($group_part) . '/' : '/shop/') . sanitize_title($slug)) : get_permalink($post->ID),
                 'seller' => [
                     '@type' => 'Organization',
                     'name' => get_bloginfo('name')
@@ -442,28 +472,47 @@ class Plugin {
 
     public function maybe_display_product_page() {
         $slug = get_query_var('produkt_slug');
-        if (empty($slug)) {
+        $group_slug = get_query_var('produkt_group');
+        if (empty($slug) && empty($group_slug)) {
             return;
         }
 
         global $wpdb;
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-        $category = null;
-        foreach ($categories as $cat) {
-            if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                $category = $cat;
-                break;
-            }
-        }
 
-        if (!$category) {
-            $group = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_groups WHERE slug = %s", sanitize_title($slug)));
-            if ($group) {
-                $categories = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 AND group_id = %d ORDER BY sort_order", $group->id));
-                $current_group = $group;
-                add_filter('pre_get_document_title', function () use ($group) { return $group->name; });
+        if ($group_slug && $slug) {
+            $group = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_groups WHERE slug = %s",
+                sanitize_title($group_slug)
+            ));
+            if (!$group) {
+                global $wp_query;
+                $wp_query->set_404();
+                status_header(404);
+                return;
+            }
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE group_id = %d AND shortcode = %s",
+                $group->id,
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE group_id = %d",
+                    $group->id
+                ));
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
+                }
+            }
+            if ($category) {
+                add_filter('pre_get_document_title', function () use ($category) {
+                    return $category->page_title ?: $category->product_title;
+                });
                 get_header();
-                include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+                include PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
                 get_footer();
                 exit;
             }
@@ -473,14 +522,47 @@ class Plugin {
             return;
         }
 
-        add_filter('pre_get_document_title', function () use ($category) {
-            return $category->page_title ?: $category->product_title;
-        });
+        if ($slug) {
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
+                }
+            }
+            if ($category) {
+                add_filter('pre_get_document_title', function () use ($category) {
+                    return $category->page_title ?: $category->product_title;
+                });
+                get_header();
+                include PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
+                get_footer();
+                exit;
+            }
+        }
 
-        get_header();
-        include PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
-        get_footer();
-        exit;
+        if ($group_slug) {
+            $group = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_groups WHERE slug = %s", sanitize_title($group_slug)));
+            if ($group) {
+                $categories = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 AND group_id = %d ORDER BY sort_order", $group->id));
+                $current_group = $group;
+                add_filter('pre_get_document_title', function () use ($group) { return $group->name; });
+                get_header();
+                include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+                get_footer();
+                exit;
+            }
+        }
+
+        global $wp_query;
+        $wp_query->set_404();
+        status_header(404);
     }
 
     private function create_shop_page() {

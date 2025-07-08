@@ -7,7 +7,14 @@ if (!defined('ABSPATH')) { exit; }
     <?php endif; ?>
     <div class="produkt-shop-grid">
         <?php foreach ($categories as $cat): ?>
-        <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
+        <?php
+            $path = '/shop/';
+            if (!empty($current_group)) {
+                $path .= sanitize_title($current_group->slug ?: $current_group->name) . '/';
+            }
+            $path .= sanitize_title($cat->shortcode ?: $cat->product_title);
+            $url = home_url($path);
+        ?>
         <?php
             $price = $wpdb->get_var($wpdb->prepare(
                 "SELECT base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order LIMIT 1",
