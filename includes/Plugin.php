@@ -559,6 +559,17 @@ class Plugin {
                 include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
                 get_footer();
                 exit;
+            } else {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
+                $current_group = null;
+                $shop_page = get_post(get_option(PRODUKT_SHOP_PAGE_OPTION));
+                if ($shop_page) {
+                    add_filter('pre_get_document_title', function () use ($shop_page) { return $shop_page->post_title; });
+                }
+                get_header();
+                include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+                get_footer();
+                exit;
             }
         }
 
