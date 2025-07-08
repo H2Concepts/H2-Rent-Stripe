@@ -129,6 +129,30 @@ class Plugin {
     public function render_product_grid() {
         global $wpdb;
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
+
+        // Fetch minimum price and variant count for each category
+        foreach ($categories as $cat) {
+            $variants = $wpdb->get_results($wpdb->prepare(
+                "SELECT base_price, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
+                $cat->id
+            ));
+
+            $prices = array();
+            foreach ($variants as $variant) {
+                if (!empty($variant->stripe_price_id)) {
+                    $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                    if (!is_wp_error($p)) {
+                        $prices[] = $p;
+                    }
+                } else {
+                    $prices[] = floatval($variant->base_price);
+                }
+            }
+
+            $cat->variant_count = count($variants);
+            $cat->min_price = !empty($prices) ? min($prices) : 0;
+        }
+
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
         return ob_get_clean();
