@@ -121,6 +121,13 @@ class Plugin {
         $page_title = !empty($atts['title']) ? $atts['title'] : $category->page_title;
         $page_description = !empty($atts['description']) ? $atts['description'] : $category->page_description;
 
+        $category->variant_count = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
+            $category->id
+        ));
+        $min = $this->db->get_min_price_for_product($category->id);
+        $category->min_price = is_numeric($min) ? floatval($min) : null;
+
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
         return ob_get_clean();

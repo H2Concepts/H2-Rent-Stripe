@@ -106,6 +106,7 @@ class Database {
                 show_rating tinyint(1) DEFAULT 0,
                 rating_value decimal(3,1) DEFAULT 0,
                 rating_link text DEFAULT '',
+                min_price decimal(10,2) DEFAULT NULL,
                 active tinyint(1) DEFAULT 1,
                 sort_order int(11) DEFAULT 0,
                 PRIMARY KEY (id)
@@ -146,7 +147,8 @@ class Database {
                 'show_tooltips' => 'TINYINT(1) DEFAULT 1',
                 'show_rating' => 'TINYINT(1) DEFAULT 0',
                 'rating_value' => 'DECIMAL(3,1) DEFAULT 0',
-                'rating_link' => 'TEXT'
+                'rating_link' => 'TEXT',
+                'min_price' => 'DECIMAL(10,2) DEFAULT NULL'
             );
             
             foreach ($new_columns as $column => $type) {
@@ -1058,5 +1060,34 @@ class Database {
         }
 
         return $min_price;
+    }
+
+    /**
+     * Calculate and store the cheapest price for a category.
+     *
+     * @param int $category_id Category identifier.
+     * @return void
+     */
+    public function update_min_price_for_category($category_id) {
+        global $wpdb;
+        $min = $this->get_min_price_for_product($category_id);
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_categories',
+            ['min_price' => $min],
+            ['id' => $category_id],
+            ['%f'],
+            ['%d']
+        );
+    }
+
+    /**
+     * Recalculate minimum prices for all categories.
+     */
+    public function recalc_all_min_prices() {
+        global $wpdb;
+        $ids = $wpdb->get_col("SELECT id FROM {$wpdb->prefix}produkt_categories");
+        foreach ($ids as $cid) {
+            $this->update_min_price_for_category($cid);
+        }
     }
 }

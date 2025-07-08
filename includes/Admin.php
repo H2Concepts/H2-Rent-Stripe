@@ -384,6 +384,8 @@ class Admin {
 
                 if ($result !== false) {
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
+                    $db = new \ProduktVerleih\Database();
+                    $db->update_min_price_for_category(intval($_POST['id']));
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
                 }
@@ -433,6 +435,8 @@ class Admin {
 
                 if ($result !== false) {
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich hinzugefügt!</p></div>';
+                    $db = new \ProduktVerleih\Database();
+                    $db->update_min_price_for_category($wpdb->insert_id);
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
                 }

@@ -52,6 +52,8 @@ if (isset($_POST['submit'])) {
         $duration_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich aktualisiert!</p></div>';
+            $db = new \ProduktVerleih\Database();
+            $db->update_min_price_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -73,6 +75,8 @@ if (isset($_POST['submit'])) {
         $duration_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich hinzugefügt!</p></div>';
+            $db = new \ProduktVerleih\Database();
+            $db->update_min_price_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -97,6 +101,8 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
     $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Mietdauer gelöscht!</p></div>';
+        $db = new \ProduktVerleih\Database();
+        $db->update_min_price_for_category($selected_category);
     } else {
         echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
     }

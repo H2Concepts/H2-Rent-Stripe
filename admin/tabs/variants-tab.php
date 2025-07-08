@@ -40,6 +40,8 @@ if (isset($_POST['submit_variant'])) {
         
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
+            $db = new \ProduktVerleih\Database();
+            $db->update_min_price_for_category($category_id);
         }
     } else {
         // Insert
@@ -61,6 +63,8 @@ if (isset($_POST['submit_variant'])) {
         
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
+            $db = new \ProduktVerleih\Database();
+            $db->update_min_price_for_category($category_id);
         }
     }
 }
@@ -70,6 +74,8 @@ if (isset($_GET['delete_variant'])) {
     $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete_variant'])), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Ausführung gelöscht!</p></div>';
+        $db = new \ProduktVerleih\Database();
+        $db->update_min_price_for_category($selected_category);
     }
 }
 

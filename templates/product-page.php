@@ -74,6 +74,8 @@ $show_rating = isset($category) ? ($category->show_rating ?? 0) : 0;
 $rating_value = isset($category) ? floatval(str_replace(',', '.', $category->rating_value ?? 0)) : 0;
 $rating_display = number_format($rating_value, 1, ',', '');
 $rating_link = isset($category) ? ($category->rating_link ?? '') : '';
+$variant_count = isset($category) ? ($category->variant_count ?? 0) : 0;
+$min_price = isset($category) ? ($category->min_price ?? null) : null;
 
 // Get initial conditions and colors (will be updated via AJAX when variant is selected)
 $initial_conditions = $wpdb->get_results($wpdb->prepare(
@@ -131,6 +133,11 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php else: ?>
                             <span>Bewertungen ansehen</span>
                         <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if ($min_price !== null): ?>
+                    <div class="produkt-card-price">
+                        <?php echo ($variant_count > 1 ? 'ab ' : '') . number_format($min_price, 2, ',', '.') . ' €'; ?>
                     </div>
                     <?php endif; ?>
                     <div class="produkt-product-description">
