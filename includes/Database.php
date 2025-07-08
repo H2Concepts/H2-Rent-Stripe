@@ -19,6 +19,13 @@ class Database {
                 $wpdb->query("ALTER TABLE $table_name ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
             }
         }
+
+        // Ensure min_price column exists in categories table
+        $cat_table = $wpdb->prefix . 'produkt_categories';
+        $min_price_exists = $wpdb->get_var("SHOW COLUMNS FROM $cat_table LIKE 'min_price'");
+        if (!$min_price_exists) {
+            $wpdb->query("ALTER TABLE $cat_table ADD COLUMN min_price DECIMAL(10,2) DEFAULT NULL");
+        }
         
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';

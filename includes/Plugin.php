@@ -72,6 +72,8 @@ class Plugin {
         if ($load_sample) {
             $this->db->insert_default_data();
         }
+        // Ensure minimum prices are calculated on fresh installs
+        $this->db->recalc_all_min_prices();
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         $this->create_shop_page();
