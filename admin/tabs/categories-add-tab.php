@@ -23,6 +23,11 @@
                     <input type="text" name="shortcode" required pattern="[a-z0-9_-]+" placeholder="z.B. nonomo-premium">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+                <div class="produkt-form-group">
+                    <label>Slug *</label>
+                    <input type="text" name="slug" required pattern="[a-z0-9-]+" placeholder="z.B. wohnzimmer">
+                    <small>Wird in der URL verwendet</small>
+                </div>
             </div>
         </div>
         
@@ -318,8 +323,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-generate shortcode from name
     const nameInput = document.querySelector('input[name="name"]');
     const shortcodeInput = document.querySelector('input[name="shortcode"]');
-    
-    if (nameInput && shortcodeInput) {
+    const slugInput = document.querySelector('input[name="slug"]');
+
+    if (nameInput && shortcodeInput && slugInput) {
         nameInput.addEventListener('input', function() {
             if (!shortcodeInput.value) {
                 const shortcode = this.value
@@ -329,6 +335,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     .replace(/-+/g, '-')
                     .trim();
                 shortcodeInput.value = shortcode;
+            }
+            if (!slugInput.value) {
+                const slug = this.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+                slugInput.value = slug;
             }
         });
     }

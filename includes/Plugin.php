@@ -156,13 +156,10 @@ class Plugin {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
-                }
-            }
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE slug = %s",
+                $slug
+            ));
         } else {
             $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
             preg_match($pattern, $post->post_content, $matches);
@@ -209,13 +206,10 @@ class Plugin {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
-                }
-            }
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE slug = %s",
+                $slug
+            ));
         } else {
             $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
             preg_match($pattern, $post->post_content, $matches);
@@ -240,7 +234,7 @@ class Plugin {
         $og_title = !empty($category->meta_title) ? $category->meta_title : $category->page_title;
         $og_description = !empty($category->meta_description) ? $category->meta_description : $category->page_description;
         $og_image = !empty($category->default_image) ? $category->default_image : '';
-        $og_url = $slug ? home_url('/shop/' . sanitize_title($slug)) : get_permalink($post->ID);
+        $og_url = $slug ? home_url('/shop/' . $slug) : get_permalink($post->ID);
 
         echo '<!-- Open Graph Tags -->' . "\n";
         echo '<meta property="og:type" content="product">' . "\n";
@@ -273,13 +267,10 @@ class Plugin {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
-                }
-            }
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE slug = %s",
+                $slug
+            ));
         } else {
             $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
             preg_match($pattern, $post->post_content, $matches);
@@ -348,7 +339,7 @@ class Plugin {
                     'unitText' => 'pro Monat'
                 ],
                 'availability' => 'https://schema.org/InStock',
-                'url' => $slug ? home_url('/shop/' . sanitize_title($slug)) : get_permalink($post->ID),
+                'url' => $slug ? home_url('/shop/' . $slug) : get_permalink($post->ID),
                 'seller' => [
                     '@type' => 'Organization',
                     'name' => get_bloginfo('name')
@@ -447,14 +438,10 @@ class Plugin {
         }
 
         global $wpdb;
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-        $category = null;
-        foreach ($categories as $cat) {
-            if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                $category = $cat;
-                break;
-            }
-        }
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE slug = %s",
+            $slug
+        ));
 
         if (!$category) {
             global $wp_query;

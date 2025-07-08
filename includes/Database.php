@@ -71,6 +71,7 @@ class Database {
             $sql = "CREATE TABLE $table_categories (
                 id mediumint(9) NOT NULL AUTO_INCREMENT,
                 name varchar(255) NOT NULL,
+                slug varchar(200) NOT NULL UNIQUE,
                 shortcode varchar(100) NOT NULL UNIQUE,
                 page_title varchar(255) DEFAULT '',
                 page_description text DEFAULT '',
@@ -116,6 +117,7 @@ class Database {
         } else {
             // Add new columns to existing categories table
             $new_columns = array(
+                'slug' => 'VARCHAR(200) UNIQUE',
                 'meta_title' => 'VARCHAR(255)',
                 'meta_description' => 'TEXT',
                 'features_title' => 'VARCHAR(255) DEFAULT ""',
@@ -153,6 +155,23 @@ class Database {
                 $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_categories LIKE '$column'");
                 if (empty($column_exists)) {
                     $wpdb->query("ALTER TABLE $table_categories ADD COLUMN $column $type");
+                }
+            }
+
+            // Populate slug column for existing records
+            if (array_key_exists('slug', $new_columns)) {
+                $rows = $wpdb->get_results("SELECT id, slug, name FROM $table_categories");
+                foreach ($rows as $row) {
+                    if (empty($row->slug)) {
+                        $base = sanitize_title($row->name);
+                        $slug = $base;
+                        $i = 1;
+                        while ($wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_categories WHERE slug = %s AND id != %d", $slug, $row->id))) {
+                            $slug = $base . '-' . $i;
+                            $i++;
+                        }
+                        $wpdb->update($table_categories, ['slug' => $slug], ['id' => $row->id]);
+                    }
                 }
             }
         }
@@ -549,6 +568,7 @@ class Database {
         $sql_categories = "CREATE TABLE $table_categories (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             name varchar(255) NOT NULL,
+            slug varchar(200) NOT NULL UNIQUE,
             shortcode varchar(100) NOT NULL UNIQUE,
             page_title varchar(255) DEFAULT '',
             page_description text DEFAULT '',
@@ -851,7 +871,8 @@ class Database {
             $wpdb->insert(
                 $wpdb->prefix . 'produkt_categories',
                 array(
-                     'name' => 'Standard Produkt',
+                    'name' => 'Standard Produkt',
+                    'slug' => 'standard-produkt',
                     'shortcode' => 'produkt_product',
                     'page_title' => '',
                     'page_description' => '',

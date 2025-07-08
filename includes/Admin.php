@@ -111,6 +111,7 @@ class Admin {
                 return;
             }
         }
+        }
 
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
         if (!empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'))) {
@@ -288,6 +289,12 @@ class Admin {
             self::verify_admin_action();
             $name = sanitize_text_field($_POST['name']);
             $shortcode = sanitize_text_field($_POST['shortcode']);
+            $slug = sanitize_title($_POST['slug']);
+            $existing_slug = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories WHERE slug = %s AND id != %d", $slug, intval($_POST['id'] ?? 0)));
+            if ($existing_slug) {
+                echo '<div class="notice notice-error"><p>❌ Slug bereits vorhanden.</p></div>';
+                $active_tab = 'list';
+            } else {
             $meta_title = sanitize_text_field($_POST['meta_title']);
             $meta_description = sanitize_textarea_field($_POST['meta_description']);
             $product_title = sanitize_text_field($_POST['product_title']);
@@ -342,6 +349,7 @@ class Admin {
                     $table_name,
                     [
                         'name' => $name,
+                        'slug' => $slug,
                         'shortcode' => $shortcode,
                         'meta_title' => $meta_title,
                         'meta_description' => $meta_description,
@@ -379,7 +387,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -392,6 +400,7 @@ class Admin {
                     $table_name,
                     [
                         'name' => $name,
+                        'slug' => $slug,
                         'shortcode' => $shortcode,
                         'meta_title' => $meta_title,
                         'meta_description' => $meta_description,
@@ -428,7 +437,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {

@@ -36,6 +36,11 @@
                     <input type="text" name="shortcode" value="<?php echo esc_attr($edit_item->shortcode); ?>" required pattern="[a-z0-9_-]+">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+                <div class="produkt-form-group">
+                    <label>Slug *</label>
+                    <input type="text" name="slug" value="<?php echo esc_attr($edit_item->slug); ?>" required pattern="[a-z0-9-]+">
+                    <small>Wird in der URL verwendet</small>
+                </div>
             </div>
         </div>
         

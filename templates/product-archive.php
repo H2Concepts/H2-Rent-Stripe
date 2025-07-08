@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) { exit; }
 <div class="produkt-shop-archive produkt-container">
     <div class="produkt-shop-grid">
         <?php foreach ($categories as $cat): ?>
-        <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
+        <?php $url = home_url('/shop/' . $cat->slug); ?>
         <?php
             $price = $wpdb->get_var($wpdb->prepare(
                 "SELECT base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order LIMIT 1",

@@ -43,7 +43,7 @@
                     <code>[produkt_product category="<?php echo esc_html($category->shortcode); ?>"]</code>
                 </div>
 
-                <?php $product_url = home_url('/shop/' . sanitize_title($category->product_title)); ?>
+                <?php $product_url = home_url('/shop/' . $category->slug); ?>
                 <div class="produkt-category-url">
                     <code><?php echo esc_url($product_url); ?></code>
                 </div>
