@@ -1073,9 +1073,17 @@ class Database {
      */
     public function update_min_price_for_category($category_id) {
         global $wpdb;
+
+        // Ensure column exists in case the DB update has not run yet
+        $table = $wpdb->prefix . 'produkt_categories';
+        $exists = $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'min_price'");
+        if (!$exists) {
+            $wpdb->query("ALTER TABLE $table ADD COLUMN min_price DECIMAL(10,2) DEFAULT NULL");
+        }
+
         $min = $this->get_min_price_for_product($category_id);
         $wpdb->update(
-            $wpdb->prefix . 'produkt_categories',
+            $table,
             ['min_price' => $min],
             ['id' => $category_id],
             ['%f'],
