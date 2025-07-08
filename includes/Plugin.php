@@ -130,36 +130,14 @@ class Plugin {
         global $wpdb;
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
 
-        // Fetch minimum price and variant count for each category
+        // Fetch variant count and cheapest price info for each category
         foreach ($categories as $cat) {
-            $variants = $wpdb->get_results($wpdb->prepare(
-                "SELECT base_price, price_from, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
+            $cat->variant_count = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
                 $cat->id
             ));
 
-            $prices = array();
-            foreach ($variants as $variant) {
-                $price_val = 0;
-                if (!empty($variant->stripe_price_id)) {
-                    $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
-                    if (!is_wp_error($p)) {
-                        $price_val = $p;
-                    }
-                }
-                if ($price_val <= 0) {
-                    if (!empty($variant->price_from) && floatval($variant->price_from) > 0) {
-                        $price_val = floatval($variant->price_from);
-                    } else {
-                        $price_val = floatval($variant->base_price);
-                    }
-                }
-                if ($price_val > 0) {
-                    $prices[] = $price_val;
-                }
-            }
-
-            $cat->variant_count = count($variants);
-            $cat->min_price = !empty($prices) ? min($prices) : 0;
+            $cat->price_info = mein_plugin_get_guenstigster_preis($cat->id);
         }
 
         ob_start();
@@ -540,4 +518,73 @@ class Plugin {
 
         return null;
     }
+}
+
+/**
+ * Retrieve the cheapest price for a product category using Stripe price IDs.
+ * Cached for performance.
+ *
+ * @param int $category_id
+ * @return array|false
+ */
+function mein_plugin_get_guenstigster_preis($category_id) {
+    global $wpdb;
+
+    $cache_key = 'guenstiger_preis_' . intval($category_id);
+    $cached = get_transient($cache_key);
+    if ($cached !== false) {
+        return $cached;
+    }
+
+    $produkte = $wpdb->get_results($wpdb->prepare(
+        "SELECT price_ids FROM {$wpdb->prefix}produkt_items WHERE category_id = %d",
+        $category_id
+    ));
+
+    if (!$produkte) {
+        return false;
+    }
+
+    $secret = get_option('produkt_stripe_secret_key', '');
+    if (empty($secret)) {
+        return false;
+    }
+
+    $stripe = new \Stripe\StripeClient($secret);
+    $cheapest = null;
+    $currency = '';
+    $interval = '';
+
+    foreach ($produkte as $produkt) {
+        $ids = json_decode($produkt->price_ids, true);
+        if (!is_array($ids) || empty($ids)) {
+            continue;
+        }
+
+        $last_id = end($ids);
+
+        try {
+            $price = $stripe->prices->retrieve($last_id);
+            $amount = $price->unit_amount / 100;
+            if ($cheapest === null || $amount < $cheapest) {
+                $cheapest = $amount;
+                $currency = strtoupper($price->currency);
+                $interval = $price->recurring['interval'] ?? null;
+            }
+        } catch (\Exception $e) {
+            continue;
+        }
+    }
+
+    if ($cheapest !== null) {
+        $result = [
+            'amount' => $cheapest,
+            'currency' => $currency,
+            'interval' => $interval,
+        ];
+        set_transient($cache_key, $result, 12 * HOUR_IN_SECONDS);
+        return $result;
+    }
+
+    return false;
 }

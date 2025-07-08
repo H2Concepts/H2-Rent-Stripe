@@ -18,9 +18,10 @@ if (!defined('ABSPATH')) { exit; }
                 </div>
             <?php endif; ?>
 
-            <?php if ($cat->min_price > 0): ?>
+            <?php $price_info = $cat->price_info; ?>
+            <?php if ($price_info): ?>
                 <div class="produkt-card-price">
-                    <?php echo ($cat->variant_count > 1 ? 'ab ' : '') . number_format($cat->min_price, 2, ',', '.') . '€'; ?>
+                    <?php echo ($cat->variant_count > 1 ? 'ab ' : '') . number_format($price_info['amount'], 2, ',', '.') . ' ' . esc_html($price_info['currency']); ?>
                 </div>
             <?php endif; ?>
 

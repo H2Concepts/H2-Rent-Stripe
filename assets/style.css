@@ -1098,6 +1098,7 @@
 .produkt-rating-number {
     font-family: "Roca",sans-serif;
     font-size: 16px;
+    text-decoration: none;
 }
 
 .produkt-star-rating {
@@ -1137,6 +1138,7 @@
     gap: 4px;
     justify-content: center;
     margin-bottom: 8px;
+    text-decoration: none;
 }
 
 .produkt-card-price {
@@ -1404,6 +1406,7 @@ body.produkt-popup-open {
     font-size: 1.25rem;
     margin: 0 0 10px;
     color: #000000;
+    text-decoration: none;
 }
 
 .produkt-shop-card p {
