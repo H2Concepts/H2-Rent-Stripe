@@ -536,9 +536,68 @@ function mein_plugin_get_guenstigster_preis($category_id) {
         return $cached;
     }
 
-    $table_variants = $wpdb->prefix . 'produkt_variants';
+    $secret = get_option('produkt_stripe_secret_key', '');
+    $use_stripe = !empty($secret) && class_exists('\\Stripe\\StripeClient');
+    $stripe = $use_stripe ? new \Stripe\StripeClient($secret) : null;
+
+    $table_items = $wpdb->prefix . 'produkt_items';
+    $table_items_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_items));
+
+    $cheapest = null;
+    $currency = 'EUR';
+    $interval = 'month';
+
+    if ($table_items_exists) {
+        $produkte = $wpdb->get_results($wpdb->prepare(
+            "SELECT price_ids FROM $table_items WHERE category_id = %d",
+            $category_id
+        ));
+
+        foreach ($produkte as $produkt) {
+            error_log('RAW price_ids: ' . $produkt->price_ids);
+            $preise_json = json_decode($produkt->price_ids, true);
+            if (!is_array($preise_json) || empty($preise_json)) {
+                continue;
+            }
+
+            $last_price_id = end($preise_json);
+            $amount = null;
+
+            if ($last_price_id && $stripe) {
+                try {
+                    $price = $stripe->prices->retrieve($last_price_id);
+                    $amount   = $price->unit_amount / 100;
+                    $currency = strtoupper($price->currency);
+                    $interval = $price->recurring['interval'] ?? $interval;
+                } catch (\Exception $e) {
+                    $amount = null;
+                }
+            }
+
+            if ($amount === null) {
+                continue;
+            }
+
+            if ($cheapest === null || $amount < $cheapest) {
+                $cheapest = $amount;
+            }
+        }
+
+        if ($cheapest !== null) {
+            $result = [
+                'amount'   => $cheapest,
+                'currency' => $currency,
+                'interval' => $interval,
+            ];
+            set_transient($cache_key, $result, 12 * HOUR_IN_SECONDS);
+            return $result;
+        }
+    }
+
+    // Fallback for newer database structure using variants/durations
+    $table_variants  = $wpdb->prefix . 'produkt_variants';
     $table_durations = $wpdb->prefix . 'produkt_durations';
-    $table_prices   = $wpdb->prefix . 'produkt_duration_prices';
+    $table_prices    = $wpdb->prefix . 'produkt_duration_prices';
 
     $table_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table_variants));
     if (!$table_exists) {
@@ -558,17 +617,6 @@ function mein_plugin_get_guenstigster_preis($category_id) {
         "SELECT id FROM $table_durations WHERE category_id = %d AND active = 1 ORDER BY months_minimum DESC LIMIT 1",
         $category_id
     ));
-
-    $secret = get_option('produkt_stripe_secret_key', '');
-    $use_stripe = !empty($secret) && class_exists('\\Stripe\\StripeClient');
-    $stripe = null;
-    if ($use_stripe) {
-        $stripe = new \Stripe\StripeClient($secret);
-    }
-
-    $cheapest = null;
-    $currency = 'EUR';
-    $interval = 'month';
 
     foreach ($variants as $v) {
         $price_id = null;

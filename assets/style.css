@@ -1384,7 +1384,7 @@ body.produkt-popup-open {
     border-radius: 0;
     padding: 15px;
     text-align: center;
-    text-decoration: none;
+    text-decoration: none !important;
     color: inherit;
     transition: box-shadow 0.3s ease, border 0.3s ease;
 }
@@ -1392,6 +1392,11 @@ body.produkt-popup-open {
 .produkt-shop-card:hover {
     box-shadow: rgba(0, 0, 0, 0.13) 0px 7px 15px, rgba(0, 0, 0, 0.05) 0px 0px 3px;
     border: 2px solid rgba(0, 0, 0, 0);
+}
+
+.produkt-shop-card *,
+.produkt-shop-card:hover * {
+    text-decoration: none !important;
 }
 
 .produkt-shop-image {
