@@ -111,7 +111,6 @@ class Admin {
                 return;
             }
         }
-        }
 
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
         if (!empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'))) {
