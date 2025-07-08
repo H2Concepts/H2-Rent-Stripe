@@ -6,10 +6,22 @@ if (!defined('ABSPATH')) { exit; }
         <?php foreach ($categories as $cat): ?>
         <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
         <?php
-            $price = $wpdb->get_var($wpdb->prepare(
-                "SELECT base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order LIMIT 1",
+            $variant = $wpdb->get_row($wpdb->prepare(
+                "SELECT stripe_price_id, base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order LIMIT 1",
                 $cat->id
             ));
+            $price = null;
+            if ($variant) {
+                if (!empty($variant->stripe_price_id)) {
+                    $amount = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                    if (!is_wp_error($amount)) {
+                        $price = $amount;
+                    }
+                }
+                if ($price === null) {
+                    $price = $variant->base_price;
+                }
+            }
         ?>
         <a class="produkt-shop-card-link" href="<?php echo esc_url($url); ?>">
             <div class="produkt-shop-card">
