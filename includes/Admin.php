@@ -49,8 +49,8 @@ class Admin {
         // New parent submenu for product settings
         add_submenu_page(
             'produkt-verleih',
-            'Produkt',
-            'Produkt',
+            'Produktoptionen',
+            'Produktoptionen',
             'manage_options',
             'produkt-products',
             array($this, 'products_page')
@@ -495,7 +495,15 @@ class Admin {
             $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", intval($_GET['edit'])));
         }
 
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
+        $shop_filter = isset($_GET['shop_cat']) ? intval($_GET['shop_cat']) : 0;
+        $query = "SELECT * FROM {$wpdb->prefix}produkt_categories";
+        if ($shop_filter > 0) {
+            $query .= $wpdb->prepare(" WHERE shop_cat_id = %d", $shop_filter);
+        }
+        $query .= " ORDER BY sort_order, name";
+        $categories = $wpdb->get_results($query);
+
+        $shopcats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_shopcats ORDER BY name");
 
         $branding = [];
         $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
@@ -503,7 +511,7 @@ class Admin {
             $branding[$result->setting_key] = $result->setting_value;
         }
 
-        $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'branding'));
+        $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'branding', 'shopcats', 'shop_filter'));
     }
     
     public function variants_page() {

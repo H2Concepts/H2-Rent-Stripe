@@ -9,6 +9,19 @@
             ➕ Neues Produkt hinzufügen
         </a>
     </div>
+
+    <form method="get" action="" class="produkt-filter-form">
+        <input type="hidden" name="page" value="produkt-categories">
+        <input type="hidden" name="tab" value="list">
+        <label for="shop_cat_filter"><strong>Kategorie:</strong></label>
+        <select id="shop_cat_filter" name="shop_cat" onchange="this.form.submit()">
+            <option value="0">Alle</option>
+            <?php foreach ($shopcats as $sc): ?>
+            <option value="<?php echo $sc->id; ?>" <?php selected($shop_filter, $sc->id); ?>><?php echo esc_html($sc->name); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <noscript><input type="submit" class="button" value="Filtern"></noscript>
+    </form>
     
     <?php if (empty($categories)): ?>
     <div class="produkt-empty-state">
