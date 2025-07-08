@@ -4,6 +4,26 @@ namespace ProduktVerleih;
 class Database {
     public function update_database() {
         global $wpdb;
+
+        // Ensure all required tables exist before attempting updates
+        $core_tables = array(
+            'produkt_categories',
+            'produkt_variants',
+            'produkt_extras',
+            'produkt_durations'
+        );
+        $missing_table = false;
+        foreach ($core_tables as $table_suffix) {
+            $table = $wpdb->prefix . $table_suffix;
+            if (!$wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table))) {
+                $missing_table = true;
+                break;
+            }
+        }
+        if ($missing_table) {
+            $this->create_tables();
+            return;
+        }
         
         // Add category_id column to all tables if it doesn't exist
         $tables_to_update = array(
