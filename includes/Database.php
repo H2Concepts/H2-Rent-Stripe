@@ -999,4 +999,64 @@ class Database {
             }
         }
     }
+
+    /**
+     * Determine the cheapest price for a category using Stripe price IDs.
+     * Falls back to stored base prices when no Stripe ID is available.
+     *
+     * @param int $category_id Category identifier.
+     * @return float|null Lowest monthly price or null when none found.
+     */
+    public function get_min_price_for_product($category_id) {
+        global $wpdb;
+
+        $variants = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, stripe_price_id, base_price FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d AND active = 1",
+            $category_id
+        ));
+
+        if (empty($variants)) {
+            return null;
+        }
+
+        $duration_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d AND active = 1 ORDER BY months_minimum DESC LIMIT 1",
+            $category_id
+        ));
+
+        $min_price = null;
+
+        foreach ($variants as $variant) {
+            $price_id = null;
+            if ($duration_id) {
+                $price_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $duration_id,
+                    $variant->id
+                ));
+            }
+
+            if (empty($price_id) && !empty($variant->stripe_price_id)) {
+                $price_id = $variant->stripe_price_id;
+            }
+
+            $amount = null;
+            if (!empty($price_id)) {
+                $res = StripeService::get_price_amount($price_id);
+                if (!is_wp_error($res)) {
+                    $amount = floatval($res);
+                }
+            }
+
+            if ($amount === null) {
+                $amount = floatval($variant->base_price);
+            }
+
+            if ($min_price === null || $amount < $min_price) {
+                $min_price = $amount;
+            }
+        }
+
+        return $min_price;
+    }
 }
