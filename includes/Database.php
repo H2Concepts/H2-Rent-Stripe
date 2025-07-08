@@ -581,6 +581,7 @@ class Database {
             layout_style varchar(50) DEFAULT 'default',
             duration_tooltip text DEFAULT '',
             condition_tooltip text DEFAULT '',
+            show_features tinyint(1) DEFAULT 1,
             show_tooltips tinyint(1) DEFAULT 1,
             show_rating tinyint(1) DEFAULT 0,
             rating_value decimal(3,1) DEFAULT 0,
