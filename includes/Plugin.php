@@ -126,9 +126,20 @@ class Plugin {
         return ob_get_clean();
     }
 
-    public function render_product_grid() {
+    public function render_product_grid($atts = []) {
         global $wpdb;
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
+        $atts = shortcode_atts(['group' => 0], $atts);
+        $group_id = intval($atts['group']);
+        $query = "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1";
+        if ($group_id > 0) {
+            $query .= $wpdb->prepare(" AND group_id = %d", $group_id);
+        }
+        $query .= " ORDER BY sort_order";
+        $categories = $wpdb->get_results($query);
+        $current_group = null;
+        if ($group_id > 0) {
+            $current_group = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_groups WHERE id = %d", $group_id));
+        }
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
         return ob_get_clean();
@@ -446,6 +457,16 @@ class Plugin {
         }
 
         if (!$category) {
+            $group = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_groups WHERE slug = %s", sanitize_title($slug)));
+            if ($group) {
+                $categories = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 AND group_id = %d ORDER BY sort_order", $group->id));
+                $current_group = $group;
+                add_filter('pre_get_document_title', function () use ($group) { return $group->name; });
+                get_header();
+                include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+                get_footer();
+                exit;
+            }
             global $wp_query;
             $wp_query->set_404();
             status_header(404);

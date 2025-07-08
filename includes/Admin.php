@@ -25,6 +25,16 @@ class Admin {
             'produkt-categories',
             array($this, 'categories_page')
         );
+
+        // Submenu: Kategorie-Gruppen
+        add_submenu_page(
+            'produkt-verleih',
+            'Kategorien',
+            'Kategorien',
+            'manage_options',
+            'produkt-groups',
+            array($this, 'groups_page')
+        );
         
         // Submenu: Produktverwaltung
         add_submenu_page(
@@ -293,6 +303,7 @@ class Admin {
             $product_title = sanitize_text_field($_POST['product_title']);
             $product_description = wp_kses_post($_POST['product_description']);
             $default_image = esc_url_raw($_POST['default_image']);
+            $group_id = intval($_POST['group_id'] ?? 0);
             $features_title = sanitize_text_field($_POST['features_title']);
             $feature_1_icon = esc_url_raw($_POST['feature_1_icon']);
             $feature_1_title = sanitize_text_field($_POST['feature_1_title']);
@@ -341,6 +352,7 @@ class Admin {
                 $result = $wpdb->update(
                     $table_name,
                     [
+                        'group_id' => $group_id,
                         'name' => $name,
                         'shortcode' => $shortcode,
                         'meta_title' => $meta_title,
@@ -379,7 +391,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -391,6 +403,7 @@ class Admin {
                 $result = $wpdb->insert(
                     $table_name,
                     [
+                        'group_id' => $group_id,
                         'name' => $name,
                         'shortcode' => $shortcode,
                         'meta_title' => $meta_title,
@@ -428,7 +441,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {
@@ -456,6 +469,7 @@ class Admin {
         }
 
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
+        $groups = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_groups ORDER BY name");
 
         $branding = [];
         $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
@@ -463,7 +477,11 @@ class Admin {
             $branding[$result->setting_key] = $result->setting_value;
         }
 
-        $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'branding'));
+        $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'groups', 'branding'));
+    }
+
+    public function groups_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/groups-page.php';
     }
     
     public function variants_page() {

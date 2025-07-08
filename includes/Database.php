@@ -19,6 +19,28 @@ class Database {
                 $wpdb->query("ALTER TABLE $table_name ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
             }
         }
+
+        // Create simple product groups table if missing
+        $table_groups = $wpdb->prefix . 'produkt_groups';
+        $groups_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_groups'");
+        if (!$groups_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_groups (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                name varchar(255) NOT NULL,
+                slug varchar(255) NOT NULL UNIQUE,
+                PRIMARY KEY (id)
+            ) $charset_collate;";
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
+        // Ensure group_id column exists on categories table
+        $table_categories = $wpdb->prefix . 'produkt_categories';
+        $group_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_categories LIKE 'group_id'");
+        if (empty($group_exists)) {
+            $wpdb->query("ALTER TABLE $table_categories ADD COLUMN group_id mediumint(9) DEFAULT 0 AFTER id");
+        }
         
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';
@@ -544,10 +566,20 @@ class Database {
         
         $charset_collate = $wpdb->get_charset_collate();
         
+        // Simple product groups
+        $table_groups = $wpdb->prefix . 'produkt_groups';
+        $sql_groups = "CREATE TABLE $table_groups (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            slug varchar(255) NOT NULL UNIQUE,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+
         // Categories table for different product categories (with SEO fields)
         $table_categories = $wpdb->prefix . 'produkt_categories';
         $sql_categories = "CREATE TABLE $table_categories (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
+            group_id mediumint(9) DEFAULT 0,
             name varchar(255) NOT NULL,
             shortcode varchar(100) NOT NULL UNIQUE,
             page_title varchar(255) DEFAULT '',
@@ -776,6 +808,7 @@ class Database {
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql_groups);
         dbDelta($sql_categories);
         dbDelta($sql_variants);
         dbDelta($sql_extras);

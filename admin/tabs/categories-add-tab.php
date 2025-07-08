@@ -23,6 +23,14 @@
                     <input type="text" name="shortcode" required pattern="[a-z0-9_-]+" placeholder="z.B. nonomo-premium">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+                <div class="produkt-form-group">
+                    <label>Kategorie</label>
+                    <select name="group_id">
+                        <?php foreach ($groups as $g): ?>
+                        <option value="<?php echo $g->id; ?>"><?php echo esc_html($g->name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
         </div>
         

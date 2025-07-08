@@ -1402,6 +1402,12 @@ body.produkt-popup-open {
     margin-bottom: 15px;
 }
 
+.produkt-group-title {
+    text-align: center;
+    font-size: 1.75rem;
+    margin-bottom: 20px;
+}
+
 .produkt-card-price {
     font-size: 1rem;
     font-weight: 600;
