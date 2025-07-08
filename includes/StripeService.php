@@ -187,7 +187,7 @@ class StripeService {
      * Returns array with 'amount' and 'price_id' keys or null on failure.
      */
     public static function get_lowest_price_with_durations($variant_ids, $duration_ids, $expiration = 43200) {
-        if (empty($variant_ids) || empty($duration_ids)) {
+        if (empty($variant_ids)) {
             return null;
         }
 
@@ -201,20 +201,21 @@ class StripeService {
 
         global $wpdb;
 
-        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
-        $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
-        $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
-        $query = $wpdb->prepare($sql, array_merge($variant_ids, $duration_ids));
-        $prices = $wpdb->get_col($query);
-
         $lowest = null;
         $lowest_id = '';
-        if (!empty($prices)) {
+
+        // 1. Variante + Dauer kombiniert
+        if (!empty($duration_ids)) {
+            $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+            $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
+
+            $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
+            $query = $wpdb->prepare($sql, array_merge($variant_ids, $duration_ids));
+            $prices = $wpdb->get_col($query);
+
             foreach ($prices as $pid) {
                 $amount = self::get_cached_price_amount($pid, $expiration);
-                if (is_wp_error($amount)) {
-                    continue;
-                }
+                if (is_wp_error($amount)) continue;
                 if ($lowest === null || $amount < $lowest) {
                     $lowest = $amount;
                     $lowest_id = $pid;
@@ -222,17 +223,20 @@ class StripeService {
             }
         }
 
-        // Fallback for single variant and duration
-        if (empty($prices) && count($variant_ids) === 1 && count($duration_ids) === 1) {
-            $fallback_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d AND duration_id = %d",
-                $variant_ids[0], $duration_ids[0]
-            ));
-            if ($fallback_id) {
-                $amount = self::get_cached_price_amount($fallback_id, $expiration);
-                if (!is_wp_error($amount)) {
+        // 2. Fallback: Direkt aus variants ohne Dauer
+        if ($lowest === null) {
+            $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+            $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)";
+            $query = $wpdb->prepare($sql, $variant_ids);
+            $variant_prices = $wpdb->get_col($query);
+
+            foreach ($variant_prices as $pid) {
+                if (!$pid) continue;
+                $amount = self::get_cached_price_amount($pid, $expiration);
+                if (is_wp_error($amount)) continue;
+                if ($lowest === null || $amount < $lowest) {
                     $lowest = $amount;
-                    $lowest_id = $fallback_id;
+                    $lowest_id = $pid;
                 }
             }
         }
