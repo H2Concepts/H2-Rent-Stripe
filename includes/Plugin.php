@@ -143,6 +143,8 @@ class Plugin {
                     $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                     if (!is_wp_error($p)) {
                         $prices[] = $p;
+                    } else {
+                        $prices[] = floatval($variant->base_price);
                     }
                 } else {
                     $prices[] = floatval($variant->base_price);
