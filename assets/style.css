@@ -902,22 +902,18 @@
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-    background: #fff;
-    border-radius: 1rem;
+    background: #dbe1e5;
+    border-radius: 0.5rem;
     padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .produkt-feature-icon-large {
-    width: 4rem;
-    height: 4rem;
-    background: #e3e8e3;
-    border-radius: 50%;
+    width: 8rem;
+    height: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2rem;
-    margin-right: 1rem;
     overflow: hidden;
 }
 
@@ -927,8 +923,7 @@
 
 .produkt-feature-item h4 {
     font-weight: 700;
-    font-family: "Roca",sans-serif;
-	font-size: 20px;
+    font-size: 18px;
     color: #000000;
     margin-bottom: 0.5rem;
 }
