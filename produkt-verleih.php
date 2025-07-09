@@ -41,6 +41,13 @@ if (class_exists('ProduktVerleih\\Autoloader')) {
     \ProduktVerleih\Autoloader::register();
 }
 
+// Explicitly load the main plugin class in case the autoloader is not yet
+// active on some installations.
+$plugin_file = plugin_dir_path(__FILE__) . 'includes/Plugin.php';
+if (file_exists($plugin_file) && !class_exists('ProduktVerleih\\Plugin')) {
+    require_once $plugin_file;
+}
+
 $webhook_file = plugin_dir_path(__FILE__) . 'includes/Webhook.php';
 if (file_exists($webhook_file)) {
     require_once $webhook_file;
