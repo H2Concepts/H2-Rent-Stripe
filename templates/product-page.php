@@ -140,8 +140,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <img src="<?php echo esc_url($default_image); ?>" alt="Produkt" id="produkt-main-image" class="produkt-main-image">
                             <?php else: ?>
                                 <div class="produkt-placeholder-image produkt-fade-in" id="produkt-placeholder">
-                                    <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-                                        <rect width="100%" height="100%" fill="#f0f0f0" stroke="#ccc" stroke-width="2" rx="8" ry="8" />
+                                    <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" width="70%" height="100%">
+                                        <rect width="100%" height="100%" fill="#f0f0f0" stroke="#ccc" stroke-width="0" rx="8" ry="8" />
                                         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="14">Produktbild folgt in Kürze</text>
                                     </svg>
                                 </div>
