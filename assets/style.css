@@ -319,6 +319,13 @@
     margin-left: 5px;
 }
 
+.produkt-tooltip svg {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    fill: currentColor;
+}
+
 .produkt-tooltiptext {
     visibility: hidden;
     width: 300px;

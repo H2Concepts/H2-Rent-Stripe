@@ -108,6 +108,7 @@ $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'def
 $duration_tooltip = isset($category) ? ($category->duration_tooltip ?? '') : '';
 $condition_tooltip = isset($category) ? ($category->condition_tooltip ?? '') : '';
 $show_tooltips = isset($category) ? ($category->show_tooltips ?? 1) : 1;
+$tooltip_icon = '<svg viewBox="0 0 64 64" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M32,1C14.4,1,0,14.2,0,30c0,6.7,2.7,13.2,7.4,18.3C6,53.7,4.2,59.2,4.1,59.3c-0.2,0.5-0.1,1,0.2,1.4C4.6,61,5,61.2,5.5,61.2c0.1,0,0.3,0,0.4-0.1c0.2-0.1,5.5-1.7,10.9-4.1c4.7,2.3,9.9,3.5,15.2,3.5c17.6,0,32-13.2,32-29C64,14.2,49.6,1,32,1z M32,58.7c-5,0-9.9-1.2-14.3-3.4c-0.2-0.1-0.5-0.1-0.7,0c-4.2,1.9-8.4,3.3-10.1,3.8c0.7-2,2.2-5.9,3.6-9.3c0.1-0.3,0-0.6-0.2-0.8C5.8,43.9,3.2,37.1,3.2,30C3.2,15.9,16.2,3.2,32,3.2c15.8,0,28.8,12.7,28.8,26.8C60.8,46.1,47.8,58.7,32,58.7z"/><path fill="currentColor" d="M32,25.6c-1,0-1.7,0.8-1.7,1.7v10.1c0,1,0.8,1.7,1.7,1.7s1.7-0.8,1.7-1.7V27.3C33.7,26.3,33,25.6,32,25.6z"/><path fill="currentColor" d="M32,19.8c-1,0-1.7,0.8-1.7,1.7v0.5c0,1,0.8,1.7,1.7,1.7s1.7-0.8,1.7-1.7v-0.5C33.7,20.6,33,19.8,32,19.8z"/></svg>';
 $show_rating = isset($category) ? ($category->show_rating ?? 0) : 0;
 $rating_value = isset($category) ? floatval(str_replace(',', '.', $category->rating_value ?? 0)) : 0;
 $rating_display = number_format($rating_value, 1, ',', '');
@@ -305,7 +306,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         Wählen Sie Ihre Mietdauer
                         <?php if ($show_tooltips): ?>
                         <span class="produkt-tooltip">
-                            ℹ️
+                            <?php echo $tooltip_icon; ?>
                             <span class="produkt-tooltiptext"><?php echo esc_html($duration_tooltip); ?></span>
                         </span>
                         <?php endif; ?>
@@ -337,7 +338,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         Zustand
                         <?php if ($show_tooltips): ?>
                         <span class="produkt-tooltip">
-                            ℹ️
+                            <?php echo $tooltip_icon; ?>
                             <span class="produkt-tooltiptext"><?php echo esc_html($condition_tooltip); ?></span>
                         </span>
                         <?php endif; ?>
