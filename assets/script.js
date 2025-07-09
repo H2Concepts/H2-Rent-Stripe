@@ -30,8 +30,17 @@ jQuery(document).ready(function($) {
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
 
-    // Initialize mobile sticky price bar
+    // Initialize mobile sticky price bar only on small screens
     initMobileStickyPrice();
+    $(window).on('resize', function() {
+        if (window.innerWidth <= 768) {
+            if (!$('#mobile-sticky-price').length) {
+                initMobileStickyPrice();
+            }
+        } else {
+            destroyMobileStickyPrice();
+        }
+    });
 
     // Handle option selection
     $('.produkt-option').on('click', function() {
@@ -746,7 +755,7 @@ jQuery(document).ready(function($) {
     }
 
     function updateMobileStickyPrice(finalPrice, originalPrice, discount, isAvailable) {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 768 && $('#mobile-sticky-price').length) {
             $('#mobile-price-value').text(formatPrice(finalPrice) + '€');
 
             if (discount > 0 && originalPrice) {
@@ -760,13 +769,22 @@ jQuery(document).ready(function($) {
     }
 
     function showMobileStickyPrice() {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 768 && $('#mobile-sticky-price').length) {
             $('#mobile-sticky-price').addClass('show');
         }
     }
 
     function hideMobileStickyPrice() {
-        $('#mobile-sticky-price').removeClass('show');
+        if ($('#mobile-sticky-price').length) {
+            $('#mobile-sticky-price').removeClass('show');
+        }
+    }
+
+    function destroyMobileStickyPrice() {
+        if ($('#mobile-sticky-price').length) {
+            hideMobileStickyPrice();
+            $('#mobile-sticky-price').remove();
+        }
     }
 
     function showGalleryNotification() {
