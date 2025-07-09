@@ -16,7 +16,23 @@ function get_lowest_stripe_price_by_category($category_id) {
         $category_id
     ));
 
-    return StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
+    $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
+
+    // Zähle alle gültigen Preis-Kombinationen (für Anzeige von "ab")
+    $count_sql = $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices 
+         WHERE variant_id IN (" . implode(',', array_fill(0, count($variant_ids), '%d')) . ")
+           AND duration_id IN (" . implode(',', array_fill(0, count($duration_ids), '%d')) . ")",
+        array_merge($variant_ids, $duration_ids)
+    );
+    $count_query = $wpdb->prepare($count_sql, array_merge($variant_ids, $duration_ids));
+    $price_count = (int) $wpdb->get_var($count_query);
+
+    return [
+        'amount'     => $price_data['amount'] ?? null,
+        'price_id'   => $price_data['price_id'] ?? null,
+        'count'      => $price_count
+    ];
 }
 ?>
 <div class="produkt-shop-archive produkt-container">
@@ -40,7 +56,13 @@ function get_lowest_stripe_price_by_category($category_id) {
                     </div>
                 <?php endif; ?>
                 <?php if ($price_data && isset($price_data['amount'])): ?>
-                    <div class="produkt-card-price">ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€</div>
+                    <div class="produkt-card-price">
+                        <?php if ($price_data['count'] > 1): ?>
+                            ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                        <?php else: ?>
+                            <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                        <?php endif; ?>
+                    </div>
                 <?php else: ?>
                     <div class="produkt-card-price">Preis auf Anfrage</div>
                 <?php endif; ?>
