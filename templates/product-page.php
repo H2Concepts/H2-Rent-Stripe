@@ -108,7 +108,7 @@ $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'def
 $duration_tooltip = isset($category) ? ($category->duration_tooltip ?? '') : '';
 $condition_tooltip = isset($category) ? ($category->condition_tooltip ?? '') : '';
 $show_tooltips = isset($category) ? ($category->show_tooltips ?? 1) : 1;
-$tooltip_icon = '<svg viewBox="0 0 30 37.5" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" fill-rule="evenodd" d="M15,23c-4.4,0-8-3.6-8-8s3.6-8,8-8,8,3.6,8,8-3.6,8-8,8ZM14.1,17h1.7c0-.3,0-.5.1-.7s.2-.4.4-.6l.7-.6c.3-.3.5-.5.6-.8.1-.3.2-.6.2-.9,0-.7-.2-1.3-.7-1.7-.5-.4-1.2-.6-2-.6s-1.6.2-2,.7c-.5.4-.7,1-.7,1.8h2c0-.3,0-.5.2-.7.1-.2.3-.3.6-.3.5,0,.8.3.8.9s0,.5-.2.7-.4.4-.7.7c-.3.2-.5.5-.6.9-.1.3-.2.8-.2,1.4ZM13.8,18.7c0,.3.1.5.3.7s.5.3.8.3.6,0,.8-.3.3-.4.3-.7-.1-.5-.3-.7-.5-.3-.8-.3-.6,0-.8.3-.3.4-.3.7Z"/></svg>';
+$tooltip_icon = '<svg viewBox="0 0 16.7 16.9" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" fill-rule="evenodd" d="M8.3,16.4C3.9,16.4.3,12.8.3,8.4S3.9.4,8.3.4s8,3.6,8,8-3.6,8-8,8ZM7.4,10.4h1.7c0-.3,0-.5.1-.7s.2-.4.4-.6l.7-.6c.3-.3.5-.5.6-.8.1-.3.2-.6.2-.9,0-.7-.2-1.3-.7-1.7-.5-.4-1.2-.6-2-.6s-1.6.2-2,.7c-.5.4-.7,1-.7,1.8h2c0-.3,0-.5.2-.7.1-.2.3-.3.6-.3.5,0,.8.3.8.9s0,.5-.2.7-.4.4-.7.7c-.3.2-.5.5-.6.9-.1.3-.2.8-.2,1.4ZM7.2,12.2c0,.3.1.5.3.7s.5.3.8.3.6,0,.8-.3.3-.4.3-.7-.1-.5-.3-.7-.5-.3-.8-.3-.6,0-.8.3-.3.4-.3.7Z"/></svg>';
 $show_rating = isset($category) ? ($category->show_rating ?? 0) : 0;
 $rating_value = isset($category) ? floatval(str_replace(',', '.', $category->rating_value ?? 0)) : 0;
 $rating_display = number_format($rating_value, 1, ',', '');
