@@ -986,7 +986,7 @@
 }
 
 .produkt-mobile-original-price {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: #9ca3af;
     text-decoration: line-through;
 }
@@ -1004,7 +1004,7 @@
 }
 
 .produkt-mobile-final-price {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: bold;
     color: var(--produkt-text-color);
 }
