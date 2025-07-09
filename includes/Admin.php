@@ -36,6 +36,18 @@ class Admin {
             'produkt-categories',
             array($this, 'categories_page')
         );
+
+        // Manage simple product categories
+        add_submenu_page(
+            'produkt-verleih',
+            'Kategorien',
+            'Kategorien',
+            'manage_options',
+            'produkt-kategorien',
+            function () {
+                include PRODUKT_PLUGIN_PATH . 'admin/categories-page.php';
+            }
+        );
         
         // Submenu: Produktverwaltung
         add_submenu_page(

@@ -1,62 +1,98 @@
 <?php
-if (!defined('ABSPATH')) {
-    exit;
+use ProduktVerleih\Database;
+
+if (!current_user_can('manage_options')) {
+    return;
+}
+
+// Kategorie speichern
+if (isset($_POST['save_category'])) {
+    $name = sanitize_text_field($_POST['name']);
+    $slug = sanitize_title($_POST['slug']);
+    $description = sanitize_textarea_field($_POST['description']);
+    $id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_product_categories';
+
+    if ($id > 0) {
+        $wpdb->update($table, [
+            'name' => $name,
+            'slug' => $slug,
+            'description' => $description
+        ], ['id' => $id]);
+    } else {
+        $wpdb->insert($table, [
+            'name' => $name,
+            'slug' => $slug,
+            'description' => $description
+        ]);
+    }
+}
+
+// Kategorie löschen
+if (isset($_GET['delete'])) {
+    $delete_id = intval($_GET['delete']);
+    global $wpdb;
+    $wpdb->delete($wpdb->prefix . 'produkt_product_categories', ['id' => $delete_id]);
+    $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['category_id' => $delete_id]);
+}
+
+global $wpdb;
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+
+// Wenn Bearbeiten
+$edit_category = null;
+if (isset($_GET['edit'])) {
+    $edit_id = intval($_GET['edit']);
+    $edit_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_product_categories WHERE id = %d", $edit_id));
 }
 ?>
 
 <div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
-        <div class="produkt-admin-logo-compact">🏷️</div>
-        <div class="produkt-admin-title-compact">
-            <h1>Produkte verwalten</h1>
-            <p>Produkte & SEO-Einstellungen</p>
-        </div>
-    </div>
-    
-    <!-- Breadcrumb Navigation -->
-    <div class="produkt-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
-        <span>→</span> 
-        <strong>Produkte</strong>
-    </div>
-    
-    <!-- Tab Navigation -->
-    <div class="produkt-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=list'); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
-            📋 Übersicht
-        </a>
-        <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
-            ➕ Neues Produkt
-        </a>
-        <?php if ($edit_item): ?>
-        <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $edit_item->id); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
-            ✏️ Bearbeiten
-        </a>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Tab Content -->
-    <div class="produkt-tab-content">
-        <?php
-        switch ($active_tab) {
-            case 'add':
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-add-tab.php';
-                break;
-            case 'edit':
-                if ($edit_item) {
-                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-edit-tab.php';
-                } else {
-                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
-                }
-                break;
-            case 'list':
-            default:
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
-        }
-        ?>
-    </div>
+    <h1>Kategorien verwalten</h1>
+
+    <h2><?= $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen' ?></h2>
+
+    <form method="post">
+        <input type="hidden" name="category_id" value="<?= esc_attr($edit_category->id ?? '') ?>">
+        <table class="form-table">
+            <tr>
+                <th><label for="name">Name</label></th>
+                <td><input name="name" type="text" required value="<?= esc_attr($edit_category->name ?? '') ?>" class="regular-text"></td>
+            </tr>
+            <tr>
+                <th><label for="slug">Slug</label></th>
+                <td><input name="slug" type="text" required value="<?= esc_attr($edit_category->slug ?? '') ?>" class="regular-text"></td>
+            </tr>
+            <tr>
+                <th><label for="description">Beschreibung</label></th>
+                <td><textarea name="description" class="large-text"><?= esc_textarea($edit_category->description ?? '') ?></textarea></td>
+            </tr>
+        </table>
+        <p><input type="submit" name="save_category" class="button-primary" value="Speichern"></p>
+    </form>
+
+    <h2>Bestehende Kategorien</h2>
+    <table class="widefat striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($categories as $cat): ?>
+                <tr>
+                    <td><?= esc_html($cat->name) ?></td>
+                    <td><?= esc_html($cat->slug) ?></td>
+                    <td>
+                        <a href="?page=produkt-kategorien&edit=<?= $cat->id ?>" class="button">Bearbeiten</a>
+                        <a href="?page=produkt-kategorien&delete=<?= $cat->id ?>" class="button button-danger" onclick="return confirm('Wirklich löschen?')">Löschen</a>
+                    </td>
+                </tr>
+            <?php endforeach ?>
+        </tbody>
+    </table>
 </div>
