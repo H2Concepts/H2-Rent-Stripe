@@ -693,7 +693,9 @@ jQuery(document).ready(function($) {
     function initMobileStickyPrice() {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
-            const mainLabel = $('#produkt-rent-button span').text().trim() || 'Jetzt Mieten';
+            const mainButton = $('#produkt-rent-button');
+            const mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
+            const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
             const stickyHtml = `
@@ -704,6 +706,7 @@ jQuery(document).ready(function($) {
                             <div class="produkt-mobile-price-value" id="mobile-price-value">0,00€</div>
                         </div>
                         <button class="produkt-mobile-button" disabled>
+                            ${mainIcon}
                             <span>${mainLabel}</span>
                         </button>
                     </div>

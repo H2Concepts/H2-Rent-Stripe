@@ -433,11 +433,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     ?>
                     
                     <?php if (!empty($required_selections)): ?>
-                    <button id="produkt-rent-button" class="produkt-rent-button" disabled>
+                    <button id="produkt-rent-button" class="produkt-rent-button" disabled data-icon="<?php echo esc_url($button_icon); ?>">
                         <?php if (!empty($button_icon)): ?>
                             <img src="<?php echo esc_url($button_icon); ?>" alt="Button Icon" class="produkt-button-icon-img">
-                        <?php else: ?>
-                            <span class="produkt-button-icon">🛒</span>
                         <?php endif; ?>
                         <span><?php echo esc_html($button_text); ?></span>
                     </button>
