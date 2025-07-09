@@ -241,7 +241,7 @@
                 <input type="text" name="features_title" value="<?php echo esc_attr($edit_item->features_title); ?>">
             </div>
 
-            <?php for ($i = 1; $i <= 3; $i++): ?>
+            <?php for ($i = 1; $i <= 4; $i++): ?>
             <div class="produkt-feature-group">
                 <h5>Feature <?php echo $i; ?></h5>
                 <div class="produkt-form-row">
