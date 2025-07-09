@@ -45,7 +45,7 @@ class Admin {
             'manage_options',
             'produkt-kategorien',
             function () {
-                include PRODUKT_PLUGIN_PATH . 'admin/categories-page.php';
+                include PRODUKT_PLUGIN_PATH . 'admin/product-categories-page.php';
             }
         );
         
@@ -417,7 +417,18 @@ class Admin {
                     array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
+                $produkt_id = intval($_POST['id']);
+
                 if ($result !== false) {
+                    if (isset($_POST['product_categories']) && is_array($_POST['product_categories'])) {
+                        $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
+                        foreach ($_POST['product_categories'] as $cat_id) {
+                            $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
+                                'produkt_id' => $produkt_id,
+                                'category_id' => intval($cat_id)
+                            ]);
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -469,7 +480,18 @@ class Admin {
                     array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
+                $produkt_id = $wpdb->insert_id;
+
                 if ($result !== false) {
+                    if (isset($_POST['product_categories']) && is_array($_POST['product_categories'])) {
+                        $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
+                        foreach ($_POST['product_categories'] as $cat_id) {
+                            $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
+                                'produkt_id' => $produkt_id,
+                                'category_id' => intval($cat_id)
+                            ]);
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich hinzugefügt!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
