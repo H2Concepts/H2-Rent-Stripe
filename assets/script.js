@@ -665,7 +665,7 @@ jQuery(document).ready(function($) {
                         }
                         
                         // Update mobile sticky price
-                        updateMobileStickyPrice(data.final_price, isAvailable);
+                        updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
                     }
                 },
                 error: function() {
@@ -699,12 +699,17 @@ jQuery(document).ready(function($) {
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
+            const suffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
             const stickyHtml = `
                 <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
                     <div class="produkt-mobile-sticky-content">
                         <div class="produkt-mobile-price-info">
                             <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
-                            <div class="produkt-mobile-price-value" id="mobile-price-value">0,00€</div>
+                            <div class="produkt-mobile-price-wrapper">
+                                <span class="produkt-mobile-original-price" id="mobile-original-price" style="display:none;"></span>
+                                <span class="produkt-mobile-final-price" id="mobile-price-value">0,00€</span>
+                                <span class="produkt-mobile-price-period">${suffix}</span>
+                            </div>
                         </div>
                         <button class="produkt-mobile-button" disabled>
                             ${mainIcon}
@@ -740,10 +745,16 @@ jQuery(document).ready(function($) {
         }
     }
 
-    function updateMobileStickyPrice(price, isAvailable) {
+    function updateMobileStickyPrice(finalPrice, originalPrice, discount, isAvailable) {
         if (window.innerWidth <= 768) {
-            const suffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
-            $('#mobile-price-value').text(formatPrice(price) + '€' + suffix);
+            $('#mobile-price-value').text(formatPrice(finalPrice) + '€');
+
+            if (discount > 0 && originalPrice) {
+                $('#mobile-original-price').text(formatPrice(originalPrice) + '€').show();
+            } else {
+                $('#mobile-original-price').hide();
+            }
+
             $('.produkt-mobile-button').prop('disabled', !isAvailable);
         }
     }

@@ -973,9 +973,28 @@
     margin: 0 auto;
 }
 
+
 .produkt-mobile-price-info {
     display: flex;
     flex-direction: column;
+}
+
+.produkt-mobile-price-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.produkt-mobile-original-price {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    text-decoration: line-through;
+}
+
+
+.produkt-mobile-price-period {
+    font-size: 0.875rem;
+    color: #6b7280;
 }
 
 .produkt-mobile-price-label {
@@ -984,7 +1003,7 @@
     margin-bottom: 2px;
 }
 
-.produkt-mobile-price-value {
+.produkt-mobile-final-price {
     font-size: 1.25rem;
     font-weight: bold;
     color: var(--produkt-text-color);
