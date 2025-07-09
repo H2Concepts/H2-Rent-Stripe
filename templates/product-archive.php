@@ -17,6 +17,7 @@ if (!is_array($categories)) {
 
 $category_slug = isset($_GET['produkt_category']) ? sanitize_title($_GET['produkt_category']) : '';
 $filtered_product_ids = [];
+$category = null;
 
 if (!empty($category_slug)) {
     global $wpdb;
@@ -83,7 +84,9 @@ function get_lowest_stripe_price_by_category($category_id) {
     <?php else: ?>
       <h2>Alle Produkte</h2>
     <?php endif; ?>
-    <?php if (empty($categories)): ?>
+    <?php if ($category_slug && !$category): ?>
+        <p>Kategorie nicht gefunden.</p>
+    <?php elseif (empty($categories)): ?>
         <p>Keine Produkte in dieser Kategorie gefunden.</p>
     <?php endif; ?>
     <div class="produkt-shop-grid">

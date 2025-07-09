@@ -33,7 +33,7 @@ class Plugin {
 
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule(
-            '^shop/kategorie/([^/]+)/?$',
+            '^shop/([^/]+)/?$',
             'index.php?produkt_category=$matches[1]',
             'top'
         );
@@ -89,7 +89,7 @@ class Plugin {
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule(
-            '^shop/kategorie/([^/]+)/?$',
+            '^shop/([^/]+)/?$',
             'index.php?produkt_category=$matches[1]',
             'top'
         );
@@ -193,7 +193,11 @@ class Plugin {
 
     public function render_product_grid() {
         global $wpdb;
-        if (isset($_SERVER['REQUEST_URI']) && preg_match('#^/shop/kategorie/([^/]+)/?$#', $_SERVER['REQUEST_URI'], $matches)) {
+        if (
+            isset($_SERVER['REQUEST_URI']) &&
+            !preg_match('#^/shop/produkt/#', $_SERVER['REQUEST_URI']) &&
+            preg_match('#^/shop/([^/]+)/?$#', $_SERVER['REQUEST_URI'], $matches)
+        ) {
             $_GET['produkt_category'] = sanitize_title($matches[1]);
         }
 
@@ -581,14 +585,14 @@ class Plugin {
 add_filter('template_include', function ($template) {
     $uri = $_SERVER['REQUEST_URI'];
 
-    if (preg_match('#^/shop/kategorie/([^/]+)/?$#', $uri, $matches)) {
-        $_GET['produkt_category'] = sanitize_title($matches[1]);
-        return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
-    }
-
     if (preg_match('#^/shop/produkt/([^/]+)/?$#', $uri, $matches)) {
         $_GET['produkt_slug'] = sanitize_title($matches[1]);
         return PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
+    }
+
+    if (!preg_match('#^/shop/produkt/#', $uri) && preg_match('#^/shop/([^/]+)/?$#', $uri, $matches)) {
+        $_GET['produkt_category'] = sanitize_title($matches[1]);
+        return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
     }
 
     return $template;
