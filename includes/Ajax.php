@@ -51,25 +51,26 @@ class Ajax {
             $variant_price = 0;
             $used_price_id  = '';
 
-            // Check if a price ID is set for this variant/duration combination
+            // Determine the Stripe price ID to send to checkout
             $price_id_to_use = $wpdb->get_var($wpdb->prepare(
                 "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
                 $duration_id,
                 $variant_id
             ));
 
-            // Fallback to the variant's Stripe price ID
             if (empty($price_id_to_use)) {
                 $price_id_to_use = $variant->stripe_price_id;
             }
 
-            if (!empty($price_id_to_use)) {
-                $price_res = StripeService::get_price_amount($price_id_to_use);
+            $used_price_id = $price_id_to_use;
+
+            // For display always use the variant's own Stripe price ID
+            if (!empty($variant->stripe_price_id)) {
+                $price_res = StripeService::get_price_amount($variant->stripe_price_id);
                 if (is_wp_error($price_res)) {
                     wp_send_json_error('Price fetch failed');
                 }
                 $variant_price = floatval($price_res);
-                $used_price_id = $price_id_to_use;
             } else {
                 $variant_price = floatval($variant->base_price);
             }
