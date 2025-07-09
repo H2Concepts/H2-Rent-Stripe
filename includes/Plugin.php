@@ -103,6 +103,46 @@ class Plugin {
         $plugin->deactivate();
     }
 
+    /**
+     * Remove all plugin data and drop tables.
+     */
+    public function uninstall() {
+        $this->db->drop_tables();
+
+        $options = array(
+            'produkt_version',
+            'produkt_popup_settings',
+            'produkt_stripe_publishable_key',
+            'produkt_stripe_secret_key',
+            'produkt_stripe_pmc_id',
+            'produkt_stripe_webhook_secret',
+            'produkt_tos_url',
+            'produkt_success_url',
+            'produkt_cancel_url',
+            'produkt_ct_shipping',
+            'produkt_ct_submit',
+            'produkt_ct_after_submit',
+            PRODUKT_SHOP_PAGE_OPTION,
+        );
+
+        foreach ($options as $opt) {
+            delete_option($opt);
+        }
+
+        $page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
+        if ($page_id) {
+            wp_delete_post($page_id, true);
+        }
+    }
+
+    /**
+     * Convenience wrapper for calling uninstall from hooks or actions.
+     */
+    public static function uninstall_plugin() {
+        $plugin = new self();
+        $plugin->uninstall();
+    }
+
     public function product_shortcode($atts) {
         global $wpdb;
 

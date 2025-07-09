@@ -349,6 +349,26 @@ class Database {
             dbDelta($sql);
         }
 
+        // Create variant durations table if it doesn't exist
+        $table_variant_durations = $wpdb->prefix . 'produkt_variant_durations';
+        $variant_durations_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_variant_durations'");
+
+        if (!$variant_durations_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_variant_durations (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                variant_id mediumint(9) NOT NULL,
+                duration_id mediumint(9) NOT NULL,
+                available tinyint(1) DEFAULT 1,
+                sort_order int(11) DEFAULT 0,
+                PRIMARY KEY (id),
+                UNIQUE KEY variant_duration (variant_id, duration_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create duration price table if it doesn't exist
         $table_duration_prices = $wpdb->prefix . 'produkt_duration_prices';
         $duration_prices_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_duration_prices'");
@@ -726,6 +746,18 @@ class Database {
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";
 
+        // Variant durations table
+        $table_variant_durations = $wpdb->prefix . 'produkt_variant_durations';
+        $sql_variant_durations = "CREATE TABLE $table_variant_durations (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            variant_id mediumint(9) NOT NULL,
+            duration_id mediumint(9) NOT NULL,
+            available tinyint(1) DEFAULT 1,
+            sort_order int(11) DEFAULT 0,
+            PRIMARY KEY (id),
+            UNIQUE KEY variant_duration (variant_id, duration_id)
+        ) $charset_collate;";
+
         // Variant price IDs per duration
         $table_duration_prices = $wpdb->prefix . 'produkt_duration_prices';
         $sql_duration_prices = "CREATE TABLE $table_duration_prices (
@@ -787,6 +819,7 @@ class Database {
         dbDelta($sql_colors);
         dbDelta($sql_color_variant_images);
         dbDelta($sql_variant_options);
+        dbDelta($sql_variant_durations);
         dbDelta($sql_duration_prices);
         dbDelta($sql_orders);
 
@@ -975,7 +1008,7 @@ class Database {
                 );
             }
         }
-        
+
         // Insert default durations only if table is empty
         $existing_durations = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
         if ($existing_durations == 0) {
@@ -999,5 +1032,72 @@ class Database {
                 );
             }
         }
+    }
+
+    /**
+     * Drop all plugin tables from the database.
+     */
+    public function drop_tables() {
+        global $wpdb;
+
+        $tables = array(
+            'produkt_categories',
+            'produkt_variants',
+            'produkt_extras',
+            'produkt_durations',
+            'produkt_conditions',
+            'produkt_colors',
+            'produkt_color_variant_images',
+            'produkt_variant_options',
+            'produkt_variant_durations',
+            'produkt_duration_prices',
+            'produkt_orders',
+            'produkt_order_logs',
+            'produkt_analytics',
+            'produkt_branding',
+            'produkt_notifications',
+            'produkt_stripe_metadata'
+        );
+
+        foreach ($tables as $table) {
+            $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}$table");
+        }
+    }
+
+    /**
+     * Get all Stripe price IDs for every variant and duration in a category.
+     *
+     * @param int $category_id
+     * @return array
+     */
+    public static function getAllStripePriceIdsByCategory($category_id) {
+        global $wpdb;
+
+        $variant_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+                $category_id
+            )
+        );
+
+        if (empty($variant_ids)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
+
+        $sql   = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)";
+        $query = $wpdb->prepare($sql, ...$variant_ids);
+        $price_ids = $wpdb->get_col($query);
+
+        // Fallback: if no duration prices were found, check the variants table
+        if (empty($price_ids)) {
+            $sql   = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders)";
+            $query = $wpdb->prepare($sql, ...$variant_ids);
+            $fallbacks = $wpdb->get_col($query);
+            $price_ids = array_merge((array) $price_ids, (array) $fallbacks);
+        }
+
+        return array_filter((array) $price_ids);
     }
 }
