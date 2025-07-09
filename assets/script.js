@@ -694,8 +694,7 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainLabel = $('#produkt-rent-button span').text().trim() || 'Jetzt Mieten';
-            const mainIconHtml = $('#produkt-rent-button .produkt-button-icon-img').prop('outerHTML') ||
-                                $('#produkt-rent-button .produkt-button-icon').prop('outerHTML') || '';
+            const mainIconHtml = $('#produkt-rent-button .produkt-button-icon-img').prop('outerHTML') || '';
 
             // Create mobile sticky price bar
             const stickyHtml = `
