@@ -2,8 +2,39 @@
 
 global $wpdb;
 
+function get_lowest_stripe_price_by_category($category_id) {
+    global $wpdb;
+
+    $variant_ids  = $wpdb->get_col($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+        $category_id
+    ));
+    $duration_ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+        $category_id
+    ));
+
+    $price_data = \ProduktVerleih\StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
+
+    $count_sql = $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
+         WHERE variant_id IN (" . implode(',', array_fill(0, count($variant_ids), '%d')) . ")
+           AND duration_id IN (" . implode(',', array_fill(0, count($duration_ids), '%d')) . ")",
+        array_merge($variant_ids, $duration_ids)
+    );
+    $count_query = $wpdb->prepare($count_sql, array_merge($variant_ids, $duration_ids));
+    $price_count = (int) $wpdb->get_var($count_query);
+
+    return [
+        'amount'   => $price_data['amount'] ?? null,
+        'price_id' => $price_data['price_id'] ?? null,
+        'count'    => $price_count
+    ];
+}
+
 // Get category data
 $category_id = isset($category) ? $category->id : 1;
+$price_data = get_lowest_stripe_price_by_category($category_id);
 
 // Get all data for this category
 $variants = $wpdb->get_results($wpdb->prepare(
@@ -122,6 +153,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 
                 <div class="produkt-product-details">
                     <h2><?php echo esc_html($product_title); ?></h2>
+                    <?php if ($price_data && isset($price_data['amount'])): ?>
+                        <div class="produkt-card-price">
+                            <?php if ($price_data['count'] > 1): ?>
+                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                            <?php else: ?>
+                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="produkt-card-price">Preis auf Anfrage</div>
+                    <?php endif; ?>
                     <?php if ($show_rating && $rating_value > 0): ?>
                     <div class="produkt-rating">
                         <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
