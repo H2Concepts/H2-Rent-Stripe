@@ -191,7 +191,7 @@ class Plugin {
     public function add_meta_tags() {
         global $post, $wpdb;
 
-        $slug = get_query_var('produkt_slug');
+        $slug = sanitize_title(get_query_var('produkt_slug'));
 
         if (!is_singular() && empty($slug)) {
             return;
@@ -244,7 +244,7 @@ class Plugin {
     public function add_open_graph_tags() {
         global $post, $wpdb;
 
-        $slug = get_query_var('produkt_slug');
+        $slug = sanitize_title(get_query_var('produkt_slug'));
 
         if (!is_singular() && empty($slug)) {
             return;
@@ -308,7 +308,7 @@ class Plugin {
     public function add_schema_markup() {
         global $post, $wpdb;
 
-        $slug = get_query_var('produkt_slug');
+        $slug = sanitize_title(get_query_var('produkt_slug'));
 
         if (!is_singular() && empty($slug)) {
             return;
@@ -484,7 +484,7 @@ class Plugin {
     }
 
     public function maybe_display_product_page() {
-        $slug = get_query_var('produkt_slug');
+        $slug = sanitize_title(get_query_var('produkt_slug'));
         if (empty($slug)) {
             return;
         }

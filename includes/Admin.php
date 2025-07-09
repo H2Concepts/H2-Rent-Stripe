@@ -122,7 +122,7 @@ class Admin {
     public function enqueue_frontend_assets() {
         global $post;
 
-        $slug = get_query_var('produkt_slug');
+        $slug = sanitize_title(get_query_var('produkt_slug'));
 
         if (!is_singular() && empty($slug)) {
             return;
