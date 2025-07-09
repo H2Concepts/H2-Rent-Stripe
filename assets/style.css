@@ -207,7 +207,8 @@
 }
 
 .produkt-price-box {
-    flex: 1;
+    flex: 0 0 calc(50% - 0.5rem);
+    min-width: 0;
     background: linear-gradient(135deg, #e3e8e3 0%, #f6f7f6 100%);
     border: 2px solid var(--produkt-border-color);
     border-radius: 0.75rem;
@@ -998,7 +999,7 @@
 }
 
 .produkt-mobile-original-price {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: #9ca3af;
     text-decoration: line-through;
 }
@@ -1016,7 +1017,7 @@
 }
 
 .produkt-mobile-final-price {
-    font-size: 1rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: var(--produkt-text-color);
 }
