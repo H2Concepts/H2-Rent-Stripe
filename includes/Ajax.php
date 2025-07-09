@@ -49,10 +49,19 @@ class Ajax {
         
         if ($variant && $duration) {
             $variant_price = 0;
-            $used_price_id = '';
+            $used_price_id  = '';
 
-            // Always use the variant's own Stripe price ID
-            $price_id_to_use = $variant->stripe_price_id;
+            // Check if a price ID is set for this variant/duration combination
+            $price_id_to_use = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+
+            // Fallback to the variant's Stripe price ID
+            if (empty($price_id_to_use)) {
+                $price_id_to_use = $variant->stripe_price_id;
+            }
 
             if (!empty($price_id_to_use)) {
                 $price_res = StripeService::get_price_amount($price_id_to_use);
