@@ -42,13 +42,19 @@
 
 .produkt-content {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 2rem;
 }
 
 @media (max-width: 768px) {
     .produkt-content {
         grid-template-columns: 1fr;
+    }
+
+    .produkt-price-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
     }
 }
 
