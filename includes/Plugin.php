@@ -32,8 +32,17 @@ class Plugin {
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule(
+            '^shop/([^/]+)/?$',
+            'index.php?produkt_category=$matches[1]',
+            'top'
+        );
         add_filter('query_vars', function ($vars) {
             $vars[] = 'produkt_slug';
+            return $vars;
+        });
+        add_filter('query_vars', function ($vars) {
+            $vars[] = 'produkt_category';
             return $vars;
         });
         add_action('template_redirect', [$this, 'maybe_display_product_page']);
@@ -79,6 +88,11 @@ class Plugin {
         }
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule(
+            '^shop/([^/]+)/?$',
+            'index.php?produkt_category=$matches[1]',
+            'top'
+        );
         $this->create_shop_page();
         flush_rewrite_rules();
     }

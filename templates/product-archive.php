@@ -4,6 +4,25 @@ if (!defined('ABSPATH')) { exit; }
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
 
+$category_slug = get_query_var('produkt_category');
+$filtered_product_ids = [];
+
+if (!empty($category_slug)) {
+    global $wpdb;
+
+    $category = $wpdb->get_row($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
+        $category_slug
+    ));
+
+    if ($category) {
+        $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
+            $category->id
+        ));
+    }
+}
+
 function get_lowest_stripe_price_by_category($category_id) {
     global $wpdb;
 
@@ -38,8 +57,19 @@ function get_lowest_stripe_price_by_category($category_id) {
         'count'      => $price_count
     ];
 }
+
+if (!empty($filtered_product_ids)) {
+    $categories = array_filter($categories, function ($product) use ($filtered_product_ids) {
+        return in_array($product->id, $filtered_product_ids);
+    });
+}
 ?>
 <div class="produkt-shop-archive produkt-container">
+    <?php if (!empty($category_slug)): ?>
+      <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
+    <?php else: ?>
+      <h2>Alle Produkte</h2>
+    <?php endif; ?>
     <div class="produkt-shop-grid">
         <?php foreach ($categories as $cat): ?>
         <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
