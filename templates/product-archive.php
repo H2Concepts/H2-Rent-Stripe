@@ -15,7 +15,7 @@ if (!is_array($categories)) {
     $categories = [];
 }
 
-$category_slug = isset($_GET['produkt_category']) ? sanitize_title($_GET['produkt_category']) : '';
+$category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 $filtered_product_ids = [];
 $category = null;
 

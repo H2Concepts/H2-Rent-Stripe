@@ -8,10 +8,7 @@ global $wpdb;
 
 get_header();
 
-$slug = get_query_var('produkt_slug');
-if (empty($slug) && isset($_GET['produkt_slug'])) {
-    $slug = sanitize_title($_GET['produkt_slug']);
-}
+$slug = sanitize_title(get_query_var('produkt_slug'));
 
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
 $category = null;
