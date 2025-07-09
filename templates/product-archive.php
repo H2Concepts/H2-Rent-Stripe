@@ -15,6 +15,7 @@ if (!is_array($categories)) {
     $categories = [];
 }
 
+// retrieve the requested category and sanitize the slug immediately
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 $filtered_product_ids = [];
 $category = null;
