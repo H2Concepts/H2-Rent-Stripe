@@ -1,6 +1,6 @@
 <?php
 /**
- * Template: Produkt-Archiv mit Kategorie
+ * Template Name: Produkt-Archiv
  */
 if (!defined('ABSPATH')) {
     exit;
