@@ -180,7 +180,7 @@
     font-size: 2.5rem;
     font-weight: bold;
     color: #000000;
-    margin-bottom: 1rem;
+    margin-bottom: 0rem;
 }
 
 .produkt-product-details p {
@@ -298,7 +298,7 @@
 
 .produkt-section h3 {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: "Poppins",sans-serif;
     color: #000000;
     margin-bottom: 1rem;
@@ -361,7 +361,7 @@
 /* Default Layout (Horizontal) */
 .produkt-options.layout-default.variants {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
 }
 
@@ -502,7 +502,7 @@
 }
 
 .produkt-option h4 {
-    font-weight: 600;
+    font-weight: 700;
     color: #000000;
     margin-bottom: 0.25rem;
     font-size: 1.3rem;
@@ -766,7 +766,7 @@
     width: 100%;
     padding: 1.3rem 1.5rem;
     border-radius: 999px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 1.125rem;
     transition: all 0.2s ease;
     display: flex;
@@ -912,7 +912,7 @@
 }
 
 .produkt-feature-item h4 {
-    font-weight: 600;
+    font-weight: 700;
     font-family: "Roca",sans-serif;
 	font-size: 20px;
     color: #000000;
@@ -976,7 +976,7 @@
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.2s ease;
@@ -1229,7 +1229,7 @@ body.produkt-popup-open {
 
 .produkt-checkout-left h3 {
     font-size: 1.2rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #000000;
     margin-bottom: 0.5rem;
 }
@@ -1246,7 +1246,7 @@ body.produkt-popup-open {
 
 #checkout-form.produkt-checkout-form label {
     display: block;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 0.25rem;
 }
 
@@ -1313,7 +1313,7 @@ body.produkt-popup-open {
     background: transparent;
     border: none;
     padding: 0.75rem 0;
-    font-weight: 600;
+    font-weight: 700;
     text-align: left;
     cursor: pointer;
     display: flex;
@@ -1405,8 +1405,8 @@ body.produkt-popup-open {
 
 .produkt-card-price {
     font-size: 1rem;
-    font-weight: 600;
-    margin-top: 10px;
+    font-weight: 700;
+    margin-top: 5px;
     color: #000;
 }
 
