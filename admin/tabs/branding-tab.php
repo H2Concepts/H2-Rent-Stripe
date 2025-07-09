@@ -3,6 +3,8 @@
 
 // Handle form submissions
 if (isset($_POST['submit_branding'])) {
+    global $wpdb;
+
     $plugin_name = sanitize_text_field($_POST['plugin_name']);
     $plugin_description = sanitize_textarea_field($_POST['plugin_description']);
     $company_name = sanitize_text_field($_POST['company_name']);
@@ -39,36 +41,17 @@ if (isset($_POST['submit_branding'])) {
     $total_count = count($settings);
     
     foreach ($settings as $key => $value) {
-        $existing = $wpdb->get_var($wpdb->prepare(
-            "SELECT setting_value FROM $table_name WHERE setting_key = %s",
-            $key
-        ));
-        
-        if ($existing !== null) {
-            // Update existing
-            $result = $wpdb->update(
-                $table_name,
-                array('setting_value' => $value),
-                array('setting_key' => $key),
-                array('%s'),
-                array('%s')
-            );
-            if ($result !== false) {
-                $success_count++;
-            }
-        } else {
-            // Insert new
-            $result = $wpdb->insert(
-                $table_name,
-                array(
-                    'setting_key' => $key,
-                    'setting_value' => $value
-                ),
-                array('%s', '%s')
-            );
-            if ($result !== false) {
-                $success_count++;
-            }
+        $result = $wpdb->replace(
+            $table_name,
+            array(
+                'setting_key'   => $key,
+                'setting_value' => $value
+            ),
+            array('%s', '%s')
+        );
+
+        if ($result !== false) {
+            $success_count++;
         }
     }
 
