@@ -4,7 +4,8 @@ if (!defined('ABSPATH')) { exit; }
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
 
-$category_slug = get_query_var('produkt_category');
+$category_slug = isset($_GET['produkt_category']) ? sanitize_title($_GET['produkt_category']) : '';
+echo '<pre>DEBUG: Kategorie-Slug = ' . htmlspecialchars($category_slug) . '</pre>';
 $filtered_product_ids = [];
 
 if (!empty($category_slug)) {

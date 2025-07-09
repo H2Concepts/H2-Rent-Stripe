@@ -193,6 +193,10 @@ class Plugin {
 
     public function render_product_grid() {
         global $wpdb;
+        if (isset($_SERVER['REQUEST_URI']) && preg_match('#^/shop/([^/]+)/?$#', $_SERVER['REQUEST_URI'], $matches)) {
+            $_GET['produkt_category'] = sanitize_title($matches[1]);
+        }
+
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
