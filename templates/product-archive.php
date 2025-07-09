@@ -1,5 +1,7 @@
 <?php
-/* Template Name: Produkt-Archiv */
+/**
+ * Template: Produkt-Archiv mit Kategorie
+ */
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -14,7 +16,6 @@ if (!is_array($categories)) {
 }
 
 $category_slug = isset($_GET['produkt_category']) ? sanitize_title($_GET['produkt_category']) : '';
-echo '<pre>DEBUG: Kategorie-Slug = ' . htmlspecialchars($category_slug) . '</pre>';
 $filtered_product_ids = [];
 
 if (!empty($category_slug)) {
@@ -87,7 +88,7 @@ function get_lowest_stripe_price_by_category($category_id) {
     <?php endif; ?>
     <div class="produkt-shop-grid">
         <?php foreach (($categories ?? []) as $cat): ?>
-        <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
+        <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
         <?php
             $price_data = get_lowest_stripe_price_by_category($cat->id);
         ?>

@@ -31,9 +31,9 @@ class Plugin {
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule(
-            '^shop/([^/]+)/?$',
+            '^shop/kategorie/([^/]+)/?$',
             'index.php?produkt_category=$matches[1]',
             'top'
         );
@@ -45,7 +45,7 @@ class Plugin {
             $vars[] = 'produkt_category';
             return $vars;
         });
-        add_action('template_redirect', [$this, 'maybe_display_product_page']);
+
 
         add_action('wp_ajax_get_product_price', [$this->ajax, 'ajax_get_product_price']);
         add_action('wp_ajax_nopriv_get_product_price', [$this->ajax, 'ajax_get_product_price']);
@@ -87,9 +87,9 @@ class Plugin {
             $this->db->insert_default_data();
         }
         update_option('produkt_version', PRODUKT_VERSION);
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule(
-            '^shop/([^/]+)/?$',
+            '^shop/kategorie/([^/]+)/?$',
             'index.php?produkt_category=$matches[1]',
             'top'
         );
@@ -193,7 +193,7 @@ class Plugin {
 
     public function render_product_grid() {
         global $wpdb;
-        if (isset($_SERVER['REQUEST_URI']) && preg_match('#^/shop/([^/]+)/?$#', $_SERVER['REQUEST_URI'], $matches)) {
+        if (isset($_SERVER['REQUEST_URI']) && preg_match('#^/shop/kategorie/([^/]+)/?$#', $_SERVER['REQUEST_URI'], $matches)) {
             $_GET['produkt_category'] = sanitize_title($matches[1]);
         }
 
@@ -298,7 +298,7 @@ class Plugin {
         $og_title = !empty($category->meta_title) ? $category->meta_title : $category->page_title;
         $og_description = !empty($category->meta_description) ? $category->meta_description : $category->page_description;
         $og_image = !empty($category->default_image) ? $category->default_image : '';
-        $og_url = $slug ? home_url('/shop/' . sanitize_title($slug)) : get_permalink($post->ID);
+        $og_url = $slug ? home_url('/shop/produkt/' . sanitize_title($slug)) : get_permalink($post->ID);
 
         echo '<!-- Open Graph Tags -->' . "\n";
         echo '<meta property="og:type" content="product">' . "\n";
@@ -406,7 +406,7 @@ class Plugin {
                     'unitText' => 'pro Monat'
                 ],
                 'availability' => 'https://schema.org/InStock',
-                'url' => $slug ? home_url('/shop/' . sanitize_title($slug)) : get_permalink($post->ID),
+                'url' => $slug ? home_url('/shop/produkt/' . sanitize_title($slug)) : get_permalink($post->ID),
                 'seller' => [
                     '@type' => 'Organization',
                     'name' => get_bloginfo('name')
@@ -578,10 +578,18 @@ class Plugin {
     }
 }
 
-add_action('template_include', function ($template) {
-    if (isset($_SERVER['REQUEST_URI']) && preg_match('#^/shop(?:/([^/]+))?/?$#', $_SERVER['REQUEST_URI'], $matches)) {
-        $_GET['produkt_category'] = isset($matches[1]) ? sanitize_title($matches[1]) : '';
+add_filter('template_include', function ($template) {
+    $uri = $_SERVER['REQUEST_URI'];
+
+    if (preg_match('#^/shop/kategorie/([^/]+)/?$#', $uri, $matches)) {
+        $_GET['produkt_category'] = sanitize_title($matches[1]);
         return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
     }
+
+    if (preg_match('#^/shop/produkt/([^/]+)/?$#', $uri, $matches)) {
+        $_GET['produkt_slug'] = sanitize_title($matches[1]);
+        return PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
+    }
+
     return $template;
 });
