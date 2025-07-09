@@ -2,8 +2,43 @@
 
 global $wpdb;
 
+function get_lowest_stripe_price_by_category($category_id) {
+    global $wpdb;
+
+    $variant_ids  = $wpdb->get_col($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+        $category_id
+    ));
+    $duration_ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+        $category_id
+    ));
+
+    $price_data = \ProduktVerleih\StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
+
+    $price_count = 0;
+    if (!empty($variant_ids) && !empty($duration_ids)) {
+        $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $placeholders_duration = implode(',', array_fill(0, count($duration_ids), '%d'));
+        $count_query = $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
+             WHERE variant_id IN ($placeholders_variant)
+               AND duration_id IN ($placeholders_duration)",
+            array_merge($variant_ids, $duration_ids)
+        );
+        $price_count = (int) $wpdb->get_var($count_query);
+    }
+
+    return [
+        'amount'   => $price_data['amount'] ?? null,
+        'price_id' => $price_data['price_id'] ?? null,
+        'count'    => $price_count
+    ];
+}
+
 // Get category data
 $category_id = isset($category) ? $category->id : 1;
+$price_data = get_lowest_stripe_price_by_category($category_id);
 
 // Get all data for this category
 $variants = $wpdb->get_results($wpdb->prepare(
@@ -37,6 +72,9 @@ $feature_2_description = isset($category) ? $category->feature_2_description : '
 $feature_3_icon = isset($category) ? $category->feature_3_icon : '';
 $feature_3_title = isset($category) ? $category->feature_3_title : '';
 $feature_3_description = isset($category) ? $category->feature_3_description : '';
+$feature_4_icon = isset($category) ? $category->feature_4_icon : '';
+$feature_4_title = isset($category) ? $category->feature_4_title : '';
+$feature_4_description = isset($category) ? $category->feature_4_description : '';
 $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 
 // Button
@@ -70,6 +108,7 @@ $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'def
 $duration_tooltip = isset($category) ? ($category->duration_tooltip ?? '') : '';
 $condition_tooltip = isset($category) ? ($category->condition_tooltip ?? '') : '';
 $show_tooltips = isset($category) ? ($category->show_tooltips ?? 1) : 1;
+$tooltip_icon = '<svg viewBox="0 0 16.7 16.9" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" fill-rule="evenodd" d="M8.3,16.4C3.9,16.4.3,12.8.3,8.4S3.9.4,8.3.4s8,3.6,8,8-3.6,8-8,8ZM7.4,10.4h1.7c0-.3,0-.5.1-.7s.2-.4.4-.6l.7-.6c.3-.3.5-.5.6-.8.1-.3.2-.6.2-.9,0-.7-.2-1.3-.7-1.7-.5-.4-1.2-.6-2-.6s-1.6.2-2,.7c-.5.4-.7,1-.7,1.8h2c0-.3,0-.5.2-.7.1-.2.3-.3.6-.3.5,0,.8.3.8.9s0,.5-.2.7-.4.4-.7.7c-.3.2-.5.5-.6.9-.1.3-.2.8-.2,1.4ZM7.2,12.2c0,.3.1.5.3.7s.5.3.8.3.6,0,.8-.3.3-.4.3-.7-.1-.5-.3-.7-.5-.3-.8-.3-.6,0-.8.3-.3.4-.3.7Z"/></svg>';
 $show_rating = isset($category) ? ($category->show_rating ?? 0) : 0;
 $rating_value = isset($category) ? floatval(str_replace(',', '.', $category->rating_value ?? 0)) : 0;
 $rating_display = number_format($rating_value, 1, ',', '');
@@ -104,7 +143,12 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <?php if (!empty($default_image)): ?>
                                 <img src="<?php echo esc_url($default_image); ?>" alt="Produkt" id="produkt-main-image" class="produkt-main-image">
                             <?php else: ?>
-                                <div class="produkt-placeholder-image" id="produkt-placeholder">👶</div>
+                                <div class="produkt-placeholder-image produkt-fade-in" id="produkt-placeholder">
+                                    <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" width="70%" height="100%">
+                                        <rect width="100%" height="100%" fill="#f0f0f0" stroke="#ccc" stroke-width="0" rx="8" ry="8" />
+                                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="14">Produktbild folgt in Kürze</text>
+                                    </svg>
+                                </div>
                             <?php endif; ?>
                             
                             <!-- Extra Image Overlay -->
@@ -121,7 +165,18 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
                 
                 <div class="produkt-product-details">
-                    <h2><?php echo esc_html($product_title); ?></h2>
+                    <h1><?php echo esc_html($product_title); ?></h1>
+                    <?php if ($price_data && isset($price_data['amount'])): ?>
+                        <div class="produkt-card-price">
+                            <?php if ($price_data['count'] > 1): ?>
+                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                            <?php else: ?>
+                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                            <?php endif; ?>
+                        </div>
+                    <?php else: ?>
+                        <div class="produkt-card-price">Preis auf Anfrage</div>
+                    <?php endif; ?>
                     <?php if ($show_rating && $rating_value > 0): ?>
                     <div class="produkt-rating">
                         <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
@@ -251,7 +306,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         Wählen Sie Ihre Mietdauer
                         <?php if ($show_tooltips): ?>
                         <span class="produkt-tooltip">
-                            ℹ️
+                            <?php echo $tooltip_icon; ?>
                             <span class="produkt-tooltiptext"><?php echo esc_html($duration_tooltip); ?></span>
                         </span>
                         <?php endif; ?>
@@ -283,7 +338,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         Zustand
                         <?php if ($show_tooltips): ?>
                         <span class="produkt-tooltip">
-                            ℹ️
+                            <?php echo $tooltip_icon; ?>
                             <span class="produkt-tooltiptext"><?php echo esc_html($condition_tooltip); ?></span>
                         </span>
                         <?php endif; ?>
@@ -378,11 +433,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     ?>
                     
                     <?php if (!empty($required_selections)): ?>
-                    <button id="produkt-rent-button" class="produkt-rent-button" disabled>
+                    <button id="produkt-rent-button" class="produkt-rent-button" disabled data-icon="<?php echo esc_url($button_icon); ?>">
                         <?php if (!empty($button_icon)): ?>
                             <img src="<?php echo esc_url($button_icon); ?>" alt="Button Icon" class="produkt-button-icon-img">
-                        <?php else: ?>
-                            <span class="produkt-button-icon">🛒</span>
                         <?php endif; ?>
                         <span><?php echo esc_html($button_text); ?></span>
                     </button>
@@ -443,8 +496,10 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         🛡️
                     <?php endif; ?>
                 </div>
-                <h4><?php echo esc_html($feature_1_title); ?></h4>
-                <p><?php echo esc_html($feature_1_description); ?></p>
+                <div class="produkt-feature-text">
+                    <h4><?php echo esc_html($feature_1_title); ?></h4>
+                    <p><?php echo esc_html($feature_1_description); ?></p>
+                </div>
             </div>
             <div class="produkt-feature-item">
                 <div class="produkt-feature-icon-large">
@@ -454,8 +509,10 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         ❤️
                     <?php endif; ?>
                 </div>
-                <h4><?php echo esc_html($feature_2_title); ?></h4>
-                <p><?php echo esc_html($feature_2_description); ?></p>
+                <div class="produkt-feature-text">
+                    <h4><?php echo esc_html($feature_2_title); ?></h4>
+                    <p><?php echo esc_html($feature_2_description); ?></p>
+                </div>
             </div>
             <div class="produkt-feature-item">
                 <div class="produkt-feature-icon-large">
@@ -465,8 +522,23 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         📱
                     <?php endif; ?>
                 </div>
-                <h4><?php echo esc_html($feature_3_title); ?></h4>
-                <p><?php echo esc_html($feature_3_description); ?></p>
+                <div class="produkt-feature-text">
+                    <h4><?php echo esc_html($feature_3_title); ?></h4>
+                    <p><?php echo esc_html($feature_3_description); ?></p>
+                </div>
+            </div>
+            <div class="produkt-feature-item">
+                <div class="produkt-feature-icon-large">
+                    <?php if (!empty($feature_4_icon)): ?>
+                        <img src="<?php echo esc_url($feature_4_icon); ?>" alt="<?php echo esc_attr($feature_4_title); ?>" style="width: 100%; height: 100%; object-fit: contain;">
+                    <?php else: ?>
+                        ⭐
+                    <?php endif; ?>
+                </div>
+                <div class="produkt-feature-text">
+                    <h4><?php echo esc_html($feature_4_title); ?></h4>
+                    <p><?php echo esc_html($feature_4_description); ?></p>
+                </div>
             </div>
         </div>
     </div>

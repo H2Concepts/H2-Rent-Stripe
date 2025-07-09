@@ -50,13 +50,9 @@ class Ajax {
         if ($variant && $duration) {
             $variant_price = 0;
             $used_price_id = '';
-            $duration_price_id = $wpdb->get_var($wpdb->prepare(
-                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
-                $duration_id,
-                $variant_id
-            ));
 
-            $price_id_to_use = $duration_price_id ?: $variant->stripe_price_id;
+            // Always use the variant's own Stripe price ID
+            $price_id_to_use = $variant->stripe_price_id;
 
             if (!empty($price_id_to_use)) {
                 $price_res = StripeService::get_price_amount($price_id_to_use);
@@ -88,11 +84,17 @@ class Ajax {
                 $extras_price  *= $modifier;
             }
 
-            $base_price = $variant_price + $extras_price;
-            $discount = floatval($duration->discount);
-            // Do not apply the discount to the calculated price. It is only used
-            // for displaying the badge on the duration option.
-            $final_price = $base_price;
+            // Base price only refers to the variant itself
+            $base_price = $variant_price;
+            $discount   = floatval($duration->discount);
+
+            $original_price = null;
+            $discounted_variant = $variant_price;
+            if ($discount > 0) {
+                $original_price = $variant_price;
+                $discounted_variant = round($variant_price * (1 - $discount), 2);
+            }
+            $final_price = $discounted_variant + $extras_price;
             $shipping_cost = 0;
             if ($variant) {
                 $category = $wpdb->get_row($wpdb->prepare(
@@ -108,12 +110,13 @@ class Ajax {
             }
             
             wp_send_json_success(array(
-                'base_price' => $base_price,
-                'final_price' => $final_price,
-                'discount' => $discount,
+                'base_price'    => $base_price,
+                'final_price'   => $final_price,
+                'original_price'=> $original_price,
+                'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
-                'price_id' => $used_price_id,
-                'available' => $variant->available ? true : false,
+                'price_id'      => $used_price_id,
+                'available'     => $variant->available ? true : false,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: ''
             ));
