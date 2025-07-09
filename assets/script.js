@@ -305,7 +305,12 @@ jQuery(document).ready(function($) {
     function showDefaultImage() {
         const mainImageContainer = $('#produkt-main-image-container');
         
-        let imageHtml = '<div class="produkt-placeholder-image produkt-fade-in" id="produkt-placeholder">👶</div>';
+        let imageHtml = '<div class="produkt-placeholder-image produkt-fade-in" id="produkt-placeholder">' +
+            '<svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" width="70%" height="100%">' +
+            '<rect width="100%" height="100%" fill="#f0f0f0" stroke="#ccc" stroke-width="0" rx="8" ry="8"/>' +
+            '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#666" font-size="14">Produktbild folgt in K\u00fcrze</text>' +
+            '</svg>' +
+            '</div>';
         
         // Find and replace only the main image, keep extra overlay
         const existingMainImage = mainImageContainer.find('#produkt-main-image, #produkt-placeholder');
@@ -614,11 +619,12 @@ jQuery(document).ready(function($) {
                         
                         // Update price display
                         $('#produkt-final-price').text(formatPrice(data.final_price) + '€');
-                        
-                        // The discount percentage is used only for the badge.
-                        // Prices come directly from Stripe, so don't show any
-                        // original price or savings calculation.
-                        $('#produkt-original-price').hide();
+
+                        if (data.discount > 0 && data.original_price) {
+                            $('#produkt-original-price').text(formatPrice(data.original_price) + '€').show();
+                        } else {
+                            $('#produkt-original-price').hide();
+                        }
                         $('#produkt-savings').hide();
 
                         // Update button based on availability
@@ -687,8 +693,10 @@ jQuery(document).ready(function($) {
 
     function initMobileStickyPrice() {
         if (window.innerWidth <= 768) {
-            // Determine button label from main button
-            const mainLabel = $('#produkt-rent-button span').text().trim() || 'Jetzt Mieten';
+            // Determine button label and icon from main button
+            const mainButton = $('#produkt-rent-button');
+            const mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
+            const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
             const stickyHtml = `
@@ -699,7 +707,8 @@ jQuery(document).ready(function($) {
                             <div class="produkt-mobile-price-value" id="mobile-price-value">0,00€</div>
                         </div>
                         <button class="produkt-mobile-button" disabled>
-                            ${mainLabel}
+                            ${mainIcon}
+                            <span>${mainLabel}</span>
                         </button>
                     </div>
                 </div>

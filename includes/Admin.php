@@ -320,6 +320,9 @@ class Admin {
             $feature_3_icon = esc_url_raw($_POST['feature_3_icon']);
             $feature_3_title = sanitize_text_field($_POST['feature_3_title']);
             $feature_3_description = sanitize_textarea_field($_POST['feature_3_description']);
+            $feature_4_icon = esc_url_raw($_POST['feature_4_icon']);
+            $feature_4_title = sanitize_text_field($_POST['feature_4_title']);
+            $feature_4_description = sanitize_textarea_field($_POST['feature_4_description']);
             $button_text = sanitize_text_field($_POST['button_text']);
             $button_icon = esc_url_raw($_POST['button_icon']);
             $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : array();
@@ -375,6 +378,9 @@ class Admin {
                         'feature_3_icon' => $feature_3_icon,
                         'feature_3_title' => $feature_3_title,
                         'feature_3_description' => $feature_3_description,
+                        'feature_4_icon' => $feature_4_icon,
+                        'feature_4_title' => $feature_4_title,
+                        'feature_4_description' => $feature_4_description,
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
@@ -396,7 +402,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 if ($result !== false) {
@@ -425,6 +431,9 @@ class Admin {
                         'feature_3_icon' => $feature_3_icon,
                         'feature_3_title' => $feature_3_title,
                         'feature_3_description' => $feature_3_description,
+                        'feature_4_icon' => $feature_4_icon,
+                        'feature_4_title' => $feature_4_title,
+                        'feature_4_description' => $feature_4_description,
                         'button_text' => $button_text,
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
@@ -445,7 +454,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 if ($result !== false) {

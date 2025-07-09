@@ -90,9 +90,13 @@ class Ajax {
 
             $base_price = $variant_price + $extras_price;
             $discount = floatval($duration->discount);
-            // Do not apply the discount to the calculated price. It is only used
-            // for displaying the badge on the duration option.
+
+            $original_price = null;
             $final_price = $base_price;
+            if ($discount > 0) {
+                $original_price = $base_price;
+                $final_price = round($base_price * (1 - $discount), 2);
+            }
             $shipping_cost = 0;
             if ($variant) {
                 $category = $wpdb->get_row($wpdb->prepare(
@@ -108,12 +112,13 @@ class Ajax {
             }
             
             wp_send_json_success(array(
-                'base_price' => $base_price,
-                'final_price' => $final_price,
-                'discount' => $discount,
+                'base_price'    => $base_price,
+                'final_price'   => $final_price,
+                'original_price'=> $original_price,
+                'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
-                'price_id' => $used_price_id,
-                'available' => $variant->available ? true : false,
+                'price_id'      => $used_price_id,
+                'available'     => $variant->available ? true : false,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: ''
             ));
