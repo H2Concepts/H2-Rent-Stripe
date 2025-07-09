@@ -427,33 +427,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    var accordionIndex = document.querySelectorAll('#accordion-container .produkt-accordion-group').length;
-    document.getElementById('add-accordion').addEventListener('click', function(e){
-        e.preventDefault();
-        var id = 'accordion_content_' + accordionIndex + '_new';
-        var wrapper = document.createElement('div');
-        wrapper.className = 'produkt-accordion-group';
-        wrapper.innerHTML = '<div class="produkt-form-row">' +
-            '<div class="produkt-form-group" style="flex:1;">' +
-            '<label>Titel</label>' +
-            '<input type="text" name="accordion_titles[]" />' +
-            '</div>' +
-            '<button type="button" class="button produkt-remove-accordion">-</button>' +
-            '</div>' +
-            '<div class="produkt-form-group"><textarea id="' + id + '" name="accordion_contents[]" rows="3"></textarea></div>';
-        document.getElementById('accordion-container').appendChild(wrapper);
-        if (typeof wp !== 'undefined' && wp.editor && wp.editor.initialize) {
-            wp.editor.initialize(id, { tinymce: true, quicktags: true });
-        }
-        accordionIndex++;
-    });
-
-    document.getElementById('accordion-container').addEventListener('click', function(e){
-        if(e.target.classList.contains('produkt-remove-accordion')){
-            e.preventDefault();
-            var group = e.target.closest('.produkt-accordion-group');
-            if(group){ group.remove(); }
-        }
-    });
+    // Accordion fields are handled in admin-script.js
 });
 </script>

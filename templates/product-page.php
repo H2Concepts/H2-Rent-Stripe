@@ -164,7 +164,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
                 
                 <div class="produkt-product-details">
-                    <h2><?php echo esc_html($product_title); ?></h2>
+                    <h1><?php echo esc_html($product_title); ?></h1>
                     <?php if ($price_data && isset($price_data['amount'])): ?>
                         <div class="produkt-card-price">
                             <?php if ($price_data['count'] > 1): ?>
