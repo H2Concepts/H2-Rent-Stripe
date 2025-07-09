@@ -578,13 +578,10 @@ class Plugin {
     }
 }
 
-add_action('template_redirect', function () {
+add_action('template_include', function ($template) {
     if (isset($_SERVER['REQUEST_URI']) && preg_match('#^/shop(?:/([^/]+))?/?$#', $_SERVER['REQUEST_URI'], $matches)) {
         $_GET['produkt_category'] = isset($matches[1]) ? sanitize_title($matches[1]) : '';
-        global $wpdb;
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
-        status_header(200);
-        include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
-        exit;
+        return plugin_dir_path(__FILE__) . 'templates/product-archive.php';
     }
+    return $template;
 });

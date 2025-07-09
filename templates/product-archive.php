@@ -1,5 +1,9 @@
 <?php
-if (!defined('ABSPATH')) { exit; }
+/* Template Name: Produkt-Archiv */
+if (!defined('ABSPATH')) {
+    exit;
+}
+get_header();
 
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
@@ -16,11 +20,18 @@ if (!empty($category_slug)) {
         $category_slug
     ));
 
-    if ($category) {
+    if (!empty($category)) {
+        // Gefundene Kategorie → filtern
         $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
             $category->id
         ));
+        $categories = array_filter($categories, function ($product) use ($filtered_product_ids) {
+            return in_array($product->id, $filtered_product_ids);
+        });
+    } elseif (!empty($category_slug)) {
+        // Slug war angegeben, aber ungültig
+        $categories = [];
     }
 }
 
@@ -59,17 +70,15 @@ function get_lowest_stripe_price_by_category($category_id) {
     ];
 }
 
-if (!empty($filtered_product_ids)) {
-    $categories = array_filter($categories, function ($product) use ($filtered_product_ids) {
-        return in_array($product->id, $filtered_product_ids);
-    });
-}
 ?>
 <div class="produkt-shop-archive produkt-container">
     <?php if (!empty($category_slug)): ?>
       <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
     <?php else: ?>
       <h2>Alle Produkte</h2>
+    <?php endif; ?>
+    <?php if (empty($categories)): ?>
+        <p>Keine Produkte in dieser Kategorie gefunden.</p>
     <?php endif; ?>
     <div class="produkt-shop-grid">
         <?php foreach ($categories as $cat): ?>
@@ -106,3 +115,4 @@ if (!empty($filtered_product_ids)) {
         <?php endforeach; ?>
     </div>
 </div>
+<?php get_footer(); ?>
