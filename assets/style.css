@@ -799,6 +799,11 @@
     cursor: not-allowed;
 }
 
+.produkt-rent-button:disabled .produkt-button-icon,
+.produkt-rent-button:disabled .produkt-button-icon-img {
+    filter: brightness(0) saturate(100%) invert(73%) sepia(6%) saturate(519%) hue-rotate(179deg) brightness(88%) contrast(92%);
+}
+
 .produkt-button-icon {
     font-size: 1.25rem;
     filter: brightness(0) saturate(100%) invert(95%) sepia(0%) saturate(7500%) hue-rotate(112deg) brightness(107%) contrast(97%);
@@ -899,14 +904,14 @@
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-    background: #dbe1e5;
+    background: #e5e7eb;
     border-radius: 0.5rem;
     padding: 1rem;
 }
 
 .produkt-feature-icon-large {
     width: 14rem;
-    height: 3rem;
+    height: 2.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -986,6 +991,9 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .produkt-mobile-button:hover {
@@ -996,6 +1004,16 @@
     background: #e5e7eb;
     color: #9ca3af;
     cursor: not-allowed;
+}
+
+.produkt-mobile-button .produkt-button-icon,
+.produkt-mobile-button .produkt-button-icon-img {
+    filter: brightness(0) saturate(100%) invert(95%) sepia(0%) saturate(7500%) hue-rotate(112deg) brightness(107%) contrast(97%);
+}
+
+.produkt-mobile-button:disabled .produkt-button-icon,
+.produkt-mobile-button:disabled .produkt-button-icon-img {
+    filter: brightness(0) saturate(100%) invert(73%) sepia(6%) saturate(519%) hue-rotate(179deg) brightness(88%) contrast(92%);
 }
 
 .produkt-color-toast {
