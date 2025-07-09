@@ -1136,4 +1136,22 @@ class Database {
 
         return array_filter((array) $price_ids);
     }
+
+    /**
+     * Retrieve all product categories.
+     *
+     * @param bool $only_active If true, return only active categories
+     * @return array List of category objects
+     */
+    public static function get_all_categories($only_active = true) {
+        global $wpdb;
+
+        $sql = "SELECT * FROM {$wpdb->prefix}produkt_categories";
+        if ($only_active) {
+            $sql .= " WHERE active = 1";
+        }
+        $sql .= " ORDER BY sort_order";
+
+        return $wpdb->get_results($sql);
+    }
 }

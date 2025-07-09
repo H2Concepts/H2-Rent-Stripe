@@ -8,6 +8,11 @@ get_header();
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
 
+$categories = Database::get_all_categories(true);
+if (!is_array($categories)) {
+    $categories = [];
+}
+
 $category_slug = isset($_GET['produkt_category']) ? sanitize_title($_GET['produkt_category']) : '';
 echo '<pre>DEBUG: Kategorie-Slug = ' . htmlspecialchars($category_slug) . '</pre>';
 $filtered_product_ids = [];
@@ -26,7 +31,7 @@ if (!empty($category_slug)) {
             "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
             $category->id
         ));
-        $categories = array_filter($categories, function ($product) use ($filtered_product_ids) {
+        $categories = array_filter($categories ?? [], function ($product) use ($filtered_product_ids) {
             return in_array($product->id, $filtered_product_ids);
         });
     } elseif (!empty($category_slug)) {
@@ -81,7 +86,7 @@ function get_lowest_stripe_price_by_category($category_id) {
         <p>Keine Produkte in dieser Kategorie gefunden.</p>
     <?php endif; ?>
     <div class="produkt-shop-grid">
-        <?php foreach ($categories as $cat): ?>
+        <?php foreach (($categories ?? []) as $cat): ?>
         <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
         <?php
             $price_data = get_lowest_stripe_price_by_category($cat->id);
