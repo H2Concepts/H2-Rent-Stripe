@@ -89,13 +89,14 @@ class Ajax {
             }
 
             $base_price = $variant_price + $extras_price;
-            $discount = floatval($duration->discount);
+            $discount    = floatval($duration->discount);
 
             $original_price = null;
-            $final_price = $base_price;
+            $final_price   = $base_price;
             if ($discount > 0) {
                 $original_price = $base_price;
-                $final_price = round($base_price * (1 - $discount), 2);
+                $discounted_variant = round($variant_price * (1 - $discount), 2);
+                $final_price = $discounted_variant + $extras_price;
             }
             $shipping_cost = 0;
             if ($variant) {
