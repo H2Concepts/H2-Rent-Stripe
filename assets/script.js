@@ -998,3 +998,15 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+jQuery(function($) {
+    $('#shop-filter-toggle').on('click', function() {
+        $('#shop-filter-overlay').addClass('open');
+        $('body').addClass('shop-filter-open');
+    });
+
+    $('#shop-filter-close').on('click', function() {
+        $('#shop-filter-overlay').removeClass('open');
+        $('body').removeClass('shop-filter-open');
+    });
+});

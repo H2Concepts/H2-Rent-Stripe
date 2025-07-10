@@ -160,6 +160,28 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         </div>
     </div>
 </div> <!-- .shop-overview-layout -->
+
+<button id="shop-filter-toggle" class="shop-filter-button" aria-label="Filter">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 5h18v2H3V5zm4 6h10v2H7v-2zm-2 6h14v2H5v-2z"/>
+    </svg>
+</button>
+<div id="shop-filter-overlay" class="shop-filter-overlay">
+    <div class="shop-filter-content">
+        <button id="shop-filter-close" class="shop-filter-close" aria-label="Close">&times;</button>
+        <h2>Produkte</h2>
+        <ul>
+            <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
+            <?php foreach ($kats as $kat): ?>
+                <li>
+                    <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
+                        <?php echo esc_html($kat->name); ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</div>
 </div> <!-- .entry-content -->
 </article></main></div> <!-- .content-area und .ast-container -->
 <?php get_footer(); ?>
