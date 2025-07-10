@@ -131,6 +131,16 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                 </div>
                 <div class="shop-product-title"><?php echo esc_html($cat->product_title); ?></div>
                 <div class="shop-product-shortdesc"><?php echo esc_html(wp_trim_words($cat->product_description, 12)); ?></div>
+                <?php
+                    $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
+                    $rating_display = number_format($rating_value, 1, ',', '');
+                ?>
+                <?php if ($cat->show_rating && $rating_value > 0): ?>
+                    <div class="produkt-rating">
+                        <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
+                        <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
+                    </div>
+                <?php endif; ?>
                 <div class="shop-product-price">
                     <?php if ($price_data && isset($price_data['amount'])): ?>
                         <?php if ($price_data['count'] > 1): ?>

@@ -1500,12 +1500,18 @@ body.produkt-popup-open {
     border-radius: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     padding: 1.5rem 1rem;
-    text-align: center;
+    text-align: left;
     transition: box-shadow 0.2s;
 }
 
 .shop-product-item:hover {
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+}
+
+.shop-product-item a {
+    display: block;
+    text-decoration: none !important;
+    color: inherit;
 }
 
 .shop-product-image img {
@@ -1518,18 +1524,19 @@ body.produkt-popup-open {
 .shop-product-title {
     font-weight: 600;
     margin-bottom: 0.5rem;
+    color: #000;
 }
 
 .shop-product-shortdesc {
     font-size: 0.95em;
-    color: #777;
+    color: #000;
     margin-bottom: 0.8rem;
 }
 
 .shop-product-price {
     font-size: 1.1em;
     font-weight: bold;
-    color: #204e7a;
+    color: #000;
 }
 
 .shop-intro {
