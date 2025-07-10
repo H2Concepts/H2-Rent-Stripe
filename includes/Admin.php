@@ -124,9 +124,9 @@ class Admin {
 
         $slug = sanitize_title(get_query_var('produkt_slug'));
         $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+        $content = $post->post_content ?? '';
 
         if (!is_page('shop') && empty($slug) && empty($category_slug)) {
-            $content = $post->post_content ?? '';
             if (!has_shortcode($content, 'produkt_product') &&
                 !has_shortcode($content, 'stripe_elements_form') &&
                 !has_shortcode($content, 'produkt_shop_grid')) {
@@ -142,7 +142,9 @@ class Admin {
             PRODUKT_VERSION
         );
 
-        $load_script = !empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'));
+        $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
+            has_shortcode($content, 'produkt_product') ||
+            has_shortcode($content, 'produkt_shop_grid');
         if ($load_script) {
             wp_enqueue_script(
                 'produkt-script',
