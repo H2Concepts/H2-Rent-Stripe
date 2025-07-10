@@ -1602,7 +1602,19 @@ body.produkt-popup-open {
 }
 
 .shop-overview-container h1 {
+    margin: 0;
+}
+
+.shop-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 30px;
+}
+
+.shop-sort-form select {
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
 }
 
 @media (max-width: 768px) {

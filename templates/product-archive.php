@@ -14,6 +14,7 @@ $categories = Database::get_all_categories(true);
 if (!is_array($categories)) {
     $categories = [];
 }
+$sort = isset($_GET['sort']) ? sanitize_text_field($_GET['sort']) : '';
 
 // retrieve the requested category and sanitize the slug immediately
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
@@ -44,6 +45,26 @@ if (!empty($category_slug)) {
         // Slug war angegeben, aber ungültig
         $categories = [];
     }
+}
+
+foreach ($categories as $cat) {
+    $price_info = get_lowest_stripe_price_by_category($cat->id);
+    $cat->lowest_price = isset($price_info['amount']) ? (float) $price_info['amount'] : null;
+    $cat->price_data = $price_info;
+}
+
+if ($sort === 'price_asc') {
+    usort($categories, function ($a, $b) {
+        $pa = $a->lowest_price ?? INF;
+        $pb = $b->lowest_price ?? INF;
+        return $pa <=> $pb;
+    });
+} elseif ($sort === 'price_desc') {
+    usort($categories, function ($a, $b) {
+        $pa = $a->lowest_price ?? -INF;
+        $pb = $b->lowest_price ?? -INF;
+        return $pb <=> $pa;
+    });
 }
 
 if (!function_exists('get_lowest_stripe_price_by_category')) {
@@ -85,6 +106,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 
 ?>
 <div class="produkt-shop-archive shop-overview-container produkt-container">
+<div class="shop-header-row">
     <?php if ($category_slug && !$category): ?>
         <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
         <p>Kategorie nicht gefunden.</p>
@@ -93,6 +115,17 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
     <?php else: ?>
         <h1>Shop</h1>
     <?php endif; ?>
+    <form method="get" class="shop-sort-form">
+        <?php if (!empty($category_slug)): ?>
+            <input type="hidden" name="kategorie" value="<?php echo esc_attr($category_slug); ?>">
+        <?php endif; ?>
+        <select name="sort" id="shop-sort" onchange="this.form.submit()">
+            <option value="" <?php selected($sort, ''); ?>>Standard</option>
+            <option value="price_asc" <?php selected($sort, 'price_asc'); ?>>Preis aufsteigend</option>
+            <option value="price_desc" <?php selected($sort, 'price_desc'); ?>>Preis absteigend</option>
+        </select>
+    </form>
+</div>
 
 
     <?php
@@ -122,8 +155,8 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             <div class="shop-product-grid">
         <?php foreach (($categories ?? []) as $cat): ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
-        <?php $price_data = get_lowest_stripe_price_by_category($cat->id); ?>
-        <div class="shop-product-item">
+        <?php $price_data = $cat->price_data; ?>
+        <div class="shop-product-item" data-price="<?php echo isset($price_data['amount']) ? esc_attr($price_data['amount']) : ''; ?>">
             <a href="<?php echo esc_url($url); ?>">
                 <div class="shop-product-image">
                     <?php if (!empty($cat->default_image)): ?>
