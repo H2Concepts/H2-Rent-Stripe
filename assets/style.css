@@ -1646,7 +1646,7 @@ body.produkt-popup-open {
     z-index: 1000;
     visibility: hidden;
     pointer-events: none;
-    padding: 20px;
+    padding: 40px;
     overflow-y: auto;
 }
 
@@ -1664,6 +1664,17 @@ body.produkt-popup-open {
     border: none;
     font-size: 24px;
     cursor: pointer;
+    box-shadow: none;
+}
+
+.shop-filter-overlay h2 {
+    font-size: 35px;
+}
+
+.shop-filter-overlay ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 #shop-filter-overlay a {
