@@ -1495,6 +1495,12 @@ body.produkt-popup-open {
     gap: 2rem;
 }
 
+@media (max-width: 768px) {
+    .shop-product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 .shop-product-item {
     background: #fff;
     border-radius: 1rem;
@@ -1509,7 +1515,9 @@ body.produkt-popup-open {
 }
 
 .shop-product-item a {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     text-decoration: none !important;
     color: inherit;
 }
@@ -1532,12 +1540,14 @@ body.produkt-popup-open {
     font-size: 0.95em;
     color: #000;
     margin-bottom: 0.8rem;
+    min-height: 3em;
 }
 
 .shop-product-price {
     font-size: 1.1em;
     font-weight: bold;
     color: #000;
+    margin-top: auto;
 }
 
 .shop-intro {
