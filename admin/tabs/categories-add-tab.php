@@ -82,7 +82,12 @@
                     </div>
                 </div>
             </div>
-            
+
+            <div class="produkt-form-group">
+                <label>Kurzbeschreibung</label>
+                <textarea name="short_description" rows="2" placeholder="Kurzer Text unter dem Titel"></textarea>
+            </div>
+
             <div class="produkt-form-group">
                 <label>Produktbeschreibung *</label>
                 <?php

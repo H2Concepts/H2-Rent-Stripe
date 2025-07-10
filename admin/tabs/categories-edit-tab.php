@@ -109,7 +109,12 @@
                     <input type="text" name="product_title" value="<?php echo esc_attr($edit_item->product_title); ?>" required>
                 </div>
             </div>
-            
+
+            <div class="produkt-form-group">
+                <label>Kurzbeschreibung</label>
+                <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description); ?></textarea>
+            </div>
+
             <div class="produkt-form-group">
                 <label>Produktbeschreibung *</label>
                 <?php

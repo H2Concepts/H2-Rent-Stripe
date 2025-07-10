@@ -17,6 +17,9 @@ if (!is_array($categories)) {
 
 // retrieve the requested category and sanitize the slug immediately
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+if (empty($category_slug)) {
+    $category_slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
+}
 $filtered_product_ids = [];
 $category = null;
 
@@ -81,50 +84,76 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 }
 
 ?>
-<div class="produkt-shop-archive produkt-container">
+<div class="produkt-shop-archive shop-overview-container produkt-container">
     <?php if ($category_slug && !$category): ?>
-        <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
+        <h1>Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h1>
         <p>Kategorie nicht gefunden.</p>
     <?php elseif (!empty($category_slug)): ?>
-        <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
+        <h1>Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h1>
     <?php else: ?>
-        <h2>Alle Produkte</h2>
+        <h1>Shop</h1>
     <?php endif; ?>
+
+    <p class="shop-intro">
+        Entdecken Sie unsere hochwertigen Produkte für Ihren Bedarf – Qualität, geprüft und sofort verfügbar.
+    </p>
+
+    <form method="get" class="produkt-filter-form">
+        <select name="kategorie" onchange="this.form.submit()">
+            <option value="">Alle Kategorien</option>
+            <?php
+            global $wpdb;
+            $kats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+            foreach ($kats as $kat):
+                $selected = ($category_slug === $kat->slug) ? 'selected' : '';
+            ?>
+                <option value="<?= esc_attr($kat->slug) ?>" <?= $selected ?>>
+                    <?= esc_html($kat->name) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </form>
+
     <?php if (empty($categories)): ?>
         <p>Keine Produkte in dieser Kategorie gefunden.</p>
     <?php endif; ?>
-    <div class="produkt-shop-grid">
+
+    <div class="shop-product-grid">
         <?php foreach (($categories ?? []) as $cat): ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
-        <?php
-            $price_data = get_lowest_stripe_price_by_category($cat->id);
-        ?>
-        <a class="produkt-shop-card-link" href="<?php echo esc_url($url); ?>">
-            <div class="produkt-shop-card">
-                <?php if (!empty($cat->default_image)): ?>
-                    <img class="produkt-shop-image" src="<?php echo esc_url($cat->default_image); ?>" alt="<?php echo esc_attr($cat->product_title); ?>">
-                <?php endif; ?>
-                <h2><?php echo esc_html($cat->product_title); ?></h2>
-                <?php if ($cat->show_rating && floatval($cat->rating_value) > 0): ?>
-                    <?php $display = number_format(floatval($cat->rating_value), 1, ',', ''); ?>
+        <?php $price_data = get_lowest_stripe_price_by_category($cat->id); ?>
+        <div class="shop-product-item">
+            <a href="<?php echo esc_url($url); ?>">
+                <div class="shop-product-image">
+                    <?php if (!empty($cat->default_image)): ?>
+                        <img src="<?php echo esc_url($cat->default_image); ?>" alt="<?php echo esc_attr($cat->product_title); ?>">
+                    <?php endif; ?>
+                </div>
+                <div class="shop-product-title"><?php echo esc_html($cat->product_title); ?></div>
+                <div class="shop-product-shortdesc"><?php echo esc_html($cat->short_description); ?></div>
+                <?php
+                    $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
+                    $rating_display = number_format($rating_value, 1, ',', '');
+                ?>
+                <?php if ($cat->show_rating && $rating_value > 0): ?>
                     <div class="produkt-rating">
-                        <span class="produkt-rating-number"><?php echo esc_html($display); ?></span>
-                        <span class="produkt-star-rating produkt-star-black" style="--rating: <?php echo esc_attr($cat->rating_value); ?>;"></span>
+                        <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
+                        <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
                     </div>
                 <?php endif; ?>
-                <?php if ($price_data && isset($price_data['amount'])): ?>
-                    <div class="produkt-card-price">
+                <div class="shop-product-price">
+                    <?php if ($price_data && isset($price_data['amount'])): ?>
                         <?php if ($price_data['count'] > 1): ?>
                             ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
                         <?php else: ?>
                             <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
                         <?php endif; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="produkt-card-price">Preis auf Anfrage</div>
-                <?php endif; ?>
-            </div>
-        </a>
+                    <?php else: ?>
+                        Preis auf Anfrage
+                    <?php endif; ?>
+                </div>
+            </a>
+        </div>
         <?php endforeach; ?>
     </div>
 </div>
