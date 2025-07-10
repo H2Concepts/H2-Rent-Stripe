@@ -1666,6 +1666,10 @@ body.produkt-popup-open {
     cursor: pointer;
 }
 
+#shop-filter-overlay a {
+    text-decoration: none;
+}
+
 body.shop-filter-open {
     overflow: hidden;
 }
