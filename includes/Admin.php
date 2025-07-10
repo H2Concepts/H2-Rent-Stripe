@@ -136,6 +136,7 @@ class Admin {
             }
         }
 
+        wp_enqueue_emoji_styles();
         wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
         if (!empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'))) {
             wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
@@ -210,6 +211,7 @@ class Admin {
     
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'produkt') !== false) {
+            wp_enqueue_admin_bar_header_styles();
             wp_enqueue_style('produkt-admin-style', PRODUKT_PLUGIN_URL . 'assets/admin-style.css', array(), PRODUKT_VERSION);
             wp_enqueue_script('produkt-admin-script', PRODUKT_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), PRODUKT_VERSION, true);
 
