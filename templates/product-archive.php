@@ -98,27 +98,31 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         Entdecken Sie unsere hochwertigen Produkte für Ihren Bedarf – Qualität, geprüft und sofort verfügbar.
     </p>
 
-    <form method="get" class="produkt-filter-form">
-        <select name="kategorie" onchange="this.form.submit()">
-            <option value="">Alle Kategorien</option>
-            <?php
-            global $wpdb;
-            $kats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
-            foreach ($kats as $kat):
-                $selected = ($category_slug === $kat->slug) ? 'selected' : '';
-            ?>
-                <option value="<?= esc_attr($kat->slug) ?>" <?= $selected ?>>
-                    <?= esc_html($kat->name) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </form>
+    <?php
+    global $wpdb;
+    $kats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+    ?>
 
-    <?php if (empty($categories)): ?>
-        <p>Keine Produkte in dieser Kategorie gefunden.</p>
-    <?php endif; ?>
+    <div class="shop-overview-layout">
+        <aside class="shop-category-list">
+            <h2>Produkte</h2>
+            <ul>
+                <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
+                <?php foreach ($kats as $kat): ?>
+                    <li>
+                        <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
+                            <?php echo esc_html($kat->name); ?>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        </aside>
+        <div>
+            <?php if (empty($categories)): ?>
+                <p>Keine Produkte in dieser Kategorie gefunden.</p>
+            <?php endif; ?>
 
-    <div class="shop-product-grid">
+            <div class="shop-product-grid">
         <?php foreach (($categories ?? []) as $cat): ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
         <?php $price_data = get_lowest_stripe_price_by_category($cat->id); ?>
@@ -155,7 +159,10 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             </a>
         </div>
         <?php endforeach; ?>
+
     </div>
+</div>
+
 </div>
 
 </div><!-- .ast-container -->
