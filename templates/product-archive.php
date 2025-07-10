@@ -94,9 +94,6 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         <h1>Shop</h1>
     <?php endif; ?>
 
-    <p class="shop-intro">
-        Entdecken Sie unsere hochwertigen Produkte für Ihren Bedarf – Qualität, geprüft und sofort verfügbar.
-    </p>
 
     <?php
     global $wpdb;

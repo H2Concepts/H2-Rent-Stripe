@@ -1503,7 +1503,6 @@ body.produkt-popup-open {
 }
 
 .shop-product-item {
-    background: #fff;
     border-radius: 1rem;
     text-align: left;
 }
@@ -1557,9 +1556,6 @@ body.produkt-popup-open {
     align-items: center;
 }
 
-.shop-intro {
-    margin-bottom: 1.5rem;
-}
 
 .produkt-filter-form {
     margin-bottom: 1.5rem;
@@ -1593,11 +1589,15 @@ body.produkt-popup-open {
 
 .shop-category-list a {
     color: #000;
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .shop-category-list a.active {
     font-weight: bold;
+}
+
+.shop-overview-container h1 {
+    margin-bottom: 30px;
 }
 
 @media (max-width: 768px) {
