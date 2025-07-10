@@ -160,5 +160,6 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         </div>
     </div>
 </div> <!-- .shop-overview-layout -->
-</div> <!-- .produkt-shop-archive -->
+</div> <!-- .entry-content -->
+</article></main></div> <!-- .content-area und .ast-container -->
 <?php get_footer(); ?>

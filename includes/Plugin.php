@@ -62,6 +62,24 @@ class Plugin {
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
+
+        // Ensure Astra page wrappers for plugin templates
+        add_filter('body_class', function ($classes) {
+            if (get_query_var('produkt_category_slug') || get_query_var('produkt_slug')) {
+                $classes[] = 'page';
+                $classes[] = 'type-page';
+                $classes[] = 'ast-page-builder-template';
+                $classes[] = 'ast-no-sidebar';
+            }
+            return $classes;
+        });
+
+        add_filter('astra_get_content_layout', function ($layout) {
+            if (get_query_var('produkt_category_slug') || get_query_var('produkt_slug')) {
+                return 'default';
+            }
+            return $layout;
+        });
     }
 
     public function check_for_updates() {
