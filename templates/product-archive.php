@@ -158,11 +158,9 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         <?php endforeach; ?>
 
     </div>
-</div>
 
 </div>
 
-</div><!-- .ast-container -->
-</div><!-- #content -->
+</div>
 
 <?php get_footer(); ?>
