@@ -10,6 +10,10 @@
     
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <?php
+        global $wpdb;
+        $all_product_cats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+        ?>
         <!-- Grunddaten -->
         <div class="produkt-form-section">
             <h4>📝 Grunddaten</h4>
@@ -78,7 +82,12 @@
                     </div>
                 </div>
             </div>
-            
+
+            <div class="produkt-form-group">
+                <label>Kurzbeschreibung</label>
+                <textarea name="short_description" rows="2" placeholder="Kurzer Text unter dem Titel"></textarea>
+            </div>
+
             <div class="produkt-form-group">
                 <label>Produktbeschreibung *</label>
                 <?php
@@ -270,6 +279,17 @@
                     <label>Sortierung</label>
                     <input type="number" name="sort_order" min="0">
                 </div>
+            </div>
+            <div class="produkt-form-group">
+                <label>Kategorien</label>
+                <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
+                    <?php foreach ($all_product_cats as $cat): ?>
+                        <option value="<?php echo $cat->id; ?>">
+                            <?php echo esc_html($cat->name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
             </div>
         </div>
         

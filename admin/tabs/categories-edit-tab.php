@@ -11,6 +11,16 @@
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
+        <?php
+        global $wpdb;
+        $all_product_cats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+        $selected_product_cats = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT category_id FROM {$wpdb->prefix}produkt_product_to_category WHERE produkt_id = %d",
+                $edit_item->id
+            )
+        );
+        ?>
 
         <div class="produkt-subtab-nav">
             <a href="#" class="produkt-subtab active" data-tab="general">Allgemein</a>
@@ -72,6 +82,17 @@
                     <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
                 </div>
             </div>
+            <div class="produkt-form-group">
+                <label>Kategorien</label>
+                <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
+                    <?php foreach ($all_product_cats as $cat): ?>
+                        <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
+                            <?php echo esc_html($cat->name); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
+            </div>
         </div>
 
         </div><!-- end tab-general -->
@@ -88,7 +109,12 @@
                     <input type="text" name="product_title" value="<?php echo esc_attr($edit_item->product_title); ?>" required>
                 </div>
             </div>
-            
+
+            <div class="produkt-form-group">
+                <label>Kurzbeschreibung</label>
+                <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description ?? ''); ?></textarea>
+            </div>
+
             <div class="produkt-form-group">
                 <label>Produktbeschreibung *</label>
                 <?php

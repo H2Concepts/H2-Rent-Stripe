@@ -36,6 +36,18 @@ class Admin {
             'produkt-categories',
             array($this, 'categories_page')
         );
+
+        // Manage simple product categories
+        add_submenu_page(
+            'produkt-verleih',
+            'Kategorien',
+            'Kategorien',
+            'manage_options',
+            'produkt-kategorien',
+            function () {
+                include PRODUKT_PLUGIN_PATH . 'admin/product-categories-page.php';
+            }
+        );
         
         // Submenu: Produktverwaltung
         add_submenu_page(
@@ -108,24 +120,37 @@ class Admin {
     }
     
     public function enqueue_frontend_assets() {
-        global $post;
+        global $post, $wpdb;
 
-        $slug = get_query_var('produkt_slug');
+        $slug = sanitize_title(get_query_var('produkt_slug'));
+        $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 
-        if (!is_singular() && empty($slug)) {
-            return;
-        }
-
-        if (empty($slug)) {
+        if (!is_page('shop') && empty($slug) && empty($category_slug)) {
             $content = $post->post_content ?? '';
-            if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form') && !has_shortcode($content, 'produkt_shop_grid')) {
+            if (!has_shortcode($content, 'produkt_product') &&
+                !has_shortcode($content, 'stripe_elements_form') &&
+                !has_shortcode($content, 'produkt_shop_grid')) {
                 return;
             }
         }
 
-        wp_enqueue_style('produkt-style', PRODUKT_PLUGIN_URL . 'assets/style.css', array(), PRODUKT_VERSION);
-        if (!empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'))) {
-            wp_enqueue_script('produkt-script', PRODUKT_PLUGIN_URL . 'assets/script.js', array('jquery'), PRODUKT_VERSION, true);
+        wp_enqueue_emoji_styles();
+        wp_enqueue_style(
+            'produkt-style',
+            PRODUKT_PLUGIN_URL . 'assets/style.css',
+            [],
+            PRODUKT_VERSION
+        );
+
+        $load_script = !empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'));
+        if ($load_script) {
+            wp_enqueue_script(
+                'produkt-script',
+                PRODUKT_PLUGIN_URL . 'assets/script.js',
+                ['jquery'],
+                PRODUKT_VERSION,
+                true
+            );
         }
 
         $branding = $this->get_branding_settings();
@@ -140,20 +165,19 @@ class Admin {
         }
         wp_add_inline_style('produkt-style', $inline_css);
 
-        global $wpdb;
         $category = null;
         if ($slug) {
             $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
             foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                if (sanitize_title($cat->product_title) === $slug) {
                     $category = $cat;
                     break;
                 }
             }
         } else {
             $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
-            preg_match($pattern, $post->post_content, $matches);
-            $category_shortcode = isset($matches[1]) ? $matches[1] : '';
+            preg_match($pattern, $post->post_content ?? '', $matches);
+            $category_shortcode = $matches[1] ?? '';
 
             if (!empty($category_shortcode)) {
                 $category = $wpdb->get_row($wpdb->prepare(
@@ -179,24 +203,27 @@ class Admin {
         $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
         $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
 
-        wp_localize_script('produkt-script', 'produkt_ajax', array(
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('produkt_nonce'),
-            'price_period' => $category->price_period ?? 'month',
-            'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
-            'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
-            'popup_settings' => array(
-                'enabled' => $popup_enabled,
-                'days'    => $popup_days,
-                'title'   => $popup_settings['title'] ?? '',
-                'content' => wpautop($popup_settings['content'] ?? ''),
-                'options' => $options
-            )
-        ));
+        if ($load_script) {
+            wp_localize_script('produkt-script', 'produkt_ajax', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('produkt_nonce'),
+                'price_period' => $category->price_period ?? 'month',
+                'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
+                'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
+                'popup_settings' => [
+                    'enabled' => $popup_enabled,
+                    'days'    => $popup_days,
+                    'title'   => $popup_settings['title'] ?? '',
+                    'content' => wpautop($popup_settings['content'] ?? ''),
+                    'options' => $options,
+                ],
+            ]);
+        }
     }
     
     public function enqueue_admin_assets($hook) {
         if (strpos($hook, 'produkt') !== false) {
+            wp_enqueue_admin_bar_header_styles();
             wp_enqueue_style('produkt-admin-style', PRODUKT_PLUGIN_URL . 'assets/admin-style.css', array(), PRODUKT_VERSION);
             wp_enqueue_script('produkt-admin-script', PRODUKT_PLUGIN_URL . 'assets/admin-script.js', array('jquery'), PRODUKT_VERSION, true);
 
@@ -308,6 +335,7 @@ class Admin {
             $meta_title = sanitize_text_field($_POST['meta_title']);
             $meta_description = sanitize_textarea_field($_POST['meta_description']);
             $product_title = sanitize_text_field($_POST['product_title']);
+            $short_description = sanitize_textarea_field($_POST['short_description']);
             $product_description = wp_kses_post($_POST['product_description']);
             $default_image = esc_url_raw($_POST['default_image']);
             $features_title = sanitize_text_field($_POST['features_title']);
@@ -357,6 +385,12 @@ class Admin {
 
             $table_name = $wpdb->prefix . 'produkt_categories';
 
+            // Ensure new short_description column exists to prevent SQL errors
+            $col_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'short_description'");
+            if (!$col_exists) {
+                $wpdb->query("ALTER TABLE $table_name ADD COLUMN short_description TEXT DEFAULT ''");
+            }
+
             if (isset($_POST['id']) && $_POST['id']) {
                 $result = $wpdb->update(
                     $table_name,
@@ -366,6 +400,7 @@ class Admin {
                         'meta_title' => $meta_title,
                         'meta_description' => $meta_description,
                         'product_title' => $product_title,
+                        'short_description' => $short_description,
                         'product_description' => $product_description,
                         'default_image' => $default_image,
                         'features_title' => $features_title,
@@ -402,10 +437,21 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
+                $produkt_id = intval($_POST['id']);
+
                 if ($result !== false) {
+                    if (isset($_POST['product_categories']) && is_array($_POST['product_categories'])) {
+                        $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
+                        foreach ($_POST['product_categories'] as $cat_id) {
+                            $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
+                                'produkt_id' => $produkt_id,
+                                'category_id' => intval($cat_id)
+                            ]);
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -419,6 +465,7 @@ class Admin {
                         'meta_title' => $meta_title,
                         'meta_description' => $meta_description,
                         'product_title' => $product_title,
+                        'short_description' => $short_description,
                         'product_description' => $product_description,
                         'default_image' => $default_image,
                         'features_title' => $features_title,
@@ -454,10 +501,21 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
+                $produkt_id = $wpdb->insert_id;
+
                 if ($result !== false) {
+                    if (isset($_POST['product_categories']) && is_array($_POST['product_categories'])) {
+                        $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
+                        foreach ($_POST['product_categories'] as $cat_id) {
+                            $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
+                                'produkt_id' => $produkt_id,
+                                'category_id' => intval($cat_id)
+                            ]);
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich hinzugefügt!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';

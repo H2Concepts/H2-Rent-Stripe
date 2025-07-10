@@ -77,6 +77,7 @@ class Database {
                 meta_title varchar(255) DEFAULT '',
                 meta_description text DEFAULT '',
                 product_title varchar(255) DEFAULT '',
+                short_description text DEFAULT '',
                 product_description text DEFAULT '',
                 default_image text DEFAULT '',
                 features_title varchar(255) DEFAULT '',
@@ -121,6 +122,7 @@ class Database {
             $new_columns = array(
                 'meta_title' => 'VARCHAR(255)',
                 'meta_description' => 'TEXT',
+                'short_description' => 'TEXT',
                 'features_title' => 'VARCHAR(255) DEFAULT ""',
                 'feature_1_icon' => 'TEXT',
                 'feature_1_title' => 'VARCHAR(255)',
@@ -569,6 +571,26 @@ class Database {
         global $wpdb;
         
         $charset_collate = $wpdb->get_charset_collate();
+
+        // Simple category table for grouping products
+        $table_prod_categories = $wpdb->prefix . 'produkt_product_categories';
+        $sql_prod_categories = "CREATE TABLE IF NOT EXISTS $table_prod_categories (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            name VARCHAR(255) NOT NULL,
+            slug VARCHAR(255) NOT NULL UNIQUE,
+            description TEXT DEFAULT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+
+        // Mapping table between products and categories
+        $table_prod_to_cat = $wpdb->prefix . 'produkt_product_to_category';
+        $sql_prod_to_cat = "CREATE TABLE IF NOT EXISTS $table_prod_to_cat (
+            produkt_id INT UNSIGNED NOT NULL,
+            category_id INT UNSIGNED NOT NULL,
+            PRIMARY KEY (produkt_id, category_id),
+            KEY category_id (category_id)
+        ) $charset_collate;";
         
         // Categories table for different product categories (with SEO fields)
         $table_categories = $wpdb->prefix . 'produkt_categories';
@@ -818,6 +840,8 @@ class Database {
         ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql_prod_categories);
+        dbDelta($sql_prod_to_cat);
         dbDelta($sql_categories);
         dbDelta($sql_variants);
         dbDelta($sql_extras);
@@ -900,6 +924,7 @@ class Database {
                     'meta_title' => '',
                     'meta_description' => '',
                     'product_title' => '',
+                    'short_description' => '',
                     'product_description' => '',
                     'default_image' => '',
                     'features_title' => '',
@@ -1053,6 +1078,8 @@ class Database {
         global $wpdb;
 
         $tables = array(
+            'produkt_product_categories',
+            'produkt_product_to_category',
             'produkt_categories',
             'produkt_variants',
             'produkt_extras',
@@ -1111,5 +1138,23 @@ class Database {
         }
 
         return array_filter((array) $price_ids);
+    }
+
+    /**
+     * Retrieve all product categories.
+     *
+     * @param bool $only_active If true, return only active categories
+     * @return array List of category objects
+     */
+    public static function get_all_categories($only_active = true) {
+        global $wpdb;
+
+        $sql = "SELECT * FROM {$wpdb->prefix}produkt_categories";
+        if ($only_active) {
+            $sql .= " WHERE active = 1";
+        }
+        $sql .= " ORDER BY sort_order";
+
+        return $wpdb->get_results($sql);
     }
 }

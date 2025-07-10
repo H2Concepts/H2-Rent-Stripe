@@ -1,6 +1,36 @@
 <?php
+/* Template Name: Produkt-Seite */
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 global $wpdb;
+
+get_header();
+
+$slug = sanitize_title(get_query_var('produkt_slug'));
+
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+$category = null;
+foreach ($categories as $cat) {
+    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+        $category = $cat;
+        break;
+    }
+}
+
+if (!$category) {
+    global $wp_query;
+    $wp_query->set_404();
+    status_header(404);
+    include get_query_template('404');
+    get_footer();
+    return;
+}
+
+add_filter('pre_get_document_title', function () use ($category) {
+    return $category->page_title ?: $category->product_title;
+});
 
 function get_lowest_stripe_price_by_category($category_id) {
     global $wpdb;
@@ -556,3 +586,4 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         <button id="produkt-exit-send" style="display:none;">Senden</button>
     </div>
 </div>
+<?php get_footer(); ?>
