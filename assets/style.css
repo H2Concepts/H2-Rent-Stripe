@@ -1547,8 +1547,8 @@ body.produkt-popup-open {
 .shop-product-footer {
     margin-top: auto;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: flex-start;
     min-height: 24px;
 }
 
