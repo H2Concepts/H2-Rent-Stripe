@@ -126,7 +126,7 @@ foreach ($branding_results as $result) {
         <h3>🛒 Letzte Produkte</h3>
         <div class="produkt-category-cards">
             <?php foreach ($recent_products as $prod): ?>
-            <?php $prod_url = home_url('/shop/' . sanitize_title($prod->product_title)); ?>
+            <?php $prod_url = home_url('/shop/produkt/' . sanitize_title($prod->product_title)); ?>
             <div class="produkt-category-card">
                 <?php if (!empty($prod->default_image)): ?>
                     <img src="<?php echo esc_url($prod->default_image); ?>" class="produkt-recent-image" alt="<?php echo esc_attr($prod->name); ?>">

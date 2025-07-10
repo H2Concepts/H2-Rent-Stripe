@@ -1,6 +1,46 @@
 <?php
+/* Template Name: Produkt-Seite */
+if (!defined('ABSPATH')) {
+    exit;
+}
 
 global $wpdb;
+
+get_header();
+<?php astra_content_before(); ?>
+<div id="content" class="site-content">
+  <div class="ast-container">
+    <?php astra_content_top(); ?>
+
+$slug = sanitize_title(get_query_var('produkt_slug'));
+
+$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+$category = null;
+foreach ($categories as $cat) {
+    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+        $category = $cat;
+        break;
+    }
+}
+
+if (!$category) {
+    global $wp_query;
+    $wp_query->set_404();
+    status_header(404);
+    include get_query_template('404');
+    astra_content_bottom();
+?>
+  </div><!-- .ast-container -->
+</div><!-- #content -->
+<?php
+    astra_content_after();
+    get_footer();
+    return;
+}
+
+add_filter('pre_get_document_title', function () use ($category) {
+    return $category->page_title ?: $category->product_title;
+});
 
 function get_lowest_stripe_price_by_category($category_id) {
     global $wpdb;
@@ -556,3 +596,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         <button id="produkt-exit-send" style="display:none;">Senden</button>
     </div>
 </div>
+<?php astra_content_bottom(); ?>
+  </div><!-- .ast-container -->
+</div><!-- #content -->
+<?php astra_content_after(); ?>
+<?php get_footer(); ?>

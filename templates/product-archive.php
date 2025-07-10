@@ -1,48 +1,105 @@
 <?php
-if (!defined('ABSPATH')) { exit; }
+/**
+ * Template Name: Produkt-Archiv
+ */
+if (!defined('ABSPATH')) {
+    exit;
+}
+get_header();
+<?php astra_content_before(); ?>
+<div id="content" class="site-content">
+  <div class="ast-container">
+    <?php astra_content_top(); ?>
 
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
 
-function get_lowest_stripe_price_by_category($category_id) {
+$categories = Database::get_all_categories(true);
+if (!is_array($categories)) {
+    $categories = [];
+}
+
+// retrieve the requested category and sanitize the slug immediately
+$category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+$filtered_product_ids = [];
+$category = null;
+
+if (!empty($category_slug)) {
     global $wpdb;
 
-    $variant_ids  = $wpdb->get_col($wpdb->prepare(
-        "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
-        $category_id
-    ));
-    $duration_ids = $wpdb->get_col($wpdb->prepare(
-        "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
-        $category_id
+    $category = $wpdb->get_row($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
+        $category_slug
     ));
 
-    $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
-
-    // Zähle alle gültigen Preis-Kombinationen (für Anzeige von "ab")
-    $price_count = 0;
-    if (!empty($variant_ids) && !empty($duration_ids)) {
-        $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
-        $placeholders_duration = implode(',', array_fill(0, count($duration_ids), '%d'));
-        $count_query = $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
-             WHERE variant_id IN ($placeholders_variant)
-               AND duration_id IN ($placeholders_duration)",
-            array_merge($variant_ids, $duration_ids)
-        );
-        $price_count = (int) $wpdb->get_var($count_query);
+    if (!empty($category)) {
+        // Gefundene Kategorie → filtern
+        $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
+            $category->id
+        ));
+        $categories = array_filter($categories ?? [], function ($product) use ($filtered_product_ids) {
+            return in_array($product->id, $filtered_product_ids);
+        });
+    } elseif (!empty($category_slug)) {
+        // Slug war angegeben, aber ungültig
+        $categories = [];
     }
-
-    return [
-        'amount'     => $price_data['amount'] ?? null,
-        'price_id'   => $price_data['price_id'] ?? null,
-        'count'      => $price_count
-    ];
 }
+
+if (!function_exists('get_lowest_stripe_price_by_category')) {
+    function get_lowest_stripe_price_by_category($category_id) {
+        global $wpdb;
+
+        $variant_ids  = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+            $category_id
+        ));
+        $duration_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+            $category_id
+        ));
+
+        $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
+
+        // Zähle alle gültigen Preis-Kombinationen (für Anzeige von "ab")
+        $price_count = 0;
+        if (!empty($variant_ids) && !empty($duration_ids)) {
+            $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
+            $placeholders_duration = implode(',', array_fill(0, count($duration_ids), '%d'));
+            $count_query = $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
+                 WHERE variant_id IN ($placeholders_variant)
+                   AND duration_id IN ($placeholders_duration)",
+                array_merge($variant_ids, $duration_ids)
+            );
+            $price_count = (int) $wpdb->get_var($count_query);
+        }
+
+        return [
+            'amount'     => $price_data['amount'] ?? null,
+            'price_id'   => $price_data['price_id'] ?? null,
+            'count'      => $price_count
+        ];
+    }
+}
+
 ?>
 <div class="produkt-shop-archive produkt-container">
+    <?php if ($category_slug && !$category): ?>
+        <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
+        <p>Kategorie nicht gefunden.</p>
+    <?php elseif (!empty($category_slug)): ?>
+        <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
+    <?php else: ?>
+        <h2>Alle Produkte</h2>
+    <?php endif; ?>
+    <?php if (empty($categories)): ?>
+        <p>Keine Produkte in dieser Kategorie gefunden.</p>
+    <?php endif; ?>
     <div class="produkt-shop-grid">
-        <?php foreach ($categories as $cat): ?>
-        <?php $url = home_url('/shop/' . sanitize_title($cat->product_title)); ?>
+        <?php foreach (($categories ?? []) as $cat): ?>
+        <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
         <?php
             $price_data = get_lowest_stripe_price_by_category($cat->id);
         ?>
@@ -75,3 +132,8 @@ function get_lowest_stripe_price_by_category($category_id) {
         <?php endforeach; ?>
     </div>
 </div>
+<?php astra_content_bottom(); ?>
+  </div><!-- .ast-container -->
+</div><!-- #content -->
+<?php astra_content_after(); ?>
+<?php get_footer(); ?>
