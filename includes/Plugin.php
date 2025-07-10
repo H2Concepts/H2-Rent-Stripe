@@ -182,7 +182,31 @@ class Plugin {
 
     public function render_product_grid() {
         global $wpdb;
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order");
+
+        $slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
+
+        $categories = Database::get_all_categories(true);
+
+        if (!empty($slug)) {
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
+                $slug
+            ));
+
+            if ($category) {
+                $product_ids = $wpdb->get_col($wpdb->prepare(
+                    "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
+                    $category->id
+                ));
+
+                $categories = array_filter($categories, function ($prod) use ($product_ids) {
+                    return in_array($prod->id, $product_ids);
+                });
+            } else {
+                $categories = [];
+            }
+        }
+
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
         return ob_get_clean();

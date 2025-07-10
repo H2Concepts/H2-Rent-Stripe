@@ -17,6 +17,9 @@ if (!is_array($categories)) {
 
 // retrieve the requested category and sanitize the slug immediately
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+if (empty($category_slug)) {
+    $category_slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
+}
 $filtered_product_ids = [];
 $category = null;
 
@@ -94,6 +97,22 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
     <p class="shop-intro">
         Entdecken Sie unsere hochwertigen Produkte für Ihren Bedarf – Qualität, geprüft und sofort verfügbar.
     </p>
+
+    <form method="get" class="produkt-filter-form">
+        <select name="kategorie" onchange="this.form.submit()">
+            <option value="">Alle Kategorien</option>
+            <?php
+            global $wpdb;
+            $kats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+            foreach ($kats as $kat):
+                $selected = ($category_slug === $kat->slug) ? 'selected' : '';
+            ?>
+                <option value="<?= esc_attr($kat->slug) ?>" <?= $selected ?>>
+                    <?= esc_html($kat->name) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </form>
 
     <?php if (empty($categories)): ?>
         <p>Keine Produkte in dieser Kategorie gefunden.</p>
