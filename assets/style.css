@@ -1505,14 +1505,11 @@ body.produkt-popup-open {
 .shop-product-item {
     background: #fff;
     border-radius: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    padding: 1.5rem 1rem;
     text-align: left;
-    transition: box-shadow 0.2s;
 }
 
-.shop-product-item:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+.shop-product-item:hover .shop-product-title {
+    text-decoration: underline;
 }
 
 .shop-product-item a {
