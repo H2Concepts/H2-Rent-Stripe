@@ -112,7 +112,7 @@
 
             <div class="produkt-form-group">
                 <label>Kurzbeschreibung</label>
-                <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description); ?></textarea>
+                <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description ?? ''); ?></textarea>
             </div>
 
             <div class="produkt-form-group">

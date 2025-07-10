@@ -130,7 +130,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                     <?php endif; ?>
                 </div>
                 <div class="shop-product-title"><?php echo esc_html($cat->product_title); ?></div>
-                <div class="shop-product-shortdesc"><?php echo esc_html($cat->short_description); ?></div>
+                <div class="shop-product-shortdesc"><?php echo esc_html($cat->short_description ?? ''); ?></div>
                 <?php
                     $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
                     $rating_display = number_format($rating_value, 1, ',', '');

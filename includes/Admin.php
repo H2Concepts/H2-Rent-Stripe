@@ -385,6 +385,12 @@ class Admin {
 
             $table_name = $wpdb->prefix . 'produkt_categories';
 
+            // Ensure new short_description column exists to prevent SQL errors
+            $col_exists = $wpdb->get_var("SHOW COLUMNS FROM $table_name LIKE 'short_description'");
+            if (!$col_exists) {
+                $wpdb->query("ALTER TABLE $table_name ADD COLUMN short_description TEXT DEFAULT ''");
+            }
+
             if (isset($_POST['id']) && $_POST['id']) {
                 $result = $wpdb->update(
                     $table_name,
