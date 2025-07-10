@@ -164,8 +164,14 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 </div> <!-- .shop-overview-layout -->
 
 <button id="shop-filter-toggle" class="shop-filter-button" aria-label="Filter">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3 5h18v2H3V5zm4 6h10v2H7v-2zm-2 6h14v2H5v-2z"/>
+    <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 67.5 52.7">
+      <defs>
+        <style>
+          .st0 { fill: #fff; }
+        </style>
+      </defs>
+      <path class="st0" d="M64.7,40.3h-5.8c-.7-4.9-4.9-8.6-10-8.6s-9.3,3.8-10,8.6H2.7c-.8,0-1.5.7-1.5,1.5s.7,1.5,1.5,1.5h36.2c.7,4.9,4.9,8.6,10,8.6s9.3-3.8,10-8.6h5.8c.8,0,1.5-.7,1.5-1.5s-.7-1.5-1.5-1.5ZM48.9,48.9c-3.9,0-7.1-3.2-7.1-7.1s3.2-7.1,7.1-7.1,7.1,3.2,7.1,7.1-3.2,7.1-7.1,7.1Z"/>
+      <path class="st0" d="M64.7,10.3H28.5c-.7-4.9-4.9-8.6-10-8.6s-9.3,3.8-10,8.6H2.7c-.8,0-1.5.7-1.5,1.5s.7,1.5,1.5,1.5h5.8c.7,4.9,4.9,8.6,10,8.6s9.3-3.8,10-8.6h36.2c.8,0,1.5-.7,1.5-1.5s-.7-1.5-1.5-1.5ZM18.5,18.9c-3.9,0-7.1-3.2-7.1-7.1s3.2-7.1,7.1-7.1,7.1,3.2,7.1,7.1-3.2,7.1-7.1,7.1Z"/>
     </svg>
 </button>
 <div id="shop-filter-overlay" class="shop-filter-overlay">

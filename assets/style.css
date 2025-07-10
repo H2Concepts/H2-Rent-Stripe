@@ -1629,8 +1629,8 @@ body.produkt-popup-open {
 }
 
 .shop-filter-button svg {
-    width: 24px;
-    height: 24px;
+    width: 30px;
+    height: auto;
     fill: currentColor;
 }
 
