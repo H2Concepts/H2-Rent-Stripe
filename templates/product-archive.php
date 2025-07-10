@@ -157,10 +157,8 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         </div>
         <?php endforeach; ?>
 
+        </div>
     </div>
-
-</div>
-
-</div>
-
+</div> <!-- .shop-overview-layout -->
+</div> <!-- .produkt-shop-archive -->
 <?php get_footer(); ?>
