@@ -80,6 +80,19 @@ class Plugin {
             }
             return $layout;
         });
+
+        // Fix für Astra Breadcrumb – Kategorieansicht als "Seite" behandeln
+        add_filter('the_post', function ($post) {
+            if (get_query_var('produkt_category_slug') && is_main_query()) {
+                $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
+                if ($shop_page_id && get_post_status($shop_page_id)) {
+                    global $post;
+                    $post = get_post($shop_page_id);
+                    setup_postdata($post);
+                }
+            }
+            return $post;
+        });
     }
 
     public function check_for_updates() {
