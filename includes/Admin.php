@@ -120,17 +120,104 @@ class Admin {
     }
     
     public function enqueue_frontend_assets() {
-        if (
-            is_page('shop') ||
-            get_query_var('produkt_category_slug') ||
-            get_query_var('produkt_slug')
-        ) {
-            wp_enqueue_style(
-                'produkt-style',
-                PRODUKT_PLUGIN_URL . 'assets/style.css',
-                [],
-                '1.0'
+        global $post, $wpdb;
+
+        $slug = sanitize_title(get_query_var('produkt_slug'));
+        $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+
+        if (!is_page('shop') && empty($slug) && empty($category_slug)) {
+            $content = $post->post_content ?? '';
+            if (!has_shortcode($content, 'produkt_product') &&
+                !has_shortcode($content, 'stripe_elements_form') &&
+                !has_shortcode($content, 'produkt_shop_grid')) {
+                return;
+            }
+        }
+
+        wp_enqueue_emoji_styles();
+        wp_enqueue_style(
+            'produkt-style',
+            PRODUKT_PLUGIN_URL . 'assets/style.css',
+            [],
+            PRODUKT_VERSION
+        );
+
+        $load_script = !empty($slug) || (isset($content) && has_shortcode($content, 'produkt_product'));
+        if ($load_script) {
+            wp_enqueue_script(
+                'produkt-script',
+                PRODUKT_PLUGIN_URL . 'assets/script.js',
+                ['jquery'],
+                PRODUKT_VERSION,
+                true
             );
+        }
+
+        $branding = $this->get_branding_settings();
+        $button_color = $branding['front_button_color'] ?? '#5f7f5f';
+        $text_color   = $branding['front_text_color'] ?? '#4a674a';
+        $border_color = $branding['front_border_color'] ?? '#a4b8a4';
+        $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
+        $custom_css = $branding['custom_css'] ?? '';
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};}";
+        if (!empty($custom_css)) {
+            $inline_css .= "\n" . $custom_css;
+        }
+        wp_add_inline_style('produkt-style', $inline_css);
+
+        $category = null;
+        if ($slug) {
+            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->product_title) === $slug) {
+                    $category = $cat;
+                    break;
+                }
+            }
+        } else {
+            $pattern = '/\[produkt_product[^\]]*category=["\']([^"\']*)["\'][^\]]*\]/';
+            preg_match($pattern, $post->post_content ?? '', $matches);
+            $category_shortcode = $matches[1] ?? '';
+
+            if (!empty($category_shortcode)) {
+                $category = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE shortcode = %s",
+                    $category_shortcode
+                ));
+            }
+        }
+        if (!$category) {
+            $category = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order LIMIT 1");
+        }
+
+        $popup_settings = get_option('produkt_popup_settings');
+        if ($popup_settings === false) {
+            $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
+            $popup_settings = get_option($legacy_key, []);
+        }
+        $options = [];
+        if (!empty($popup_settings['options'])) {
+            $opts = array_filter(array_map('trim', explode("\n", $popup_settings['options'])));
+            $options = array_values($opts);
+        }
+        $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
+        $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
+
+        if ($load_script) {
+            wp_localize_script('produkt-script', 'produkt_ajax', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('produkt_nonce'),
+                'price_period' => $category->price_period ?? 'month',
+                'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
+                'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
+                'popup_settings' => [
+                    'enabled' => $popup_enabled,
+                    'days'    => $popup_days,
+                    'title'   => $popup_settings['title'] ?? '',
+                    'content' => wpautop($popup_settings['content'] ?? ''),
+                    'options' => $options,
+                ],
+            ]);
         }
     }
     
