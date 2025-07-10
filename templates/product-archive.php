@@ -86,10 +86,10 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 ?>
 <div class="produkt-shop-archive shop-overview-container produkt-container">
     <?php if ($category_slug && !$category): ?>
-        <h1>Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h1>
+        <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
         <p>Kategorie nicht gefunden.</p>
     <?php elseif (!empty($category_slug)): ?>
-        <h1>Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h1>
+        <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
     <?php else: ?>
         <h1>Shop</h1>
     <?php endif; ?>
