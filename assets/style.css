@@ -10,7 +10,6 @@
     max-width: 100%;
     margin: 50px auto;
     padding: 0px;
-    font-family: "Poppins",sans-serif;
     background: transparent;
     border-radius: 1rem;
 }
@@ -203,7 +202,7 @@
 .produkt-product-description {
     color: #000000;
     line-height: 1.6;
-    margin-bottom: 1.5rem;
+    margin: 1rem 0;
 }
 
 
@@ -310,7 +309,6 @@
 .produkt-section h3 {
     font-size: 1.125rem;
     font-weight: 700;
-    font-family: "Poppins",sans-serif;
     color: #000000;
     margin-bottom: 1rem;
     display: flex;
@@ -525,7 +523,7 @@
     margin-bottom: 0.25rem;
     font-size: 1.3rem;
     line-height: 1.3;
-    font-family: "Roca",sans-serif;
+    
 }
 
 .produkt-option p {
@@ -566,7 +564,7 @@
     font-weight: 500;
     color: #000000;
     font-size: 1rem;
-    font-family: "Roca",sans-serif;
+    
 }
 
 .produkt-extra-price {
@@ -587,7 +585,7 @@
     font-weight: 500;
     color: #000000;
     font-size: 1rem;
-    font-family: "Roca",sans-serif;
+    
 }
 
 .produkt-discount-badge {
@@ -617,7 +615,7 @@
     font-weight: 500;
     color: #000000;
     font-size: 1rem;
-    font-family: "Roca",sans-serif;
+    
 }
 
 .produkt-condition-badge {
@@ -657,7 +655,7 @@
     margin-bottom: 0.25rem;
     font-weight: 700;
     color: #000000;
-    font-family: "Roca",sans-serif;
+    
 }
 
 .produkt-option.selected .produkt-color-preview {
@@ -855,7 +853,7 @@
     font-weight: 500;
     color: #000000;
     font-size: 1rem;
-    font-family: "Roca", sans-serif;
+    
 }
 
 .produkt-notify-form {
@@ -901,7 +899,7 @@
 }
 
 .produkt-features-section h3 {
-    font-family: "Roca",sans-serif;
+    
 	font-size: 40px;
     font-weight: bold;
     text-align: center;
@@ -1164,12 +1162,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    margin: 0.5rem 0;
+    margin: 0;
     min-height: 24px;
 }
 
 .produkt-rating-number {
-    font-family: "Roca",sans-serif;
+    
     font-size: 13px;
 }
 
@@ -1476,7 +1474,7 @@ body.produkt-popup-open {
 }
 
 .produkt-card-price {
-    font-size: 1rem;
+    font-size: 1.2rem;
     font-weight: 700;
     margin-top: 5px;
     color: #000;
@@ -1546,11 +1544,18 @@ body.produkt-popup-open {
     min-height: 3em;
 }
 
+.shop-product-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 24px;
+}
+
 .shop-product-price {
     font-size: 1.1em;
     font-weight: bold;
     color: #000;
-    margin-top: auto;
     min-height: 24px;
     display: flex;
     align-items: center;
@@ -1603,5 +1608,75 @@ body.produkt-popup-open {
 @media (max-width: 768px) {
     .shop-overview-layout {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Mobile filter button */
+.shop-filter-button {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
+    border: none;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.shop-filter-button svg {
+    width: 30px;
+    height: auto;
+    fill: currentColor;
+}
+
+.shop-filter-overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: #fff;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    visibility: hidden;
+    pointer-events: none;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.shop-filter-overlay.open {
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+}
+
+.shop-filter-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+body.shop-filter-open {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .shop-category-list {
+        display: none;
+    }
+
+    .shop-filter-button {
+        display: flex;
+        flex-direction: column;
     }
 }

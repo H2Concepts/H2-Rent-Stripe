@@ -132,26 +132,28 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                 </div>
                 <div class="shop-product-title"><?php echo esc_html($cat->product_title); ?></div>
                 <div class="shop-product-shortdesc"><?php echo esc_html($cat->short_description ?? ''); ?></div>
-                <?php
-                    $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
-                    $rating_display = number_format($rating_value, 1, ',', '');
-                ?>
-                <?php if ($cat->show_rating && $rating_value > 0): ?>
-                    <div class="produkt-rating">
-                        <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
-                        <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
-                    </div>
-                <?php endif; ?>
-                <div class="shop-product-price">
-                    <?php if ($price_data && isset($price_data['amount'])): ?>
-                        <?php if ($price_data['count'] > 1): ?>
-                            ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                        <?php else: ?>
-                            <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                        <?php endif; ?>
-                    <?php else: ?>
-                        Preis auf Anfrage
+                <div class="shop-product-footer">
+                    <?php
+                        $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
+                        $rating_display = number_format($rating_value, 1, ',', '');
+                    ?>
+                    <?php if ($cat->show_rating && $rating_value > 0): ?>
+                        <div class="produkt-rating">
+                            <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
+                            <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
+                        </div>
                     <?php endif; ?>
+                    <div class="shop-product-price">
+                        <?php if ($price_data && isset($price_data['amount'])): ?>
+                            <?php if ($price_data['count'] > 1): ?>
+                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                            <?php else: ?>
+                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                            <?php endif; ?>
+                        <?php else: ?>
+                            Preis auf Anfrage
+                        <?php endif; ?>
+                    </div>
                 </div>
             </a>
         </div>
@@ -160,6 +162,34 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         </div>
     </div>
 </div> <!-- .shop-overview-layout -->
+
+<button id="shop-filter-toggle" class="shop-filter-button" aria-label="Filter">
+    <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 67.5 52.7">
+      <defs>
+        <style>
+          .st0 { fill: #fff; }
+        </style>
+      </defs>
+      <path class="st0" d="M64.7,40.3h-5.8c-.7-4.9-4.9-8.6-10-8.6s-9.3,3.8-10,8.6H2.7c-.8,0-1.5.7-1.5,1.5s.7,1.5,1.5,1.5h36.2c.7,4.9,4.9,8.6,10,8.6s9.3-3.8,10-8.6h5.8c.8,0,1.5-.7,1.5-1.5s-.7-1.5-1.5-1.5ZM48.9,48.9c-3.9,0-7.1-3.2-7.1-7.1s3.2-7.1,7.1-7.1,7.1,3.2,7.1,7.1-3.2,7.1-7.1,7.1Z"/>
+      <path class="st0" d="M64.7,10.3H28.5c-.7-4.9-4.9-8.6-10-8.6s-9.3,3.8-10,8.6H2.7c-.8,0-1.5.7-1.5,1.5s.7,1.5,1.5,1.5h5.8c.7,4.9,4.9,8.6,10,8.6s9.3-3.8,10-8.6h36.2c.8,0,1.5-.7,1.5-1.5s-.7-1.5-1.5-1.5ZM18.5,18.9c-3.9,0-7.1-3.2-7.1-7.1s3.2-7.1,7.1-7.1,7.1,3.2,7.1,7.1-3.2,7.1-7.1,7.1Z"/>
+    </svg>
+</button>
+<div id="shop-filter-overlay" class="shop-filter-overlay">
+    <div class="shop-filter-content">
+        <button id="shop-filter-close" class="shop-filter-close" aria-label="Close">&times;</button>
+        <h2>Produkte</h2>
+        <ul>
+            <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
+            <?php foreach ($kats as $kat): ?>
+                <li>
+                    <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
+                        <?php echo esc_html($kat->name); ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
+</div>
 </div> <!-- .entry-content -->
 </article></main></div> <!-- .content-area und .ast-container -->
 <?php get_footer(); ?>
