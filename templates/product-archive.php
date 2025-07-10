@@ -82,14 +82,15 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 
 ?>
 <div class="produkt-shop-archive produkt-container">
-    <?php if (!empty($category_slug)): ?>
-      <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
-    <?php else: ?>
-      <h2>Alle Produkte</h2>
-    <?php endif; ?>
     <?php if ($category_slug && !$category): ?>
+        <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
         <p>Kategorie nicht gefunden.</p>
-    <?php elseif (empty($categories)): ?>
+    <?php elseif (!empty($category_slug)): ?>
+        <h2>Produkte in Kategorie: <?= esc_html(ucfirst($category_slug)) ?></h2>
+    <?php else: ?>
+        <h2>Alle Produkte</h2>
+    <?php endif; ?>
+    <?php if (empty($categories)): ?>
         <p>Keine Produkte in dieser Kategorie gefunden.</p>
     <?php endif; ?>
     <div class="produkt-shop-grid">
