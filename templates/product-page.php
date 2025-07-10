@@ -7,10 +7,12 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 
 get_header();
-<?php astra_content_before(); ?>
+astra_content_before();
+?>
 <div id="content" class="site-content">
   <div class="ast-container">
     <?php astra_content_top(); ?>
+<?php
 
 $slug = sanitize_title(get_query_var('produkt_slug'));
 
