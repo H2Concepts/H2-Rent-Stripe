@@ -123,12 +123,13 @@ class Admin {
         global $post;
 
         $slug = sanitize_title(get_query_var('produkt_slug'));
+        $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 
-        if (!is_singular() && empty($slug)) {
+        if (!is_singular() && empty($slug) && empty($category_slug)) {
             return;
         }
 
-        if (empty($slug)) {
+        if (empty($slug) && empty($category_slug)) {
             $content = $post->post_content ?? '';
             if (!has_shortcode($content, 'produkt_product') && !has_shortcode($content, 'stripe_elements_form') && !has_shortcode($content, 'produkt_shop_grid')) {
                 return;
