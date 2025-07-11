@@ -1730,7 +1730,7 @@ body.shop-filter-open {
 
 /* Show blocks based on screen size without overriding flex layout */
 .desktop-only {
-    display: flex;
+    display: flex ;
 }
 .mobile-only {
     display: none;
