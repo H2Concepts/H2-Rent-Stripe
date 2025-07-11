@@ -46,6 +46,19 @@ if (!empty($category_slug)) {
     }
 }
 
+$content_blocks = [];
+if (!empty($category)) {
+    $content_blocks = Database::get_content_blocks_for_category($category->id);
+}
+$blocks_by_position = [];
+foreach ($content_blocks as $b) {
+    $blocks_by_position[$b->position][] = $b;
+    $mobile_pos = intval(($b->position / 9) * 6);
+    if ($mobile_pos > 0) {
+        $blocks_by_position[$mobile_pos][] = $b;
+    }
+}
+
 if (!function_exists('get_lowest_stripe_price_by_category')) {
     function get_lowest_stripe_price_by_category($category_id) {
         global $wpdb;
@@ -120,7 +133,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             <?php endif; ?>
 
             <div class="shop-product-grid">
-        <?php foreach (($categories ?? []) as $cat): ?>
+        <?php $produkt_index = 0; foreach (($categories ?? []) as $cat): $produkt_index++; ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
         <?php $price_data = get_lowest_stripe_price_by_category($cat->id); ?>
         <div class="shop-product-item">
@@ -157,6 +170,28 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                 </div>
             </a>
         </div>
+        <?php
+            if (isset($blocks_by_position[$produkt_index])) {
+                foreach ($blocks_by_position[$produkt_index] as $block) {
+                    ?>
+                    <div class="content-block">
+                        <div class="content-block-text">
+                            <h3><?php echo esc_html($block->title); ?></h3>
+                            <?php echo wpautop($block->content); ?>
+                            <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
+                                <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="content-block-image">
+                            <?php if (!empty($block->image_url)): ?>
+                                <img src="<?php echo esc_url($block->image_url); ?>" alt="">
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php
+                }
+            }
+        ?>
         <?php endforeach; ?>
 
         </div>
