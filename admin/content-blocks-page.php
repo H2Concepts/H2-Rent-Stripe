@@ -15,6 +15,7 @@ if (isset($_POST['save_block'])) {
     $data = [
         'category_id' => $selected_category,
         'position'     => intval($_POST['position']),
+        'position_mobile' => intval($_POST['position_mobile']),
         'title'        => sanitize_text_field($_POST['title']),
         'content'      => wp_kses_post($_POST['content']),
         'image_url'    => esc_url_raw($_POST['image_url']),
@@ -65,8 +66,12 @@ $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
             <table class="form-table">
                 <tr>
-                    <th><label>Position *</label></th>
+                    <th><label>Position Desktop *</label></th>
                     <td><input type="number" name="position" required value="<?php echo esc_attr($block->position ?? 9); ?>"></td>
+                </tr>
+                <tr>
+                    <th><label>Position Mobil *</label></th>
+                    <td><input type="number" name="position_mobile" required value="<?php echo esc_attr($block->position_mobile ?? 6); ?>"></td>
                 </tr>
                 <tr>
                     <th><label>Überschrift *</label></th>
@@ -122,11 +127,12 @@ $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
             <p>Noch keine Blöcke definiert.</p>
         <?php else: ?>
             <table class="widefat striped">
-                <thead><tr><th>Position</th><th>Titel</th><th>Aktionen</th></tr></thead>
+                <thead><tr><th>Desktop</th><th>Mobil</th><th>Titel</th><th>Aktionen</th></tr></thead>
                 <tbody>
                     <?php foreach ($blocks as $b): ?>
                         <tr>
                             <td><?php echo intval($b->position); ?></td>
+                            <td><?php echo intval($b->position_mobile); ?></td>
                             <td><?php echo esc_html($b->title); ?></td>
                             <td>
                                 <a href="<?php echo admin_url('admin.php?page=produkt-content-blocks&category=' . $selected_category . '&action=edit&edit=' . $b->id); ?>" class="button">Bearbeiten</a>

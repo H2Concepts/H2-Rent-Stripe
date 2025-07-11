@@ -1725,6 +1725,13 @@ body.shop-filter-open {
     display: inline-block;
 }
 
+.desktop-only {
+    display: block;
+}
+.mobile-only {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .content-block {
         flex-direction: column;
@@ -1732,6 +1739,12 @@ body.shop-filter-open {
     .content-block-text,
     .content-block-image {
         flex: 1 1 auto;
+    }
+    .desktop-only {
+        display: none;
+    }
+    .mobile-only {
+        display: block;
     }
 }
 

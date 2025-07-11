@@ -48,9 +48,11 @@ if (!empty($category_slug)) {
 
 $content_category_id = $category->id ?? 0;
 $content_blocks = Database::get_content_blocks_for_category($content_category_id);
-$blocks_by_position = [];
+$blocks_by_position_desktop = [];
+$blocks_by_position_mobile  = [];
 foreach ($content_blocks as $b) {
-    $blocks_by_position[$b->position][] = $b;
+    $blocks_by_position_desktop[$b->position][] = $b;
+    $blocks_by_position_mobile[$b->position_mobile][] = $b;
 }
 
 if (!function_exists('get_lowest_stripe_price_by_category')) {
@@ -166,10 +168,30 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         </div>
         <?php
             $next_index = $produkt_index + 1;
-            if (isset($blocks_by_position[$next_index])) {
-                foreach ($blocks_by_position[$next_index] as $block) {
+            if (isset($blocks_by_position_desktop[$next_index])) {
+                foreach ($blocks_by_position_desktop[$next_index] as $block) {
                     ?>
-                    <div class="content-block">
+                    <div class="content-block desktop-only">
+                        <div class="content-block-text">
+                            <h3><?php echo esc_html($block->title); ?></h3>
+                            <?php echo wpautop($block->content); ?>
+                            <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
+                                <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
+                            <?php endif; ?>
+                        </div>
+                        <div class="content-block-image">
+                            <?php if (!empty($block->image_url)): ?>
+                                <img src="<?php echo esc_url($block->image_url); ?>" alt="">
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php
+                }
+            }
+            if (isset($blocks_by_position_mobile[$next_index])) {
+                foreach ($blocks_by_position_mobile[$next_index] as $block) {
+                    ?>
+                    <div class="content-block mobile-only">
                         <div class="content-block-text">
                             <h3><?php echo esc_html($block->title); ?></h3>
                             <?php echo wpautop($block->content); ?>

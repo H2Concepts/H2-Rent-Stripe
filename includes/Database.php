@@ -577,6 +577,7 @@ class Database {
                 id INT NOT NULL AUTO_INCREMENT,
                 category_id INT NOT NULL,
                 position INT NOT NULL,
+                position_mobile INT NOT NULL DEFAULT 6,
                 title TEXT NOT NULL,
                 content TEXT NOT NULL,
                 image_url TEXT,
@@ -588,6 +589,12 @@ class Database {
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
+        } else {
+            // Add missing columns for desktop/mobile positions
+            $mobile_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'position_mobile'");
+            if (empty($mobile_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN position_mobile INT NOT NULL DEFAULT 6 AFTER position");
+            }
         }
     }
     
@@ -884,6 +891,7 @@ class Database {
             id INT NOT NULL AUTO_INCREMENT,
             category_id INT NOT NULL,
             position INT NOT NULL,
+            position_mobile INT NOT NULL DEFAULT 6,
             title TEXT NOT NULL,
             content TEXT NOT NULL,
             image_url TEXT,
