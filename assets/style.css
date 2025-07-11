@@ -1715,7 +1715,7 @@ body.shop-filter-open {
 }
 .content-block-image {
     flex: 0 0 30%;
-    margin-right: 1rem;
+    padding-right: 16px;
 }
 .content-block-image img {
     width: 100%;
