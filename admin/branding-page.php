@@ -19,6 +19,7 @@ if (isset($_POST['submit_branding'])) {
     $front_text_color   = sanitize_hex_color($_POST['front_text_color']);
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
+    $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
 
     $table_name = $wpdb->prefix . 'produkt_branding';
@@ -35,6 +36,7 @@ if (isset($_POST['submit_branding'])) {
         'front_text_color'   => $front_text_color,
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
+        'filter_button_color' => $filter_button_color,
         'footer_text' => $footer_text
     );
 
@@ -213,6 +215,13 @@ foreach ($results as $result) {
                 <td>
                     <input type="color" name="front_button_color" value="<?php echo esc_attr($branding['front_button_color'] ?? '#5f7f5f'); ?>" class="color-picker">
                     <p class="description">Hauptfarbe der Handlungs-Buttons</p>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">Filter-Button-Farbe</th>
+                <td>
+                    <input type="color" name="filter_button_color" value="<?php echo esc_attr($branding['filter_button_color'] ?? '#5f7f5f'); ?>" class="color-picker">
+                    <p class="description">Farbe des mobilen Filter-Buttons</p>
                 </td>
             </tr>
             <tr>
