@@ -8,17 +8,10 @@
 }
 .produkt-container {
     max-width: 100%;
-    margin: 100px 0;
-    padding: 0;
+    margin: 0;
+    padding: 50px 0;
     background: transparent;
     border-radius: 1rem;
-}
-
-@media (max-width: 768px) {
-    .produkt-container {
-        margin: 50px 0;
-        padding-bottom: 50px;
-    }
 }
 
 .produkt-header {
@@ -1676,6 +1669,7 @@ body.produkt-popup-open {
     font-size: 24px;
     cursor: pointer;
     box-shadow: none;
+    color: #000;
 }
 
 .shop-filter-overlay h2 {
