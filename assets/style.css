@@ -1697,6 +1697,7 @@ body.shop-filter-open {
 
 .content-block {
     display: flex;
+    flex-direction: row;
     gap: 1rem;
     margin: 2rem 0;
     background: #f5f5f5;
@@ -1712,13 +1713,13 @@ body.shop-filter-open {
 }
 .content-block-image {
     flex: 0 0 30%;
+    padding-right: 1rem;
 }
 .content-block-image img {
     width: 100%;
     height: auto;
     display: block;
     border-radius: 0.5rem;
-    margin-right: 1rem;
 }
 .content-block-button {
     margin-top: 1rem;
