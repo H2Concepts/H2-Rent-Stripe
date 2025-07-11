@@ -7,6 +7,9 @@
     --produkt-button-text: #ffffff;
     --produkt-filter-button-bg: #5f7f5f;
 }
+#page {
+    min-height: auto !important;
+}
 .produkt-container {
     max-width: 100%;
     margin: 0;
