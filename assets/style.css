@@ -1728,8 +1728,9 @@ body.shop-filter-open {
     display: inline-block;
 }
 
+/* Show blocks based on screen size without overriding flex layout */
 .desktop-only {
-    display: block;
+    display: flex;
 }
 .mobile-only {
     display: none;
@@ -1747,7 +1748,7 @@ body.shop-filter-open {
         display: none;
     }
     .mobile-only {
-        display: block;
+        display: flex;
     }
 }
 
