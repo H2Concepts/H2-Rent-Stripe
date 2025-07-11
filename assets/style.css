@@ -5,11 +5,15 @@
     --produkt-text-color: #000000;
     --produkt-border-color: #a4b8a4;
     --produkt-button-text: #ffffff;
+    --produkt-filter-button-bg: #5f7f5f;
+}
+#page {
+    min-height: auto !important;
 }
 .produkt-container {
     max-width: 100%;
-    margin: 50px auto;
-    padding: 0px;
+    margin: 0;
+    padding: 50px 0;
     background: transparent;
     border-radius: 1rem;
 }
@@ -971,7 +975,7 @@
     backdrop-filter: blur(10px);
     border-bottom: 1px solid #e5e7eb;
     padding: 20px 15px;
-    box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+    box-shadow: none;
     z-index: 1000;
     transform: translateY(-100%);
     transition: transform 0.3s ease;
@@ -980,6 +984,7 @@
 
 .produkt-mobile-sticky-price.show {
     transform: translateY(0);
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
 }
 
 .produkt-mobile-sticky-content {
@@ -1619,12 +1624,15 @@ body.produkt-popup-open {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: var(--produkt-button-bg);
+    background: var(--produkt-filter-button-bg, var(--produkt-button-bg));
     color: var(--produkt-button-text);
     border: none;
     display: none;
     align-items: center;
     justify-content: center;
+    padding: 0;
+    min-width: 50px;
+    min-height: 50px;
     z-index: 1000;
 }
 
@@ -1643,10 +1651,11 @@ body.produkt-popup-open {
     background: #fff;
     transform: translateY(100%);
     transition: transform 0.3s ease;
-    z-index: 1000;
+    z-index: 10000;
     visibility: hidden;
     pointer-events: none;
-    padding: 20px;
+    padding: 40px;
+    box-sizing: border-box;
     overflow-y: auto;
 }
 
@@ -1664,6 +1673,22 @@ body.produkt-popup-open {
     border: none;
     font-size: 24px;
     cursor: pointer;
+    box-shadow: none;
+    color: #000;
+}
+
+.shop-filter-overlay h2 {
+    font-size: 35px;
+}
+
+.shop-filter-overlay ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#shop-filter-overlay a {
+    text-decoration: none;
 }
 
 body.shop-filter-open {
