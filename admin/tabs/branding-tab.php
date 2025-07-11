@@ -16,6 +16,7 @@ if (isset($_POST['submit_branding'])) {
     $front_text_color   = sanitize_hex_color($_POST['front_text_color']);
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
+    $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
     $custom_css = sanitize_textarea_field($_POST['custom_css']);
 
@@ -33,6 +34,7 @@ if (isset($_POST['submit_branding'])) {
         'front_text_color' => $front_text_color,
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
+        'filter_button_color' => $filter_button_color,
         'footer_text' => $footer_text,
         'custom_css' => $custom_css
     );
@@ -155,6 +157,11 @@ if (isset($_POST['submit_branding'])) {
                         <label>Button-Farbe (Frontend)</label>
                         <input type="color" name="front_button_color" value="<?php echo esc_attr($branding['front_button_color'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
                         <small>Hauptfarbe der Handlungs-Buttons</small>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Filter-Button-Farbe</label>
+                        <input type="color" name="filter_button_color" value="<?php echo esc_attr($branding['filter_button_color'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
+                        <small>Farbe des mobilen Filter-Buttons</small>
                     </div>
 
                     <div class="produkt-form-group">
