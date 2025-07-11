@@ -5,6 +5,7 @@ global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_content_blocks';
 
 $categories = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_product_categories ORDER BY name");
+array_unshift($categories, (object)['id' => 0, 'name' => 'Alle Kategorien']);
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : ($categories[0]->id ?? 0);
 $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
 $edit_id = isset($_GET['edit']) ? intval($_GET['edit']) : 0;

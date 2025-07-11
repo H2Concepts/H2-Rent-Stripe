@@ -46,10 +46,8 @@ if (!empty($category_slug)) {
     }
 }
 
-$content_blocks = [];
-if (!empty($category)) {
-    $content_blocks = Database::get_content_blocks_for_category($category->id);
-}
+$content_category_id = $category->id ?? 0;
+$content_blocks = Database::get_content_blocks_for_category($content_category_id);
 $blocks_by_position = [];
 foreach ($content_blocks as $b) {
     $blocks_by_position[$b->position][] = $b;
