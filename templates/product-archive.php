@@ -51,10 +51,6 @@ $content_blocks = Database::get_content_blocks_for_category($content_category_id
 $blocks_by_position = [];
 foreach ($content_blocks as $b) {
     $blocks_by_position[$b->position][] = $b;
-    $mobile_pos = intval(($b->position / 9) * 6);
-    if ($mobile_pos > 0) {
-        $blocks_by_position[$mobile_pos][] = $b;
-    }
 }
 
 if (!function_exists('get_lowest_stripe_price_by_category')) {
@@ -169,8 +165,9 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             </a>
         </div>
         <?php
-            if (isset($blocks_by_position[$produkt_index])) {
-                foreach ($blocks_by_position[$produkt_index] as $block) {
+            $next_index = $produkt_index + 1;
+            if (isset($blocks_by_position[$next_index])) {
+                foreach ($blocks_by_position[$next_index] as $block) {
                     ?>
                     <div class="content-block">
                         <div class="content-block-text">
