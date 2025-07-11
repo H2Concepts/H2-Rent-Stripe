@@ -1717,6 +1717,8 @@ body.shop-filter-open {
     width: 100%;
     height: auto;
     display: block;
+    border-radius: 0.5rem;
+    margin-right: 1rem;
 }
 .content-block-button {
     margin-top: 1rem;
