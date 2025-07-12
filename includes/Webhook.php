@@ -65,7 +65,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 error_log("❌ Fehler beim Anlegen des Users: " . $user_id->get_error_message());
             }
         } else {
+            $user_id = $existing_user->ID;
             error_log("ℹ️ Benutzer bereits vorhanden: {$customer_email}");
+        }
+
+        if (!empty($user_id) && !empty($session->customer)) {
+            update_user_meta($user_id, 'stripe_customer_id', sanitize_text_field($session->customer));
         }
         $subscription_id = $session->subscription ?? '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];

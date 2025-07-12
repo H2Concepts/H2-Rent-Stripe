@@ -253,6 +253,7 @@ class Plugin {
         $message        = '';
         $show_code_form = false;
         $email_value    = '';
+        $subscriptions  = [];
 
         if (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
             $email       = sanitize_email($_POST['email']);
@@ -306,6 +307,43 @@ class Plugin {
                 $message = '<p style="color:red;">Benutzer wurde nicht gefunden.</p>';
             }
             $show_code_form = true;
+        }
+
+        if (is_user_logged_in()) {
+            $current_user_id = get_current_user_id();
+            $customer_id     = get_user_meta($current_user_id, 'stripe_customer_id', true);
+
+            if ($customer_id && isset($_POST['cancel_subscription'])) {
+                $sub_id = sanitize_text_field($_POST['cancel_subscription']);
+                $subs   = StripeService::get_active_subscriptions_for_customer($customer_id);
+                if (!is_wp_error($subs)) {
+                    foreach ($subs as $sub) {
+                        if ($sub['subscription_id'] === $sub_id) {
+                            $cancelable = time() > strtotime('+3 months', $sub['start_date']);
+                            if ($cancelable && empty($sub['cancel_at_period_end'])) {
+                                $res = StripeService::cancel_subscription_at_period_end($sub_id);
+                                if (is_wp_error($res)) {
+                                    $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
+                                } else {
+                                    $message = '<p>Kündigung vorgemerkt.</p>';
+                                }
+                            } else {
+                                $message = '<p style="color:red;">Dieses Abo kann noch nicht gekündigt werden.</p>';
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($customer_id) {
+                $subs = StripeService::get_active_subscriptions_for_customer($customer_id);
+                if (!is_wp_error($subs)) {
+                    $subscriptions = $subs;
+                } else {
+                    $message .= '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+                }
+            }
         }
 
         ob_start();

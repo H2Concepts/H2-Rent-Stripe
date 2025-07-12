@@ -19,5 +19,28 @@ if (!defined('ABSPATH')) {
     <?php endif; ?>
 <?php else: ?>
     <p>Willkommen zurück, <?php echo esc_html(wp_get_current_user()->display_name); ?>!</p>
-    <!-- Hier kommen später die Kundendaten -->
+    <?php foreach ($subscriptions as $sub) :
+        $start_ts = (int) $sub['start_date'];
+        $start_formatted = date_i18n(get_option('date_format'), $start_ts);
+        $cancelable_ts   = strtotime('+3 months', $start_ts);
+        $cancelable_date = date_i18n(get_option('date_format'), $cancelable_ts);
+        $cancelable      = time() > $cancelable_ts;
+    ?>
+        <div class="abo-box">
+            <h3><?php echo esc_html($sub['product_name']); ?></h3>
+            <p>Gemietet seit: <?php echo esc_html($start_formatted); ?></p>
+            <p>Kündbar ab: <?php echo esc_html($cancelable_date); ?></p>
+
+            <?php if ($sub['cancel_at_period_end']) : ?>
+                <p style="color:orange;">Kündigung vorgemerkt.</p>
+            <?php elseif ($cancelable) : ?>
+                <form method="post">
+                    <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
+                    <button type="submit">Jetzt kündigen</button>
+                </form>
+            <?php else : ?>
+                <p>Mindestlaufzeit noch aktiv.</p>
+            <?php endif; ?>
+        </div>
+    <?php endforeach; ?>
 <?php endif; ?>
