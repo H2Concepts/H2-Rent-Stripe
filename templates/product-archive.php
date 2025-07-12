@@ -46,6 +46,15 @@ if (!empty($category_slug)) {
     }
 }
 
+$content_category_id = $category->id ?? 0;
+$content_blocks = Database::get_content_blocks_for_category($content_category_id);
+$blocks_by_position_desktop = [];
+$blocks_by_position_mobile  = [];
+foreach ($content_blocks as $b) {
+    $blocks_by_position_desktop[$b->position][] = $b;
+    $blocks_by_position_mobile[$b->position_mobile][] = $b;
+}
+
 if (!function_exists('get_lowest_stripe_price_by_category')) {
     function get_lowest_stripe_price_by_category($category_id) {
         global $wpdb;
@@ -120,7 +129,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             <?php endif; ?>
 
             <div class="shop-product-grid">
-        <?php foreach (($categories ?? []) as $cat): ?>
+        <?php $produkt_index = 0; foreach (($categories ?? []) as $cat): $produkt_index++; ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
         <?php $price_data = get_lowest_stripe_price_by_category($cat->id); ?>
         <div class="shop-product-item">
@@ -157,6 +166,43 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                 </div>
             </a>
         </div>
+        <?php
+            $next_index = $produkt_index + 1;
+            if (isset($blocks_by_position_desktop[$next_index])) {
+                foreach ($blocks_by_position_desktop[$next_index] as $block) {
+                    ?>
+                    <div class="content-block desktop-only">
+                        <div class="content-block-text">
+                            <h3><?php echo esc_html($block->title); ?></h3>
+                            <?php echo wpautop($block->content); ?>
+                        </div>
+                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
+                            <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
+                                <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php
+                }
+            }
+            if (isset($blocks_by_position_mobile[$next_index])) {
+                foreach ($blocks_by_position_mobile[$next_index] as $block) {
+                    ?>
+                    <div class="content-block mobile-only">
+                        <div class="content-block-text">
+                            <h3><?php echo esc_html($block->title); ?></h3>
+                            <?php echo wpautop($block->content); ?>
+                        </div>
+                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
+                            <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
+                                <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php
+                }
+            }
+        ?>
         <?php endforeach; ?>
 
         </div>
