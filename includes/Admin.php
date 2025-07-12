@@ -95,6 +95,15 @@ class Admin {
             'produkt-colors',
             array($this, 'colors_page')
         );
+
+        add_submenu_page(
+            'produkt-verleih',
+            'Content-Blöcke',
+            'Content-Blöcke',
+            'manage_options',
+            'produkt-content-blocks',
+            array($this, 'content_blocks_page')
+        );
         
         
         
@@ -571,6 +580,10 @@ class Admin {
     
     public function colors_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/colors-page.php';
+    }
+
+    public function content_blocks_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/content-blocks-page.php';
     }
     
     public function orders_page() {
