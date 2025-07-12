@@ -252,14 +252,9 @@ class Plugin {
                 $token   = wp_generate_password(32, false);
                 $expires = time() + 15 * MINUTE_IN_SECONDS;
 
-                $data = [
-                    'token'   => $token,
-                    'expires' => $expires,
-                ];
+                produkt_set_login_token($user->ID, $token, $expires);
 
-                update_user_meta($user->ID, 'produkt_login_token', $data);
-
-                error_log('TOKEN gespeichert: ' . print_r(['user_id' => $user->ID, 'data' => $data], true));
+                error_log('TOKEN gespeichert: ' . print_r(['user_id' => $user->ID, 'token' => $token, 'expires' => $expires], true));
 
                 $login_url = add_query_arg([
                     'produkt_login_token' => $token,
@@ -584,20 +579,27 @@ class Plugin {
 
     public function handle_magic_login() {
         if (isset($_GET['produkt_login_token'], $_GET['uid'])) {
-            $token    = sanitize_text_field($_GET['produkt_login_token']);
-            $user_id  = absint($_GET['uid']);
-            $data     = get_user_meta($user_id, 'produkt_login_token', true);
+            $token   = sanitize_text_field($_GET['produkt_login_token']);
+            $user_id = absint($_GET['uid']);
+            $stored  = produkt_get_login_token($user_id);
 
-            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $data], true));
+            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $stored], true));
 
-            if (!$data || $data['token'] !== $token || $data['expires'] < time()) {
-                wp_die('Der Login-Link ist ungültig oder abgelaufen.');
+            if (!$stored) {
+                error_log('❌ TOKEN fehlt');
+                wp_die('Token nicht gefunden oder abgelaufen.');
             }
 
-            delete_user_meta($user_id, 'produkt_login_token');
+            if ($stored['token'] !== $token || $stored['expires'] < time()) {
+                error_log('⚠️ TOKEN abgelaufen');
+                wp_die('Token ungültig oder abgelaufen.');
+            }
 
+            error_log('✅ TOKEN gültig');
             wp_set_auth_cookie($user_id);
+            error_log('🔁 Login redirect eingeleitet');
             wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+            delete_user_meta($user_id, 'produkt_login_token');
             exit;
         }
     }
