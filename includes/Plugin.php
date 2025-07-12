@@ -63,6 +63,8 @@ class Plugin {
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
+        // Process magic login links
+        add_action('template_redirect', [$this, 'handle_magic_login']);
 
         // Ensure Astra page wrappers for plugin templates
         add_filter('body_class', function ($classes) {
@@ -241,7 +243,40 @@ class Plugin {
     public function render_customer_account() {
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
+
+        if (isset($_POST['produkt_login_request']) && !empty($_POST['produkt_email'])) {
+            $email = sanitize_email($_POST['produkt_email']);
+            $user  = get_user_by('email', $email);
+
+            if ($user) {
+                $token   = wp_generate_password(32, false);
+                $expires = time() + 15 * MINUTE_IN_SECONDS;
+
+                set_transient('produkt_login_token_' . $token, $user->ID, $expires);
+
+                $login_url = add_query_arg([
+                    'produkt_login_token' => $token,
+                ], get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+
+                add_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
+                wp_mail(
+                    $email,
+                    'Ihr Login-Link',
+                    "Klicken Sie hier, um sich einzuloggen:<br><br><a href=\"{$login_url}\">{$login_url}</a><br><br>Dieser Link ist 15 Minuten g\u00fcltig."
+                );
+                remove_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
+
+                echo '<p>Ein Login-Link wurde an Ihre E-Mail-Adresse gesendet.</p>';
+            } else {
+                echo '<p style="color:red;">Es existiert kein Benutzer mit dieser E-Mail-Adresse.</p>';
+            }
+        }
+
         return ob_get_clean();
+    }
+
+    public function html_email_content_type() {
+        return 'text/html';
     }
 
     public function add_meta_tags() {
@@ -536,6 +571,22 @@ class Plugin {
             exit;
         } catch (\Exception $e) {
             wp_die($e->getMessage());
+        }
+    }
+
+    public function handle_magic_login() {
+        if (isset($_GET['produkt_login_token'])) {
+            $token   = sanitize_text_field($_GET['produkt_login_token']);
+            $user_id = get_transient('produkt_login_token_' . $token);
+
+            if ($user_id) {
+                wp_set_auth_cookie($user_id);
+                delete_transient('produkt_login_token_' . $token);
+                wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+                exit;
+            } else {
+                wp_die('Der Login-Link ist ungültig oder abgelaufen.');
+            }
         }
     }
 
