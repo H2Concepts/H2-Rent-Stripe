@@ -581,25 +581,26 @@ class Plugin {
         if (isset($_GET['produkt_login_token'], $_GET['uid'])) {
             $token   = sanitize_text_field($_GET['produkt_login_token']);
             $user_id = absint($_GET['uid']);
-            $stored  = produkt_get_login_token($user_id);
 
-            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $stored], true));
+            $data = get_user_meta($user_id, 'produkt_login_token', true);
 
-            if (!$stored) {
-                error_log('❌ TOKEN fehlt');
-                wp_die('Token nicht gefunden oder abgelaufen.');
+            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $data], true));
+
+            if (
+                !is_array($data) ||
+                !isset($data['token'], $data['expires']) ||
+                $data['token'] !== $token ||
+                $data['expires'] < time() ||
+                !empty($data['used'])
+            ) {
+                wp_die('Der Login-Link ist ungültig oder abgelaufen.');
             }
 
-            if ($stored['token'] !== $token || $stored['expires'] < time()) {
-                error_log('⚠️ TOKEN abgelaufen');
-                wp_die('Token ungültig oder abgelaufen.');
-            }
+            $data['used'] = true;
+            update_user_meta($user_id, 'produkt_login_token', $data);
 
-            error_log('✅ TOKEN gültig');
             wp_set_auth_cookie($user_id);
-            error_log('🔁 Login redirect eingeleitet');
             wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
-            delete_user_meta($user_id, 'produkt_login_token');
             exit;
         }
     }

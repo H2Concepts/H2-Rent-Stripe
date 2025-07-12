@@ -86,6 +86,7 @@ function produkt_set_login_token($user_id, $token, $expires) {
     $data = [
         'token'   => $token,
         'expires' => $expires,
+        'used'    => false,
     ];
     update_user_meta($user_id, 'produkt_login_token', $data);
 }
