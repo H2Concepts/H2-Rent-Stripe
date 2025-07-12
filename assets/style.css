@@ -1769,6 +1769,7 @@ body.shop-filter-open {
     .content-block-image {
         min-height: 350px;
         border-radius: .5rem .5rem 0 0;
+        margin: 0;
     }
     .content-block-text h3 {
         font-size: 28px;
