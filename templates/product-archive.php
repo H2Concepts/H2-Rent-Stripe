@@ -177,7 +177,9 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                                 <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
                             <?php endif; ?>
                             <h3><?php echo esc_html($block->title); ?></h3>
-                            <?php echo wpautop($block->content); ?>
+                            <div class="content-block-description">
+                                <?php echo wpautop($block->content); ?>
+                            </div>
                             <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
                                 <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
                             <?php endif; ?>
@@ -197,7 +199,9 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                                 <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
                             <?php endif; ?>
                             <h3><?php echo esc_html($block->title); ?></h3>
-                            <?php echo wpautop($block->content); ?>
+                            <div class="content-block-description">
+                                <?php echo wpautop($block->content); ?>
+                            </div>
                             <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
                                 <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
                             <?php endif; ?>
