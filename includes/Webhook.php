@@ -35,6 +35,38 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
+
+        $customer_email = $session->customer_details->email ?? '';
+        if (!$customer_email) {
+            return;
+        }
+
+        $existing_user = get_user_by('email', $customer_email);
+        if (!$existing_user) {
+            $username_base = sanitize_user(current(explode('@', $customer_email)));
+            $username      = $username_base;
+            $i = 1;
+            while (username_exists($username)) {
+                $username = $username_base . $i;
+                $i++;
+            }
+
+            $random_password = wp_generate_password(12, true);
+            $user_id = wp_create_user($username, $random_password, $customer_email);
+
+            if (!is_wp_error($user_id)) {
+                wp_update_user([
+                    'ID'   => $user_id,
+                    'role' => 'subscriber',
+                ]);
+                update_user_meta($user_id, 'produkt_customer_origin', 'stripe_checkout');
+                error_log("✅ Neuer Kunde erstellt: {$customer_email}");
+            } else {
+                error_log("❌ Fehler beim Anlegen des Users: " . $user_id->get_error_message());
+            }
+        } else {
+            error_log("ℹ️ Benutzer bereits vorhanden: {$customer_email}");
+        }
         $subscription_id = $session->subscription ?? '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
 

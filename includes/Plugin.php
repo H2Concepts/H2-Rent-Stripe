@@ -37,6 +37,7 @@ class Plugin {
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
+        add_action('init', [$this, 'register_customer_role']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
@@ -117,6 +118,7 @@ class Plugin {
     }
 
     public function deactivate() {
+        remove_role('kunde');
         flush_rewrite_rules();
     }
 
@@ -675,6 +677,14 @@ class Plugin {
         }
 
         update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
+    }
+
+    public function register_customer_role() {
+        add_role('kunde', 'Kunde', [
+            'read'        => true,
+            'edit_posts'  => false,
+            'delete_posts'=> false,
+        ]);
     }
 
     public function mark_shop_page($states, $post) {
