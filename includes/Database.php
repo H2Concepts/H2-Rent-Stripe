@@ -567,6 +567,44 @@ class Database {
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
+
+        // Create content blocks table if it doesn't exist
+        $table_blocks = $wpdb->prefix . 'produkt_content_blocks';
+        $blocks_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_blocks'");
+        if (!$blocks_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_blocks (
+                id INT NOT NULL AUTO_INCREMENT,
+                category_id INT NOT NULL,
+                position INT NOT NULL,
+                position_mobile INT NOT NULL DEFAULT 6,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                image_url TEXT,
+                button_text TEXT,
+                button_url TEXT,
+                PRIMARY KEY (id),
+                KEY category_id (category_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        } else {
+            // Add missing columns for desktop/mobile positions
+            $mobile_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'position_mobile'");
+            if (empty($mobile_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN position_mobile INT NOT NULL DEFAULT 6 AFTER position");
+            }
+
+            $color_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'background_color'");
+            if (empty($color_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN background_color VARCHAR(20) DEFAULT '' AFTER button_url");
+            }
+            $badge_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'badge_text'");
+            if (empty($badge_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN badge_text TEXT AFTER background_color");
+            }
+        }
     }
     
     public function create_tables() {
@@ -856,6 +894,24 @@ class Database {
         dbDelta($sql_variant_options);
         dbDelta($sql_variant_durations);
         dbDelta($sql_duration_prices);
+        // Content blocks table
+        $table_content_blocks = $wpdb->prefix . 'produkt_content_blocks';
+        $sql_content_blocks = "CREATE TABLE $table_content_blocks (
+            id INT NOT NULL AUTO_INCREMENT,
+            category_id INT NOT NULL,
+            position INT NOT NULL,
+            position_mobile INT NOT NULL DEFAULT 6,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL,
+            image_url TEXT,
+            button_text TEXT,
+            button_url TEXT,
+            background_color VARCHAR(20) DEFAULT '',
+            badge_text TEXT,
+            PRIMARY KEY (id),
+            KEY category_id (category_id)
+        ) $charset_collate;";
+        dbDelta($sql_content_blocks);
         dbDelta($sql_orders);
 
         // Metadata table for storing Stripe session details
@@ -1097,6 +1153,7 @@ class Database {
             'produkt_analytics',
             'produkt_branding',
             'produkt_notifications',
+            'produkt_content_blocks',
             'produkt_stripe_metadata'
         );
 
@@ -1158,5 +1215,40 @@ class Database {
         $sql .= " ORDER BY sort_order";
 
         return $wpdb->get_results($sql);
+    }
+
+    /**
+     * Retrieve content blocks for a product category.
+     *
+     * @param int $category_id
+     * @return array
+     */
+    public static function get_content_blocks_for_category($category_id) {
+        $cache_key = 'produkt_content_blocks_' . intval($category_id);
+        $blocks = get_transient($cache_key);
+        if ($blocks !== false) {
+            return $blocks;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_content_blocks';
+        $blocks = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM $table WHERE category_id = %d ORDER BY position",
+                $category_id
+            )
+        );
+
+        set_transient($cache_key, $blocks, HOUR_IN_SECONDS);
+        return $blocks;
+    }
+
+    /**
+     * Clear cached content blocks for a category.
+     *
+     * @param int $category_id
+     */
+    public static function clear_content_blocks_cache($category_id) {
+        delete_transient('produkt_content_blocks_' . intval($category_id));
     }
 }
