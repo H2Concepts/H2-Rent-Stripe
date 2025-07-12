@@ -21,6 +21,7 @@ define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);
 define('PRODUKT_VERSION', PRODUKT_PLUGIN_VERSION);
 define('PRODUKT_PLUGIN_FILE', __FILE__);
 define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
+define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
 
 // Control whether default demo data is inserted on activation
 if (!defined('PRODUKT_LOAD_DEFAULT_DATA')) {
@@ -79,4 +80,22 @@ function produkt_simple_checkout_button() {
     });
     </script>
     <?php return ob_get_clean();
+}
+
+function produkt_set_login_token($user_id, $token, $expires) {
+    $data = [
+        'token'   => $token,
+        'expires' => $expires,
+        'used'    => false,
+    ];
+    update_user_meta($user_id, 'produkt_login_token', $data);
+}
+
+function produkt_get_login_token($user_id) {
+    $data = get_user_meta($user_id, 'produkt_login_token', true);
+    if (!is_array($data) || empty($data['token'])) {
+        error_log("TOKEN ABRUF FEHLGESCHLAGEN f\xC3\xBCr User {$user_id}");
+        return false;
+    }
+    return $data;
 }

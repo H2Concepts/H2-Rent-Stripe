@@ -25,9 +25,19 @@ class Plugin {
     }
 
     public function init() {
+        // Disable browser prefetch and REST discovery
+        remove_action('wp_head', 'rest_output_link_wp_head', 10);
+        remove_action('wp_head', 'wp_oembed_add_discovery_links', 10);
+        remove_action('template_redirect', 'rest_output_link_header', 11);
+
+        // Prevent caching sensitive pages
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
+        add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -62,6 +72,8 @@ class Plugin {
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
+        // Process magic login links
+        add_action('template_redirect', [$this, 'handle_magic_login']);
 
         // Ensure Astra page wrappers for plugin templates
         add_filter('body_class', function ($classes) {
@@ -102,6 +114,7 @@ class Plugin {
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
+        $this->create_customer_page();
         flush_rewrite_rules();
     }
 
@@ -145,6 +158,7 @@ class Plugin {
             'produkt_ct_submit',
             'produkt_ct_after_submit',
             PRODUKT_SHOP_PAGE_OPTION,
+            PRODUKT_CUSTOMER_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -154,6 +168,10 @@ class Plugin {
         $page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($page_id) {
             wp_delete_post($page_id, true);
+        }
+        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($customer_page_id) {
+            wp_delete_post($customer_page_id, true);
         }
     }
 
@@ -229,6 +247,48 @@ class Plugin {
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
         return ob_get_clean();
+    }
+
+    public function render_customer_account() {
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
+
+        if (isset($_POST['produkt_login_request']) && !empty($_POST['produkt_email'])) {
+            $email = sanitize_email($_POST['produkt_email']);
+            $user  = get_user_by('email', $email);
+
+            if ($user) {
+                $token   = wp_generate_password(32, false);
+                $expires = time() + 15 * MINUTE_IN_SECONDS;
+
+                produkt_set_login_token($user->ID, $token, $expires);
+
+                error_log('TOKEN gespeichert: ' . print_r(['user_id' => $user->ID, 'token' => $token, 'expires' => $expires], true));
+
+                $login_url = add_query_arg([
+                    'produkt_login_token' => $token,
+                    'uid'                 => $user->ID,
+                ], get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+
+                add_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
+                wp_mail(
+                    $email,
+                    'Ihr Login-Link',
+                    "Klicken Sie hier, um sich einzuloggen:<br><br><a href=\"{$login_url}\">{$login_url}</a><br><br>Dieser Link ist 15 Minuten g\u00fcltig."
+                );
+                remove_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
+
+                echo '<p>Ein Login-Link wurde an Ihre E-Mail-Adresse gesendet.</p>';
+            } else {
+                echo '<p style="color:red;">Es existiert kein Benutzer mit dieser E-Mail-Adresse.</p>';
+            }
+        }
+
+        return ob_get_clean();
+    }
+
+    public function html_email_content_type() {
+        return 'text/html';
     }
 
     public function add_meta_tags() {
@@ -526,6 +586,38 @@ class Plugin {
         }
     }
 
+    public function handle_magic_login() {
+        if (isset($_GET['produkt_login_token'], $_GET['uid'])) {
+            $token   = sanitize_text_field($_GET['produkt_login_token']);
+            $user_id = absint($_GET['uid']);
+            $data    = get_user_meta($user_id, 'produkt_login_token', true);
+
+            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $data], true));
+
+            if (
+                !$data ||
+                !is_array($data) ||
+                ($data['token'] ?? '') !== $token ||
+                ($data['expires'] ?? 0) < time() ||
+                !empty($data['used'])
+            ) {
+                wp_die('Der Login-Link ist ungültig oder abgelaufen.');
+            }
+
+            // ✅ Authentifizieren und Cookie setzen
+            wp_set_auth_cookie($user_id);
+
+            // ✅ Token nun als verwendet markieren – aber erst **jetzt**
+            $data['used'] = true;
+            update_user_meta($user_id, 'produkt_login_token', $data);
+
+            error_log('✅ TOKEN gültig & verwendet, Weiterleitung...');
+
+            wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+            exit;
+        }
+    }
+
     public function maybe_display_product_page() {
         $slug = sanitize_title(get_query_var('produkt_slug'));
         if (empty($slug)) {
@@ -577,10 +669,32 @@ class Plugin {
         update_option(PRODUKT_SHOP_PAGE_OPTION, $page_id);
     }
 
+    private function create_customer_page() {
+        $page = get_page_by_path('kundenkonto');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Kundenkonto',
+                'post_name'    => 'kundenkonto',
+                'post_content' => '[produkt_account]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
             $states[] = __('Shop-Seite', 'h2-concepts');
+        }
+        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($post->ID == $customer_page_id) {
+            $states[] = __('Kundenkonto-Seite', 'h2-concepts');
         }
         return $states;
     }
