@@ -250,9 +250,15 @@ class Plugin {
 
             if ($user) {
                 $token   = wp_generate_password(32, false);
-                $expires = time() + 15 * MINUTE_IN_SECONDS;
+                $expires = current_time('timestamp') + 15 * MINUTE_IN_SECONDS;
 
-                set_transient('produkt_login_token_' . $token, $user->ID, $expires);
+                update_option(
+                    'produkt_login_token_' . $token,
+                    [
+                        'user_id' => $user->ID,
+                        'expires' => $expires,
+                    ]
+                );
 
                 $login_url = add_query_arg([
                     'produkt_login_token' => $token,
@@ -576,17 +582,19 @@ class Plugin {
 
     public function handle_magic_login() {
         if (isset($_GET['produkt_login_token'])) {
-            $token   = sanitize_text_field($_GET['produkt_login_token']);
-            $user_id = get_transient('produkt_login_token_' . $token);
+            $token = sanitize_text_field($_GET['produkt_login_token'] ?? '');
+            $data  = get_option('produkt_login_token_' . $token);
 
-            if ($user_id) {
-                wp_set_auth_cookie($user_id);
-                delete_transient('produkt_login_token_' . $token);
-                wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
-                exit;
-            } else {
+            if (!$data || current_time('timestamp') > $data['expires']) {
                 wp_die('Der Login-Link ist ungültig oder abgelaufen.');
             }
+
+            $user_id = $data['user_id'];
+            delete_option('produkt_login_token_' . $token);
+
+            wp_set_auth_cookie($user_id);
+            wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+            exit;
         }
     }
 
