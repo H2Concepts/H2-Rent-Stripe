@@ -250,19 +250,20 @@ class Plugin {
 
             if ($user) {
                 $token   = wp_generate_password(32, false);
-                $expires = current_time('timestamp') + 15 * MINUTE_IN_SECONDS;
+                $expires = time() + 15 * MINUTE_IN_SECONDS;
 
                 $data = [
-                    'user_id' => $user->ID,
+                    'token'   => $token,
                     'expires' => $expires,
                 ];
 
-                set_transient('produkt_login_token_' . $token, $data, 15 * MINUTE_IN_SECONDS);
+                update_user_meta($user->ID, 'produkt_login_token', $data);
 
-                error_log('TOKEN gespeichert: ' . print_r(['key' => 'produkt_login_token_' . $token, 'data' => $data], true));
+                error_log('TOKEN gespeichert: ' . print_r(['user_id' => $user->ID, 'data' => $data], true));
 
                 $login_url = add_query_arg([
                     'produkt_login_token' => $token,
+                    'uid'                 => $user->ID,
                 ], get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
 
                 add_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
@@ -582,18 +583,18 @@ class Plugin {
     }
 
     public function handle_magic_login() {
-        if (isset($_GET['produkt_login_token'])) {
-            $token = sanitize_text_field($_GET['produkt_login_token'] ?? '');
-            $data  = get_transient('produkt_login_token_' . $token);
+        if (isset($_GET['produkt_login_token'], $_GET['uid'])) {
+            $token    = sanitize_text_field($_GET['produkt_login_token']);
+            $user_id  = absint($_GET['uid']);
+            $data     = get_user_meta($user_id, 'produkt_login_token', true);
 
-            error_log('TOKEN geladen: ' . print_r(['key' => 'produkt_login_token_' . $token, 'data' => $data], true));
+            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $data], true));
 
-            if (!$data || current_time('timestamp') > $data['expires']) {
+            if (!$data || $data['token'] !== $token || $data['expires'] < time()) {
                 wp_die('Der Login-Link ist ungültig oder abgelaufen.');
             }
 
-            $user_id = $data['user_id'];
-            delete_transient('produkt_login_token_' . $token);
+            delete_user_meta($user_id, 'produkt_login_token');
 
             wp_set_auth_cookie($user_id);
             wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
