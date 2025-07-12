@@ -257,7 +257,7 @@ class Plugin {
                     'expires' => $expires,
                 ];
 
-                update_option('produkt_login_token_' . $token, $data);
+                set_transient('produkt_login_token_' . $token, $data, 15 * MINUTE_IN_SECONDS);
 
                 error_log('TOKEN gespeichert: ' . print_r(['key' => 'produkt_login_token_' . $token, 'data' => $data], true));
 
@@ -584,7 +584,7 @@ class Plugin {
     public function handle_magic_login() {
         if (isset($_GET['produkt_login_token'])) {
             $token = sanitize_text_field($_GET['produkt_login_token'] ?? '');
-            $data  = get_option('produkt_login_token_' . $token);
+            $data  = get_transient('produkt_login_token_' . $token);
 
             error_log('TOKEN geladen: ' . print_r(['key' => 'produkt_login_token_' . $token, 'data' => $data], true));
 
@@ -593,7 +593,7 @@ class Plugin {
             }
 
             $user_id = $data['user_id'];
-            delete_option('produkt_login_token_' . $token);
+            delete_transient('produkt_login_token_' . $token);
 
             wp_set_auth_cookie($user_id);
             wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
