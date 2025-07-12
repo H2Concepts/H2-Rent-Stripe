@@ -595,6 +595,15 @@ class Database {
             if (empty($mobile_exists)) {
                 $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN position_mobile INT NOT NULL DEFAULT 6 AFTER position");
             }
+
+            $color_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'background_color'");
+            if (empty($color_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN background_color VARCHAR(20) DEFAULT '' AFTER button_url");
+            }
+            $badge_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'badge_text'");
+            if (empty($badge_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN badge_text TEXT AFTER background_color");
+            }
         }
     }
     
@@ -897,6 +906,8 @@ class Database {
             image_url TEXT,
             button_text TEXT,
             button_url TEXT,
+            background_color VARCHAR(20) DEFAULT '',
+            badge_text TEXT,
             PRIMARY KEY (id),
             KEY category_id (category_id)
         ) $charset_collate;";

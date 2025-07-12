@@ -21,6 +21,8 @@ if (isset($_POST['save_block'])) {
         'image_url'    => esc_url_raw($_POST['image_url']),
         'button_text'  => sanitize_text_field($_POST['button_text']),
         'button_url'   => esc_url_raw($_POST['button_url']),
+        'background_color' => sanitize_hex_color($_POST['background_color']),
+        'badge_text'  => sanitize_text_field($_POST['badge_text']),
     ];
     if (!empty($_POST['id'])) {
         $wpdb->update($table_name, $data, ['id' => intval($_POST['id'])]);
@@ -95,6 +97,14 @@ $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 <tr>
                     <th><label>Button-Link</label></th>
                     <td><input type="url" name="button_url" value="<?php echo esc_attr($block->button_url ?? ''); ?>"></td>
+                </tr>
+                <tr>
+                    <th><label>Hintergrundfarbe</label></th>
+                    <td><input type="color" name="background_color" value="<?php echo esc_attr($block->background_color ?? '#ffffff'); ?>"></td>
+                </tr>
+                <tr>
+                    <th><label>Badge-Text</label></th>
+                    <td><input type="text" name="badge_text" value="<?php echo esc_attr($block->badge_text ?? ''); ?>"></td>
                 </tr>
             </table>
             <p>
