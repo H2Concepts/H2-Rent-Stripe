@@ -175,11 +175,11 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                         <div class="content-block-text">
                             <h3><?php echo esc_html($block->title); ?></h3>
                             <?php echo wpautop($block->content); ?>
-                        </div>
-                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
                             <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
                                 <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
                             <?php endif; ?>
+                        </div>
+                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
                         </div>
                     </div>
                     <?php
@@ -192,11 +192,11 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                         <div class="content-block-text">
                             <h3><?php echo esc_html($block->title); ?></h3>
                             <?php echo wpautop($block->content); ?>
-                        </div>
-                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
                             <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
                                 <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
                             <?php endif; ?>
+                        </div>
+                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
                         </div>
                     </div>
                     <?php
