@@ -25,6 +25,15 @@ class Plugin {
     }
 
     public function init() {
+        // Disable browser prefetch and REST discovery
+        remove_action('wp_head', 'rest_output_link_wp_head', 10);
+        remove_action('wp_head', 'wp_oembed_add_discovery_links', 10);
+        remove_action('template_redirect', 'rest_output_link_header', 11);
+
+        // Prevent caching sensitive pages
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        header('Pragma: no-cache');
+
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
@@ -581,25 +590,29 @@ class Plugin {
         if (isset($_GET['produkt_login_token'], $_GET['uid'])) {
             $token   = sanitize_text_field($_GET['produkt_login_token']);
             $user_id = absint($_GET['uid']);
-
-            $data = get_user_meta($user_id, 'produkt_login_token', true);
+            $data    = get_user_meta($user_id, 'produkt_login_token', true);
 
             error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $data], true));
 
             if (
+                !$data ||
                 !is_array($data) ||
-                !isset($data['token'], $data['expires']) ||
-                $data['token'] !== $token ||
-                $data['expires'] < time() ||
+                ($data['token'] ?? '') !== $token ||
+                ($data['expires'] ?? 0) < time() ||
                 !empty($data['used'])
             ) {
                 wp_die('Der Login-Link ist ungültig oder abgelaufen.');
             }
 
+            // ✅ Authentifizieren und Cookie setzen
+            wp_set_auth_cookie($user_id);
+
+            // ✅ Token nun als verwendet markieren – aber erst **jetzt**
             $data['used'] = true;
             update_user_meta($user_id, 'produkt_login_token', $data);
 
-            wp_set_auth_cookie($user_id);
+            error_log('✅ TOKEN gültig & verwendet, Weiterleitung...');
+
             wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
             exit;
         }
