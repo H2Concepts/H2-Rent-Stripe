@@ -72,8 +72,6 @@ class Plugin {
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
-        // Process magic login links
-        add_action('template_redirect', [$this, 'handle_magic_login']);
 
         // Ensure Astra page wrappers for plugin templates
         add_filter('body_class', function ($classes) {
@@ -250,45 +248,68 @@ class Plugin {
     }
 
     public function render_customer_account() {
-        ob_start();
-        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
+        $message        = '';
+        $show_code_form = false;
+        $email_value    = '';
 
-        if (isset($_POST['produkt_login_request']) && !empty($_POST['produkt_email'])) {
-            $email = sanitize_email($_POST['produkt_email']);
-            $user  = get_user_by('email', $email);
+        if (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
+            $email       = sanitize_email($_POST['email']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
 
-            if ($user) {
-                $token   = wp_generate_password(32, false);
+            if (!$user) {
+                $user_id = wp_create_user($email, wp_generate_password(), $email);
+                if (!is_wp_error($user_id)) {
+                    $user = get_user_by('ID', $user_id);
+                }
+            }
+
+            if ($user && !is_wp_error($user)) {
+                $code    = random_int(100000, 999999);
                 $expires = time() + 15 * MINUTE_IN_SECONDS;
 
-                produkt_set_login_token($user->ID, $token, $expires);
+                update_user_meta($user->ID, 'produkt_login_code', [
+                    'code'    => $code,
+                    'expires' => $expires,
+                ]);
 
-                error_log('TOKEN gespeichert: ' . print_r(['user_id' => $user->ID, 'token' => $token, 'expires' => $expires], true));
+                wp_mail($email, 'Ihr Login-Code', "Ihr Login-Code lautet: $code\n\nEr ist 15 Minuten gültig.");
 
-                $login_url = add_query_arg([
-                    'produkt_login_token' => $token,
-                    'uid'                 => $user->ID,
-                ], get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
-
-                add_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
-                wp_mail(
-                    $email,
-                    'Ihr Login-Link',
-                    "Klicken Sie hier, um sich einzuloggen:<br><br><a href=\"{$login_url}\">{$login_url}</a><br><br>Dieser Link ist 15 Minuten g\u00fcltig."
-                );
-                remove_filter('wp_mail_content_type', [$this, 'html_email_content_type']);
-
-                echo '<p>Ein Login-Link wurde an Ihre E-Mail-Adresse gesendet.</p>';
+                $message        = '<p>Ein Login-Code wurde an Ihre E-Mail-Adresse gesendet.</p>';
+                $show_code_form = true;
             } else {
-                echo '<p style="color:red;">Es existiert kein Benutzer mit dieser E-Mail-Adresse.</p>';
+                $message = '<p style="color:red;">Es ist ein Fehler aufgetreten.</p>';
             }
+        } elseif (isset($_POST['verify_login_code']) && !empty($_POST['email']) && !empty($_POST['code'])) {
+            $email       = sanitize_email($_POST['email']);
+            $input_code  = trim($_POST['code']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if ($user) {
+                $data = get_user_meta($user->ID, 'produkt_login_code', true);
+                if (
+                    isset($data['code'], $data['expires']) &&
+                    $data['code'] == $input_code &&
+                    time() <= $data['expires']
+                ) {
+                    delete_user_meta($user->ID, 'produkt_login_code');
+                    wp_set_auth_cookie($user->ID);
+                    wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+                    exit;
+                } else {
+                    $message = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
+                }
+            } else {
+                $message = '<p style="color:red;">Benutzer wurde nicht gefunden.</p>';
+            }
+            $show_code_form = true;
         }
 
+        ob_start();
+        echo $message;
+        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
         return ob_get_clean();
-    }
-
-    public function html_email_content_type() {
-        return 'text/html';
     }
 
     public function add_meta_tags() {
@@ -586,37 +607,6 @@ class Plugin {
         }
     }
 
-    public function handle_magic_login() {
-        if (isset($_GET['produkt_login_token'], $_GET['uid'])) {
-            $token   = sanitize_text_field($_GET['produkt_login_token']);
-            $user_id = absint($_GET['uid']);
-            $data    = get_user_meta($user_id, 'produkt_login_token', true);
-
-            error_log('TOKEN geladen: ' . print_r(['user_id' => $user_id, 'data' => $data], true));
-
-            if (
-                !$data ||
-                !is_array($data) ||
-                ($data['token'] ?? '') !== $token ||
-                ($data['expires'] ?? 0) < time() ||
-                !empty($data['used'])
-            ) {
-                wp_die('Der Login-Link ist ungültig oder abgelaufen.');
-            }
-
-            // ✅ Authentifizieren und Cookie setzen
-            wp_set_auth_cookie($user_id);
-
-            // ✅ Token nun als verwendet markieren – aber erst **jetzt**
-            $data['used'] = true;
-            update_user_meta($user_id, 'produkt_login_token', $data);
-
-            error_log('✅ TOKEN gültig & verwendet, Weiterleitung...');
-
-            wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
-            exit;
-        }
-    }
 
     public function maybe_display_product_page() {
         $slug = sanitize_title(get_query_var('produkt_slug'));
