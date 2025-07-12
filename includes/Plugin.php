@@ -252,13 +252,14 @@ class Plugin {
                 $token   = wp_generate_password(32, false);
                 $expires = current_time('timestamp') + 15 * MINUTE_IN_SECONDS;
 
-                update_option(
-                    'produkt_login_token_' . $token,
-                    [
-                        'user_id' => $user->ID,
-                        'expires' => $expires,
-                    ]
-                );
+                $data = [
+                    'user_id' => $user->ID,
+                    'expires' => $expires,
+                ];
+
+                update_option('produkt_login_token_' . $token, $data);
+
+                error_log('TOKEN gespeichert: ' . print_r(['key' => 'produkt_login_token_' . $token, 'data' => $data], true));
 
                 $login_url = add_query_arg([
                     'produkt_login_token' => $token,
@@ -584,6 +585,8 @@ class Plugin {
         if (isset($_GET['produkt_login_token'])) {
             $token = sanitize_text_field($_GET['produkt_login_token'] ?? '');
             $data  = get_option('produkt_login_token_' . $token);
+
+            error_log('TOKEN geladen: ' . print_r(['key' => 'produkt_login_token_' . $token, 'data' => $data], true));
 
             if (!$data || current_time('timestamp') > $data['expires']) {
                 wp_die('Der Login-Link ist ungültig oder abgelaufen.');
