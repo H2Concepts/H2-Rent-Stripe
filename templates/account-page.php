@@ -50,9 +50,10 @@ $db = new Database();
                         $laufzeit_in_monaten = 3; // Fallback
                     }
                 }
-                $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
-                $cancelable_date = date_i18n('d.m.Y', $cancelable_ts);
-                $cancelable = time() > $cancelable_ts;
+                $cancelable_ts       = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                $cancelable_date       = date_i18n('d.m.Y', $cancelable_ts);
+                $kuendigungsfenster_ts = strtotime('-14 days', $cancelable_ts);
+                $cancelable            = time() >= $kuendigungsfenster_ts;
                 ?>
                 <div class="abo-box">
                     <h3><?php echo esc_html($product_name); ?></h3>
@@ -64,7 +65,10 @@ $db = new Database();
                     <?php elseif ($cancelable) : ?>
                         <form method="post">
                             <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
-                            <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">Jetzt kündigen</button>
+                            <p style="margin-bottom:8px;"> Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html($cancelable_date); ?>).</p>
+                            <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">
+                                Zum Laufzeitende kündigen
+                            </button>
                         </form>
                     <?php else : ?>
                         <p style="color:#888;"><strong>⏳ Mindestlaufzeit noch aktiv.</strong></p>
