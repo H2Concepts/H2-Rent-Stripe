@@ -254,6 +254,7 @@ class Plugin {
         $show_code_form = false;
         $email_value    = '';
         $subscriptions  = [];
+        $user_orders    = [];
 
         if (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
             $email       = sanitize_email($_POST['email']);
@@ -344,6 +345,9 @@ class Plugin {
                     $message .= '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
                 }
             }
+
+            $user_email  = wp_get_current_user()->user_email;
+            $user_orders = Database::get_orders_by_user_email($user_email);
         }
 
         ob_start();

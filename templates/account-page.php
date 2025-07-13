@@ -43,4 +43,39 @@ if (!defined('ABSPATH')) {
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
+
+    <?php if (!empty($user_orders)) : ?>
+        <h2>Ihre Mietprodukte</h2>
+        <?php foreach ($user_orders as $order): ?>
+            <div class="mietprodukt-box">
+                <h3><?php echo esc_html($order->produkt_name); ?></h3>
+                <?php if (!empty($order->produkt_image)) : ?>
+                    <img src="<?php echo esc_url($order->produkt_image); ?>" style="max-width: 150px;">
+                <?php endif; ?>
+                <ul>
+                    <li><strong>Gemietet am:</strong> <?php echo esc_html(date_i18n(get_option('date_format'), strtotime($order->created_at))); ?></li>
+                    <li><strong>Dauer:</strong> <?php echo esc_html($order->dauer_text); ?></li>
+                    <li><strong>Extras:</strong> <?php echo esc_html($order->extra_text); ?></li>
+                    <li><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></li>
+                    <li><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></li>
+                    <li><strong>Status:</strong> <?php echo esc_html($order->status); ?></li>
+                </ul>
+            </div>
+        <?php endforeach; ?>
+    <?php else : ?>
+        <p>Aktuell liegen keine Mietprodukte vor.</p>
+    <?php endif; ?>
+    <style>
+    .mietprodukt-box {
+        border: 1px solid #ccc;
+        padding: 16px;
+        margin-bottom: 24px;
+        border-radius: 8px;
+        background: #f9f9f9;
+    }
+    .mietprodukt-box img {
+        float: right;
+        margin-left: 16px;
+    }
+    </style>
 <?php endif; ?>

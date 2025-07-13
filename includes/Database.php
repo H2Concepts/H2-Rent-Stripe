@@ -1251,4 +1251,23 @@ class Database {
     public static function clear_content_blocks_cache($category_id) {
         delete_transient('produkt_content_blocks_' . intval($category_id));
     }
+
+    /**
+     * Retrieve all orders for a user by their email address.
+     *
+     * @param string $email
+     * @return array List of order objects
+     */
+    public static function get_orders_by_user_email($email) {
+        global $wpdb;
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_orders
+                 WHERE customer_email = %s
+                 ORDER BY created_at DESC",
+                $email
+            )
+        );
+    }
 }
