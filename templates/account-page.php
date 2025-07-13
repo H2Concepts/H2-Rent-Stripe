@@ -2,6 +2,24 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+if (isset($_POST['verify_login_code'])) {
+    $email      = sanitize_email($_POST['email'] ?? '');
+    $input_code = sanitize_text_field($_POST['code'] ?? '');
+    $user       = get_user_by('email', $email);
+
+    if ($user) {
+        $data = get_user_meta($user->ID, 'produkt_login_code', true);
+        if ($data && $data['code'] == $input_code && time() <= $data['expires']) {
+            delete_user_meta($user->ID, 'produkt_login_code');
+            delete_user_meta($user->ID, 'login_code');
+            delete_user_meta($user->ID, 'login_code_time');
+            wp_set_auth_cookie($user->ID, true);
+            wp_safe_redirect(get_permalink());
+            exit;
+        }
+    }
+}
 ?>
 <div class="produkt-account-wrapper">
     <?php if (!is_user_logged_in()) : ?>

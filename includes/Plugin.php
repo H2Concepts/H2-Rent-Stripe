@@ -30,7 +30,6 @@ class Plugin {
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_action('init', [$this, 'register_customer_role']);
-        add_action('template_redirect', [$this, 'maybe_handle_login_code']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -656,28 +655,6 @@ class Plugin {
         }
     }
 
-    /**
-     * Process login code verification before any output is sent.
-     */
-    public function maybe_handle_login_code() {
-        if (empty($_POST['verify_login_code'])) {
-            return;
-        }
-
-        $email      = sanitize_email($_POST['email'] ?? '');
-        $input_code = sanitize_text_field($_POST['code'] ?? '');
-        $user       = get_user_by('email', $email);
-
-        if ($user) {
-            $data = get_user_meta($user->ID, 'produkt_login_code', true);
-            if ($data && $data['code'] == $input_code && time() <= $data['expires']) {
-                delete_user_meta($user->ID, 'produkt_login_code');
-                wp_set_auth_cookie($user->ID);
-                wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
-                exit;
-            }
-        }
-    }
 
     public function maybe_display_product_page() {
         $slug = sanitize_title(get_query_var('produkt_slug'));
