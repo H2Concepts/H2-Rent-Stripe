@@ -50,28 +50,28 @@ $db = new Database();
                         $laufzeit_in_monaten = 3; // Fallback
                     }
                 }
-                $cancelable_ts       = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
-                $cancelable_date       = date_i18n('d.m.Y', $cancelable_ts);
-                $kuendigungsfenster_ts = strtotime('-14 days', $cancelable_ts);
-                $cancelable            = time() >= $kuendigungsfenster_ts;
+                $cancelable_ts            = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
+                $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
+                $cancelable               = time() >= $kuendigungsfenster_ts;
                 ?>
                 <div class="abo-box">
                     <h3><?php echo esc_html($product_name); ?></h3>
                     <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
-                    <p><strong>Kündbar ab:</strong> <?php echo esc_html($cancelable_date); ?></p>
+                    <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
 
                     <?php if ($sub['cancel_at_period_end']) : ?>
                         <p style="color:orange;"><strong>✅ Kündigung vorgemerkt.</strong></p>
                     <?php elseif ($cancelable) : ?>
                         <form method="post">
                             <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
-                            <p style="margin-bottom:8px;"> Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html($cancelable_date); ?>).</p>
+                            <p style="margin-bottom:8px;">Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html(date_i18n('d.m.Y', $cancelable_ts)); ?>).</p>
                             <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">
                                 Zum Laufzeitende kündigen
                             </button>
                         </form>
                     <?php else : ?>
-                        <p style="color:#888;"><strong>⏳ Mindestlaufzeit noch aktiv.</strong></p>
+                        <p style="color:#888;"><strong>⏳ Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
