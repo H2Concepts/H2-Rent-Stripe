@@ -54,24 +54,56 @@ $db = new Database();
                 $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
                 $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
                 $cancelable               = time() >= $kuendigungsfenster_ts;
-                ?>
-                <div class="abo-box">
-                    <h3><?php echo esc_html($product_name); ?></h3>
-                    <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
-                    <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
 
-                    <?php if ($sub['cancel_at_period_end']) : ?>
-                        <p style="color:orange;"><strong>✅ Kündigung vorgemerkt.</strong></p>
-                    <?php elseif ($cancelable) : ?>
-                        <form method="post">
-                            <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
-                            <p style="margin-bottom:8px;">Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html(date_i18n('d.m.Y', $cancelable_ts)); ?>).</p>
-                            <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">
-                                Zum Laufzeitende kündigen
-                            </button>
-                        </form>
-                    <?php else : ?>
-                        <p style="color:#888;"><strong>⏳ Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
+                $image_url = '';
+                if ($order && !empty($order->variant_id)) {
+                    global $wpdb;
+                    $image_url = $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT image_url_1 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                            $order->variant_id
+                        )
+                    );
+                }
+
+                $address = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
+                ?>
+                <div class="abo-wrapper">
+                    <div class="abo-box">
+                        <h3><?php echo esc_html($product_name); ?></h3>
+                        <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
+                        <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
+
+                        <?php if ($sub['cancel_at_period_end']) : ?>
+                            <p style="color:orange;"><strong>✅ Kündigung vorgemerkt.</strong></p>
+                        <?php elseif ($cancelable) : ?>
+                            <form method="post">
+                                <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
+                                <p style="margin-bottom:8px;">Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html(date_i18n('d.m.Y', $cancelable_ts)); ?>).</p>
+                                <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">
+                                    Zum Laufzeitende kündigen
+                                </button>
+                            </form>
+                        <?php else : ?>
+                            <p style="color:#888;"><strong>⏳ Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($order) : ?>
+                        <div class="order-box">
+                            <?php if ($image_url) : ?>
+                                <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width:100%;height:auto;margin-bottom:8px;">
+                            <?php endif; ?>
+                            <p><strong>Name:</strong> <?php echo esc_html($order->customer_name); ?></p>
+                            <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>
+                            <p><strong>Adresse:</strong> <?php echo esc_html($address); ?></p>
+                            <p><strong>Preis pro Monat:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
+                            <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text); ?></p>
+                            <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
+                            <p><strong>Gestellfarbe:</strong> <?php echo esc_html($order->gestellfarbe_text); ?></p>
+                            <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
+                            <p><strong>Mietbeginn:</strong> <?php echo esc_html($start_formatted); ?></p>
+                        </div>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
@@ -90,5 +122,19 @@ $db = new Database();
 }
 .abo-box h3 {
     margin-top: 0;
+}
+.abo-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.order-box {
+    border: 1px solid #ddd;
+    padding: 16px;
+    border-radius: 8px;
+    background: #fff;
+    flex: 1;
+    min-width: 260px;
 }
 </style>
