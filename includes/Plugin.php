@@ -850,3 +850,10 @@ add_filter('template_include', function ($template) {
 
     return $template;
 });
+
+add_action('admin_init', function () {
+    if (current_user_can('kunde') && !wp_doing_ajax()) {
+        wp_redirect(home_url('/kundenkonto'));
+        exit;
+    }
+});
