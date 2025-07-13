@@ -103,7 +103,7 @@ $db = new Database();
                     <?php if ($order) : ?>
                         <div class="order-box">
                             <?php if ($image_url) : ?>
-                                <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width:100%;height:auto;margin-bottom:8px;">
+                                <img src="<?php echo esc_url($image_url); ?>" alt="">
                             <?php endif; ?>
                             <p><strong>Name:</strong> <?php echo esc_html($order->customer_name); ?></p>
                             <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>

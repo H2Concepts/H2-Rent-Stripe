@@ -1,10 +1,5 @@
 .produkt-account-wrapper {
-    max-width: 1080px;
     margin: 0 auto;
-    padding: 40px 20px;
-    font-size: 16px;
-    line-height: 1.6;
-    background: #f9f9f9;
 }
 
 .abo-wrapper {
@@ -18,12 +13,18 @@
     border: 1px solid #ddd;
 }
 
-.abo-box, .order-box {
+.abo-box,
+.order-box {
     flex: 1 1 300px;
 }
 
+.order-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
 .abo-box h3 {
-    font-size: 20px;
     margin-bottom: 16px;
 }
 
@@ -52,10 +53,11 @@
 }
 
 .order-box img {
-    width: 100%;
+    width: 140px;
     height: auto;
-    margin-bottom: 12px;
+    margin: 0;
     border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .produkt-account-email-form,
