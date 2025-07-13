@@ -21,6 +21,7 @@ define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);
 define('PRODUKT_VERSION', PRODUKT_PLUGIN_VERSION);
 define('PRODUKT_PLUGIN_FILE', __FILE__);
 define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
+define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
 
 // Control whether default demo data is inserted on activation
 if (!defined('PRODUKT_LOAD_DEFAULT_DATA')) {

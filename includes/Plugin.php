@@ -28,6 +28,7 @@ class Plugin {
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
+        add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -102,6 +103,7 @@ class Plugin {
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
+        $this->create_customer_page();
         flush_rewrite_rules();
     }
 
@@ -145,6 +147,7 @@ class Plugin {
             'produkt_ct_submit',
             'produkt_ct_after_submit',
             PRODUKT_SHOP_PAGE_OPTION,
+            PRODUKT_CUSTOMER_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -154,6 +157,11 @@ class Plugin {
         $page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($page_id) {
             wp_delete_post($page_id, true);
+        }
+
+        $cust_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($cust_page_id) {
+            wp_delete_post($cust_page_id, true);
         }
     }
 
@@ -228,6 +236,12 @@ class Plugin {
 
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+        return ob_get_clean();
+    }
+
+    public function render_customer_account() {
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
         return ob_get_clean();
     }
 
@@ -577,10 +591,32 @@ class Plugin {
         update_option(PRODUKT_SHOP_PAGE_OPTION, $page_id);
     }
 
+    private function create_customer_page() {
+        $page = get_page_by_path('kundenkonto');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Kundenkonto',
+                'post_name'    => 'kundenkonto',
+                'post_content' => '[produkt_account]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
             $states[] = __('Shop-Seite', 'h2-concepts');
+        }
+        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($post->ID == $customer_page_id) {
+            $states[] = __('Kundenkonto-Seite', 'h2-concepts');
         }
         return $states;
     }
