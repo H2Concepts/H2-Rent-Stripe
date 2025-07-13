@@ -37,10 +37,17 @@ $db = new Database();
         }
         ?>
         <div class="account-layout">
-            <aside class="account-sidebar">
+            <aside class="account-sidebar shop-category-list">
                 <h2>Hallo <?php echo esc_html($full_name); ?></h2>
                 <ul>
-                    <li class="active"><span class="menu-icon">📦</span> Abos</li>
+                    <li>
+                        <a href="#" class="active"><span class="menu-icon">📦</span> Abos</a>
+                    </li>
+                    <li>
+                        <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">
+                            <span class="menu-icon">🚪</span> Logout
+                        </a>
+                    </li>
                 </ul>
             </aside>
             <div>
