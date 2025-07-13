@@ -22,9 +22,22 @@ $db = new Database();
         </form>
         <?php endif; ?>
     <?php else : ?>
+        <?php
+        $orders = Database::get_orders_for_user(get_current_user_id());
+        $full_name = '';
+        foreach ($orders as $o) {
+            if (!empty($o->customer_name)) {
+                $full_name = $o->customer_name;
+                break;
+            }
+        }
+        if (!$full_name) {
+            $full_name = wp_get_current_user()->display_name;
+        }
+        ?>
         <div class="account-layout">
             <aside class="account-sidebar">
-                <h2>Hallo <?php echo esc_html(wp_get_current_user()->display_name); ?></h2>
+                <h2>Hallo <?php echo esc_html($full_name); ?></h2>
                 <ul>
                     <li class="active"><span class="menu-icon">📦</span> Abos</li>
                 </ul>
@@ -32,7 +45,6 @@ $db = new Database();
             <div>
         <?php if (!empty($subscriptions)) : ?>
             <?php
-            $orders = Database::get_orders_for_user(get_current_user_id());
             $order_map = [];
             foreach ($orders as $o) {
                 $order_map[$o->subscription_id] = $o;

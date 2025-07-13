@@ -47,9 +47,8 @@
 .abo-box,
 .order-box,
 .image-box {
-    background: #fff;
+    background: #f4f4f4;
     border-radius: 12px;
-    border: 1px solid #ddd;
     padding: 24px;
 }
 
