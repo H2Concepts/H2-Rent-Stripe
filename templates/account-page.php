@@ -56,14 +56,25 @@ $db = new Database();
                 $cancelable               = time() >= $kuendigungsfenster_ts;
 
                 $image_url = '';
-                if ($order && !empty($order->variant_id)) {
+                if ($order) {
                     global $wpdb;
-                    $image_url = $wpdb->get_var(
-                        $wpdb->prepare(
-                            "SELECT image_url_1 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
-                            $order->variant_id
-                        )
-                    );
+                    if (!empty($order->variant_id)) {
+                        $image_url = $wpdb->get_var(
+                            $wpdb->prepare(
+                                "SELECT image_url_1 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                                $order->variant_id
+                            )
+                        );
+                    }
+
+                    if (empty($image_url) && !empty($order->category_id)) {
+                        $image_url = $wpdb->get_var(
+                            $wpdb->prepare(
+                                "SELECT default_image FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                                $order->category_id
+                            )
+                        );
+                    }
                 }
 
                 $address = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
@@ -98,10 +109,21 @@ $db = new Database();
                             <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>
                             <p><strong>Adresse:</strong> <?php echo esc_html($address); ?></p>
                             <p><strong>Preis pro Monat:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
-                            <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text); ?></p>
-                            <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
-                            <p><strong>Gestellfarbe:</strong> <?php echo esc_html($order->gestellfarbe_text); ?></p>
-                            <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
+                            <?php if (!empty($order->extra_text)) : ?>
+                                <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text); ?></p>
+                            <?php endif; ?>
+
+                            <?php if (!empty($order->produktfarbe_text)) : ?>
+                                <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
+                            <?php endif; ?>
+
+                            <?php if (!empty($order->gestellfarbe_text)) : ?>
+                                <p><strong>Gestellfarbe:</strong> <?php echo esc_html($order->gestellfarbe_text); ?></p>
+                            <?php endif; ?>
+
+                            <?php if (!empty($order->zustand_text)) : ?>
+                                <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
+                            <?php endif; ?>
                             <p><strong>Mietbeginn:</strong> <?php echo esc_html($start_formatted); ?></p>
                         </div>
                     <?php endif; ?>
