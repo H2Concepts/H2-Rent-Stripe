@@ -5,6 +5,12 @@ class Plugin {
     private $db;
     private $ajax;
     private $admin;
+    /**
+     * Stores an error message when login code verification fails.
+     * Displayed on the account page after template_redirect processing.
+     * @var string
+     */
+    private $login_error = '';
 
     public function __construct() {
         $this->db = new Database();
@@ -64,6 +70,9 @@ class Plugin {
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
+
+        // Process login code submissions as early as possible to avoid header issues
+        add_action('template_redirect', [$this, 'maybe_handle_login_code'], 1);
 
         // Ensure Astra page wrappers for plugin templates
         add_filter('body_class', function ($classes) {
@@ -241,8 +250,8 @@ class Plugin {
     }
 
     public function render_customer_account() {
-        $message        = '';
-        $show_code_form = false;
+        $message        = $this->login_error;
+        $show_code_form = isset($_POST['verify_login_code']);
         $email_value    = '';
 
         if (
@@ -258,18 +267,12 @@ class Plugin {
             if ($user) {
                 $data = get_user_meta($user->ID, 'produkt_login_code', true);
                 if (
-                    isset($data['code'], $data['expires']) &&
-                    $data['code'] == $input_code &&
-                    time() <= $data['expires']
+                    !(
+                        isset($data['code'], $data['expires']) &&
+                        $data['code'] == $input_code &&
+                        time() <= $data['expires']
+                    )
                 ) {
-                    delete_user_meta($user->ID, 'produkt_login_code');
-
-                    wp_set_current_user($user->ID);
-                    wp_set_auth_cookie($user->ID, true);
-                    $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-                    wp_safe_redirect(get_permalink($account_page_id));
-                    exit;
-                } else {
                     $message        = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
                     $show_code_form = true;
                 }
@@ -678,6 +681,44 @@ class Plugin {
         } catch (\Exception $e) {
             wp_die($e->getMessage());
         }
+    }
+
+    /**
+     * Verify a login code before any output is sent and log the user in.
+     * Redirects to the customer account page on success.
+     */
+    public function maybe_handle_login_code() {
+        if (
+            !isset($_POST['verify_login_code']) ||
+            empty($_POST['email']) ||
+            empty($_POST['code'])
+        ) {
+            return;
+        }
+
+        $email      = sanitize_email($_POST['email']);
+        $input_code = trim($_POST['code']);
+        $user       = get_user_by('email', $email);
+
+        if ($user) {
+            $data = get_user_meta($user->ID, 'produkt_login_code', true);
+            if (
+                isset($data['code'], $data['expires']) &&
+                $data['code'] == $input_code &&
+                time() <= $data['expires']
+            ) {
+                delete_user_meta($user->ID, 'produkt_login_code');
+
+                wp_set_current_user($user->ID);
+                wp_set_auth_cookie($user->ID, true);
+                $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                wp_safe_redirect(get_permalink($page_id));
+                exit;
+            }
+        }
+
+        // Invalid code – store message for later display
+        $this->login_error = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
     }
 
 
