@@ -68,6 +68,8 @@ class Plugin {
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
         add_filter('display_post_states', [$this, 'mark_shop_page'], 10, 2);
 
+        add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
+
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
 
@@ -827,6 +829,13 @@ class Plugin {
         add_role('kunde', 'Kunde', [
             'read' => true,
         ]);
+    }
+
+    public function hide_admin_bar_for_customers($show) {
+        if (current_user_can('kunde')) {
+            return false;
+        }
+        return $show;
     }
 }
 
