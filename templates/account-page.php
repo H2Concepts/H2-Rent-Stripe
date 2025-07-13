@@ -56,8 +56,12 @@ $db = new Database();
                 $cancelable               = time() >= $kuendigungsfenster_ts;
                 $is_extended              = time() > $cancelable_ts;
 
-                $period_end_ts   = strtotime($sub['current_period_end']);
-                $period_end_date = date_i18n('d.m.Y', $period_end_ts);
+                $period_end_ts   = null;
+                $period_end_date = '';
+                if (!empty($sub['current_period_end'])) {
+                    $period_end_ts   = strtotime($sub['current_period_end']);
+                    $period_end_date = date_i18n('d.m.Y', $period_end_ts);
+                }
 
                 $image_url = '';
                 if ($order) {
