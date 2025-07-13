@@ -240,7 +240,62 @@ class Plugin {
     }
 
     public function render_customer_account() {
+        $message        = '';
+        $show_code_form = false;
+        $email_value    = '';
+
+        if (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
+            $email       = sanitize_email($_POST['email']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if (!$user) {
+                $user_id = wp_create_user($email, wp_generate_password(), $email);
+                if (!is_wp_error($user_id)) {
+                    wp_update_user(['ID' => $user_id, 'role' => 'kunde']);
+                    $user = get_user_by('ID', $user_id);
+                }
+            }
+
+            if ($user) {
+                $code    = random_int(100000, 999999);
+                $expires = time() + 15 * MINUTE_IN_SECONDS;
+                update_user_meta(
+                    $user->ID,
+                    'produkt_login_code',
+                    ['code' => $code, 'expires' => $expires]
+                );
+
+                wp_mail(
+                    $email,
+                    'Ihr Login-Code',
+                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten."
+                );
+                $message        = '<p>Login-Code gesendet.</p>';
+                $show_code_form = true;
+            }
+        } elseif (isset($_POST['verify_login_code'])) {
+            $email       = sanitize_email($_POST['email']);
+            $input_code  = sanitize_text_field($_POST['code']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if ($user) {
+                $data = get_user_meta($user->ID, 'produkt_login_code', true);
+                if ($data && $data['code'] == $input_code && time() <= $data['expires']) {
+                    delete_user_meta($user->ID, 'produkt_login_code');
+                    wp_set_auth_cookie($user->ID);
+                    wp_redirect(get_permalink(get_option(PRODUKT_CUSTOMER_PAGE_OPTION)));
+                    exit;
+                } else {
+                    $message        = '<p style="color:red;">Code ungültig oder abgelaufen.</p>';
+                    $show_code_form = true;
+                }
+            }
+        }
+
         ob_start();
+        echo $message;
         include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
         return ob_get_clean();
     }
