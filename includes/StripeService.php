@@ -282,8 +282,8 @@ class StripeService {
                         'subscription_id'      => $sub->id,
                         'start_date'           => date('Y-m-d H:i:s', $sub->start_date),
                         'cancel_at_period_end' => $sub->cancel_at_period_end,
-                        'current_period_start' => date('Y-m-d H:i:s', $sub->current_period_start),
-                        'current_period_end'   => date('Y-m-d H:i:s', $sub->current_period_end),
+                        'current_period_start' => isset($sub->current_period_start) ? date('Y-m-d H:i:s', $sub->current_period_start) : null,
+                        'current_period_end'   => isset($sub->current_period_end) ? date('Y-m-d H:i:s', $sub->current_period_end) : null,
                         'status'               => $sub->status,
                     ];
                 }
