@@ -31,6 +31,8 @@ class Plugin {
     }
 
     public function init() {
+        // Replace deprecated emoji and admin bar functions with enqueue versions.
+        $this->replace_deprecated_wp_functions();
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
@@ -853,6 +855,19 @@ class Plugin {
             return false;
         }
         return $show;
+    }
+
+    /**
+     * Replace deprecated WordPress functions with modern equivalents.
+     * Removes the old actions that trigger deprecation warnings.
+     */
+    private function replace_deprecated_wp_functions() {
+        remove_action('wp_print_styles', 'print_emoji_styles');
+        remove_action('admin_print_styles', 'print_emoji_styles');
+        remove_action('admin_print_scripts', 'wp_admin_bar_header');
+
+        add_action('wp_enqueue_scripts', 'wp_enqueue_emoji_styles');
+        add_action('admin_enqueue_scripts', 'wp_enqueue_admin_bar_header_styles');
     }
 }
 
