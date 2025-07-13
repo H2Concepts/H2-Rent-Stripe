@@ -331,12 +331,17 @@ class Plugin {
                                 }
                             }
 
-                            $laufzeit_in_monaten = 3; // Fallback
-
-                            if ($matching_order && !empty($matching_order->dauer_text)) {
-                                // Dauer auslesen, z.\xE2\x80\xAFB. \xE2\x80\x9EAb 2+ Monaten\xE2\x80\x9C \xE2\x86\x92 2
-                                if (preg_match('/(\d+)\+/', $matching_order->dauer_text, $matches)) {
-                                    $laufzeit_in_monaten = (int) $matches[1];
+                            $laufzeit_in_monaten = 3;
+                            if ($matching_order && !empty($matching_order->duration_id)) {
+                                global $wpdb;
+                                $laufzeit_in_monaten = (int) $wpdb->get_var(
+                                    $wpdb->prepare(
+                                        "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+                                        $matching_order->duration_id
+                                    )
+                                );
+                                if (!$laufzeit_in_monaten) {
+                                    $laufzeit_in_monaten = 3; // Fallback
                                 }
                             }
 

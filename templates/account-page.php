@@ -38,8 +38,17 @@ $db = new Database();
                 $start_ts = strtotime($sub['start_date']);
                 $start_formatted = date_i18n('d.m.Y', $start_ts);
                 $laufzeit_in_monaten = 3;
-                if ($order && !empty($order->dauer_text) && preg_match('/(\d+)\+/', $order->dauer_text, $m)) {
-                    $laufzeit_in_monaten = (int) $m[1];
+                if ($order && !empty($order->duration_id)) {
+                    global $wpdb;
+                    $laufzeit_in_monaten = (int) $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+                            $order->duration_id
+                        )
+                    );
+                    if (!$laufzeit_in_monaten) {
+                        $laufzeit_in_monaten = 3; // Fallback
+                    }
                 }
                 $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
                 $cancelable_date = date_i18n('d.m.Y', $cancelable_ts);
