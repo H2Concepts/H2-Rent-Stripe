@@ -29,6 +29,7 @@ class Plugin {
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
+        add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -694,6 +695,12 @@ class Plugin {
         }
 
         return null;
+    }
+
+    public function register_customer_role() {
+        add_role('kunde', 'Kunde', [
+            'read' => true,
+        ]);
     }
 }
 
