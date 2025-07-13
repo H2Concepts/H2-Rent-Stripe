@@ -1,5 +1,9 @@
 .produkt-account-wrapper {
-    margin: 0 auto;
+    max-width: 100%;
+    margin: 0;
+    padding: 50px 0;
+    background: transparent;
+    border-radius: 1rem;
 }
 
 /* Layout with sidebar similar to the shop pages */

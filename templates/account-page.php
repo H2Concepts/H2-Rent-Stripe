@@ -8,7 +8,8 @@ if (!defined('ABSPATH')) {
 $db = new Database();
 
 ?>
-<div class="produkt-account-wrapper">
+<div class="produkt-account-wrapper produkt-container shop-overview-container">
+    <h1>Kundenkonto</h1>
     <?php if (!is_user_logged_in()) : ?>
         <form method="post" class="produkt-account-email-form">
             <input type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
