@@ -73,6 +73,39 @@
     margin-bottom: 16px;
 }
 
+.abo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.status-badge.active {
+    background-color: #28a745;
+}
+
+.status-badge.scheduled {
+    background-color: #fd7e14;
+}
+
+.status-badge.cancelled {
+    background-color: #dc3545;
+}
+
+.abo-info {
+    font-size: 0.875rem;
+    color: #666;
+    margin-top: 12px;
+}
+
 .abo-box p,
 .order-box p {
     margin: 8px 0;

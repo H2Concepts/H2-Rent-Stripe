@@ -116,7 +116,23 @@ $db = new Database();
                 ?>
                 <div class="abo-row">
                     <div class="abo-box">
-                        <h3>Abo-Übersicht</h3>
+                        <?php
+                        $badge_text  = 'Aktiv';
+                        $badge_class = 'active';
+                        if ($sub['status'] === 'canceled') {
+                            $badge_text  = 'Gekündigt';
+                            $badge_class = 'cancelled';
+                        } elseif ($sub['cancel_at_period_end']) {
+                            $badge_text  = 'Kündigung vorgemerkt';
+                            $badge_class = 'scheduled';
+                        }
+                        ?>
+                        <div class="abo-header">
+                            <h3>Abo-Übersicht</h3>
+                            <span class="status-badge <?php echo esc_attr($badge_class); ?>">
+                                <?php echo esc_html($badge_text); ?>
+                            </span>
+                        </div>
                         <p><strong>Produkt:</strong> <?php echo esc_html($product_name); ?></p>
                         <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
                         <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
@@ -145,6 +161,7 @@ $db = new Database();
                         <?php else : ?>
                             <p style="color:#888;"><strong>⏳ Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
                         <?php endif; ?>
+                        <p class="abo-info">Nach Ablauf der Mindestlaufzeit verlängert sich das Abo automatisch monatlich. Sie können jederzeit zum Ende des laufenden Abrechnungszeitraums kündigen.</p>
                     </div>
 
                     <?php if ($order) : ?>
