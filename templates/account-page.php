@@ -17,7 +17,26 @@ if (!defined('ABSPATH')) {
         </form>
         <?php endif; ?>
     <?php else : ?>
-        <p>Hier entsteht Ihr persönlicher Kundenbereich.</p>
+        <?php if (!empty($subscriptions)) : ?>
+            <h2>Ihre Abos</h2>
+            <ul class="produkt-subscriptions">
+                <?php foreach ($subscriptions as $s) : ?>
+                    <li>
+                        <?php echo esc_html($s['subscription_id']); ?>
+                        <?php if (empty($s['cancel_at_period_end'])) : ?>
+                            <form method="post" style="display:inline;margin-left:10px;">
+                                <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($s['subscription_id']); ?>">
+                                <button type="submit">Jetzt kündigen</button>
+                            </form>
+                        <?php else : ?>
+                            <span style="margin-left:10px;">Kündigung vorgemerkt</span>
+                        <?php endif; ?>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php else : ?>
+            <p>Keine aktiven Abos.</p>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 

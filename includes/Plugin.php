@@ -293,6 +293,70 @@ class Plugin {
                     $show_code_form = true;
                 }
             }
+
+        }
+
+        $subscriptions  = [];
+        $current_user_id = get_current_user_id();
+        if ($current_user_id) {
+            $customer_id = get_user_meta($current_user_id, 'stripe_customer_id', true);
+
+            if ($customer_id && isset($_POST['cancel_subscription'])) {
+                $sub_id = sanitize_text_field($_POST['cancel_subscription']);
+                $subs   = StripeService::get_active_subscriptions_for_customer($customer_id);
+                $orders = Database::get_orders_for_user($current_user_id);
+
+                if (!is_wp_error($subs)) {
+                    foreach ($subs as $sub) {
+                        if ($sub['subscription_id'] === $sub_id) {
+                            $matching_order = null;
+
+                            // passende Bestellung zur Subscription suchen
+                            foreach ($orders as $order) {
+                                if ($order->subscription_id === $sub_id) {
+                                    $matching_order = $order;
+                                    break;
+                                }
+                            }
+
+                            $laufzeit_in_monaten = 3; // Fallback
+
+                            if ($matching_order && !empty($matching_order->dauer_text)) {
+                                // Dauer auslesen, z.\xE2\x80\xAFB. \xE2\x80\x9EAb 2+ Monaten\xE2\x80\x9C \xE2\x86\x92 2
+                                if (preg_match('/(\d+)\+/', $matching_order->dauer_text, $matches)) {
+                                    $laufzeit_in_monaten = (int) $matches[1];
+                                }
+                            }
+
+                            $start_ts      = strtotime($sub['start_date']);
+                            $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                            $cancelable    = time() > $cancelable_ts;
+
+                            if ($cancelable && empty($sub['cancel_at_period_end'])) {
+                                $res = StripeService::cancel_subscription_at_period_end($sub_id);
+                                if (is_wp_error($res)) {
+                                    $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
+                                } else {
+                                    $message = '<p>K\xC3\xBCndigung vorgemerkt.</p>';
+                                }
+                            } else {
+                                $message = '<p style="color:red;">Dieses Abo kann noch nicht gek\xC3\xBCndigt werden.</p>';
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($customer_id) {
+                $subs = StripeService::get_active_subscriptions_for_customer($customer_id);
+                if (!is_wp_error($subs)) {
+                    $subscriptions = $subs;
+                } else {
+                    $message = '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+                }
+            }
         }
 
         ob_start();
