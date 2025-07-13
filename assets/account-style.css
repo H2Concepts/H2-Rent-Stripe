@@ -2,26 +2,68 @@
     margin: 0 auto;
 }
 
-.abo-wrapper {
+/* Layout with sidebar similar to the shop pages */
+.account-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2rem;
+}
+
+.account-sidebar h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.account-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.account-sidebar li {
+    margin-bottom: 0.5rem;
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.account-sidebar a {
+    color: #000;
+    text-decoration: none !important;
+}
+
+.account-sidebar a.active {
+    font-weight: bold;
+}
+
+/* Grid with three cards per subscription */
+.abo-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-bottom: 40px;
-    padding: 24px;
-    background: #fff;
-    border-radius: 12px;
-    border: 1px solid #ddd;
 }
 
 .abo-box,
-.order-box {
-    flex: 1 1 300px;
+.order-box,
+.image-box {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    padding: 24px;
 }
 
-.order-box {
+.image-box {
     display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: center;
+    justify-content: center;
+}
+
+.order-box img,
+.image-box img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
 }
 
 .abo-box h3 {
@@ -52,13 +94,7 @@
     background-color: #c82333;
 }
 
-.order-box img {
-    width: 140px;
-    height: auto;
-    margin: 0;
-    border-radius: 8px;
-    flex-shrink: 0;
-}
+
 
 .produkt-account-email-form,
 .produkt-account-code-form {
@@ -98,7 +134,10 @@
 }
 
 @media (max-width: 768px) {
-    .abo-wrapper {
-        flex-direction: column;
+    .account-layout {
+        grid-template-columns: 1fr;
+    }
+    .abo-row {
+        grid-template-columns: 1fr;
     }
 }

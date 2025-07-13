@@ -22,8 +22,15 @@ $db = new Database();
         </form>
         <?php endif; ?>
     <?php else : ?>
+        <div class="account-layout">
+            <aside class="account-sidebar">
+                <h2>Hallo <?php echo esc_html(wp_get_current_user()->display_name); ?></h2>
+                <ul>
+                    <li class="active"><span class="menu-icon">📦</span> Abos</li>
+                </ul>
+            </aside>
+            <div>
         <?php if (!empty($subscriptions)) : ?>
-            <h2>Ihre Abos</h2>
             <?php
             $orders = Database::get_orders_for_user(get_current_user_id());
             $order_map = [];
@@ -87,9 +94,10 @@ $db = new Database();
 
                 $address = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
                 ?>
-                <div class="abo-wrapper">
+                <div class="abo-row">
                     <div class="abo-box">
-                        <h3><?php echo esc_html($product_name); ?></h3>
+                        <h3>Abo-Übersicht</h3>
+                        <p><strong>Produkt:</strong> <?php echo esc_html($product_name); ?></p>
                         <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
                         <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
                         <?php if (!empty($sub['current_period_end'])) : ?>
@@ -120,10 +128,13 @@ $db = new Database();
                     </div>
 
                     <?php if ($order) : ?>
-                        <div class="order-box">
+                        <div class="image-box">
                             <?php if ($image_url) : ?>
                                 <img src="<?php echo esc_url($image_url); ?>" alt="">
                             <?php endif; ?>
+                        </div>
+                        <div class="order-box">
+                            <h3>Abo-Details</h3>
                             <p><strong>Name:</strong> <?php echo esc_html($order->customer_name); ?></p>
                             <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>
                             <p><strong>Adresse:</strong> <?php echo esc_html($address); ?></p>
@@ -151,5 +162,7 @@ $db = new Database();
         <?php else : ?>
             <p>Keine aktiven Abos.</p>
         <?php endif; ?>
+            </div>
+        </div>
     <?php endif; ?>
 </div>
