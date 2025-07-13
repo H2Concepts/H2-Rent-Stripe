@@ -19,24 +19,58 @@ if (!defined('ABSPATH')) {
     <?php else : ?>
         <?php if (!empty($subscriptions)) : ?>
             <h2>Ihre Abos</h2>
-            <ul class="produkt-subscriptions">
-                <?php foreach ($subscriptions as $s) : ?>
-                    <li>
-                        <?php echo esc_html($s['subscription_id']); ?>
-                        <?php if (empty($s['cancel_at_period_end'])) : ?>
-                            <form method="post" style="display:inline;margin-left:10px;">
-                                <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($s['subscription_id']); ?>">
-                                <button type="submit">Jetzt kündigen</button>
-                            </form>
-                        <?php else : ?>
-                            <span style="margin-left:10px;">Kündigung vorgemerkt</span>
-                        <?php endif; ?>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+            <?php
+            $orders = Database::get_orders_for_user(get_current_user_id());
+            $order_map = [];
+            foreach ($orders as $o) {
+                $order_map[$o->subscription_id] = $o;
+            }
+            ?>
+            <?php foreach ($subscriptions as $sub) : ?>
+                <?php
+                $order = $order_map[$sub['subscription_id']] ?? null;
+                $product_name = $order->produkt_name ?? $sub['subscription_id'];
+                $start_ts = strtotime($sub['start_date']);
+                $start_formatted = date_i18n('d.m.Y', $start_ts);
+                $laufzeit_in_monaten = 3;
+                if ($order && !empty($order->dauer_text) && preg_match('/(\d+)\+/', $order->dauer_text, $m)) {
+                    $laufzeit_in_monaten = (int) $m[1];
+                }
+                $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                $cancelable_date = date_i18n('d.m.Y', $cancelable_ts);
+                $cancelable = time() > $cancelable_ts;
+                ?>
+                <div class="abo-box">
+                    <h3><?php echo esc_html($product_name); ?></h3>
+                    <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
+                    <p><strong>Kündbar ab:</strong> <?php echo esc_html($cancelable_date); ?></p>
+
+                    <?php if ($sub['cancel_at_period_end']) : ?>
+                        <p style="color:orange;"><strong>✅ Kündigung vorgemerkt.</strong></p>
+                    <?php elseif ($cancelable) : ?>
+                        <form method="post">
+                            <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
+                            <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">Jetzt kündigen</button>
+                        </form>
+                    <?php else : ?>
+                        <p style="color:#888;"><strong>⏳ Mindestlaufzeit noch aktiv.</strong></p>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
         <?php else : ?>
             <p>Keine aktiven Abos.</p>
         <?php endif; ?>
     <?php endif; ?>
 </div>
-
+<style>
+.abo-box {
+    border: 1px solid #ddd;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    background: #fff;
+}
+.abo-box h3 {
+    margin-top: 0;
+}
+</style>
