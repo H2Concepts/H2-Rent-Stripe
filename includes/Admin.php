@@ -161,6 +161,8 @@ class Admin {
             PRODUKT_VERSION
         );
 
+        $branding = $this->get_branding_settings();
+
         if ($is_account_page) {
             wp_enqueue_style(
                 'produkt-account-style',
@@ -168,6 +170,12 @@ class Admin {
                 [],
                 PRODUKT_VERSION
             );
+
+            $login_bg = $branding['login_bg_image'] ?? '';
+            if ($login_bg) {
+                $login_css = '.produkt-login-image{background-image:url(' . esc_url($login_bg) . ');}';
+                wp_add_inline_style('produkt-account-style', $login_css);
+            }
         }
 
         $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
@@ -183,7 +191,6 @@ class Admin {
             );
         }
 
-        $branding = $this->get_branding_settings();
         $button_color = $branding['front_button_color'] ?? '#5f7f5f';
         $text_color   = $branding['front_text_color'] ?? '#4a674a';
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';

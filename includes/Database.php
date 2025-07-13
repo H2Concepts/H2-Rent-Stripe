@@ -241,6 +241,7 @@ class Database {
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
                 'filter_button_color'  => '#5f7f5f',
+                'login_bg_image' => '',
                 'footer_text' => 'Powered by H2 Concepts',
                 'custom_css' => ''
             );
@@ -262,7 +263,8 @@ class Database {
             'front_text_color'         => '#4a674a',
             'front_border_color'       => '#a4b8a4',
             'front_button_text_color'  => '#ffffff',
-            'filter_button_color'      => '#5f7f5f'
+            'filter_button_color'      => '#5f7f5f',
+            'login_bg_image'           => ''
         );
         foreach ($branding_defaults as $key => $value) {
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_branding WHERE setting_key = %s", $key));
@@ -1034,6 +1036,7 @@ class Database {
                 'front_text_color'      => '#4a674a',
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
+                'login_bg_image'         => '',
                 'footer_text' => '',
                 'custom_css' => ''
             );

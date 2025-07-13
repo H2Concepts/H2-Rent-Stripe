@@ -10,6 +10,8 @@ $db = new Database();
 ?>
 <?php if (!is_user_logged_in()) : ?>
 <div class="produkt-login-wrapper">
+    <div class="produkt-login-image"></div>
+    <div class="produkt-login-form">
     <div class="login-box">
         <h1>Login</h1>
         <p>Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.</p>
@@ -25,6 +27,7 @@ $db = new Database();
             <button type="submit" name="verify_login_code">Einloggen</button>
         </form>
         <?php endif; ?>
+    </div>
     </div>
 </div>
 <?php else : ?>
