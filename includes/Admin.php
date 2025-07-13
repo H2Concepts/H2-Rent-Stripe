@@ -173,7 +173,7 @@ class Admin {
 
             $login_bg = $branding['login_bg_image'] ?? '';
             if ($login_bg) {
-                $login_css = '.produkt-login-image{background-image:url(' . esc_url($login_bg) . ');}';
+                $login_css = 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
                 wp_add_inline_style('produkt-account-style', $login_css);
             }
         }
