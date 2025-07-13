@@ -257,4 +257,59 @@ class StripeService {
     public static function get_payment_method_configuration_id() {
         return get_option('produkt_stripe_pmc_id', '');
     }
+
+    /**
+     * Retrieve active subscriptions for a given customer.
+     *
+     * @param string $customer_id Stripe customer ID
+     * @return array|\WP_Error
+     */
+    public static function get_active_subscriptions_for_customer($customer_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+        try {
+            $subs = \Stripe\Subscription::all([
+                'customer' => $customer_id,
+                'status'   => 'all',
+                'limit'    => 100,
+            ]);
+            $result = [];
+            foreach ($subs->autoPagingIterator() as $sub) {
+                if (in_array($sub->status, ['active', 'trialing', 'past_due'], true)) {
+                    $result[] = [
+                        'subscription_id'      => $sub->id,
+                        'start_date'           => date('Y-m-d H:i:s', $sub->start_date),
+                        'cancel_at_period_end' => $sub->cancel_at_period_end,
+                        'current_period_start' => date('Y-m-d H:i:s', $sub->current_period_start),
+                        'current_period_end'   => date('Y-m-d H:i:s', $sub->current_period_end),
+                        'status'               => $sub->status,
+                    ];
+                }
+            }
+            return $result;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_subscriptions', $e->getMessage());
+        }
+    }
+
+    /**
+     * Mark a subscription to cancel at the period end.
+     *
+     * @param string $subscription_id
+     * @return true|\WP_Error
+     */
+    public static function cancel_subscription_at_period_end($subscription_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+        try {
+            \Stripe\Subscription::update($subscription_id, ['cancel_at_period_end' => true]);
+            return true;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_cancel', $e->getMessage());
+        }
+    }
 }

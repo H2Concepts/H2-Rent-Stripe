@@ -1,0 +1,104 @@
+.produkt-account-wrapper {
+    margin: 0 auto;
+}
+
+.abo-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 40px;
+    padding: 24px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+}
+
+.abo-box,
+.order-box {
+    flex: 1 1 300px;
+}
+
+.order-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.abo-box h3 {
+    margin-bottom: 16px;
+}
+
+.abo-box p,
+.order-box p {
+    margin: 8px 0;
+}
+
+.abo-box form {
+    margin-top: 16px;
+}
+
+.abo-box button {
+    padding: 10px 20px;
+    font-size: 14px;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.abo-box button:hover {
+    background-color: #c82333;
+}
+
+.order-box img {
+    width: 140px;
+    height: auto;
+    margin: 0;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.produkt-account-email-form,
+.produkt-account-code-form {
+    max-width: 400px;
+    margin: 0 auto 40px;
+    padding: 24px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.produkt-account-email-form input,
+.produkt-account-code-form input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.produkt-account-email-form button,
+.produkt-account-code-form button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.produkt-account-email-form button:hover,
+.produkt-account-code-form button:hover {
+    background-color: #005d8f;
+}
+
+@media (max-width: 768px) {
+    .abo-wrapper {
+        flex-direction: column;
+    }
+}
