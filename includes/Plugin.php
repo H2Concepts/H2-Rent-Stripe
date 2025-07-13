@@ -315,10 +315,16 @@ class Plugin {
                     ['code' => $code, 'expires' => $expires]
                 );
 
+                $headers    = ['Content-Type: text/plain; charset=UTF-8'];
+                $from_name  = get_bloginfo('name');
+                $from_email = get_option('admin_email');
+                $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
                 wp_mail(
                     $email,
                     'Ihr Login-Code',
-                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten."
+                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten.",
+                    $headers
                 );
                 $message        = '<p>Login-Code gesendet.</p>';
                 $show_code_form = true;
