@@ -28,6 +28,8 @@ class Plugin {
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
+        add_shortcode('produkt_account', [$this, 'render_customer_account']);
+        add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -102,6 +104,7 @@ class Plugin {
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
+        $this->create_customer_page();
         flush_rewrite_rules();
     }
 
@@ -145,6 +148,7 @@ class Plugin {
             'produkt_ct_submit',
             'produkt_ct_after_submit',
             PRODUKT_SHOP_PAGE_OPTION,
+            PRODUKT_CUSTOMER_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -154,6 +158,11 @@ class Plugin {
         $page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($page_id) {
             wp_delete_post($page_id, true);
+        }
+
+        $cust_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($cust_page_id) {
+            wp_delete_post($cust_page_id, true);
         }
     }
 
@@ -228,6 +237,151 @@ class Plugin {
 
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+        return ob_get_clean();
+    }
+
+    public function render_customer_account() {
+        $message        = '';
+        $show_code_form = false;
+        $email_value    = '';
+
+        if (
+            isset($_POST['verify_login_code']) &&
+            !empty($_POST['email']) &&
+            !empty($_POST['code'])
+        ) {
+            $email       = sanitize_email($_POST['email']);
+            $input_code  = trim($_POST['code']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if ($user) {
+                $data = get_user_meta($user->ID, 'produkt_login_code', true);
+                if (
+                    isset($data['code'], $data['expires']) &&
+                    $data['code'] == $input_code &&
+                    time() <= $data['expires']
+                ) {
+                    delete_user_meta($user->ID, 'produkt_login_code');
+
+                    wp_set_current_user($user->ID);
+                    wp_set_auth_cookie($user->ID, true);
+                    $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                    wp_safe_redirect(get_permalink($account_page_id));
+                    exit;
+                } else {
+                    $message        = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
+                    $show_code_form = true;
+                }
+            } else {
+                $message        = '<p style="color:red;">Benutzer wurde nicht gefunden.</p>';
+                $show_code_form = true;
+            }
+
+        } elseif (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
+            $email       = sanitize_email($_POST['email']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if (!$user) {
+                $user_id = wp_create_user($email, wp_generate_password(), $email);
+                if (!is_wp_error($user_id)) {
+                    wp_update_user(['ID' => $user_id, 'role' => 'kunde']);
+                    $user = get_user_by('ID', $user_id);
+                }
+            }
+
+            if ($user) {
+                $code    = random_int(100000, 999999);
+                $expires = time() + 15 * MINUTE_IN_SECONDS;
+                update_user_meta(
+                    $user->ID,
+                    'produkt_login_code',
+                    ['code' => $code, 'expires' => $expires]
+                );
+
+                wp_mail(
+                    $email,
+                    'Ihr Login-Code',
+                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten."
+                );
+                $message        = '<p>Login-Code gesendet.</p>';
+                $show_code_form = true;
+            }
+
+        }
+
+        ob_start();
+        $subscriptions  = [];
+        $current_user_id = get_current_user_id();
+        if ($current_user_id) {
+            $customer_id = get_user_meta($current_user_id, 'stripe_customer_id', true);
+
+            if ($customer_id && isset($_POST['cancel_subscription'])) {
+                $sub_id = sanitize_text_field($_POST['cancel_subscription']);
+                $subs   = StripeService::get_active_subscriptions_for_customer($customer_id);
+                $orders = Database::get_orders_for_user($current_user_id);
+
+                if (!is_wp_error($subs)) {
+                    foreach ($subs as $sub) {
+                        if ($sub['subscription_id'] === $sub_id) {
+                            $matching_order = null;
+
+                            // passende Bestellung zur Subscription suchen
+                            foreach ($orders as $order) {
+                                if ($order->subscription_id === $sub_id) {
+                                    $matching_order = $order;
+                                    break;
+                                }
+                            }
+
+                            $laufzeit_in_monaten = 3;
+                            if ($matching_order && !empty($matching_order->duration_id)) {
+                                global $wpdb;
+                                $laufzeit_in_monaten = (int) $wpdb->get_var(
+                                    $wpdb->prepare(
+                                        "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+                                        $matching_order->duration_id
+                                    )
+                                );
+                                if (!$laufzeit_in_monaten) {
+                                    $laufzeit_in_monaten = 3; // Fallback
+                                }
+                            }
+
+                            $start_ts      = strtotime($sub['start_date']);
+                            $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                            $cancelable    = time() > $cancelable_ts;
+
+                            if ($cancelable && empty($sub['cancel_at_period_end'])) {
+                                $res = StripeService::cancel_subscription_at_period_end($sub_id);
+                                if (is_wp_error($res)) {
+                                    $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
+                                } else {
+                                    $message = '<p>K\xC3\xBCndigung vorgemerkt.</p>';
+                                }
+                            } else {
+                                $message = '<p style="color:red;">Dieses Abo kann noch nicht gek\xC3\xBCndigt werden.</p>';
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($customer_id) {
+                $subs = StripeService::get_active_subscriptions_for_customer($customer_id);
+                if (!is_wp_error($subs)) {
+                    $subscriptions = $subs;
+                } else {
+                    $message = '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+                }
+            }
+        }
+
+        echo $message;
+        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
         return ob_get_clean();
     }
 
@@ -526,6 +680,7 @@ class Plugin {
         }
     }
 
+
     public function maybe_display_product_page() {
         $slug = sanitize_title(get_query_var('produkt_slug'));
         if (empty($slug)) {
@@ -577,10 +732,32 @@ class Plugin {
         update_option(PRODUKT_SHOP_PAGE_OPTION, $page_id);
     }
 
+    private function create_customer_page() {
+        $page = get_page_by_path('kundenkonto');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Kundenkonto',
+                'post_name'    => 'kundenkonto',
+                'post_content' => '[produkt_account]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
             $states[] = __('Shop-Seite', 'h2-concepts');
+        }
+        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($post->ID == $customer_page_id) {
+            $states[] = __('Kundenkonto-Seite', 'h2-concepts');
         }
         return $states;
     }
@@ -603,6 +780,12 @@ class Plugin {
         }
 
         return null;
+    }
+
+    public function register_customer_role() {
+        add_role('kunde', 'Kunde', [
+            'read' => true,
+        ]);
     }
 }
 
