@@ -241,6 +241,7 @@ class Plugin {
     }
 
     public function render_customer_account() {
+        ob_start(); // verhindert Header-Fehler
         $message        = '';
         $show_code_form = false;
         $email_value    = '';
@@ -275,22 +276,38 @@ class Plugin {
                 $message        = '<p>Login-Code gesendet.</p>';
                 $show_code_form = true;
             }
-        } elseif (isset($_POST['verify_login_code'])) {
-            $email       = sanitize_email($_POST['email']);
-            $input_code  = sanitize_text_field($_POST['code']);
+
+        } elseif (
+            isset($_POST["verify_login_code"]) &&
+            !empty($_POST["email"]) &&
+            !empty($_POST["code"])
+        ) {
+            $email       = sanitize_email($_POST["email"]);
+            $input_code  = trim($_POST["code"]);
             $email_value = $email;
-            $user        = get_user_by('email', $email);
+            $user        = get_user_by("email", $email);
 
             if ($user) {
-                $data = get_user_meta($user->ID, 'produkt_login_code', true);
-                if (!$data || $data['code'] != $input_code || time() > $data['expires']) {
-                    $message        = '<p style="color:red;">Code ungültig oder abgelaufen.</p>';
+                $data = get_user_meta($user->ID, "produkt_login_code", true);
+                if (
+                    isset($data["code"], $data["expires"]) &&
+                    $data["code"] == $input_code &&
+                    time() <= $data["expires"]
+                ) {
+                    delete_user_meta($user->ID, "produkt_login_code");
+
+                    // Logge den Benutzer ein
+                    wp_set_current_user($user->ID);
+                    wp_set_auth_cookie($user->ID, true);
+                } else {
+                    $message        = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
                     $show_code_form = true;
                 }
+            } else {
+                $message        = '<p style="color:red;">Benutzer wurde nicht gefunden.</p>';
+                $show_code_form = true;
             }
-
         }
-
         $subscriptions  = [];
         $current_user_id = get_current_user_id();
         if ($current_user_id) {
@@ -354,7 +371,6 @@ class Plugin {
             }
         }
 
-        ob_start();
         echo $message;
         include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
         return ob_get_clean();
