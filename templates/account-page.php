@@ -1,7 +1,11 @@
 <?php
+use ProduktVerleih\Database;
+
 if (!defined('ABSPATH')) {
     exit;
 }
+
+$db = new Database();
 
 ?>
 <div class="produkt-account-wrapper">
