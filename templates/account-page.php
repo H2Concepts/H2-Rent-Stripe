@@ -92,6 +92,9 @@ $db = new Database();
                         <h3><?php echo esc_html($product_name); ?></h3>
                         <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
                         <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
+                        <?php if (!empty($sub['current_period_end'])) : ?>
+                            <p><strong>Läuft aktuell bis:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($sub['current_period_end']))); ?></p>
+                        <?php endif; ?>
 
                         <?php if ($sub['cancel_at_period_end']) : ?>
                             <p style="color:orange;"><strong>✅ Kündigung vorgemerkt zum <?php echo esc_html($period_end_date); ?>.</strong></p>
