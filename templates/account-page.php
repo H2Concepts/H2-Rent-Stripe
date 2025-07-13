@@ -134,29 +134,3 @@ $db = new Database();
         <?php endif; ?>
     <?php endif; ?>
 </div>
-<style>
-.abo-box {
-    border: 1px solid #ddd;
-    padding: 16px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    background: #fff;
-}
-.abo-box h3 {
-    margin-top: 0;
-}
-.abo-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-bottom: 24px;
-}
-.order-box {
-    border: 1px solid #ddd;
-    padding: 16px;
-    border-radius: 8px;
-    background: #fff;
-    flex: 1;
-    min-width: 260px;
-}
-</style>

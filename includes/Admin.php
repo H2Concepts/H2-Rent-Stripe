@@ -131,14 +131,24 @@ class Admin {
     public function enqueue_frontend_assets() {
         global $post, $wpdb;
 
-        $slug = sanitize_title(get_query_var('produkt_slug'));
+        $slug          = sanitize_title(get_query_var('produkt_slug'));
         $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
-        $content = $post->post_content ?? '';
+        $content       = $post->post_content ?? '';
 
-        if (!is_page('shop') && empty($slug) && empty($category_slug)) {
+        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        $is_account_page  = false;
+        if ($customer_page_id) {
+            $is_account_page = is_page($customer_page_id);
+        }
+        if (!$is_account_page) {
+            $is_account_page = has_shortcode($content, 'produkt_account');
+        }
+
+        if (!is_page('shop') && !$is_account_page && empty($slug) && empty($category_slug)) {
             if (!has_shortcode($content, 'produkt_product') &&
                 !has_shortcode($content, 'stripe_elements_form') &&
-                !has_shortcode($content, 'produkt_shop_grid')) {
+                !has_shortcode($content, 'produkt_shop_grid') &&
+                !has_shortcode($content, 'produkt_account')) {
                 return;
             }
         }
@@ -150,6 +160,15 @@ class Admin {
             [],
             PRODUKT_VERSION
         );
+
+        if ($is_account_page) {
+            wp_enqueue_style(
+                'produkt-account-style',
+                PRODUKT_PLUGIN_URL . 'assets/account-style.css',
+                [],
+                PRODUKT_VERSION
+            );
+        }
 
         $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
             has_shortcode($content, 'produkt_product') ||
