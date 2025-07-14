@@ -23,7 +23,8 @@ class Database {
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';
         $columns_to_add = array(
-            'stripe_price_id' => 'VARCHAR(255) DEFAULT ""',
+            'stripe_price_id'   => 'VARCHAR(255) DEFAULT ""',
+            'stripe_product_id' => 'VARCHAR(255) DEFAULT NULL',
             'price_from' => 'DECIMAL(10,2) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
@@ -38,7 +39,13 @@ class Database {
         foreach ($columns_to_add as $column => $type) {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE '$column'");
             if (empty($column_exists)) {
-                $after = $column === 'stripe_price_id' ? 'name' : 'base_price';
+                if ($column === 'stripe_price_id') {
+                    $after = 'name';
+                } elseif ($column === 'stripe_product_id') {
+                    $after = 'stripe_price_id';
+                } else {
+                    $after = 'base_price';
+                }
                 $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER $after");
             }
         }
@@ -391,13 +398,23 @@ class Database {
                 id mediumint(9) NOT NULL AUTO_INCREMENT,
                 duration_id mediumint(9) NOT NULL,
                 variant_id mediumint(9) NOT NULL,
-                stripe_price_id varchar(255) DEFAULT '',
+                stripe_product_id varchar(255) DEFAULT NULL,
+                stripe_price_id varchar(255) DEFAULT NULL,
                 PRIMARY KEY (id),
                 UNIQUE KEY duration_variant (duration_id, variant_id)
             ) $charset_collate;";
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
+        } else {
+            $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_duration_prices LIKE 'stripe_product_id'");
+            if (empty($exists)) {
+                $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN stripe_product_id VARCHAR(255) DEFAULT NULL AFTER variant_id");
+            }
+            $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_duration_prices LIKE 'stripe_price_id'");
+            if (empty($exists)) {
+                $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER stripe_product_id");
+            }
         }
         
         // Create orders table if it doesn't exist
@@ -691,7 +708,8 @@ class Database {
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
             description text,
-            stripe_price_id varchar(255) DEFAULT '',
+            stripe_product_id varchar(255) DEFAULT NULL,
+            stripe_price_id varchar(255) DEFAULT NULL,
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             image_url_1 text,

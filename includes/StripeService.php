@@ -312,4 +312,58 @@ class StripeService {
             return new \WP_Error('stripe_cancel', $e->getMessage());
         }
     }
+
+    /**
+     * Erstellt ein Stripe-Produkt + Preis je nach Modus.
+     *
+     * @param array $product_data {
+     *     @type string   $name
+     *     @type float    $price
+     *     @type string   $mode       'miete'|'kauf'
+     *     @type int      $plugin_product_id
+     *     @type int      $variant_id
+     *     @type int|null $duration_id
+     * }
+     * @return array|\WP_Error
+     */
+    public static function create_or_update_product_and_price($product_data) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            $stripe_product = \Stripe\Product::create([
+                'name'     => $product_data['name'],
+                'metadata' => [
+                    'plugin_product_id' => $product_data['plugin_product_id'],
+                    'variant_id'        => $product_data['variant_id'],
+                    'duration_id'       => $product_data['duration_id'] ?? 0,
+                    'mode'              => $product_data['mode'],
+                ],
+            ]);
+
+            $price_params = [
+                'unit_amount' => (int) ($product_data['price'] * 100),
+                'currency'    => 'eur',
+                'product'     => $stripe_product->id,
+            ];
+
+            if ($product_data['mode'] === 'miete') {
+                $price_params['recurring'] = [
+                    'interval' => 'month',
+                ];
+            }
+
+            $stripe_price = \Stripe\Price::create($price_params);
+
+            return [
+                'stripe_product_id' => $stripe_product->id,
+                'stripe_price_id'   => $stripe_price->id,
+            ];
+
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_create', $e->getMessage());
+        }
+    }
 }

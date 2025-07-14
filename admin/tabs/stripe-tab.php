@@ -13,6 +13,7 @@ if (isset($_POST['submit_stripe'])) {
     update_option('produkt_ct_shipping', wp_kses_post($_POST['ct_shipping'] ?? ''));
     update_option('produkt_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
     update_option('produkt_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
+    update_option('produkt_betriebsmodus', sanitize_text_field($_POST['produkt_betriebsmodus'] ?? 'miete'));
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
@@ -26,6 +27,7 @@ $cancel_url          = get_option('produkt_cancel_url', home_url('/abbrechen'));
 $ct_shipping         = get_option('produkt_ct_shipping', '');
 $ct_submit           = get_option('produkt_ct_submit', '');
 $ct_after_submit     = get_option('produkt_ct_after_submit', '');
+$modus               = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
 <div class="produkt-branding-tab">
@@ -49,6 +51,13 @@ $ct_after_submit     = get_option('produkt_ct_after_submit', '');
                 <div class="produkt-form-group">
                     <label>Webhook Signing Secret</label>
                     <input type="text" name="stripe_webhook_secret" value="<?php echo esc_attr($stripe_webhook_secret); ?>">
+                </div>
+                <div class="produkt-form-group">
+                    <label for="produkt_betriebsmodus">Betriebsmodus</label>
+                    <select name="produkt_betriebsmodus" id="produkt_betriebsmodus">
+                        <option value="miete" <?php selected($modus, 'miete'); ?>>Vermietung</option>
+                        <option value="kauf" <?php selected($modus, 'kauf'); ?>>Einmalverkauf</option>
+                    </select>
                 </div>
             </div>
         </div>
