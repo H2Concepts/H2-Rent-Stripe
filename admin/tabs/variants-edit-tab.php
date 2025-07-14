@@ -22,8 +22,12 @@
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                 </div>
                 <div class="produkt-form-group">
-                    <label>Stripe Preis ID *</label>
-                    <input type="text" name="stripe_price_id" value="<?php echo esc_attr($edit_item->stripe_price_id); ?>" required>
+                    <label>Monatlicher Mietpreis *</label>
+                    <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo esc_attr($edit_item->mietpreis_monatlich); ?>" required>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Einmaliger Verkaufspreis</label>
+                    <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($edit_item->verkaufspreis_einmalig); ?>">
                 </div>
             </div>
             

@@ -7,7 +7,8 @@ if (isset($_POST['submit_variant'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $description = sanitize_textarea_field($_POST['description']);
-    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
+    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
     $sort_order = intval($_POST['sort_order']);
@@ -21,20 +22,21 @@ if (isset($_POST['submit_variant'])) {
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
         $update_data = array_merge(array(
-            'category_id' => $category_id,
-            'name' => $name,
-            'description' => $description,
-            'stripe_price_id' => $stripe_price_id,
-            'available' => $available,
-            'availability_note' => $availability_note,
-            'sort_order' => $sort_order
+            'category_id'            => $category_id,
+            'name'                   => $name,
+            'description'            => $description,
+            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'available'              => $available,
+            'availability_note'      => $availability_note,
+            'sort_order'             => $sort_order
         ), $image_data);
         
         $result = $wpdb->update(
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
-            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%d'), array_fill(0, 5, '%s')),
+            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%d'), array_fill(0, 5, '%s')),
             array('%d')
         );
         
@@ -44,19 +46,20 @@ if (isset($_POST['submit_variant'])) {
     } else {
         // Insert
         $insert_data = array_merge(array(
-            'category_id' => $category_id,
-            'name' => $name,
-            'description' => $description,
-            'stripe_price_id' => $stripe_price_id,
-            'available' => $available,
-            'availability_note' => $availability_note,
-            'sort_order' => $sort_order
+            'category_id'            => $category_id,
+            'name'                   => $name,
+            'description'            => $description,
+            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'available'              => $available,
+            'availability_note'      => $availability_note,
+            'sort_order'             => $sort_order
         ), $image_data);
         
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
-            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%d'), array_fill(0, 5, '%s'))
+            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%d'), array_fill(0, 5, '%s'))
         );
         
         if ($result !== false) {
@@ -105,8 +108,12 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                 </div>
                 
                 <div class="produkt-form-group">
-                    <label>Stripe Preis ID *</label>
-                    <input type="text" name="stripe_price_id" value="<?php echo $edit_item ? esc_attr($edit_item->stripe_price_id) : ''; ?>" required>
+                    <label>Monatlicher Mietpreis *</label>
+                    <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo $edit_item ? esc_attr($edit_item->mietpreis_monatlich) : ''; ?>" required>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Einmaliger Verkaufspreis</label>
+                    <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo $edit_item ? esc_attr($edit_item->verkaufspreis_einmalig) : ''; ?>">
                 </div>
                 
                 <div class="produkt-form-group full-width">

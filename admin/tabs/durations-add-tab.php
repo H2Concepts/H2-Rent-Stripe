@@ -39,14 +39,18 @@
             </div>
         </div>
 
-        <!-- Price IDs per Variant -->
+        <!-- Preise pro Variant -->
         <div class="produkt-form-section">
-            <h4>💳 Preis IDs pro Ausführung</h4>
+            <h4>💶 Monatlicher Preis pro Ausführung</h4>
             <?php foreach ($variants as $variant): ?>
             <div class="produkt-form-group">
                 <label><?php echo esc_html($variant->name); ?></label>
-                <input type="text" name="variant_price_id[<?php echo $variant->id; ?>]" placeholder="<?php echo esc_attr($variant->stripe_price_id); ?>">
-                <small>Leer lassen, um Standard zu verwenden</small>
+                <input type="number" step="0.01" name="variant_price_miete[<?php echo $variant->id; ?>]" placeholder="0.00">
+                <small>Monatlicher Mietpreis</small>
+            </div>
+            <div class="produkt-form-group">
+                <label>Verkaufspreis</label>
+                <input type="number" step="0.01" name="variant_price_kauf[<?php echo $variant->id; ?>]" placeholder="0.00">
             </div>
             <?php endforeach; ?>
         </div>

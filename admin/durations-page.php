@@ -78,15 +78,41 @@ if (isset($_POST['submit'])) {
         }
     }
 
-    if ($result !== false && isset($_POST['variant_price_id']) && is_array($_POST['variant_price_id'])) {
-        foreach ($_POST['variant_price_id'] as $v_id => $pid) {
+    if ($result !== false && isset($_POST['variant_price_miete']) && is_array($_POST['variant_price_miete'])) {
+        foreach ($_POST['variant_price_miete'] as $v_id => $price_miete) {
             $v_id = intval($v_id);
-            $pid  = sanitize_text_field($pid);
+            $price_miete  = floatval($price_miete);
+            $price_kauf = isset($_POST['variant_price_kauf'][$v_id]) ? floatval($_POST['variant_price_kauf'][$v_id]) : 0;
             $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table_prices WHERE duration_id = %d AND variant_id = %d", $duration_id, $v_id));
+            $data = [
+                'duration_id'            => $duration_id,
+                'variant_id'             => $v_id,
+                'mietpreis_monatlich'    => $price_miete,
+                'verkaufspreis_einmalig' => $price_kauf
+            ];
             if ($exists) {
-                $wpdb->update($table_prices, ['stripe_price_id' => $pid], ['id' => $exists]);
+                $wpdb->update($table_prices, $data, ['id' => $exists]);
             } else {
-                $wpdb->insert($table_prices, ['duration_id' => $duration_id, 'variant_id' => $v_id, 'stripe_price_id' => $pid]);
+                $wpdb->insert($table_prices, $data);
+                $exists = $wpdb->insert_id;
+            }
+            // Stripe product/price erzeugen
+            $variant_name  = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d", $v_id));
+            $name_for_stripe = $variant_name . ' ' . ($edit_item ? $edit_item->name : $name);
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+            $result_ids = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                'name'              => $name_for_stripe,
+                'price'             => $price_miete,
+                'mode'              => $mode,
+                'plugin_product_id' => $exists,
+                'variant_id'        => $v_id,
+                'duration_id'       => $duration_id,
+            ]);
+            if (!is_wp_error($result_ids)) {
+                $wpdb->update($table_prices, [
+                    'stripe_product_id' => $result_ids['stripe_product_id'],
+                    'stripe_price_id'   => $result_ids['stripe_price_id'],
+                ], ['id' => $exists]);
             }
         }
     }

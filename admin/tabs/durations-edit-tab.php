@@ -3,11 +3,14 @@
 ?>
 
 <?php
-    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, stripe_price_id FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
+    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, mietpreis_monatlich, verkaufspreis_einmalig FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
     $duration_prices = array();
     if ($price_rows) {
         foreach ($price_rows as $pid => $obj) {
-            $duration_prices[$pid] = $obj->stripe_price_id;
+            $duration_prices[$pid] = [
+                'mietpreis' => $obj->mietpreis_monatlich,
+                'kaufpreis' => $obj->verkaufspreis_einmalig,
+            ];
         }
     }
 ?>
@@ -50,14 +53,18 @@
         </div>
     </div>
 
-        <!-- Price IDs per Variant -->
+        <!-- Preise pro Variant -->
         <div class="produkt-form-section">
-            <h4>💳 Preis IDs pro Ausführung</h4>
+            <h4>💶 Monatlicher Preis pro Ausführung</h4>
             <?php foreach ($variants as $variant): ?>
             <div class="produkt-form-group">
                 <label><?php echo esc_html($variant->name); ?></label>
-                <input type="text" name="variant_price_id[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id] ?? ''); ?>" placeholder="<?php echo esc_attr($variant->stripe_price_id); ?>">
-                <small>Leer lassen, um Standard zu verwenden</small>
+                <input type="number" step="0.01" name="variant_price_miete[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['mietpreis'] ?? ''); ?>">
+                <small>Monatlicher Mietpreis</small>
+            </div>
+            <div class="produkt-form-group">
+                <label>Verkaufspreis</label>
+                <input type="number" step="0.01" name="variant_price_kauf[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['kaufpreis'] ?? ''); ?>">
             </div>
             <?php endforeach; ?>
         </div>

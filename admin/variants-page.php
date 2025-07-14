@@ -55,7 +55,8 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $description = sanitize_textarea_field($_POST['description']);
-    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
+    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
     $delivery_time = sanitize_text_field($_POST['delivery_time']);
@@ -71,52 +72,86 @@ if (isset($_POST['submit'])) {
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
         $update_data = array_merge(array(
-            'category_id' => $category_id,
-            'name' => $name,
-            'description' => $description,
-            'stripe_price_id' => $stripe_price_id,
-            'available' => $available,
-            'availability_note' => $availability_note,
-            'delivery_time' => $delivery_time,
-            'active' => $active,
-            'sort_order' => $sort_order
+            'category_id'            => $category_id,
+            'name'                   => $name,
+            'description'            => $description,
+            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'available'              => $available,
+            'availability_note'      => $availability_note,
+            'delivery_time'          => $delivery_time,
+            'active'                 => $active,
+            'sort_order'             => $sort_order
         ), $image_data);
         
         $result = $wpdb->update(
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
-            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s')),
+            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s')),
             array('%d')
         );
         
+        $variant_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+            $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                'plugin_product_id' => $variant_id,
+                'variant_id'        => $variant_id,
+                'duration_id'       => null,
+                'name'              => $name,
+                'price'             => $mietpreis_monatlich,
+                'mode'              => $mode,
+            ]);
+            if (!is_wp_error($res)) {
+                $wpdb->update($table_name, [
+                    'stripe_product_id' => $res['stripe_product_id'],
+                    'stripe_price_id'   => $res['stripe_price_id'],
+                ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+            }
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
     } else {
         // Insert
         $insert_data = array_merge(array(
-            'category_id' => $category_id,
-            'name' => $name,
-            'description' => $description,
-            'stripe_price_id' => $stripe_price_id,
-            'available' => $available,
-            'availability_note' => $availability_note,
-            'delivery_time' => $delivery_time,
-            'active' => $active,
-            'sort_order' => $sort_order
+            'category_id'            => $category_id,
+            'name'                   => $name,
+            'description'            => $description,
+            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'available'              => $available,
+            'availability_note'      => $availability_note,
+            'delivery_time'          => $delivery_time,
+            'active'                 => $active,
+            'sort_order'             => $sort_order
         ), $image_data);
         
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
-            array_merge(array('%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s'))
+            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s'))
         );
-        
+
+        $variant_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+            $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                'plugin_product_id' => $variant_id,
+                'variant_id'        => $variant_id,
+                'duration_id'       => null,
+                'name'              => $name,
+                'price'             => $mietpreis_monatlich,
+                'mode'              => $mode,
+            ]);
+            if (!is_wp_error($res)) {
+                $wpdb->update($table_name, [
+                    'stripe_product_id' => $res['stripe_product_id'],
+                    'stripe_price_id'   => $res['stripe_price_id'],
+                ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+            }
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }

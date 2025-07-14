@@ -23,9 +23,11 @@ class Database {
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';
         $columns_to_add = array(
-            'stripe_price_id'   => 'VARCHAR(255) DEFAULT ""',
-            'stripe_product_id' => 'VARCHAR(255) DEFAULT NULL',
-            'price_from' => 'DECIMAL(10,2) DEFAULT 0',
+            'stripe_price_id'        => 'VARCHAR(255) DEFAULT ""',
+            'stripe_product_id'      => 'VARCHAR(255) DEFAULT NULL',
+            'mietpreis_monatlich'    => 'DECIMAL(10,2) DEFAULT 0',
+            'verkaufspreis_einmalig' => 'DECIMAL(10,2) DEFAULT 0',
+            'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
             'image_url_3' => 'TEXT',
@@ -43,6 +45,10 @@ class Database {
                     $after = 'name';
                 } elseif ($column === 'stripe_product_id') {
                     $after = 'stripe_price_id';
+                } elseif ($column === 'mietpreis_monatlich') {
+                    $after = 'stripe_product_id';
+                } elseif ($column === 'verkaufspreis_einmalig') {
+                    $after = 'mietpreis_monatlich';
                 } else {
                     $after = 'base_price';
                 }
@@ -415,6 +421,14 @@ class Database {
             if (empty($exists)) {
                 $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER stripe_product_id");
             }
+            $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_duration_prices LIKE 'mietpreis_monatlich'");
+            if (empty($exists)) {
+                $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN mietpreis_monatlich DECIMAL(10,2) DEFAULT 0 AFTER stripe_price_id");
+            }
+            $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_duration_prices LIKE 'verkaufspreis_einmalig'");
+            if (empty($exists)) {
+                $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN verkaufspreis_einmalig DECIMAL(10,2) DEFAULT 0 AFTER mietpreis_monatlich");
+            }
         }
         
         // Create orders table if it doesn't exist
@@ -710,6 +724,8 @@ class Database {
             description text,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            mietpreis_monatlich decimal(10,2) DEFAULT 0,
+            verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             image_url_1 text,
@@ -855,7 +871,10 @@ class Database {
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             duration_id mediumint(9) NOT NULL,
             variant_id mediumint(9) NOT NULL,
-            stripe_price_id varchar(255) DEFAULT '',
+            stripe_product_id varchar(255) DEFAULT NULL,
+            stripe_price_id varchar(255) DEFAULT NULL,
+            mietpreis_monatlich decimal(10,2) DEFAULT 0,
+            verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
             PRIMARY KEY (id),
             UNIQUE KEY duration_variant (duration_id, variant_id)
         ) $charset_collate;";

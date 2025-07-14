@@ -21,8 +21,12 @@
                     <input type="text" name="name" required placeholder="z.B. Premium Produkt">
                 </div>
                 <div class="produkt-form-group">
-                    <label>Stripe Preis ID *</label>
-                    <input type="text" name="stripe_price_id" required placeholder="price_123...">
+                    <label>Monatlicher Mietpreis *</label>
+                    <input type="number" step="0.01" name="mietpreis_monatlich" required placeholder="29.90">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Einmaliger Verkaufspreis</label>
+                    <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="199.00">
                 </div>
             </div>
             

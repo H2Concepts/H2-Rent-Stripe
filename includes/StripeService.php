@@ -333,34 +333,75 @@ class StripeService {
         }
 
         try {
-            $stripe_product = \Stripe\Product::create([
-                'name'     => $product_data['name'],
-                'metadata' => [
-                    'plugin_product_id' => $product_data['plugin_product_id'],
-                    'variant_id'        => $product_data['variant_id'],
-                    'duration_id'       => $product_data['duration_id'] ?? 0,
-                    'mode'              => $product_data['mode'],
-                ],
-            ]);
-
-            $price_params = [
-                'unit_amount' => (int) ($product_data['price'] * 100),
-                'currency'    => 'eur',
-                'product'     => $stripe_product->id,
-            ];
-
-            if ($product_data['mode'] === 'miete') {
-                $price_params['recurring'] = [
-                    'interval' => 'month',
-                ];
+            $cache_key = 'produkt_stripe_pair_' . md5(json_encode($product_data));
+            $cached    = get_transient($cache_key);
+            if ($cached !== false) {
+                return $cached;
             }
 
-            $stripe_price = \Stripe\Price::create($price_params);
+            $query = sprintf(
+                'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["duration_id"]:"%d" AND metadata["mode"]:"%s"',
+                $product_data['plugin_product_id'],
+                $product_data['variant_id'],
+                $product_data['duration_id'] ?? 0,
+                $product_data['mode']
+            );
 
-            return [
+            $found = \Stripe\Product::search(['query' => $query, 'limit' => 1]);
+            $stripe_product = $found && !empty($found->data) ? $found->data[0] : null;
+
+            if (!$stripe_product) {
+                $stripe_product = \Stripe\Product::create([
+                    'name'     => $product_data['name'],
+                    'metadata' => [
+                        'plugin_product_id' => $product_data['plugin_product_id'],
+                        'variant_id'        => $product_data['variant_id'],
+                        'duration_id'       => $product_data['duration_id'] ?? 0,
+                        'mode'              => $product_data['mode'],
+                    ],
+                ]);
+            }
+
+            $prices = \Stripe\Price::all(['product' => $stripe_product->id, 'limit' => 100]);
+            $stripe_price = null;
+            $amount = (int) ($product_data['price'] * 100);
+            foreach ($prices->data as $p) {
+                $match = $p->unit_amount == $amount && $p->currency === 'eur';
+                if ($product_data['mode'] === 'miete') {
+                    $match = $match && isset($p->recurring) && $p->recurring->interval === 'month';
+                } else {
+                    $match = $match && !isset($p->recurring);
+                }
+                if ($match) {
+                    $stripe_price = $p;
+                    break;
+                }
+            }
+
+            if (!$stripe_price) {
+                $price_params = [
+                    'unit_amount' => $amount,
+                    'currency'    => 'eur',
+                    'product'     => $stripe_product->id,
+                ];
+
+                if ($product_data['mode'] === 'miete') {
+                    $price_params['recurring'] = [
+                        'interval' => 'month',
+                    ];
+                }
+
+                $stripe_price = \Stripe\Price::create($price_params);
+            }
+
+            $result = [
                 'stripe_product_id' => $stripe_product->id,
                 'stripe_price_id'   => $stripe_price->id,
             ];
+
+            set_transient($cache_key, $result, DAY_IN_SECONDS);
+
+            return $result;
 
         } catch (\Exception $e) {
             return new \WP_Error('stripe_create', $e->getMessage());
