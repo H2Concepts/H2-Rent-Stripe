@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+use ProduktVerleih\StripeService;
+
 global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_variants';
 
@@ -54,6 +56,16 @@ if (isset($_POST['submit'])) {
     \ProduktVerleih\Admin::verify_admin_action();
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
+    $stripe_product_id = '';
+    if (!empty($_POST['id'])) {
+        $stripe_product_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT stripe_product_id FROM $table_name WHERE id = %d",
+            intval($_POST['id'])
+        ));
+    }
+    if (!empty($stripe_product_id)) {
+        StripeService::update_product_name($stripe_product_id, $name);
+    }
     $description = sanitize_textarea_field($_POST['description']);
     $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
     $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
@@ -101,7 +113,6 @@ if (isset($_POST['submit'])) {
             $price_id   = $ids ? $ids->stripe_price_id : '';
 
             if ($product_id) {
-                \ProduktVerleih\StripeService::update_product_name($product_id, $name);
                 $existing_amount = \ProduktVerleih\StripeService::get_price_amount($price_id);
                 if (!is_wp_error($existing_amount) && $existing_amount != $mietpreis_monatlich) {
                     $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($mietpreis_monatlich * 100), $mode);
