@@ -5,6 +5,12 @@ class Plugin {
     private $db;
     private $ajax;
     private $admin;
+    /**
+     * Stores an error message when login code verification fails.
+     * Displayed on the account page after template_redirect processing.
+     * @var string
+     */
+    private $login_error = '';
 
     public function __construct() {
         $this->db = new Database();
@@ -25,9 +31,13 @@ class Plugin {
     }
 
     public function init() {
+        // Replace deprecated emoji and admin bar functions with enqueue versions.
+        $this->replace_deprecated_wp_functions();
         add_action('admin_menu', [$this->admin, 'add_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
+        add_shortcode('produkt_account', [$this, 'render_customer_account']);
+        add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
@@ -60,10 +70,15 @@ class Plugin {
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
         add_filter('display_post_states', [$this, 'mark_shop_page'], 10, 2);
 
+        add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
+
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
 
-        // Ensure Astra page wrappers for plugin templates
+        // Process login code submissions as early as possible to avoid header issues
+        add_action('template_redirect', [$this, 'maybe_handle_login_code'], 1);
+
+        // Ensure Astra page wrappers for plugin templates and login page
         add_filter('body_class', function ($classes) {
             if (get_query_var('produkt_category_slug') || get_query_var('produkt_slug')) {
                 $classes[] = 'page';
@@ -71,6 +86,16 @@ class Plugin {
                 $classes[] = 'ast-page-builder-template';
                 $classes[] = 'ast-no-sidebar';
             }
+
+            $cust_page = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+            if ($cust_page && is_page($cust_page) && !is_user_logged_in()) {
+                $classes[] = 'produkt-login-page';
+                $classes[] = 'page';
+                $classes[] = 'type-page';
+                $classes[] = 'ast-page-builder-template';
+                $classes[] = 'ast-no-sidebar';
+            }
+
             return $classes;
         });
 
@@ -102,6 +127,7 @@ class Plugin {
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
+        $this->create_customer_page();
         flush_rewrite_rules();
     }
 
@@ -145,6 +171,7 @@ class Plugin {
             'produkt_ct_submit',
             'produkt_ct_after_submit',
             PRODUKT_SHOP_PAGE_OPTION,
+            PRODUKT_CUSTOMER_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -154,6 +181,11 @@ class Plugin {
         $page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($page_id) {
             wp_delete_post($page_id, true);
+        }
+
+        $cust_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($cust_page_id) {
+            wp_delete_post($cust_page_id, true);
         }
     }
 
@@ -228,6 +260,152 @@ class Plugin {
 
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+        return ob_get_clean();
+    }
+
+    public function render_customer_account() {
+        $message        = $this->login_error;
+        $show_code_form = isset($_POST['verify_login_code']);
+        $email_value    = '';
+
+        if (
+            isset($_POST['verify_login_code']) &&
+            !empty($_POST['email']) &&
+            !empty($_POST['code'])
+        ) {
+            $email       = sanitize_email($_POST['email']);
+            $input_code  = trim($_POST['code']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if ($user) {
+                $data = get_user_meta($user->ID, 'produkt_login_code', true);
+                if (
+                    !(
+                        isset($data['code'], $data['expires']) &&
+                        $data['code'] == $input_code &&
+                        time() <= $data['expires']
+                    )
+                ) {
+                    $message        = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
+                    $show_code_form = true;
+                }
+            } else {
+                $message        = '<p style="color:red;">Benutzer wurde nicht gefunden.</p>';
+                $show_code_form = true;
+            }
+
+        } elseif (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
+            $email       = sanitize_email($_POST['email']);
+            $email_value = $email;
+            $user        = get_user_by('email', $email);
+
+            if (!$user) {
+                $user_id = wp_create_user($email, wp_generate_password(), $email);
+                if (!is_wp_error($user_id)) {
+                    wp_update_user(['ID' => $user_id, 'role' => 'kunde']);
+                    $user = get_user_by('ID', $user_id);
+                }
+            }
+
+            if ($user) {
+                $code    = random_int(100000, 999999);
+                $expires = time() + 15 * MINUTE_IN_SECONDS;
+                update_user_meta(
+                    $user->ID,
+                    'produkt_login_code',
+                    ['code' => $code, 'expires' => $expires]
+                );
+
+                $headers    = ['Content-Type: text/plain; charset=UTF-8'];
+                $from_name  = get_bloginfo('name');
+                $from_email = get_option('admin_email');
+                $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+                wp_mail(
+                    $email,
+                    'Ihr Login-Code',
+                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten.",
+                    $headers
+                );
+                $message        = '<p>Login-Code gesendet.</p>';
+                $show_code_form = true;
+            }
+
+        }
+
+        ob_start();
+        $subscriptions  = [];
+        $current_user_id = get_current_user_id();
+        if ($current_user_id) {
+            $customer_id = get_user_meta($current_user_id, 'stripe_customer_id', true);
+
+            if ($customer_id && isset($_POST['cancel_subscription'])) {
+                $sub_id = sanitize_text_field($_POST['cancel_subscription']);
+                $subs   = StripeService::get_active_subscriptions_for_customer($customer_id);
+                $orders = Database::get_orders_for_user($current_user_id);
+
+                if (!is_wp_error($subs)) {
+                    foreach ($subs as $sub) {
+                        if ($sub['subscription_id'] === $sub_id) {
+                            $matching_order = null;
+
+                            // passende Bestellung zur Subscription suchen
+                            foreach ($orders as $order) {
+                                if ($order->subscription_id === $sub_id) {
+                                    $matching_order = $order;
+                                    break;
+                                }
+                            }
+
+                            $laufzeit_in_monaten = 3;
+                            if ($matching_order && !empty($matching_order->duration_id)) {
+                                global $wpdb;
+                                $laufzeit_in_monaten = (int) $wpdb->get_var(
+                                    $wpdb->prepare(
+                                        "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+                                        $matching_order->duration_id
+                                    )
+                                );
+                                if (!$laufzeit_in_monaten) {
+                                    $laufzeit_in_monaten = 3; // Fallback
+                                }
+                            }
+
+                            $start_ts      = strtotime($sub['start_date']);
+                            $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                            $cancelable    = time() > $cancelable_ts;
+                            $period_end_ts = strtotime($sub['current_period_end']);
+                            $period_end_date = date_i18n('d.m.Y', $period_end_ts);
+
+                            if ($cancelable && empty($sub['cancel_at_period_end'])) {
+                                $res = StripeService::cancel_subscription_at_period_end($sub_id);
+                                if (is_wp_error($res)) {
+                                    $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
+                                } else {
+                                    $message = '<p>K\xFCndigung vorgemerkt. Laufzeit endet am ' . esc_html($period_end_date) . '.</p>';
+                                }
+                            } else {
+                                $message = '<p style="color:red;">Dieses Abo kann noch nicht gek\xC3\xBCndigt werden.</p>';
+                            }
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($customer_id) {
+                $subs = StripeService::get_active_subscriptions_for_customer($customer_id);
+                if (!is_wp_error($subs)) {
+                    $subscriptions = $subs;
+                } else {
+                    $message = '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+                }
+            }
+        }
+
+        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
         return ob_get_clean();
     }
 
@@ -526,6 +704,45 @@ class Plugin {
         }
     }
 
+    /**
+     * Verify a login code before any output is sent and log the user in.
+     * Redirects to the customer account page on success.
+     */
+    public function maybe_handle_login_code() {
+        if (
+            !isset($_POST['verify_login_code']) ||
+            empty($_POST['email']) ||
+            empty($_POST['code'])
+        ) {
+            return;
+        }
+
+        $email      = sanitize_email($_POST['email']);
+        $input_code = trim($_POST['code']);
+        $user       = get_user_by('email', $email);
+
+        if ($user) {
+            $data = get_user_meta($user->ID, 'produkt_login_code', true);
+            if (
+                isset($data['code'], $data['expires']) &&
+                $data['code'] == $input_code &&
+                time() <= $data['expires']
+            ) {
+                delete_user_meta($user->ID, 'produkt_login_code');
+
+                wp_set_current_user($user->ID);
+                wp_set_auth_cookie($user->ID, true);
+                $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                wp_safe_redirect(get_permalink($page_id));
+                exit;
+            }
+        }
+
+        // Invalid code – store message for later display
+        $this->login_error = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
+    }
+
+
     public function maybe_display_product_page() {
         $slug = sanitize_title(get_query_var('produkt_slug'));
         if (empty($slug)) {
@@ -577,10 +794,32 @@ class Plugin {
         update_option(PRODUKT_SHOP_PAGE_OPTION, $page_id);
     }
 
+    private function create_customer_page() {
+        $page = get_page_by_path('kundenkonto');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Kundenkonto',
+                'post_name'    => 'kundenkonto',
+                'post_content' => '[produkt_account]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
             $states[] = __('Shop-Seite', 'h2-concepts');
+        }
+        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($post->ID == $customer_page_id) {
+            $states[] = __('Kundenkonto-Seite', 'h2-concepts');
         }
         return $states;
     }
@@ -604,6 +843,32 @@ class Plugin {
 
         return null;
     }
+
+    public function register_customer_role() {
+        add_role('kunde', 'Kunde', [
+            'read' => true,
+        ]);
+    }
+
+    public function hide_admin_bar_for_customers($show) {
+        if (current_user_can('kunde')) {
+            return false;
+        }
+        return $show;
+    }
+
+    /**
+     * Replace deprecated WordPress functions with modern equivalents.
+     * Removes the old actions that trigger deprecation warnings.
+     */
+    private function replace_deprecated_wp_functions() {
+        remove_action('wp_print_styles', 'print_emoji_styles');
+        remove_action('admin_print_styles', 'print_emoji_styles');
+        remove_action('admin_print_scripts', 'wp_admin_bar_header');
+
+        add_action('wp_enqueue_scripts', 'wp_enqueue_emoji_styles');
+        add_action('admin_enqueue_scripts', 'wp_enqueue_admin_bar_header_styles');
+    }
 }
 
 add_filter('template_include', function ($template) {
@@ -616,4 +881,11 @@ add_filter('template_include', function ($template) {
     }
 
     return $template;
+});
+
+add_action('admin_init', function () {
+    if (current_user_can('kunde') && !wp_doing_ajax()) {
+        wp_redirect(home_url('/kundenkonto'));
+        exit;
+    }
 });

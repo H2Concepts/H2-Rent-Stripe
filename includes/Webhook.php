@@ -35,8 +35,30 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
-        $subscription_id = $session->subscription ?? '';
+        $subscription_id   = $session->subscription ?? '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
+
+        $email              = $session->customer_details->email ?? '';
+        $stripe_customer_id = $session->customer ?? '';
+
+        if ($email && $stripe_customer_id) {
+            $user = get_user_by('email', $email);
+
+            if (!$user) {
+                // Benutzer anlegen
+                $user_id = wp_create_user($email, wp_generate_password(), $email);
+                if (!is_wp_error($user_id)) {
+                    wp_update_user([
+                        'ID'   => $user_id,
+                        'role' => 'kunde',
+                    ]);
+                    update_user_meta($user_id, 'stripe_customer_id', $stripe_customer_id);
+                }
+            } else {
+                // Benutzer existiert – Stripe-ID ggf. ergänzen/überschreiben
+                update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+            }
+        }
 
         $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
         $zustand       = sanitize_text_field($metadata['zustand'] ?? '');

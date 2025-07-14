@@ -17,6 +17,7 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
     $custom_css = sanitize_textarea_field($_POST['custom_css']);
 
@@ -35,6 +36,7 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'login_bg_image' => $login_bg_image,
         'footer_text' => $footer_text,
         'custom_css' => $custom_css
     );
@@ -180,6 +182,16 @@ if (isset($_POST['submit_branding'])) {
                         <label>Button-Textfarbe</label>
                         <input type="color" name="front_button_text_color" value="<?php echo esc_attr($branding['front_button_text_color'] ?? '#ffffff'); ?>" class="produkt-color-picker">
                         <small>Textfarbe der Buttons im Frontend</small>
+                    </div>
+
+                    <div class="produkt-form-group full-width">
+                        <label>Login Hintergrundbild</label>
+                        <input type="url" name="login_bg_image" id="login_bg_image" value="<?php echo esc_attr($branding['login_bg_image'] ?? ''); ?>">
+                        <button type="button" class="button produkt-media-button" data-target="login_bg_image">📁 Aus Mediathek wählen</button>
+                        <?php if (!empty($branding['login_bg_image'])) : ?>
+                            <div class="produkt-image-preview"><img src="<?php echo esc_url($branding['login_bg_image']); ?>" alt=""></div>
+                        <?php endif; ?>
+                        <small>Hintergrundbild für die Login-Seite</small>
                     </div>
                     
                     <div class="produkt-form-group full-width">
@@ -382,3 +394,20 @@ if (isset($_POST['submit_branding'])) {
     }
 }
 </style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.produkt-media-button').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.getElementById(this.getAttribute('data-target'));
+            if (!target) return;
+            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function() {
+                const attachment = frame.state().get('selection').first().toJSON();
+                target.value = attachment.url;
+            });
+            frame.open();
+        });
+    });
+});
+</script>
