@@ -95,20 +95,35 @@ if (isset($_POST['submit'])) {
         $variant_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
-            $mode = get_option('produkt_betriebsmodus', 'miete');
-            $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
-                'plugin_product_id' => $variant_id,
-                'variant_id'        => $variant_id,
-                'duration_id'       => null,
-                'name'              => $name,
-                'price'             => $mietpreis_monatlich,
-                'mode'              => $mode,
-            ]);
-            if (!is_wp_error($res)) {
-                $wpdb->update($table_name, [
-                    'stripe_product_id' => $res['stripe_product_id'],
-                    'stripe_price_id'   => $res['stripe_price_id'],
-                ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+            $mode       = get_option('produkt_betriebsmodus', 'miete');
+            $ids        = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d", $variant_id));
+            $product_id = $ids ? $ids->stripe_product_id : '';
+            $price_id   = $ids ? $ids->stripe_price_id : '';
+
+            if ($product_id) {
+                \ProduktVerleih\StripeService::update_product_name($product_id, $name);
+                $existing_amount = \ProduktVerleih\StripeService::get_price_amount($price_id);
+                if (!is_wp_error($existing_amount) && $existing_amount != $mietpreis_monatlich) {
+                    $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($mietpreis_monatlich * 100), $mode);
+                    if (!is_wp_error($new_price)) {
+                        $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $variant_id], ['%s'], ['%d']);
+                    }
+                }
+            } else {
+                $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                    'plugin_product_id' => $variant_id,
+                    'variant_id'        => $variant_id,
+                    'duration_id'       => null,
+                    'name'              => $name,
+                    'price'             => $mietpreis_monatlich,
+                    'mode'              => $mode,
+                ]);
+                if (!is_wp_error($res)) {
+                    $wpdb->update($table_name, [
+                        'stripe_product_id' => $res['stripe_product_id'],
+                        'stripe_price_id'   => $res['stripe_price_id'],
+                    ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+                }
             }
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';

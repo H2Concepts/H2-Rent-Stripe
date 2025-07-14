@@ -314,6 +314,61 @@ class StripeService {
     }
 
     /**
+     * Update an existing Stripe product name.
+     *
+     * @param string $product_id Stripe product ID
+     * @param string $new_name   New product name
+     * @return \Stripe\Product|\WP_Error
+     */
+    public static function update_product_name($product_id, $new_name) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            return \Stripe\Product::update($product_id, ['name' => $new_name]);
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_product_update', $e->getMessage());
+        }
+    }
+
+    /**
+     * Create a new price for the given Stripe product.
+     *
+     * @param string $product_id     Stripe product ID
+     * @param int    $amount_cents   Price amount in cents
+     * @param string $mode           Pricing mode (miete|kauf)
+     * @return \Stripe\Price|\WP_Error
+     */
+    public static function create_price($product_id, $amount_cents, $mode = null) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        if ($mode === null) {
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+        }
+
+        $params = [
+            'unit_amount' => (int) $amount_cents,
+            'currency'    => 'eur',
+            'product'     => $product_id,
+        ];
+
+        if ($mode === 'miete') {
+            $params['recurring'] = ['interval' => 'month'];
+        }
+
+        try {
+            return \Stripe\Price::create($params);
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_price_create', $e->getMessage());
+        }
+    }
+
+    /**
      * Erstellt ein Stripe-Produkt + Preis je nach Modus.
      *
      * @param array $product_data {

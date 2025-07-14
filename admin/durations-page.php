@@ -96,23 +96,36 @@ if (isset($_POST['submit'])) {
                 $wpdb->insert($table_prices, $data);
                 $exists = $wpdb->insert_id;
             }
-            // Stripe product/price erzeugen
-            $variant_name  = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d", $v_id));
+            // Stripe product/price handling
+            $variant_name    = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d", $v_id));
             $name_for_stripe = $variant_name . ' ' . ($edit_item ? $edit_item->name : $name);
-            $mode = get_option('produkt_betriebsmodus', 'miete');
-            $result_ids = \ProduktVerleih\StripeService::create_or_update_product_and_price([
-                'name'              => $name_for_stripe,
-                'price'             => $price_miete,
-                'mode'              => $mode,
-                'plugin_product_id' => $exists,
-                'variant_id'        => $v_id,
-                'duration_id'       => $duration_id,
-            ]);
-            if (!is_wp_error($result_ids)) {
-                $wpdb->update($table_prices, [
-                    'stripe_product_id' => $result_ids['stripe_product_id'],
-                    'stripe_price_id'   => $result_ids['stripe_price_id'],
-                ], ['id' => $exists]);
+            $mode            = get_option('produkt_betriebsmodus', 'miete');
+
+            $ids = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id, stripe_price_id FROM $table_prices WHERE id = %d", $exists));
+            if ($ids && $ids->stripe_product_id) {
+                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $name_for_stripe);
+                $existing_amount = \ProduktVerleih\StripeService::get_price_amount($ids->stripe_price_id);
+                if (!is_wp_error($existing_amount) && $existing_amount != $price_miete) {
+                    $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price_miete * 100), $mode);
+                    if (!is_wp_error($new_price)) {
+                        $wpdb->update($table_prices, ['stripe_price_id' => $new_price->id], ['id' => $exists], ['%s'], ['%d']);
+                    }
+                }
+            } else {
+                $result_ids = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                    'name'              => $name_for_stripe,
+                    'price'             => $price_miete,
+                    'mode'              => $mode,
+                    'plugin_product_id' => $exists,
+                    'variant_id'        => $v_id,
+                    'duration_id'       => $duration_id,
+                ]);
+                if (!is_wp_error($result_ids)) {
+                    $wpdb->update($table_prices, [
+                        'stripe_product_id' => $result_ids['stripe_product_id'],
+                        'stripe_price_id'   => $result_ids['stripe_price_id'],
+                    ], ['id' => $exists]);
+                }
             }
         }
     }
