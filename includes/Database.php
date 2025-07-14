@@ -64,15 +64,20 @@ class Database {
             $wpdb->query("ALTER TABLE $table_variants DROP COLUMN image_url");
         }
         
-        // Add image_url and stripe_price_id columns to extras table if they don't exist
+        // Add image_url and Stripe ID columns to extras table if they don't exist
         $table_extras = $wpdb->prefix . 'produkt_extras';
         $extra_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'image_url'");
         if (empty($extra_column_exists)) {
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN image_url TEXT AFTER price");
         }
+        $product_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_product_id'");
+        if (empty($product_id_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_product_id VARCHAR(255) DEFAULT NULL AFTER name");
+        }
         $price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id'");
         if (empty($price_id_exists)) {
-            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+            $after = $product_id_exists ? 'stripe_product_id' : 'name';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
         }
         
         // Create categories table if it doesn't exist
@@ -747,7 +752,8 @@ class Database {
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
-            stripe_price_id varchar(255) DEFAULT '',
+            stripe_product_id varchar(255) DEFAULT NULL,
+            stripe_price_id varchar(255) DEFAULT NULL,
             price decimal(10,2) NOT NULL,
             image_url text,
             active tinyint(1) DEFAULT 1,
@@ -1133,12 +1139,13 @@ class Database {
                 $wpdb->insert(
                     $wpdb->prefix . 'produkt_extras',
                     array(
-                        'category_id' => 1,
-                        'name' => $extra[0],
-                        'stripe_price_id' => $extra[1],
-                        'price' => $extra[2],
-                        'image_url' => '',
-                        'sort_order' => $index
+                        'category_id'       => 1,
+                        'name'              => $extra[0],
+                        'stripe_product_id' => '',
+                        'stripe_price_id'   => $extra[1],
+                        'price'             => $extra[2],
+                        'image_url'         => '',
+                        'sort_order'        => $index
                     )
                 );
             }

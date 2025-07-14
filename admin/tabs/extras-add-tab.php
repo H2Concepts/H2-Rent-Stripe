@@ -21,8 +21,8 @@
                     <input type="text" name="name" required placeholder="z.B. Himmel, Zubehör-Set">
                 </div>
                 <div class="produkt-form-group">
-                    <label>Stripe Preis ID *</label>
-                    <input type="text" name="stripe_price_id" required placeholder="price_123...">
+                    <label>Preis (EUR) *</label>
+                    <input type="number" step="0.01" name="price" placeholder="0.00" required>
                 </div>
             </div>
         </div>

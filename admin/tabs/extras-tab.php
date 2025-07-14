@@ -1,19 +1,24 @@
 <?php
 // Extras Tab Content
 $table_name = $wpdb->prefix . 'produkt_extras';
-// Ensure stripe_price_id column exists
+// Ensure necessary columns exist
+$product_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_product_id'");
+if (empty($product_id_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_product_id VARCHAR(255) DEFAULT NULL AFTER name");
+}
 $price_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
 if (empty($price_id_exists)) {
-    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
+    $after = $product_id_exists ? 'stripe_product_id' : 'name';
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
 }
 
 // Handle form submissions
 if (isset($_POST['submit_extra'])) {
     $category_id = intval($_POST['category_id']);
-    $name = sanitize_text_field($_POST['name']);
-    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
-    $image_url = esc_url_raw($_POST['image_url']);
-    $sort_order = intval($_POST['sort_order']);
+    $name        = sanitize_text_field($_POST['name']);
+    $price       = floatval($_POST['price']);
+    $image_url   = esc_url_raw($_POST['image_url']);
+    $sort_order  = intval($_POST['sort_order']);
 
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
@@ -21,18 +26,46 @@ if (isset($_POST['submit_extra'])) {
             $table_name,
             array(
                 'category_id' => $category_id,
-                'name' => $name,
-                'stripe_price_id' => $stripe_price_id,
-                'image_url' => $image_url,
-                'sort_order' => $sort_order
+                'name'        => $name,
+                'price'       => $price,
+                'image_url'   => $image_url,
+                'sort_order'  => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%s', '%s', '%d'),
+            array('%d', '%s', '%f', '%s', '%d'),
             array('%d')
         );
-        
+
+        $extra_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich aktualisiert!</p></div>';
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+            $ids  = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d", $extra_id));
+            if ($ids && $ids->stripe_product_id) {
+                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $name);
+                $existing_amount = \ProduktVerleih\StripeService::get_price_amount($ids->stripe_price_id);
+                if (!is_wp_error($existing_amount) && $existing_amount != $price) {
+                    $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), $mode);
+                    if (!is_wp_error($new_price)) {
+                        $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
+                    }
+                }
+            } else {
+                $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                    'plugin_product_id' => $extra_id,
+                    'variant_id'        => 0,
+                    'duration_id'       => null,
+                    'name'              => $name,
+                    'price'             => $price,
+                    'mode'              => $mode,
+                ]);
+                if (!is_wp_error($res)) {
+                    $wpdb->update($table_name, [
+                        'stripe_product_id' => $res['stripe_product_id'],
+                        'stripe_price_id'   => $res['stripe_price_id'],
+                    ], ['id' => $extra_id]);
+                }
+            }
         }
     } else {
         // Insert
@@ -40,16 +73,32 @@ if (isset($_POST['submit_extra'])) {
             $table_name,
             array(
                 'category_id' => $category_id,
-                'name' => $name,
-                'stripe_price_id' => $stripe_price_id,
-                'image_url' => $image_url,
-                'sort_order' => $sort_order
+                'name'        => $name,
+                'price'       => $price,
+                'image_url'   => $image_url,
+                'sort_order'  => $sort_order
             ),
-            array('%d', '%s', '%s', '%s', '%d')
+            array('%d', '%s', '%f', '%s', '%d')
         );
-        
+
+        $extra_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+            $res  = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                'plugin_product_id' => $extra_id,
+                'variant_id'        => 0,
+                'duration_id'       => null,
+                'name'              => $name,
+                'price'             => $price,
+                'mode'              => $mode,
+            ]);
+            if (!is_wp_error($res)) {
+                $wpdb->update($table_name, [
+                    'stripe_product_id' => $res['stripe_product_id'],
+                    'stripe_price_id'   => $res['stripe_price_id'],
+                ], ['id' => $extra_id]);
+            }
         }
     }
 }
@@ -94,8 +143,8 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 </div>
                 
                 <div class="produkt-form-group">
-                    <label>Stripe Preis ID *</label>
-                    <input type="text" name="stripe_price_id" value="<?php echo $edit_item ? esc_attr($edit_item->stripe_price_id) : ''; ?>" required>
+                    <label>Preis (EUR) *</label>
+                    <input type="number" step="0.01" name="price" value="<?php echo $edit_item ? esc_attr($edit_item->price) : ''; ?>" placeholder="0.00" required>
                 </div>
                 
                 <div class="produkt-form-group full-width">
@@ -158,12 +207,18 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 <div class="produkt-item-content">
                     <h5><?php echo esc_html($extra->name); ?></h5>
                     <div class="produkt-item-meta">
-                        <?php if (!empty($extra->stripe_price_id)) {
+                        <?php
+                        $display_price = $extra->price;
+                        if (!empty($extra->stripe_price_id)) {
                             $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
                             if (!is_wp_error($p)) {
-                                echo '<span class="produkt-price">' . number_format($p, 2, ',', '.') . '€</span>';
+                                $display_price = $p;
                             }
-                        } ?>
+                        }
+                        if ($display_price > 0) {
+                            echo '<span class="produkt-price">' . number_format($display_price, 2, ',', '.') . '€</span>';
+                        }
+                        ?>
                     </div>
                 </div>
                 

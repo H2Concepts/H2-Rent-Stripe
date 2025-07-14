@@ -44,12 +44,18 @@
                 
                 <div class="produkt-extra-meta">
                     <div class="produkt-extra-price">
-                        <?php if (!empty($extra->stripe_price_id)) {
+                        <?php
+                        $display_price = $extra->price;
+                        if (!empty($extra->stripe_price_id)) {
                             $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
                             if (!is_wp_error($p)) {
-                                echo '<strong>' . number_format($p, 2, ',', '.') . "€</strong><small>/Monat</small>";
+                                $display_price = $p;
                             }
-                        } ?>
+                        }
+                        if ($display_price > 0) {
+                            echo '<strong>' . number_format($display_price, 2, ',', '.') . "€</strong>";
+                        }
+                        ?>
                     </div>
                     
                     <div class="produkt-extra-info">
