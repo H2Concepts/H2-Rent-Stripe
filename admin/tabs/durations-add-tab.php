@@ -45,12 +45,8 @@
             <?php foreach ($variants as $variant): ?>
             <div class="produkt-form-group">
                 <label><?php echo esc_html($variant->name); ?></label>
-                <input type="number" step="0.01" name="variant_price_miete[<?php echo $variant->id; ?>]" placeholder="0.00">
-                <small>Monatlicher Mietpreis</small>
-            </div>
-            <div class="produkt-form-group">
-                <label>Verkaufspreis</label>
-                <input type="number" step="0.01" name="variant_price_kauf[<?php echo $variant->id; ?>]" placeholder="0.00">
+                <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" placeholder="0.00">
+                <small>Preis (monatlich in €)</small>
             </div>
             <?php endforeach; ?>
         </div>

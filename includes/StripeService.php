@@ -341,7 +341,7 @@ class StripeService {
      * @param string $mode           Pricing mode (miete|kauf)
      * @return \Stripe\Price|\WP_Error
      */
-    public static function create_price($product_id, $amount_cents, $mode = null) {
+    public static function create_price($product_id, $amount_cents, $mode = null, $nickname = null, $metadata = []) {
         $init = self::init();
         if (is_wp_error($init)) {
             return $init;
@@ -356,6 +356,14 @@ class StripeService {
             'currency'    => 'eur',
             'product'     => $product_id,
         ];
+
+        if ($nickname !== null) {
+            $params['nickname'] = $nickname;
+        }
+
+        if (!empty($metadata)) {
+            $params['metadata'] = $metadata;
+        }
 
         if ($mode === 'miete') {
             $params['recurring'] = ['interval' => 'month'];

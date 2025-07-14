@@ -3,13 +3,12 @@
 ?>
 
 <?php
-    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, mietpreis_monatlich, verkaufspreis_einmalig FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
+    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, custom_price FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
     $duration_prices = array();
     if ($price_rows) {
         foreach ($price_rows as $pid => $obj) {
             $duration_prices[$pid] = [
-                'mietpreis' => $obj->mietpreis_monatlich,
-                'kaufpreis' => $obj->verkaufspreis_einmalig,
+                'custom_price' => $obj->custom_price,
             ];
         }
     }
@@ -59,12 +58,8 @@
             <?php foreach ($variants as $variant): ?>
             <div class="produkt-form-group">
                 <label><?php echo esc_html($variant->name); ?></label>
-                <input type="number" step="0.01" name="variant_price_miete[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['mietpreis'] ?? ''); ?>">
-                <small>Monatlicher Mietpreis</small>
-            </div>
-            <div class="produkt-form-group">
-                <label>Verkaufspreis</label>
-                <input type="number" step="0.01" name="variant_price_kauf[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['kaufpreis'] ?? ''); ?>">
+                <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['custom_price'] ?? ''); ?>">
+                <small>Preis (monatlich in €)</small>
             </div>
             <?php endforeach; ?>
         </div>
