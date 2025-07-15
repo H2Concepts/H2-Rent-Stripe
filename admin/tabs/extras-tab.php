@@ -1,5 +1,6 @@
 <?php
 use ProduktVerleih\StripeService;
+require_once plugin_dir_path(__FILE__) . '/../../includes/stripe-sync.php';
 // Extras Tab Content
 $table_name = $wpdb->prefix . 'produkt_extras';
 // Ensure necessary columns exist
@@ -105,7 +106,12 @@ if (isset($_POST['submit_extra'])) {
 
 // Handle delete
 if (isset($_GET['delete_extra'])) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete_extra'])), array('%d'));
+    $del_id = intval($_GET['delete_extra']);
+    $row = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table_name WHERE id = %d", $del_id));
+    if ($row && $row->stripe_product_id) {
+        produkt_delete_or_archive_stripe_product($row->stripe_product_id);
+    }
+    $result = $wpdb->delete($table_name, array('id' => $del_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Extra gelöscht!</p></div>';
     }

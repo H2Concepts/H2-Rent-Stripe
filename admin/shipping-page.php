@@ -4,6 +4,8 @@ if (!defined('ABSPATH')) { exit; }
 global $wpdb;
 $table = $wpdb->prefix . 'produkt_shipping_methods';
 
+require_once plugin_dir_path(__FILE__) . '/../includes/stripe-sync.php';
+
 // Get current record if editing
 $edit_id = isset($_GET['edit']) ? intval($_GET['edit']) : 0;
 $edit_shipping = $edit_id ? $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $edit_id)) : null;
@@ -102,7 +104,12 @@ if (isset($_POST['save_shipping'])) {
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) &&
     wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
     if (current_user_can('manage_options')) {
-        $result = $wpdb->delete($table, ['id' => intval($_GET['delete'])], ['%d']);
+        $del_id = intval($_GET['delete']);
+        $row = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table WHERE id = %d", $del_id));
+        if ($row && $row->stripe_product_id) {
+            produkt_delete_or_archive_stripe_product($row->stripe_product_id);
+        }
+        $result = $wpdb->delete($table, ['id' => $del_id], ['%d']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Versandart gelöscht!</p></div>';
         } else {
