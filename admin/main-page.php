@@ -14,7 +14,7 @@ $colors_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_colo
 
 // Get recently edited products (latest entries)
 $recent_products = $wpdb->get_results(
-    "SELECT id, name, product_title, default_image, shipping_provider, meta_title
+    "SELECT id, name, product_title, default_image, meta_title
        FROM {$wpdb->prefix}produkt_categories
        ORDER BY id DESC
        LIMIT 4"
@@ -140,9 +140,6 @@ foreach ($branding_results as $result) {
                         <span class="badge badge-warning">SEO fehlt</span>
                     <?php endif; ?>
                 </p>
-                <?php if (!empty($prod->shipping_provider)): ?>
-                    <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $prod->shipping_provider . '.svg'); ?>" class="produkt-shipping-icon" alt="<?php echo esc_attr(strtoupper($prod->shipping_provider)); ?>">
-                <?php endif; ?>
                 <div class="produkt-category-actions">
                     <a href="<?php echo esc_url($prod_url); ?>" class="button button-small" target="_blank">Seite ansehen</a>
                     <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $prod->id); ?>" class="button button-small">Bearbeiten</a>

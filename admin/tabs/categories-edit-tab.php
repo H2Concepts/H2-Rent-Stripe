@@ -228,28 +228,7 @@
                 <div class="produkt-form-row">
                     <div class="produkt-form-group">
                         <label>Versanddienstleister</label>
-                        <div class="produkt-shipping-radios">
-                            <?php $shipping_providers = [
-                                'dhl' => 'DHL',
-                                'hermes' => 'Hermes',
-                                'ups' => 'UPS',
-                                'dpd' => 'DPD'
-                            ]; ?>
-                            <?php foreach ($shipping_providers as $key => $label): ?>
-                                <label>
-                                    <input type="radio" name="shipping_provider" value="<?php echo esc_attr($key); ?>" <?php checked($edit_item->shipping_provider ?? '', $key); ?>>
-                                    <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
-                                </label>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <div class="produkt-form-group">
-                        <label>Stripe Versandkosten Preis ID</label>
-                        <input type="text" name="shipping_price_id" value="<?php echo esc_attr($edit_item->shipping_price_id ?? ''); ?>" placeholder="price_123...">
-                    </div>
-                    <div class="produkt-form-group">
-                        <label>Text Versandkosten</label>
-                        <input type="text" name="shipping_label" value="<?php echo isset($edit_item->shipping_label) ? esc_attr($edit_item->shipping_label) : ''; ?>" placeholder="Einmalige Versandkosten:">
+                        <p>Wird nun global verwaltet.</p>
                     </div>
                 </div>
             </div>

@@ -106,17 +106,9 @@ class Ajax {
             }
             $final_price = $discounted_variant + $extras_price;
             $shipping_cost = 0;
-            if ($variant) {
-                $category = $wpdb->get_row($wpdb->prepare(
-                    "SELECT shipping_price_id FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
-                    $variant->category_id
-                ));
-                if ($category && !empty($category->shipping_price_id)) {
-                    $price_res = StripeService::get_price_amount($category->shipping_price_id);
-                    if (!is_wp_error($price_res)) {
-                        $shipping_cost = floatval($price_res);
-                    }
-                }
+            $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
+            if ($shipping) {
+                $shipping_cost = floatval($shipping->price);
             }
             
             wp_send_json_success(array(
@@ -775,7 +767,8 @@ function produkt_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
-        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        global $wpdb;
+        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
 
@@ -812,9 +805,6 @@ function produkt_create_subscription() {
                 'country'     => $body['country'] ?? '',
             ],
         ];
-        if ($shipping_price_id) {
-            $sub_params['metadata']['shipping_price_id'] = $shipping_price_id;
-        }
 
         $subscription = StripeService::create_subscription($sub_params);
 
@@ -843,7 +833,8 @@ function produkt_create_checkout_session() {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
 
-        $shipping_price_id = sanitize_text_field($body['shipping_price_id'] ?? '');
+        global $wpdb;
+        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
         $shipping_cost = 0;
         if ($shipping_price_id) {
             $sc = StripeService::get_price_amount($shipping_price_id);

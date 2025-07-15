@@ -64,23 +64,6 @@
                     <label>Produkttitel *</label>
                     <input type="text" name="product_title" required placeholder="Titel unter dem Produktbild">
                 </div>
-                <div class="produkt-form-group">
-                    <label>Versanddienstleister</label>
-                    <div class="produkt-shipping-radios">
-                        <?php $shipping_providers = [
-                            'dhl' => 'DHL',
-                            'hermes' => 'Hermes',
-                            'ups' => 'UPS',
-                            'dpd' => 'DPD'
-                        ]; ?>
-                        <?php foreach ($shipping_providers as $key => $label): ?>
-                            <label>
-                                <input type="radio" name="shipping_provider" value="<?php echo esc_attr($key); ?>" <?php checked($key, 'dhl'); ?>>
-                                <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
             </div>
 
             <div class="produkt-form-group">
@@ -190,14 +173,6 @@
             </div>
 
             <div class="produkt-form-row">
-                <div class="produkt-form-group">
-                    <label>Stripe Versandkosten Preis ID</label>
-                    <input type="text" name="shipping_price_id" placeholder="price_123...">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Text Versandkosten</label>
-                    <input type="text" name="shipping_label" placeholder="Einmalige Versandkosten:">
-                </div>
                 <div class="produkt-form-group">
                     <label>Preis-Label</label>
                     <input type="text" name="price_label" placeholder="Monatlicher Mietpreis">

@@ -16,6 +16,17 @@ class Admin {
             30
         );
 
+        // Global shipping settings
+        add_menu_page(
+            'Versandkosten',
+            '\xf0\x9f\x9a\x9a Versandkosten',
+            'manage_options',
+            'produkt-shipping',
+            array($this, 'shipping_page'),
+            'dashicons-admin-site-alt3',
+            27
+        );
+
         // Explicitly register a Dashboard submenu so the first item shows
         // "Dashboard" instead of repeating the plugin name
         add_submenu_page(
@@ -393,9 +404,9 @@ class Admin {
             $button_icon = esc_url_raw($_POST['button_icon']);
             $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : array();
             $payment_icons = implode(',', $payment_icons);
-            $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? '');
-            $shipping_price_id = sanitize_text_field($_POST['shipping_price_id'] ?? '');
-            $shipping_label = sanitize_text_field($_POST['shipping_label']);
+            $shipping_provider = '';
+            $shipping_price_id = '';
+            $shipping_label = '';
             $price_label = sanitize_text_field($_POST['price_label']);
             $price_period = sanitize_text_field($_POST['price_period']);
             $vat_included = isset($_POST['vat_included']) ? 1 : 0;
@@ -458,10 +469,7 @@ class Admin {
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
                         'accordion_data' => $accordion_data,
-                        'shipping_provider' => $shipping_provider,
-                        'shipping_price_id' => $shipping_price_id,
                         'price_label' => $price_label,
-                        'shipping_label' => $shipping_label,
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
@@ -475,7 +483,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -523,10 +531,7 @@ class Admin {
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
                         'accordion_data' => $accordion_data,
-                        'shipping_provider' => $shipping_provider,
-                        'shipping_price_id' => $shipping_price_id,
                         'price_label' => $price_label,
-                        'shipping_label' => $shipping_label,
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
@@ -539,7 +544,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 $produkt_id = $wpdb->insert_id;
@@ -722,8 +727,12 @@ class Admin {
             'notice'
         ));
     }
-    
-    
+
+    public function shipping_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/shipping-page.php';
+    }
+
+
     public function settings_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/settings-page.php';
     }

@@ -117,17 +117,12 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 $accordions = isset($category) && property_exists($category, 'accordion_data') ? json_decode($category->accordion_data, true) : [];
 if (!is_array($accordions)) { $accordions = []; }
 
-$shipping_price_id = isset($category) ? ($category->shipping_price_id ?? '') : '';
-$shipping_cost = 0;
-if (!empty($shipping_price_id)) {
-    $amount = \ProduktVerleih\StripeService::get_price_amount($shipping_price_id);
-    if (!is_wp_error($amount)) {
-        $shipping_cost = $amount;
-    }
-}
-$shipping_provider = isset($category) ? ($category->shipping_provider ?? '') : '';
+$shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
+$shipping_price_id = $shipping->stripe_price_id ?? '';
+$shipping_cost = $shipping->price ?? 0;
+$shipping_provider = $shipping->service_provider ?? '';
 $price_label = isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis';
-$shipping_label = isset($category) ? ($category->shipping_label ?? 'Einmalige Versandkosten:') : 'Einmalige Versandkosten:';
+$shipping_label = 'Einmalige Versandkosten:';
 $price_period = isset($category) ? ($category->price_period ?? 'month') : 'month';
 $vat_included = isset($category) ? ($category->vat_included ?? 0) : 0;
 
@@ -239,7 +234,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     </div>
                 </div>
 
-                <?php if (!empty($shipping_price_id)): ?>
+                <?php if ($shipping): ?>
                 <div class="produkt-price-box produkt-shipping-box">
                     <p class="produkt-price-label">
                         <?php echo esc_html($shipping_label); ?>
@@ -440,7 +435,6 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="gestellfarbe" id="produkt-field-gestellfarbe">
                         <input type="hidden" name="preis" id="produkt-field-preis">
                         <input type="hidden" name="shipping" id="produkt-field-shipping">
-                        <input type="hidden" name="shipping_price_id" id="produkt-field-shipping-price-id" value="<?php echo esc_attr($shipping_price_id); ?>">
                         <input type="hidden" name="variant_id" id="produkt-field-variant-id">
                         <input type="hidden" name="duration_id" id="produkt-field-duration-id">
                         <input type="hidden" name="price_id" id="produkt-field-price-id">

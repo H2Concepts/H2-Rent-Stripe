@@ -647,6 +647,26 @@ class Database {
                 $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN badge_text TEXT AFTER background_color");
             }
         }
+
+        // Create shipping methods table if it doesn't exist
+        $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
+        $shipping_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_shipping'");
+        if (!$shipping_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_shipping (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                price DECIMAL(10,2) NOT NULL,
+                service_provider VARCHAR(50),
+                stripe_product_id VARCHAR(255),
+                stripe_price_id VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
     }
     
     public function create_tables() {
@@ -964,6 +984,20 @@ class Database {
         dbDelta($sql_content_blocks);
         dbDelta($sql_orders);
 
+        // Shipping methods table
+        $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
+        $sql_shipping = "CREATE TABLE $table_shipping (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            description TEXT,
+            price DECIMAL(10,2) NOT NULL,
+            service_provider VARCHAR(50),
+            stripe_product_id VARCHAR(255),
+            stripe_price_id VARCHAR(255),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) $charset_collate;";
+        dbDelta($sql_shipping);
+
         // Metadata table for storing Stripe session details
         $table_meta = $wpdb->prefix . 'produkt_stripe_metadata';
         $sql_meta = "CREATE TABLE $table_meta (
@@ -1206,6 +1240,7 @@ class Database {
             'produkt_branding',
             'produkt_notifications',
             'produkt_content_blocks',
+            'produkt_shipping_methods',
             'produkt_stripe_metadata'
         );
 

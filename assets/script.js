@@ -170,14 +170,12 @@ jQuery(document).ready(function($) {
         const frameColorName = $('.produkt-option[data-type="frame-color"].selected').data('color-name') || '';
 
         const priceId = currentPriceId;
-        const shippingId = $('#produkt-field-shipping-price-id').val() || '';
         const extras = selectedExtras.join(',');
         fetch(produkt_ajax.ajax_url + '?action=create_checkout_session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 price_id: priceId,
-                shipping_price_id: shippingId,
                 extra_ids: extras,
                 category_id: currentCategoryId,
                 variant_id: selectedVariant,

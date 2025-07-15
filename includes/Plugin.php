@@ -654,7 +654,8 @@ class Plugin {
         }
 
         $price_id = sanitize_text_field($_POST['price_id'] ?? '');
-        $shipping_price_id = sanitize_text_field($_POST['shipping_price_id'] ?? '');
+        global $wpdb;
+        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
 
         $init = StripeService::init();
         if (is_wp_error($init)) {
