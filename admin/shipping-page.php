@@ -98,6 +98,19 @@ if (isset($_POST['save_shipping'])) {
     }
 }
 
+// Handle delete
+if (isset($_GET['delete']) && isset($_GET['fw_nonce']) &&
+    wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
+    if (current_user_can('manage_options')) {
+        $result = $wpdb->delete($table, ['id' => intval($_GET['delete'])], ['%d']);
+        if ($result !== false) {
+            echo '<div class="notice notice-success"><p>✅ Versandart gelöscht!</p></div>';
+        } else {
+            echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        }
+    }
+}
+
 $rows      = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC");
 $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DPD'];
 ?>
@@ -151,7 +164,11 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
                         <td><?= number_format($r->price, 2, ',', '.') ?> €</td>
                         <td><span class="icon-<?= esc_attr($r->service_provider) ?>"><?= esc_html(ucfirst($r->service_provider)) ?></span></td>
                         <td><?= esc_html($r->stripe_price_id) ?></td>
-                        <td><a href="?page=produkt-shipping&amp;edit=<?= esc_attr($r->id) ?>">Bearbeiten</a></td>
+                        <td>
+                            <a href="<?php echo admin_url('admin.php?page=produkt-shipping&edit=' . $r->id); ?>">Bearbeiten</a>
+                            |
+                            <a href="<?php echo admin_url('admin.php?page=produkt-shipping&delete=' . $r->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" onclick="return confirm('Sind Sie sicher?');">Löschen</a>
+                        </td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
