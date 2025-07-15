@@ -215,7 +215,7 @@ $frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHE
     border-radius: 8px;
     padding: 15px;
     text-align: center;
-    background: #f8f9fa;
+    background: #eeeeee;
 }
 
 .produkt-color-preview {

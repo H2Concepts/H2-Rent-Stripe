@@ -100,9 +100,6 @@
 </div>
 
 <style>
-.produkt-add-variant {
-    max-width: 800px;
-}
 
 .produkt-form-header {
     margin-bottom: 30px;
@@ -127,7 +124,7 @@
 }
 
 .produkt-form-section {
-    background: #f8f9fa;
+    background: #eeeeee;
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 20px;

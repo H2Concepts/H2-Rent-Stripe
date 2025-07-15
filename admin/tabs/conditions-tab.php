@@ -177,7 +177,7 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
     padding: 20px;
     border: 1px solid #e9ecef;
     border-radius: 8px;
-    background: #f8f9fa;
+    background: #eeeeee;
 }
 
 .produkt-simple-content h5 {

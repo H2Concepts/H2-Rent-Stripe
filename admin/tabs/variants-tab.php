@@ -259,7 +259,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 }
 
 .produkt-form-card {
-    background: #f8f9fa;
+    background: #eeeeee;
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 25px;
@@ -383,7 +383,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 .produkt-item-images {
     position: relative;
     height: 150px;
-    background: #f8f9fa;
+    background: #eeeeee;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -450,7 +450,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
 
 .produkt-item-actions {
     padding: 15px;
-    background: #f8f9fa;
+    background: #eeeeee;
     display: flex;
     gap: 10px;
 }

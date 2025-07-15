@@ -126,7 +126,7 @@
 .produkt-empty-state {
     text-align: center;
     padding: 60px 20px;
-    background: #f8f9fa;
+    background: #eeeeee;
     border-radius: 8px;
     border: 2px dashed #dee2e6;
 }
