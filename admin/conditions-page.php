@@ -380,4 +380,13 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
         }
         ?>
     </div>
+    <script>
+    jQuery(function($) {
+        $('#category-select').select2({
+            placeholder: 'Produkt wählen …',
+            allowClear: true,
+            width: 'resolve'
+        });
+    });
+    </script>
 </div>

@@ -297,4 +297,13 @@ foreach ($branding_results as $result) {
         }
         ?>
     </div>
+    <script>
+    jQuery(function($) {
+        $('#category-select').select2({
+            placeholder: 'Produkt wählen …',
+            allowClear: true,
+            width: 'resolve'
+        });
+    });
+    </script>
 </div>

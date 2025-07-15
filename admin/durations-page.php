@@ -256,4 +256,13 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id 
         }
         ?>
     </div>
+    <script>
+    jQuery(function($) {
+        $('#category-select').select2({
+            placeholder: 'Produkt wählen …',
+            allowClear: true,
+            width: 'resolve'
+        });
+    });
+    </script>
 </div>
