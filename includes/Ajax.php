@@ -675,7 +675,7 @@ class Ajax {
         wp_send_json_success();
     }
 
-    public function ajax_fetch_products() {
+    public static function fetch_products() {
         global $wpdb;
         $term = isset($_GET['q']) ? sanitize_text_field($_GET['q']) : '';
 
@@ -706,6 +706,8 @@ add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\produkt_create_subs
 add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\produkt_create_subscription');
 add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
 add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
+add_action('wp_ajax_fetch_products', [__NAMESPACE__ . '\\Ajax', 'fetch_products']);
+add_action('wp_ajax_nopriv_fetch_products', [__NAMESPACE__ . '\\Ajax', 'fetch_products']);
 
 function produkt_create_payment_intent() {
     $init = StripeService::init();
