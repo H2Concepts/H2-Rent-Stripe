@@ -30,7 +30,11 @@ if (isset($_POST['submit_extra'])) {
             )
         );
     }
-    $full_name = $name . ' – ' . $main_product_name;
+    $extra_base_name     = trim($name);
+    $stripe_product_name = $extra_base_name;
+    if (!empty($main_product_name)) {
+        $stripe_product_name .= ' – ' . $main_product_name;
+    }
 
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
@@ -55,13 +59,13 @@ if (isset($_POST['submit_extra'])) {
             $ids           = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table_name WHERE id = %d", $extra_id));
 
             if ($ids && $ids->stripe_product_id) {
-                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $full_name);
-                $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), $mode);
+                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $stripe_product_name);
+                $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), 'miete');
                 if (!is_wp_error($new_price)) {
                     $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
                 }
             } else {
-                $res = \ProduktVerleih\StripeService::create_extra_price($name, $price, $main_product_name);
+                $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name);
                 if (!is_wp_error($res)) {
                     $wpdb->update($table_name, [
                         'stripe_product_id' => $res['product_id'],
@@ -88,7 +92,7 @@ if (isset($_POST['submit_extra'])) {
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
             $mode         = get_option('produkt_betriebsmodus', 'miete');
-            $res = \ProduktVerleih\StripeService::create_extra_price($name, $price, $main_product_name);
+            $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name);
             if (!is_wp_error($res)) {
                 $wpdb->update($table_name, [
                     'stripe_product_id' => $res['product_id'],

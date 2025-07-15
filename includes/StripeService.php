@@ -484,15 +484,30 @@ class StripeService {
             return $init;
         }
 
+        $full_name = trim($name);
+        if ($related_product_name !== '') {
+            $full_name .= ' – ' . $related_product_name;
+        }
+
         try {
-            $product = \Stripe\Product::create([
-                'name'        => $name . ' – ' . $related_product_name,
-                'description' => 'Extra für: ' . $related_product_name,
+            $found = \Stripe\Product::search([
+                'query' => 'name:"' . $full_name . '"',
+                'limit' => 1,
             ]);
+
+            $product = ($found && !empty($found->data)) ? $found->data[0] : null;
+
+            if (!$product) {
+                $product = \Stripe\Product::create([
+                    'name'        => $full_name,
+                    'description' => 'Extra für Produkt: ' . $related_product_name,
+                ]);
+            }
 
             $price_obj = \Stripe\Price::create([
                 'unit_amount' => intval(round($price * 100)),
                 'currency'    => 'eur',
+                'recurring'   => ['interval' => 'month'],
                 'product'     => $product->id,
             ]);
 
