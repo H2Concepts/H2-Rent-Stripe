@@ -661,7 +661,7 @@ class Database {
         if (!$shipping_exists) {
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE $table_shipping (
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id INT NOT NULL AUTO_INCREMENT,
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
                 price DECIMAL(10,2) NOT NULL,
@@ -669,7 +669,8 @@ class Database {
                 stripe_product_id VARCHAR(255),
                 stripe_price_id VARCHAR(255),
                 is_default TINYINT(1) DEFAULT 0,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
             ) $charset_collate;";
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -1001,7 +1002,7 @@ class Database {
         // Shipping methods table
         $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
         $sql_shipping = "CREATE TABLE $table_shipping (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INT NOT NULL AUTO_INCREMENT,
             name VARCHAR(255) NOT NULL,
             description TEXT,
             price DECIMAL(10,2) NOT NULL,
@@ -1009,7 +1010,8 @@ class Database {
             stripe_product_id VARCHAR(255),
             stripe_price_id VARCHAR(255),
             is_default TINYINT(1) DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
         ) $charset_collate;";
         dbDelta($sql_shipping);
 

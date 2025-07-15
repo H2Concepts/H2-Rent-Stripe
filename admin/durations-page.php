@@ -13,6 +13,9 @@ $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categorie
 // Get selected category from URL parameter
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
 
+// Prepare edit item variable early to avoid undefined notices
+$edit_item = null;
+
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
@@ -105,7 +108,7 @@ if (isset($_POST['submit'])) {
                 continue;
             }
 
-            $duration_name = $edit_item ? $edit_item->name : $name;
+            $duration_name = (isset($edit_item) && $edit_item) ? $edit_item->name : $name;
             $mode          = 'miete';
 
             $ids = $wpdb->get_row($wpdb->prepare("SELECT stripe_price_id FROM $table_prices WHERE id = %d", $exists));

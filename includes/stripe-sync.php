@@ -17,10 +17,13 @@ function produkt_delete_or_archive_stripe_product($stripe_product_id) {
 
     try {
         $product = \Stripe\Product::retrieve($stripe_product_id);
+        if (!$product || (isset($product->deleted) && $product->deleted)) {
+            return;
+        }
+
         try {
             $product->delete();
         } catch (\Stripe\Exception\InvalidRequestException $e) {
-            // If product cannot be deleted because it has prices or is in use
             try {
                 \Stripe\Product::update($stripe_product_id, ['active' => false]);
             } catch (Exception $e2) {
