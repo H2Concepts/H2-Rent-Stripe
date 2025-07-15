@@ -3,133 +3,139 @@ namespace ProduktVerleih;
 
 class Admin {
     public function add_admin_menu() {
-        // Hauptmenü
+        $branding = $this->get_branding_settings();
+        $menu_title = $branding['plugin_name'] ?? 'Produkt';
+        
         add_menu_page(
-            'Produktverleih',
-            'Produktverleih',
+            $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
+            $menu_title,
             'manage_options',
-            'produkt-dashboard',
-            [$this, 'dashboard_page'],
-            '',
+            'produkt-verleih',
+            array($this, 'admin_page'),
+            'dashicons-heart',
             30
         );
 
-        // Separate menu for shipping methods
-        add_menu_page(
-            'Versandkosten',
-            'Versandkosten',
-            'manage_options',
-            'produkt-shipping',
-            [$this, 'shipping_page'],
-            'dashicons-admin-site-alt3',
-            31
-        );
 
-        // Übersicht
+        // Explicitly register a Dashboard submenu so the first item shows
+        // "Dashboard" instead of repeating the plugin name
         add_submenu_page(
-            'produkt-dashboard',
-            'Übersicht',
-            'Übersicht',
+            'produkt-verleih',
+            'Dashboard',
+            'Dashboard',
             'manage_options',
-            'produkt-dashboard',
-            [$this, 'dashboard_page']
+            'produkt-verleih',
+            array($this, 'admin_page')
         );
-
-        // Produkte
+        
+        // Submenu: Produkte
         add_submenu_page(
-            'produkt-dashboard',
-            'Produkte verwalten',
+            'produkt-verleih',
+            'Produkte',
             'Produkte',
             'manage_options',
-            'produkt-products',
-            [$this, 'products_page']
+            'produkt-categories',
+            array($this, 'categories_page')
         );
 
+        // Manage simple product categories
         add_submenu_page(
-            'produkt-dashboard',
-            'Produktvarianten',
-            'Varianten',
+            'produkt-verleih',
+            'Kategorien',
+            'Kategorien',
+            'manage_options',
+            'produkt-kategorien',
+            function () {
+                include PRODUKT_PLUGIN_PATH . 'admin/product-categories-page.php';
+            }
+        );
+        
+        // Submenu: Produktverwaltung
+        add_submenu_page(
+            'produkt-verleih',
+            'Ausführungen',
+            'Ausführungen',
             'manage_options',
             'produkt-variants',
-            [$this, 'variants_page']
+            array($this, 'variants_page')
         );
-
+        
         add_submenu_page(
-            'produkt-dashboard',
+            'produkt-verleih',
             'Extras',
             'Extras',
             'manage_options',
             'produkt-extras',
-            [$this, 'extras_page']
+            array($this, 'extras_page')
         );
-
+        
         add_submenu_page(
-            'produkt-dashboard',
-            'Farben',
-            'Farben',
-            'manage_options',
-            'produkt-colors',
-            [$this, 'colors_page']
-        );
-
-        add_submenu_page(
-            'produkt-dashboard',
-            'Zustand',
-            'Zustand',
-            'manage_options',
-            'produkt-condition',
-            [$this, 'condition_page']
-        );
-
-        // Kategorien
-        add_submenu_page(
-            'produkt-dashboard',
-            'Kategorien',
-            'Kategorien',
-            'manage_options',
-            'produkt-categories',
-            [$this, 'categories_page']
-        );
-
-        // Mietoptionen
-        add_submenu_page(
-            'produkt-dashboard',
+            'produkt-verleih',
             'Mietdauer',
             'Mietdauer',
             'manage_options',
             'produkt-durations',
-            [$this, 'durations_page']
+            array($this, 'durations_page')
+        );
+        
+        // New submenu items
+        add_submenu_page(
+            'produkt-verleih',
+            'Zustand',
+            'Zustand',
+            'manage_options',
+            'produkt-conditions',
+            array($this, 'conditions_page')
+        );
+        
+        add_submenu_page(
+            'produkt-verleih',
+            'Farben',
+            'Farben',
+            'manage_options',
+            'produkt-colors',
+            array($this, 'colors_page')
         );
 
-
-        // Content
         add_submenu_page(
-            'produkt-dashboard',
+            'produkt-verleih',
             'Content-Blöcke',
             'Content-Blöcke',
             'manage_options',
             'produkt-content-blocks',
-            [$this, 'content_blocks_page']
+            array($this, 'content_blocks_page')
         );
-
-        // Bestellungen
+        
+        
+        
         add_submenu_page(
-            'produkt-dashboard',
+            'produkt-verleih',
             'Bestellungen',
             'Bestellungen',
             'manage_options',
             'produkt-orders',
-            [$this, 'orders_page']
+            array($this, 'orders_page')
         );
 
-        // Einstellungen
+        // Global shipping settings
         add_submenu_page(
-            'produkt-dashboard',
+            'produkt-verleih',
+            'Versandkosten',
+            '🚚 Versandkosten',
+            'manage_options',
+            'produkt-shipping',
+            array($this, 'shipping_page')
+        );
+        
+
+        // New settings menu with Stripe integration tab
+        add_submenu_page(
+            'produkt-verleih',
             'Einstellungen',
             'Einstellungen',
             'manage_options',
             'produkt-settings',
-            [$this, 'settings_page']
+            array($this, 'settings_page')
         );
     }
     
