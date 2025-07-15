@@ -26,7 +26,15 @@ if (!function_exists('produkt_create_stripe_shipping_item')) {
 }
 
 if (isset($_POST['save_shipping'])) {
-    \ProduktVerleih\Admin::verify_admin_action();
+    if (
+        !isset($_POST['save_shipping_nonce']) ||
+        !wp_verify_nonce($_POST['save_shipping_nonce'], 'save_shipping_action')
+    ) {
+        wp_die('Ungültige Anfrage – bitte Seite neu laden und erneut versuchen.');
+    }
+    if (!current_user_can('manage_options')) {
+        wp_die(__('Insufficient permissions.', 'h2-concepts'));
+    }
     $name = sanitize_text_field($_POST['shipping_name']);
     $description = sanitize_textarea_field($_POST['shipping_description']);
     $price = floatval($_POST['shipping_price']);
@@ -49,7 +57,7 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
 <div class="wrap">
     <h1>Versandarten verwalten</h1>
     <form method="post">
-        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <?php wp_nonce_field('save_shipping_action', 'save_shipping_nonce'); ?>
         <table class="form-table">
             <tr>
                 <th><label>Name</label></th>
