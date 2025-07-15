@@ -5,9 +5,6 @@
 <div class="produkt-extras-list">
     <div class="produkt-list-header">
         <h3>🎁 Extras für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h3>
-        <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&tab=add'); ?>" class="button button-primary">
-            ➕ Neues Extra hinzufügen
-        </a>
     </div>
     
     <?php if (empty($extras)): ?>

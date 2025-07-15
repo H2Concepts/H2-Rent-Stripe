@@ -5,9 +5,6 @@
 <div class="produkt-variants-list">
     <div class="produkt-list-header">
         <h3>📋 Ausführungen für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h3>
-        <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&tab=add'); ?>" class="button button-primary">
-            ➕ Neue Ausführung hinzufügen
-        </a>
     </div>
     
     <?php if (empty($variants)): ?>
