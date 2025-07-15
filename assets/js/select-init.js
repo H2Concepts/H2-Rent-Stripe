@@ -1,5 +1,5 @@
 jQuery(document).ready(function ($) {
-    var $select = $('#produkt-select');
+    var $select = $('select[name="category"]');
     if (!$select.length) return;
 
     $select.select2({
