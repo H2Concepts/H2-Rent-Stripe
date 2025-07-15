@@ -470,4 +470,38 @@ class StripeService {
             return new \WP_Error('stripe_create', $e->getMessage());
         }
     }
+    /**
+     * Create a Stripe product and price for an extra.
+     *
+     * @param string $name                 Extra name
+     * @param float  $price                Price in EUR
+     * @param string $related_product_name Related product name
+     * @return array|\WP_Error
+     */
+    public static function create_extra_price($name, $price, $related_product_name = '') {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            $product = \Stripe\Product::create([
+                'name'        => $name . ' – ' . $related_product_name,
+                'description' => 'Extra für: ' . $related_product_name,
+            ]);
+
+            $price_obj = \Stripe\Price::create([
+                'unit_amount' => intval(round($price * 100)),
+                'currency'    => 'eur',
+                'product'     => $product->id,
+            ]);
+
+            return [
+                'product_id' => $product->id,
+                'price_id'   => $price_obj->id,
+            ];
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_extra', $e->getMessage());
+        }
+    }
 }

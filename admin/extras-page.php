@@ -1,4 +1,5 @@
 <?php
+use ProduktVerleih\StripeService;
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -42,8 +43,8 @@ if (empty($category_column_exists)) {
 if (isset($_POST['submit'])) {
     \ProduktVerleih\Admin::verify_admin_action();
     $category_id = intval($_POST['category_id']);
-    $name = sanitize_text_field($_POST['name']);
-    $stripe_price_id = sanitize_text_field($_POST['stripe_price_id']);
+    $name  = sanitize_text_field($_POST['name']);
+    $price = floatval($_POST['price']);
     $image_url = esc_url_raw($_POST['image_url']);
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
@@ -54,20 +55,37 @@ if (isset($_POST['submit'])) {
             $table_name,
             array(
                 'category_id' => $category_id,
-                'name' => $name,
-                'stripe_price_id' => $stripe_price_id,
+                'name'  => $name,
+                'price' => $price,
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%s', '%s', '%d', '%d'),
+            array('%d', '%s', '%f', '%s', '%d', '%d'),
             array('%d')
         );
         
         if ($result !== false) {
             $extra_id = intval($_POST['id']);
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich aktualisiert!</p></div>';
+            $related_name = $current_category ? $current_category->name : '';
+            $ids = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table_name WHERE id = %d", $extra_id));
+            if ($ids && $ids->stripe_product_id) {
+                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $name . ' – ' . $related_name);
+                $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100));
+                if (!is_wp_error($new_price)) {
+                    $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
+                }
+            } else {
+                $res = \ProduktVerleih\StripeService::create_extra_price($name, $price, $related_name);
+                if (!is_wp_error($res)) {
+                    $wpdb->update($table_name, [
+                        'stripe_product_id' => $res['product_id'],
+                        'stripe_price_id'   => $res['price_id'],
+                    ], ['id' => $extra_id]);
+                }
+            }
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -77,18 +95,26 @@ if (isset($_POST['submit'])) {
             $table_name,
             array(
                 'category_id' => $category_id,
-                'name' => $name,
-                'stripe_price_id' => $stripe_price_id,
+                'name'  => $name,
+                'price' => $price,
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%s', '%s', '%d', '%d')
+            array('%d', '%s', '%f', '%s', '%d', '%d')
         );
         
         if ($result !== false) {
             $extra_id = $wpdb->insert_id;
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
+            $related_name = $current_category ? $current_category->name : '';
+            $res = \ProduktVerleih\StripeService::create_extra_price($name, $price, $related_name);
+            if (!is_wp_error($res)) {
+                $wpdb->update($table_name, [
+                    'stripe_product_id' => $res['product_id'],
+                    'stripe_price_id'   => $res['price_id'],
+                ], ['id' => $extra_id]);
+            }
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }

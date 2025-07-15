@@ -1,4 +1,5 @@
 <?php
+use ProduktVerleih\StripeService;
 // Extras Tab Content
 $table_name = $wpdb->prefix . 'produkt_extras';
 // Ensure necessary columns exist
@@ -39,30 +40,22 @@ if (isset($_POST['submit_extra'])) {
         $extra_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich aktualisiert!</p></div>';
-            $mode = get_option('produkt_betriebsmodus', 'miete');
-            $ids  = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d", $extra_id));
+            $mode          = get_option('produkt_betriebsmodus', 'miete');
+            $ids           = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table_name WHERE id = %d", $extra_id));
+            $related_name  = $current_category ? $current_category->name : '';
+
             if ($ids && $ids->stripe_product_id) {
-                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $name);
-                $existing_amount = \ProduktVerleih\StripeService::get_price_amount($ids->stripe_price_id);
-                if (!is_wp_error($existing_amount) && $existing_amount != $price) {
-                    $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), $mode);
-                    if (!is_wp_error($new_price)) {
-                        $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
-                    }
+                \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $name . ' – ' . $related_name);
+                $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), $mode);
+                if (!is_wp_error($new_price)) {
+                    $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
                 }
             } else {
-                $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
-                    'plugin_product_id' => $extra_id,
-                    'variant_id'        => 0,
-                    'duration_id'       => null,
-                    'name'              => $name,
-                    'price'             => $price,
-                    'mode'              => $mode,
-                ]);
+                $res = \ProduktVerleih\StripeService::create_extra_price($name, $price, $related_name);
                 if (!is_wp_error($res)) {
                     $wpdb->update($table_name, [
-                        'stripe_product_id' => $res['stripe_product_id'],
-                        'stripe_price_id'   => $res['stripe_price_id'],
+                        'stripe_product_id' => $res['product_id'],
+                        'stripe_price_id'   => $res['price_id'],
                     ], ['id' => $extra_id]);
                 }
             }
@@ -84,19 +77,13 @@ if (isset($_POST['submit_extra'])) {
         $extra_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
-            $mode = get_option('produkt_betriebsmodus', 'miete');
-            $res  = \ProduktVerleih\StripeService::create_or_update_product_and_price([
-                'plugin_product_id' => $extra_id,
-                'variant_id'        => 0,
-                'duration_id'       => null,
-                'name'              => $name,
-                'price'             => $price,
-                'mode'              => $mode,
-            ]);
+            $mode         = get_option('produkt_betriebsmodus', 'miete');
+            $related_name = $current_category ? $current_category->name : '';
+            $res = \ProduktVerleih\StripeService::create_extra_price($name, $price, $related_name);
             if (!is_wp_error($res)) {
                 $wpdb->update($table_name, [
-                    'stripe_product_id' => $res['stripe_product_id'],
-                    'stripe_price_id'   => $res['stripe_price_id'],
+                    'stripe_product_id' => $res['product_id'],
+                    'stripe_price_id'   => $res['price_id'],
                 ], ['id' => $extra_id]);
             }
         }
