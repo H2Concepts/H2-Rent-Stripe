@@ -106,7 +106,7 @@ class Ajax {
             }
             $final_price = $discounted_variant + $extras_price;
             $shipping_cost = 0;
-            $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
+            $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
             if ($shipping) {
                 $shipping_cost = floatval($shipping->price);
             }
@@ -768,7 +768,7 @@ function produkt_create_subscription() {
         }
 
         global $wpdb;
-        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
+        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
 
@@ -834,7 +834,7 @@ function produkt_create_checkout_session() {
         }
 
         global $wpdb;
-        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
+        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
         $shipping_cost = 0;
         if ($shipping_price_id) {
             $sc = StripeService::get_price_amount($shipping_price_id);

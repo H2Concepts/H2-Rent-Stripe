@@ -117,7 +117,7 @@ if (isset($category) && property_exists($category, 'payment_icons')) {
 $accordions = isset($category) && property_exists($category, 'accordion_data') ? json_decode($category->accordion_data, true) : [];
 if (!is_array($accordions)) { $accordions = []; }
 
-$shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY id DESC LIMIT 1");
+$shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
 $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
