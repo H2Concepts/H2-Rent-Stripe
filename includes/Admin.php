@@ -16,16 +16,6 @@ class Admin {
             30
         );
 
-        // Global shipping settings
-        add_menu_page(
-            'Versandkosten',
-            '\xf0\x9f\x9a\x9a Versandkosten',
-            'manage_options',
-            'produkt-shipping',
-            array($this, 'shipping_page'),
-            'dashicons-admin-site-alt3',
-            27
-        );
 
         // Explicitly register a Dashboard submenu so the first item shows
         // "Dashboard" instead of repeating the plugin name
@@ -125,6 +115,16 @@ class Admin {
             'manage_options',
             'produkt-orders',
             array($this, 'orders_page')
+        );
+
+        // Global shipping settings
+        add_submenu_page(
+            'produkt-verleih',
+            'Versandkosten',
+            '🚚 Versandkosten',
+            'manage_options',
+            'produkt-shipping',
+            array($this, 'shipping_page')
         );
         
 
