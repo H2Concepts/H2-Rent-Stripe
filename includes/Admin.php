@@ -283,25 +283,8 @@ class Admin {
             wp_enqueue_editor();
         }
 
-        $allowed_pages = [
-            'produkt-verleih_page_produkt-variants',
-            'produkt-verleih_page_produkt-durations',
-            'produkt-verleih_page_produkt-extras',
-            'produkt-verleih_page_produkt-colors',
-            'produkt-verleih_page_produkt-conditions',
-        ];
-
-        if (in_array($hook, $allowed_pages, true)) {
-            wp_enqueue_style('select2-css', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css');
-            wp_enqueue_script('select2-js', 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js', ['jquery'], null, true);
-            wp_enqueue_script(
-                'produkt-select-init',
-                PRODUKT_PLUGIN_URL . 'assets/js/select-init.js',
-                ['jquery', 'select2-js'],
-                PRODUKT_VERSION,
-                true
-            );
-        }
+        // previously loaded Select2 for category dropdowns, but reverted to
+        // simple selects for reliability
     }
     
     private function get_branding_settings() {
