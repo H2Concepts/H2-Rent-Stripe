@@ -568,7 +568,33 @@ class Admin {
 
         if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
             $category_id = intval($_GET['delete']);
-            $table_name = $wpdb->prefix . 'produkt_categories';
+            $table_name  = $wpdb->prefix . 'produkt_categories';
+
+            require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+
+            $variants = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, stripe_product_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+                    $category_id
+                )
+            );
+
+            if ($variants) {
+                $variant_ids = array();
+                foreach ($variants as $v) {
+                    $variant_ids[] = $v->id;
+                    if ($v->stripe_product_id) {
+                        produkt_delete_or_archive_stripe_product($v->stripe_product_id);
+                    }
+                }
+
+                $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders)", ...$variant_ids));
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id IN ($placeholders)", ...$variant_ids));
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variant_durations WHERE variant_id IN ($placeholders)", ...$variant_ids));
+                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)", ...$variant_ids));
+            }
+
             $result = $wpdb->delete($table_name, ['id' => $category_id], ['%d']);
             if ($result !== false) {
                 echo '<div class="notice notice-success"><p>✅ Produkt gelöscht!</p></div>';
