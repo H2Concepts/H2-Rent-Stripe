@@ -614,10 +614,13 @@ class Admin {
         $selected_prodcat = isset($_GET['prodcat']) ? intval($_GET['prodcat']) : 0;
         $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 
-        $sql = "SELECT c.* FROM {$wpdb->prefix}produkt_categories c";
+        $sql = "SELECT c.*, GROUP_CONCAT(pc.name ORDER BY pc.name SEPARATOR ', ') AS categories
+                FROM {$wpdb->prefix}produkt_categories c
+                LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON c.id = ptc.produkt_id
+                LEFT JOIN {$wpdb->prefix}produkt_product_categories pc ON ptc.category_id = pc.id";
         $params = [];
         if ($selected_prodcat > 0) {
-            $sql .= " INNER JOIN {$wpdb->prefix}produkt_product_to_category pc ON c.id = pc.produkt_id AND pc.category_id = %d";
+            $sql .= " WHERE ptc.category_id = %d";
             $params[] = $selected_prodcat;
         }
         if ($search_term !== '') {
@@ -626,7 +629,7 @@ class Admin {
             $params[] = $like;
             $params[] = $like;
         }
-        $sql .= " ORDER BY c.sort_order, c.name";
+        $sql .= " GROUP BY c.id ORDER BY c.sort_order, c.name";
         $categories = $wpdb->get_results($wpdb->prepare($sql, ...$params));
 
         $branding = [];

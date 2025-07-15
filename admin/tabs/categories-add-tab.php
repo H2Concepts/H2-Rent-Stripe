@@ -37,8 +37,7 @@
                 <div class="produkt-form-group">
                     <label>SEO-Titel</label>
                     <input type="text" name="meta_title" maxlength="60" placeholder="Optimiert für Suchmaschinen">
-                    <small>Max. 60 Zeichen für Google</small>
-                    <div id="meta_title_counter" class="produkt-char-counter"></div>
+                    <small>Max. 60 Zeichen für Google <span id="meta_title_counter" class="produkt-char-counter"></span></small>
                 </div>
                 <div class="produkt-form-group">
                     <label>Layout-Stil</label>

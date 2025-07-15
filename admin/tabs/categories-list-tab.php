@@ -56,6 +56,14 @@
                 <div class="produkt-category-url">
                     <code><?php echo esc_url($product_url); ?></code>
                 </div>
+
+                <?php if (!empty($category->categories)): ?>
+                <div class="produkt-category-tags">
+                    <?php foreach (explode(',', $category->categories) as $cat_name): ?>
+                        <span class="badge"><?php echo esc_html(trim($cat_name)); ?></span>
+                    <?php endforeach; ?>
+                </div>
+                <?php endif; ?>
                 
                 <div class="produkt-category-meta">
                     <div class="produkt-category-info">
@@ -113,6 +121,7 @@
 .produkt-filter-form select,
 .produkt-filter-form input[type="text"] {
     padding: 6px 8px;
+    min-width: 200px;
 }
 
 .produkt-list-header h3 {
@@ -143,7 +152,7 @@
 
 .produkt-category-image {
     position: relative;
-    height: 150px;
+    height: 250px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     display: flex;
     align-items: center;
@@ -227,6 +236,13 @@
     font-size: 0.8rem;
     color: var(--produkt-primary);
     font-weight: 500;
+}
+
+.produkt-category-tags {
+    margin: 0 0 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .produkt-category-meta {

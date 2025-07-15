@@ -344,12 +344,12 @@
     border: 1px solid #e9ecef;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 5rem;
 }
 
 .produkt-form-section h4 {
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 3rem;
     color: #3c434a;
     font-size: 1.3rem;
 }
