@@ -5,9 +5,18 @@
 <div class="produkt-categories-list">
     <div class="produkt-list-header">
         <h3>📋 Alle Produkte</h3>
-        <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="button button-primary">
-            ➕ Neues Produkt hinzufügen
-        </a>
+        <form method="get" action="" class="produkt-filter-form">
+            <input type="hidden" name="page" value="produkt-categories">
+            <input type="hidden" name="tab" value="list">
+            <select name="prodcat">
+                <option value="0">Alle Kategorien</option>
+                <?php foreach ($product_categories as $pc): ?>
+                    <option value="<?php echo $pc->id; ?>" <?php selected($selected_prodcat, $pc->id); ?>><?php echo esc_html($pc->name); ?></option>
+                <?php endforeach; ?>
+            </select>
+            <input type="text" name="s" value="<?php echo esc_attr($search_term); ?>" placeholder="Produkt suchen...">
+            <button type="submit" class="button">Filtern</button>
+        </form>
     </div>
     
     <?php if (empty($categories)): ?>
@@ -93,6 +102,17 @@
     margin-bottom: 25px;
     padding-bottom: 15px;
     border-bottom: 1px solid #e9ecef;
+}
+
+.produkt-filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.produkt-filter-form select,
+.produkt-filter-form input[type="text"] {
+    padding: 6px 8px;
 }
 
 .produkt-list-header h3 {

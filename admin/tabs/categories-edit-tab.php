@@ -25,9 +25,7 @@
         <div class="produkt-subtab-nav">
             <a href="#" class="produkt-subtab active" data-tab="general">Allgemein</a>
             <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
-            <a href="#" class="produkt-subtab" data-tab="shipping">Versand</a>
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
-            <a href="#" class="produkt-subtab" data-tab="pricing">Preis-Einstellungen</a>
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
@@ -165,17 +163,6 @@
         </div>
         </div><!-- end tab-product -->
 
-        <div id="tab-shipping" class="produkt-subtab-content">
-            <div class="produkt-form-section">
-                <h4>🚚 Versand</h4>
-                <div class="produkt-form-row">
-                    <div class="produkt-form-group">
-                        <label>Versanddienstleister</label>
-                        <p>Wird nun global verwaltet.</p>
-                    </div>
-                </div>
-            </div>
-        </div><!-- end tab-shipping -->
 
         <div id="tab-features" class="produkt-subtab-content">
         <!-- Features -->
@@ -248,27 +235,6 @@
 
 
 
-        <div id="tab-pricing" class="produkt-subtab-content">
-            <div class="produkt-form-section">
-                <h4>💲 Preiseinstellungen</h4>
-                <div class="produkt-form-row">
-                    <div class="produkt-form-group">
-                        <label>Preis-Label</label>
-                        <input type="text" name="price_label" value="<?php echo isset($edit_item->price_label) ? esc_attr($edit_item->price_label) : ''; ?>" placeholder="Monatlicher Mietpreis">
-                    </div>
-                    <div class="produkt-form-group">
-                        <label>Preiszeitraum</label>
-                        <select name="price_period">
-                            <option value="month" <?php isset($edit_item->price_period) ? selected($edit_item->price_period, 'month') : ''; ?>>pro Monat</option>
-                            <option value="one-time" <?php isset($edit_item->price_period) ? selected($edit_item->price_period, 'one-time') : ''; ?>>einmalig</option>
-                        </select>
-                    </div>
-                    <div class="produkt-form-group">
-                        <label><input type="checkbox" name="vat_included" value="1" <?php isset($edit_item->vat_included) ? checked($edit_item->vat_included, 1) : ''; ?>> Mit MwSt.</label>
-                    </div>
-                </div>
-            </div>
-        </div><!-- end tab-pricing -->
 
         <!-- Actions -->
         <div class="produkt-form-actions">

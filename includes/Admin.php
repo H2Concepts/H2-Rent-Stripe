@@ -609,7 +609,25 @@ class Admin {
             $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", intval($_GET['edit'])));
         }
 
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
+        // Filter & Suche
+        $product_categories = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+        $selected_prodcat = isset($_GET['prodcat']) ? intval($_GET['prodcat']) : 0;
+        $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+
+        $sql = "SELECT c.* FROM {$wpdb->prefix}produkt_categories c";
+        $params = [];
+        if ($selected_prodcat > 0) {
+            $sql .= " INNER JOIN {$wpdb->prefix}produkt_product_to_category pc ON c.id = pc.produkt_id AND pc.category_id = %d";
+            $params[] = $selected_prodcat;
+        }
+        if ($search_term !== '') {
+            $like = '%' . $wpdb->esc_like($search_term) . '%';
+            $sql .= ($params ? " AND" : " WHERE") . " (c.name LIKE %s OR c.product_title LIKE %s)";
+            $params[] = $like;
+            $params[] = $like;
+        }
+        $sql .= " ORDER BY c.sort_order, c.name";
+        $categories = $wpdb->get_results($wpdb->prepare($sql, ...$params));
 
         $branding = [];
         $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
@@ -617,7 +635,10 @@ class Admin {
             $branding[$result->setting_key] = $result->setting_value;
         }
 
-        $this->load_template('categories', compact('active_tab', 'edit_item', 'categories', 'branding'));
+        $this->load_template(
+            'categories',
+            compact('active_tab', 'edit_item', 'categories', 'branding', 'product_categories', 'selected_prodcat', 'search_term')
+        );
     }
     
     public function variants_page() {
