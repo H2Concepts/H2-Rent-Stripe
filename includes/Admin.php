@@ -650,7 +650,11 @@ class Admin {
             $params[] = $like;
         }
         $sql .= " GROUP BY c.id ORDER BY c.sort_order, c.name";
-        $categories = $wpdb->get_results($wpdb->prepare($sql, ...$params));
+        if (!empty($params)) {
+            $categories = $wpdb->get_results($wpdb->prepare($sql, ...$params));
+        } else {
+            $categories = $wpdb->get_results($sql);
+        }
 
         $branding = [];
         $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
