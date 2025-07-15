@@ -661,11 +661,17 @@ class Database {
                 service_provider VARCHAR(50),
                 stripe_product_id VARCHAR(255),
                 stripe_price_id VARCHAR(255),
+                is_default TINYINT(1) DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             ) $charset_collate;";
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
+        } else {
+            $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_shipping LIKE 'is_default'");
+            if (empty($exists)) {
+                $wpdb->query("ALTER TABLE $table_shipping ADD COLUMN is_default TINYINT(1) DEFAULT 0 AFTER stripe_price_id");
+            }
         }
     }
     
@@ -994,6 +1000,7 @@ class Database {
             service_provider VARCHAR(50),
             stripe_product_id VARCHAR(255),
             stripe_price_id VARCHAR(255),
+            is_default TINYINT(1) DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         ) $charset_collate;";
         dbDelta($sql_shipping);
