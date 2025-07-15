@@ -2,7 +2,7 @@
 namespace ProduktVerleih;
 
 class Admin {
-    public function register_admin_menu() {
+    public function add_admin_menu() {
         // Hauptmenü
         add_menu_page(
             'Produktverleih',
@@ -12,6 +12,17 @@ class Admin {
             [$this, 'dashboard_page'],
             '',
             30
+        );
+
+        // Separate menu for shipping methods
+        add_menu_page(
+            'Versandkosten',
+            'Versandkosten',
+            'manage_options',
+            'produkt-shipping',
+            [$this, 'shipping_page'],
+            'dashicons-admin-site-alt3',
+            31
         );
 
         // Übersicht
@@ -90,14 +101,6 @@ class Admin {
             [$this, 'durations_page']
         );
 
-        add_submenu_page(
-            'produkt-dashboard',
-            'Versandkosten',
-            'Versandkosten',
-            'manage_options',
-            'produkt-shipping',
-            [$this, 'shipping_page']
-        );
 
         // Content
         add_submenu_page(
