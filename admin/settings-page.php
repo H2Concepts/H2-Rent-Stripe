@@ -47,6 +47,10 @@ foreach ($branding_results as $result) {
            class="produkt-tab <?php echo $active_tab === 'stripe' ? 'active' : ''; ?>">
             💳 Stripe Integration
         </a>
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=buttons'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'buttons' ? 'active' : ''; ?>">
+            🔘 Buttons & Tooltips
+        </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=debug'); ?>"
            class="produkt-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
             🔧 Debug
@@ -69,6 +73,9 @@ foreach ($branding_results as $result) {
                 break;
             case 'stripe':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/stripe-tab.php';
+                break;
+            case 'buttons':
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/buttons-tab.php';
                 break;
             case 'debug':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/debug-tab.php';

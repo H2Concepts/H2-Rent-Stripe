@@ -126,12 +126,10 @@ $feature_4_description = isset($category) ? $category->feature_4_description : '
 $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 
 // Button
-$button_text = isset($category) ? ($category->button_text ?: 'Jetzt Mieten') : 'Jetzt Mieten';
-$button_icon = isset($category) ? $category->button_icon : '';
-$payment_icons = [];
-if (isset($category) && property_exists($category, 'payment_icons')) {
-    $payment_icons = array_filter(array_map('trim', explode(',', $category->payment_icons)));
-}
+$ui = get_option('produkt_ui_settings', []);
+$button_text = $ui['button_text'] ?? 'Jetzt Mieten';
+$button_icon = $ui['button_icon'] ?? '';
+$payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];
 $accordions = isset($category) && property_exists($category, 'accordion_data') ? json_decode($category->accordion_data, true) : [];
 if (!is_array($accordions)) { $accordions = []; }
 
@@ -139,18 +137,18 @@ $shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_method
 $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
-$price_label = isset($category) ? ($category->price_label ?? 'Monatlicher Mietpreis') : 'Monatlicher Mietpreis';
+$price_label = $ui['price_label'] ?? 'Monatlicher Mietpreis';
 $shipping_label = 'Einmalige Versandkosten:';
-$price_period = isset($category) ? ($category->price_period ?? 'month') : 'month';
-$vat_included = isset($category) ? ($category->vat_included ?? 0) : 0;
+$price_period = $ui['price_period'] ?? 'month';
+$vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 
 // Layout
 $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'default';
 
 // Tooltips
-$duration_tooltip = isset($category) ? ($category->duration_tooltip ?? '') : '';
-$condition_tooltip = isset($category) ? ($category->condition_tooltip ?? '') : '';
-$show_tooltips = isset($category) ? ($category->show_tooltips ?? 1) : 1;
+$duration_tooltip = $ui['duration_tooltip'] ?? '';
+$condition_tooltip = $ui['condition_tooltip'] ?? '';
+$show_tooltips = isset($ui['show_tooltips']) ? intval($ui['show_tooltips']) : 1;
 $tooltip_icon = '<svg viewBox="0 0 16.7 16.9" width="16" height="16" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" fill-rule="evenodd" d="M8.3,16.4C3.9,16.4.3,12.8.3,8.4S3.9.4,8.3.4s8,3.6,8,8-3.6,8-8,8ZM7.4,10.4h1.7c0-.3,0-.5.1-.7s.2-.4.4-.6l.7-.6c.3-.3.5-.5.6-.8.1-.3.2-.6.2-.9,0-.7-.2-1.3-.7-1.7-.5-.4-1.2-.6-2-.6s-1.6.2-2,.7c-.5.4-.7,1-.7,1.8h2c0-.3,0-.5.2-.7.1-.2.3-.3.6-.3.5,0,.8.3.8.9s0,.5-.2.7-.4.4-.7.7c-.3.2-.5.5-.6.9-.1.3-.2.8-.2,1.4ZM7.2,12.2c0,.3.1.5.3.7s.5.3.8.3.6,0,.8-.3.3-.4.3-.7-.1-.5-.3-.7-.5-.3-.8-.3-.6,0-.8.3-.3.4-.3.7Z"/></svg>';
 $show_rating = isset($category) ? ($category->show_rating ?? 0) : 0;
 $rating_value = isset($category) ? floatval(str_replace(',', '.', $category->rating_value ?? 0)) : 0;

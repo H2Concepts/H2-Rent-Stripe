@@ -27,7 +27,6 @@
             <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
             <a href="#" class="produkt-subtab" data-tab="shipping">Versand</a>
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
-            <a href="#" class="produkt-subtab" data-tab="tooltips">Tooltips</a>
             <a href="#" class="produkt-subtab" data-tab="pricing">Preis-Einstellungen</a>
         </div>
 
@@ -57,6 +56,7 @@
                     <label>SEO-Titel</label>
                     <input type="text" name="meta_title" value="<?php echo esc_attr($edit_item->meta_title ?? ''); ?>" maxlength="60">
                     <small>Max. 60 Zeichen für Google</small>
+                    <div id="meta_title_counter" class="produkt-char-counter"></div>
                 </div>
                 <div class="produkt-form-group">
                     <label>Layout-Stil</label>
@@ -71,6 +71,7 @@
             <div class="produkt-form-group">
                 <label>SEO-Beschreibung</label>
                 <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
+                <div id="meta_description_counter" class="produkt-char-counter"></div>
             </div>
         </div>
 
@@ -103,15 +104,8 @@
         <div class="produkt-form-section">
             <h4>📄 Seiteninhalte</h4>
             
-            <div class="produkt-form-row">
-                <div class="produkt-form-group">
-                    <label>Produkttitel *</label>
-                    <input type="text" name="product_title" value="<?php echo esc_attr($edit_item->product_title); ?>" required>
-                </div>
-            </div>
-
             <div class="produkt-form-group">
-                <label>Kurzbeschreibung</label>
+                <label>Kurzbeschreibung <small>für Produktübersichtsseite</small></label>
                 <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description ?? ''); ?></textarea>
             </div>
 
@@ -150,58 +144,7 @@
             </div>
         </div>
         
-        <!-- Button -->
-        <div class="produkt-form-section">
-            <h4>🔘 Button</h4>
-            <div class="produkt-form-row">
-                <div class="produkt-form-group">
-                    <label>Button-Text</label>
-                    <input type="text" name="button_text" value="<?php echo esc_attr($edit_item->button_text); ?>">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Button-Icon</label>
-                    <div class="produkt-upload-area">
-                        <input type="url" name="button_icon" id="button_icon" value="<?php echo esc_attr($edit_item->button_icon); ?>">
-                        <button type="button" class="button produkt-media-button" data-target="button_icon">📁</button>
-                    </div>
-                    <?php if (!empty($edit_item->button_icon)): ?>
-                    <div class="produkt-icon-preview">
-                        <img src="<?php echo esc_url($edit_item->button_icon); ?>" alt="Button Icon">
-                    </div>
-                    <?php endif; ?>
-                </div>
-            </div>
 
-            <div class="produkt-form-group">
-                <label>Bezahlmethoden</label>
-                <div class="produkt-payment-checkboxes">
-                    <?php $payment_methods = [
-                        'american-express' => 'American Express',
-                        'apple-pay' => 'Apple Pay',
-                        'google-pay' => 'Google Pay',
-                        'klarna' => 'Klarna',
-                        'maestro' => 'Maestro',
-                        'mastercard' => 'Mastercard',
-                        'paypal' => 'Paypal',
-                        'shop' => 'Shop',
-                        'union-pay' => 'Union Pay',
-                        'visa' => 'Visa'
-                    ];
-                    $selected_icons = [];
-                    if (isset($edit_item->payment_icons)) {
-                        $selected_icons = array_filter(array_map('trim', explode(',', $edit_item->payment_icons)));
-                    }
-                    ?>
-                    <?php foreach ($payment_methods as $key => $label): ?>
-                        <label>
-                            <input type="checkbox" name="payment_icons[]" value="<?php echo esc_attr($key); ?>" <?php checked(in_array($key, $selected_icons)); ?>>
-                            <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
-                        </label>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-        </div>
 
         <!-- Produktbewertung -->
         <div class="produkt-form-section">
@@ -303,22 +246,7 @@
 
         </div><!-- end tab-features -->
 
-        <div id="tab-tooltips" class="produkt-subtab-content">
-            <div class="produkt-form-section">
-                <h4>💬 Tooltips</h4>
-                <div class="produkt-form-group">
-                    <label>Mietdauer-Tooltip</label>
-                    <textarea name="duration_tooltip" rows="3"><?php echo esc_textarea($edit_item->duration_tooltip); ?></textarea>
-                </div>
-                <div class="produkt-form-group">
-                    <label>Zustand-Tooltip</label>
-                    <textarea name="condition_tooltip" rows="4"><?php echo esc_textarea($edit_item->condition_tooltip); ?></textarea>
-                </div>
-                <div class="produkt-form-group">
-                    <label><input type="checkbox" name="show_tooltips" value="1" <?php checked($edit_item->show_tooltips ?? 1, 1); ?>> Tooltips auf Produktseite anzeigen</label>
-                </div>
-            </div>
-        </div><!-- end tab-tooltips -->
+
 
         <div id="tab-pricing" class="produkt-subtab-content">
             <div class="produkt-form-section">
@@ -418,6 +346,49 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaUploader.open();
         });
     });
+
+    // Auto-generate shortcode from name
+    const nameInput = document.querySelector('input[name="name"]');
+    const shortcodeInput = document.querySelector('input[name="shortcode"]');
+    let manualShortcode = false;
+    if (shortcodeInput) {
+        shortcodeInput.addEventListener('input', function() { manualShortcode = true; });
+    }
+    if (nameInput && shortcodeInput) {
+        nameInput.addEventListener('input', function() {
+            if (!manualShortcode) {
+                const shortcode = this.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+                shortcodeInput.value = shortcode;
+            }
+        });
+    }
+
+    function updateCharCounter(input, counter, min, max) {
+        const len = input.value.length;
+        counter.textContent = len + ' Zeichen';
+        let cls = 'warning';
+        if (len > max) { cls = 'error'; }
+        else if (len >= min) { cls = 'ok'; }
+        counter.className = 'produkt-char-counter ' + cls;
+    }
+
+    const mtInput = document.querySelector('input[name="meta_title"]');
+    const mtCounter = document.getElementById('meta_title_counter');
+    if (mtInput && mtCounter) {
+        updateCharCounter(mtInput, mtCounter, 50, 60);
+        mtInput.addEventListener('input', () => updateCharCounter(mtInput, mtCounter, 50, 60));
+    }
+    const mdInput = document.querySelector('textarea[name="meta_description"]');
+    const mdCounter = document.getElementById('meta_description_counter');
+    if (mdInput && mdCounter) {
+        updateCharCounter(mdInput, mdCounter, 150, 160);
+        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
+    }
 
     // Subtab switching
     document.querySelectorAll('.produkt-subtab').forEach(function(tab) {

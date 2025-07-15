@@ -28,16 +28,6 @@ class Admin {
             array($this, 'admin_page')
         );
         
-        // Submenu: Produkte
-        add_submenu_page(
-            'produkt-verleih',
-            'Produkte',
-            'Produkte',
-            'manage_options',
-            'produkt-categories',
-            array($this, 'categories_page')
-        );
-
         // Manage simple product categories
         add_submenu_page(
             'produkt-verleih',
@@ -48,6 +38,16 @@ class Admin {
             function () {
                 include PRODUKT_PLUGIN_PATH . 'admin/product-categories-page.php';
             }
+        );
+
+        // Submenu: Produkte
+        add_submenu_page(
+            'produkt-verleih',
+            'Produkte',
+            'Produkte',
+            'manage_options',
+            'produkt-categories',
+            array($this, 'categories_page')
         );
         
         // Submenu: Produktverwaltung
@@ -383,7 +383,7 @@ class Admin {
             }
             $meta_title = sanitize_text_field($_POST['meta_title']);
             $meta_description = sanitize_textarea_field($_POST['meta_description']);
-            $product_title = sanitize_text_field($_POST['product_title']);
+            $product_title = sanitize_text_field($_POST['product_title'] ?? $name);
             $short_description = sanitize_textarea_field($_POST['short_description']);
             $product_description = wp_kses_post($_POST['product_description']);
             $default_image = esc_url_raw($_POST['default_image']);
@@ -400,21 +400,22 @@ class Admin {
             $feature_4_icon = esc_url_raw($_POST['feature_4_icon']);
             $feature_4_title = sanitize_text_field($_POST['feature_4_title']);
             $feature_4_description = sanitize_textarea_field($_POST['feature_4_description']);
-            $button_text = sanitize_text_field($_POST['button_text']);
-            $button_icon = esc_url_raw($_POST['button_icon']);
-            $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : array();
+            $global_ui = get_option('produkt_ui_settings', []);
+            $button_text = sanitize_text_field($_POST['button_text'] ?? ($global_ui['button_text'] ?? ''));
+            $button_icon = esc_url_raw($_POST['button_icon'] ?? ($global_ui['button_icon'] ?? ''));
+            $payment_icons = isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : (array)($global_ui['payment_icons'] ?? []);
             $payment_icons = implode(',', $payment_icons);
             $shipping_provider = '';
             $shipping_price_id = '';
             $shipping_label = '';
-            $price_label = sanitize_text_field($_POST['price_label']);
-            $price_period = sanitize_text_field($_POST['price_period']);
-            $vat_included = isset($_POST['vat_included']) ? 1 : 0;
+            $price_label = sanitize_text_field($_POST['price_label'] ?? ($global_ui['price_label'] ?? ''));
+            $price_period = sanitize_text_field($_POST['price_period'] ?? ($global_ui['price_period'] ?? 'month'));
+            $vat_included = isset($_POST['vat_included']) ? 1 : (isset($global_ui['vat_included']) ? intval($global_ui['vat_included']) : 0);
             $layout_style = sanitize_text_field($_POST['layout_style']);
-            $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip']);
-            $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip']);
+            $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip'] ?? ($global_ui['duration_tooltip'] ?? ''));
+            $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip'] ?? ($global_ui['condition_tooltip'] ?? ''));
             $show_features = isset($_POST['show_features']) ? 1 : 0;
-            $show_tooltips = isset($_POST['show_tooltips']) ? 1 : 0;
+            $show_tooltips = isset($_POST['show_tooltips']) ? 1 : (isset($global_ui['show_tooltips']) ? intval($global_ui['show_tooltips']) : 1);
             $show_rating = isset($_POST['show_rating']) ? 1 : 0;
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
             $rating_value = $rating_value_input !== '' ? min(5, max(0, floatval($rating_value_input))) : 0;

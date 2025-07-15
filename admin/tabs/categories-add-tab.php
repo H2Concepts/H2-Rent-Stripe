@@ -5,7 +5,7 @@
 <div class="produkt-add-category">
     <div class="produkt-form-header">
         <h3>➕ Neues Produkt hinzufügen</h3>
-        <p>Erstellen Sie ein neues Produkt mit SEO-Einstellungen und individueller Konfiguration.</p>
+        <p>Erstellen Sie eine Produkt und Produktseite individuellen Einstellungen und Konfigurationen.</p>
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
@@ -38,6 +38,7 @@
                     <label>SEO-Titel</label>
                     <input type="text" name="meta_title" maxlength="60" placeholder="Optimiert für Suchmaschinen">
                     <small>Max. 60 Zeichen für Google</small>
+                    <div id="meta_title_counter" class="produkt-char-counter"></div>
                 </div>
                 <div class="produkt-form-group">
                     <label>Layout-Stil</label>
@@ -52,22 +53,16 @@
             <div class="produkt-form-group">
                 <label>SEO-Beschreibung</label>
                 <textarea name="meta_description" rows="3" maxlength="160" placeholder="Beschreibung für Suchmaschinen (max. 160 Zeichen)"></textarea>
+                <div id="meta_description_counter" class="produkt-char-counter"></div>
             </div>
         </div>
         
         <!-- Seiteninhalte -->
         <div class="produkt-form-section">
             <h4>📄 Seiteninhalte</h4>
-            
-            <div class="produkt-form-row">
-                <div class="produkt-form-group">
-                    <label>Produkttitel *</label>
-                    <input type="text" name="product_title" required placeholder="Titel unter dem Produktbild">
-                </div>
-            </div>
 
             <div class="produkt-form-group">
-                <label>Kurzbeschreibung</label>
+                <label>Kurzbeschreibung <small>für Produktübersichtsseite</small></label>
                 <textarea name="short_description" rows="2" placeholder="Kurzer Text unter dem Titel"></textarea>
             </div>
 
@@ -155,78 +150,7 @@
             <button type="button" id="add-accordion" class="button">+ Accordion hinzufügen</button>
         </div>
         
-        <!-- Button & Tooltips -->
-        <div class="produkt-form-section">
-            <h4>🔘 Button & Tooltips</h4>
-            <div class="produkt-form-row">
-                <div class="produkt-form-group">
-                    <label>Button-Text</label>
-                    <input type="text" name="button_text" placeholder="z.B. Jetzt Mieten">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Button-Icon</label>
-                    <div class="produkt-upload-area">
-                        <input type="url" name="button_icon" id="button_icon" placeholder="https://example.com/button-icon.png">
-                        <button type="button" class="button produkt-media-button" data-target="button_icon">📁</button>
-                    </div>
-                </div>
-            </div>
 
-            <div class="produkt-form-row">
-                <div class="produkt-form-group">
-                    <label>Preis-Label</label>
-                    <input type="text" name="price_label" placeholder="Monatlicher Mietpreis">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Preiszeitraum</label>
-                    <select name="price_period">
-                        <option value="month">pro Monat</option>
-                        <option value="one-time">einmalig</option>
-                    </select>
-                </div>
-                <div class="produkt-form-group">
-                    <label><input type="checkbox" name="vat_included" value="1"> Mit MwSt.</label>
-                </div>
-            </div>
-
-            <div class="produkt-form-group">
-                <label>Bezahlmethoden</label>
-                <div class="produkt-payment-checkboxes">
-                    <?php $payment_methods = [
-                        'american-express' => 'American Express',
-                        'apple-pay' => 'Apple Pay',
-                        'google-pay' => 'Google Pay',
-                        'klarna' => 'Klarna',
-                        'maestro' => 'Maestro',
-                        'mastercard' => 'Mastercard',
-                        'paypal' => 'Paypal',
-                        'shop' => 'Shop',
-                        'union-pay' => 'Union Pay',
-                        'visa' => 'Visa'
-                    ]; ?>
-                    <?php foreach ($payment_methods as $key => $label): ?>
-                        <label>
-                            <input type="checkbox" name="payment_icons[]" value="<?php echo esc_attr($key); ?>">
-                            <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $key . '.svg'); ?>" alt="<?php echo esc_attr($label); ?>">
-                        </label>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            
-            <div class="produkt-form-group">
-                <label>Mietdauer-Tooltip</label>
-                <textarea name="duration_tooltip" rows="3" placeholder="Text der bei 'Wählen Sie Ihre Mietdauer' angezeigt wird"></textarea>
-            </div>
-            
-            <div class="produkt-form-group">
-                <label>Zustand-Tooltip</label>
-                <textarea name="condition_tooltip" rows="4" placeholder="Text der bei 'Zustand' angezeigt wird"></textarea>
-            </div>
-        <div class="produkt-form-group">
-            <label><input type="checkbox" name="show_tooltips" value="1" checked> Tooltips auf Produktseite anzeigen</label>
-        </div>
-    </div>
 
     <!-- Produktbewertung -->
     <div class="produkt-form-section">
@@ -313,10 +237,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-generate shortcode from name
     const nameInput = document.querySelector('input[name="name"]');
     const shortcodeInput = document.querySelector('input[name="shortcode"]');
-    
+    let manualShortcode = false;
+    if (shortcodeInput) {
+        shortcodeInput.addEventListener('input', function() { manualShortcode = true; });
+    }
     if (nameInput && shortcodeInput) {
         nameInput.addEventListener('input', function() {
-            if (!shortcodeInput.value) {
+            if (!manualShortcode) {
                 const shortcode = this.value
                     .toLowerCase()
                     .replace(/[^a-z0-9\s-]/g, '')
@@ -326,6 +253,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 shortcodeInput.value = shortcode;
             }
         });
+    }
+
+    function updateCharCounter(input, counter, min, max) {
+        const len = input.value.length;
+        counter.textContent = len + ' Zeichen';
+        let cls = 'warning';
+        if (len > max) { cls = 'error'; }
+        else if (len >= min) { cls = 'ok'; }
+        counter.className = 'produkt-char-counter ' + cls;
+    }
+
+    const mtInput = document.querySelector('input[name="meta_title"]');
+    const mtCounter = document.getElementById('meta_title_counter');
+    if (mtInput && mtCounter) {
+        updateCharCounter(mtInput, mtCounter, 50, 60);
+        mtInput.addEventListener('input', () => updateCharCounter(mtInput, mtCounter, 50, 60));
+    }
+    const mdInput = document.querySelector('textarea[name="meta_description"]');
+    const mdCounter = document.getElementById('meta_description_counter');
+    if (mdInput && mdCounter) {
+        updateCharCounter(mdInput, mdCounter, 150, 160);
+        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
     }
 
     // Accordion fields are handled in admin-script.js

@@ -351,6 +351,7 @@
     margin-top: 0;
     margin-bottom: 15px;
     color: #3c434a;
+    font-size: 1.3rem;
 }
 
 .produkt-form-row {
@@ -930,3 +931,5 @@
         grid-template-columns: 1fr;
     }
 }
+
+.produkt-char-counter{font-size:0.85rem;text-align:right;margin-top:4px;} .produkt-char-counter.ok{color:#46b450;} .produkt-char-counter.warning{color:#ffb900;} .produkt-char-counter.error{color:#dc3232;}
