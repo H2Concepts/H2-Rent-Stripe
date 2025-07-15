@@ -86,6 +86,21 @@ $durations = $wpdb->get_results($wpdb->prepare(
     $category_id
 ));
 
+// Preise der ersten Variante für Rabatt-Badges ermitteln
+$badge_base_price = null;
+$badge_prices = array();
+if (!empty($variants)) {
+    $first_variant = $variants[0];
+    $badge_base_price = floatval($first_variant->base_price);
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
+        $first_variant->id
+    ));
+    foreach ($rows as $r) {
+        $badge_prices[(int) $r->duration_id] = floatval($r->custom_price);
+    }
+}
+
 // Get category settings
 $default_image = isset($category) ? $category->default_image : '';
 $product_title = isset($category) ? $category->product_title : '';
@@ -342,8 +357,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <div class="produkt-option-content">
                                 <div class="produkt-duration-header">
                                     <span class="produkt-duration-name"><?php echo esc_html($duration->name); ?></span>
-                                    <?php if ($duration->show_badge): ?>
-                                    <span class="produkt-discount-badge">Badge</span>
+                                    <?php if ($duration->show_badge && isset($badge_prices[$duration->id]) && $badge_base_price > 0): ?>
+                                        <?php
+                                            $mietpreis = $badge_prices[$duration->id];
+                                            if ($mietpreis > 0 && $mietpreis < $badge_base_price) {
+                                                $rabatt = round((1 - ($mietpreis / $badge_base_price)) * 100);
+                                                echo '<span class="produkt-discount-badge">-' . $rabatt . '%</span>';
+                                            }
+                                        ?>
                                     <?php endif; ?>
                                 </div>
                                 <p class="produkt-duration-info">
