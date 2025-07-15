@@ -41,9 +41,8 @@
             
         <div class="produkt-form-row">
             <div class="produkt-form-group">
-                <label>Rabatt (%)</label>
-                <input type="number" name="discount" value="<?php echo ($edit_item->discount * 100); ?>" step="0.01" min="0" max="100">
-                <small>z.B. 10 für 10% Rabatt</small>
+                <label for="show_badge">Rabatt-Badge anzeigen</label>
+                <input type="checkbox" name="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
             </div>
             <div class="produkt-form-group">
                 <label>Sortierung</label>

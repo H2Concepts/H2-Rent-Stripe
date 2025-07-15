@@ -28,9 +28,8 @@
             
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
-                    <label>Rabatt (%)</label>
-                    <input type="number" name="discount" step="0.01" min="0" max="100" placeholder="10">
-                    <small>z.B. 10 für 10% Rabatt</small>
+                    <label for="show_badge">Rabatt-Badge anzeigen</label>
+                    <input type="checkbox" name="show_badge" value="1">
                 </div>
                 <div class="produkt-form-group">
                     <label>Sortierung</label>

@@ -79,6 +79,13 @@ class Database {
             $after = $product_id_exists ? 'stripe_product_id' : 'name';
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
         }
+
+        // Ensure show_badge column exists for durations
+        $table_durations = $wpdb->prefix . 'produkt_durations';
+        $badge_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'show_badge'");
+        if (empty($badge_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN show_badge TINYINT(1) DEFAULT 0 AFTER discount");
+        }
         
         // Create categories table if it doesn't exist
         $table_categories = $wpdb->prefix . 'produkt_categories';
@@ -799,6 +806,7 @@ class Database {
             name varchar(255) NOT NULL,
             months_minimum int(11) NOT NULL,
             discount decimal(5,4) DEFAULT 0,
+            show_badge tinyint(1) DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1215,6 +1223,7 @@ class Database {
                         'name' => $duration[0],
                         'months_minimum' => $duration[1],
                         'discount' => $duration[2],
+                        'show_badge' => 0,
                         'sort_order' => $index
                     )
                 );

@@ -1793,3 +1793,21 @@ body.shop-filter-open {
         flex-direction: column;
     }
 }
+
+.badge {
+    background: red;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}
+.old-price {
+    text-decoration: line-through;
+    color: #999;
+    margin-left: 6px;
+}
+.new-price {
+    color: #000;
+    font-weight: bold;
+    margin-left: 6px;
+}

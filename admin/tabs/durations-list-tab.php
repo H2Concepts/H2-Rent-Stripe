@@ -26,8 +26,8 @@
         <div class="produkt-duration-card">
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
-                <?php if ($duration->discount > 0): ?>
-                    <span class="produkt-discount-badge">-<?php echo round($duration->discount * 100); ?>%</span>
+                <?php if ($duration->show_badge): ?>
+                    <span class="produkt-discount-badge">Badge</span>
                 <?php endif; ?>
             </div>
             
@@ -38,11 +38,9 @@
                         <small>Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?> Mindestlaufzeit</small>
                     </div>
                     
-                    <?php if ($duration->discount > 0): ?>
+                    <?php if ($duration->show_badge): ?>
                     <div class="produkt-duration-savings">
-                        <span class="produkt-savings-text">
-                            <?php echo round($duration->discount * 100); ?>% Rabatt
-                        </span>
+                        <span class="produkt-savings-text">Badge aktiv</span>
                     </div>
                     <?php endif; ?>
                 </div>

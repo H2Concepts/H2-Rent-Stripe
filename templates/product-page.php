@@ -342,8 +342,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <div class="produkt-option-content">
                                 <div class="produkt-duration-header">
                                     <span class="produkt-duration-name"><?php echo esc_html($duration->name); ?></span>
-                                    <?php if ($duration->discount > 0): ?>
-                                    <span class="produkt-discount-badge">-<?php echo round($duration->discount * 100); ?>%</span>
+                                    <?php if ($duration->show_badge): ?>
+                                    <span class="produkt-discount-badge">Badge</span>
                                     <?php endif; ?>
                                 </div>
                                 <p class="produkt-duration-info">

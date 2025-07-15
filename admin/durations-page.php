@@ -28,7 +28,7 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $months_minimum = intval($_POST['months_minimum']);
-    $discount = floatval($_POST['discount']) / 100; // Convert percentage to decimal
+    $show_badge = isset($_POST['show_badge']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
 
@@ -40,12 +40,13 @@ if (isset($_POST['submit'])) {
                 'category_id' => $category_id,
                 'name' => $name,
                 'months_minimum' => $months_minimum,
-                'discount' => $discount,
+                'discount' => 0,
+                'show_badge' => $show_badge,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%d', '%f', '%d', '%d'),
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%d'),
             array('%d')
         );
         
@@ -63,11 +64,12 @@ if (isset($_POST['submit'])) {
                 'category_id' => $category_id,
                 'name' => $name,
                 'months_minimum' => $months_minimum,
-                'discount' => $discount,
+                'discount' => 0,
+                'show_badge' => $show_badge,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%d', '%f', '%d', '%d')
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%d')
         );
         
         $duration_id = $wpdb->insert_id;

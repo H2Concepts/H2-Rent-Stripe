@@ -94,17 +94,24 @@ class Ajax {
                 $extras_price  *= $modifier;
             }
 
-            // Base price only refers to the variant itself
+            // Base price for the variant
             $base_price = $variant_price;
-            $discount   = floatval($duration->discount);
+
+            $duration_custom_price = $wpdb->get_var($wpdb->prepare(
+                "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $duration_id,
+                $variant_id
+            ));
+            $duration_price = ($duration_custom_price !== null) ? floatval($duration_custom_price) : $base_price;
 
             $original_price = null;
-            $discounted_variant = $variant_price;
-            if ($discount > 0) {
-                $original_price = $variant_price;
-                $discounted_variant = round($variant_price * (1 - $discount), 2);
+            $discount = 0;
+            if ($duration->show_badge && $duration_price < $base_price) {
+                $original_price = $base_price;
+                $discount = 1 - ($duration_price / $base_price);
             }
-            $final_price = $discounted_variant + $extras_price;
+
+            $final_price = $duration_price + $extras_price;
             $shipping_cost = 0;
             $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
             if ($shipping) {
