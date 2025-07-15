@@ -33,7 +33,7 @@ class Plugin {
     public function init() {
         // Replace deprecated emoji and admin bar functions with enqueue versions.
         $this->replace_deprecated_wp_functions();
-        add_action('admin_menu', [$this->admin, 'add_admin_menu']);
+        add_action('admin_menu', [$this->admin, 'register_admin_menu']);
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
