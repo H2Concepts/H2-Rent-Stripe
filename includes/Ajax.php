@@ -674,6 +674,30 @@ class Ajax {
 
         wp_send_json_success();
     }
+
+    public function ajax_fetch_products() {
+        global $wpdb;
+        $term = isset($_GET['q']) ? sanitize_text_field($_GET['q']) : '';
+
+        $results = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, name FROM {$wpdb->prefix}produkt_categories WHERE name LIKE %s ORDER BY name ASC LIMIT 20",
+                '%' . $wpdb->esc_like($term) . '%'
+            )
+        );
+
+        $formatted = array_map(
+            function ($row) {
+                return [
+                    'id'   => $row->id,
+                    'text' => $row->name,
+                ];
+            },
+            $results
+        );
+
+        wp_send_json($formatted);
+    }
 }
 
 add_action('wp_ajax_create_payment_intent', __NAMESPACE__ . '\\produkt_create_payment_intent');

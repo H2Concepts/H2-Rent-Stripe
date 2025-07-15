@@ -65,6 +65,7 @@ class Plugin {
 
         add_action('wp_ajax_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
         add_action('wp_ajax_nopriv_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
+        add_action('wp_ajax_fetch_products', [$this->ajax, 'ajax_fetch_products']);
 
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);

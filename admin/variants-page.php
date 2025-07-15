@@ -241,13 +241,13 @@ foreach ($branding_results as $result) {
         <form method="get" action="">
             <input type="hidden" name="page" value="produkt-variants">
             <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-            <label for="category-select"><strong>🏷️ Produkt:</strong></label>
-            <select name="category" id="category-select" onchange="this.form.submit()">
-                <?php foreach ($categories as $category): ?>
-                <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
-                    <?php echo esc_html($category->name); ?>
-                </option>
-                <?php endforeach; ?>
+            <label for="produkt-select"><strong>🎯 Produkt auswählen:</strong></label>
+            <select id="produkt-select" style="width: 100%;" name="category">
+                <?php if ($current_category): ?>
+                    <option value="<?php echo $current_category->id; ?>" selected><?php echo esc_html($current_category->name); ?></option>
+                <?php else: ?>
+                    <option></option>
+                <?php endif; ?>
             </select>
             <noscript><input type="submit" value="Wechseln" class="button"></noscript>
         </form>
@@ -297,13 +297,4 @@ foreach ($branding_results as $result) {
         }
         ?>
     </div>
-    <script>
-    jQuery(function($) {
-        $('#category-select').select2({
-            placeholder: 'Produkt wählen …',
-            allowClear: true,
-            width: 'resolve'
-        });
-    });
-    </script>
 </div>
