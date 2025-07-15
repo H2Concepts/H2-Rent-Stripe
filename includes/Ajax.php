@@ -73,6 +73,9 @@ class Ajax {
                 $variant_price = floatval($price_res);
             } else {
                 $variant_price = floatval($variant->base_price);
+                if ($variant_price <= 0) {
+                    $variant_price = floatval($variant->mietpreis_monatlich);
+                }
             }
             $extras_price = 0;
             foreach ($extras as $ex) {

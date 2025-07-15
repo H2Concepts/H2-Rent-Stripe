@@ -92,6 +92,9 @@ $badge_prices = array();
 if (!empty($variants)) {
     $first_variant = $variants[0];
     $badge_base_price = floatval($first_variant->base_price);
+    if ($badge_base_price <= 0) {
+        $badge_base_price = floatval($first_variant->mietpreis_monatlich);
+    }
     $rows = $wpdb->get_results($wpdb->prepare(
         "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
         $first_variant->id
