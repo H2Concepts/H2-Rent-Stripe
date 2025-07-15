@@ -49,7 +49,7 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
 <div class="wrap">
     <h1>Versandarten verwalten</h1>
     <form method="post">
-        <?php wp_nonce_field('produkt_admin_action', 'fw_nonce'); ?>
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <table class="form-table">
             <tr>
                 <th><label>Name</label></th>
