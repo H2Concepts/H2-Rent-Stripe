@@ -364,7 +364,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                         <?php
                                             $mietpreis = $badge_prices[$duration->id];
                                             if ($mietpreis > 0 && $mietpreis < $badge_base_price) {
-                                                $rabatt = round((1 - ($mietpreis / $badge_base_price)) * 100);
+                                                $rabatt = number_format((1 - ($mietpreis / $badge_base_price)) * 100, 1, ',', '');
                                                 echo '<span class="produkt-discount-badge">-' . $rabatt . '%</span>';
                                             }
                                         ?>
