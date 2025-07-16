@@ -59,7 +59,19 @@
             
             <div class="produkt-variant-content">
                 <h4><?php echo esc_html($variant->name); ?></h4>
-                <?php if (isset($variant->active) && $variant->active == 0): ?>
+                <?php
+                $archived = false;
+                if (!empty($variant->stripe_product_id)) {
+                    try {
+                        \Stripe\Stripe::setApiKey(get_option('produkt_stripe_secret_key'));
+                        $stripe_product = \Stripe\Product::retrieve($variant->stripe_product_id);
+                        $archived = !$stripe_product->active;
+                    } catch (\Exception $e) {
+                        $archived = false; // Fehler bei Stripe, lieber Badge weglassen
+                    }
+                }
+                ?>
+                <?php if ($archived): ?>
                     <span class="badge badge-gray">Archiviert bei Stripe</span>
                 <?php endif; ?>
                 <p class="produkt-variant-description"><?php echo esc_html($variant->description); ?></p>
