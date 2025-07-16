@@ -47,7 +47,21 @@ if (isset($_POST['clear_stripe_cache']) && check_admin_referer('clear_stripe_cac
 
 // Cleanup orphaned products
 if (isset($_POST['run_cleanup']) && check_admin_referer('cleanup_action')) {
-    $wpdb->query("DELETE FROM {$wpdb->prefix}produkt_items WHERE category_id NOT IN (SELECT id FROM {$wpdb->prefix}produkt_categories)");
+    $cleanup_tables = [
+        'produkt_variants',
+        'produkt_extras',
+        'produkt_durations',
+    ];
+
+    foreach ($cleanup_tables as $tbl) {
+        $table = $wpdb->prefix . $tbl;
+        $wpdb->query(
+            "DELETE FROM {$table} WHERE category_id NOT IN (
+                SELECT id FROM {$wpdb->prefix}produkt_categories
+            )"
+        );
+    }
+
     echo '<div class="notice notice-success"><p>✅ Verwaiste Produkte bereinigt.</p></div>';
 }
 
@@ -56,8 +70,15 @@ if (isset($_POST['run_hard_cleanup']) && check_admin_referer('produkt_cleanup_ac
     $prefix = $wpdb->prefix;
 
     $wpdb->query("DELETE FROM {$prefix}produkt_product_to_category WHERE produkt_id NOT IN (SELECT id FROM {$prefix}produkt_categories)");
-    $wpdb->query("DELETE FROM {$prefix}produkt_duration_prices WHERE duration_id NOT IN (SELECT id FROM {$prefix}produkt_durations)");
-    $wpdb->query("DELETE FROM {$prefix}produkt_variant_prices WHERE variant_id NOT IN (SELECT id FROM {$prefix}produkt_variants)");
+
+    $wpdb->query(
+        "DELETE FROM {$prefix}produkt_duration_prices WHERE duration_id NOT IN (
+            SELECT id FROM {$prefix}produkt_durations
+        ) OR variant_id NOT IN (
+            SELECT id FROM {$prefix}produkt_variants
+        )"
+    );
+
     $wpdb->query("DELETE FROM {$prefix}produkt_categories WHERE id NOT IN (SELECT produkt_id FROM {$prefix}produkt_product_to_category)");
 
     echo '<div class="notice notice-success"><p>✅ Verwaiste Einträge erfolgreich bereinigt.</p></div>';
