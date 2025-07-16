@@ -41,8 +41,11 @@
             
         <div class="produkt-form-row">
             <div class="produkt-form-group">
-                <label for="show_badge">Rabatt-Badge anzeigen</label>
-                <input type="checkbox" name="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
+                <label class="produkt-toggle-label" for="show_badge" style="min-width:160px;">
+                    <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
+                    <span class="produkt-toggle-slider"></span>
+                    <span>Rabatt-Badge anzeigen</span>
+                </label>
             </div>
             <div class="produkt-form-group">
                 <label>Sortierung</label>

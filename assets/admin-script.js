@@ -120,4 +120,19 @@ jQuery(document).ready(function($) {
             group.remove();
         }
     });
+
+    // Remember last selected product across admin pages
+    var catSelect = $('#category-select');
+    if (catSelect.length) {
+        var savedCat = localStorage.getItem('produkt_last_category');
+        if (savedCat && catSelect.val() !== savedCat && window.location.search.indexOf('category=') === -1) {
+            catSelect.val(savedCat);
+            if (catSelect.val() === savedCat) {
+                catSelect.closest('form').submit();
+            }
+        }
+        catSelect.on('change', function() {
+            localStorage.setItem('produkt_last_category', $(this).val());
+        });
+    }
 });

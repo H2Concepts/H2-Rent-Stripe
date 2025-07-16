@@ -148,6 +148,7 @@
 
 .produkt-duration-months strong {
     display: block;
+    margin-bottom: 1rem;
     font-size: 2rem;
     color: var(--produkt-primary);
     font-weight: 700;
