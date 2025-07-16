@@ -157,13 +157,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             produkt_add_order_log($existing_id, 'welcome_email_sent');
         }
     } elseif ($event->type === 'customer.subscription.deleted') {
-        $subscription = $event->data->object;
-        $subscription_id = $subscription->id;
+        $subscription     = $event->data->object;
+        $subscription_id  = $subscription->id;
         global $wpdb;
         $wpdb->update(
             "{$wpdb->prefix}produkt_orders",
-            [ 'status' => 'gekündigt' ],
-            [ 'stripe_subscription_id' => $subscription_id ]
+            ['status' => 'gekündigt'],
+            ['stripe_subscription_id' => $subscription_id]
         );
         $order_id = $wpdb->get_var($wpdb->prepare(
             "SELECT id FROM {$wpdb->prefix}produkt_orders WHERE stripe_subscription_id = %s",
@@ -173,6 +173,22 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             produkt_add_order_log((int) $order_id, 'subscription_cancelled');
         }
         return new WP_REST_Response(['status' => 'subscription cancelled'], 200);
+    } elseif ($event->type === 'product.deleted') {
+        $product    = $event->data->object;
+        $product_id = $product->id;
+        global $wpdb;
+        $wpdb->delete("{$wpdb->prefix}produkt_variants", ['stripe_product_id' => $product_id]);
+        $wpdb->delete("{$wpdb->prefix}produkt_extras", ['stripe_product_id' => $product_id]);
+        return new WP_REST_Response(['status' => 'product removed in plugin'], 200);
+    } elseif ($event->type === 'price.deleted') {
+        $price    = $event->data->object;
+        $price_id = $price->id;
+        global $wpdb;
+        $wpdb->query($wpdb->prepare(
+            "UPDATE {$wpdb->prefix}produkt_variants SET stripe_price_id = '' WHERE stripe_price_id = %s",
+            $price_id
+        ));
+        return new WP_REST_Response(['status' => 'price unlinked in plugin'], 200);
     }
 
     return new WP_REST_Response(['status' => 'ok'], 200);
