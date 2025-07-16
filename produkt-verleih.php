@@ -23,6 +23,9 @@ define('PRODUKT_PLUGIN_FILE', __FILE__);
 define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
 define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
 
+// Load Stripe SDK if available
+require_once plugin_dir_path(__FILE__) . 'includes/stripe-autoload.php';
+
 // Control whether default demo data is inserted on activation
 if (!defined('PRODUKT_LOAD_DEFAULT_DATA')) {
     define('PRODUKT_LOAD_DEFAULT_DATA', false);
