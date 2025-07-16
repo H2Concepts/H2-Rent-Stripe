@@ -580,6 +580,29 @@ class StripeService {
     }
 
     /**
+     * Check if a Stripe price is archived using a transient cache.
+     * Falls back to live lookup if no cache entry exists.
+     *
+     * @param string $price_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_price_archived_cached($price_id) {
+        if (!$price_id) {
+            return true;
+        }
+
+        $cache_key = 'stripe_price_archived_' . $price_id;
+        $cached    = get_transient($cache_key);
+        if ($cached !== false) {
+            return (bool) $cached;
+        }
+
+        $archived = self::is_price_archived($price_id);
+        set_transient($cache_key, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+        return $archived;
+    }
+
+    /**
      * Determine if a Stripe product is archived or invalid.
      *
      * @param string $product_id
@@ -600,6 +623,55 @@ class StripeService {
             return !$product->active;
         } catch (\Exception $e) {
             return true;
+        }
+    }
+
+    /**
+     * Check if a Stripe product is archived using a transient cache.
+     * Falls back to a live lookup if no cache entry exists.
+     *
+     * @param string $product_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_product_archived_cached($product_id) {
+        if (!$product_id) {
+            return true;
+        }
+
+        $cache_key = 'stripe_product_archived_' . $product_id;
+        $cached    = get_transient($cache_key);
+        if ($cached !== false) {
+            return (bool) $cached;
+        }
+
+        $archived = self::is_product_archived($product_id);
+        set_transient($cache_key, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+        return $archived;
+    }
+
+    /**
+     * Clear cached Stripe archive status for all known products and prices.
+     * Iterates over variant, extra and duration price tables.
+     */
+    public static function clear_stripe_archive_cache() {
+        global $wpdb;
+
+        $tables = [
+            $wpdb->prefix . 'produkt_variants',
+            $wpdb->prefix . 'produkt_extras',
+            $wpdb->prefix . 'produkt_duration_prices',
+        ];
+
+        foreach ($tables as $table) {
+            $ids = $wpdb->get_results("SELECT stripe_price_id, stripe_product_id FROM $table");
+            foreach ($ids as $entry) {
+                if (!empty($entry->stripe_price_id)) {
+                    delete_transient('stripe_price_archived_' . $entry->stripe_price_id);
+                }
+                if (!empty($entry->stripe_product_id)) {
+                    delete_transient('stripe_product_archived_' . $entry->stripe_product_id);
+                }
+            }
         }
     }
 

@@ -62,7 +62,7 @@
                 <?php
                 $archived = false;
                 if (!empty($variant->stripe_product_id)) {
-                    $archived = \ProduktVerleih\StripeService::is_product_archived($variant->stripe_product_id);
+                    $archived = \ProduktVerleih\StripeService::is_product_archived_cached($variant->stripe_product_id);
                 }
                 ?>
                 <?php if ($archived): ?>

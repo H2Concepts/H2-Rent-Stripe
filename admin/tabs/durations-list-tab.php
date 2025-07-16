@@ -24,14 +24,14 @@
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
                 <?php
-                $is_archived = \ProduktVerleih\StripeService::is_price_archived($duration->stripe_price_id);
+                $is_archived = \ProduktVerleih\StripeService::is_price_archived_cached($duration->stripe_price_id);
                 if ($is_archived): ?>
                     <span class="badge badge-warning">Archivierter oder ungültiger Stripe-Preis</span>
                 <?php endif; ?>
                 <?php
                 $product_archived = false;
                 if (!empty($duration->stripe_product_id)) {
-                    $product_archived = \ProduktVerleih\StripeService::is_product_archived($duration->stripe_product_id);
+                    $product_archived = \ProduktVerleih\StripeService::is_product_archived_cached($duration->stripe_product_id);
                 }
                 if ($product_archived): ?>
                     <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>

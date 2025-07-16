@@ -41,7 +41,7 @@
                 <?php
                 $archived = false;
                 if (!empty($extra->stripe_product_id)) {
-                    $archived = \ProduktVerleih\StripeService::is_product_archived($extra->stripe_product_id);
+                    $archived = \ProduktVerleih\StripeService::is_product_archived_cached($extra->stripe_product_id);
                 }
                 ?>
                 <?php if ($archived): ?>
