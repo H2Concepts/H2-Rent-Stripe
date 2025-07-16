@@ -75,6 +75,16 @@ function produkt_deactivate_stripe_price($price_id) {
             \Stripe\Price::update($price_id, ['active' => false]);
         }
 
+        // Mark local record as archived
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_duration_prices',
+            ['stripe_archived' => 1],
+            ['stripe_price_id' => $price_id],
+            ['%d'],
+            ['%s']
+        );
+
     } catch (\Exception $e) {
         error_log('Stripe price archive error: ' . $e->getMessage());
     }

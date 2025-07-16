@@ -7,6 +7,12 @@ global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_durations';
 $table_prices = $wpdb->prefix . 'produkt_duration_prices';
 
+// Ensure stripe_archived column exists in price table
+$archived_col = $wpdb->get_results("SHOW COLUMNS FROM $table_prices LIKE 'stripe_archived'");
+if (empty($archived_col)) {
+    $wpdb->query("ALTER TABLE $table_prices ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER stripe_price_id");
+}
+
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 

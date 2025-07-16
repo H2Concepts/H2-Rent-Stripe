@@ -23,12 +23,28 @@
         <div class="produkt-duration-card">
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
-                <?php if (!empty($duration->stripe_price_id)) :
+                <?php
+                $archived_price = false;
+                if (!empty($duration->stripe_price_id)) {
                     $active = \ProduktVerleih\StripeService::is_price_active($duration->stripe_price_id);
-                    if ($active === false) : ?>
-                        <span class="badge badge-gray">Archiviert bei Stripe</span>
-                    <?php endif;
-                endif; ?>
+                    if ($active === false) {
+                        $archived_price = true;
+                    }
+                    if (!$archived_price) {
+                        $archived_price = (bool) $wpdb->get_var($wpdb->prepare(
+                            "SELECT stripe_archived FROM {$wpdb->prefix}produkt_duration_prices WHERE stripe_price_id = %s LIMIT 1",
+                            $duration->stripe_price_id
+                        ));
+                    }
+                } else {
+                    $archived_price = (bool) $wpdb->get_var($wpdb->prepare(
+                        "SELECT stripe_archived FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d LIMIT 1",
+                        $duration->id
+                    ));
+                }
+                if ($archived_price) : ?>
+                    <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                <?php endif; ?>
                 <?php if ($duration->show_badge): ?>
                     <span class="produkt-discount-badge">Badge</span>
                 <?php endif; ?>

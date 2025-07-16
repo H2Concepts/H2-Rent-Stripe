@@ -3,12 +3,13 @@
 ?>
 
 <?php
-    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, custom_price FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
+    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, custom_price, stripe_archived FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
     $duration_prices = array();
     if ($price_rows) {
         foreach ($price_rows as $pid => $obj) {
             $duration_prices[$pid] = [
-                'custom_price' => $obj->custom_price,
+                'custom_price'    => $obj->custom_price,
+                'stripe_archived' => $obj->stripe_archived,
             ];
         }
     }
@@ -62,6 +63,9 @@
                 <label><?php echo esc_html($variant->name); ?></label>
                 <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['custom_price'] ?? ''); ?>">
                 <small>Preis (monatlich in €)</small>
+                <?php if (!empty($duration_prices[$variant->id]['stripe_archived'])): ?>
+                    <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                <?php endif; ?>
             </div>
             <?php endforeach; ?>
         </div>

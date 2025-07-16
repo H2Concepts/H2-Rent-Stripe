@@ -432,6 +432,7 @@ class Database {
                 variant_id mediumint(9) NOT NULL,
                 stripe_product_id varchar(255) DEFAULT NULL,
                 stripe_price_id varchar(255) DEFAULT NULL,
+                stripe_archived tinyint(1) DEFAULT 0,
                 PRIMARY KEY (id),
                 UNIQUE KEY duration_variant (duration_id, variant_id)
             ) $charset_collate;";
@@ -458,6 +459,12 @@ class Database {
             $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_duration_prices LIKE 'custom_price'");
             if (empty($exists)) {
                 $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN custom_price DECIMAL(10,2) DEFAULT NULL AFTER verkaufspreis_einmalig");
+            }
+
+            // Ensure stripe_archived column exists
+            $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_duration_prices LIKE 'stripe_archived'");
+            if (empty($exists)) {
+                $wpdb->query("ALTER TABLE $table_duration_prices ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER stripe_price_id");
             }
         }
         
@@ -951,6 +958,7 @@ class Database {
             variant_id mediumint(9) NOT NULL,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_archived tinyint(1) DEFAULT 0,
             mietpreis_monatlich decimal(10,2) DEFAULT 0,
             verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
             custom_price decimal(10,2) DEFAULT NULL,
