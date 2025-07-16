@@ -110,7 +110,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         "SELECT pc.*, COUNT(p.id) AS product_count
          FROM {$wpdb->prefix}produkt_product_categories pc
          LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON pc.id = ptc.category_id
-         INNER JOIN {$wpdb->prefix}produkt_products p ON p.id = ptc.produkt_id
+         INNER JOIN {$wpdb->prefix}produkt_categories p ON p.id = ptc.produkt_id
          GROUP BY pc.id
          HAVING product_count > 0
          ORDER BY pc.name ASC"

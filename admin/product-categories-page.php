@@ -43,7 +43,7 @@ $categories = $wpdb->get_results(
     "SELECT c.*, COUNT(p.id) AS product_count
      FROM {$wpdb->prefix}produkt_product_categories c
      LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON c.id = ptc.category_id
-     INNER JOIN {$wpdb->prefix}produkt_products p ON p.id = ptc.produkt_id
+     INNER JOIN {$wpdb->prefix}produkt_categories p ON p.id = ptc.produkt_id
      GROUP BY c.id
      ORDER BY c.name ASC"
 );

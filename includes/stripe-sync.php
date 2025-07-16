@@ -113,7 +113,7 @@ function produkt_hard_delete($produkt_id) {
         ['produkt_id' => $produkt_id]
     );
     $wpdb->delete(
-        $wpdb->prefix . 'produkt_products',
+        $wpdb->prefix . 'produkt_categories',
         ['id' => $produkt_id]
     );
 }
