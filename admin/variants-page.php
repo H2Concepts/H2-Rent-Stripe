@@ -103,7 +103,10 @@ if (isset($_POST['submit'])) {
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
-            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s')),
+            array_merge(
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array_fill(0, 5, '%s')
+            ),
             array('%d')
         );
         
@@ -165,7 +168,10 @@ if (isset($_POST['submit'])) {
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
-            array_merge(array('%d', '%s', '%s', '%f', '%f', '%d', '%s', '%s', '%d', '%d'), array_fill(0, 5, '%s'))
+            array_merge(
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array_fill(0, 5, '%s')
+            )
         );
 
         $variant_id = $wpdb->insert_id;
@@ -194,7 +200,18 @@ if (isset($_POST['submit'])) {
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
+    $variant_id = intval($_GET['delete']);
+    $stripe_product_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT stripe_product_id FROM $table_name WHERE id = %d",
+        $variant_id
+    ));
+
+    if (!empty($stripe_product_id)) {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+        produkt_delete_or_archive_stripe_product($stripe_product_id);
+    }
+
+    $result = $wpdb->delete($table_name, array('id' => $variant_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Ausführung gelöscht!</p></div>';
     } else {
