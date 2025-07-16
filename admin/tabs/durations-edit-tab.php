@@ -63,7 +63,16 @@
                 <label><?php echo esc_html($variant->name); ?></label>
                 <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['custom_price'] ?? ''); ?>">
                 <small>Preis (monatlich in €)</small>
-                <?php if (!empty($duration_prices[$variant->id]['stripe_archived'])): ?>
+                <?php
+                $archived = false;
+                $price_id = $duration_prices[$variant->id]['stripe_price_id'] ?? '';
+                if ($price_id) {
+                    $archived = \ProduktVerleih\StripeService::is_price_archived($price_id);
+                } elseif (!empty($duration_prices[$variant->id]['stripe_archived'])) {
+                    $archived = true;
+                }
+                ?>
+                <?php if ($archived): ?>
                     <span class="badge badge-gray">Archivierter Stripe-Preis</span>
                 <?php endif; ?>
             </div>

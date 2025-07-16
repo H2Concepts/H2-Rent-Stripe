@@ -23,8 +23,10 @@
         <div class="produkt-duration-card">
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
-                <?php if (!empty($duration->stripe_archived)) : ?>
-                    <span class="badge badge-warning">Archiviert bei Stripe</span>
+                <?php
+                $is_archived = \ProduktVerleih\StripeService::is_price_archived($duration->stripe_price_id);
+                if ($is_archived): ?>
+                    <span class="badge badge-warning">Archivierter oder ungültiger Stripe-Preis</span>
                 <?php endif; ?>
                 <?php if ($duration->show_badge): ?>
                     <span class="produkt-discount-badge">Badge</span>
