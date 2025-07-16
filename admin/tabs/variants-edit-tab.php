@@ -113,9 +113,6 @@
 </div>
 
 <style>
-.produkt-edit-variant {
-    max-width: 800px;
-}
 
 .produkt-image-preview {
     margin-top: 8px;
