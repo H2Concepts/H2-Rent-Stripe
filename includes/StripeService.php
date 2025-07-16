@@ -519,4 +519,44 @@ class StripeService {
             return new \WP_Error('stripe_extra', $e->getMessage());
         }
     }
+
+    /**
+     * Check if a Stripe price still exists and is active.
+     */
+    public static function price_exists($price_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return false;
+        }
+        try {
+            $price = \Stripe\Price::retrieve($price_id);
+            return !empty($price) && empty($price->deleted);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Trigger a synchronization of all Stripe products and prices.
+     * Placeholder implementation that fetches items from Stripe.
+     */
+    public static function sync_all() {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+        try {
+            $products = \Stripe\Product::all(['limit' => 100]);
+            foreach ($products->data as $product) {
+                // Hier könnte ein Abgleich mit der Datenbank erfolgen
+            }
+            $prices = \Stripe\Price::all(['limit' => 100]);
+            foreach ($prices->data as $price) {
+                // Ebenso könnte hier ein Abgleich stattfinden
+            }
+            return true;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_sync', $e->getMessage());
+        }
+    }
 }

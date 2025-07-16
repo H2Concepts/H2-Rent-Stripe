@@ -29,9 +29,19 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
-    } catch (\UnexpectedValueException | \Stripe\Exception\SignatureVerificationException $e) {
-        return new WP_REST_Response(['error' => 'Webhook verification failed'], 400);
+    } catch (\Exception $e) {
+        http_response_code(400);
+        exit('Ungültige Signatur: ' . $e->getMessage());
     }
+
+    // Log webhook event
+    global $wpdb;
+    $log_table = $wpdb->prefix . 'produkt_webhook_logs';
+    $wpdb->insert($log_table, [
+        'event_type'    => $event->type,
+        'stripe_object' => wp_json_encode($event->data->object),
+        'message'       => 'Webhook verarbeitet'
+    ]);
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;

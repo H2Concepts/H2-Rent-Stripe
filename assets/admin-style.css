@@ -925,6 +925,7 @@
 .badge-success { background: var(--pv-green); color: white; }
 .badge-warning { background: #ffc107; color: #212529; }
 .badge-danger { background: var(--pv-red); color: white; }
+.badge-gray { background: #dee2e6; color: #212529; }
 
 /* Buttons */
 .button-primary {

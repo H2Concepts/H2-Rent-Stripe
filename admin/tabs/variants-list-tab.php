@@ -59,15 +59,23 @@
             
             <div class="produkt-variant-content">
                 <h4><?php echo esc_html($variant->name); ?></h4>
+                <?php if (isset($variant->active) && $variant->active == 0): ?>
+                    <span class="badge badge-gray">Archiviert bei Stripe</span>
+                <?php endif; ?>
                 <p class="produkt-variant-description"><?php echo esc_html($variant->description); ?></p>
                 
                 <div class="produkt-variant-meta">
                     <?php
                         $price = 0;
+                        $missing_price = false;
                         if (!empty($variant->stripe_price_id)) {
-                            $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
-                            if (!is_wp_error($p)) {
-                                $price = $p;
+                            if (\ProduktVerleih\StripeService::price_exists($variant->stripe_price_id)) {
+                                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                if (!is_wp_error($p)) {
+                                    $price = $p;
+                                }
+                            } else {
+                                $missing_price = true;
                             }
                         }
                     ?>
@@ -75,6 +83,9 @@
                         <strong><?php echo number_format($price, 2, ',', '.'); ?>€</strong>
                         <small>/Monat</small>
                     </div>
+                    <?php if ($missing_price): ?>
+                        <span class="badge badge-warning">Preis fehlt bei Stripe</span>
+                    <?php endif; ?>
                     
                     <div class="produkt-variant-info">
                         <small>Sortierung: <?php echo $variant->sort_order; ?></small>

@@ -23,6 +23,9 @@
         <div class="produkt-duration-card">
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
+                <?php if (isset($duration->active) && $duration->active == 0): ?>
+                    <span class="badge badge-gray">Archiviert bei Stripe</span>
+                <?php endif; ?>
                 <?php if ($duration->show_badge): ?>
                     <span class="produkt-discount-badge">Badge</span>
                 <?php endif; ?>

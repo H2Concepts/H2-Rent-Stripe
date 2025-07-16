@@ -617,6 +617,23 @@ class Database {
             dbDelta($sql);
         }
 
+        // Create webhook logs table if it doesn't exist
+        $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
+        $webhook_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_webhooks'");
+        if (!$webhook_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_webhooks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                event_type VARCHAR(100),
+                stripe_object TEXT,
+                message TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create content blocks table if it doesn't exist
         $table_blocks = $wpdb->prefix . 'produkt_content_blocks';
         $blocks_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_blocks'");
@@ -1065,6 +1082,18 @@ class Database {
         ) $charset_collate;";
 
         dbDelta($sql_logs);
+
+        // Webhook logs table
+        $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
+        $sql_webhooks = "CREATE TABLE $table_webhooks (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            event_type VARCHAR(100),
+            stripe_object TEXT,
+            message TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        ) $charset_collate;";
+
+        dbDelta($sql_webhooks);
     }
     
     public function insert_default_data() {
@@ -1259,7 +1288,8 @@ class Database {
             'produkt_notifications',
             'produkt_content_blocks',
             'produkt_shipping_methods',
-            'produkt_stripe_metadata'
+            'produkt_stripe_metadata',
+            'produkt_webhook_logs'
         );
 
         foreach ($tables as $table) {

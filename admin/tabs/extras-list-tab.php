@@ -38,15 +38,23 @@
             
             <div class="produkt-extra-content">
                 <h4><?php echo esc_html($extra->name); ?></h4>
+                <?php if (isset($extra->active) && $extra->active == 0): ?>
+                    <span class="badge badge-gray">Archiviert bei Stripe</span>
+                <?php endif; ?>
                 
                 <div class="produkt-extra-meta">
                     <div class="produkt-extra-price">
                         <?php
                         $display_price = $extra->price;
+                        $missing_price = false;
                         if (!empty($extra->stripe_price_id)) {
-                            $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
-                            if (!is_wp_error($p)) {
-                                $display_price = $p;
+                            if (\ProduktVerleih\StripeService::price_exists($extra->stripe_price_id)) {
+                                $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                                if (!is_wp_error($p)) {
+                                    $display_price = $p;
+                                }
+                            } else {
+                                $missing_price = true;
                             }
                         }
                         if ($display_price > 0) {
@@ -54,6 +62,9 @@
                         }
                         ?>
                     </div>
+                    <?php if ($missing_price): ?>
+                        <span class="badge badge-warning">Preis fehlt bei Stripe</span>
+                    <?php endif; ?>
                     
                     <div class="produkt-extra-info">
                         <small>Sortierung: <?php echo $extra->sort_order; ?></small>

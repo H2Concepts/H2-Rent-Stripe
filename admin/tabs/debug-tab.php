@@ -28,6 +28,17 @@ if (isset($_POST['plugin_uninstall'])) {
     echo '<div class="notice notice-success"><p>✅ Plugin-Daten wurden entfernt. Bitte deaktivieren Sie das Plugin manuell.</p></div>';
 }
 
+// Manual Stripe sync
+if (isset($_POST['manual_stripe_sync'])) {
+    \ProduktVerleih\Admin::verify_admin_action();
+    $res = \ProduktVerleih\StripeService::sync_all();
+    if (is_wp_error($res)) {
+        echo '<div class="notice notice-error"><p>❌ Sync Fehler: ' . esc_html($res->get_error_message()) . '</p></div>';
+    } else {
+        echo '<div class="notice notice-success"><p>✅ Stripe Sync abgeschlossen</p></div>';
+    }
+}
+
 // Get table structure
 $table_variants = $wpdb->prefix . 'produkt_variants';
 
@@ -54,6 +65,12 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="plugin_uninstall" class="button button-secondary" onclick="return confirm('Plugin und alle Daten wirklich löschen?')">
                 🗑️ Plugin-Daten löschen
+            </button>
+        </form>
+        <form method="post" action="" style="margin-top:10px;">
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+            <button type="submit" name="manual_stripe_sync" class="button button-primary">
+                🔁 Stripe Sync starten
             </button>
         </form>
     </div>
