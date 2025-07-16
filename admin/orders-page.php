@@ -37,20 +37,6 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         </div>
     </div>
     
-    <!-- Navigation -->
-    <div class="produkt-admin-nav">
-        <h3>🧭 Schnellnavigation</h3>
-        <div class="produkt-nav-grid">
-            <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>" class="produkt-nav-item">
-                <span class="dashicons dashicons-dashboard"></span>
-                Dashboard
-            </a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-item">
-                <span class="dashicons dashicons-category"></span>
-                Produkte
-            </a>
-        </div>
-    </div>
     
     <!-- Filter Section -->
     <div style="background: #f0f8ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">

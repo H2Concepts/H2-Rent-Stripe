@@ -865,6 +865,7 @@
 .produkt-summary-value {
     font-size: 2rem;
     font-weight: 700;
+    margin: 1rem 0;
 }
 
 .produkt-summary-note {
@@ -875,8 +876,9 @@
 
 .produkt-summary-range {
     font-size: 1rem;
-    font-weight: 600;
-    color: #2a372a;
+    font-weight: 700;
+    color: #000000;
+    margin: 1rem 0;
 }
 /* Modern UI Enhancements */
 .navigation-grid {
