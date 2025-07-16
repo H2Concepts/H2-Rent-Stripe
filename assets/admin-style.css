@@ -338,6 +338,56 @@
     font-size: 0.9rem;
 }
 
+/* Compact form header */
+.produkt-form-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.produkt-form-header h3 {
+    margin: 0 0 8px 0;
+    color: #2a372a;
+}
+
+.produkt-form-header p {
+    margin: 0;
+    color: #6c757d;
+}
+
+/* Compact form wrapper */
+.produkt-compact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+/* Section description */
+.produkt-section-description {
+    margin: 0 0 15px 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Image grid for variant forms */
+.produkt-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.produkt-image-upload-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.produkt-image-upload-compact label {
+    font-weight: 600;
+    color: #3c434a;
+    font-size: 0.85rem;
+}
+
 /* Structured form layout */
 .produkt-form-section {
     background: #eeeeee;
@@ -363,8 +413,10 @@
 
 .produkt-form-actions {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
 }
 
 /* List Cards */
@@ -519,6 +571,17 @@
     transform: scale(1.05);
 }
 
+/* Delete button styling */
+.produkt-delete-button {
+    color: #dc3545 !important;
+    border-color: #dc3545 !important;
+}
+
+.produkt-delete-button:hover {
+    background: #dc3545 !important;
+    color: #fff !important;
+}
+
 .produkt-color-swatch {
     width: 40px;
     height: 40px;
@@ -658,7 +721,15 @@
     .produkt-form-row {
         grid-template-columns: 1fr;
     }
-    
+
+    .produkt-images-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .produkt-form-actions {
+        flex-direction: column;
+    }
+
     .produkt-items-grid {
         grid-template-columns: 1fr;
     }

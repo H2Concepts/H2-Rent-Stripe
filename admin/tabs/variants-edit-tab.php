@@ -112,31 +112,7 @@
     </form>
 </div>
 
-<style>
 
-.produkt-image-preview {
-    margin-top: 8px;
-}
-
-.produkt-image-preview img {
-    width: 100%;
-    max-width: 120px;
-    height: 80px;
-    object-fit: cover;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.produkt-delete-button {
-    color: #dc3545 !important;
-    border-color: #dc3545 !important;
-}
-
-.produkt-delete-button:hover {
-    background: #dc3545 !important;
-    color: white !important;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

@@ -71,14 +71,16 @@ if (isset($_POST['submit'])) {
     $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
-    $delivery_time = sanitize_text_field($_POST['delivery_time']);
+    $delivery_time = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
     
     // Handle multiple images
     $image_data = array();
     for ($i = 1; $i <= 5; $i++) {
-        $image_data['image_url_' . $i] = esc_url_raw($_POST['image_url_' . $i] ?? '');
+        $image_raw = $_POST['image_url_' . $i] ?? '';
+        $image_data['image_url_' . $i] = (is_string($image_raw) && filter_var($image_raw, FILTER_VALIDATE_URL))
+            ? esc_url_raw($image_raw) : '';
     }
 
     if (isset($_POST['id']) && $_POST['id']) {
@@ -107,7 +109,11 @@ if (isset($_POST['submit'])) {
         
         $variant_id = intval($_POST['id']);
         if ($result !== false) {
-            echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
+            if ($result === 0) {
+                echo '<div class="notice notice-warning"><p>⚠️ Keine Änderungen erkannt.</p></div>';
+            } else {
+                echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
+            }
             $mode       = get_option('produkt_betriebsmodus', 'miete');
             $ids        = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d", $variant_id));
             $product_id = $ids ? $ids->stripe_product_id : '';
