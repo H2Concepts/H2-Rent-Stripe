@@ -106,7 +106,14 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 
     <?php
     global $wpdb;
-    $kats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+    $kats = $wpdb->get_results(
+        "SELECT pc.*, COUNT(ptc.produkt_id) AS product_count
+         FROM {$wpdb->prefix}produkt_product_categories pc
+         LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON pc.id = ptc.category_id
+         GROUP BY pc.id
+         HAVING product_count > 0
+         ORDER BY pc.name ASC"
+    );
     ?>
 
     <div class="shop-overview-layout">

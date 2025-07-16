@@ -5,6 +5,17 @@ if (!defined('ABSPATH')) {
 
 global $wpdb;
 
+// Hard delete a product if requested
+if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
+    $id = intval($_GET['delete']);
+
+    // Optional: verknüpfte Daten wie Bilder, Varianten etc. löschen
+
+    $wpdb->delete($wpdb->prefix . 'produkt_products', ['id' => $id], ['%d']);
+
+    echo '<div class="notice notice-success"><p>✅ Produkt gelöscht!</p></div>';
+}
+
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 

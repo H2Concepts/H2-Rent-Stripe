@@ -537,6 +537,189 @@ class StripeService {
     }
 
     /**
+     * Check if a Stripe price is currently active.
+     *
+     * @param string $price_id
+     * @return bool|null True if active, false if archived, null on error
+     */
+    public static function is_price_active($price_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return null;
+        }
+        try {
+            $price = \Stripe\Price::retrieve($price_id);
+            return $price->active;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Determine if a Stripe price is archived or invalid.
+     *
+     * @param string $price_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_price_archived($price_id) {
+        if (!$price_id) {
+            return true;
+        }
+
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return true;
+        }
+
+        try {
+            $price = \Stripe\Price::retrieve($price_id);
+            return !$price->active;
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
+     * Check if a Stripe price is archived using a transient cache.
+     * Falls back to live lookup if no cache entry exists.
+     *
+     * @param string $price_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_price_archived_cached($price_id) {
+        if (!$price_id) {
+            return true;
+        }
+
+        $cache_key = 'stripe_price_archived_' . $price_id;
+        $cached    = get_transient($cache_key);
+        if ($cached !== false) {
+            return (bool) $cached;
+        }
+
+        $archived = self::is_price_archived($price_id);
+        set_transient($cache_key, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+        return $archived;
+    }
+
+    /**
+     * Determine if a Stripe product is archived or invalid.
+     *
+     * @param string $product_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_product_archived($product_id) {
+        if (!$product_id) {
+            return true;
+        }
+
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return true;
+        }
+
+        try {
+            $product = \Stripe\Product::retrieve($product_id);
+            return !$product->active;
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
+     * Check if a Stripe product is archived using a transient cache.
+     * Falls back to a live lookup if no cache entry exists.
+     *
+     * @param string $product_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_product_archived_cached($product_id) {
+        if (!$product_id) {
+            return true;
+        }
+
+        $cache_key = 'stripe_product_archived_' . $product_id;
+        $cached    = get_transient($cache_key);
+        if ($cached !== false) {
+            return (bool) $cached;
+        }
+
+        $archived = self::is_product_archived($product_id);
+        set_transient($cache_key, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+        return $archived;
+    }
+
+    /**
+     * Clear cached Stripe archive status for all known products and prices.
+     * Iterates over variant, extra and duration price tables.
+     */
+    public static function clear_stripe_archive_cache() {
+        global $wpdb;
+
+        $tables = [
+            $wpdb->prefix . 'produkt_variants',
+            $wpdb->prefix . 'produkt_extras',
+            $wpdb->prefix . 'produkt_duration_prices',
+        ];
+
+        foreach ($tables as $table) {
+            $ids = $wpdb->get_results("SELECT stripe_price_id, stripe_product_id FROM $table");
+            foreach ($ids as $entry) {
+                if (!empty($entry->stripe_price_id)) {
+                    delete_transient('stripe_price_archived_' . $entry->stripe_price_id);
+                }
+                if (!empty($entry->stripe_product_id)) {
+                    delete_transient('stripe_product_archived_' . $entry->stripe_product_id);
+                }
+            }
+        }
+    }
+
+    /**
+     * Refresh Stripe archive cache for all known products and prices.
+     * Intended to run via WP-Cron.
+     */
+    public static function cron_refresh_stripe_archive_cache() {
+        global $wpdb;
+
+        $tables = [
+            $wpdb->prefix . 'produkt_variants',
+            $wpdb->prefix . 'produkt_extras',
+            $wpdb->prefix . 'produkt_duration_prices',
+        ];
+
+        $stripe = new \Stripe\StripeClient(self::get_secret_key());
+
+        foreach ($tables as $table) {
+            $entries = $wpdb->get_results("SELECT stripe_product_id, stripe_price_id FROM $table");
+
+            foreach ($entries as $entry) {
+                if (!empty($entry->stripe_price_id)) {
+                    try {
+                        $price    = $stripe->prices->retrieve($entry->stripe_price_id);
+                        $archived = !$price->active;
+                    } catch (\Exception $e) {
+                        $archived = true;
+                    }
+                    set_transient('stripe_price_archived_' . $entry->stripe_price_id, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+                }
+
+                if (!empty($entry->stripe_product_id)) {
+                    try {
+                        $product  = $stripe->products->retrieve($entry->stripe_product_id);
+                        $archived = !$product->active;
+                    } catch (\Exception $e) {
+                        $archived = true;
+                    }
+                    set_transient('stripe_product_archived_' . $entry->stripe_product_id, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+                }
+            }
+        }
+
+        error_log('✅ Stripe-Archivstatus erfolgreich via Cron aktualisiert');
+    }
+
+    /**
      * Trigger a synchronization of all Stripe products and prices.
      * Placeholder implementation that fetches items from Stripe.
      */

@@ -32,6 +32,13 @@ if (empty($price_column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
 }
 
+// Ensure stripe_archived column exists
+$archived_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_archived'");
+if (empty($archived_column_exists)) {
+    $after = !empty($price_column_exists) ? 'stripe_price_id' : 'name';
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
+}
+
 // Ensure category_id column exists
 $category_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
 if (empty($category_column_exists)) {

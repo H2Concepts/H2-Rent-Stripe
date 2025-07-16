@@ -38,8 +38,14 @@
             
             <div class="produkt-extra-content">
                 <h4><?php echo esc_html($extra->name); ?></h4>
-                <?php if (isset($extra->active) && $extra->active == 0): ?>
-                    <span class="badge badge-gray">Archiviert bei Stripe</span>
+                <?php
+                $archived = false;
+                if (!empty($extra->stripe_product_id)) {
+                    $archived = \ProduktVerleih\StripeService::is_product_archived_cached($extra->stripe_product_id);
+                }
+                ?>
+                <?php if ($archived): ?>
+                    <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
                 <?php endif; ?>
                 
                 <div class="produkt-extra-meta">
