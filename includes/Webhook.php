@@ -177,17 +177,32 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $product    = $event->data->object;
         $product_id = $product->id;
         global $wpdb;
-        $wpdb->delete("{$wpdb->prefix}produkt_variants", ['stripe_product_id' => $product_id]);
-        $wpdb->delete("{$wpdb->prefix}produkt_extras", ['stripe_product_id' => $product_id]);
-        return new WP_REST_Response(['status' => 'product removed in plugin'], 200);
+        if (!empty($product->deleted) && $product->deleted === true) {
+            $wpdb->delete("{$wpdb->prefix}produkt_variants", ['stripe_product_id' => $product_id]);
+            $wpdb->delete("{$wpdb->prefix}produkt_extras", ['stripe_product_id' => $product_id]);
+            return new WP_REST_Response(['status' => 'product removed in plugin'], 200);
+        }
+        $wpdb->update(
+            "{$wpdb->prefix}produkt_variants",
+            ['active' => 0],
+            ['stripe_product_id' => $product_id]
+        );
+        return new WP_REST_Response(['status' => 'product archived in plugin'], 200);
     } elseif ($event->type === 'price.deleted') {
         $price    = $event->data->object;
         $price_id = $price->id;
         global $wpdb;
-        $wpdb->query($wpdb->prepare(
-            "UPDATE {$wpdb->prefix}produkt_variants SET stripe_price_id = '' WHERE stripe_price_id = %s",
-            $price_id
-        ));
+        if (!empty($price->deleted) && $price->deleted === true) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}produkt_variants SET stripe_price_id = '' WHERE stripe_price_id = %s",
+                $price_id
+            ));
+        } else {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}produkt_variants SET active = 0 WHERE stripe_price_id = %s",
+                $price_id
+            ));
+        }
         return new WP_REST_Response(['status' => 'price unlinked in plugin'], 200);
     }
 
