@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) {
 
 use ProduktVerleih\StripeService;
 
-function produkt_delete_or_archive_stripe_product($product_id) {
+function produkt_delete_or_archive_stripe_product($product_id, $local_id = null, $table = 'produkt_variants') {
     if (!$product_id) {
         return;
     }
@@ -28,6 +28,17 @@ function produkt_delete_or_archive_stripe_product($product_id) {
             if ($price->active) {
                 \Stripe\Price::update($price->id, ['active' => false]);
             }
+        }
+
+        if ($local_id && in_array($table, ['produkt_variants', 'produkt_extras'])) {
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->prefix . $table,
+                ['stripe_archived' => 1],
+                ['id' => $local_id],
+                ['%d'],
+                ['%d']
+            );
         }
 
     } catch (\Exception $e) {

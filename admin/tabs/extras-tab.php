@@ -109,7 +109,7 @@ if (isset($_GET['delete_extra'])) {
     $del_id = intval($_GET['delete_extra']);
     $row = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table_name WHERE id = %d", $del_id));
     if ($row && $row->stripe_product_id) {
-        produkt_delete_or_archive_stripe_product($row->stripe_product_id);
+        produkt_delete_or_archive_stripe_product($row->stripe_product_id, $del_id, 'produkt_extras');
     }
     $result = $wpdb->delete($table_name, array('id' => $del_id), array('%d'));
     if ($result !== false) {

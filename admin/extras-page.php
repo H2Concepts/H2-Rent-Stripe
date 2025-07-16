@@ -163,7 +163,18 @@ if (isset($_POST['submit'])) {
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
+    $extra_id = intval($_GET['delete']);
+    $stripe_product_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT stripe_product_id FROM $table_name WHERE id = %d",
+        $extra_id
+    ));
+
+    if (!empty($stripe_product_id)) {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+        produkt_delete_or_archive_stripe_product($stripe_product_id, $extra_id, 'produkt_extras');
+    }
+
+    $result = $wpdb->delete($table_name, array('id' => $extra_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Extra gelöscht!</p></div>';
     } else {
