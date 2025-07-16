@@ -23,21 +23,12 @@
         <div class="produkt-duration-card">
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
-                <?php
-                $archived = false;
-                if (isset($duration->stripe_product_id) && !empty($duration->stripe_product_id)) {
-                    try {
-                        \Stripe\Stripe::setApiKey(get_option('produkt_stripe_secret_key'));
-                        $stripe_product = \Stripe\Product::retrieve($duration->stripe_product_id);
-                        $archived = !$stripe_product->active;
-                    } catch (\Exception $e) {
-                        $archived = false; // Fehler bei Stripe, lieber Badge weglassen
-                    }
-                }
-                ?>
-                <?php if ($archived): ?>
-                    <span class="badge badge-gray">Archiviert bei Stripe</span>
-                <?php endif; ?>
+                <?php if (!empty($duration->stripe_price_id)) :
+                    $active = \ProduktVerleih\StripeService::is_price_active($duration->stripe_price_id);
+                    if ($active === false) : ?>
+                        <span class="badge badge-gray">Archiviert bei Stripe</span>
+                    <?php endif;
+                endif; ?>
                 <?php if ($duration->show_badge): ?>
                     <span class="produkt-discount-badge">Badge</span>
                 <?php endif; ?>

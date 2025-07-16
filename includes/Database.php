@@ -55,6 +55,13 @@ class Database {
                 $wpdb->query("ALTER TABLE $table_variants ADD COLUMN $column $type AFTER $after");
             }
         }
+
+        // Ensure stripe_archived column exists
+        $archived_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'stripe_archived'");
+        if (empty($archived_exists)) {
+            $after = isset($columns_to_add['stripe_price_id']) ? 'stripe_price_id' : 'name';
+            $wpdb->query("ALTER TABLE $table_variants ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
+        }
         
         // Remove old single image_url column if it exists
         $old_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'image_url'");
@@ -78,6 +85,13 @@ class Database {
         if (empty($price_id_exists)) {
             $after = $product_id_exists ? 'stripe_product_id' : 'name';
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
+        }
+
+        // Ensure stripe_archived column exists
+        $archived_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_archived'");
+        if (empty($archived_exists)) {
+            $after = !empty($price_id_exists) ? 'stripe_price_id' : 'name';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
         }
 
         // Ensure show_badge column exists for durations
@@ -784,6 +798,7 @@ class Database {
             description text,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_archived tinyint(1) DEFAULT 0,
             mietpreis_monatlich decimal(10,2) DEFAULT 0,
             verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
             base_price decimal(10,2) NOT NULL,
@@ -809,6 +824,7 @@ class Database {
             name varchar(255) NOT NULL,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_archived tinyint(1) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,
             active tinyint(1) DEFAULT 1,

@@ -41,6 +41,22 @@ function produkt_delete_or_archive_stripe_product($product_id, $local_id = null,
             );
         }
 
+    } catch (\Stripe\Exception\InvalidRequestException $e) {
+        if (strpos($e->getMessage(), 'No such product') !== false) {
+            error_log('Stripe-Produkt existiert nicht mehr – wird lokal archiviert: ' . $product_id);
+            if ($local_id && in_array($table, ['produkt_variants', 'produkt_extras'])) {
+                global $wpdb;
+                $wpdb->update(
+                    $wpdb->prefix . $table,
+                    ['stripe_archived' => 1],
+                    ['id' => $local_id],
+                    ['%d'],
+                    ['%d']
+                );
+            }
+        } else {
+            error_log('Stripe archive error: ' . $e->getMessage());
+        }
     } catch (\Exception $e) {
         error_log('Stripe archive error: ' . $e->getMessage());
     }

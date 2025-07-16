@@ -537,6 +537,25 @@ class StripeService {
     }
 
     /**
+     * Check if a Stripe price is currently active.
+     *
+     * @param string $price_id
+     * @return bool|null True if active, false if archived, null on error
+     */
+    public static function is_price_active($price_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return null;
+        }
+        try {
+            $price = \Stripe\Price::retrieve($price_id);
+            return $price->active;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Trigger a synchronization of all Stripe products and prices.
      * Placeholder implementation that fetches items from Stripe.
      */
