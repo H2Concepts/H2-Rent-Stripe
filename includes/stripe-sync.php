@@ -64,28 +64,40 @@ function produkt_delete_or_archive_stripe_product($product_id, $local_id = null,
 
 function produkt_deactivate_stripe_price($price_id) {
     if (!$price_id) {
+        error_log('Keine Stripe-Preis-ID übergeben, Abbruch.');
         return;
     }
 
+    $secret_key = get_option('produkt_stripe_secret_key');
+    $stripe = new \Stripe\StripeClient($secret_key);
+
     try {
-        \Stripe\Stripe::setApiKey(get_option('produkt_stripe_secret_key'));
-
-        $price = \Stripe\Price::retrieve($price_id);
-        if ($price && $price->active) {
-            \Stripe\Price::update($price_id, ['active' => false]);
-        }
-
-        // Mark local record as archived
-        global $wpdb;
-        $wpdb->update(
-            $wpdb->prefix . 'produkt_duration_prices',
-            ['stripe_archived' => 1],
-            ['stripe_price_id' => $price_id],
-            ['%d'],
-            ['%s']
-        );
-
+        $price = $stripe->prices->retrieve($price_id);
+    } catch (\Stripe\Exception\InvalidRequestException $e) {
+        error_log("Preis nicht gefunden, überspringe: $price_id");
+        return;
     } catch (\Exception $e) {
-        error_log('Stripe price archive error: ' . $e->getMessage());
+        error_log('Stripe price retrieve error: ' . $e->getMessage());
+        return;
     }
+
+    if ($price->active) {
+        try {
+            $stripe->prices->update($price_id, ['active' => false]);
+            error_log("Stripe-Preis {$price_id} deaktiviert.");
+        } catch (\Stripe\Exception\InvalidRequestException $e) {
+            error_log('Stripe price archive error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            error_log('Stripe price archive error: ' . $e->getMessage());
+        }
+    }
+
+    global $wpdb;
+    $wpdb->update(
+        $wpdb->prefix . 'produkt_duration_prices',
+        ['stripe_archived' => 1],
+        ['stripe_price_id' => $price_id],
+        ['%d'],
+        ['%s']
+    );
 }

@@ -644,13 +644,12 @@ class Database {
         if (!$webhook_exists) {
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE $table_webhooks (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                event_type VARCHAR(100),
-                stripe_object TEXT,
-                message TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                id INT NOT NULL AUTO_INCREMENT,
+                event_type VARCHAR(255),
+                payload LONGTEXT,
+                created_at DATETIME,
+                PRIMARY KEY (id)
             ) $charset_collate;";
-
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
@@ -1110,11 +1109,11 @@ class Database {
         // Webhook logs table
         $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
         $sql_webhooks = "CREATE TABLE $table_webhooks (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            event_type VARCHAR(100),
-            stripe_object TEXT,
-            message TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            id INT NOT NULL AUTO_INCREMENT,
+            event_type VARCHAR(255),
+            payload LONGTEXT,
+            created_at DATETIME,
+            PRIMARY KEY (id)
         ) $charset_collate;";
 
         dbDelta($sql_webhooks);
