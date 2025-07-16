@@ -9,19 +9,8 @@ global $wpdb;
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
     $id = intval($_GET['delete']);
 
-    // Optional: verknüpfte Daten wie Bilder, Varianten etc. löschen
-
-    $wpdb->delete(
-        $wpdb->prefix . 'produkt_product_to_category',
-        ['produkt_id' => $id],
-        ['%d']
-    );
-
-    $wpdb->delete(
-        $wpdb->prefix . 'produkt_products',
-        ['id' => $id],
-        ['%d']
-    );
+    require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+    produkt_hard_delete($id);
 
     echo '<div class="notice notice-success"><p>✅ Produkt gelöscht!</p></div>';
 }

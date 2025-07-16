@@ -101,3 +101,19 @@ function produkt_deactivate_stripe_price($price_id) {
         ['%s']
     );
 }
+
+function produkt_hard_delete($produkt_id) {
+    if (!$produkt_id) {
+        return;
+    }
+
+    global $wpdb;
+    $wpdb->delete(
+        $wpdb->prefix . 'produkt_product_to_category',
+        ['produkt_id' => $produkt_id]
+    );
+    $wpdb->delete(
+        $wpdb->prefix . 'produkt_products',
+        ['id' => $produkt_id]
+    );
+}
