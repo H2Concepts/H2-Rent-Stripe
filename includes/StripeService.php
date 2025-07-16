@@ -676,6 +676,50 @@ class StripeService {
     }
 
     /**
+     * Refresh Stripe archive cache for all known products and prices.
+     * Intended to run via WP-Cron.
+     */
+    public static function cron_refresh_stripe_archive_cache() {
+        global $wpdb;
+
+        $tables = [
+            $wpdb->prefix . 'produkt_variants',
+            $wpdb->prefix . 'produkt_extras',
+            $wpdb->prefix . 'produkt_duration_prices',
+        ];
+
+        $stripe = new \Stripe\StripeClient(self::get_secret_key());
+
+        foreach ($tables as $table) {
+            $entries = $wpdb->get_results("SELECT stripe_product_id, stripe_price_id FROM $table");
+
+            foreach ($entries as $entry) {
+                if (!empty($entry->stripe_price_id)) {
+                    try {
+                        $price    = $stripe->prices->retrieve($entry->stripe_price_id);
+                        $archived = !$price->active;
+                    } catch (\Exception $e) {
+                        $archived = true;
+                    }
+                    set_transient('stripe_price_archived_' . $entry->stripe_price_id, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+                }
+
+                if (!empty($entry->stripe_product_id)) {
+                    try {
+                        $product  = $stripe->products->retrieve($entry->stripe_product_id);
+                        $archived = !$product->active;
+                    } catch (\Exception $e) {
+                        $archived = true;
+                    }
+                    set_transient('stripe_product_archived_' . $entry->stripe_product_id, $archived ? 1 : 0, 6 * HOUR_IN_SECONDS);
+                }
+            }
+        }
+
+        error_log('✅ Stripe-Archivstatus erfolgreich via Cron aktualisiert');
+    }
+
+    /**
      * Trigger a synchronization of all Stripe products and prices.
      * Placeholder implementation that fetches items from Stripe.
      */

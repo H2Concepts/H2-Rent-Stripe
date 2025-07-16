@@ -84,6 +84,9 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
             <p><strong>Stripe-Status-Cache leeren:</strong> Dies erzwingt eine erneute Prüfung der Stripe-Archivierung für Produkte und Preise (Mietdauer, Extras, Ausführungen).</p>
             <input type="submit" name="clear_stripe_cache" class="button button-secondary" value="Stripe-Status neu prüfen">
         </form>
+        <?php if (wp_next_scheduled('produkt_stripe_status_cron')): ?>
+            <p>Nächster automatischer Stripe-Archiv-Check: <?php echo date('d.m.Y H:i:s', wp_next_scheduled('produkt_stripe_status_cron')); ?></p>
+        <?php endif; ?>
     </div>
     
     <div class="produkt-debug-sections">
