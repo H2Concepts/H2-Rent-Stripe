@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/stripe-autoload.php';
+require_once plugin_dir_path(__FILE__) . 'stripe-php/init.php';
+
 if (!defined('ABSPATH')) {
     exit;
 }

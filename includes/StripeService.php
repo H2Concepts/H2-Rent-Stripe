@@ -3,7 +3,7 @@ namespace ProduktVerleih;
 
 class StripeService {
     private static function load_library() {
-        $stripe_init = plugin_dir_path(__FILE__) . '/../vendor/stripe/stripe-php/init.php';
+        $stripe_init = plugin_dir_path(__FILE__) . 'stripe-php/init.php';
         if (file_exists($stripe_init)) {
             require_once $stripe_init;
         }

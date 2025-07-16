@@ -5,18 +5,17 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-function load_stripe_sdk() {
+// Stripe erst laden, wenn alle Plugins geladen sind
+add_action('plugins_loaded', function () {
     if (!class_exists('\\Stripe\\Stripe')) {
-        $vendor_path = __DIR__ . '/../vendor/autoload.php';
+        $stripe_path = __DIR__ . '/stripe-php/init.php';
 
-        if (file_exists($vendor_path)) {
-            require_once $vendor_path;
+        if (file_exists($stripe_path)) {
+            require_once $stripe_path;
         } else {
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-error"><p><strong>Stripe-Bibliothek nicht gefunden:</strong> <code>/vendor</code>-Ordner fehlt. Bitte <code>composer install</code> ausführen oder Ordner hochladen.</p></div>';
+                echo '<div class="notice notice-error"><p><strong>Stripe-Bibliothek nicht gefunden:</strong> <code>includes/stripe-php/</code>-Ordner fehlt. Bitte manuell hochladen oder via Composer installieren.</p></div>';
             });
         }
     }
-}
-
-load_stripe_sdk();
+});
