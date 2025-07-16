@@ -45,3 +45,21 @@ function produkt_delete_or_archive_stripe_product($product_id, $local_id = null,
         error_log('Stripe archive error: ' . $e->getMessage());
     }
 }
+
+function produkt_deactivate_stripe_price($price_id) {
+    if (!$price_id) {
+        return;
+    }
+
+    try {
+        \Stripe\Stripe::setApiKey(get_option('produkt_stripe_secret_key'));
+
+        $price = \Stripe\Price::retrieve($price_id);
+        if ($price && $price->active) {
+            \Stripe\Price::update($price_id, ['active' => false]);
+        }
+
+    } catch (\Exception $e) {
+        error_log('Stripe price archive error: ' . $e->getMessage());
+    }
+}

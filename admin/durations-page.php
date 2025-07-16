@@ -153,7 +153,26 @@ if (isset($_POST['submit'])) {
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
+    $duration_id = intval($_GET['delete']);
+    $price_rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT stripe_price_id FROM $table_prices WHERE duration_id = %d",
+        $duration_id
+    ));
+
+    if ($price_rows) {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+
+        foreach ($price_rows as $row) {
+            if (!empty($row->stripe_price_id)) {
+                produkt_deactivate_stripe_price($row->stripe_price_id);
+            }
+        }
+    }
+
+    // Optional: zugehörige Preise aus DB löschen
+    $wpdb->delete($table_prices, ['duration_id' => $duration_id], ['%d']);
+
+    $result = $wpdb->delete($table_name, array('id' => $duration_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Mietdauer gelöscht!</p></div>';
     } else {
