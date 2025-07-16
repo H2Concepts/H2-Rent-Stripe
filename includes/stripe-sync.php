@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/stripe-autoload.php';
 if (!defined('ABSPATH')) {
     exit;
 }

@@ -13,7 +13,7 @@ function load_stripe_sdk() {
             require_once $vendor_path;
         } else {
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-error"><p><strong>Stripe-Bibliothek nicht gefunden.</strong> Bitte führen Sie <code>composer install</code> aus oder laden Sie den <code>/vendor</code>-Ordner hoch.</p></div>';
+                echo '<div class="notice notice-error"><p><strong>Stripe-Bibliothek nicht gefunden:</strong> <code>/vendor</code>-Ordner fehlt. Bitte <code>composer install</code> ausführen oder Ordner hochladen.</p></div>';
             });
         }
     }
