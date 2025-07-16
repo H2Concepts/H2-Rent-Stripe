@@ -121,7 +121,7 @@ class Admin {
         add_submenu_page(
             'produkt-verleih',
             'Versandkosten',
-            '🚚 Versandkosten',
+            'Versandkosten',
             'manage_options',
             'produkt-shipping',
             array($this, 'shipping_page')
