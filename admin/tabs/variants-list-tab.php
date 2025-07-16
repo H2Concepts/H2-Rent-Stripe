@@ -62,17 +62,11 @@
                 <?php
                 $archived = false;
                 if (!empty($variant->stripe_product_id)) {
-                    try {
-                        \Stripe\Stripe::setApiKey(get_option('produkt_stripe_secret_key'));
-                        $stripe_product = \Stripe\Product::retrieve($variant->stripe_product_id);
-                        $archived = !$stripe_product->active;
-                    } catch (\Exception $e) {
-                        $archived = false; // Fehler bei Stripe, lieber Badge weglassen
-                    }
+                    $archived = \ProduktVerleih\StripeService::is_product_archived($variant->stripe_product_id);
                 }
                 ?>
                 <?php if ($archived): ?>
-                    <span class="badge badge-gray">Archiviert bei Stripe</span>
+                    <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
                 <?php endif; ?>
                 <p class="produkt-variant-description"><?php echo esc_html($variant->description); ?></p>
                 

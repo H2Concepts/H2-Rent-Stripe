@@ -71,9 +71,16 @@
                 } elseif (!empty($duration_prices[$variant->id]['stripe_archived'])) {
                     $archived = true;
                 }
+                $product_archived = false;
+                if (!empty($variant->stripe_product_id)) {
+                    $product_archived = \ProduktVerleih\StripeService::is_product_archived($variant->stripe_product_id);
+                }
                 ?>
                 <?php if ($archived): ?>
                     <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                <?php endif; ?>
+                <?php if ($product_archived): ?>
+                    <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
                 <?php endif; ?>
             </div>
             <?php endforeach; ?>

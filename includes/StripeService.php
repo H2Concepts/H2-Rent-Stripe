@@ -580,6 +580,30 @@ class StripeService {
     }
 
     /**
+     * Determine if a Stripe product is archived or invalid.
+     *
+     * @param string $product_id
+     * @return bool True if archived or not found, false if active
+     */
+    public static function is_product_archived($product_id) {
+        if (!$product_id) {
+            return true;
+        }
+
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return true;
+        }
+
+        try {
+            $product = \Stripe\Product::retrieve($product_id);
+            return !$product->active;
+        } catch (\Exception $e) {
+            return true;
+        }
+    }
+
+    /**
      * Trigger a synchronization of all Stripe products and prices.
      * Placeholder implementation that fetches items from Stripe.
      */
