@@ -47,7 +47,7 @@ if (isset($_POST['clear_stripe_cache']) && check_admin_referer('clear_stripe_cac
 
 // Cleanup orphaned products
 if (isset($_POST['run_cleanup']) && check_admin_referer('cleanup_action')) {
-    $wpdb->query("DELETE FROM {$wpdb->prefix}produkt_products WHERE category_id NOT IN (SELECT id FROM {$wpdb->prefix}produkt_categories)");
+    $wpdb->query("DELETE FROM {$wpdb->prefix}produkt_items WHERE category_id NOT IN (SELECT id FROM {$wpdb->prefix}produkt_categories)");
     echo '<div class="notice notice-success"><p>✅ Verwaiste Produkte bereinigt.</p></div>';
 }
 
