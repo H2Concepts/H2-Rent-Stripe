@@ -11,8 +11,17 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
 
     // Optional: verknüpfte Daten wie Bilder, Varianten etc. löschen
 
-    $wpdb->delete($wpdb->prefix . 'produkt_categories', ['id' => $id], ['%d']);
-    $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $id], ['%d']);
+    $wpdb->delete(
+        $wpdb->prefix . 'produkt_product_to_category',
+        ['produkt_id' => $id],
+        ['%d']
+    );
+
+    $wpdb->delete(
+        $wpdb->prefix . 'produkt_products',
+        ['id' => $id],
+        ['%d']
+    );
 
     echo '<div class="notice notice-success"><p>✅ Produkt gelöscht!</p></div>';
 }
