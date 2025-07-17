@@ -1540,6 +1540,8 @@ body.produkt-popup-open {
     font-weight: 600;
     margin-bottom: 0.5rem;
     color: #000;
+    font-size: 22px;
+    line-height: 1.1;
 }
 
 .shop-product-shortdesc {

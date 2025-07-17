@@ -152,7 +152,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                         <img src="<?php echo esc_url($cat->default_image); ?>" alt="<?php echo esc_attr($cat->product_title); ?>">
                     <?php endif; ?>
                 </div>
-                <div class="shop-product-title"><?php echo esc_html($cat->product_title); ?></div>
+                <h3 class="shop-product-title"><?php echo esc_html($cat->product_title); ?></h3>
                 <div class="shop-product-shortdesc"><?php echo esc_html($cat->short_description ?? ''); ?></div>
                 <div class="shop-product-footer">
                     <?php
