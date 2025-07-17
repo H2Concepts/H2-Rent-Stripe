@@ -35,8 +35,8 @@ function produkt_render_kategorien_metabox() {
     }
     echo '</ul>';
     echo '</div>';
-    echo '<p class="button-controls"><span>';
-    echo '<button type="button" class="button-secondary add-to-menu" name="add-plugin-kategorie-menu">Zum Menü hinzufügen</button>';
+    echo '<p class="button-controls"><span class="add-to-menu">';
+    echo '<button type="submit" class="button-secondary submit-add-to-menu right" name="add-plugin-kategorie-menu">Zum Menü hinzufügen</button>';
     echo '<span class="spinner"></span></span></p>';
     echo '</div>';
 }
@@ -70,8 +70,8 @@ function produkt_render_produkte_metabox() {
     }
     echo '</ul>';
     echo '</div>';
-    echo '<p class="button-controls"><span>';
-    echo '<button type="button" class="button-secondary add-to-menu" name="add-plugin-produkt-menu">Zum Menü hinzufügen</button>';
+    echo '<p class="button-controls"><span class="add-to-menu">';
+    echo '<button type="submit" class="button-secondary submit-add-to-menu right" name="add-plugin-produkt-menu">Zum Menü hinzufügen</button>';
     echo '<span class="spinner"></span></span></p>';
     echo '</div>';
 }
@@ -87,19 +87,21 @@ add_filter('wp_edit_nav_menu_walker', function ($walker) {
 });
 
 add_action('admin_init', function () {
+    global $nav_menu_selected_id;
+
     if (isset($_POST['plugin_kategorie_menu'])) {
-        produkt_menue_custom_items_speichern($_POST['plugin_kategorie_menu']);
+        produkt_menue_custom_items_speichern($_POST['plugin_kategorie_menu'], $nav_menu_selected_id);
     }
     if (isset($_POST['plugin_produkt_menu'])) {
-        produkt_menue_custom_items_speichern($_POST['plugin_produkt_menu']);
+        produkt_menue_custom_items_speichern($_POST['plugin_produkt_menu'], $nav_menu_selected_id);
     }
 });
 
-function produkt_menue_custom_items_speichern($eintraege) {
+function produkt_menue_custom_items_speichern($eintraege, $menu_id) {
     foreach ($eintraege as $item) {
         list($url, $title) = explode('|', $item);
 
-        wp_update_nav_menu_item(0, 0, [
+        wp_update_nav_menu_item($menu_id, 0, [
             'menu-item-type'   => 'custom',
             'menu-item-title'  => $title,
             'menu-item-url'    => $url,
@@ -108,41 +110,3 @@ function produkt_menue_custom_items_speichern($eintraege) {
     }
 }
 
-// Ensure checked entries get converted to hidden inputs before submission
-add_action('admin_enqueue_scripts', function ($hook) {
-    if ($hook === 'nav-menus.php') {
-        wp_add_inline_script('nav-menu', <<<'JS'
-document.addEventListener('DOMContentLoaded', function () {
-    ['add-plugin-kategorie-menu', 'add-plugin-produkt-menu'].forEach(buttonName => {
-        const button = document.querySelector(`button[name="${buttonName}"]`);
-        if (button) {
-            button.addEventListener('click', function () {
-                const form = button.closest('form');
-                const selected = form.querySelectorAll('input.menu-item-checkbox:checked');
-                selected.forEach((checkbox, index) => {
-                    const [url, title] = checkbox.value.split('|');
-                    const base = Date.now() + index;
-                    const fields = [
-                        { name: `menu-item[${base}][menu-item-type]`, value: 'custom' },
-                        { name: `menu-item[${base}][menu-item-title]`, value: title },
-                        { name: `menu-item[${base}][menu-item-url]`, value: url },
-                        { name: `menu-item[${base}][menu-item-status]`, value: 'publish' },
-                    ];
-                    fields.forEach(({ name, value }) => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = name;
-                        input.value = value;
-                        form.appendChild(input);
-                    });
-                });
-
-                form.submit();
-            });
-        }
-    });
-});
-JS
-        );
-    }
-});
