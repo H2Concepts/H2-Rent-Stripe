@@ -246,9 +246,11 @@ class Plugin {
             ));
 
             if ($category) {
+                $cat_ids = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
+                $placeholders = implode(',', array_fill(0, count($cat_ids), '%d'));
                 $product_ids = $wpdb->get_col($wpdb->prepare(
-                    "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
-                    $category->id
+                    "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id IN ($placeholders)",
+                    $cat_ids
                 ));
 
                 $categories = array_filter($categories, function ($prod) use ($product_ids) {

@@ -19,6 +19,14 @@ class Database {
                 $wpdb->query("ALTER TABLE $table_name ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
             }
         }
+
+        // Ensure parent_id column exists for product categories
+        $table_prod_cats = $wpdb->prefix . 'produkt_product_categories';
+        $parent_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_prod_cats LIKE 'parent_id'");
+        if (empty($parent_exists)) {
+            $wpdb->query("ALTER TABLE $table_prod_cats ADD COLUMN parent_id INT UNSIGNED DEFAULT NULL AFTER id");
+            $wpdb->query("ALTER TABLE $table_prod_cats ADD KEY parent_id (parent_id)");
+        }
         
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';
@@ -729,11 +737,13 @@ class Database {
         $table_prod_categories = $wpdb->prefix . 'produkt_product_categories';
         $sql_prod_categories = "CREATE TABLE IF NOT EXISTS $table_prod_categories (
             id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            parent_id INT UNSIGNED DEFAULT NULL,
             name VARCHAR(255) NOT NULL,
             slug VARCHAR(255) NOT NULL UNIQUE,
             description TEXT DEFAULT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+            KEY parent_id (parent_id)
         ) $charset_collate;";
 
         // Mapping table between products and categories
@@ -1428,5 +1438,58 @@ class Database {
 
         $sql = "SELECT *, stripe_subscription_id AS subscription_id FROM $table WHERE customer_email = %s ORDER BY created_at";
         return $wpdb->get_results($wpdb->prepare($sql, $email));
+    }
+
+    /**
+     * Retrieve all product categories sorted hierarchically.
+     * Each returned object has a 'depth' property for indentation.
+     *
+     * @return array
+     */
+    public static function get_product_categories_tree() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_product_categories';
+        $cats = $wpdb->get_results("SELECT id, parent_id, name, slug FROM $table ORDER BY name");
+        $map = [];
+        foreach ($cats as $c) {
+            $c->children = [];
+            $map[$c->id] = $c;
+        }
+        foreach ($cats as $c) {
+            if ($c->parent_id && isset($map[$c->parent_id])) {
+                $map[$c->parent_id]->children[] = $c;
+            }
+        }
+        $ordered = [];
+        $add = function($cat, $level) use (&$ordered, &$add) {
+            $cat->depth = $level;
+            $ordered[] = $cat;
+            foreach ($cat->children as $child) {
+                $add($child, $level + 1);
+            }
+        };
+        foreach ($cats as $c) {
+            if (empty($c->parent_id)) {
+                $add($c, 0);
+            }
+        }
+        return $ordered;
+    }
+
+    /**
+     * Get IDs of all descendant categories of a given parent.
+     *
+     * @param int $parent_id
+     * @return array
+     */
+    public static function get_descendant_category_ids($parent_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_product_categories';
+        $ids = $wpdb->get_col($wpdb->prepare("SELECT id FROM $table WHERE parent_id = %d", $parent_id));
+        $all = $ids;
+        foreach ($ids as $id) {
+            $all = array_merge($all, self::get_descendant_category_ids($id));
+        }
+        return $all;
     }
 }

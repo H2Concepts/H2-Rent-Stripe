@@ -11,7 +11,7 @@
             <select name="prodcat">
                 <option value="0">Alle Kategorien</option>
                 <?php foreach ($product_categories as $pc): ?>
-                    <option value="<?php echo $pc->id; ?>" <?php selected($selected_prodcat, $pc->id); ?>><?php echo esc_html($pc->name); ?></option>
+                    <option value="<?php echo $pc->id; ?>" <?php selected($selected_prodcat, $pc->id); ?>><?php echo str_repeat('--', $pc->depth) . ' ' . esc_html($pc->name); ?></option>
                 <?php endforeach; ?>
             </select>
             <input type="text" name="s" value="<?php echo esc_attr($search_term); ?>" placeholder="Produkt suchen...">

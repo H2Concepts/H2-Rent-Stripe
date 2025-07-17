@@ -12,8 +12,7 @@
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
         <?php
-        global $wpdb;
-        $all_product_cats = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+        $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
         $selected_product_cats = $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT category_id FROM {$wpdb->prefix}produkt_product_to_category WHERE produkt_id = %d",
@@ -85,7 +84,7 @@
                 <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
                     <?php foreach ($all_product_cats as $cat): ?>
                         <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
-                            <?php echo esc_html($cat->name); ?>
+                            <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

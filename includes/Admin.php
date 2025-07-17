@@ -613,7 +613,7 @@ class Admin {
         }
 
         // Filter & Suche
-        $product_categories = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+        $product_categories = \ProduktVerleih\Database::get_product_categories_tree();
         $selected_prodcat = isset($_GET['prodcat']) ? intval($_GET['prodcat']) : 0;
         $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 
