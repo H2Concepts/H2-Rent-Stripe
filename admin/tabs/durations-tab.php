@@ -159,13 +159,4 @@ $durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE 
     </div>
 </div>
 
-<style>
-.produkt-discount-badge {
-    background: #e3e8e3;
-    color: var(--produkt-secondary);
-    padding: 0.125rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.7rem;
-    font-weight: 500;
-}
-</style>
+

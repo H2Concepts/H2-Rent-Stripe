@@ -688,7 +688,12 @@ class StripeService {
             $wpdb->prefix . 'produkt_duration_prices',
         ];
 
-        $stripe = new \Stripe\StripeClient(self::get_secret_key());
+        $secret = get_option('produkt_stripe_secret_key', '');
+        if (empty($secret)) {
+            error_log('Stripe secret key not set - cannot refresh archive cache');
+            return;
+        }
+        $stripe = new \Stripe\StripeClient($secret);
 
         foreach ($tables as $table) {
             $entries = $wpdb->get_results("SELECT stripe_product_id, stripe_price_id FROM $table");

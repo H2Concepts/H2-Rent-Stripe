@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) { exit; }
 global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_content_blocks';
 
-$categories = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_product_categories ORDER BY name");
+$categories = \ProduktVerleih\Database::get_product_categories_tree();
 array_unshift($categories, (object)['id' => 0, 'name' => 'Alle Kategorien']);
 $selected_category = isset($_GET['category']) ? intval($_GET['category']) : ($categories[0]->id ?? 0);
 $action = isset($_GET['action']) ? sanitize_text_field($_GET['action']) : 'list';
@@ -54,7 +54,7 @@ $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
         <label for="cb-category-select"><strong>Kategorie:</strong></label>
         <select id="cb-category-select" name="category" onchange="this.form.submit()">
             <?php foreach ($categories as $cat): ?>
-                <option value="<?php echo $cat->id; ?>" <?php selected($selected_category, $cat->id); ?>><?php echo esc_html($cat->name); ?></option>
+                <option value="<?php echo $cat->id; ?>" <?php selected($selected_category, $cat->id); ?>><?php echo str_repeat('--', $cat->depth ?? 0) . ' ' . esc_html($cat->name); ?></option>
             <?php endforeach; ?>
         </select>
         <noscript><input type="submit" value="Wechseln" class="button"></noscript>

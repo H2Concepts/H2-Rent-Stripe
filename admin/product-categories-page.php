@@ -10,6 +10,7 @@ if (isset($_POST['save_category'])) {
     $name = sanitize_text_field($_POST['name']);
     $slug = sanitize_title($_POST['slug']);
     $description = sanitize_textarea_field($_POST['description']);
+    $parent_id = isset($_POST['parent_id']) ? intval($_POST['parent_id']) : 0;
     $id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
 
     global $wpdb;
@@ -19,13 +20,15 @@ if (isset($_POST['save_category'])) {
         $wpdb->update($table, [
             'name' => $name,
             'slug' => $slug,
-            'description' => $description
+            'description' => $description,
+            'parent_id' => $parent_id ?: null
         ], ['id' => $id]);
     } else {
         $wpdb->insert($table, [
             'name' => $name,
             'slug' => $slug,
-            'description' => $description
+            'description' => $description,
+            'parent_id' => $parent_id ?: null
         ]);
     }
 }
@@ -39,14 +42,17 @@ if (isset($_GET['delete'])) {
 }
 
 global $wpdb;
-$categories = $wpdb->get_results(
+$raw_cats = $wpdb->get_results(
     "SELECT c.*, COUNT(p.id) AS product_count
      FROM {$wpdb->prefix}produkt_product_categories c
      LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON c.id = ptc.category_id
      LEFT JOIN {$wpdb->prefix}produkt_categories p ON p.id = ptc.produkt_id
-     GROUP BY c.id
-     ORDER BY c.name ASC"
+     GROUP BY c.id"
 );
+$categories = Database::get_product_categories_tree();
+$counts = [];
+foreach ($raw_cats as $r) { $counts[$r->id] = $r->product_count; }
+foreach ($categories as $c) { $c->product_count = $counts[$c->id] ?? 0; }
 
 // Wenn Bearbeiten
 $edit_category = null;
@@ -61,7 +67,7 @@ if (isset($_GET['edit'])) {
 
     <h2><?= $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen' ?></h2>
 
-    <form method="post">
+    <form method="post" id="produkt-category-form">
         <input type="hidden" name="category_id" value="<?= esc_attr($edit_category->id ?? '') ?>">
         <table class="form-table">
             <tr>
@@ -73,12 +79,44 @@ if (isset($_GET['edit'])) {
                 <td><input name="slug" type="text" required value="<?= esc_attr($edit_category->slug ?? '') ?>" class="regular-text"></td>
             </tr>
             <tr>
+                <th><label for="parent_id">Übergeordnete Kategorie</label></th>
+                <td>
+                    <select name="parent_id">
+                        <option value="0">Keine</option>
+                        <?php foreach ($categories as $cat_option): ?>
+                            <?php if (!isset($edit_category->id) || $cat_option->id != $edit_category->id): ?>
+                                <option value="<?= $cat_option->id ?>" <?= isset($edit_category->parent_id) && $edit_category->parent_id == $cat_option->id ? 'selected' : '' ?>>
+                                    <?= str_repeat('--', $cat_option->depth) . ' ' . esc_html($cat_option->name) ?>
+                                </option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
                 <th><label for="description">Beschreibung</label></th>
                 <td><textarea name="description" class="large-text"><?= esc_textarea($edit_category->description ?? '') ?></textarea></td>
             </tr>
         </table>
         <p><input type="submit" name="save_category" class="button-primary" value="Speichern"></p>
     </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var nameField = document.querySelector('#produkt-category-form input[name="name"]');
+        var slugField = document.querySelector('#produkt-category-form input[name="slug"]');
+        if (!nameField || !slugField) return;
+
+        var touched = false;
+        slugField.addEventListener('input', function () { touched = true; });
+        nameField.addEventListener('input', function () {
+            if (touched && slugField.value) return;
+            var slug = nameField.value.toLowerCase().trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-');
+            slugField.value = slug;
+        });
+    });
+    </script>
 
     <h2>Bestehende Kategorien</h2>
     <table class="widefat striped">
@@ -93,7 +131,7 @@ if (isset($_GET['edit'])) {
         <tbody>
             <?php foreach ($categories as $cat): ?>
                 <tr>
-                    <td><?= esc_html($cat->name) ?></td>
+                    <td><?= str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name) ?></td>
                     <td><?= esc_html($cat->slug) ?></td>
                     <td><?= intval($cat->product_count) ?></td>
                     <td>

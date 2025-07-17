@@ -320,33 +320,4 @@ foreach ($results as $result) {
     </div>
 </div>
 
-<style>
-.form-table th {
-    width: 200px;
-    padding: 20px 10px 20px 0;
-    font-weight: 600;
-}
 
-.form-table td {
-    padding: 15px 10px;
-}
-
-.form-table input[type="text"],
-.form-table input[type="url"],
-.form-table textarea {
-    width: 100%;
-    max-width: 500px;
-}
-
-.form-table textarea {
-    resize: vertical;
-}
-
-.color-picker {
-    width: 60px;
-    height: 40px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-}
-</style>

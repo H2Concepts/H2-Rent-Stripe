@@ -310,29 +310,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     </div>
 </div>
 
-<style>
-.wp-list-table th,
-.wp-list-table td {
-    padding: 12px 8px;
-    vertical-align: top;
-}
 
-.wp-list-table .button-small {
-    margin-bottom: 5px;
-    white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-    .wp-list-table {
-        font-size: 12px;
-    }
-    
-    .wp-list-table th,
-    .wp-list-table td {
-        padding: 8px 4px;
-    }
-}
-</style>
 
 <script>
 function showOrderDetails(orderId) {

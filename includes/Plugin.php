@@ -110,7 +110,8 @@ class Plugin {
 
     public function check_for_updates() {
         $current_version = get_option('produkt_version', '1.0.0');
-        if (version_compare($current_version, PRODUKT_VERSION, '<')) {
+        $needs_schema = !$this->db->categories_table_has_parent_column();
+        if (version_compare($current_version, PRODUKT_VERSION, '<') || $needs_schema) {
             $this->db->update_database();
             update_option('produkt_version', PRODUKT_VERSION);
         }
@@ -118,6 +119,8 @@ class Plugin {
 
     public function activate() {
         $this->db->create_tables();
+        // Ensure any new columns are added when activating after an update
+        $this->db->update_database();
         $load_sample = defined('PRODUKT_LOAD_DEFAULT_DATA') ? PRODUKT_LOAD_DEFAULT_DATA : false;
         $load_sample = apply_filters('produkt_load_default_data', $load_sample);
         if ($load_sample) {
@@ -246,9 +249,11 @@ class Plugin {
             ));
 
             if ($category) {
+                $cat_ids = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
+                $placeholders = implode(',', array_fill(0, count($cat_ids), '%d'));
                 $product_ids = $wpdb->get_col($wpdb->prepare(
-                    "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
-                    $category->id
+                    "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id IN ($placeholders)",
+                    $cat_ids
                 ));
 
                 $categories = array_filter($categories, function ($prod) use ($product_ids) {

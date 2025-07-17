@@ -32,10 +32,12 @@ if (!empty($category_slug)) {
     ));
 
     if (!empty($category)) {
-        // Gefundene Kategorie → filtern
+        // Gefundene Kategorie → filtern inkl. Unterkategorien
+        $cat_ids = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
+        $placeholders = implode(',', array_fill(0, count($cat_ids), '%d'));
         $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
-            $category->id
+            "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id IN ($placeholders)",
+            $cat_ids
         ));
         $categories = array_filter($categories ?? [], function ($product) use ($filtered_product_ids) {
             return in_array($product->id, $filtered_product_ids);
@@ -106,15 +108,17 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 
     <?php
     global $wpdb;
-    $kats = $wpdb->get_results(
-        "SELECT pc.*, COUNT(p.id) AS product_count
+    $kats_raw = $wpdb->get_results(
+        "SELECT pc.id, pc.parent_id, pc.name, pc.slug, COUNT(ptc.produkt_id) AS product_count
          FROM {$wpdb->prefix}produkt_product_categories pc
          LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON pc.id = ptc.category_id
-         INNER JOIN {$wpdb->prefix}produkt_categories p ON p.id = ptc.produkt_id
-         GROUP BY pc.id
-         HAVING product_count > 0
-         ORDER BY pc.name ASC"
+         GROUP BY pc.id"
     );
+    $kats = Database::get_product_categories_tree();
+    $cnt_map = [];
+    foreach ($kats_raw as $r) { $cnt_map[$r->id] = $r->product_count; }
+    foreach ($kats as $c) { $c->product_count = $cnt_map[$c->id] ?? 0; }
+    $kats = array_filter($kats, function($c){ return $c->product_count > 0; });
     ?>
 
     <div class="shop-overview-layout">
@@ -123,7 +127,8 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             <ul>
                 <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
                 <?php foreach ($kats as $kat): ?>
-                    <li>
+                    <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
+                    <li class="<?php echo esc_attr($cls); ?>">
                         <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
                             <?php echo esc_html($kat->name); ?>
                         </a>
@@ -147,7 +152,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                         <img src="<?php echo esc_url($cat->default_image); ?>" alt="<?php echo esc_attr($cat->product_title); ?>">
                     <?php endif; ?>
                 </div>
-                <div class="shop-product-title"><?php echo esc_html($cat->product_title); ?></div>
+                <h3 class="shop-product-title"><?php echo esc_html($cat->product_title); ?></h3>
                 <div class="shop-product-shortdesc"><?php echo esc_html($cat->short_description ?? ''); ?></div>
                 <div class="shop-product-footer">
                     <?php
@@ -245,7 +250,8 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         <ul>
             <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
             <?php foreach ($kats as $kat): ?>
-                <li>
+                <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
+                <li class="<?php echo esc_attr($cls); ?>">
                     <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
                         <?php echo esc_html($kat->name); ?>
                     </a>

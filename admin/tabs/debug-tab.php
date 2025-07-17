@@ -106,28 +106,28 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
                 🔄 Datenbank reparieren
             </button>
         </form>
-        <form method="post" action="" style="margin-top:10px;">
+        <form method="post" action="">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="plugin_uninstall" class="button button-secondary" onclick="return confirm('Plugin und alle Daten wirklich löschen?')">
                 🗑️ Plugin-Daten löschen
             </button>
         </form>
-        <form method="post" action="" style="margin-top:10px;">
+        <form method="post" action="">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="manual_stripe_sync" class="button button-primary">
                 🔁 Stripe Sync starten
             </button>
         </form>
-        <form method="post" action="" style="margin-top:10px;">
+        <form method="post" action="">
             <?php wp_nonce_field('clear_stripe_cache_action'); ?>
             <p><strong>Stripe-Status-Cache leeren:</strong> Dies erzwingt eine erneute Prüfung der Stripe-Archivierung für Produkte und Preise (Mietdauer, Extras, Ausführungen).</p>
             <input type="submit" name="clear_stripe_cache" class="button button-secondary" value="Stripe-Status neu prüfen">
         </form>
-        <form method="post" action="" style="margin-top:10px;">
+        <form method="post" action="">
             <?php wp_nonce_field('cleanup_action'); ?>
             <input type="submit" name="run_cleanup" class="button button-secondary" value="🧹 Cleanup nicht mehr verknüpfter Datensätze">
         </form>
-        <form method="post" action="" style="margin-top:10px;">
+        <form method="post" action="">
             <?php wp_nonce_field('produkt_cleanup_action'); ?>
             <p><strong>🧹 Verwaiste Daten bereinigen:</strong> Entfernt z. B. Kategorie-Zuordnungen gelöschter Produkte.</p>
             <input type="submit" name="run_hard_cleanup" class="button button-secondary" value="Jetzt bereinigen">
@@ -190,87 +190,4 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
     </div>
 </div>
 
-<style>
-.produkt-debug-tab {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
 
-.produkt-debug-warning {
-    background: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 8px;
-    padding: 15px;
-}
-
-.produkt-debug-warning h3 {
-    margin: 0 0 10px 0;
-    color: #856404;
-}
-
-.produkt-debug-actions {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 15px;
-}
-
-.produkt-debug-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.produkt-debug-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-}
-
-.produkt-debug-section h4 {
-    margin: 0 0 15px 0;
-    color: #3c434a;
-}
-
-.produkt-debug-table {
-    margin-bottom: 15px;
-}
-
-.produkt-debug-sample {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    padding: 15px;
-}
-
-.produkt-debug-sample h5 {
-    margin: 0 0 10px 0;
-    color: #3c434a;
-}
-
-.produkt-debug-sample pre {
-    background: #f1f1f1;
-    padding: 10px;
-    border-radius: 4px;
-    overflow-x: auto;
-    font-size: 12px;
-}
-
-.produkt-debug-error {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    border-radius: 4px;
-    padding: 15px;
-}
-
-.produkt-debug-info ul {
-    margin: 0;
-    padding-left: 20px;
-}
-
-.produkt-debug-info li {
-    margin-bottom: 5px;
-}
-</style>
