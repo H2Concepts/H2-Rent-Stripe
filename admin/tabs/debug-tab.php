@@ -106,28 +106,28 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
                 🔄 Datenbank reparieren
             </button>
         </form>
-        <form method="post" action="" class="pv-mt-10">
+        <form method="post" action="">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="plugin_uninstall" class="button button-secondary" onclick="return confirm('Plugin und alle Daten wirklich löschen?')">
                 🗑️ Plugin-Daten löschen
             </button>
         </form>
-        <form method="post" action="" class="pv-mt-10">
+        <form method="post" action="">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <button type="submit" name="manual_stripe_sync" class="button button-primary">
                 🔁 Stripe Sync starten
             </button>
         </form>
-        <form method="post" action="" class="pv-mt-10">
+        <form method="post" action="">
             <?php wp_nonce_field('clear_stripe_cache_action'); ?>
             <p><strong>Stripe-Status-Cache leeren:</strong> Dies erzwingt eine erneute Prüfung der Stripe-Archivierung für Produkte und Preise (Mietdauer, Extras, Ausführungen).</p>
             <input type="submit" name="clear_stripe_cache" class="button button-secondary" value="Stripe-Status neu prüfen">
         </form>
-        <form method="post" action="" class="pv-mt-10">
+        <form method="post" action="">
             <?php wp_nonce_field('cleanup_action'); ?>
             <input type="submit" name="run_cleanup" class="button button-secondary" value="🧹 Cleanup nicht mehr verknüpfter Datensätze">
         </form>
-        <form method="post" action="" class="pv-mt-10">
+        <form method="post" action="">
             <?php wp_nonce_field('produkt_cleanup_action'); ?>
             <p><strong>🧹 Verwaiste Daten bereinigen:</strong> Entfernt z. B. Kategorie-Zuordnungen gelöschter Produkte.</p>
             <input type="submit" name="run_hard_cleanup" class="button button-secondary" value="Jetzt bereinigen">
