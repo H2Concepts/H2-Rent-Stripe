@@ -107,3 +107,34 @@ function produkt_menue_custom_items_speichern($eintraege) {
         ]);
     }
 }
+
+// Ensure checked entries get converted to hidden inputs before submission
+add_action('admin_enqueue_scripts', function ($hook) {
+    if ($hook === 'nav-menus.php') {
+        wp_add_inline_script('nav-menu', <<<'JS'
+document.addEventListener('DOMContentLoaded', function () {
+    ['add-plugin-kategorie-menu', 'add-plugin-produkt-menu'].forEach(buttonName => {
+        const button = document.querySelector(`input[name="${buttonName}"]`);
+        if (button) {
+            button.addEventListener('click', function () {
+                const form = button.closest('form');
+                const selected = form.querySelectorAll('input.menu-item-checkbox:checked');
+                selected.forEach((checkbox, index) => {
+                    const [url, title] = checkbox.value.split('|');
+                    const base = Date.now() + index;
+                    ['type', 'title', 'url'].forEach((field, i) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = `menu-item[${base}][menu-item-${field}]`;
+                        input.value = i === 0 ? 'custom' : (field === 'title' ? title : url);
+                        form.appendChild(input);
+                    });
+                });
+            });
+        }
+    });
+});
+JS
+        );
+    }
+});
