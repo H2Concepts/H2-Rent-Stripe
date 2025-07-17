@@ -35,8 +35,8 @@ function produkt_render_kategorien_metabox() {
     }
     echo '</ul>';
     echo '</div>';
-    echo '<p class="button-controls"><span>'; 
-    echo '<input type="submit" class="button-secondary right" value="Zum Menü hinzufügen" name="add-plugin-kategorie-menu">';
+    echo '<p class="button-controls"><span>';
+    echo '<button type="button" class="button-secondary add-to-menu" name="add-plugin-kategorie-menu">Zum Menü hinzufügen</button>';
     echo '<span class="spinner"></span></span></p>';
     echo '</div>';
 }
@@ -71,7 +71,7 @@ function produkt_render_produkte_metabox() {
     echo '</ul>';
     echo '</div>';
     echo '<p class="button-controls"><span>';
-    echo '<input type="submit" class="button-secondary right" value="Zum Menü hinzufügen" name="add-plugin-produkt-menu">';
+    echo '<button type="button" class="button-secondary add-to-menu" name="add-plugin-produkt-menu">Zum Menü hinzufügen</button>';
     echo '<span class="spinner"></span></span></p>';
     echo '</div>';
 }
@@ -114,7 +114,7 @@ add_action('admin_enqueue_scripts', function ($hook) {
         wp_add_inline_script('nav-menu', <<<'JS'
 document.addEventListener('DOMContentLoaded', function () {
     ['add-plugin-kategorie-menu', 'add-plugin-produkt-menu'].forEach(buttonName => {
-        const button = document.querySelector(`input[name="${buttonName}"]`);
+        const button = document.querySelector(`button[name="${buttonName}"]`);
         if (button) {
             button.addEventListener('click', function () {
                 const form = button.closest('form');
@@ -122,14 +122,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 selected.forEach((checkbox, index) => {
                     const [url, title] = checkbox.value.split('|');
                     const base = Date.now() + index;
-                    ['type', 'title', 'url'].forEach((field, i) => {
+                    const fields = [
+                        { name: `menu-item[${base}][menu-item-type]`, value: 'custom' },
+                        { name: `menu-item[${base}][menu-item-title]`, value: title },
+                        { name: `menu-item[${base}][menu-item-url]`, value: url },
+                        { name: `menu-item[${base}][menu-item-status]`, value: 'publish' },
+                    ];
+                    fields.forEach(({ name, value }) => {
                         const input = document.createElement('input');
                         input.type = 'hidden';
-                        input.name = `menu-item[${base}][menu-item-${field}]`;
-                        input.value = i === 0 ? 'custom' : (field === 'title' ? title : url);
+                        input.name = name;
+                        input.value = value;
                         form.appendChild(input);
                     });
                 });
+
+                form.submit();
             });
         }
     });
