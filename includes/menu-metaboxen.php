@@ -19,14 +19,14 @@ add_action('admin_init', function () {
 
 function produkt_render_kategorien_metabox() {
     global $wpdb;
-    $table      = $wpdb->prefix . 'produkt_categories';
-    $kategorien = $wpdb->get_results("SELECT * FROM $table ORDER BY sort_order, name");
+    $table = $wpdb->prefix . 'produkt_product_categories';
+    $kategorien = $wpdb->get_results("SELECT * FROM $table ORDER BY name");
 
     echo '<div id="posttype-plugin_kategorie" class="posttypediv">';
     echo '<div class="tabs-panel tabs-panel-active" id="tabs-panel-plugin_kategorie">';
     echo '<ul id="plugin_kategorie-checklist" class="categorychecklist form-no-clear">';
     foreach ($kategorien as $cat) {
-        $url = home_url('/shop/kategorie/' . sanitize_title($cat->shortcode));
+        $url = home_url('/shop/' . sanitize_title($cat->slug));
         echo '<li>';
         echo '<label class="menu-item-title">';
         echo '<input type="checkbox" class="menu-item-checkbox" name="plugin_kategorie_menu[]" value="' . esc_attr($url) . '|' . esc_attr($cat->name) . '"> ' . esc_html($cat->name);
@@ -55,16 +55,16 @@ add_action('admin_init', function () {
 
 function produkt_render_produkte_metabox() {
     global $wpdb;
-    $produkte = $wpdb->get_results("SELECT id, name, slug FROM {$wpdb->prefix}produkt_products ORDER BY name");
+    $produkte = $wpdb->get_results("SELECT id, product_title FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
     echo '<div id="posttype-plugin_produkt" class="posttypediv">';
     echo '<div class="tabs-panel tabs-panel-active" id="tabs-panel-plugin_produkt">';
     echo '<ul id="plugin_produkt-checklist" class="categorychecklist form-no-clear">';
     foreach ($produkte as $p) {
-        $url = home_url('/shop/produkt/' . sanitize_title($p->slug));
+        $url = home_url('/shop/produkt/' . sanitize_title($p->product_title));
         echo '<li>';
         echo '<label class="menu-item-title">';
-        echo '<input type="checkbox" class="menu-item-checkbox" name="plugin_produkt_menu[]" value="' . esc_attr($url) . '|' . esc_attr($p->name) . '"> ' . esc_html($p->name);
+        echo '<input type="checkbox" class="menu-item-checkbox" name="plugin_produkt_menu[]" value="' . esc_attr($url) . '|' . esc_attr($p->product_title) . '"> ' . esc_html($p->product_title);
         echo '</label>';
         echo '</li>';
     }
