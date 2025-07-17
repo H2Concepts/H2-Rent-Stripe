@@ -12,6 +12,7 @@
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
         <?php
+        global $wpdb;
         $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
         $selected_product_cats = $wpdb->get_col(
             $wpdb->prepare(

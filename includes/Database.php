@@ -1449,6 +1449,15 @@ class Database {
     public static function get_product_categories_tree() {
         global $wpdb;
         $table = $wpdb->prefix . 'produkt_product_categories';
+        $has_parent = $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
+        if (!$has_parent) {
+            $cats = $wpdb->get_results("SELECT id, name, slug FROM $table ORDER BY name");
+            foreach ($cats as $c) {
+                $c->parent_id = 0;
+                $c->depth = 0;
+            }
+            return $cats;
+        }
         $cats = $wpdb->get_results("SELECT id, parent_id, name, slug FROM $table ORDER BY name");
         $map = [];
         foreach ($cats as $c) {
