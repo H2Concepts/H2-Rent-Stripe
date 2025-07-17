@@ -1501,4 +1501,15 @@ class Database {
         }
         return $all;
     }
+
+    /**
+     * Check if the product categories table has the parent_id column.
+     *
+     * @return bool
+     */
+    public function categories_table_has_parent_column() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_product_categories';
+        return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
+    }
 }
