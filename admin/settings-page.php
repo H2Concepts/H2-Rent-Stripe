@@ -53,7 +53,7 @@ foreach ($branding_results as $result) {
         </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=debug'); ?>"
            class="produkt-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
-            🔧 Debug
+            🛠 Debug
         </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications'); ?>"
            class="produkt-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>">

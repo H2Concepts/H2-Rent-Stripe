@@ -39,7 +39,14 @@ if (isset($_GET['delete'])) {
 }
 
 global $wpdb;
-$categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_product_categories ORDER BY name ASC");
+$categories = $wpdb->get_results(
+    "SELECT c.*, COUNT(p.id) AS product_count
+     FROM {$wpdb->prefix}produkt_product_categories c
+     LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON c.id = ptc.category_id
+     LEFT JOIN {$wpdb->prefix}produkt_categories p ON p.id = ptc.produkt_id
+     GROUP BY c.id
+     ORDER BY c.name ASC"
+);
 
 // Wenn Bearbeiten
 $edit_category = null;
@@ -79,6 +86,7 @@ if (isset($_GET['edit'])) {
             <tr>
                 <th>Name</th>
                 <th>Slug</th>
+                <th>Produkte</th>
                 <th>Aktionen</th>
             </tr>
         </thead>
@@ -87,6 +95,7 @@ if (isset($_GET['edit'])) {
                 <tr>
                     <td><?= esc_html($cat->name) ?></td>
                     <td><?= esc_html($cat->slug) ?></td>
+                    <td><?= intval($cat->product_count) ?></td>
                     <td>
                         <a href="?page=produkt-kategorien&edit=<?= $cat->id ?>" class="button">Bearbeiten</a>
                         <a href="?page=produkt-kategorien&delete=<?= $cat->id ?>" class="button button-danger" onclick="return confirm('Wirklich löschen?')">Löschen</a>

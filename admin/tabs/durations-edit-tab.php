@@ -3,12 +3,13 @@
 ?>
 
 <?php
-    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, custom_price FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
+    $price_rows = $wpdb->get_results($wpdb->prepare("SELECT variant_id, custom_price, stripe_archived FROM $table_prices WHERE duration_id = %d", $edit_item->id), OBJECT_K);
     $duration_prices = array();
     if ($price_rows) {
         foreach ($price_rows as $pid => $obj) {
             $duration_prices[$pid] = [
-                'custom_price' => $obj->custom_price,
+                'custom_price'    => $obj->custom_price,
+                'stripe_archived' => $obj->stripe_archived,
             ];
         }
     }
@@ -62,6 +63,25 @@
                 <label><?php echo esc_html($variant->name); ?></label>
                 <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($duration_prices[$variant->id]['custom_price'] ?? ''); ?>">
                 <small>Preis (monatlich in €)</small>
+                <?php
+                $archived = false;
+                $price_id = $duration_prices[$variant->id]['stripe_price_id'] ?? '';
+                if ($price_id) {
+                    $archived = \ProduktVerleih\StripeService::is_price_archived_cached($price_id);
+                } elseif (!empty($duration_prices[$variant->id]['stripe_archived'])) {
+                    $archived = true;
+                }
+                $product_archived = false;
+                if (!empty($variant->stripe_product_id)) {
+                    $product_archived = \ProduktVerleih\StripeService::is_product_archived_cached($variant->stripe_product_id);
+                }
+                ?>
+                <?php if ($archived): ?>
+                    <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                <?php endif; ?>
+                <?php if ($product_archived): ?>
+                    <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
+                <?php endif; ?>
             </div>
             <?php endforeach; ?>
         </div>

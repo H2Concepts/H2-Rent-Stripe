@@ -59,9 +59,28 @@ if (file_exists($webhook_file)) {
     error_log('Webhook.php not found at ' . $webhook_file);
 }
 
+$helpers_file = plugin_dir_path(__FILE__) . 'includes/category-functions.php';
+if (file_exists($helpers_file)) {
+    require_once $helpers_file;
+}
+
 // Register activation and deactivation hooks
 register_activation_hook(__FILE__, ['ProduktVerleih\\Plugin', 'activate_plugin']);
 register_deactivation_hook(__FILE__, ['ProduktVerleih\\Plugin', 'deactivate_plugin']);
+
+// Schedule daily cron job to refresh Stripe archive cache
+register_activation_hook(__FILE__, function () {
+    if (!wp_next_scheduled('produkt_stripe_status_cron')) {
+        wp_schedule_event(time(), 'daily', 'produkt_stripe_status_cron');
+    }
+});
+
+// Clear cron job on deactivation
+register_deactivation_hook(__FILE__, function () {
+    wp_clear_scheduled_hook('produkt_stripe_status_cron');
+});
+
+add_action('produkt_stripe_status_cron', ['\ProduktVerleih\StripeService', 'cron_refresh_stripe_archive_cache']);
 
 // Initialize the plugin after WordPress has loaded
 add_action('plugins_loaded', function () {

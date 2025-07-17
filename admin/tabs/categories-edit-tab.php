@@ -43,6 +43,13 @@
                     <input type="text" name="shortcode" value="<?php echo esc_attr($edit_item->shortcode); ?>" required pattern="[a-z0-9_-]+">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+                <div class="produkt-form-group">
+                    <label>Übergeordnete Kategorie</label>
+                    <select name="parent_id">
+                        <option value="0">— Keine —</option>
+                        <?php produkt_render_category_dropdown([$edit_item->parent_id]); ?>
+                    </select>
+                </div>
             </div>
         </div>
         

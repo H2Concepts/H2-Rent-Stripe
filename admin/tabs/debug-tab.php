@@ -39,6 +39,51 @@ if (isset($_POST['manual_stripe_sync'])) {
     }
 }
 
+// Clear Stripe status cache
+if (isset($_POST['clear_stripe_cache']) && check_admin_referer('clear_stripe_cache_action')) {
+    \ProduktVerleih\StripeService::clear_stripe_archive_cache();
+    echo '<div class="notice notice-success"><p>✅ Stripe-Caches wurden geleert.</p></div>';
+}
+
+// Cleanup orphaned products
+if (isset($_POST['run_cleanup']) && check_admin_referer('cleanup_action')) {
+    $cleanup_tables = [
+        'produkt_variants',
+        'produkt_extras',
+        'produkt_durations',
+    ];
+
+    foreach ($cleanup_tables as $tbl) {
+        $table = $wpdb->prefix . $tbl;
+        $wpdb->query(
+            "DELETE FROM {$table} WHERE category_id NOT IN (
+                SELECT id FROM {$wpdb->prefix}produkt_categories
+            )"
+        );
+    }
+
+    echo '<div class="notice notice-success"><p>✅ Verwaiste Produkte bereinigt.</p></div>';
+}
+
+if (isset($_POST['run_hard_cleanup']) && check_admin_referer('produkt_cleanup_action')) {
+    global $wpdb;
+    $prefix = $wpdb->prefix;
+
+    $wpdb->query("DELETE FROM {$prefix}produkt_product_to_category WHERE produkt_id NOT IN (SELECT id FROM {$prefix}produkt_categories)");
+
+    $wpdb->query(
+        "DELETE FROM {$prefix}produkt_duration_prices WHERE duration_id NOT IN (
+            SELECT id FROM {$prefix}produkt_durations
+        ) OR variant_id NOT IN (
+            SELECT id FROM {$prefix}produkt_variants
+        )"
+    );
+
+    $wpdb->query("DELETE FROM {$prefix}produkt_categories WHERE id NOT IN (SELECT produkt_id FROM {$prefix}produkt_product_to_category)");
+
+    echo '<div class="notice notice-success"><p>✅ Verwaiste Einträge erfolgreich bereinigt.</p></div>';
+}
+
 // Get table structure
 $table_variants = $wpdb->prefix . 'produkt_variants';
 
@@ -73,6 +118,23 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
                 🔁 Stripe Sync starten
             </button>
         </form>
+        <form method="post" action="" style="margin-top:10px;">
+            <?php wp_nonce_field('clear_stripe_cache_action'); ?>
+            <p><strong>Stripe-Status-Cache leeren:</strong> Dies erzwingt eine erneute Prüfung der Stripe-Archivierung für Produkte und Preise (Mietdauer, Extras, Ausführungen).</p>
+            <input type="submit" name="clear_stripe_cache" class="button button-secondary" value="Stripe-Status neu prüfen">
+        </form>
+        <form method="post" action="" style="margin-top:10px;">
+            <?php wp_nonce_field('cleanup_action'); ?>
+            <input type="submit" name="run_cleanup" class="button button-secondary" value="🧹 Cleanup nicht mehr verknüpfter Datensätze">
+        </form>
+        <form method="post" action="" style="margin-top:10px;">
+            <?php wp_nonce_field('produkt_cleanup_action'); ?>
+            <p><strong>🧹 Verwaiste Daten bereinigen:</strong> Entfernt z. B. Kategorie-Zuordnungen gelöschter Produkte.</p>
+            <input type="submit" name="run_hard_cleanup" class="button button-secondary" value="Jetzt bereinigen">
+        </form>
+        <?php if (wp_next_scheduled('produkt_stripe_status_cron')): ?>
+            <p>Nächster automatischer Stripe-Archiv-Check: <?php echo date('d.m.Y H:i:s', wp_next_scheduled('produkt_stripe_status_cron')); ?></p>
+        <?php endif; ?>
     </div>
     
     <div class="produkt-debug-sections">

@@ -33,6 +33,13 @@ if (empty($price_id_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
 }
 
+// Ensure stripe_archived column exists
+$archived_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_archived'");
+if (empty($archived_column_exists)) {
+    $after = !empty($price_id_exists) ? 'stripe_price_id' : 'name';
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
+}
+
 // Ensure category_id column exists
 $category_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'category_id'");
 if (empty($category_column_exists)) {
@@ -163,7 +170,18 @@ if (isset($_POST['submit'])) {
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
+    $extra_id = intval($_GET['delete']);
+    $stripe_product_id = $wpdb->get_var($wpdb->prepare(
+        "SELECT stripe_product_id FROM $table_name WHERE id = %d",
+        $extra_id
+    ));
+
+    if (!empty($stripe_product_id)) {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+        produkt_delete_or_archive_stripe_product($stripe_product_id, $extra_id, 'produkt_extras');
+    }
+
+    $result = $wpdb->delete($table_name, array('id' => $extra_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Extra gelöscht!</p></div>';
     } else {

@@ -7,6 +7,12 @@ global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_durations';
 $table_prices = $wpdb->prefix . 'produkt_duration_prices';
 
+// Ensure stripe_archived column exists in price table
+$archived_col = $wpdb->get_results("SHOW COLUMNS FROM $table_prices LIKE 'stripe_archived'");
+if (empty($archived_col)) {
+    $wpdb->query("ALTER TABLE $table_prices ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER stripe_price_id");
+}
+
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
@@ -153,7 +159,26 @@ if (isset($_POST['submit'])) {
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
+    $duration_id = intval($_GET['delete']);
+    $price_rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT stripe_price_id FROM $table_prices WHERE duration_id = %d",
+        $duration_id
+    ));
+
+    if ($price_rows) {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+
+        foreach ($price_rows as $row) {
+            if (!empty($row->stripe_price_id)) {
+                produkt_deactivate_stripe_price($row->stripe_price_id);
+            }
+        }
+    }
+
+    // Optional: zugehörige Preise aus DB löschen
+    $wpdb->delete($table_prices, ['duration_id' => $duration_id], ['%d']);
+
+    $result = $wpdb->delete($table_name, array('id' => $duration_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Mietdauer gelöscht!</p></div>';
     } else {
@@ -173,11 +198,9 @@ if (isset($_GET['edit'])) {
 // Get current category info
 $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
-// Get all durations for selected category
-$durations = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY sort_order, months_minimum", $selected_category));
+$durations = $wpdb->get_results($wpdb->prepare("SELECT d.*, MAX(p.stripe_price_id) AS stripe_price_id, MAX(p.stripe_product_id) AS stripe_product_id, MAX(p.stripe_archived) AS stripe_archived FROM $table_name d LEFT JOIN $table_prices p ON p.duration_id = d.id WHERE d.category_id = %d GROUP BY d.id ORDER BY d.sort_order, d.months_minimum", $selected_category));
 $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
 ?>
-
 <div class="wrap">
     <!-- Kompakter Header -->
     <div class="produkt-admin-header-compact">

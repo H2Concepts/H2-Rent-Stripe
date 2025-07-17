@@ -27,6 +27,13 @@
                     <input type="text" name="shortcode" required pattern="[a-z0-9_-]+" placeholder="z.B. nonomo-premium">
                     <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
                 </div>
+                <div class="produkt-form-group">
+                    <label>Übergeordnete Kategorie</label>
+                    <select name="parent_id">
+                        <option value="0">— Keine —</option>
+                        <?php produkt_render_category_dropdown(); ?>
+                    </select>
+                </div>
             </div>
         </div>
         
