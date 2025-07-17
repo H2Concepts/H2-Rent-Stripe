@@ -35,8 +35,8 @@ function produkt_render_kategorien_metabox() {
     }
     echo '</ul>';
     echo '</div>';
-    echo '<p class="button-controls"><span class="add-to-menu">';
-    echo '<input type="submit" class="button-secondary submit-add-to-menu right" value="Zum Menü hinzufügen" name="add-plugin-kategorie-menu">';
+    echo '<p class="button-controls"><span>'; 
+    echo '<input type="submit" class="button-secondary right" value="Zum Menü hinzufügen" name="add-plugin-kategorie-menu">';
     echo '<span class="spinner"></span></span></p>';
     echo '</div>';
 }
@@ -70,8 +70,8 @@ function produkt_render_produkte_metabox() {
     }
     echo '</ul>';
     echo '</div>';
-    echo '<p class="button-controls"><span class="add-to-menu">';
-    echo '<input type="submit" class="button-secondary submit-add-to-menu right" value="Zum Menü hinzufügen" name="add-plugin-produkt-menu">';
+    echo '<p class="button-controls"><span>';
+    echo '<input type="submit" class="button-secondary right" value="Zum Menü hinzufügen" name="add-plugin-produkt-menu">';
     echo '<span class="spinner"></span></span></p>';
     echo '</div>';
 }
