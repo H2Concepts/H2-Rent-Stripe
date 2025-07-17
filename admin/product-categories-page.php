@@ -67,7 +67,7 @@ if (isset($_GET['edit'])) {
 
     <h2><?= $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen' ?></h2>
 
-    <form method="post">
+    <form method="post" id="produkt-category-form">
         <input type="hidden" name="category_id" value="<?= esc_attr($edit_category->id ?? '') ?>">
         <table class="form-table">
             <tr>
@@ -100,6 +100,23 @@ if (isset($_GET['edit'])) {
         </table>
         <p><input type="submit" name="save_category" class="button-primary" value="Speichern"></p>
     </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var nameField = document.querySelector('#produkt-category-form input[name="name"]');
+        var slugField = document.querySelector('#produkt-category-form input[name="slug"]');
+        if (!nameField || !slugField) return;
+
+        var touched = false;
+        slugField.addEventListener('input', function () { touched = true; });
+        nameField.addEventListener('input', function () {
+            if (touched && slugField.value) return;
+            var slug = nameField.value.toLowerCase().trim()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-');
+            slugField.value = slug;
+        });
+    });
+    </script>
 
     <h2>Bestehende Kategorien</h2>
     <table class="widefat striped">

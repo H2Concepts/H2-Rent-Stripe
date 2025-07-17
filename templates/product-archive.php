@@ -127,9 +127,10 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             <ul>
                 <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
                 <?php foreach ($kats as $kat): ?>
-                    <li>
+                    <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
+                    <li class="<?php echo esc_attr($cls); ?>">
                         <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
-                            <?php echo str_repeat('--', $kat->depth) . ' ' . esc_html($kat->name); ?>
+                            <?php echo esc_html($kat->name); ?>
                         </a>
                     </li>
                 <?php endforeach; ?>
@@ -249,9 +250,10 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
         <ul>
             <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
             <?php foreach ($kats as $kat): ?>
-                <li>
+                <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
+                <li class="<?php echo esc_attr($cls); ?>">
                     <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
-                        <?php echo str_repeat('--', $kat->depth) . ' ' . esc_html($kat->name); ?>
+                        <?php echo esc_html($kat->name); ?>
                     </a>
                 </li>
             <?php endforeach; ?>
