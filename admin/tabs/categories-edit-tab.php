@@ -20,12 +20,20 @@
                 $edit_item->id
             )
         );
+        $filters = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_filters ORDER BY name");
+        $selected_filters = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT filter_id FROM {$wpdb->prefix}produkt_category_filters WHERE category_id = %d",
+                $edit_item->id
+            )
+        );
         ?>
 
         <div class="produkt-subtab-nav">
             <a href="#" class="produkt-subtab active" data-tab="general">Allgemein</a>
             <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
+            <a href="#" class="produkt-subtab" data-tab="filters">Filter</a>
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
@@ -232,6 +240,20 @@
 
         </div><!-- end tab-features -->
 
+        <div id="tab-filters" class="produkt-subtab-content">
+        <div class="produkt-form-section">
+            <h4>🔎 Filter</h4>
+            <input type="text" id="filter-search" placeholder="Filter suchen..." style="max-width:300px;width:100%;">
+            <div id="filter-list" class="produkt-filter-list" style="margin-top:10px;">
+                <?php foreach ($filters as $f): ?>
+                <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
+                    <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>" <?php checked(in_array($f->id, $selected_filters)); ?>> <?php echo esc_html($f->name); ?>
+                </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        </div><!-- end tab-filters -->
+
 
 
 
@@ -367,6 +389,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (content) content.classList.add('active');
         });
     });
+
+    const filterSearch = document.getElementById('filter-search');
+    if (filterSearch) {
+        filterSearch.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('#filter-list .produkt-filter-item').forEach(function(el) {
+                el.style.display = el.textContent.toLowerCase().indexOf(term) !== -1 ? 'block' : 'none';
+            });
+        });
+    }
 
     // Accordion fields are handled in admin-script.js
 });

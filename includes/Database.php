@@ -726,6 +726,37 @@ class Database {
                 $wpdb->query("ALTER TABLE $table_shipping ADD COLUMN is_default TINYINT(1) DEFAULT 0 AFTER stripe_price_id");
             }
         }
+
+        // Create filters table if it doesn't exist
+        $table_filters = $wpdb->prefix . 'produkt_filters';
+        $filters_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_filters'");
+        if (!$filters_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_filters (
+                id INT NOT NULL AUTO_INCREMENT,
+                name VARCHAR(255) NOT NULL,
+                PRIMARY KEY (id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
+        // Mapping table between products and filters
+        $table_cat_filters = $wpdb->prefix . 'produkt_category_filters';
+        $map_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_cat_filters'");
+        if (!$map_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_cat_filters (
+                category_id INT NOT NULL,
+                filter_id INT NOT NULL,
+                PRIMARY KEY (category_id, filter_id),
+                KEY filter_id (filter_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
     }
     
     public function create_tables() {
@@ -1065,6 +1096,25 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_shipping);
 
+        // Filters table
+        $table_filters = $wpdb->prefix . 'produkt_filters';
+        $sql_filters = "CREATE TABLE IF NOT EXISTS $table_filters (
+            id INT NOT NULL AUTO_INCREMENT,
+            name VARCHAR(255) NOT NULL,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
+        dbDelta($sql_filters);
+
+        // Category to filter mapping
+        $table_cat_filters = $wpdb->prefix . 'produkt_category_filters';
+        $sql_cat_filters = "CREATE TABLE IF NOT EXISTS $table_cat_filters (
+            category_id INT NOT NULL,
+            filter_id INT NOT NULL,
+            PRIMARY KEY (category_id, filter_id),
+            KEY filter_id (filter_id)
+        ) $charset_collate;";
+        dbDelta($sql_cat_filters);
+
         // Metadata table for storing Stripe session details
         $table_meta = $wpdb->prefix . 'produkt_stripe_metadata';
         $sql_meta = "CREATE TABLE $table_meta (
@@ -1321,6 +1371,8 @@ class Database {
             'produkt_notifications',
             'produkt_content_blocks',
             'produkt_shipping_methods',
+            'produkt_filters',
+            'produkt_category_filters',
             'produkt_stripe_metadata',
             'produkt_webhook_logs'
         );
