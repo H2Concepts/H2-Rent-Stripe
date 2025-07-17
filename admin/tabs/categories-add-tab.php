@@ -12,7 +12,16 @@
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <?php
         $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
-        $filters = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_filters ORDER BY name");
+        $filter_groups = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_filter_groups ORDER BY name");
+        $filters_by_group = [];
+        foreach ($filter_groups as $g) {
+            $filters_by_group[$g->id] = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_filters WHERE group_id = %d ORDER BY name",
+                    $g->id
+                )
+            );
+        }
         ?>
         <!-- Grunddaten -->
         <div class="produkt-form-section">
@@ -195,10 +204,13 @@
             <h4>🔎 Filter</h4>
             <input type="text" id="filter-search" placeholder="Filter suchen..." style="max-width:300px;width:100%;">
             <div id="filter-list" class="produkt-filter-list" style="margin-top:10px;">
-                <?php foreach ($filters as $f): ?>
-                <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
-                    <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
-                </label>
+                <?php foreach ($filter_groups as $group): ?>
+                    <strong><?php echo esc_html($group->name); ?></strong><br>
+                    <?php foreach ($filters_by_group[$group->id] as $f): ?>
+                    <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
+                        <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
+                    </label>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
             </div>
         </div>
