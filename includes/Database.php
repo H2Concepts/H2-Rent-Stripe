@@ -1503,6 +1503,34 @@ class Database {
     }
 
     /**
+     * Get IDs of all ancestor categories for a given category ID.
+     * Returns an empty array if the hierarchy column does not exist.
+     *
+     * @param int $category_id
+     * @return array
+     */
+    public static function get_ancestor_category_ids($category_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_product_categories';
+        $has_parent = $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
+        if (!$has_parent) {
+            return [];
+        }
+
+        $ids = [];
+        $parent = $wpdb->get_var(
+            $wpdb->prepare("SELECT parent_id FROM $table WHERE id = %d", $category_id)
+        );
+        while (!empty($parent)) {
+            $ids[] = (int) $parent;
+            $parent = $wpdb->get_var(
+                $wpdb->prepare("SELECT parent_id FROM $table WHERE id = %d", $parent)
+            );
+        }
+        return $ids;
+    }
+
+    /**
      * Check if the product categories table has the parent_id column.
      *
      * @return bool

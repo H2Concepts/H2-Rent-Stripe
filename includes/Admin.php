@@ -494,8 +494,14 @@ class Admin {
 
                 if ($result !== false) {
                     if (isset($_POST['product_categories']) && is_array($_POST['product_categories'])) {
+                        $cat_ids = array_map('intval', $_POST['product_categories']);
+                        foreach ($cat_ids as $cid) {
+                            $cat_ids = array_merge($cat_ids, Database::get_ancestor_category_ids($cid));
+                        }
+                        $cat_ids = array_unique($cat_ids);
+
                         $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
-                        foreach ($_POST['product_categories'] as $cat_id) {
+                        foreach ($cat_ids as $cat_id) {
                             $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
                                 'produkt_id' => $produkt_id,
                                 'category_id' => intval($cat_id)
@@ -555,8 +561,14 @@ class Admin {
 
                 if ($result !== false) {
                     if (isset($_POST['product_categories']) && is_array($_POST['product_categories'])) {
+                        $cat_ids = array_map('intval', $_POST['product_categories']);
+                        foreach ($cat_ids as $cid) {
+                            $cat_ids = array_merge($cat_ids, Database::get_ancestor_category_ids($cid));
+                        }
+                        $cat_ids = array_unique($cat_ids);
+
                         $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
-                        foreach ($_POST['product_categories'] as $cat_id) {
+                        foreach ($cat_ids as $cat_id) {
                             $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
                                 'produkt_id' => $produkt_id,
                                 'category_id' => intval($cat_id)
