@@ -168,7 +168,8 @@ class Admin {
             if (!has_shortcode($content, 'produkt_product') &&
                 !has_shortcode($content, 'stripe_elements_form') &&
                 !has_shortcode($content, 'produkt_shop_grid') &&
-                !has_shortcode($content, 'produkt_account')) {
+                !has_shortcode($content, 'produkt_account') &&
+                !has_shortcode($content, 'produkt_checkout')) {
                 return;
             }
         }

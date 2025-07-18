@@ -70,6 +70,20 @@ register_activation_hook(__FILE__, function () {
     }
 });
 
+register_activation_hook(__FILE__, function () {
+    $slug = 'produkt-checkout';
+    $existing = get_page_by_path($slug);
+    if (!$existing) {
+        wp_insert_post([
+            'post_title'   => 'Produkt Checkout',
+            'post_name'    => $slug,
+            'post_content' => '[produkt_checkout]',
+            'post_status'  => 'publish',
+            'post_type'    => 'page'
+        ]);
+    }
+});
+
 // Clear cron job on deactivation
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('produkt_stripe_status_cron');
@@ -98,6 +112,12 @@ function produkt_simple_checkout_button() {
     </script>
     <?php return ob_get_clean();
 }
+
+add_shortcode('produkt_checkout', function () {
+    ob_start();
+    include plugin_dir_path(__FILE__) . 'templates/checkout-page.php';
+    return ob_get_clean();
+});
 
 require_once plugin_dir_path(__FILE__) . 'includes/seo-module.php';
 \ProduktVerleih\SeoModule::init();
