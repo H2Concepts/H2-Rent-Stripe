@@ -288,9 +288,8 @@ class Admin {
                 'produkt-script',
                 'khv_ajax',
                 [
-                    'ajaxurl'    => admin_url('admin-ajax.php'),
-                    'nonce'      => wp_create_nonce('khv_nonce'),
-                    'public_key' => \ProduktVerleih\StripeService::get_public_key(),
+                    'ajax_url' => admin_url('admin-ajax.php'),
+                    'nonce'    => wp_create_nonce('khv_ajax_nonce'),
                 ]
             );
         }

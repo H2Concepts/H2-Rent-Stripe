@@ -1,8 +1,8 @@
 <?php
 namespace ProduktVerleih;
 
-add_action('wp_ajax_khv_create_embedded_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
-add_action('wp_ajax_nopriv_khv_create_embedded_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
+add_action('wp_ajax_khv_create_checkout_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
+add_action('wp_ajax_nopriv_khv_create_checkout_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
 
 class Ajax {
     
@@ -678,16 +678,41 @@ class Ajax {
         wp_send_json_success();
     }
     public static function create_embedded_checkout_session() {
-        check_ajax_referer("khv_nonce", "nonce");
-        $product_id = absint($_POST["product_id"] ?? 0);
-        if (!$product_id) {
-            wp_send_json_error("Produkt-ID fehlt.");
+        check_ajax_referer('khv_ajax_nonce', 'security');
+
+        $variant_id = intval($_POST['variant_id'] ?? 0);
+        if (!$variant_id) {
+            wp_send_json_error(['message' => 'Variante fehlt']);
         }
-        $session = \ProduktVerleih\StripeService::create_embedded_checkout_session($product_id);
-        if (is_wp_error($session)) {
-            wp_send_json_error($session->get_error_message());
+
+        global $wpdb;
+        $variant = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d", $variant_id)
+        );
+
+        if (!$variant || empty($variant->stripe_price_id)) {
+            wp_send_json_error(['message' => 'Keine gültige Variante gefunden']);
         }
-        wp_send_json_success(["client_secret" => $session->client_secret]);
+
+        try {
+            \Stripe\Stripe::setApiKey(\ProduktVerleih\StripeService::get_secret_key());
+            $checkout_session = \Stripe\Checkout\Session::create([
+                'ui_mode'    => 'embedded',
+                'mode'       => 'subscription',
+                'line_items' => [[
+                    'price'    => $variant->stripe_price_id,
+                    'quantity' => 1,
+                ]],
+                'return_url' => home_url('/danke'),
+            ]);
+
+            wp_send_json_success([
+                'client_secret'   => $checkout_session->client_secret,
+                'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
+            ]);
+        } catch (\Exception $e) {
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
     }
 
 

@@ -11,20 +11,20 @@ document.addEventListener('DOMContentLoaded', function () {
         window.produktStripe = Stripe(StripeConfig.publicKey);
       }
       if (checkoutMount && typeof khv_ajax !== 'undefined') {
-        const productId = checkoutMount.dataset.productId;
-        fetch(khv_ajax.ajaxurl, {
+        const variantId = checkoutMount.dataset.variantId;
+        fetch(khv_ajax.ajax_url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
-            action: 'khv_create_embedded_session',
-            nonce: khv_ajax.nonce,
-            product_id: productId
+            action: 'khv_create_checkout_session',
+            security: khv_ajax.nonce,
+            variant_id: variantId
           })
         })
         .then(r => r.json())
         .then(result => {
           if (result.success) {
-            const stripe = Stripe(khv_ajax.public_key);
+            const stripe = Stripe(result.data.publishable_key);
             stripe.mountEmbeddedCheckout({
               clientSecret: result.data.client_secret,
               element: '#checkout-mount-point'
