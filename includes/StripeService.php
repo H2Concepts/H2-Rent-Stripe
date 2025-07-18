@@ -263,6 +263,44 @@ class StripeService {
         return self::get_publishable_key();
     }
 
+    private static function get_product_data($product_id) {
+        global $wpdb;
+        return $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                $product_id
+            )
+        );
+    }
+
+    public static function create_embedded_checkout_session($product_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        $product = self::get_product_data($product_id);
+        if (!$product || empty($product->stripe_price_id)) {
+            return new \WP_Error('invalid_product', 'Produkt nicht gefunden');
+        }
+
+        try {
+            $session = \Stripe\Checkout\Session::create([
+                'ui_mode' => 'embedded',
+                'mode'    => 'subscription',
+                'return_url' => home_url('/danke/'),
+                'line_items' => [[
+                    'price'    => $product->stripe_price_id,
+                    'quantity' => 1,
+                ]],
+            ]);
+
+            return $session;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_error', $e->getMessage());
+        }
+    }
+
     public static function get_payment_method_configuration_id() {
         return get_option('produkt_stripe_pmc_id', '');
     }

@@ -1,6 +1,9 @@
 <?php
 namespace ProduktVerleih;
 
+add_action('wp_ajax_khv_create_embedded_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
+add_action('wp_ajax_nopriv_khv_create_embedded_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
+
 class Ajax {
     
     public function ajax_get_product_price() {
@@ -674,6 +677,19 @@ class Ajax {
 
         wp_send_json_success();
     }
+    public static function create_embedded_checkout_session() {
+        check_ajax_referer("khv_nonce", "nonce");
+        $product_id = absint($_POST["product_id"] ?? 0);
+        if (!$product_id) {
+            wp_send_json_error("Produkt-ID fehlt.");
+        }
+        $session = \ProduktVerleih\StripeService::create_embedded_checkout_session($product_id);
+        if (is_wp_error($session)) {
+            wp_send_json_error($session->get_error_message());
+        }
+        wp_send_json_success(["client_secret" => $session->client_secret]);
+    }
+
 
 }
 

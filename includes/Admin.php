@@ -284,6 +284,15 @@ class Admin {
                     'publicKey' => get_option('produkt_stripe_publishable_key', '')
                 ]
             );
+            wp_localize_script(
+                'produkt-script',
+                'khv_ajax',
+                [
+                    'ajaxurl'    => admin_url('admin-ajax.php'),
+                    'nonce'      => wp_create_nonce('khv_nonce'),
+                    'public_key' => \ProduktVerleih\StripeService::get_public_key(),
+                ]
+            );
         }
     }
     

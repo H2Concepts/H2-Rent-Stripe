@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
-  if (document.querySelector('#checkout-element')) {
+  const checkoutMount = document.getElementById('checkout-mount-point');
+  const needsStripe = checkoutMount || document.querySelector('#checkout-element');
+  if (needsStripe) {
     const script = document.createElement('script');
     script.src = 'https://js.stripe.com/v3/';
     script.async = true;
@@ -7,6 +9,30 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log('Stripe.js geladen.');
       if (typeof Stripe !== 'undefined' && window.StripeConfig) {
         window.produktStripe = Stripe(StripeConfig.publicKey);
+      }
+      if (checkoutMount && typeof khv_ajax !== 'undefined') {
+        const productId = checkoutMount.dataset.productId;
+        fetch(khv_ajax.ajaxurl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: 'khv_create_embedded_session',
+            nonce: khv_ajax.nonce,
+            product_id: productId
+          })
+        })
+        .then(r => r.json())
+        .then(result => {
+          if (result.success) {
+            const stripe = Stripe(khv_ajax.public_key);
+            stripe.mountEmbeddedCheckout({
+              clientSecret: result.data.client_secret,
+              element: '#checkout-mount-point'
+            });
+          } else {
+            console.error('Stripe-Session-Fehler:', result.data);
+          }
+        });
       }
     };
     document.head.appendChild(script);
