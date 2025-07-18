@@ -270,7 +270,7 @@ class SeoModule {
     }
 
     public static function add_sitemap_to_robots($output, $public) {
-        $sitemap_url = home_url('/shop-sitemap.xml');
+        $sitemap_url = home_url('/shop-sitemap.xml/');
         $output .= "\nSitemap: $sitemap_url";
         return $output;
     }
