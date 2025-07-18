@@ -706,14 +706,17 @@ class Ajax {
                     ],
                 ],
                 'return_url' => home_url('/danke'),
+                'expand'     => [
+                    'subscription',
+                    'subscription.latest_invoice',
+                    'subscription.latest_invoice.payment_intent',
+                ],
             ]);
 
-            $subscription    = \Stripe\Subscription::retrieve($session->subscription);
-            $invoice         = \Stripe\Invoice::retrieve($subscription->latest_invoice);
-            $payment_intent  = \Stripe\PaymentIntent::retrieve($invoice->payment_intent);
+            $client_secret = $session->subscription->latest_invoice->payment_intent->client_secret;
 
             wp_send_json_success([
-                'client_secret'   => $payment_intent->client_secret,
+                'client_secret'   => $client_secret,
                 'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
             ]);
         } catch (\Exception $e) {
