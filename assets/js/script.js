@@ -1,3 +1,18 @@
+document.addEventListener('DOMContentLoaded', function () {
+  if (document.querySelector('#checkout-element')) {
+    const script = document.createElement('script');
+    script.src = 'https://js.stripe.com/v3/';
+    script.async = true;
+    script.onload = function () {
+      console.log('Stripe.js geladen.');
+      if (typeof Stripe !== 'undefined' && window.StripeConfig) {
+        window.produktStripe = Stripe(StripeConfig.publicKey);
+      }
+    };
+    document.head.appendChild(script);
+  }
+});
+
 jQuery(document).ready(function($) {
     let selectedVariant = null;
     let selectedExtras = [];
@@ -1007,4 +1022,21 @@ jQuery(function($) {
         $('#shop-filter-overlay').removeClass('open');
         $('body').removeClass('shop-filter-open');
     });
+
+    function updateFilterQuery() {
+        const ids = $('.shop-filter-checkbox:checked').map(function(){ return this.value; }).get();
+        const params = new URLSearchParams(window.location.search);
+        if (ids.length) {
+            params.set('filter', ids.join(','));
+        } else {
+            params.delete('filter');
+        }
+        window.location.search = params.toString();
+    }
+
+$(document).on('change', '.shop-filter-checkbox', updateFilterQuery);
 });
+
+if (typeof Stripe !== 'undefined' && window.StripeConfig) {
+  window.produktStripe = Stripe(StripeConfig.publicKey);
+}

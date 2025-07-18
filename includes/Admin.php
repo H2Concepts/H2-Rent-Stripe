@@ -126,7 +126,16 @@ class Admin {
             'produkt-shipping',
             array($this, 'shipping_page')
         );
-        
+
+        add_submenu_page(
+            'produkt-verleih',
+            'Filter',
+            'Filter',
+            'manage_options',
+            'produkt-filters',
+            array($this, 'filters_page')
+        );
+
 
         // New settings menu with Stripe integration tab
         add_submenu_page(
@@ -195,7 +204,7 @@ class Admin {
         if ($load_script) {
             wp_enqueue_script(
                 'produkt-script',
-                PRODUKT_PLUGIN_URL . 'assets/script.js',
+                PRODUKT_PLUGIN_URL . 'assets/js/script.js',
                 ['jquery'],
                 PRODUKT_VERSION,
                 true
@@ -267,6 +276,13 @@ class Admin {
                     'options' => $options,
                 ],
             ]);
+            wp_localize_script(
+                'produkt-script',
+                'StripeConfig',
+                [
+                    'publicKey' => get_option('produkt_stripe_publishable_key', '')
+                ]
+            );
         }
     }
     
@@ -508,6 +524,17 @@ class Admin {
                             ]);
                         }
                     }
+
+                    if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+                        $filter_ids = array_map('intval', $_POST['filters']);
+                        $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+                        foreach ($filter_ids as $fid) {
+                            $wpdb->insert($wpdb->prefix . 'produkt_category_filters', [
+                                'category_id' => $produkt_id,
+                                'filter_id'   => $fid
+                            ]);
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -572,6 +599,17 @@ class Admin {
                             $wpdb->insert($wpdb->prefix . 'produkt_product_to_category', [
                                 'produkt_id' => $produkt_id,
                                 'category_id' => intval($cat_id)
+                            ]);
+                        }
+                    }
+
+                    if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+                        $filter_ids = array_map('intval', $_POST['filters']);
+                        $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+                        foreach ($filter_ids as $fid) {
+                            $wpdb->insert($wpdb->prefix . 'produkt_category_filters', [
+                                'category_id' => $produkt_id,
+                                'filter_id'   => $fid
                             ]);
                         }
                     }
@@ -800,6 +838,10 @@ class Admin {
 
     public function shipping_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/shipping-page.php';
+    }
+
+    public function filters_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/filters-page.php';
     }
 
 
