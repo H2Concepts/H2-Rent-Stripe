@@ -707,9 +707,11 @@ class Ajax {
                 ],
                 'return_url' => home_url('/danke'),
             ]);
+            error_log('Client Secret RAW: ' . $session->client_secret);
+            error_log('Client Secret DEC: ' . rawurldecode($session->client_secret));
 
             wp_send_json_success([
-                'client_secret'   => $session->client_secret,
+                'client_secret'   => rawurldecode($session->client_secret),
                 'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
             ]);
         } catch (\Exception $e) {
