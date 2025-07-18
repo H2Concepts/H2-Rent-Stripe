@@ -44,12 +44,17 @@ class SeoModule {
             return;
         }
 
-        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-        $category   = null;
-        foreach ($categories as $cat) {
-            if (sanitize_title($cat->product_title) === $slug) {
-                $category = $cat;
-                break;
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE REPLACE(LOWER(product_title),' ', '-') = %s",
+            $slug
+        ));
+        if (!$category) {
+            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->product_title) === $slug) {
+                    $category = $cat;
+                    break;
+                }
             }
         }
         if (!$category) return;
@@ -59,6 +64,9 @@ class SeoModule {
 
         echo '<title>' . esc_html($title) . '</title>' . "\n";
         echo '<meta name="description" content="' . esc_attr($desc) . '">' . "\n";
+        echo '<meta name="robots" content="index,follow">' . "\n";
+        $canonical = home_url('/shop/produkt/' . sanitize_title($slug));
+        echo '<link rel="canonical" href="' . esc_url($canonical) . '">' . "\n";
     }
 
     public static function add_open_graph_tags() {
@@ -72,11 +80,17 @@ class SeoModule {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE REPLACE(LOWER(product_title),' ', '-') = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
                 }
             }
         } else {
@@ -111,6 +125,7 @@ class SeoModule {
         echo '<meta property="og:description" content="' . esc_attr($og_description) . '">' . "\n";
         echo '<meta property="og:url" content="' . esc_url($og_url) . '">' . "\n";
         echo '<meta property="og:site_name" content="' . esc_attr(get_bloginfo('name')) . '">' . "\n";
+        echo '<link rel="canonical" href="' . esc_url($og_url) . '">' . "\n";
         if (!empty($og_image)) {
             echo '<meta property="og:image" content="' . esc_url($og_image) . '">' . "\n";
             echo '<meta property="og:image:width" content="1200">' . "\n";
@@ -136,11 +151,17 @@ class SeoModule {
 
         $category = null;
         if ($slug) {
-            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
-            foreach ($categories as $cat) {
-                if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
-                    $category = $cat;
-                    break;
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE REPLACE(LOWER(product_title),' ', '-') = %s",
+                sanitize_title($slug)
+            ));
+            if (!$category) {
+                $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+                foreach ($categories as $cat) {
+                    if (sanitize_title($cat->product_title) === sanitize_title($slug)) {
+                        $category = $cat;
+                        break;
+                    }
                 }
             }
         } else {
@@ -244,8 +265,6 @@ class SeoModule {
     }
 
     public static function add_sitemap_rewrite() {
-        add_rewrite_rule('^shop-sitemap\.xml$', 'index.php?shop_sitemap=1', 'top');
-        // also match trailing slash variant
         add_rewrite_rule('^shop-sitemap\.xml/?$', 'index.php?shop_sitemap=1', 'top');
         add_rewrite_tag('%shop_sitemap%', '1');
     }
