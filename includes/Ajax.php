@@ -696,18 +696,20 @@ class Ajax {
 
         try {
             \ProduktVerleih\StripeService::init();
-            $checkout_session = \Stripe\Checkout\Session::create([
+            $session = \Stripe\Checkout\Session::create([
                 'ui_mode'    => 'embedded',
                 'mode'       => 'subscription',
-                'line_items' => [[
-                    'price'    => $variant->stripe_price_id,
-                    'quantity' => 1,
-                ]],
+                'line_items' => [
+                    [
+                        'price'    => $variant->stripe_price_id,
+                        'quantity' => 1,
+                    ],
+                ],
                 'return_url' => home_url('/danke'),
             ]);
 
             wp_send_json_success([
-                'client_secret'   => $checkout_session->client_secret,
+                'client_secret'   => $session->client_secret,
                 'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
             ]);
         } catch (\Exception $e) {

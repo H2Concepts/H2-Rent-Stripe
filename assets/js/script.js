@@ -25,15 +25,11 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(result => {
           if (result.success) {
-            let clientSecret = result.data.client_secret;
-            try {
-              clientSecret = decodeURIComponent(clientSecret);
-            } catch (e) {}
-            try {
-              clientSecret = decodeURIComponent(clientSecret);
-            } catch (e) {}
-            const stripe = Stripe(result.data.publishable_key);
-            const elements = stripe.elements({ clientSecret });
+            const clientSecret = result.data.client_secret;
+            const publishableKey = result.data.publishable_key;
+            const stripe = Stripe(publishableKey);
+            const options = { clientSecret: clientSecret };
+            const elements = stripe.elements(options);
             const checkoutElement = elements.create('checkout');
             checkoutElement.mount('#checkout-mount-point');
           } else {
@@ -233,15 +229,11 @@ jQuery(document).ready(function($) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                let clientSecret = data.data.client_secret;
-                try {
-                    clientSecret = decodeURIComponent(clientSecret);
-                } catch (e) {}
-                try {
-                    clientSecret = decodeURIComponent(clientSecret);
-                } catch (e) {}
-                const stripe = Stripe(data.data.publishable_key);
-                const elements = stripe.elements({ clientSecret });
+                const clientSecret = data.data.client_secret;
+                const publishableKey = data.data.publishable_key;
+                const stripe = Stripe(publishableKey);
+                const options = { clientSecret: clientSecret };
+                const elements = stripe.elements(options);
                 const checkoutElement = elements.create('checkout');
                 checkoutElement.mount('#produkt-embedded-checkout');
 
