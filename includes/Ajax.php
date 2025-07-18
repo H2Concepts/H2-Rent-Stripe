@@ -994,6 +994,10 @@ function produkt_create_checkout_session() {
             $session_args['customer_email'] = $customer_email;
         }
 
+        // switch to embedded checkout
+        $session_args['ui_mode']   = 'embedded';
+        $session_args['return_url'] = home_url('/danke/');
+
         $session = \Stripe\Checkout\Session::create($session_args);
 
         // store preliminary order with status "offen"
@@ -1030,7 +1034,10 @@ function produkt_create_checkout_session() {
             ]
         );
 
-        wp_send_json(['url' => $session->url]);
+        wp_send_json_success([
+            'client_secret'   => $session->client_secret,
+            'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
+        ]);
     } catch (\Exception $e) {
         error_log('Stripe Checkout Session Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
