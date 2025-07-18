@@ -13,6 +13,8 @@ class SeoModule {
         add_action('wp_head', [self::class, 'add_schema_markup']);
         add_action('init', [self::class, 'add_sitemap_rewrite']);
         add_action('template_redirect', [self::class, 'render_sitemap']);
+        // add sitemap reference to robots.txt
+        add_filter('robots_txt', [self::class, 'add_sitemap_to_robots'], 10, 2);
     }
 
     public static function add_meta_tags() {
@@ -243,7 +245,15 @@ class SeoModule {
 
     public static function add_sitemap_rewrite() {
         add_rewrite_rule('^shop-sitemap\.xml$', 'index.php?shop_sitemap=1', 'top');
+        // also match trailing slash variant
+        add_rewrite_rule('^shop-sitemap\.xml/?$', 'index.php?shop_sitemap=1', 'top');
         add_rewrite_tag('%shop_sitemap%', '1');
+    }
+
+    public static function add_sitemap_to_robots($output, $public) {
+        $sitemap_url = home_url('/shop-sitemap.xml');
+        $output .= "\nSitemap: $sitemap_url";
+        return $output;
     }
 
     public static function render_sitemap() {
