@@ -25,11 +25,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(result => {
           if (result.success) {
-            const publishableKey = result.data.publishable_key;
             const clientSecret = result.data.client_secret;
-            const stripe = Stripe(publishableKey);
-            const options = { clientSecret: clientSecret };
-            const elements = stripe.elements(options);
+            const stripe = Stripe(result.data.publishable_key);
+            const elements = stripe.elements({ clientSecret });
             const checkoutElement = elements.create('checkout');
             checkoutElement.mount('#checkout-mount-point');
           } else {
@@ -229,11 +227,9 @@ jQuery(document).ready(function($) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                const publishableKey = data.data.publishable_key;
                 const clientSecret = data.data.client_secret;
-                const stripe = Stripe(publishableKey);
-                const options = { clientSecret: clientSecret };
-                const elements = stripe.elements(options);
+                const stripe = Stripe(data.data.publishable_key);
+                const elements = stripe.elements({ clientSecret });
                 const checkoutElement = elements.create('checkout');
                 checkoutElement.mount('#produkt-embedded-checkout');
 

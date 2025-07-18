@@ -695,7 +695,7 @@ class Ajax {
         }
 
         try {
-            \Stripe\Stripe::setApiKey(\ProduktVerleih\StripeService::get_secret_key());
+            \ProduktVerleih\StripeService::init();
             $checkout_session = \Stripe\Checkout\Session::create([
                 'ui_mode'    => 'embedded',
                 'mode'       => 'subscription',
