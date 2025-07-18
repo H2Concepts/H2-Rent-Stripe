@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const checkoutMount = document.getElementById('checkout-mount-point');
-  const needsStripe = checkoutMount || document.querySelector('#checkout-element');
+  const embeddedMount = document.getElementById('produkt-embedded-checkout');
+  const needsStripe = checkoutMount || document.querySelector('#checkout-element') || embeddedMount;
   if (needsStripe) {
     const script = document.createElement('script');
     script.src = 'https://js.stripe.com/v3/';
@@ -24,11 +25,13 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(result => {
           if (result.success) {
-            const stripe = Stripe(result.data.publishable_key);
-            stripe.mountEmbeddedCheckout({
-              clientSecret: result.data.client_secret,
-              element: '#checkout-mount-point'
-            });
+            const publishableKey = result.data.publishable_key;
+            const clientSecret = result.data.client_secret;
+            const stripe = Stripe(publishableKey);
+            const options = { clientSecret: clientSecret };
+            const elements = stripe.elements(options);
+            const checkoutElement = elements.create('checkout');
+            checkoutElement.mount('#checkout-mount-point');
           } else {
             console.error('Stripe-Session-Fehler:', result.data);
           }
@@ -210,32 +213,36 @@ jQuery(document).ready(function($) {
         const productColorName = $('.produkt-option[data-type="product-color"].selected').data('color-name') || '';
         const frameColorName = $('.produkt-option[data-type="frame-color"].selected').data('color-name') || '';
 
-        const priceId = currentPriceId;
-        const extras = selectedExtras.join(',');
-        fetch(produkt_ajax.ajax_url + '?action=create_checkout_session', {
+        if (!selectedVariant) {
+            return;
+        }
+
+        fetch(khv_ajax.ajax_url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                price_id: priceId,
-                extra_ids: extras,
-                category_id: currentCategoryId,
-                variant_id: selectedVariant,
-                duration_id: selectedDuration,
-                condition_id: selectedCondition,
-                product_color_id: selectedProductColor,
-                frame_color_id: selectedFrameColor,
-                final_price: currentPrice,
-                produkt: variantName,
-                extra: extraNames,
-                dauer: selectedDuration,
-                dauer_name: durationName,
-                zustand: conditionName,
-                produktfarbe: productColorName,
-                gestellfarbe: frameColorName
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                action: 'khv_create_checkout_session',
+                security: khv_ajax.nonce,
+                variant_id: selectedVariant
             })
         })
         .then(res => res.json())
-        .then(data => { if (data.url) { window.location.href = data.url; } });
+        .then(data => {
+            if (data.success) {
+                const publishableKey = data.data.publishable_key;
+                const clientSecret = data.data.client_secret;
+                const stripe = Stripe(publishableKey);
+                const options = { clientSecret: clientSecret };
+                const elements = stripe.elements(options);
+                const checkoutElement = elements.create('checkout');
+                checkoutElement.mount('#produkt-embedded-checkout');
+
+                document.querySelector('.produkt-configuration').style.display = 'none';
+                document.querySelector('#produkt-embedded-checkout-wrapper').style.display = 'block';
+            } else {
+                console.error('Stripe-Session-Fehler:', data.data);
+            }
+        });
     });
 
     // Handle thumbnail clicks
