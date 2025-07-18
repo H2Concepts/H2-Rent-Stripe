@@ -697,7 +697,7 @@ class Ajax {
         try {
             \ProduktVerleih\StripeService::init();
 
-            // Stripe Session anlegen
+            // Stripe Session anlegen und sofort Subscription + PaymentIntent erhalten
             $session = \Stripe\Checkout\Session::create([
                 'ui_mode'    => 'embedded',
                 'mode'       => 'subscription',
@@ -708,28 +708,20 @@ class Ajax {
                     ],
                 ],
                 'return_url' => home_url('/danke'),
+                'expand'     => [
+                    'subscription',
+                    'subscription.latest_invoice',
+                    'subscription.latest_invoice.payment_intent',
+                ],
             ]);
 
-            // Nachträglich die Subscription holen
-            $subscription_id = $session->subscription;
-            if (!$subscription_id) {
-                wp_send_json_error(['message' => 'Stripe-Subscription nicht verfügbar']);
-            }
-
-            // Subscription + PaymentIntent abrufen
-            $subscription = \Stripe\Subscription::retrieve([
-                'id'    => $subscription_id,
-                'expand' => ['latest_invoice.payment_intent'],
-            ]);
-
-            $payment_intent = $subscription->latest_invoice->payment_intent;
-            if (!$payment_intent || empty($payment_intent->client_secret)) {
+            $client_secret = $session->subscription->latest_invoice->payment_intent->client_secret ?? '';
+            if (!$client_secret) {
                 wp_send_json_error(['message' => 'Client Secret konnte nicht ermittelt werden']);
             }
 
-            // Erfolg zurückgeben
             wp_send_json_success([
-                'client_secret'   => rawurldecode($payment_intent->client_secret),
+                'client_secret'   => $client_secret,
                 'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
             ]);
         } catch (\Exception $e) {

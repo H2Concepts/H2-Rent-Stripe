@@ -286,13 +286,18 @@ class StripeService {
 
         try {
             $session = \Stripe\Checkout\Session::create([
-                'ui_mode' => 'embedded',
-                'mode'    => 'subscription',
+                'ui_mode'  => 'embedded',
+                'mode'     => 'subscription',
                 'return_url' => home_url('/danke/'),
                 'line_items' => [[
                     'price'    => $product->stripe_price_id,
                     'quantity' => 1,
                 ]],
+                'expand' => [
+                    'subscription',
+                    'subscription.latest_invoice',
+                    'subscription.latest_invoice.payment_intent',
+                ],
             ]);
 
             return $session;
