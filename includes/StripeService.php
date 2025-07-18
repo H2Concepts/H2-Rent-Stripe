@@ -293,12 +293,25 @@ class StripeService {
                     'price'    => $product->stripe_price_id,
                     'quantity' => 1,
                 ]],
-                'expand' => [
-                    'subscription',
-                    'subscription.latest_invoice',
-                    'subscription.latest_invoice.payment_intent',
-                ],
+                'expand' => ['subscription'],
             ]);
+
+            $subscription_id = $session->subscription ?? null;
+            if (!$subscription_id) {
+                return new \WP_Error('stripe_error', 'Subscription konnte nicht geladen werden');
+            }
+
+            $subscription = \Stripe\Subscription::retrieve([
+                'id' => $subscription_id,
+                'expand' => ['latest_invoice.payment_intent'],
+            ]);
+
+            $payment_intent = $subscription->latest_invoice->payment_intent ?? null;
+            if (!$payment_intent || empty($payment_intent->client_secret)) {
+                return new \WP_Error('stripe_error', 'Client Secret konnte nicht ermittelt werden');
+            }
+
+            $session->client_secret = rawurldecode($payment_intent->client_secret);
 
             return $session;
         } catch (\Exception $e) {
