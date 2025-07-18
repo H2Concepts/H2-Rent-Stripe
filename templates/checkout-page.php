@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
-    const stripe = Stripe('<?php echo esc_js(\ProduktVerleih\StripeService::get_publishable_key()); ?>');
+    const stripe = Stripe('<?php echo esc_js(\ProduktVerleih\StripeService::get_public_key()); ?>');
     stripe.mountEmbeddedCheckout({
         clientSecret: sessionId,
         element: '#checkout-mount-point'

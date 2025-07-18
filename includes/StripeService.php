@@ -254,6 +254,15 @@ class StripeService {
         return get_option('produkt_stripe_publishable_key', '');
     }
 
+    /**
+     * Alias for backward compatibility.
+     *
+     * @return string
+     */
+    public static function get_public_key() {
+        return self::get_publishable_key();
+    }
+
     public static function get_payment_method_configuration_id() {
         return get_option('produkt_stripe_pmc_id', '');
     }
