@@ -20,7 +20,14 @@ class SeoModule {
         $slug = sanitize_title(get_query_var('produkt_slug'));
         if (empty($slug)) return;
 
-        $category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE slug = %s", $slug));
+        $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+        $category   = null;
+        foreach ($categories as $cat) {
+            if (sanitize_title($cat->product_title) === $slug) {
+                $category = $cat;
+                break;
+            }
+        }
         if (!$category) return;
 
         $title = !empty($category->meta_title) ? $category->meta_title : $category->product_title . ' | ' . get_bloginfo('name');
@@ -224,13 +231,16 @@ class SeoModule {
         header('Content-Type: application/xml; charset=utf-8');
 
         $base = home_url();
-        $products = $wpdb->get_results("SELECT slug FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order");
+        $products = $wpdb->get_results(
+            "SELECT product_title FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order"
+        );
 
         echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
         foreach ($products as $p) {
-            echo '<url><loc>' . esc_url($base . '/shop/produkt/' . $p->slug) . '</loc></url>' . "\n";
+            $slug = sanitize_title($p->product_title);
+            echo '<url><loc>' . esc_url($base . '/shop/produkt/' . $slug) . '</loc></url>' . "\n";
         }
 
         echo '</urlset>'; exit;
