@@ -2482,7 +2482,7 @@
 
 .produkt-category-cards {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 15px;
     margin: 0 auto;
 }
@@ -2512,6 +2512,7 @@
     font-size: 0.8rem;
     display: block;
     margin-bottom: 10px;
+    overflow-wrap: anywhere;
 }
 
 .produkt-recent-image {
