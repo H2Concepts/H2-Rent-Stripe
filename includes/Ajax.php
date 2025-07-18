@@ -711,7 +711,7 @@ class Ajax {
             error_log('Client Secret DEC: ' . rawurldecode($session->client_secret));
 
             wp_send_json_success([
-                'client_secret'   => $session->client_secret,
+                'client_secret'   => rawurldecode($session->client_secret),
                 'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
             ]);
         } catch (\Exception $e) {
@@ -769,7 +769,7 @@ function produkt_create_payment_intent() {
             throw new \Exception($intent->get_error_message());
         }
 
-        wp_send_json(['client_secret' => $intent->client_secret]);
+        wp_send_json(['client_secret' => rawurldecode($intent->client_secret)]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
@@ -870,7 +870,7 @@ function produkt_create_subscription() {
 
         $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
 
-        wp_send_json(['client_secret' => $client_secret]);
+        wp_send_json(['client_secret' => rawurldecode($client_secret)]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
@@ -1039,7 +1039,7 @@ function produkt_create_checkout_session() {
         );
 
         wp_send_json_success([
-            'client_secret'   => $session->client_secret,
+            'client_secret'   => rawurldecode($session->client_secret),
             'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
         ]);
     } catch (\Exception $e) {

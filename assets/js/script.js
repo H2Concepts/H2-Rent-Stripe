@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(result => {
           if (result.success) {
-            const clientSecret = result.data.client_secret;
+            const clientSecret = decodeURIComponent(result.data.client_secret);
             const publishableKey = result.data.publishable_key;
             const stripe = Stripe(publishableKey);
             console.log('→ clientSecret used for elements():', clientSecret);
@@ -233,7 +233,7 @@ jQuery(document).ready(function($) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                const clientSecret = data.data.client_secret;
+                const clientSecret = decodeURIComponent(data.data.client_secret);
                 const publishableKey = data.data.publishable_key;
                 const stripe = Stripe(publishableKey);
                 console.log('→ clientSecret used for elements():', clientSecret);
