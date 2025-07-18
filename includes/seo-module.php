@@ -17,8 +17,30 @@ class SeoModule {
 
     public static function add_meta_tags() {
         global $wpdb;
-        $slug = sanitize_title(get_query_var('produkt_slug'));
-        if (empty($slug)) return;
+        $slug          = sanitize_title(get_query_var('produkt_slug'));
+        $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+
+        if ($category_slug) {
+            $cat = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
+                $category_slug
+            ));
+            if ($cat) {
+                $count = $wpdb->get_var($wpdb->prepare(
+                    "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id = %d",
+                    $cat->id
+                ));
+                if (intval($count) === 0) {
+                    echo '<meta name="robots" content="noindex,follow">' . "\n";
+                }
+            } else {
+                echo '<meta name="robots" content="noindex,follow">' . "\n";
+            }
+        }
+
+        if (empty($slug)) {
+            return;
+        }
 
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
         $category   = null;
@@ -241,6 +263,14 @@ class SeoModule {
         foreach ($products as $p) {
             $slug = sanitize_title($p->product_title);
             echo '<url><loc>' . esc_url($base . '/shop/produkt/' . $slug) . '</loc></url>' . "\n";
+        }
+
+        $categories = $wpdb->get_results(
+            "SELECT product_title FROM {$wpdb->prefix}produkt_categories WHERE active = 1 ORDER BY sort_order"
+        );
+        foreach ($categories as $cat) {
+            $cat_slug = sanitize_title($cat->product_title);
+            echo '<url><loc>' . esc_url($base . '/shop/kategorie/' . $cat_slug) . '</loc></url>' . "\n";
         }
 
         echo '</urlset>'; exit;
