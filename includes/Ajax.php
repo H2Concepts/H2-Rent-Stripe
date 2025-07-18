@@ -1,6 +1,9 @@
 <?php
 namespace ProduktVerleih;
 
+add_action('wp_ajax_khv_create_checkout_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
+add_action('wp_ajax_nopriv_khv_create_checkout_session', [\ProduktVerleih\Ajax::class, 'create_embedded_checkout_session']);
+
 class Ajax {
     
     public function ajax_get_product_price() {
@@ -674,6 +677,56 @@ class Ajax {
 
         wp_send_json_success();
     }
+    public static function create_embedded_checkout_session() {
+        check_ajax_referer('khv_ajax_nonce', 'security');
+
+        $variant_id = intval($_POST['variant_id'] ?? 0);
+        if (!$variant_id) {
+            wp_send_json_error(['message' => 'Variante fehlt']);
+        }
+
+        global $wpdb;
+        $variant = $wpdb->get_row(
+            $wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d", $variant_id)
+        );
+
+        if (!$variant || empty($variant->stripe_price_id)) {
+            wp_send_json_error(['message' => 'Keine gültige Variante gefunden']);
+        }
+
+        try {
+            \ProduktVerleih\StripeService::init();
+
+            // Stripe Session anlegen und PaymentIntent direkt abrufen
+            $session = \Stripe\Checkout\Session::create([
+                'ui_mode'    => 'embedded',
+                'mode'       => 'subscription',
+                'line_items' => [
+                    [
+                        'price'    => $variant->stripe_price_id,
+                        'quantity' => 1,
+                    ],
+                ],
+                'return_url' => home_url('/danke'),
+                'expand'     => ['subscription.latest_invoice.payment_intent'],
+            ]);
+
+            $payment_intent = $session->subscription->latest_invoice->payment_intent ?? null;
+            if (!$payment_intent || empty($payment_intent->client_secret)) {
+                wp_send_json_error(['message' => 'Client Secret konnte nicht ermittelt werden']);
+            }
+
+            $client_secret = rawurldecode($payment_intent->client_secret);
+
+            wp_send_json_success([
+                'client_secret'   => $client_secret,
+                'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
+            ]);
+        } catch (\Exception $e) {
+            wp_send_json_error(['message' => $e->getMessage()]);
+        }
+    }
+
 
 }
 
@@ -724,7 +777,7 @@ function produkt_create_payment_intent() {
             throw new \Exception($intent->get_error_message());
         }
 
-        wp_send_json(['client_secret' => $intent->client_secret]);
+        wp_send_json(['client_secret' => rawurldecode($intent->client_secret)]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
@@ -825,7 +878,7 @@ function produkt_create_subscription() {
 
         $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
 
-        wp_send_json(['client_secret' => $client_secret]);
+        wp_send_json(['client_secret' => rawurldecode($client_secret)]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
@@ -953,6 +1006,10 @@ function produkt_create_checkout_session() {
             $session_args['customer_email'] = $customer_email;
         }
 
+        // switch to embedded checkout
+        $session_args['ui_mode']   = 'embedded';
+        $session_args['return_url'] = home_url('/danke/');
+
         $session = \Stripe\Checkout\Session::create($session_args);
 
         // store preliminary order with status "offen"
@@ -989,7 +1046,10 @@ function produkt_create_checkout_session() {
             ]
         );
 
-        wp_send_json(['url' => $session->url]);
+        wp_send_json_success([
+            'client_secret'   => rawurldecode($session->client_secret),
+            'publishable_key' => \ProduktVerleih\StripeService::get_publishable_key(),
+        ]);
     } catch (\Exception $e) {
         error_log('Stripe Checkout Session Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);

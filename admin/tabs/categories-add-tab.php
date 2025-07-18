@@ -12,6 +12,16 @@
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <?php
         $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
+        $filter_groups = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_filter_groups ORDER BY name");
+        $filters_by_group = [];
+        foreach ($filter_groups as $g) {
+            $filters_by_group[$g->id] = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}produkt_filters WHERE group_id = %d ORDER BY name",
+                    $g->id
+                )
+            );
+        }
         ?>
         <!-- Grunddaten -->
         <div class="produkt-form-section">
@@ -177,8 +187,8 @@
                     <input type="number" name="sort_order" min="0">
                 </div>
             </div>
-            <div class="produkt-form-group">
-                <label>Kategorien</label>
+        <div class="produkt-form-group">
+            <label>Kategorien</label>
                 <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
                     <?php foreach ($all_product_cats as $cat): ?>
                         <option value="<?php echo $cat->id; ?>">
@@ -187,6 +197,21 @@
                     <?php endforeach; ?>
                 </select>
                 <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
+            </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>🔎 Filter</h4>
+            <input type="text" id="filter-search" placeholder="Filter suchen..." style="max-width:300px;width:100%;">
+            <div id="filter-list" class="produkt-filter-list" style="margin-top:10px;">
+                <?php foreach ($filter_groups as $group): ?>
+                    <strong><?php echo esc_html($group->name); ?></strong><br>
+                    <?php foreach ($filters_by_group[$group->id] as $f): ?>
+                    <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
+                        <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
+                    </label>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
             </div>
         </div>
         
@@ -273,6 +298,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (mdInput && mdCounter) {
         updateCharCounter(mdInput, mdCounter, 150, 160);
         mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
+    }
+
+    const filterSearch = document.getElementById('filter-search');
+    if (filterSearch) {
+        filterSearch.addEventListener('input', function() {
+            const term = this.value.toLowerCase();
+            document.querySelectorAll('#filter-list .produkt-filter-item').forEach(function(el) {
+                el.style.display = el.textContent.toLowerCase().indexOf(term) !== -1 ? 'block' : 'none';
+            });
+        });
     }
 
     // Accordion fields are handled in admin-script.js

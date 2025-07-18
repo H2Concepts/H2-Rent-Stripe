@@ -1,3 +1,51 @@
+document.addEventListener('DOMContentLoaded', function () {
+  const checkoutMount = document.getElementById('checkout-mount-point');
+  const embeddedMount = document.getElementById('produkt-embedded-checkout');
+  const needsStripe = checkoutMount || document.querySelector('#checkout-element') || embeddedMount;
+  if (needsStripe) {
+    const script = document.createElement('script');
+    script.src = 'https://js.stripe.com/v3/';
+    script.async = true;
+    script.onload = function () {
+      console.log('Stripe.js geladen.');
+      if (typeof Stripe !== 'undefined' && window.StripeConfig) {
+        window.produktStripe = Stripe(StripeConfig.publicKey);
+      }
+      if (typeof khv_vars !== 'undefined') {
+        console.log(khv_vars.nonce);
+      }
+      if (checkoutMount && typeof khv_vars !== 'undefined') {
+        const variantId = checkoutMount.dataset.variantId;
+        fetch(khv_vars.ajax_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            action: 'khv_create_checkout_session',
+            security: khv_vars.nonce,
+            variant_id: variantId
+          })
+        })
+        .then(r => r.json())
+        .then(result => {
+          if (result.success) {
+            const clientSecret = decodeURIComponent(result.data.client_secret);
+            const publishableKey = result.data.publishable_key;
+            const stripe = Stripe(publishableKey);
+            console.log('→ clientSecret used for elements():', clientSecret);
+            const options = { clientSecret: clientSecret };
+            const elements = stripe.elements(options);
+            const checkoutElement = elements.create('checkout');
+            checkoutElement.mount('#checkout-mount-point');
+          } else {
+            console.error('Stripe-Session-Fehler:', result.data);
+          }
+        });
+      }
+    };
+    document.head.appendChild(script);
+  }
+});
+
 jQuery(document).ready(function($) {
     let selectedVariant = null;
     let selectedExtras = [];
@@ -169,32 +217,37 @@ jQuery(document).ready(function($) {
         const productColorName = $('.produkt-option[data-type="product-color"].selected').data('color-name') || '';
         const frameColorName = $('.produkt-option[data-type="frame-color"].selected').data('color-name') || '';
 
-        const priceId = currentPriceId;
-        const extras = selectedExtras.join(',');
-        fetch(produkt_ajax.ajax_url + '?action=create_checkout_session', {
+        if (!selectedVariant) {
+            return;
+        }
+
+        fetch(khv_vars.ajax_url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                price_id: priceId,
-                extra_ids: extras,
-                category_id: currentCategoryId,
-                variant_id: selectedVariant,
-                duration_id: selectedDuration,
-                condition_id: selectedCondition,
-                product_color_id: selectedProductColor,
-                frame_color_id: selectedFrameColor,
-                final_price: currentPrice,
-                produkt: variantName,
-                extra: extraNames,
-                dauer: selectedDuration,
-                dauer_name: durationName,
-                zustand: conditionName,
-                produktfarbe: productColorName,
-                gestellfarbe: frameColorName
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                action: 'khv_create_checkout_session',
+                security: khv_vars.nonce,
+                variant_id: selectedVariant
             })
         })
         .then(res => res.json())
-        .then(data => { if (data.url) { window.location.href = data.url; } });
+        .then(data => {
+            if (data.success) {
+                const clientSecret = decodeURIComponent(data.data.client_secret);
+                const publishableKey = data.data.publishable_key;
+                const stripe = Stripe(publishableKey);
+                console.log('→ clientSecret used for elements():', clientSecret);
+                const options = { clientSecret: clientSecret };
+                const elements = stripe.elements(options);
+                const checkoutElement = elements.create('checkout');
+                checkoutElement.mount('#produkt-embedded-checkout');
+
+                document.querySelector('.produkt-configuration').style.display = 'none';
+                document.querySelector('#produkt-embedded-checkout-wrapper').style.display = 'block';
+            } else {
+                console.error('Stripe-Session-Fehler:', data.data);
+            }
+        });
     });
 
     // Handle thumbnail clicks
@@ -1007,4 +1060,21 @@ jQuery(function($) {
         $('#shop-filter-overlay').removeClass('open');
         $('body').removeClass('shop-filter-open');
     });
+
+    function updateFilterQuery() {
+        const ids = $('.shop-filter-checkbox:checked').map(function(){ return this.value; }).get();
+        const params = new URLSearchParams(window.location.search);
+        if (ids.length) {
+            params.set('filter', ids.join(','));
+        } else {
+            params.delete('filter');
+        }
+        window.location.search = params.toString();
+    }
+
+$(document).on('change', '.shop-filter-checkbox', updateFilterQuery);
 });
+
+if (typeof Stripe !== 'undefined' && window.StripeConfig) {
+  window.produktStripe = Stripe(StripeConfig.publicKey);
+}
