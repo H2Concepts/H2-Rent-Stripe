@@ -98,3 +98,6 @@ function produkt_simple_checkout_button() {
     </script>
     <?php return ob_get_clean();
 }
+
+require_once plugin_dir_path(__FILE__) . 'includes/seo-module.php';
+\ProduktVerleih\SeoModule::init();

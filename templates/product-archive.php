@@ -15,12 +15,19 @@ if (!is_array($categories)) {
     $categories = [];
 }
 
+// Selected filters from query string
+$selected_filters = [];
+if (!empty($_GET['filter'])) {
+    $selected_filters = array_map('intval', array_filter(explode(',', $_GET['filter'])));
+}
+
 // retrieve the requested category and sanitize the slug immediately
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 if (empty($category_slug)) {
     $category_slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
 }
 $filtered_product_ids = [];
+$filtered_filter_ids = [];
 $category = null;
 
 if (!empty($category_slug)) {
@@ -46,6 +53,19 @@ if (!empty($category_slug)) {
         // Slug war angegeben, aber ungültig
         $categories = [];
     }
+}
+
+if (!empty($selected_filters)) {
+    global $wpdb;
+    $placeholders = implode(',', array_fill(0, count($selected_filters), '%d'));
+    $query = $wpdb->prepare(
+        "SELECT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders) GROUP BY category_id HAVING COUNT(DISTINCT filter_id) = %d",
+        array_merge($selected_filters, [count($selected_filters)])
+    );
+    $filtered_filter_ids = $wpdb->get_col($query);
+    $categories = array_filter($categories ?? [], function ($product) use ($filtered_filter_ids) {
+        return in_array($product->id, $filtered_filter_ids);
+    });
 }
 
 $content_category_id = $category->id ?? 0;
@@ -119,6 +139,27 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
     foreach ($kats_raw as $r) { $cnt_map[$r->id] = $r->product_count; }
     foreach ($kats as $c) { $c->product_count = $cnt_map[$c->id] ?? 0; }
     $kats = array_filter($kats, function($c){ return $c->product_count > 0; });
+
+    // Retrieve filter groups with at least one assigned product
+    $filter_groups = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_filter_groups ORDER BY name");
+    $filters_by_group = [];
+    foreach ($filter_groups as $fg) {
+        $filters = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT f.id, f.name, COUNT(cf.category_id) AS cnt
+                 FROM {$wpdb->prefix}produkt_filters f
+                 LEFT JOIN {$wpdb->prefix}produkt_category_filters cf ON cf.filter_id = f.id
+                 WHERE f.group_id = %d
+                 GROUP BY f.id
+                 HAVING cnt > 0
+                 ORDER BY f.name",
+                $fg->id
+            )
+        );
+        if (!empty($filters)) {
+            $filters_by_group[$fg->id] = $filters;
+        }
+    }
     ?>
 
     <div class="shop-overview-layout">
@@ -135,6 +176,24 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                     </li>
                 <?php endforeach; ?>
             </ul>
+
+            <?php if (!empty($filters_by_group)): ?>
+                <div class="shop-filter-checkboxes">
+                    <?php foreach ($filter_groups as $fg): if (empty($filters_by_group[$fg->id])) continue; ?>
+                        <strong><?php echo esc_html($fg->name); ?></strong>
+                        <ul>
+                            <?php foreach ($filters_by_group[$fg->id] as $f): ?>
+                                <li>
+                                    <label>
+                                        <input type="checkbox" class="shop-filter-checkbox" value="<?php echo $f->id; ?>" <?php checked(in_array($f->id, $selected_filters)); ?>>
+                                        <?php echo esc_html($f->name); ?>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </aside>
         <div>
             <?php if (empty($categories)): ?>
@@ -258,6 +317,24 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                 </li>
             <?php endforeach; ?>
         </ul>
+
+        <?php if (!empty($filters_by_group)): ?>
+            <div class="shop-filter-checkboxes">
+                <?php foreach ($filter_groups as $fg): if (empty($filters_by_group[$fg->id])) continue; ?>
+                    <strong><?php echo esc_html($fg->name); ?></strong>
+                    <ul>
+                        <?php foreach ($filters_by_group[$fg->id] as $f): ?>
+                            <li>
+                                <label>
+                                    <input type="checkbox" class="shop-filter-checkbox" value="<?php echo $f->id; ?>" <?php checked(in_array($f->id, $selected_filters)); ?>>
+                                    <?php echo esc_html($f->name); ?>
+                                </label>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 </div>
 </div> <!-- .entry-content -->

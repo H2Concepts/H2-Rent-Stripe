@@ -1007,4 +1007,17 @@ jQuery(function($) {
         $('#shop-filter-overlay').removeClass('open');
         $('body').removeClass('shop-filter-open');
     });
+
+    function updateFilterQuery() {
+        const ids = $('.shop-filter-checkbox:checked').map(function(){ return this.value; }).get();
+        const params = new URLSearchParams(window.location.search);
+        if (ids.length) {
+            params.set('filter', ids.join(','));
+        } else {
+            params.delete('filter');
+        }
+        window.location.search = params.toString();
+    }
+
+    $(document).on('change', '.shop-filter-checkbox', updateFilterQuery);
 });
