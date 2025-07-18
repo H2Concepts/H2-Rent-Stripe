@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const clientSecret = result.data.client_secret;
             const publishableKey = result.data.publishable_key;
             const stripe = Stripe(publishableKey);
+            console.log('→ clientSecret used for elements():', clientSecret);
             const options = { clientSecret: clientSecret };
             const elements = stripe.elements(options);
             const checkoutElement = elements.create('checkout');
@@ -235,6 +236,7 @@ jQuery(document).ready(function($) {
                 const clientSecret = data.data.client_secret;
                 const publishableKey = data.data.publishable_key;
                 const stripe = Stripe(publishableKey);
+                console.log('→ clientSecret used for elements():', clientSecret);
                 const options = { clientSecret: clientSecret };
                 const elements = stripe.elements(options);
                 const checkoutElement = elements.create('checkout');
