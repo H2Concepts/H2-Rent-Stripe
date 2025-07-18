@@ -11,14 +11,17 @@ document.addEventListener('DOMContentLoaded', function () {
       if (typeof Stripe !== 'undefined' && window.StripeConfig) {
         window.produktStripe = Stripe(StripeConfig.publicKey);
       }
-      if (checkoutMount && typeof khv_ajax !== 'undefined') {
+      if (typeof khv_vars !== 'undefined') {
+        console.log(khv_vars.nonce);
+      }
+      if (checkoutMount && typeof khv_vars !== 'undefined') {
         const variantId = checkoutMount.dataset.variantId;
-        fetch(khv_ajax.ajax_url, {
+        fetch(khv_vars.ajax_url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
             action: 'khv_create_checkout_session',
-            security: khv_ajax.nonce,
+            security: khv_vars.nonce,
             variant_id: variantId
           })
         })
@@ -217,12 +220,12 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        fetch(khv_ajax.ajax_url, {
+        fetch(khv_vars.ajax_url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 action: 'khv_create_checkout_session',
-                security: khv_ajax.nonce,
+                security: khv_vars.nonce,
                 variant_id: selectedVariant
             })
         })

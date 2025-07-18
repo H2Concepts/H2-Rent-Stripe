@@ -286,7 +286,7 @@ class Admin {
             );
             wp_localize_script(
                 'produkt-script',
-                'khv_ajax',
+                'khv_vars',
                 [
                     'ajax_url' => admin_url('admin-ajax.php'),
                     'nonce'    => wp_create_nonce('khv_ajax_nonce'),
