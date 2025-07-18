@@ -524,6 +524,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     </div>
                     <?php endif; ?>
                                         </form>
+
+                    <!-- Embedded Checkout Wrapper -->
                     <div id="produkt-embedded-checkout-wrapper" style="display:none;">
                         <div id="produkt-embedded-checkout"></div>
                     </div>
