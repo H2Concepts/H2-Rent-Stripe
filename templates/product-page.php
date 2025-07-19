@@ -588,7 +588,13 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             </div>
         </div>
     </div>
+
     <?php endif; ?>
+</div>
+
+<!-- Display a payment form -->
+<div id="checkout">
+    <!-- Checkout will insert the payment form here -->
 </div>
 
 <div id="produkt-exit-popup" class="produkt-exit-popup" style="display:none;">

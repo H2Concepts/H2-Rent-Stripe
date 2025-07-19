@@ -272,6 +272,7 @@ class Admin {
             wp_localize_script('produkt-script', 'produkt_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('produkt_nonce'),
+                'publishable_key' => StripeService::get_publishable_key(),
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,

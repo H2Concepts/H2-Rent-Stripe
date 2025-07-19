@@ -17,6 +17,30 @@ jQuery(document).ready(function($) {
     let currentPriceId = '';
     let colorNotificationTimeout = null;
 
+    const publishableKey = produkt_ajax.publishable_key || '';
+    let stripe;
+    let embeddedCheckout;
+
+    async function startEmbeddedCheckout() {
+        if (!publishableKey) return;
+        if (!stripe) {
+            stripe = Stripe(publishableKey);
+        }
+
+        const fetchClientSecret = async () => {
+            const res = await fetch(produkt_ajax.ajax_url + '?action=create_embedded_checkout_session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ price_id: currentPriceId })
+            });
+            const data = await res.json();
+            return data.client_secret;
+        };
+
+        embeddedCheckout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
+        embeddedCheckout.mount('#checkout');
+    }
+
     // Get category ID from container
     const container = $('.produkt-container');
     if (container.length) {
@@ -161,40 +185,7 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        const variantName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
-        const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
-            .map(function() { return $(this).text().trim(); }).get().join(',');
-        const durationName = $('.produkt-option[data-type="duration"].selected .produkt-duration-name').text().trim();
-        const conditionName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
-        const productColorName = $('.produkt-option[data-type="product-color"].selected').data('color-name') || '';
-        const frameColorName = $('.produkt-option[data-type="frame-color"].selected').data('color-name') || '';
-
-        const priceId = currentPriceId;
-        const extras = selectedExtras.join(',');
-        fetch(produkt_ajax.ajax_url + '?action=create_checkout_session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                price_id: priceId,
-                extra_ids: extras,
-                category_id: currentCategoryId,
-                variant_id: selectedVariant,
-                duration_id: selectedDuration,
-                condition_id: selectedCondition,
-                product_color_id: selectedProductColor,
-                frame_color_id: selectedFrameColor,
-                final_price: currentPrice,
-                produkt: variantName,
-                extra: extraNames,
-                dauer: selectedDuration,
-                dauer_name: durationName,
-                zustand: conditionName,
-                produktfarbe: productColorName,
-                gestellfarbe: frameColorName
-            })
-        })
-        .then(res => res.json())
-        .then(data => { if (data.url) { window.location.href = data.url; } });
+        startEmbeddedCheckout();
     });
 
     // Handle thumbnail clicks
