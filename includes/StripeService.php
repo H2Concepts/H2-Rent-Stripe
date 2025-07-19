@@ -187,8 +187,25 @@ class StripeService {
      * Returns array with 'amount' and 'price_id' keys or null on failure.
      */
     public static function get_lowest_price_with_durations($variant_ids, $duration_ids, $expiration = 43200) {
+        global $wpdb;
+
+        $variant_ids  = array_map('intval', (array) $variant_ids);
+        $duration_ids = array_map('intval', (array) $duration_ids);
+
+        if (!empty($variant_ids)) {
+            $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
+            $sql         = "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders) AND available = 1";
+            $variant_ids = $wpdb->get_col($wpdb->prepare($sql, $variant_ids));
+        }
+
         if (empty($variant_ids)) {
             return null;
+        }
+
+        if (!empty($duration_ids)) {
+            $placeholders = implode(',', array_fill(0, count($duration_ids), '%d'));
+            $sql          = "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE id IN ($placeholders) AND active = 1";
+            $duration_ids = $wpdb->get_col($wpdb->prepare($sql, $duration_ids));
         }
 
         sort($variant_ids);
@@ -198,8 +215,6 @@ class StripeService {
         if ($cached !== false) {
             return $cached;
         }
-
-        global $wpdb;
 
         $lowest = null;
         $lowest_id = '';
