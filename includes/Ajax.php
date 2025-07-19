@@ -1027,19 +1027,51 @@ function produkt_create_embedded_checkout_session() {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
 
-        $extra_ids = [];
+        $extra_price_ids = [];
         if (!empty($body['extra_price_ids'])) {
             if (is_array($body['extra_price_ids'])) {
-                $extra_ids = array_map('sanitize_text_field', $body['extra_price_ids']);
+                $extra_price_ids = array_map('sanitize_text_field', $body['extra_price_ids']);
             } elseif (is_string($body['extra_price_ids'])) {
-                $extra_ids = array_map('sanitize_text_field', explode(',', $body['extra_price_ids']));
+                $extra_price_ids = array_map('sanitize_text_field', explode(',', $body['extra_price_ids']));
             }
-            $extra_ids = array_filter($extra_ids);
+            $extra_price_ids = array_filter($extra_price_ids);
         }
 
+        $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $category_id      = intval($body['category_id'] ?? 0);
+        $variant_id       = intval($body['variant_id'] ?? 0);
+        $duration_id      = intval($body['duration_id'] ?? 0);
+        $condition_id     = intval($body['condition_id'] ?? 0);
+        $product_color_id = intval($body['product_color_id'] ?? 0);
+        $frame_color_id   = intval($body['frame_color_id'] ?? 0);
+        $final_price      = floatval($body['final_price'] ?? 0);
+        $customer_email   = sanitize_email($body['email'] ?? '');
+
         $shipping_price_id = '';
+        $shipping_cost = 0;
         if (!empty($body['shipping_price_id'])) {
             $shipping_price_id = sanitize_text_field($body['shipping_price_id']);
+            $amt = StripeService::get_price_amount($shipping_price_id);
+            if (!is_wp_error($amt)) {
+                $shipping_cost = floatval($amt);
+            }
+        }
+
+        $metadata = [
+            'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
+            'extra'         => sanitize_text_field($body['extra'] ?? ''),
+            'dauer'         => sanitize_text_field($body['dauer'] ?? ''),
+            'dauer_name'    => sanitize_text_field($body['dauer_name'] ?? ''),
+            'zustand'       => sanitize_text_field($body['zustand'] ?? ''),
+            'produktfarbe'  => sanitize_text_field($body['produktfarbe'] ?? ''),
+            'gestellfarbe'  => sanitize_text_field($body['gestellfarbe'] ?? ''),
+            'email'         => $customer_email,
+            'user_ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
+            'user_agent'    => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+        ];
+        if ($shipping_price_id) {
+            $metadata['shipping_price_id'] = $shipping_price_id;
         }
 
         $line_items = [[
@@ -1047,7 +1079,7 @@ function produkt_create_embedded_checkout_session() {
             'quantity' => 1,
         ]];
 
-        foreach ($extra_ids as $extra_price_id) {
+        foreach ($extra_price_ids as $extra_price_id) {
             $line_items[] = [
                 'price'    => $extra_price_id,
                 'quantity' => 1,
@@ -1068,6 +1100,39 @@ function produkt_create_embedded_checkout_session() {
             'return_url'   => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'automatic_tax'=> ['enabled' => true],
         ]);
+
+        global $wpdb;
+        $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
+        $wpdb->insert(
+            $wpdb->prefix . 'produkt_orders',
+            [
+                'category_id'      => $category_id,
+                'variant_id'       => $variant_id,
+                'extra_id'         => $extra_id,
+                'extra_ids'        => $extra_ids_raw,
+                'duration_id'      => $duration_id,
+                'condition_id'     => $condition_id ?: null,
+                'product_color_id' => $product_color_id ?: null,
+                'frame_color_id'   => $frame_color_id ?: null,
+                'final_price'      => $final_price,
+                'shipping_cost'    => $shipping_cost,
+                'stripe_session_id'=> $session->id,
+                'amount_total'     => 0,
+                'produkt_name'     => $metadata['produkt'],
+                'zustand_text'     => $metadata['zustand'],
+                'produktfarbe_text'=> $metadata['produktfarbe'],
+                'gestellfarbe_text'=> $metadata['gestellfarbe'],
+                'extra_text'       => $metadata['extra'],
+                'dauer_text'       => $metadata['dauer_name'],
+                'customer_name'    => '',
+                'customer_email'   => $customer_email,
+                'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
+                'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+                'discount_amount'  => 0,
+                'status'           => 'offen',
+                'created_at'       => current_time('mysql', 1)
+            ]
+        );
 
         wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {

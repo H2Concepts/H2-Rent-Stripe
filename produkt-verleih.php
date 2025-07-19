@@ -105,6 +105,25 @@ function produkt_simple_checkout_button($atts = []) {
         $shipping_price_id = sanitize_text_field($_GET['shipping_price_id']);
     }
 
+    $extra_ids_raw   = isset($_GET['extra_ids']) ? sanitize_text_field($_GET['extra_ids']) : '';
+    $category_id     = isset($_GET['category_id']) ? intval($_GET['category_id']) : 0;
+    $variant_id      = isset($_GET['variant_id']) ? intval($_GET['variant_id']) : 0;
+    $duration_id     = isset($_GET['duration_id']) ? intval($_GET['duration_id']) : 0;
+    $condition_id    = isset($_GET['condition_id']) ? intval($_GET['condition_id']) : 0;
+    $product_color_id= isset($_GET['product_color_id']) ? intval($_GET['product_color_id']) : 0;
+    $frame_color_id  = isset($_GET['frame_color_id']) ? intval($_GET['frame_color_id']) : 0;
+    $final_price     = isset($_GET['final_price']) ? floatval($_GET['final_price']) : 0;
+
+    $metadata = [
+        'produkt'       => isset($_GET['produkt']) ? sanitize_text_field($_GET['produkt']) : '',
+        'extra'         => isset($_GET['extra']) ? sanitize_text_field($_GET['extra']) : '',
+        'dauer'         => isset($_GET['dauer']) ? sanitize_text_field($_GET['dauer']) : '',
+        'dauer_name'    => isset($_GET['dauer_name']) ? sanitize_text_field($_GET['dauer_name']) : '',
+        'zustand'       => isset($_GET['zustand']) ? sanitize_text_field($_GET['zustand']) : '',
+        'produktfarbe'  => isset($_GET['produktfarbe']) ? sanitize_text_field($_GET['produktfarbe']) : '',
+        'gestellfarbe'  => isset($_GET['gestellfarbe']) ? sanitize_text_field($_GET['gestellfarbe']) : '',
+    ];
+
     ob_start();
     ?>
     <div class="produkt-container shop-overview-container">
@@ -122,7 +141,22 @@ function produkt_simple_checkout_button($atts = []) {
                 body: JSON.stringify({
                     price_id: <?php echo json_encode($atts['price_id']); ?>,
                     extra_price_ids: <?php echo json_encode($extra_price_ids); ?>,
-                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>
+                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>,
+                    extra_ids: <?php echo json_encode($extra_ids_raw); ?>,
+                    category_id: <?php echo json_encode($category_id); ?>,
+                    variant_id: <?php echo json_encode($variant_id); ?>,
+                    duration_id: <?php echo json_encode($duration_id); ?>,
+                    condition_id: <?php echo json_encode($condition_id); ?>,
+                    product_color_id: <?php echo json_encode($product_color_id); ?>,
+                    frame_color_id: <?php echo json_encode($frame_color_id); ?>,
+                    final_price: <?php echo json_encode($final_price); ?>,
+                    produkt: <?php echo json_encode($metadata['produkt']); ?>,
+                    extra: <?php echo json_encode($metadata['extra']); ?>,
+                    dauer: <?php echo json_encode($metadata['dauer']); ?>,
+                    dauer_name: <?php echo json_encode($metadata['dauer_name']); ?>,
+                    zustand: <?php echo json_encode($metadata['zustand']); ?>,
+                    produktfarbe: <?php echo json_encode($metadata['produktfarbe']); ?>,
+                    gestellfarbe: <?php echo json_encode($metadata['gestellfarbe']); ?>
                 })
             });
             const data = await res.json();

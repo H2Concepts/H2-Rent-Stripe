@@ -170,14 +170,45 @@ jQuery(document).ready(function($) {
                 .map(function(){ return $(this).data('price-id'); })
                 .get()
                 .filter(id => id);
-            let url = produkt_ajax.checkout_url + '?price_id=' + encodeURIComponent(currentPriceId);
+
+            const extraIds = selectedExtras.join(',');
+
+            const params = new URLSearchParams();
+            params.set('price_id', currentPriceId);
             if (extraPriceIds.length) {
-                url += '&extra_price_ids=' + extraPriceIds.map(encodeURIComponent).join(',');
+                params.set('extra_price_ids', extraPriceIds.join(','));
             }
             if (shippingPriceId) {
-                url += '&shipping_price_id=' + encodeURIComponent(shippingPriceId);
+                params.set('shipping_price_id', shippingPriceId);
             }
-            window.location.href = url;
+            if (currentCategoryId) {
+                params.set('category_id', currentCategoryId);
+            }
+            if (selectedVariant) params.set('variant_id', selectedVariant);
+            if (extraIds) params.set('extra_ids', extraIds);
+            if (selectedDuration) params.set('duration_id', selectedDuration);
+            if (selectedCondition) params.set('condition_id', selectedCondition);
+            if (selectedProductColor) params.set('product_color_id', selectedProductColor);
+            if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
+            if (currentPrice) params.set('final_price', currentPrice);
+
+            const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+            const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
+                .map(function(){ return $(this).text().trim(); })
+                .get().join(', ');
+            const dauerName = $('.produkt-option[data-type="duration"].selected .produkt-duration-name').text().trim();
+            const zustandName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+            const produktfarbeName = $('.produkt-option[data-type="product-color"].selected').data('color-name');
+            const gestellfarbeName = $('.produkt-option[data-type="frame-color"].selected').data('color-name');
+
+            if (produktName) params.set('produkt', produktName);
+            if (extraNames) params.set('extra', extraNames);
+            if (dauerName) params.set('dauer_name', dauerName);
+            if (zustandName) params.set('zustand', zustandName);
+            if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
+            if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+
+            window.location.href = produkt_ajax.checkout_url + '?' + params.toString();
         }
     });
 
