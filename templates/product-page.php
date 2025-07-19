@@ -323,6 +323,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php foreach ($extras as $extra): ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
+                             data-price-id="<?php echo esc_attr($extra->stripe_price_id ?? ''); ?>"
                              data-available="true">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>

@@ -161,7 +161,15 @@ jQuery(document).ready(function($) {
         });
 
         if (produkt_ajax.checkout_url) {
-            window.location.href = produkt_ajax.checkout_url + '?price_id=' + encodeURIComponent(currentPriceId);
+            const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
+                .map(function(){ return $(this).data('price-id'); })
+                .get()
+                .filter(id => id);
+            let url = produkt_ajax.checkout_url + '?price_id=' + encodeURIComponent(currentPriceId);
+            if (extraPriceIds.length) {
+                url += '&extra_price_ids=' + extraPriceIds.map(encodeURIComponent).join(',');
+            }
+            window.location.href = url;
         }
     });
 

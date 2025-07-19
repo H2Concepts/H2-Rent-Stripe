@@ -1011,15 +1011,34 @@ function produkt_create_embedded_checkout_session() {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
 
-        $session = \Stripe\Checkout\Session::create([
-            'ui_mode' => 'embedded',
-            'line_items' => [[
-                'price' => $price_id,
+        $extra_ids = [];
+        if (!empty($body['extra_price_ids'])) {
+            if (is_array($body['extra_price_ids'])) {
+                $extra_ids = array_map('sanitize_text_field', $body['extra_price_ids']);
+            } elseif (is_string($body['extra_price_ids'])) {
+                $extra_ids = array_map('sanitize_text_field', explode(',', $body['extra_price_ids']));
+            }
+            $extra_ids = array_filter($extra_ids);
+        }
+
+        $line_items = [[
+            'price'    => $price_id,
+            'quantity' => 1,
+        ]];
+
+        foreach ($extra_ids as $extra_price_id) {
+            $line_items[] = [
+                'price'    => $extra_price_id,
                 'quantity' => 1,
-            ]],
-            'mode' => 'subscription',
-            'return_url' => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
-            'automatic_tax' => ['enabled' => true],
+            ];
+        }
+
+        $session = \Stripe\Checkout\Session::create([
+            'ui_mode'      => 'embedded',
+            'line_items'   => $line_items,
+            'mode'         => 'subscription',
+            'return_url'   => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
+            'automatic_tax'=> ['enabled' => true],
         ]);
 
         wp_send_json(['client_secret' => $session->client_secret]);

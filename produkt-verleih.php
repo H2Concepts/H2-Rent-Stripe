@@ -94,6 +94,12 @@ function produkt_simple_checkout_button($atts = []) {
         $atts['price_id'] = sanitize_text_field($_GET['price_id']);
     }
 
+    $extra_price_ids = [];
+    if (isset($_GET['extra_price_ids'])) {
+        $raw  = sanitize_text_field($_GET['extra_price_ids']);
+        $extra_price_ids = array_filter(array_map('sanitize_text_field', explode(',', $raw)));
+    }
+
     ob_start();
     ?>
     <div id="checkout"></div>
@@ -106,7 +112,10 @@ function produkt_simple_checkout_button($atts = []) {
             const res = await fetch('<?php echo admin_url('admin-ajax.php?action=create_embedded_checkout_session'); ?>', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ price_id: <?php echo json_encode($atts['price_id']); ?> })
+                body: JSON.stringify({
+                    price_id: <?php echo json_encode($atts['price_id']); ?>,
+                    extra_price_ids: <?php echo json_encode($extra_price_ids); ?>
+                })
             });
             const data = await res.json();
             return data.client_secret;
