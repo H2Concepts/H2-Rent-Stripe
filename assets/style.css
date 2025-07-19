@@ -1880,3 +1880,9 @@ html, body, #root {
   max-width: 100vw !important;
 }
 
+@media only screen and (min-width: 992px) {
+  .App-Container:not(.js-global-setup-mode) {
+    width: 100%;
+  }
+}
+

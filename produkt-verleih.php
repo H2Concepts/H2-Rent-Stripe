@@ -107,7 +107,9 @@ function produkt_simple_checkout_button($atts = []) {
 
     ob_start();
     ?>
-    <div id="checkout-mount-point"></div>
+    <div class="produkt-container shop-overview-container">
+        <div id="checkout-mount-point"></div>
+    </div>
     <script>
     (async () => {
         const publishableKey = <?php echo json_encode(\ProduktVerleih\StripeService::get_publishable_key()); ?>;
