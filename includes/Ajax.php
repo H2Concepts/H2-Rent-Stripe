@@ -930,11 +930,15 @@ function produkt_create_checkout_session() {
         }
 
         $tos_url = get_option('produkt_tos_url', home_url('/agb'));
-        $custom_text = [
-            'terms_of_service_acceptance' => [
+        $custom_text = [];
+        $agb_msg = get_option('produkt_ct_agb', '');
+        if ($agb_msg !== '') {
+            $custom_text['terms_of_service_acceptance'] = ['message' => $agb_msg];
+        } else {
+            $custom_text['terms_of_service_acceptance'] = [
                 'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
-            ],
-        ];
+            ];
+        }
         $ct_shipping = get_option('produkt_ct_shipping', '');
         if ($ct_shipping !== '') {
             $custom_text['shipping_address'] = [ 'message' => $ct_shipping ];
@@ -1094,11 +1098,15 @@ function produkt_create_embedded_checkout_session() {
         }
 
         $tos_url = get_option('produkt_tos_url', home_url('/agb'));
-        $custom_text = [
-            'terms_of_service_acceptance' => [
+        $custom_text = [];
+        $agb_msg = get_option('produkt_ct_agb', '');
+        if ($agb_msg !== '') {
+            $custom_text['terms_of_service_acceptance'] = ['message' => $agb_msg];
+        } else {
+            $custom_text['terms_of_service_acceptance'] = [
                 'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
-            ],
-        ];
+            ];
+        }
         $ct_shipping = get_option('produkt_ct_shipping', '');
         if ($ct_shipping !== '') {
             $custom_text['shipping_address'] = [ 'message' => $ct_shipping ];

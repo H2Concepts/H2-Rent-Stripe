@@ -13,6 +13,7 @@ if (isset($_POST['submit_stripe'])) {
     update_option('produkt_ct_shipping', wp_kses_post($_POST['ct_shipping'] ?? ''));
     update_option('produkt_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
     update_option('produkt_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
+    update_option('produkt_ct_agb', wp_kses_post($_POST['ct_agb'] ?? ''));
     update_option('produkt_betriebsmodus', sanitize_text_field($_POST['produkt_betriebsmodus'] ?? 'miete'));
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
@@ -27,6 +28,7 @@ $cancel_url          = get_option('produkt_cancel_url', home_url('/abbrechen'));
 $ct_shipping         = get_option('produkt_ct_shipping', '');
 $ct_submit           = get_option('produkt_ct_submit', '');
 $ct_after_submit     = get_option('produkt_ct_after_submit', '');
+$ct_agb              = get_option('produkt_ct_agb', '');
 $modus               = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
@@ -88,6 +90,10 @@ $modus               = get_option('produkt_betriebsmodus', 'miete');
             <div class="produkt-form-group">
                 <label>Nachricht unter Versandadresse</label>
                 <textarea name="ct_shipping" rows="2" class="large-text"><?php echo esc_textarea($ct_shipping); ?></textarea>
+            </div>
+            <div class="produkt-form-group">
+                <label>Text neben AGB-Checkbox</label>
+                <textarea name="ct_agb" rows="2" class="large-text"><?php echo esc_textarea($ct_agb); ?></textarea>
             </div>
             <div class="produkt-form-group">
                 <label>Nachricht auf dem Bezahl-Button</label>

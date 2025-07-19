@@ -176,6 +176,7 @@ class Plugin {
             'produkt_ct_shipping',
             'produkt_ct_submit',
             'produkt_ct_after_submit',
+            'produkt_ct_agb',
             'produkt_ui_settings',
             PRODUKT_SHOP_PAGE_OPTION,
             PRODUKT_CUSTOMER_PAGE_OPTION,
