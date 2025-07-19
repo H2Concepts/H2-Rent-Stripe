@@ -22,6 +22,7 @@ define('PRODUKT_VERSION', PRODUKT_PLUGIN_VERSION);
 define('PRODUKT_PLUGIN_FILE', __FILE__);
 define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
 define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
+define('PRODUKT_CHECKOUT_PAGE_OPTION', 'produkt_checkout_page_id');
 
 // Load Stripe SDK if available
 require_once plugin_dir_path(__FILE__) . 'includes/stripe-autoload.php';
@@ -84,19 +85,55 @@ add_action('plugins_loaded', function () {
 
 
 add_shortcode('stripe_elements_form', 'produkt_simple_checkout_button');
-function produkt_simple_checkout_button() {
-    ob_start(); ?>
-    <button id="mieten-button">Jetzt mieten</button>
+function produkt_simple_checkout_button($atts = []) {
+    $atts = shortcode_atts([
+        'price_id' => '',
+    ], $atts, 'stripe_elements_form');
+
+    if (empty($atts['price_id']) && isset($_GET['price_id'])) {
+        $atts['price_id'] = sanitize_text_field($_GET['price_id']);
+    }
+
+    $extra_price_ids = [];
+    if (isset($_GET['extra_price_ids'])) {
+        $raw  = sanitize_text_field($_GET['extra_price_ids']);
+        $extra_price_ids = array_filter(array_map('sanitize_text_field', explode(',', $raw)));
+    }
+
+    $shipping_price_id = '';
+    if (isset($_GET['shipping_price_id'])) {
+        $shipping_price_id = sanitize_text_field($_GET['shipping_price_id']);
+    }
+
+    ob_start();
+    ?>
+    <div class="produkt-container shop-overview-container">
+        <div id="checkout-mount-point"></div>
+    </div>
     <script>
-    document.getElementById('mieten-button').addEventListener('click', async () => {
-        const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_checkout_session"); ?>');
-        const data = await res.json();
-        if (data.url) {
-            window.location.href = data.url;
-        }
-    });
+    (async () => {
+        const publishableKey = <?php echo json_encode(\ProduktVerleih\StripeService::get_publishable_key()); ?>;
+        if (!publishableKey) return;
+        const stripe = Stripe(publishableKey);
+        const fetchClientSecret = async () => {
+            const res = await fetch('<?php echo admin_url('admin-ajax.php?action=create_embedded_checkout_session'); ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    price_id: <?php echo json_encode($atts['price_id']); ?>,
+                    extra_price_ids: <?php echo json_encode($extra_price_ids); ?>,
+                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>
+                })
+            });
+            const data = await res.json();
+            return data.client_secret;
+        };
+        const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
+        checkout.mount('#checkout-mount-point');
+    })();
     </script>
-    <?php return ob_get_clean();
+    <?php
+    return ob_get_clean();
 }
 
 require_once plugin_dir_path(__FILE__) . 'includes/seo-module.php';

@@ -200,15 +200,37 @@ class Admin {
 
         $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
             has_shortcode($content, 'produkt_product') ||
-            has_shortcode($content, 'produkt_shop_grid');
+            has_shortcode($content, 'produkt_shop_grid') ||
+            has_shortcode($content, 'stripe_elements_form');
         if ($load_script) {
+            wp_enqueue_script(
+                'stripe-js',
+                'https://js.stripe.com/basil/stripe.js',
+                [],
+                null,
+                false
+            );
             wp_enqueue_script(
                 'produkt-script',
                 PRODUKT_PLUGIN_URL . 'assets/script.js',
-                ['jquery'],
+                ['jquery', 'stripe-js'],
                 PRODUKT_VERSION,
                 true
             );
+        }
+
+        if (is_page() && isset($_GET['session_id'])) {
+            wp_enqueue_script(
+                'produkt-return',
+                PRODUKT_PLUGIN_URL . 'assets/return.js',
+                [],
+                PRODUKT_VERSION,
+                true
+            );
+            wp_localize_script('produkt-return', 'produkt_return', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'checkout_url' => Plugin::get_checkout_page_url(),
+            ]);
         }
 
         $button_color = $branding['front_button_color'] ?? '#5f7f5f';
@@ -265,6 +287,8 @@ class Admin {
             wp_localize_script('produkt-script', 'produkt_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('produkt_nonce'),
+                'publishable_key' => StripeService::get_publishable_key(),
+                'checkout_url' => Plugin::get_checkout_page_url(),
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,

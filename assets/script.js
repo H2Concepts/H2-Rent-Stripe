@@ -15,8 +15,8 @@ jQuery(document).ready(function($) {
     let currentPrice = 0;
     let currentShippingCost = 0;
     let currentPriceId = '';
+    let shippingPriceId = '';
     let colorNotificationTimeout = null;
-
     // Get category ID from container
     const container = $('.produkt-container');
     if (container.length) {
@@ -24,6 +24,10 @@ jQuery(document).ready(function($) {
         const sc = parseFloat(container.data('shipping-cost'));
         if (!isNaN(sc)) {
             currentShippingCost = sc;
+        }
+        const spid = container.data('shipping-price-id');
+        if (spid) {
+            shippingPriceId = spid.toString();
         }
     }
 
@@ -161,40 +165,20 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        const variantName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
-        const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
-            .map(function() { return $(this).text().trim(); }).get().join(',');
-        const durationName = $('.produkt-option[data-type="duration"].selected .produkt-duration-name').text().trim();
-        const conditionName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
-        const productColorName = $('.produkt-option[data-type="product-color"].selected').data('color-name') || '';
-        const frameColorName = $('.produkt-option[data-type="frame-color"].selected').data('color-name') || '';
-
-        const priceId = currentPriceId;
-        const extras = selectedExtras.join(',');
-        fetch(produkt_ajax.ajax_url + '?action=create_checkout_session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                price_id: priceId,
-                extra_ids: extras,
-                category_id: currentCategoryId,
-                variant_id: selectedVariant,
-                duration_id: selectedDuration,
-                condition_id: selectedCondition,
-                product_color_id: selectedProductColor,
-                frame_color_id: selectedFrameColor,
-                final_price: currentPrice,
-                produkt: variantName,
-                extra: extraNames,
-                dauer: selectedDuration,
-                dauer_name: durationName,
-                zustand: conditionName,
-                produktfarbe: productColorName,
-                gestellfarbe: frameColorName
-            })
-        })
-        .then(res => res.json())
-        .then(data => { if (data.url) { window.location.href = data.url; } });
+        if (produkt_ajax.checkout_url) {
+            const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
+                .map(function(){ return $(this).data('price-id'); })
+                .get()
+                .filter(id => id);
+            let url = produkt_ajax.checkout_url + '?price_id=' + encodeURIComponent(currentPriceId);
+            if (extraPriceIds.length) {
+                url += '&extra_price_ids=' + extraPriceIds.map(encodeURIComponent).join(',');
+            }
+            if (shippingPriceId) {
+                url += '&shipping_price_id=' + encodeURIComponent(shippingPriceId);
+            }
+            window.location.href = url;
+        }
     });
 
     // Handle thumbnail clicks
@@ -491,7 +475,12 @@ jQuery(document).ready(function($) {
                 const priceSuffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
                 const priceHtml = option.price > 0 ? `+${parseFloat(option.price).toFixed(2).replace('.', ',')}€${priceSuffix}` : '';
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="extra" data-id="${option.id}" data-extra-image="${option.image_url || ''}" data-available="${option.available == 0 ? 'false' : 'true'}">
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}"
+                         data-type="extra"
+                         data-id="${option.id}"
+                         data-price-id="${option.stripe_price_id || ''}"
+                         data-extra-image="${option.image_url || ''}"
+                         data-available="${option.available == 0 ? 'false' : 'true'}">
                         <div class="produkt-option-content">
                             <span class="produkt-extra-name">${option.name}</span>
                             ${priceHtml ? `<div class="produkt-extra-price">${priceHtml}</div>` : ''}

@@ -266,14 +266,21 @@ class Ajax {
                             $option->option_id
                         ));
                         if ($extra) {
-                            $extra->available = intval($option->available);
+                            $extra_data = [
+                                'id'             => (int) $extra->id,
+                                'name'           => $extra->name,
+                                'price'          => $extra->price,
+                                'stripe_price_id'=> $extra->stripe_price_id,
+                                'image_url'      => $extra->image_url ?? '',
+                                'available'      => intval($option->available),
+                            ];
                             if (!empty($extra->stripe_price_id)) {
                                 $amount = StripeService::get_price_amount($extra->stripe_price_id);
                                 if (!is_wp_error($amount)) {
-                                    $extra->price = $amount;
+                                    $extra_data['price'] = $amount;
                                 }
                             }
-                            $extras[] = $extra;
+                            $extras[] = $extra_data;
                         }
                         break;
                 }
@@ -324,18 +331,27 @@ class Ajax {
                     }
                 }
 
-                $extras = $wpdb->get_results($wpdb->prepare(
+                $extras_rows = $wpdb->get_results($wpdb->prepare(
                     "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order",
                     $variant->category_id
                 ));
-                foreach ($extras as $e) {
-                    $e->available = 1;
+                $extras = [];
+                foreach ($extras_rows as $e) {
+                    $extra_data = [
+                        'id'             => (int) $e->id,
+                        'name'           => $e->name,
+                        'price'          => $e->price,
+                        'stripe_price_id'=> $e->stripe_price_id,
+                        'image_url'      => $e->image_url ?? '',
+                        'available'      => 1,
+                    ];
                     if (!empty($e->stripe_price_id)) {
                         $amount = StripeService::get_price_amount($e->stripe_price_id);
                         if (!is_wp_error($amount)) {
-                            $e->price = $amount;
+                            $extra_data['price'] = $amount;
                         }
                     }
+                    $extras[] = $extra_data;
                 }
             }
         }
@@ -683,6 +699,8 @@ add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\produkt_create_subs
 add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\produkt_create_subscription');
 add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
 add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
+add_action('wp_ajax_create_embedded_checkout_session', __NAMESPACE__ . '\\produkt_create_embedded_checkout_session');
+add_action('wp_ajax_nopriv_create_embedded_checkout_session', __NAMESPACE__ . '\\produkt_create_embedded_checkout_session');
 
 function produkt_create_payment_intent() {
     $init = StripeService::init();
@@ -992,6 +1010,93 @@ function produkt_create_checkout_session() {
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
         error_log('Stripe Checkout Session Error: ' . $e->getMessage());
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
+function produkt_create_embedded_checkout_session() {
+    try {
+        $init = StripeService::init();
+        if (is_wp_error($init)) {
+            wp_send_json_error(['message' => $init->get_error_message()]);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $price_id = sanitize_text_field($body['price_id'] ?? '');
+        if (!$price_id) {
+            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
+        }
+
+        $extra_ids = [];
+        if (!empty($body['extra_price_ids'])) {
+            if (is_array($body['extra_price_ids'])) {
+                $extra_ids = array_map('sanitize_text_field', $body['extra_price_ids']);
+            } elseif (is_string($body['extra_price_ids'])) {
+                $extra_ids = array_map('sanitize_text_field', explode(',', $body['extra_price_ids']));
+            }
+            $extra_ids = array_filter($extra_ids);
+        }
+
+        $shipping_price_id = '';
+        if (!empty($body['shipping_price_id'])) {
+            $shipping_price_id = sanitize_text_field($body['shipping_price_id']);
+        }
+
+        $line_items = [[
+            'price'    => $price_id,
+            'quantity' => 1,
+        ]];
+
+        foreach ($extra_ids as $extra_price_id) {
+            $line_items[] = [
+                'price'    => $extra_price_id,
+                'quantity' => 1,
+            ];
+        }
+
+        if ($shipping_price_id) {
+            $line_items[] = [
+                'price'    => $shipping_price_id,
+                'quantity' => 1,
+            ];
+        }
+
+        $session = \Stripe\Checkout\Session::create([
+            'ui_mode'      => 'embedded',
+            'line_items'   => $line_items,
+            'mode'         => 'subscription',
+            'return_url'   => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
+            'automatic_tax'=> ['enabled' => true],
+        ]);
+
+        wp_send_json(['client_secret' => $session->client_secret]);
+    } catch (\Exception $e) {
+        error_log('Stripe Embedded Checkout Error: ' . $e->getMessage());
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
+add_action('wp_ajax_get_checkout_session_status', __NAMESPACE__ . '\\produkt_get_checkout_session_status');
+add_action('wp_ajax_nopriv_get_checkout_session_status', __NAMESPACE__ . '\\produkt_get_checkout_session_status');
+
+function produkt_get_checkout_session_status() {
+    try {
+        $init = StripeService::init();
+        if (is_wp_error($init)) {
+            wp_send_json_error(['message' => $init->get_error_message()]);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $session_id = sanitize_text_field($body['session_id'] ?? '');
+        if (!$session_id) {
+            wp_send_json_error(['message' => 'Keine Session-ID vorhanden']);
+        }
+
+        $session = \Stripe\Checkout\Session::retrieve($session_id);
+        $email = $session->customer_details->email ?? '';
+        wp_send_json(['status' => $session->status, 'customer_email' => $email]);
+    } catch (\Exception $e) {
+        error_log('Stripe Session Status Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }

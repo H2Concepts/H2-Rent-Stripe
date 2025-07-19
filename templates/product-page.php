@@ -172,7 +172,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 ));
 ?>
 
-<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>">
+<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>">
 
     <div class="produkt-content">
         <div class="produkt-left">
@@ -323,6 +323,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php foreach ($extras as $extra): ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
+                             data-price-id="<?php echo esc_attr($extra->stripe_price_id ?? ''); ?>"
                              data-available="true">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
@@ -588,8 +589,10 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             </div>
         </div>
     </div>
+
     <?php endif; ?>
 </div>
+
 
 <div id="produkt-exit-popup" class="produkt-exit-popup" style="display:none;">
     <div class="produkt-exit-popup-content">

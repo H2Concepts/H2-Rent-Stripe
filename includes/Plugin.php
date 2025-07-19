@@ -93,6 +93,11 @@ class Plugin {
                 $classes[] = 'ast-no-sidebar';
             }
 
+            $checkout_page = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+            if ($checkout_page && is_page($checkout_page)) {
+                $classes[] = 'checkout-embedded';
+            }
+
             return $classes;
         });
 
@@ -128,6 +133,7 @@ class Plugin {
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
         $this->create_customer_page();
+        $this->create_checkout_page();
         flush_rewrite_rules();
     }
 
@@ -173,6 +179,7 @@ class Plugin {
             'produkt_ui_settings',
             PRODUKT_SHOP_PAGE_OPTION,
             PRODUKT_CUSTOMER_PAGE_OPTION,
+            PRODUKT_CHECKOUT_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -187,6 +194,11 @@ class Plugin {
         $cust_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
         if ($cust_page_id) {
             wp_delete_post($cust_page_id, true);
+        }
+
+        $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+        if ($checkout_page_id) {
+            wp_delete_post($checkout_page_id, true);
         }
     }
 
@@ -582,6 +594,24 @@ class Plugin {
         update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
     }
 
+    private function create_checkout_page() {
+        $page = get_page_by_path('checkout');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Checkout',
+                'post_name'    => 'checkout',
+                'post_content' => '[stripe_elements_form]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_CHECKOUT_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
@@ -590,6 +620,10 @@ class Plugin {
         $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
         if ($post->ID == $customer_page_id) {
             $states[] = __('Kundenkonto-Seite', 'h2-concepts');
+        }
+        $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+        if ($post->ID == $checkout_page_id) {
+            $states[] = __('Checkout-Seite', 'h2-concepts');
         }
         return $states;
     }
@@ -648,6 +682,11 @@ add_filter('template_include', function ($template) {
 
     if (get_query_var('produkt_category_slug')) {
         return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+    }
+
+    $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+    if ($checkout_page_id && is_page($checkout_page_id)) {
+        return PRODUKT_PLUGIN_PATH . 'templates/checkout-page.php';
     }
 
     return $template;
