@@ -287,6 +287,7 @@ class Admin {
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('produkt_nonce'),
                 'publishable_key' => StripeService::get_publishable_key(),
+                'checkout_url' => Plugin::get_checkout_page_url(),
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,

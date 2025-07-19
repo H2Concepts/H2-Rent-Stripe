@@ -89,6 +89,10 @@ function produkt_simple_checkout_button($atts = []) {
         'price_id' => '',
     ], $atts, 'stripe_elements_form');
 
+    if (empty($atts['price_id']) && isset($_GET['price_id'])) {
+        $atts['price_id'] = sanitize_text_field($_GET['price_id']);
+    }
+
     ob_start();
     ?>
     <div id="checkout"></div>

@@ -16,31 +16,6 @@ jQuery(document).ready(function($) {
     let currentShippingCost = 0;
     let currentPriceId = '';
     let colorNotificationTimeout = null;
-
-    const publishableKey = produkt_ajax.publishable_key || '';
-    let stripe;
-    let embeddedCheckout;
-
-    async function startEmbeddedCheckout() {
-        if (!publishableKey) return;
-        if (!stripe) {
-            stripe = Stripe(publishableKey);
-        }
-
-        const fetchClientSecret = async () => {
-            const res = await fetch(produkt_ajax.ajax_url + '?action=create_embedded_checkout_session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ price_id: currentPriceId })
-            });
-            const data = await res.json();
-            return data.client_secret;
-        };
-
-        embeddedCheckout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
-        embeddedCheckout.mount('#checkout');
-    }
-
     // Get category ID from container
     const container = $('.produkt-container');
     if (container.length) {
@@ -185,7 +160,9 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        startEmbeddedCheckout();
+        if (produkt_ajax.checkout_url) {
+            window.location.href = produkt_ajax.checkout_url + '?price_id=' + encodeURIComponent(currentPriceId);
+        }
     });
 
     // Handle thumbnail clicks
