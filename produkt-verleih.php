@@ -107,7 +107,7 @@ function produkt_simple_checkout_button($atts = []) {
 
     ob_start();
     ?>
-    <div id="checkout"></div>
+    <div id="checkout-mount-point"></div>
     <script>
     (async () => {
         const publishableKey = <?php echo json_encode(\ProduktVerleih\StripeService::get_publishable_key()); ?>;
@@ -127,7 +127,7 @@ function produkt_simple_checkout_button($atts = []) {
             return data.client_secret;
         };
         const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
-        checkout.mount('#checkout');
+        checkout.mount('#checkout-mount-point');
     })();
     </script>
     <?php

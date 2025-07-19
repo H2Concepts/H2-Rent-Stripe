@@ -93,6 +93,11 @@ class Plugin {
                 $classes[] = 'ast-no-sidebar';
             }
 
+            $checkout_page = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+            if ($checkout_page && is_page($checkout_page)) {
+                $classes[] = 'checkout-embedded';
+            }
+
             return $classes;
         });
 
