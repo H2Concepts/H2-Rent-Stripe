@@ -684,6 +684,11 @@ add_filter('template_include', function ($template) {
         return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
     }
 
+    $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+    if ($checkout_page_id && is_page($checkout_page_id)) {
+        return PRODUKT_PLUGIN_PATH . 'templates/checkout-page.php';
+    }
+
     return $template;
 });
 
