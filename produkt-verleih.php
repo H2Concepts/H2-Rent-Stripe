@@ -84,19 +84,34 @@ add_action('plugins_loaded', function () {
 
 
 add_shortcode('stripe_elements_form', 'produkt_simple_checkout_button');
-function produkt_simple_checkout_button() {
-    ob_start(); ?>
-    <button id="mieten-button">Jetzt mieten</button>
+function produkt_simple_checkout_button($atts = []) {
+    $atts = shortcode_atts([
+        'price_id' => '',
+    ], $atts, 'stripe_elements_form');
+
+    ob_start();
+    ?>
+    <div id="checkout"></div>
     <script>
-    document.getElementById('mieten-button').addEventListener('click', async () => {
-        const res = await fetch('<?php echo admin_url("admin-ajax.php?action=create_checkout_session"); ?>');
-        const data = await res.json();
-        if (data.url) {
-            window.location.href = data.url;
-        }
-    });
+    (async () => {
+        const publishableKey = <?php echo json_encode(\ProduktVerleih\StripeService::get_publishable_key()); ?>;
+        if (!publishableKey) return;
+        const stripe = Stripe(publishableKey);
+        const fetchClientSecret = async () => {
+            const res = await fetch('<?php echo admin_url('admin-ajax.php?action=create_embedded_checkout_session'); ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ price_id: <?php echo json_encode($atts['price_id']); ?> })
+            });
+            const data = await res.json();
+            return data.client_secret;
+        };
+        const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
+        checkout.mount('#checkout');
+    })();
     </script>
-    <?php return ob_get_clean();
+    <?php
+    return ob_get_clean();
 }
 
 require_once plugin_dir_path(__FILE__) . 'includes/seo-module.php';
