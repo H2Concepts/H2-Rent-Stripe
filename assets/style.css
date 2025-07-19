@@ -1853,4 +1853,11 @@ body.shop-filter-open {
     margin-left: 6px;
 }
 
+#stripe-container iframe {
+    width: 100% !important;
+    min-width: 600px;
+    height: 800px;
+    border: none;
+}
+
 
