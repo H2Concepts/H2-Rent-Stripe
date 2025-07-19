@@ -1028,3 +1028,28 @@ function produkt_create_embedded_checkout_session() {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
+
+add_action('wp_ajax_get_checkout_session_status', __NAMESPACE__ . '\\produkt_get_checkout_session_status');
+add_action('wp_ajax_nopriv_get_checkout_session_status', __NAMESPACE__ . '\\produkt_get_checkout_session_status');
+
+function produkt_get_checkout_session_status() {
+    try {
+        $init = StripeService::init();
+        if (is_wp_error($init)) {
+            wp_send_json_error(['message' => $init->get_error_message()]);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $session_id = sanitize_text_field($body['session_id'] ?? '');
+        if (!$session_id) {
+            wp_send_json_error(['message' => 'Keine Session-ID vorhanden']);
+        }
+
+        $session = \Stripe\Checkout\Session::retrieve($session_id);
+        $email = $session->customer_details->email ?? '';
+        wp_send_json(['status' => $session->status, 'customer_email' => $email]);
+    } catch (\Exception $e) {
+        error_log('Stripe Session Status Error: ' . $e->getMessage());
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}

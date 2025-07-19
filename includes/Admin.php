@@ -218,6 +218,20 @@ class Admin {
             );
         }
 
+        if (is_page() && isset($_GET['session_id'])) {
+            wp_enqueue_script(
+                'produkt-return',
+                PRODUKT_PLUGIN_URL . 'assets/return.js',
+                [],
+                PRODUKT_VERSION,
+                true
+            );
+            wp_localize_script('produkt-return', 'produkt_return', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'checkout_url' => Plugin::get_checkout_page_url(),
+            ]);
+        }
+
         $button_color = $branding['front_button_color'] ?? '#5f7f5f';
         $text_color   = $branding['front_text_color'] ?? '#4a674a';
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';
