@@ -1021,6 +1021,11 @@ function produkt_create_embedded_checkout_session() {
             $extra_ids = array_filter($extra_ids);
         }
 
+        $shipping_price_id = '';
+        if (!empty($body['shipping_price_id'])) {
+            $shipping_price_id = sanitize_text_field($body['shipping_price_id']);
+        }
+
         $line_items = [[
             'price'    => $price_id,
             'quantity' => 1,
@@ -1029,6 +1034,13 @@ function produkt_create_embedded_checkout_session() {
         foreach ($extra_ids as $extra_price_id) {
             $line_items[] = [
                 'price'    => $extra_price_id,
+                'quantity' => 1,
+            ];
+        }
+
+        if ($shipping_price_id) {
+            $line_items[] = [
+                'price'    => $shipping_price_id,
                 'quantity' => 1,
             ];
         }

@@ -172,7 +172,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 ));
 ?>
 
-<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>">
+<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>">
 
     <div class="produkt-content">
         <div class="produkt-left">

@@ -100,6 +100,11 @@ function produkt_simple_checkout_button($atts = []) {
         $extra_price_ids = array_filter(array_map('sanitize_text_field', explode(',', $raw)));
     }
 
+    $shipping_price_id = '';
+    if (isset($_GET['shipping_price_id'])) {
+        $shipping_price_id = sanitize_text_field($_GET['shipping_price_id']);
+    }
+
     ob_start();
     ?>
     <div id="checkout"></div>
@@ -114,7 +119,8 @@ function produkt_simple_checkout_button($atts = []) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     price_id: <?php echo json_encode($atts['price_id']); ?>,
-                    extra_price_ids: <?php echo json_encode($extra_price_ids); ?>
+                    extra_price_ids: <?php echo json_encode($extra_price_ids); ?>,
+                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>
                 })
             });
             const data = await res.json();

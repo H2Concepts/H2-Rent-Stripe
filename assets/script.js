@@ -15,6 +15,7 @@ jQuery(document).ready(function($) {
     let currentPrice = 0;
     let currentShippingCost = 0;
     let currentPriceId = '';
+    let shippingPriceId = '';
     let colorNotificationTimeout = null;
     // Get category ID from container
     const container = $('.produkt-container');
@@ -23,6 +24,10 @@ jQuery(document).ready(function($) {
         const sc = parseFloat(container.data('shipping-cost'));
         if (!isNaN(sc)) {
             currentShippingCost = sc;
+        }
+        const spid = container.data('shipping-price-id');
+        if (spid) {
+            shippingPriceId = spid.toString();
         }
     }
 
@@ -168,6 +173,9 @@ jQuery(document).ready(function($) {
             let url = produkt_ajax.checkout_url + '?price_id=' + encodeURIComponent(currentPriceId);
             if (extraPriceIds.length) {
                 url += '&extra_price_ids=' + extraPriceIds.map(encodeURIComponent).join(',');
+            }
+            if (shippingPriceId) {
+                url += '&shipping_price_id=' + encodeURIComponent(shippingPriceId);
             }
             window.location.href = url;
         }
