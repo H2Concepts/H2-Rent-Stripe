@@ -1017,7 +1017,7 @@ function produkt_create_embedded_checkout_session() {
                 'price' => $price_id,
                 'quantity' => 1,
             ]],
-            'mode' => 'payment',
+            'mode' => 'subscription',
             'return_url' => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'automatic_tax' => ['enabled' => true],
         ]);

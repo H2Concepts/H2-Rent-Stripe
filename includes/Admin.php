@@ -203,6 +203,13 @@ class Admin {
             has_shortcode($content, 'produkt_shop_grid');
         if ($load_script) {
             wp_enqueue_script(
+                'stripe-js',
+                'https://js.stripe.com/basil/stripe.js',
+                [],
+                null,
+                true
+            );
+            wp_enqueue_script(
                 'produkt-script',
                 PRODUKT_PLUGIN_URL . 'assets/script.js',
                 ['jquery'],
