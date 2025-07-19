@@ -230,7 +230,8 @@ class StripeService {
         );
 
         // Fetch duration specific prices once
-        $duration_map = [];
+        $duration_map   = [];
+        $duration_rows  = [];
         if (!empty($duration_ids)) {
             $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
             $sql   = "SELECT variant_id, duration_id, stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
@@ -239,7 +240,10 @@ class StripeService {
             foreach ($rows as $row) {
                 $duration_map[$row->variant_id][$row->duration_id] = $row;
             }
+            $duration_rows = $rows;
         }
+
+        $has_duration_prices = !empty($duration_rows);
 
         foreach ($variants_data as $v_id => $variant) {
             $base = floatval($variant->base_price);
@@ -265,12 +269,16 @@ class StripeService {
                 continue;
             }
 
-            foreach ($duration_ids as $d_id) {
-                $row    = $duration_map[$v_id][$d_id] ?? null;
-                $amount = null;
-                $pid    = '';
+            if ($has_duration_prices) {
+                foreach ($duration_ids as $d_id) {
+                    $row = $duration_map[$v_id][$d_id] ?? null;
+                    if (!$row) {
+                        continue;
+                    }
 
-                if ($row) {
+                    $amount = null;
+                    $pid    = '';
+
                     $stripe_amount = null;
                     $custom_amount = null;
 
@@ -293,16 +301,16 @@ class StripeService {
                     } else {
                         $amount = $stripe_amount;
                     }
-                }
 
-                if ($amount === null) {
-                    $amount = $base_amount;
-                    $pid    = $variant->stripe_price_id;
+                    if ($amount !== null && ($lowest === null || $amount < $lowest)) {
+                        $lowest    = $amount;
+                        $lowest_id = $pid;
+                    }
                 }
-
-                if ($amount !== null && ($lowest === null || $amount < $lowest)) {
-                    $lowest    = $amount;
-                    $lowest_id = $pid;
+            } else {
+                if ($base_amount !== null && ($lowest === null || $base_amount < $lowest)) {
+                    $lowest    = $base_amount;
+                    $lowest_id = $variant->stripe_price_id;
                 }
             }
         }
