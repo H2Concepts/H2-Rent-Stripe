@@ -187,25 +187,8 @@ class StripeService {
      * Returns array with 'amount' and 'price_id' keys or null on failure.
      */
     public static function get_lowest_price_with_durations($variant_ids, $duration_ids, $expiration = 43200) {
-        global $wpdb;
-
-        $variant_ids  = array_map('intval', (array) $variant_ids);
-        $duration_ids = array_map('intval', (array) $duration_ids);
-
-        if (!empty($variant_ids)) {
-            $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
-            $sql         = "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders) AND available = 1";
-            $variant_ids = $wpdb->get_col($wpdb->prepare($sql, $variant_ids));
-        }
-
         if (empty($variant_ids)) {
             return null;
-        }
-
-        if (!empty($duration_ids)) {
-            $placeholders = implode(',', array_fill(0, count($duration_ids), '%d'));
-            $sql          = "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE id IN ($placeholders) AND active = 1";
-            $duration_ids = $wpdb->get_col($wpdb->prepare($sql, $duration_ids));
         }
 
         sort($variant_ids);
@@ -216,102 +199,43 @@ class StripeService {
             return $cached;
         }
 
-        $lowest    = null;
+        global $wpdb;
+
+        $lowest = null;
         $lowest_id = '';
 
-        // Fetch base data for variants
-        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
-        $variants_data  = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT id, stripe_price_id, base_price, mietpreis_monatlich FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)",
-                $variant_ids
-            ),
-            OBJECT_K
-        );
-
-        // Fetch duration specific prices once
-        $duration_map   = [];
-        $duration_rows  = [];
+        // 1. Variante + Dauer kombiniert
         if (!empty($duration_ids)) {
+            $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
             $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
-            $sql   = "SELECT variant_id, duration_id, stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
+
+            $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
             $query = $wpdb->prepare($sql, array_merge($variant_ids, $duration_ids));
-            $rows  = $wpdb->get_results($query);
-            foreach ($rows as $row) {
-                $duration_map[$row->variant_id][$row->duration_id] = $row;
+            $prices = $wpdb->get_col($query);
+
+            foreach ($prices as $pid) {
+                $amount = self::get_cached_price_amount($pid, $expiration);
+                if (is_wp_error($amount)) continue;
+                if ($lowest === null || $amount < $lowest) {
+                    $lowest = $amount;
+                    $lowest_id = $pid;
+                }
             }
-            $duration_rows = $rows;
         }
 
-        $has_duration_prices = !empty($duration_rows);
+        // 2. Auch Preise der Varianten selbst berücksichtigen
+        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)";
+        $query = $wpdb->prepare($sql, $variant_ids);
+        $variant_prices = $wpdb->get_col($query);
 
-        foreach ($variants_data as $v_id => $variant) {
-            $base = floatval($variant->base_price);
-            if ($base <= 0) {
-                $base = floatval($variant->mietpreis_monatlich);
-            }
-            $base_amount = null;
-            if (!empty($variant->stripe_price_id)) {
-                $res = self::get_cached_price_amount($variant->stripe_price_id, $expiration);
-                if (!is_wp_error($res)) {
-                    $base_amount = $res;
-                }
-            }
-            if ($base_amount === null) {
-                $base_amount = $base;
-            }
-
-            if (empty($duration_ids)) {
-                if ($base_amount !== null && ($lowest === null || $base_amount < $lowest)) {
-                    $lowest    = $base_amount;
-                    $lowest_id = $variant->stripe_price_id;
-                }
-                continue;
-            }
-
-            if ($has_duration_prices) {
-                foreach ($duration_ids as $d_id) {
-                    $row = $duration_map[$v_id][$d_id] ?? null;
-                    if (!$row) {
-                        continue;
-                    }
-
-                    $amount = null;
-                    $pid    = '';
-
-                    $stripe_amount = null;
-                    $custom_amount = null;
-
-                    if (!empty($row->stripe_price_id)) {
-                        $stripe_amount = self::get_cached_price_amount($row->stripe_price_id, $expiration);
-                        if (is_wp_error($stripe_amount)) {
-                            $stripe_amount = null;
-                        } else {
-                            $pid = $row->stripe_price_id;
-                        }
-                    }
-
-                    if ($row->custom_price !== null) {
-                        $custom_amount = floatval($row->custom_price);
-                    }
-
-                    if ($custom_amount !== null && ($stripe_amount === null || $custom_amount < $stripe_amount)) {
-                        $amount = $custom_amount;
-                        $pid    = '';
-                    } else {
-                        $amount = $stripe_amount;
-                    }
-
-                    if ($amount !== null && ($lowest === null || $amount < $lowest)) {
-                        $lowest    = $amount;
-                        $lowest_id = $pid;
-                    }
-                }
-            } else {
-                if ($base_amount !== null && ($lowest === null || $base_amount < $lowest)) {
-                    $lowest    = $base_amount;
-                    $lowest_id = $variant->stripe_price_id;
-                }
+        foreach ($variant_prices as $pid) {
+            if (!$pid) continue;
+            $amount = self::get_cached_price_amount($pid, $expiration);
+            if (is_wp_error($amount)) continue;
+            if ($lowest === null || $amount < $lowest) {
+                $lowest = $amount;
+                $lowest_id = $pid;
             }
         }
 
@@ -849,23 +773,5 @@ class StripeService {
             $cache_key = 'lowest_price_cache_' . md5(implode('_', $variant_ids) . '|' . implode('_', $duration_ids));
             delete_transient($cache_key);
         }
-
-        // Also clear Stripe archived status caches so fresh data is used
-        self::clear_stripe_archive_cache();
-    }
-
-    /**
-     * Delete all cached lowest price transients.
-     */
-    public static function clear_all_lowest_price_caches() {
-        global $wpdb;
-
-        $option_table = $wpdb->options;
-
-        $like = $wpdb->esc_like('_transient_lowest_price_cache_') . '%';
-        $wpdb->query($wpdb->prepare("DELETE FROM {$option_table} WHERE option_name LIKE %s", $like));
-
-        $like_timeout = $wpdb->esc_like('_transient_timeout_lowest_price_cache_') . '%';
-        $wpdb->query($wpdb->prepare("DELETE FROM {$option_table} WHERE option_name LIKE %s", $like_timeout));
     }
 }

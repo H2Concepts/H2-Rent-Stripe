@@ -65,22 +65,7 @@ jQuery(document).ready(function($) {
             } else if (type === 'extra') {
                 selectedExtras = [id];
             }
-
-            // Deselect everything when an unavailable option is chosen
-            $('.produkt-option').removeClass('selected');
-            if (type !== 'variant') selectedVariant = null;
-            if (type !== 'condition') selectedCondition = null;
-            if (type !== 'product-color') selectedProductColor = null;
-            if (type !== 'frame-color') selectedFrameColor = null;
-            if (type !== 'extra') selectedExtras = [];
-            selectedDuration = null;
-
-            updateExtraImage(null);
-            updateColorImage(null);
-            hideMobileStickyPrice();
-            currentPrice = 0;
-            $('#produkt-price-display').hide();
-
+            $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
             $('#produkt-rent-button').prop('disabled', true);
             $('.produkt-mobile-button').prop('disabled', true);
             $('#produkt-button-help').hide();

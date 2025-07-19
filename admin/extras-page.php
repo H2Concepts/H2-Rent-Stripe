@@ -107,7 +107,6 @@ if (isset($_POST['submit'])) {
                     ], ['id' => $extra_id]);
                 }
             }
-            \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -136,7 +135,6 @@ if (isset($_POST['submit'])) {
                     'stripe_price_id'   => $res['price_id'],
                 ], ['id' => $extra_id]);
             }
-            \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -186,7 +184,6 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
     $result = $wpdb->delete($table_name, array('id' => $extra_id), array('%d'));
     if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Extra gelöscht!</p></div>';
-        \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($selected_category);
     } else {
         echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
     }
