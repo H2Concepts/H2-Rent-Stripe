@@ -1099,6 +1099,10 @@ function produkt_create_embedded_checkout_session() {
             'mode'         => 'subscription',
             'return_url'   => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'automatic_tax'=> ['enabled' => true],
+            'metadata'     => $metadata,
+            'subscription_data' => [
+                'metadata' => $metadata
+            ],
         ]);
 
         global $wpdb;
