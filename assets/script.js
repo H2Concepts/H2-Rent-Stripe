@@ -415,6 +415,18 @@ jQuery(document).ready(function($) {
         }
     }
 
+    function updateDiscountBadges(discounts) {
+        $('.produkt-options.durations .produkt-option').each(function(){
+            const id = $(this).data('id');
+            const badge = $(this).find('.produkt-discount-badge');
+            badge.remove();
+            if (discounts && typeof discounts[id] !== 'undefined' && discounts[id] > 0) {
+                const pct = (discounts[id] * 100).toFixed(1).replace('.', ',');
+                $(this).find('.produkt-duration-header').append(`<span class="produkt-discount-badge">-${pct}%</span>`);
+            }
+        });
+    }
+
     function updateVariantOptions(variantId) {
         // Get variant-specific options via AJAX
         $.ajax({
@@ -453,6 +465,7 @@ jQuery(document).ready(function($) {
                     updateExtraImage(null);
                     updateColorImage(null);
 
+                    updateDiscountBadges(data.duration_discounts || {});
                     updatePriceAndButton();
                 }
             }

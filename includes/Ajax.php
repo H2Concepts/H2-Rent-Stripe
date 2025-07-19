@@ -209,6 +209,7 @@ class Ajax {
         $product_colors = array();
         $frame_colors = array();
         $extras = array();
+        $duration_discounts = array();
         
         if (!empty($variant_options)) {
             // Get specific options for this variant
@@ -356,11 +357,64 @@ class Ajax {
             }
         }
 
+        // Calculate discounts for each duration based on this variant
+        $variant_data = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                $variant_id
+            )
+        );
+        if ($variant_data) {
+            $base_price = 0;
+            if (!empty($variant_data->stripe_price_id)) {
+                $amount = StripeService::get_price_amount($variant_data->stripe_price_id);
+                if (!is_wp_error($amount)) {
+                    $base_price = floatval($amount);
+                }
+            }
+            if ($base_price <= 0) {
+                $base_price = floatval($variant_data->base_price);
+                if ($base_price <= 0) {
+                    $base_price = floatval($variant_data->mietpreis_monatlich);
+                }
+            }
+
+            $duration_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, show_badge FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+                    $variant_data->category_id
+                )
+            );
+            $price_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
+                    $variant_id
+                )
+            );
+            $price_map = [];
+            foreach ($price_rows as $row) {
+                $price_map[(int) $row->duration_id] = $row->custom_price !== null ? floatval($row->custom_price) : null;
+            }
+
+            foreach ($duration_rows as $d) {
+                $price = $base_price;
+                if (isset($price_map[$d->id]) && $price_map[$d->id] !== null) {
+                    $price = $price_map[$d->id];
+                }
+                $discount = 0;
+                if ($d->show_badge && $price < $base_price && $base_price > 0) {
+                    $discount = 1 - ($price / $base_price);
+                }
+                $duration_discounts[$d->id] = $discount;
+            }
+        }
+
         wp_send_json_success(array(
             'conditions' => $conditions,
             'product_colors' => $product_colors,
             'frame_colors' => $frame_colors,
-            'extras' => $extras
+            'extras' => $extras,
+            'duration_discounts' => $duration_discounts
         ));
     }
     
