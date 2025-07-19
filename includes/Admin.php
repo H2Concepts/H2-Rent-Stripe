@@ -208,12 +208,12 @@ class Admin {
                 'https://js.stripe.com/basil/stripe.js',
                 [],
                 null,
-                true
+                false
             );
             wp_enqueue_script(
                 'produkt-script',
                 PRODUKT_PLUGIN_URL . 'assets/script.js',
-                ['jquery'],
+                ['jquery', 'stripe-js'],
                 PRODUKT_VERSION,
                 true
             );
