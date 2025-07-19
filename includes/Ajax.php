@@ -683,6 +683,8 @@ add_action('wp_ajax_create_subscription', __NAMESPACE__ . '\\produkt_create_subs
 add_action('wp_ajax_nopriv_create_subscription', __NAMESPACE__ . '\\produkt_create_subscription');
 add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
 add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
+add_action('wp_ajax_create_embedded_checkout_session', __NAMESPACE__ . '\\produkt_create_embedded_checkout_session');
+add_action('wp_ajax_nopriv_create_embedded_checkout_session', __NAMESPACE__ . '\\produkt_create_embedded_checkout_session');
 
 function produkt_create_payment_intent() {
     $init = StripeService::init();
@@ -992,6 +994,37 @@ function produkt_create_checkout_session() {
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
         error_log('Stripe Checkout Session Error: ' . $e->getMessage());
+        wp_send_json_error(['message' => $e->getMessage()]);
+    }
+}
+
+function produkt_create_embedded_checkout_session() {
+    try {
+        $init = StripeService::init();
+        if (is_wp_error($init)) {
+            wp_send_json_error(['message' => $init->get_error_message()]);
+        }
+
+        $body = json_decode(file_get_contents('php://input'), true);
+        $price_id = sanitize_text_field($body['price_id'] ?? '');
+        if (!$price_id) {
+            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
+        }
+
+        $session = \Stripe\Checkout\Session::create([
+            'ui_mode' => 'embedded',
+            'line_items' => [[
+                'price' => $price_id,
+                'quantity' => 1,
+            ]],
+            'mode' => 'payment',
+            'return_url' => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
+            'automatic_tax' => ['enabled' => true],
+        ]);
+
+        wp_send_json(['client_secret' => $session->client_secret]);
+    } catch (\Exception $e) {
+        error_log('Stripe Embedded Checkout Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
