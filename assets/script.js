@@ -475,7 +475,12 @@ jQuery(document).ready(function($) {
                 const priceSuffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
                 const priceHtml = option.price > 0 ? `+${parseFloat(option.price).toFixed(2).replace('.', ',')}€${priceSuffix}` : '';
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="extra" data-id="${option.id}" data-extra-image="${option.image_url || ''}" data-available="${option.available == 0 ? 'false' : 'true'}">
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}"
+                         data-type="extra"
+                         data-id="${option.id}"
+                         data-price-id="${option.stripe_price_id || ''}"
+                         data-extra-image="${option.image_url || ''}"
+                         data-available="${option.available == 0 ? 'false' : 'true'}">
                         <div class="produkt-option-content">
                             <span class="produkt-extra-name">${option.name}</span>
                             ${priceHtml ? `<div class="produkt-extra-price">${priceHtml}</div>` : ''}

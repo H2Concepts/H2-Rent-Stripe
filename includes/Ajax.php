@@ -266,14 +266,21 @@ class Ajax {
                             $option->option_id
                         ));
                         if ($extra) {
-                            $extra->available = intval($option->available);
+                            $extra_data = [
+                                'id'             => (int) $extra->id,
+                                'name'           => $extra->name,
+                                'price'          => $extra->price,
+                                'stripe_price_id'=> $extra->stripe_price_id,
+                                'image_url'      => $extra->image_url ?? '',
+                                'available'      => intval($option->available),
+                            ];
                             if (!empty($extra->stripe_price_id)) {
                                 $amount = StripeService::get_price_amount($extra->stripe_price_id);
                                 if (!is_wp_error($amount)) {
-                                    $extra->price = $amount;
+                                    $extra_data['price'] = $amount;
                                 }
                             }
-                            $extras[] = $extra;
+                            $extras[] = $extra_data;
                         }
                         break;
                 }
@@ -324,18 +331,27 @@ class Ajax {
                     }
                 }
 
-                $extras = $wpdb->get_results($wpdb->prepare(
+                $extras_rows = $wpdb->get_results($wpdb->prepare(
                     "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order",
                     $variant->category_id
                 ));
-                foreach ($extras as $e) {
-                    $e->available = 1;
+                $extras = [];
+                foreach ($extras_rows as $e) {
+                    $extra_data = [
+                        'id'             => (int) $e->id,
+                        'name'           => $e->name,
+                        'price'          => $e->price,
+                        'stripe_price_id'=> $e->stripe_price_id,
+                        'image_url'      => $e->image_url ?? '',
+                        'available'      => 1,
+                    ];
                     if (!empty($e->stripe_price_id)) {
                         $amount = StripeService::get_price_amount($e->stripe_price_id);
                         if (!is_wp_error($amount)) {
-                            $e->price = $amount;
+                            $extra_data['price'] = $amount;
                         }
                     }
+                    $extras[] = $extra_data;
                 }
             }
         }
