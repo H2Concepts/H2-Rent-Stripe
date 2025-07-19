@@ -223,21 +223,19 @@ class StripeService {
             }
         }
 
-        // 2. Fallback: Direkt aus variants ohne Dauer
-        if ($lowest === null) {
-            $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
-            $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)";
-            $query = $wpdb->prepare($sql, $variant_ids);
-            $variant_prices = $wpdb->get_col($query);
+        // 2. Auch Preise der Varianten selbst berücksichtigen
+        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)";
+        $query = $wpdb->prepare($sql, $variant_ids);
+        $variant_prices = $wpdb->get_col($query);
 
-            foreach ($variant_prices as $pid) {
-                if (!$pid) continue;
-                $amount = self::get_cached_price_amount($pid, $expiration);
-                if (is_wp_error($amount)) continue;
-                if ($lowest === null || $amount < $lowest) {
-                    $lowest = $amount;
-                    $lowest_id = $pid;
-                }
+        foreach ($variant_prices as $pid) {
+            if (!$pid) continue;
+            $amount = self::get_cached_price_amount($pid, $expiration);
+            if (is_wp_error($amount)) continue;
+            if ($lowest === null || $amount < $lowest) {
+                $lowest = $amount;
+                $lowest_id = $pid;
             }
         }
 
