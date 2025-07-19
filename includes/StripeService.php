@@ -745,4 +745,33 @@ class StripeService {
             return new \WP_Error('stripe_sync', $e->getMessage());
         }
     }
+
+    /**
+     * Delete cached lowest price transients for a category when variants or
+     * durations change.
+     *
+     * @param int $category_id ID of the affected category
+     */
+    public static function delete_lowest_price_cache_for_category($category_id) {
+        global $wpdb;
+
+        $variant_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+                $category_id
+            )
+        );
+
+        $duration_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+                $category_id
+            )
+        );
+
+        if (!empty($variant_ids) && !empty($duration_ids)) {
+            $cache_key = 'lowest_price_cache_' . md5(implode('_', $variant_ids) . '|' . implode('_', $duration_ids));
+            delete_transient($cache_key);
+        }
+    }
 }

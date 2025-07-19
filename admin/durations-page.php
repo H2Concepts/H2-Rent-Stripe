@@ -62,6 +62,7 @@ if (isset($_POST['submit'])) {
         $duration_id = intval($_POST['id']);
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich aktualisiert!</p></div>';
+            \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -84,6 +85,7 @@ if (isset($_POST['submit'])) {
         $duration_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich hinzugefügt!</p></div>';
+            \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }

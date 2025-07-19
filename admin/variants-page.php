@@ -153,6 +153,8 @@ if (isset($_POST['submit'])) {
                     ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
                 }
             }
+
+            \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
@@ -199,6 +201,8 @@ if (isset($_POST['submit'])) {
                     'stripe_price_id'   => $res['stripe_price_id'],
                 ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
             }
+
+            \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
