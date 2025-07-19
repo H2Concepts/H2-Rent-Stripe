@@ -92,24 +92,9 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
 
         $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
 
-        // Zähle alle gültigen Preis-Kombinationen (für Anzeige von "ab")
-        $price_count = 0;
-        if (!empty($variant_ids) && !empty($duration_ids)) {
-            $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
-            $placeholders_duration = implode(',', array_fill(0, count($duration_ids), '%d'));
-            $count_query = $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
-                 WHERE variant_id IN ($placeholders_variant)
-                   AND duration_id IN ($placeholders_duration)",
-                array_merge($variant_ids, $duration_ids)
-            );
-            $price_count = (int) $wpdb->get_var($count_query);
-        }
-
         return [
-            'amount'     => $price_data['amount'] ?? null,
-            'price_id'   => $price_data['price_id'] ?? null,
-            'count'      => $price_count
+            'amount'   => $price_data['amount'] ?? null,
+            'price_id' => $price_data['price_id'] ?? null,
         ];
     }
 }
@@ -225,15 +210,11 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                         </div>
                     <?php endif; ?>
                     <div class="shop-product-price">
-                        <?php if ($price_data && isset($price_data['amount'])): ?>
-                            <?php if ($price_data['count'] > 1): ?>
-                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php else: ?>
-                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php endif; ?>
-                        <?php else: ?>
-                            Preis auf Anfrage
-                        <?php endif; ?>
+                    <?php if ($price_data && isset($price_data['amount'])): ?>
+                        ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
+                    <?php else: ?>
+                        Preis auf Anfrage
+                    <?php endif; ?>
                     </div>
                 </div>
             </a>

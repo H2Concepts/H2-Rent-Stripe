@@ -54,19 +54,7 @@ $durations = $wpdb->get_results($wpdb->prepare(
 // Determine lowest price across all variants and durations
 $variant_ids  = array_map(fn($v) => (int) $v->id, $variants);
 $duration_ids = array_map(fn($d) => (int) $d->id, $durations);
-$price_data   = \ProduktVerleih\StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
-$price_count  = 0;
-if (!empty($variant_ids) && !empty($duration_ids)) {
-    $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
-    $placeholders_duration = implode(',', array_fill(0, count($duration_ids), '%d'));
-    $count_query = $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
-         WHERE variant_id IN ($placeholders_variant)
-           AND duration_id IN ($placeholders_duration)",
-        array_merge($variant_ids, $duration_ids)
-    );
-    $price_count = (int) $wpdb->get_var($count_query);
-}
+$price_data = \ProduktVerleih\StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
 
 // Preise der ersten Variante für Rabatt-Badges ermitteln
 $badge_base_price = null;
@@ -199,11 +187,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <h1><?php echo esc_html($product_title); ?></h1>
                     <?php if ($price_data && isset($price_data['amount'])): ?>
                         <div class="produkt-card-price">
-                            <?php if ($price_count > 1): ?>
-                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php else: ?>
-                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php endif; ?>
+                            ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
                         </div>
                     <?php else: ?>
                         <div class="produkt-card-price">Preis auf Anfrage</div>
