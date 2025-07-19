@@ -200,7 +200,8 @@ class Admin {
 
         $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
             has_shortcode($content, 'produkt_product') ||
-            has_shortcode($content, 'produkt_shop_grid');
+            has_shortcode($content, 'produkt_shop_grid') ||
+            has_shortcode($content, 'stripe_elements_form');
         if ($load_script) {
             wp_enqueue_script(
                 'stripe-js',
