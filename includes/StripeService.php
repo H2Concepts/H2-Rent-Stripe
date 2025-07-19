@@ -271,15 +271,27 @@ class StripeService {
                 $pid    = '';
 
                 if ($row) {
+                    $stripe_amount = null;
+                    $custom_amount = null;
+
                     if (!empty($row->stripe_price_id)) {
-                        $amount = self::get_cached_price_amount($row->stripe_price_id, $expiration);
-                        if (is_wp_error($amount)) {
-                            $amount = null;
+                        $stripe_amount = self::get_cached_price_amount($row->stripe_price_id, $expiration);
+                        if (is_wp_error($stripe_amount)) {
+                            $stripe_amount = null;
                         } else {
                             $pid = $row->stripe_price_id;
                         }
-                    } elseif ($row->custom_price !== null) {
-                        $amount = floatval($row->custom_price);
+                    }
+
+                    if ($row->custom_price !== null) {
+                        $custom_amount = floatval($row->custom_price);
+                    }
+
+                    if ($custom_amount !== null && ($stripe_amount === null || $custom_amount < $stripe_amount)) {
+                        $amount = $custom_amount;
+                        $pid    = '';
+                    } else {
+                        $amount = $stripe_amount;
                     }
                 }
 
