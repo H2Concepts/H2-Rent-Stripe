@@ -849,5 +849,8 @@ class StripeService {
             $cache_key = 'lowest_price_cache_' . md5(implode('_', $variant_ids) . '|' . implode('_', $duration_ids));
             delete_transient($cache_key);
         }
+
+        // Also clear Stripe archived status caches so fresh data is used
+        self::clear_stripe_archive_cache();
     }
 }
