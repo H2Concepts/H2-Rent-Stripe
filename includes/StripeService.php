@@ -216,41 +216,82 @@ class StripeService {
             return $cached;
         }
 
-        $lowest = null;
+        $lowest    = null;
         $lowest_id = '';
 
-        // 1. Variante + Dauer kombiniert
+        // Fetch base data for variants
+        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $variants_data  = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, stripe_price_id, base_price, mietpreis_monatlich FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)",
+                $variant_ids
+            ),
+            OBJECT_K
+        );
+
+        // Fetch duration specific prices once
+        $duration_map = [];
         if (!empty($duration_ids)) {
-            $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
             $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
-
-            $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
+            $sql   = "SELECT variant_id, duration_id, stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
             $query = $wpdb->prepare($sql, array_merge($variant_ids, $duration_ids));
-            $prices = $wpdb->get_col($query);
-
-            foreach ($prices as $pid) {
-                $amount = self::get_cached_price_amount($pid, $expiration);
-                if (is_wp_error($amount)) continue;
-                if ($lowest === null || $amount < $lowest) {
-                    $lowest = $amount;
-                    $lowest_id = $pid;
-                }
+            $rows  = $wpdb->get_results($query);
+            foreach ($rows as $row) {
+                $duration_map[$row->variant_id][$row->duration_id] = $row;
             }
         }
 
-        // 2. Auch Preise der Varianten selbst berücksichtigen
-        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
-        $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)";
-        $query = $wpdb->prepare($sql, $variant_ids);
-        $variant_prices = $wpdb->get_col($query);
+        foreach ($variants_data as $v_id => $variant) {
+            $base = floatval($variant->base_price);
+            if ($base <= 0) {
+                $base = floatval($variant->mietpreis_monatlich);
+            }
+            $base_amount = null;
+            if (!empty($variant->stripe_price_id)) {
+                $res = self::get_cached_price_amount($variant->stripe_price_id, $expiration);
+                if (!is_wp_error($res)) {
+                    $base_amount = $res;
+                }
+            }
+            if ($base_amount === null) {
+                $base_amount = $base;
+            }
 
-        foreach ($variant_prices as $pid) {
-            if (!$pid) continue;
-            $amount = self::get_cached_price_amount($pid, $expiration);
-            if (is_wp_error($amount)) continue;
-            if ($lowest === null || $amount < $lowest) {
-                $lowest = $amount;
-                $lowest_id = $pid;
+            if (empty($duration_ids)) {
+                if ($base_amount !== null && ($lowest === null || $base_amount < $lowest)) {
+                    $lowest    = $base_amount;
+                    $lowest_id = $variant->stripe_price_id;
+                }
+                continue;
+            }
+
+            foreach ($duration_ids as $d_id) {
+                $row    = $duration_map[$v_id][$d_id] ?? null;
+                $amount = null;
+                $pid    = '';
+
+                if ($row) {
+                    if (!empty($row->stripe_price_id)) {
+                        $amount = self::get_cached_price_amount($row->stripe_price_id, $expiration);
+                        if (is_wp_error($amount)) {
+                            $amount = null;
+                        } else {
+                            $pid = $row->stripe_price_id;
+                        }
+                    } elseif ($row->custom_price !== null) {
+                        $amount = floatval($row->custom_price);
+                    }
+                }
+
+                if ($amount === null) {
+                    $amount = $base_amount;
+                    $pid    = $variant->stripe_price_id;
+                }
+
+                if ($amount !== null && ($lowest === null || $amount < $lowest)) {
+                    $lowest    = $amount;
+                    $lowest_id = $pid;
+                }
             }
         }
 
