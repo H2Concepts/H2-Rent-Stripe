@@ -853,4 +853,19 @@ class StripeService {
         // Also clear Stripe archived status caches so fresh data is used
         self::clear_stripe_archive_cache();
     }
+
+    /**
+     * Delete all cached lowest price transients.
+     */
+    public static function clear_all_lowest_price_caches() {
+        global $wpdb;
+
+        $option_table = $wpdb->options;
+
+        $like = $wpdb->esc_like('_transient_lowest_price_cache_') . '%';
+        $wpdb->query($wpdb->prepare("DELETE FROM {$option_table} WHERE option_name LIKE %s", $like));
+
+        $like_timeout = $wpdb->esc_like('_transient_timeout_lowest_price_cache_') . '%';
+        $wpdb->query($wpdb->prepare("DELETE FROM {$option_table} WHERE option_name LIKE %s", $like_timeout));
+    }
 }

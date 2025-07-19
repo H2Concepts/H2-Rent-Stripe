@@ -26,6 +26,13 @@ if (isset($_POST['force_update'])) {
     
 }
 
+// Manual cache clear for lowest prices
+if (isset($_POST['clear_price_cache'])) {
+    \ProduktVerleih\Admin::verify_admin_action();
+    \ProduktVerleih\StripeService::clear_all_lowest_price_caches();
+    echo '<div class="notice notice-success"><p>✅ Preis-Cache wurde geleert.</p></div>';
+}
+
 // Get table structure
 $table_variants = $wpdb->prefix . 'produkt_variants';
 
@@ -48,6 +55,14 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
         <p>
             <button type="submit" name="force_update" class="button button-primary" onclick="return confirm('Sind Sie sicher? Dies führt Datenbankänderungen durch.')">
                 🔄 Datenbank reparieren
+            </button>
+        </p>
+    </form>
+    <form method="post" action="">
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <p>
+            <button type="submit" name="clear_price_cache" class="button button-secondary">
+                🗑️ Preis-Cache löschen
             </button>
         </p>
     </form>
