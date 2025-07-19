@@ -1093,6 +1093,25 @@ function produkt_create_embedded_checkout_session() {
             ];
         }
 
+        $tos_url = get_option('produkt_tos_url', home_url('/agb'));
+        $custom_text = [
+            'terms_of_service_acceptance' => [
+                'message' => 'Ich akzeptiere die [Allgemeinen Geschäftsbedingungen (AGB)](' . esc_url($tos_url) . ')',
+            ],
+        ];
+        $ct_shipping = get_option('produkt_ct_shipping', '');
+        if ($ct_shipping !== '') {
+            $custom_text['shipping_address'] = [ 'message' => $ct_shipping ];
+        }
+        $ct_submit = get_option('produkt_ct_submit', '');
+        if ($ct_submit !== '') {
+            $custom_text['submit'] = [ 'message' => $ct_submit ];
+        }
+        $ct_after = get_option('produkt_ct_after_submit', '');
+        if ($ct_after !== '') {
+            $custom_text['after_submit'] = [ 'message' => $ct_after ];
+        }
+
         $session = \Stripe\Checkout\Session::create([
             'ui_mode'      => 'embedded',
             'line_items'   => $line_items,
@@ -1103,6 +1122,15 @@ function produkt_create_embedded_checkout_session() {
             'subscription_data' => [
                 'metadata' => $metadata
             ],
+            'billing_address_collection' => 'required',
+            'shipping_address_collection' => [ 'allowed_countries' => ['DE'] ],
+            'phone_number_collection' => [
+                'enabled' => true,
+            ],
+            'consent_collection' => [
+                'terms_of_service' => 'required',
+            ],
+            'custom_text' => $custom_text,
         ]);
 
         global $wpdb;
