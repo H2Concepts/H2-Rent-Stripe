@@ -913,6 +913,7 @@ jQuery(document).ready(function($) {
         '0',
         10
     );
+    const daysSetting = parseInt(popupData.days || '7', 10);
 
     function showPopup() {
         if (exitShown) return;
@@ -924,13 +925,18 @@ jQuery(document).ready(function($) {
     function hidePopup() {
         popup.hide();
         $('body').removeClass('produkt-popup-open');
-        const days = parseInt(popupData.days || '7', 10);
-        const expire = Date.now() + days * 86400000;
-        localStorage.setItem('produkt_exit_hide_until', expire.toString());
+        if (daysSetting > 0) {
+            const expire = Date.now() + daysSetting * 86400000;
+            localStorage.setItem('produkt_exit_hide_until', expire.toString());
+            exitShown = true;
+        } else {
+            localStorage.removeItem('produkt_exit_hide_until');
+            exitShown = false;
+        }
         localStorage.removeItem(legacyExitKey);
     }
 
-    if (popup.length && popupData.enabled && popupData.title && Date.now() > hideUntil) {
+    if (popup.length && popupData.enabled && popupData.title && (daysSetting === 0 || Date.now() > hideUntil)) {
         $('#produkt-exit-title').text(popupData.title);
         $('#produkt-exit-message').html(popupData.content);
         let showSend = false;
