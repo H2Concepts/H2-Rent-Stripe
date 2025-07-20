@@ -28,12 +28,10 @@
                 <h2>Hallo <?php echo esc_html($full_name); ?></h2>
                 <ul>
                     <li>
-                        <a href="#" class="active"><span class="menu-icon">📦</span> Abos</a>
+                        <a href="#" class="active">Abos</a>
                     </li>
                     <li>
-                        <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">
-                            <span class="menu-icon">🚪</span> Logout
-                        </a>
+                        <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Logout</a>
                     </li>
                 </ul>
             </aside>
