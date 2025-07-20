@@ -64,12 +64,6 @@ img.wp-smiley, img.emoji {
     .produkt-content {
         grid-template-columns: 1fr;
     }
-
-    .produkt-price-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0 !important;
-    }
 }
 
 .produkt-left {
@@ -252,7 +246,7 @@ img.wp-smiley, img.emoji {
 .produkt-price-wrapper {
     display: flex;
     align-items: baseline;
-    gap: 0.5rem;
+    flex-wrap: wrap;
     margin-bottom: 0.5rem;
 }
 
@@ -260,6 +254,8 @@ img.wp-smiley, img.emoji {
     font-size: 1rem;
     color: #9ca3af;
     text-decoration: line-through;
+    display: block;
+    width: 100%;
 }
 
 .produkt-final-price {
@@ -918,7 +914,7 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-features-section {
-    padding: 2rem 0;
+    padding: 4rem 0;
 }
 
 .produkt-features-section h3 {
