@@ -24,7 +24,7 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 $subscriptions = [];
 $current_user_id = get_current_user_id();
 if ($current_user_id) {
-    $stripe_customer_id = get_user_meta($current_user_id, 'stripe_customer_id', true);
+    $stripe_customer_id = $db->get_stripe_customer_id_for_user($current_user_id);
     if ($stripe_customer_id) {
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($stripe_customer_id);
         if (!is_wp_error($subs)) {
