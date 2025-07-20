@@ -7,6 +7,17 @@
     --produkt-button-text: #ffffff;
     --produkt-filter-button-bg: #5f7f5f;
 }
+img.wp-smiley, img.emoji {
+    height: 1em;
+    width: 1em;
+    margin: 0 .07em;
+    vertical-align: -0.1em;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 #page {
     min-height: auto !important;
 }

@@ -5,6 +5,17 @@
     background: transparent;
     border-radius: 1rem;
 }
+img.wp-smiley, img.emoji {
+    height: 1em;
+    width: 1em;
+    margin: 0 .07em;
+    vertical-align: -0.1em;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 
 /* Layout with sidebar similar to the shop pages */
 .account-layout {
