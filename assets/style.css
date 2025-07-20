@@ -942,7 +942,7 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-feature-icon-large {
-    width: 14rem;
+    width: 3rem;
     height: 2.6rem;
     display: flex;
     align-items: center;
@@ -1558,10 +1558,10 @@ body.produkt-popup-open {
 }
 
 .shop-product-title {
-    font-weight: 600;
+    font-weight: 700 !important;
     margin-bottom: 0.5rem;
     color: #000;
-    font-size: 22px;
+    font-size: 20px !important;
     line-height: 1.1;
 }
 
