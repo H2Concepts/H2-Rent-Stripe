@@ -1526,6 +1526,16 @@ class Database {
         $sql = "SELECT *, stripe_subscription_id AS subscription_id FROM $table WHERE customer_email = %s ORDER BY created_at";
         return $wpdb->get_results($wpdb->prepare($sql, $email));
     }
+    /**
+     * Get the Stripe customer ID for a WordPress user.
+     *
+     * @param int $user_id User ID
+     * @return string Customer ID or empty string if none found
+     */
+    public static function get_stripe_customer_id_for_user($user_id) {
+        return get_user_meta($user_id, 'stripe_customer_id', true);
+    }
+
 
     /**
      * Retrieve all product categories sorted hierarchically.

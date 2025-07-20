@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
 get_header();
 
@@ -115,6 +116,7 @@ $feature_4_title = isset($category) ? $category->feature_4_title : '';
 $feature_4_description = isset($category) ? $category->feature_4_description : '';
 $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 
+$default_feature_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81.5 81.9"><path d="M56.5,26.8l-21.7,21.7-9.7-9.7c-1.2-1.2-3.3-1.2-4.5,0s-1.2,3.3,0,4.5l12,12c.6.6,1.5.9,2.3.9s1.6-.3,2.3-.9l24-23.9c1.2-1.2,1.2-3.3,0-4.5-1.3-1.3-3.3-1.3-4.5,0Z"/><path d="M40.8,1C18.7,1,.8,18.9.8,41s17.9,40,40,40,40-17.9,40-40S62.8,1,40.8,1ZM40.8,74.6c-18.5,0-33.6-15.1-33.6-33.6S22.3,7.4,40.8,7.4s33.6,15.1,33.6,33.6-15.1,33.6-33.6,33.6Z"/></svg>';
 // Button
 $ui = get_option('produkt_ui_settings', []);
 $button_text = $ui['button_text'] ?? 'Jetzt Mieten';
@@ -197,17 +199,15 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 
                 <div class="produkt-product-details">
                     <h1><?php echo esc_html($product_title); ?></h1>
-                    <?php if ($price_data && isset($price_data['amount'])): ?>
-                        <div class="produkt-card-price">
-                            <?php if ($price_count > 1): ?>
-                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php else: ?>
-                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php endif; ?>
-                        </div>
-                    <?php else: ?>
-                        <div class="produkt-card-price">Preis auf Anfrage</div>
-                    <?php endif; ?>
+                    <div class="produkt-card-price">
+                        <?php
+                            $pd = $price_data;
+                            if (is_array($pd)) {
+                                $pd['count'] = $price_count;
+                            }
+                            echo esc_html(pv_format_price_label($pd));
+                        ?>
+                    </div>
                     <?php if ($show_rating && $rating_value > 0): ?>
                     <div class="produkt-rating">
                         <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
@@ -291,7 +291,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
-                                        <span class="produkt-unavailable-badge">❌ Nicht verfügbar</span>
+                                        <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>
                                         <?php if (!empty($variant->availability_note)): ?>
                                             <p class="produkt-availability-note"><?php echo esc_html($variant->availability_note); ?></p>
                                         <?php endif; ?>
@@ -530,7 +530,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if (!empty($feature_1_icon)): ?>
                         <img src="<?php echo esc_url($feature_1_icon); ?>" alt="<?php echo esc_attr($feature_1_title); ?>" style="width: 100%; height: 100%; object-fit: contain;">
                     <?php else: ?>
-                        🛡️
+                        <?php echo $default_feature_svg; ?>
                     <?php endif; ?>
                 </div>
                 <div class="produkt-feature-text">
@@ -543,7 +543,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if (!empty($feature_2_icon)): ?>
                         <img src="<?php echo esc_url($feature_2_icon); ?>" alt="<?php echo esc_attr($feature_2_title); ?>" style="width: 100%; height: 100%; object-fit: contain;">
                     <?php else: ?>
-                        ❤️
+                        <?php echo $default_feature_svg; ?>
                     <?php endif; ?>
                 </div>
                 <div class="produkt-feature-text">
@@ -556,7 +556,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if (!empty($feature_3_icon)): ?>
                         <img src="<?php echo esc_url($feature_3_icon); ?>" alt="<?php echo esc_attr($feature_3_title); ?>" style="width: 100%; height: 100%; object-fit: contain;">
                     <?php else: ?>
-                        📱
+                        <?php echo $default_feature_svg; ?>
                     <?php endif; ?>
                 </div>
                 <div class="produkt-feature-text">
@@ -569,7 +569,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if (!empty($feature_4_icon)): ?>
                         <img src="<?php echo esc_url($feature_4_icon); ?>" alt="<?php echo esc_attr($feature_4_title); ?>" style="width: 100%; height: 100%; object-fit: contain;">
                     <?php else: ?>
-                        ⭐
+                        <?php echo $default_feature_svg; ?>
                     <?php endif; ?>
                 </div>
                 <div class="produkt-feature-text">

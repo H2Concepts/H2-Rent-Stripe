@@ -1,5 +1,6 @@
 <?php
 // Categories Add Tab Content
+global $wpdb;
 ?>
 
 <div class="produkt-add-category">
