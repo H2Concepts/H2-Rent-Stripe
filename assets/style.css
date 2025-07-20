@@ -568,6 +568,14 @@ img.wp-smiley, img.emoji {
     border: 1px solid #fecaca;
 }
 
+.produkt-unavailable-badge .produkt-emoji {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    line-height: 1;
+    vertical-align: -0.1em;
+}
+
 .produkt-availability-note {
     font-size: 0.75rem;
     color: #6b7280;

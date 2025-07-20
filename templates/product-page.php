@@ -290,7 +290,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
-                                        <span class="produkt-unavailable-badge">❌ Nicht verfügbar</span>
+                                        <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>
                                         <?php if (!empty($variant->availability_note)): ?>
                                             <p class="produkt-availability-note"><?php echo esc_html($variant->availability_note); ?></p>
                                         <?php endif; ?>
