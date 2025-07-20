@@ -393,10 +393,10 @@ class Plugin {
                                 if (is_wp_error($res)) {
                                     $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
                                 } else {
-                                    $message = '<p>K\xFCndigung vorgemerkt. Laufzeit endet am ' . esc_html($period_end_date) . '.</p>';
+                                    $message = '<p>' . esc_html__('Kündigung vorgemerkt. Laufzeit endet am ', 'h2-concepts') . esc_html($period_end_date) . '</p>';
                                 }
                             } else {
-                                $message = '<p style="color:red;">Dieses Abo kann noch nicht gek\xC3\xBCndigt werden.</p>';
+                                $message = '<p style="color:red;">' . esc_html__('Dieses Abo kann noch nicht gekündigt werden.', 'h2-concepts') . '</p>';
                             }
 
                             break;

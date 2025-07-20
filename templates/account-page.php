@@ -16,7 +16,7 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
         if (is_wp_error($res)) {
             $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
         } else {
-            $message = '<p>K\xFCndigung vorgemerkt.</p>';
+            $message = '<p>' . esc_html__('Kündigung vorgemerkt.', 'h2-concepts') . '</p>';
         }
     }
 }
