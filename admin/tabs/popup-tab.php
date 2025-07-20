@@ -4,11 +4,12 @@
 if (isset($_POST['submit_popup'])) {
     \ProduktVerleih\Admin::verify_admin_action();
     $settings = [
-        'enabled' => isset($_POST['popup_enabled']) ? 1 : 0,
-        'days'    => max(1, intval($_POST['popup_days'] ?? 7)),
-        'title'   => sanitize_text_field($_POST['popup_title'] ?? ''),
-        'content' => wp_kses_post($_POST['popup_content'] ?? ''),
-        'options' => sanitize_textarea_field($_POST['popup_options'] ?? '')
+        'enabled'       => isset($_POST['popup_enabled']) ? 1 : 0,
+        'days'          => max(0, intval($_POST['popup_days'] ?? 7)),
+        'email_enabled' => isset($_POST['popup_email_enabled']) ? 1 : 0,
+        'title'         => sanitize_text_field($_POST['popup_title'] ?? ''),
+        'content'       => wp_kses_post($_POST['popup_content'] ?? ''),
+        'options'       => sanitize_textarea_field($_POST['popup_options'] ?? '')
     ];
     update_option('produkt_popup_settings', $settings);
 
@@ -22,6 +23,7 @@ if ($popup_settings === false) {
 }
 $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
 $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
+$popup_email_enabled = isset($popup_settings['email_enabled']) ? intval($popup_settings['email_enabled']) : 0;
 $popup_title   = $popup_settings['title'] ?? '';
 $popup_content = $popup_settings['content'] ?? '';
 $popup_options = $popup_settings['options'] ?? '';
@@ -41,7 +43,13 @@ $popup_options = $popup_settings['options'] ?? '';
                 </div>
                 <div class="produkt-form-group">
                     <label>Nicht erneut anzeigen (Tage)</label>
-                    <input type="number" name="popup_days" min="1" value="<?php echo esc_attr($popup_days); ?>">
+                    <input type="number" name="popup_days" min="0" value="<?php echo esc_attr($popup_days); ?>">
+                </div>
+                <div class="produkt-form-group">
+                    <label>
+                        <input type="checkbox" name="popup_email_enabled" value="1" <?php checked($popup_email_enabled, 1); ?>>
+                        E-Mail-Feld anzeigen
+                    </label>
                 </div>
                 <div class="produkt-form-group">
                     <label>Titel</label>

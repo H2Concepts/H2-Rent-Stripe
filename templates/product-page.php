@@ -589,6 +589,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         <button type="button" class="produkt-exit-popup-close">&times;</button>
         <h3 id="produkt-exit-title"></h3>
         <div id="produkt-exit-message"></div>
+        <div id="produkt-exit-email-wrapper" style="display:none;">
+            <input type="email" id="produkt-exit-email" placeholder="E-Mail-Adresse">
+        </div>
         <div id="produkt-exit-select-wrapper" style="display:none;">
             <select id="produkt-exit-select"></select>
         </div>

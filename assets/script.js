@@ -933,11 +933,19 @@ jQuery(document).ready(function($) {
     if (popup.length && popupData.enabled && popupData.title && Date.now() > hideUntil) {
         $('#produkt-exit-title').text(popupData.title);
         $('#produkt-exit-message').html(popupData.content);
+        let showSend = false;
         if (popupData.options && popupData.options.length) {
             popupData.options.forEach(opt => {
                 $('#produkt-exit-select').append(`<option value="${opt}">${opt}</option>`);
             });
             $('#produkt-exit-select-wrapper').show();
+            showSend = true;
+        }
+        if (popupData.email) {
+            $('#produkt-exit-email-wrapper').show();
+            showSend = true;
+        }
+        if (showSend) {
             $('#produkt-exit-send').show();
         }
 
@@ -981,9 +989,11 @@ jQuery(document).ready(function($) {
 
         $('#produkt-exit-send').on('click', function(){
             const opt = $('#produkt-exit-select').val() || '';
+            const emailVal = $('#produkt-exit-email').val() || '';
             $.post(produkt_ajax.ajax_url, {
                 action: 'exit_intent_feedback',
                 option: opt,
+                user_email: emailVal,
                 variant_id: selectedVariant || '',
                 extra_ids: selectedExtras.join(','),
                 duration_id: selectedDuration || '',

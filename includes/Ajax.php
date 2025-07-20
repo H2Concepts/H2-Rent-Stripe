@@ -652,6 +652,7 @@ class Ajax {
         check_ajax_referer('produkt_nonce', 'nonce');
 
         $option          = isset($_POST['option']) ? sanitize_text_field($_POST['option']) : '';
+        $user_email      = isset($_POST['user_email']) ? sanitize_text_field($_POST['user_email']) : '';
         $variant_id      = isset($_POST['variant_id']) ? intval($_POST['variant_id']) : 0;
         $extra_ids_raw   = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
         $extra_ids_array = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
@@ -721,6 +722,9 @@ class Ajax {
         if (!empty($emails)) {
             $subject = 'Exit-Intent Feedback';
             $message = "Kundenrückmeldung: $option\n";
+            if ($user_email) {
+                $message .= 'E-Mail: ' . $user_email . "\n";
+            }
             if ($variant_name) {
                 $message .= 'Ausführung: ' . $variant_name . "\n";
             }

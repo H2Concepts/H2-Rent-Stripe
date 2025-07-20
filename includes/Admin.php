@@ -282,6 +282,7 @@ class Admin {
         }
         $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
         $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
+        $popup_email   = isset($popup_settings['email_enabled']) ? intval($popup_settings['email_enabled']) : 0;
 
         if ($load_script) {
             wp_localize_script('produkt-script', 'produkt_ajax', [
@@ -295,6 +296,7 @@ class Admin {
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,
+                    'email'   => $popup_email,
                     'title'   => $popup_settings['title'] ?? '',
                     'content' => wpautop($popup_settings['content'] ?? ''),
                     'options' => $options,
