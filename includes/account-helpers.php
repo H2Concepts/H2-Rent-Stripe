@@ -21,3 +21,19 @@ function pv_get_subscription_status_badge($status) {
             return '<span class="badge badge-default">Unbekannt</span>';
     }
 }
+
+function pv_get_minimum_duration_months($order) {
+    global $wpdb;
+    if ($order && !empty($order->duration_id)) {
+        $months = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+                $order->duration_id
+            )
+        );
+        if ($months) {
+            return $months;
+        }
+    }
+    return 3;
+}

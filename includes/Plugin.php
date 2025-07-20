@@ -280,12 +280,14 @@ class Plugin {
     }
 
     public function render_customer_account() {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
         $message        = $this->login_error;
         $show_code_form = isset($_POST['verify_login_code']);
         $email_value    = '';
 
         if (
-            isset($_POST['verify_login_code']) &&
+            isset($_POST['verify_login_code_nonce'], $_POST['verify_login_code']) &&
+            wp_verify_nonce($_POST['verify_login_code_nonce'], 'verify_login_code_action') &&
             !empty($_POST['email']) &&
             !empty($_POST['code'])
         ) {
@@ -311,7 +313,11 @@ class Plugin {
                 $show_code_form = true;
             }
 
-        } elseif (isset($_POST['request_login_code']) && !empty($_POST['email'])) {
+        } elseif (
+            isset($_POST['request_login_code_nonce'], $_POST['request_login_code']) &&
+            wp_verify_nonce($_POST['request_login_code_nonce'], 'request_login_code_action') &&
+            !empty($_POST['email'])
+        ) {
             $email       = sanitize_email($_POST['email']);
             $email_value = $email;
             $user        = get_user_by('email', $email);
@@ -374,19 +380,7 @@ class Plugin {
                                 }
                             }
 
-                            $laufzeit_in_monaten = 3;
-                            if ($matching_order && !empty($matching_order->duration_id)) {
-                                global $wpdb;
-                                $laufzeit_in_monaten = (int) $wpdb->get_var(
-                                    $wpdb->prepare(
-                                        "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
-                                        $matching_order->duration_id
-                                    )
-                                );
-                                if (!$laufzeit_in_monaten) {
-                                    $laufzeit_in_monaten = 3; // Fallback
-                                }
-                            }
+                            $laufzeit_in_monaten = pv_get_minimum_duration_months($matching_order);
 
                             $start_ts      = strtotime($sub['start_date']);
                             $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);

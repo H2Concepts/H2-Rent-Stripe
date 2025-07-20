@@ -3,13 +3,15 @@
     <div class="login-box">
         <h1>Login</h1>
         <p>Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.</p>
-        <?php echo $message; ?>
+        <?php if (!empty($message)) { echo $message; } ?>
         <form method="post" class="login-email-form">
+            <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
             <input type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
             <button type="submit" name="request_login_code">Code zum einloggen anfordern</button>
         </form>
         <?php if ($show_code_form) : ?>
         <form method="post" class="login-code-form">
+            <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
             <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
             <input type="text" name="code" placeholder="6-stelliger Code" required>
             <button type="submit" name="verify_login_code">Einloggen</button>
@@ -20,7 +22,7 @@
 <?php else : ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>
-    <?php echo $message; ?>
+    <?php if (!empty($message)) { echo $message; } ?>
         <div class="account-layout">
             <aside class="account-sidebar shop-category-list">
                 <h2>Hallo <?php echo esc_html($full_name); ?></h2>
@@ -49,19 +51,7 @@
                 $product_name = $order->produkt_name ?? $sub['subscription_id'];
                 $start_ts = strtotime($sub['start_date']);
                 $start_formatted = date_i18n('d.m.Y', $start_ts);
-                $laufzeit_in_monaten = 3;
-                if ($order && !empty($order->duration_id)) {
-                    global $wpdb;
-                    $laufzeit_in_monaten = (int) $wpdb->get_var(
-                        $wpdb->prepare(
-                            "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
-                            $order->duration_id
-                        )
-                    );
-                    if (!$laufzeit_in_monaten) {
-                        $laufzeit_in_monaten = 3; // Fallback
-                    }
-                }
+                $laufzeit_in_monaten = pv_get_minimum_duration_months($order);
                 $cancelable_ts            = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
                 $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
                 $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
