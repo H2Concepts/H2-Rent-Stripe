@@ -21,28 +21,31 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     }
 }
 
+$orders       = [];
 $subscriptions = [];
-$current_user_id = get_current_user_id();
-if ($current_user_id) {
-    $stripe_customer_id = $db->get_stripe_customer_id_for_user($current_user_id);
-    if ($stripe_customer_id) {
-        $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($stripe_customer_id);
-        if (!is_wp_error($subs)) {
-            $subscriptions = $subs;
+$full_name     = '';
+
+if (is_user_logged_in()) {
+    $user_id = get_current_user_id();
+    $orders  = Database::get_orders_for_user($user_id);
+
+    foreach ($orders as $o) {
+        if (!empty($o->stripe_customer_id)) {
+            $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($o->stripe_customer_id);
+            if (!is_wp_error($subs)) {
+                $subscriptions = $subs;
+            }
+            break;
         }
     }
-}
 
-$orders    = [];
-$full_name = '';
-if (is_user_logged_in()) {
-    $orders = Database::get_orders_for_user(get_current_user_id());
     foreach ($orders as $o) {
         if (!empty($o->customer_name)) {
             $full_name = $o->customer_name;
             break;
         }
     }
+
     if (!$full_name) {
         $full_name = wp_get_current_user()->display_name;
     }
