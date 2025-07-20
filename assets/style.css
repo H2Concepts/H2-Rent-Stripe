@@ -943,8 +943,14 @@ img.wp-smiley, img.emoji {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.5rem;
     overflow: hidden;
+}
+
+.produkt-feature-icon-large img.wp-smiley,
+.produkt-feature-icon-large img.emoji {
+    height: 1.5rem;
+    width: 1.5rem;
 }
 
 .produkt-feature-text h4 {
