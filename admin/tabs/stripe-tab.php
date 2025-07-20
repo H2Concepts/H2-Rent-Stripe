@@ -18,6 +18,11 @@ if (isset($_POST['submit_stripe'])) {
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
+if (isset($_POST['clear_price_cache']) && check_admin_referer('clear_price_cache_action')) {
+    \ProduktVerleih\StripeService::clear_price_cache();
+    echo '<div class="notice notice-success"><p>✅ Preis-Cache geleert.</p></div>';
+}
+
 $stripe_publishable_key = get_option('produkt_stripe_publishable_key', '');
 $stripe_secret_key   = get_option('produkt_stripe_secret_key', '');
 $stripe_pmc_id       = get_option('produkt_stripe_pmc_id', '');
@@ -106,5 +111,9 @@ $modus               = get_option('produkt_betriebsmodus', 'miete');
             <p class="description">Bleibt ein Feld leer, wird kein Text angezeigt.</p>
         </div>
         <?php submit_button('💾 Stripe Einstellungen speichern', 'primary', 'submit_stripe'); ?>
+    </form>
+    <form method="post" action="" style="margin-top:15px;">
+        <?php wp_nonce_field('clear_price_cache_action'); ?>
+        <input type="submit" name="clear_price_cache" class="button button-secondary" value="Preis-Cache löschen">
     </form>
 </div>

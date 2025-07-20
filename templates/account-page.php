@@ -1,11 +1,25 @@
 <?php
 use ProduktVerleih\Database;
 
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
 if (!defined('ABSPATH')) {
     exit;
 }
 
 $db = new Database();
+
+if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
+    if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
+        $sub_id = sanitize_text_field($_POST['subscription_id']);
+        $res    = \ProduktVerleih\StripeService::cancel_subscription_at_period_end($sub_id);
+        if (is_wp_error($res)) {
+            $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
+        } else {
+            $message = '<p>Kündigung vorgemerkt.</p>';
+        }
+    }
+}
 
 ?>
 <?php if (!is_user_logged_in()) : ?>
@@ -122,87 +136,7 @@ $db = new Database();
 
                 $address = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
                 ?>
-                <div class="abo-row">
-                    <div class="abo-box">
-                        <?php
-                        $badge_text  = 'Aktiv';
-                        $badge_class = 'active';
-                        if ($sub['status'] === 'canceled') {
-                            $badge_text  = 'Gekündigt';
-                            $badge_class = 'cancelled';
-                        } elseif ($sub['cancel_at_period_end']) {
-                            $badge_text  = 'Kündigung vorgemerkt';
-                            $badge_class = 'scheduled';
-                        }
-                        ?>
-                        <div class="abo-header">
-                            <h3>Abo-Übersicht</h3>
-                            <span class="status-badge <?php echo esc_attr($badge_class); ?>">
-                                <?php echo esc_html($badge_text); ?>
-                            </span>
-                        </div>
-                        <p><strong>Produkt:</strong> <?php echo esc_html($product_name); ?></p>
-                        <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
-                        <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
-                        <?php if (!empty($sub['current_period_end'])) : ?>
-                            <p><strong>Läuft aktuell bis:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($sub['current_period_end']))); ?></p>
-                        <?php endif; ?>
-
-                        <?php if ($sub['cancel_at_period_end']) : ?>
-                            <p style="color:orange;"><strong>✅ Kündigung vorgemerkt zum <?php echo esc_html($period_end_date); ?>.</strong></p>
-                        <?php elseif ($is_extended) : ?>
-                            <p>📦 Abo läuft weiter. Nächster Abrechnungszeitraum bis: <?php echo esc_html($period_end_date); ?></p>
-                            <form method="post">
-                                <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
-                                <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">
-                                    Zum nächsten Laufzeitende kündigen
-                                </button>
-                            </form>
-                        <?php elseif ($cancelable) : ?>
-                            <form method="post">
-                                <input type="hidden" name="cancel_subscription" value="<?php echo esc_attr($sub['subscription_id']); ?>">
-                                <p style="margin-bottom:8px;">Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html(date_i18n('d.m.Y', $cancelable_ts)); ?>).</p>
-                                <button type="submit" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">
-                                    Zum Laufzeitende kündigen
-                                </button>
-                            </form>
-                        <?php else : ?>
-                            <p style="color:#888;"><strong>⏳ Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
-                        <?php endif; ?>
-                        <p class="abo-info">Nach Ablauf der Mindestlaufzeit verlängert sich das Abo automatisch monatlich. Sie können jederzeit zum Ende des laufenden Abrechnungszeitraums kündigen.</p>
-                    </div>
-
-                    <?php if ($order) : ?>
-                        <div class="image-box">
-                            <?php if ($image_url) : ?>
-                                <img src="<?php echo esc_url($image_url); ?>" alt="">
-                            <?php endif; ?>
-                        </div>
-                        <div class="order-box">
-                            <h3>Abo-Details</h3>
-                            <p><strong>Name:</strong> <?php echo esc_html($order->customer_name); ?></p>
-                            <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>
-                            <p><strong>Adresse:</strong> <?php echo esc_html($address); ?></p>
-                            <p><strong>Preis pro Monat:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
-                            <?php if (!empty($order->extra_text)) : ?>
-                                <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text); ?></p>
-                            <?php endif; ?>
-
-                            <?php if (!empty($order->produktfarbe_text)) : ?>
-                                <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
-                            <?php endif; ?>
-
-                            <?php if (!empty($order->gestellfarbe_text)) : ?>
-                                <p><strong>Gestellfarbe:</strong> <?php echo esc_html($order->gestellfarbe_text); ?></p>
-                            <?php endif; ?>
-
-                            <?php if (!empty($order->zustand_text)) : ?>
-                                <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
-                            <?php endif; ?>
-                            <p><strong>Mietbeginn:</strong> <?php echo esc_html($start_formatted); ?></p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                <?php include PRODUKT_PLUGIN_PATH . 'includes/render-subscription.php'; ?>
             <?php endforeach; ?>
         <?php else : ?>
             <p>Keine aktiven Abos.</p>

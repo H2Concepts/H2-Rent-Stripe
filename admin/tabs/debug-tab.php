@@ -45,6 +45,12 @@ if (isset($_POST['clear_stripe_cache']) && check_admin_referer('clear_stripe_cac
     echo '<div class="notice notice-success"><p>✅ Stripe-Caches wurden geleert.</p></div>';
 }
 
+// Clear price transients
+if (isset($_POST['clear_price_cache']) && check_admin_referer('clear_price_cache_action')) {
+    \ProduktVerleih\StripeService::clear_price_cache();
+    echo '<div class="notice notice-success"><p>✅ Preis-Cache geleert.</p></div>';
+}
+
 // Cleanup orphaned products
 if (isset($_POST['run_cleanup']) && check_admin_referer('cleanup_action')) {
     $cleanup_tables = [
@@ -122,6 +128,11 @@ $sample_variant = $wpdb->get_row("SELECT * FROM $table_variants LIMIT 1");
             <?php wp_nonce_field('clear_stripe_cache_action'); ?>
             <p><strong>Stripe-Status-Cache leeren:</strong> Dies erzwingt eine erneute Prüfung der Stripe-Archivierung für Produkte und Preise (Mietdauer, Extras, Ausführungen).</p>
             <input type="submit" name="clear_stripe_cache" class="button button-secondary" value="Stripe-Status neu prüfen">
+        </form>
+        <form method="post" action="">
+            <?php wp_nonce_field('clear_price_cache_action'); ?>
+            <p><strong>Preis-Cache leeren:</strong> Entfernt alle gespeicherten Transient-Werte für Preise.</p>
+            <input type="submit" name="clear_price_cache" class="button button-secondary" value="Preis-Cache löschen">
         </form>
         <form method="post" action="">
             <?php wp_nonce_field('cleanup_action'); ?>

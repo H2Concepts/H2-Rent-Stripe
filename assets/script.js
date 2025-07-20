@@ -34,6 +34,22 @@ jQuery(document).ready(function($) {
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
 
+    function resetAllSelections() {
+        selectedVariant = null;
+        selectedExtras = [];
+        selectedDuration = null;
+        selectedCondition = null;
+        selectedProductColor = null;
+        selectedFrameColor = null;
+
+        $('.produkt-option.selected').removeClass('selected');
+        $('#selected-product-color-name').text('');
+        $('#selected-frame-color-name').text('');
+
+        updateExtraImage(null);
+        updateColorImage(null);
+    }
+
     // Initialize mobile sticky price bar only on small screens
     initMobileStickyPrice();
     $(window).on('resize', function() {
@@ -54,18 +70,7 @@ jQuery(document).ready(function($) {
         // Prevent selection of unavailable options
         const available = $(this).data('available');
         if (available === false || available === 'false' || available === 0 || available === '0') {
-            if (type === 'variant') {
-                selectedVariant = id;
-            } else if (type === 'product-color') {
-                selectedProductColor = id;
-            } else if (type === 'frame-color') {
-                selectedFrameColor = id;
-            } else if (type === 'condition') {
-                selectedCondition = id;
-            } else if (type === 'extra') {
-                selectedExtras = [id];
-            }
-            $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
+            resetAllSelections();
             $('#produkt-rent-button').prop('disabled', true);
             $('.produkt-mobile-button').prop('disabled', true);
             $('#produkt-button-help').hide();
@@ -415,6 +420,18 @@ jQuery(document).ready(function($) {
         }
     }
 
+    function updateDiscountBadges(discounts) {
+        $('.produkt-options.durations .produkt-option').each(function(){
+            const id = $(this).data('id');
+            const badge = $(this).find('.produkt-discount-badge');
+            badge.remove();
+            if (discounts && typeof discounts[id] !== 'undefined' && discounts[id] > 0) {
+                const pct = (discounts[id] * 100).toFixed(1).replace('.', ',');
+                $(this).find('.produkt-duration-header').append(`<span class="produkt-discount-badge">-${pct}%</span>`);
+            }
+        });
+    }
+
     function updateVariantOptions(variantId) {
         // Get variant-specific options via AJAX
         $.ajax({
@@ -453,6 +470,7 @@ jQuery(document).ready(function($) {
                     updateExtraImage(null);
                     updateColorImage(null);
 
+                    updateDiscountBadges(data.duration_discounts || {});
                     updatePriceAndButton();
                 }
             }
@@ -534,16 +552,7 @@ jQuery(document).ready(function($) {
 
             const available = $(this).data('available');
             if (available === false || available === 'false' || available === 0 || available === '0') {
-                if (type === 'product-color') {
-                    selectedProductColor = id;
-                } else if (type === 'frame-color') {
-                    selectedFrameColor = id;
-                } else if (type === 'condition') {
-                    selectedCondition = id;
-                } else if (type === 'extra') {
-                    selectedExtras = [id];
-                }
-                $(`.produkt-option[data-type="${type}"]`).removeClass('selected');
+                resetAllSelections();
                 $('#produkt-rent-button').prop('disabled', true);
                 $('.produkt-mobile-button').prop('disabled', true);
                 $('#produkt-button-help').hide();
