@@ -956,6 +956,10 @@ img.wp-smiley, img.emoji {
     height: 1.5rem;
     width: 1.5rem;
 }
+.produkt-feature-icon-large svg {
+    height: 1.5rem;
+    width: 1.5rem;
+}
 
 .produkt-feature-text h4 {
     margin-top: 0;
