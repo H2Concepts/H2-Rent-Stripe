@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
 get_header();
 
@@ -197,17 +198,15 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 
                 <div class="produkt-product-details">
                     <h1><?php echo esc_html($product_title); ?></h1>
-                    <?php if ($price_data && isset($price_data['amount'])): ?>
-                        <div class="produkt-card-price">
-                            <?php if ($price_count > 1): ?>
-                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php else: ?>
-                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php endif; ?>
-                        </div>
-                    <?php else: ?>
-                        <div class="produkt-card-price">Preis auf Anfrage</div>
-                    <?php endif; ?>
+                    <div class="produkt-card-price">
+                        <?php
+                            $pd = $price_data;
+                            if (is_array($pd)) {
+                                $pd['count'] = $price_count;
+                            }
+                            echo esc_html(pv_format_price_label($pd));
+                        ?>
+                    </div>
                     <?php if ($show_rating && $rating_value > 0): ?>
                     <div class="produkt-rating">
                         <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
@@ -291,7 +290,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
-                                        <span class="produkt-unavailable-badge">❌ Nicht verfügbar</span>
+                                        <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>
                                         <?php if (!empty($variant->availability_note)): ?>
                                             <p class="produkt-availability-note"><?php echo esc_html($variant->availability_note); ?></p>
                                         <?php endif; ?>

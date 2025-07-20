@@ -7,6 +7,17 @@
     --produkt-button-text: #ffffff;
     --produkt-filter-button-bg: #5f7f5f;
 }
+img.wp-smiley, img.emoji {
+    height: 1em;
+    width: 1em;
+    margin: 0 .07em;
+    vertical-align: -0.1em;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
 #page {
     min-height: auto !important;
 }
@@ -557,6 +568,14 @@
     border: 1px solid #fecaca;
 }
 
+.produkt-unavailable-badge .produkt-emoji {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    line-height: 1;
+    vertical-align: -0.1em;
+}
+
 .produkt-availability-note {
     font-size: 0.75rem;
     color: #6b7280;
@@ -932,8 +951,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.5rem;
     overflow: hidden;
+}
+
+.produkt-feature-icon-large img.wp-smiley,
+.produkt-feature-icon-large img.emoji {
+    height: 1.5rem;
+    width: 1.5rem;
 }
 
 .produkt-feature-text h4 {
