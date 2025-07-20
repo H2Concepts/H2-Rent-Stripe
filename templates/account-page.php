@@ -7,8 +7,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-$db = new Database();
-
 if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
         $sub_id = sanitize_text_field($_POST['subscription_id']);
@@ -20,6 +18,7 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
         }
     }
 }
+
 
 $orders       = [];
 $order_map    = [];
@@ -36,13 +35,11 @@ if (is_user_logged_in()) {
         }
     }
 
-    foreach ($orders as $o) {
-        if (!empty($o->stripe_customer_id)) {
-            $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($o->stripe_customer_id);
-            if (!is_wp_error($subs)) {
-                $subscriptions = $subs;
-            }
-            break;
+    $customer_id = Database::get_stripe_customer_id_for_user($user_id);
+    if ($customer_id) {
+        $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
+        if (!is_wp_error($subs)) {
+            $subscriptions = $subs;
         }
     }
 
