@@ -1891,4 +1891,10 @@ body.shop-filter-open {
     flex-direction: column;
 }
 
+@media (max-width: 600px) {
+    #stripe-container iframe {
+        min-width: 0 !important;
+    }
+}
+
 
