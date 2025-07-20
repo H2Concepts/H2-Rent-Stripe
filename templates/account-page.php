@@ -22,12 +22,19 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 }
 
 $orders       = [];
+$order_map    = [];
 $subscriptions = [];
 $full_name     = '';
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
     $orders  = Database::get_orders_for_user($user_id);
+
+    foreach ($orders as $o) {
+        if (!empty($o->subscription_id)) {
+            $order_map[$o->subscription_id] = $o;
+        }
+    }
 
     foreach ($orders as $o) {
         if (!empty($o->stripe_customer_id)) {

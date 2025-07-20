@@ -39,15 +39,12 @@
             </aside>
             <div>
         <?php if (!empty($subscriptions)) : ?>
-            <?php
-            $order_map = [];
-            foreach ($orders as $o) {
-                $order_map[$o->subscription_id] = $o;
-            }
-            ?>
             <?php foreach ($subscriptions as $sub) : ?>
                 <?php
                 $order = $order_map[$sub['subscription_id']] ?? null;
+                if (!$order) {
+                    continue;
+                }
                 $product_name = $order->produkt_name ?? $sub['subscription_id'];
                 $start_ts = strtotime($sub['start_date']);
                 $start_formatted = date_i18n('d.m.Y', $start_ts);
@@ -65,29 +62,13 @@
                     $period_end_date = date_i18n('d.m.Y', $period_end_ts);
                 }
 
-                $image_url = '';
-                if ($order) {
-                    global $wpdb;
-                    if (!empty($order->variant_id)) {
-                        $image_url = $wpdb->get_var(
-                            $wpdb->prepare(
-                                "SELECT image_url_1 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
-                                $order->variant_id
-                            )
-                        );
-                    }
+                $variant_id = $order->variant_id ?? 0;
+                $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
 
-                    if (empty($image_url) && !empty($order->category_id)) {
-                        $image_url = $wpdb->get_var(
-                            $wpdb->prepare(
-                                "SELECT default_image FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
-                                $order->category_id
-                            )
-                        );
-                    }
+                $address = '';
+                if (!empty($order->customer_street) && !empty($order->customer_postal) && !empty($order->customer_city)) {
+                    $address = esc_html(trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city));
                 }
-
-                $address = esc_html(trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city));
                 ?>
                 <?php include PRODUKT_PLUGIN_PATH . 'includes/render-subscription.php'; ?>
             <?php endforeach; ?>
