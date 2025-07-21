@@ -28,6 +28,13 @@
                     <label>Einmaliger Verkaufspreis</label>
                     <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="199.00">
                 </div>
+                <div class="produkt-form-group">
+                    <label for="mode">Produkttyp:</label>
+                    <select name="mode" id="mode">
+                        <option value="miete" <?php selected($mode, 'miete'); ?>>Miete</option>
+                        <option value="kauf" <?php selected($mode, 'kauf'); ?>>Einmalverkauf</option>
+                    </select>
+                </div>
             </div>
             
             <div class="produkt-form-group">

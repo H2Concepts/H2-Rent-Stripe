@@ -16,8 +16,11 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
-// Determine the current mode from request parameters
-$mode = $_GET['mode'] ?? $_POST['mode'] ?? null;
+// Determine the current mode from request or database
+$variant_lookup_id = intval($_POST['id'] ?? ($_GET['edit'] ?? 0));
+$mode = $_POST['mode'] ?? $_GET['mode'] ?? $wpdb->get_var(
+    $wpdb->prepare("SELECT mode FROM $table_name WHERE id = %d", $variant_lookup_id)
+) ?? 'miete';
 
 // Ensure all image columns exist
 $image_columns = array('image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5');
@@ -123,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
             'base_price'             => $base_price,
+            'mode'                   => $mode,
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
@@ -135,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%s', '%d', '%s', '%s', '%d', '%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
@@ -236,6 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
             'base_price'             => $base_price,
+            'mode'                   => $mode,
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
@@ -247,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             $table_name,
             $insert_data,
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%s', '%d', '%s', '%s', '%d', '%d'),
                 array_fill(0, 5, '%s')
             )
         );

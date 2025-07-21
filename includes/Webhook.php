@@ -169,7 +169,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             send_admin_order_email($data, $existing_id, $session->id);
             produkt_add_order_log($existing_id, 'welcome_email_sent');
         }
-    }
+        }
     }
     elseif ($event->type === 'customer.subscription.deleted') {
         $subscription     = $event->data->object;

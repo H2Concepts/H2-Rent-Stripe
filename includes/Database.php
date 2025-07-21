@@ -38,6 +38,7 @@ class Database {
             'mietpreis_monatlich'    => 'DECIMAL(10,2) DEFAULT 0',
             'verkaufspreis_einmalig' => 'DECIMAL(10,2) DEFAULT 0',
             'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
+            'mode'                   => "VARCHAR(10) DEFAULT 'miete'",
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
             'image_url_3' => 'TEXT',
@@ -63,6 +64,8 @@ class Database {
                     $after = 'stripe_product_id';
                 } elseif ($column === 'verkaufspreis_einmalig') {
                     $after = 'mietpreis_monatlich';
+                } elseif ($column === 'mode') {
+                    $after = 'price_from';
                 } else {
                     $after = 'base_price';
                 }
@@ -896,6 +899,7 @@ class Database {
             verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
+            mode varchar(10) DEFAULT 'miete',
             image_url_1 text,
             image_url_2 text,
             image_url_3 text,
