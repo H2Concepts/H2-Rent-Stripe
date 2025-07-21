@@ -19,8 +19,9 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
+
 // Determine the current mode from request or database
-$variant_lookup_id = intval($_POST['id'] ?? ($_GET['edit'] ?? 0));
+$variant_lookup_id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_POST['id']) ? intval($_POST['id']) : 0);
 $mode = $_POST['mode'] ?? $_GET['mode'] ?? $wpdb->get_var(
     $wpdb->prepare("SELECT mode FROM $table_name WHERE id = %d", $variant_lookup_id)
 ) ?? 'miete';
