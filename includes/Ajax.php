@@ -961,6 +961,24 @@ function produkt_create_checkout_session() {
             'quantity' => 1,
         ]];
 
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+        if ($modus === 'kauf') {
+            $session = StripeService::create_checkout_session_for_sale([
+                'price_id'       => $price_id,
+                'quantity'       => 1,
+                'customer_email' => $customer_email,
+                'metadata'       => $metadata,
+                'reference'      => $variant_id ? "var-$variant_id" : null,
+                'success_url'    => get_option('produkt_success_url', home_url('/danke')),
+                'cancel_url'     => get_option('produkt_cancel_url', home_url('/abbrechen')),
+            ]);
+            if (is_wp_error($session)) {
+                throw new \Exception($session->get_error_message());
+            }
+
+            wp_send_json(['url' => $session->url]);
+        }
+
         if (!empty($extra_ids)) {
             global $wpdb;
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));

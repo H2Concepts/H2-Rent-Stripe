@@ -54,6 +54,42 @@ class StripeService {
         return \Stripe\Subscription::create($params);
     }
 
+    /**
+     * Create a Stripe Checkout Session for one-time sales.
+     *
+     * @param array $args Session parameters
+     * @return \Stripe\Checkout\Session|\WP_Error
+     */
+    public static function create_checkout_session_for_sale(array $args) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        $success_url = $args['success_url'] ?? home_url('/danke');
+        $cancel_url  = $args['cancel_url'] ?? home_url('/abbrechen');
+
+        try {
+            $session = \Stripe\Checkout\Session::create([
+                'mode' => 'payment',
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price'    => $args['price_id'],
+                    'quantity' => $args['quantity'] ?? 1,
+                ]],
+                'customer_email' => $args['customer_email'] ?? null,
+                'client_reference_id' => $args['reference'] ?? null,
+                'metadata' => $args['metadata'] ?? [],
+                'success_url' => $success_url . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url'  => $cancel_url,
+            ]);
+
+            return $session;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_checkout_error', $e->getMessage());
+        }
+    }
+
     public static function get_price_amount($price_id) {
         $init = self::init();
         if (is_wp_error($init)) {
