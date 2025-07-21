@@ -16,6 +16,8 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
+// Determine the current mode from request parameters
+$mode = $_GET['mode'] ?? $_POST['mode'] ?? null;
 
 // Ensure all image columns exist
 $image_columns = array('image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5');
