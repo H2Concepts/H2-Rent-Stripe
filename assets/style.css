@@ -991,17 +991,34 @@ img.wp-smiley, img.emoji {
 .produkt-seo-image {
     flex: 1 1 50%;
 }
+.produkt-seo-image {
+    width: 600px;
+    height: 600px;
+    overflow: hidden;
+    border-radius: 0 .5rem .5rem 0;
+    flex-shrink: 0;
+}
 .produkt-seo-image img {
-    max-width: 100%;
-    height: auto;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: block;
-    margin: 0 auto;
 }
 
 @media (max-width: 768px) {
     .produkt-seo-block,
     .produkt-seo-block.reverse {
         flex-direction: column;
+    }
+    .produkt-seo-image {
+        width: 100%;
+        height: auto;
+        min-height: 350px;
+        border-radius: .5rem .5rem 0 0;
+        margin: 0;
+    }
+    .produkt-seo-text h3 {
+        font-size: 30px;
     }
 }
 
@@ -1831,18 +1848,12 @@ body.shop-filter-open {
     display: inline-block;
 }
 .content-block-image {
-    width: 600px;
-    height: 600px;
-    overflow: hidden;
+    flex: 0 0 30%;
+    background-size: cover;
+    background-position: center;
     border-radius: 0 .5rem .5rem 0;
-    flex-shrink: 0;
-}
-
-.content-block-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    margin-right: 16px;
+    overflow: hidden;
 }
 .content-block-button {
     width: 100%;

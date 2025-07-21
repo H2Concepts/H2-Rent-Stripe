@@ -137,10 +137,32 @@
                 );
                 ?>
             </div>
+        <!-- Bilder -->
+        <div class="produkt-form-section">
+            <h4>📸 Standard-Produktbild</h4>
+            <div class="produkt-form-group">
+                <label>Standard-Produktbild</label>
+                <div class="produkt-upload-area">
+                    <input type="url" name="default_image" id="default_image" value="<?php echo esc_attr($edit_item->default_image); ?>">
+                    <button type="button" class="button produkt-media-button" data-target="default_image">📁 Aus Mediathek wählen</button>
+                </div>
+                <small>Fallback-Bild wenn für Ausführungen kein spezifisches Bild hinterlegt ist</small>
+                
+                <?php if (!empty($edit_item->default_image)): ?>
+                <div class="produkt-image-preview">
+                    <img src="<?php echo esc_url($edit_item->default_image); ?>" alt="Standard-Produktbild">
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Content Blöcke -->
+        <div class="produkt-form-section">
+            <h4>Content Blöcke</h4>
             <?php
                 $page_blocks = !empty($edit_item->page_blocks) ? json_decode($edit_item->page_blocks, true) : [];
                 if (!is_array($page_blocks) || empty($page_blocks)) {
-                    $page_blocks = [['title' => '', 'text' => '', 'image' => '']];
+                    $page_blocks = [['title' => '', 'text' => '', 'image' => '', 'alt' => '']];
                 }
             ?>
             <div id="page-blocks-container">
@@ -164,29 +186,14 @@
                             <button type="button" class="button produkt-media-button" data-target="page_block_image_<?php echo $idx; ?>">📁</button>
                         </div>
                     </div>
+                    <div class="produkt-form-group">
+                        <label>Alt-Text</label>
+                        <input type="text" name="page_block_alts[]" value="<?php echo esc_attr($block['alt'] ?? ''); ?>">
+                    </div>
                 </div>
                 <?php endforeach; ?>
             </div>
             <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
-        </div>
-        
-        <!-- Bilder -->
-        <div class="produkt-form-section">
-            <h4>📸 Standard-Produktbild</h4>
-            <div class="produkt-form-group">
-                <label>Standard-Produktbild</label>
-                <div class="produkt-upload-area">
-                    <input type="url" name="default_image" id="default_image" value="<?php echo esc_attr($edit_item->default_image); ?>">
-                    <button type="button" class="button produkt-media-button" data-target="default_image">📁 Aus Mediathek wählen</button>
-                </div>
-                <small>Fallback-Bild wenn für Ausführungen kein spezifisches Bild hinterlegt ist</small>
-                
-                <?php if (!empty($edit_item->default_image)): ?>
-                <div class="produkt-image-preview">
-                    <img src="<?php echo esc_url($edit_item->default_image); ?>" alt="Standard-Produktbild">
-                </div>
-                <?php endif; ?>
-            </div>
         </div>
         
 
@@ -462,7 +469,9 @@ document.addEventListener('DOMContentLoaded', function() {
             + '<div class="produkt-upload-area">'
             + '<input type="url" name="page_block_images[]" id="' + id + '">' 
             + '<button type="button" class="button produkt-media-button" data-target="' + id + '">📁</button>'
-            + '</div></div>';
+            + '</div></div>'
+            + '<div class="produkt-form-group"><label>Alt-Text</label>'
+            + '<input type="text" name="page_block_alts[]"></div>';
         document.getElementById('page-blocks-container').appendChild(div);
         attachMediaButton(div.querySelector('.produkt-media-button'));
         pageBlockIndex++;

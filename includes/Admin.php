@@ -474,12 +474,14 @@ class Admin {
             $block_titles = isset($_POST['page_block_titles']) ? array_map('sanitize_text_field', (array) $_POST['page_block_titles']) : array();
             $block_texts  = isset($_POST['page_block_texts'])  ? array_map('wp_kses_post', (array) $_POST['page_block_texts'])   : array();
             $block_images = isset($_POST['page_block_images']) ? array_map('esc_url_raw', (array) $_POST['page_block_images']) : array();
+            $block_alts   = isset($_POST['page_block_alts'])   ? array_map('sanitize_text_field', (array) $_POST['page_block_alts'])   : array();
             $blocks = array();
             foreach ($block_titles as $k => $t) {
                 $text  = $block_texts[$k] ?? '';
                 $img   = $block_images[$k] ?? '';
+                $alt   = $block_alts[$k] ?? '';
                 if ($t !== '' || $text !== '' || $img !== '') {
-                    $blocks[] = array('title' => $t, 'text' => $text, 'image' => $img);
+                    $blocks[] = array('title' => $t, 'text' => $text, 'image' => $img, 'alt' => $alt);
                 }
             }
             $page_blocks = json_encode($blocks);

@@ -597,7 +597,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             </div>
             <div class="produkt-seo-image">
                 <?php if (!empty($block['image'])): ?>
-                <img src="<?php echo esc_url($block['image']); ?>" alt="<?php echo esc_attr($block['title'] ?? ''); ?>">
+                <img src="<?php echo esc_url($block['image']); ?>" alt="<?php echo esc_attr($block['alt'] ?? ($block['title'] ?? '')); ?>">
                 <?php endif; ?>
             </div>
         </div>
