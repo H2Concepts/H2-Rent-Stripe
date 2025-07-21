@@ -203,7 +203,7 @@ foreach ($content_blocks as $b) {
                 foreach ($blocks_by_position_desktop[$next_index] as $block) {
                     if (($block->style ?? 'wide') === 'compact') {
                         ?>
-                        <div class="shop-product-item desktop-only content-block-compact">
+                        <div class="shop-product-item desktop-only content-block-compact"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
                             <a href="<?php echo esc_url($block->button_url); ?>">
                                 <div class="shop-product-image">
                                     <?php if (!empty($block->image_url)): ?>
@@ -243,7 +243,7 @@ foreach ($content_blocks as $b) {
                 foreach ($blocks_by_position_mobile[$next_index] as $block) {
                     if (($block->style ?? 'wide') === 'compact') {
                         ?>
-                        <div class="shop-product-item mobile-only content-block-compact">
+                        <div class="shop-product-item mobile-only content-block-compact"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
                             <a href="<?php echo esc_url($block->button_url); ?>">
                                 <div class="shop-product-image">
                                     <?php if (!empty($block->image_url)): ?>
