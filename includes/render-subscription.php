@@ -3,21 +3,23 @@ if (!defined('ABSPATH')) { exit; }
 ?>
 <div class="abo-row">
     <div class="abo-box">
-        <div class="abo-header">
-            <img src="<?php echo esc_url(pv_get_variant_image_url($variant_id)); ?>" alt="">
+    <div class="abo-header">
+        <img src="<?php echo esc_url(pv_get_variant_image_url($variant_id)); ?>" alt="">
+        <div class="abo-title">
             <h3>Abo-Übersicht</h3>
             <?php echo pv_get_subscription_status_badge($sub['status']); ?>
         </div>
-        <p><strong>Produkt:</strong> <?php echo esc_html($produkt_name); ?></p>
+    </div>
+    <p><strong>Produkt:</strong> <?php echo esc_html($product_name); ?></p>
         <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
         <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
         <?php if (!empty($sub['current_period_end'])) : ?>
             <p><strong>Läuft aktuell bis:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($sub['current_period_end']))); ?></p>
         <?php endif; ?>
         <?php if ($sub['cancel_at_period_end']) : ?>
-            <p style="color:orange;"><strong>✅ Kündigung vorgemerkt zum <?php echo esc_html($period_end_date); ?>.</strong></p>
+            <p style="color:orange;"><strong>Kündigung vorgemerkt zum <?php echo esc_html($period_end_date); ?>.</strong></p>
         <?php elseif ($is_extended) : ?>
-            <p>📦 Abo läuft weiter. Nächster Abrechnungszeitraum bis: <?php echo esc_html($period_end_date); ?></p>
+            <p>Abo läuft weiter. Nächster Abrechnungszeitraum bis: <?php echo esc_html($period_end_date); ?></p>
             <?php if ($can_cancel) : ?>
             <form method="post">
                 <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
@@ -33,7 +35,7 @@ if (!defined('ABSPATH')) { exit; }
                 <button type="submit" name="cancel_subscription" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">Zum Laufzeitende kündigen</button>
             </form>
         <?php elseif (!$cancelable) : ?>
-            <p style="color:#888;"><strong>⏳ Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
+            <p style="color:#888;"><strong>Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
         <?php endif; ?>
         <p class="abo-info">Nach Ablauf der Mindestlaufzeit verlängert sich das Abo automatisch monatlich. Sie können jederzeit zum Ende des laufenden Abrechnungszeitraums kündigen.</p>
     </div>

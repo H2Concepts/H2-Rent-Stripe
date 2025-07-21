@@ -86,9 +86,18 @@ img.wp-smiley, img.emoji {
 
 .abo-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 12px;
+}
+
+.abo-title {
+    display: flex;
+    flex-direction: column;
+    margin-left: 12px;
+}
+
+.abo-title .status-badge {
+    margin-top: 4px;
 }
 
 .status-badge {

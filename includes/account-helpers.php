@@ -14,12 +14,21 @@ function pv_get_subscription_status_badge($status) {
     switch ($status) {
         case 'active':
         case 'trialing':
-            return '<span class="badge badge-success">Aktiv</span>';
-        case 'past_due':
-            return '<span class="badge badge-warning">Zahlung überfällig</span>';
+            $class = 'active';
+            $label = 'Aktiv';
+            break;
+        case 'canceled':
+        case 'cancelled':
+            $class = 'cancelled';
+            $label = 'Gekündigt';
+            break;
         default:
-            return '<span class="badge badge-default">Unbekannt</span>';
+            $class = 'scheduled';
+            $label = ucfirst($status);
+            break;
     }
+
+    return '<span class="status-badge ' . esc_attr($class) . '">' . esc_html($label) . '</span>';
 }
 
 function pv_get_minimum_duration_months($order) {
