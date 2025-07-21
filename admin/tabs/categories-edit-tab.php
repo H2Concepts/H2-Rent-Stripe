@@ -137,6 +137,8 @@
                 );
                 ?>
             </div>
+        </div>
+
         <!-- Bilder -->
         <div class="produkt-form-section">
             <h4>📸 Standard-Produktbild</h4>
