@@ -639,6 +639,18 @@
     padding: 15px;
     margin-bottom: 15px;
 }
+.produkt-page-block {
+    background: #eeeeee;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.produkt-page-block .produkt-remove-page-block {
+    margin-top: 50px;
+    height: 32px;
+    width: 32px;
+}
 .produkt-accordion-group .produkt-remove-accordion {
     margin-top: 50px;
     height: 32px;

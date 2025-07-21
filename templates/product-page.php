@@ -124,6 +124,8 @@ $button_icon = $ui['button_icon'] ?? '';
 $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];
 $accordions = isset($category) && property_exists($category, 'accordion_data') ? json_decode($category->accordion_data, true) : [];
 if (!is_array($accordions)) { $accordions = []; }
+$page_blocks = isset($category) && property_exists($category, 'page_blocks') ? json_decode($category->page_blocks, true) : [];
+if (!is_array($page_blocks)) { $page_blocks = []; }
 
 $shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
 $shipping_price_id = $shipping->stripe_price_id ?? '';
@@ -580,6 +582,26 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         </div>
     </div>
 
+    <?php endif; ?>
+
+    <?php if (!empty($page_blocks)): ?>
+        <?php foreach ($page_blocks as $i => $block): ?>
+        <div class="produkt-seo-block<?php echo $i % 2 === 1 ? ' reverse' : ''; ?>">
+            <div class="produkt-seo-text">
+                <?php if (!empty($block['title'])): ?>
+                <h3><?php echo esc_html($block['title']); ?></h3>
+                <?php endif; ?>
+                <?php if (!empty($block['text'])): ?>
+                <p><?php echo wp_kses_post(wpautop($block['text'])); ?></p>
+                <?php endif; ?>
+            </div>
+            <div class="produkt-seo-image">
+                <?php if (!empty($block['image'])): ?>
+                <img src="<?php echo esc_url($block['image']); ?>" alt="<?php echo esc_attr($block['title'] ?? ''); ?>">
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
     <?php endif; ?>
 </div>
 

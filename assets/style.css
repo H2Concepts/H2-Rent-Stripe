@@ -978,6 +978,33 @@ img.wp-smiley, img.emoji {
     line-height: 1.5;
 }
 
+.produkt-seo-block {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin: 3rem 0;
+}
+.produkt-seo-block.reverse {
+    flex-direction: row-reverse;
+}
+.produkt-seo-text,
+.produkt-seo-image {
+    flex: 1 1 50%;
+}
+.produkt-seo-image img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .produkt-seo-block,
+    .produkt-seo-block.reverse {
+        flex-direction: column;
+    }
+}
+
 @media (max-width: 768px) {
     .produkt-feature-item {
         flex-direction: column;

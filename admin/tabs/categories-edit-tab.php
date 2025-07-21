@@ -137,6 +137,37 @@
                 );
                 ?>
             </div>
+            <?php
+                $page_blocks = !empty($edit_item->page_blocks) ? json_decode($edit_item->page_blocks, true) : [];
+                if (!is_array($page_blocks) || empty($page_blocks)) {
+                    $page_blocks = [['title' => '', 'text' => '', 'image' => '']];
+                }
+            ?>
+            <div id="page-blocks-container">
+                <?php foreach ($page_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="page_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-page-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="page_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Bild</label>
+                        <div class="produkt-upload-area">
+                            <input type="url" name="page_block_images[]" id="page_block_image_<?php echo $idx; ?>" value="<?php echo esc_attr($block['image']); ?>">
+                            <button type="button" class="button produkt-media-button" data-target="page_block_image_<?php echo $idx; ?>">📁</button>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
         </div>
         
         <!-- Bilder -->
@@ -411,6 +442,54 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    let pageBlockIndex = document.querySelectorAll('#page-blocks-container .produkt-page-block').length;
+    document.getElementById('add-page-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const id = 'page_block_image_' + pageBlockIndex;
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="page_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-page-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="page_block_texts[]" rows="3"></textarea></div>'
+            + '<div class="produkt-form-group"><label>Bild</label>'
+            + '<div class="produkt-upload-area">'
+            + '<input type="url" name="page_block_images[]" id="' + id + '">' 
+            + '<button type="button" class="button produkt-media-button" data-target="' + id + '">📁</button>'
+            + '</div></div>';
+        document.getElementById('page-blocks-container').appendChild(div);
+        attachMediaButton(div.querySelector('.produkt-media-button'));
+        pageBlockIndex++;
+    });
+
+    document.getElementById('page-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-page-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    function attachMediaButton(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const field = document.getElementById(targetId);
+            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function() {
+                const att = frame.state().get('selection').first().toJSON();
+                field.value = att.url;
+            });
+            frame.open();
+        });
+    }
+    document.querySelectorAll('.produkt-media-button').forEach(attachMediaButton);
 
     // Accordion fields are handled in admin-script.js
 });

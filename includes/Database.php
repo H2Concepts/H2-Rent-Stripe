@@ -187,6 +187,7 @@ class Database {
                 'button_icon' => 'TEXT',
                 'payment_icons'   => 'TEXT',
                 'accordion_data'  => 'LONGTEXT',
+                'page_blocks'     => 'LONGTEXT',
                 'shipping_cost'   => 'DECIMAL(10,2) DEFAULT 0',
                 'shipping_provider' => 'VARCHAR(50) DEFAULT ""',
                 'shipping_price_id' => 'VARCHAR(255) DEFAULT ""',
@@ -201,7 +202,8 @@ class Database {
                 'show_tooltips' => 'TINYINT(1) DEFAULT 1',
                 'show_rating' => 'TINYINT(1) DEFAULT 0',
                 'rating_value' => 'DECIMAL(3,1) DEFAULT 0',
-                'rating_link' => 'TEXT'
+                'rating_link' => 'TEXT',
+                'page_blocks' => 'LONGTEXT'
             );
             
             foreach ($new_columns as $column => $type) {
@@ -839,6 +841,7 @@ class Database {
             button_icon text DEFAULT '',
             payment_icons text DEFAULT '',
             accordion_data longtext DEFAULT NULL,
+            page_blocks longtext DEFAULT NULL,
             shipping_cost decimal(10,2) DEFAULT 0,
             shipping_provider varchar(50) DEFAULT '',
             shipping_price_id varchar(255) DEFAULT '',
@@ -1249,6 +1252,7 @@ class Database {
                     'button_icon' => '',
                     'payment_icons' => '',
                     'accordion_data' => '',
+                    'page_blocks' => '',
                     'shipping_cost' => 0,
                     'shipping_provider' => '',
                     'shipping_price_id' => '',
