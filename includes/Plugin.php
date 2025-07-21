@@ -443,6 +443,7 @@ class Plugin {
             $session_args = [
                 'mode' => 'subscription',
                 'payment_method_types' => ['card', 'paypal'],
+                'allow_promotion_codes' => true,
                 'line_items' => [[
                     'price' => $price_id,
                     'quantity' => 1,
