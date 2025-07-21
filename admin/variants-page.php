@@ -13,7 +13,6 @@ $db_updater->update_database();
 $table_name = $wpdb->prefix . 'produkt_variants';
 
 // Check if a form was submitted
-$is_post = ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']));
 
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
@@ -90,7 +89,15 @@ foreach ($availability_columns as $column) {
 }
 
 // Handle form submissions only on POST
-if ($is_post) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce'])) {
+    if (!wp_verify_nonce($_POST['produkt_admin_nonce'], 'produkt_admin_action')) {
+        wp_die('Ungültige Anfrage.');
+    }
+
+    // → Speicher-Logik beginnt hier:
+    error_log('✅ POST erfolgreich empfangen');
+    error_log(print_r($_POST, true));
+
     \ProduktVerleih\Admin::verify_admin_action();
     $name = sanitize_text_field($_POST['name'] ?? '');
     $stripe_product_id = '';
