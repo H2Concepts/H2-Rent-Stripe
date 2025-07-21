@@ -613,6 +613,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
     <?php if (!empty($detail_blocks)): ?>
     <div class="produkt-info-section">
         <h3>Details</h3>
+        <div class="produkt-info-grid">
         <?php foreach ($detail_blocks as $block): ?>
         <div class="produkt-info-block">
             <?php if (!empty($block['title'])): ?>
@@ -623,12 +624,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             <?php endif; ?>
         </div>
         <?php endforeach; ?>
+        </div>
     </div>
     <?php endif; ?>
 
     <?php if (!empty($tech_blocks)): ?>
     <div class="produkt-info-section">
         <h3>Technische Daten</h3>
+        <div class="produkt-info-grid">
         <?php foreach ($tech_blocks as $block): ?>
         <div class="produkt-info-block">
             <?php if (!empty($block['title'])): ?>
@@ -639,12 +642,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             <?php endif; ?>
         </div>
         <?php endforeach; ?>
+        </div>
     </div>
     <?php endif; ?>
 
     <?php if (!empty($scope_blocks)): ?>
     <div class="produkt-info-section">
         <h3>Lieferumfang</h3>
+        <div class="produkt-info-grid">
         <?php foreach ($scope_blocks as $block): ?>
         <div class="produkt-info-block">
             <?php if (!empty($block['title'])): ?>
@@ -655,6 +660,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             <?php endif; ?>
         </div>
         <?php endforeach; ?>
+        </div>
     </div>
     <?php endif; ?>
 </div>
