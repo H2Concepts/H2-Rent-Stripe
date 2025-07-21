@@ -35,7 +35,7 @@ if (!defined('ABSPATH')) { exit; }
                 <button type="submit" name="cancel_subscription" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">Zum Laufzeitende kündigen</button>
             </form>
         <?php elseif (!$cancelable) : ?>
-            <p style="color:#888;"><strong>Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
+            <p class="abo-info"><strong>Ihre Kündigung ist frühestens 14 Tage vor Ablauf der Mindestlaufzeit möglich (ab dem <?php echo esc_html($kuendigbar_ab_date); ?>).</strong></p>
         <?php endif; ?>
         <p class="abo-info">Nach Ablauf der Mindestlaufzeit verlängert sich das Abo automatisch monatlich. Sie können jederzeit zum Ende des laufenden Abrechnungszeitraums kündigen.</p>
     </div>
