@@ -31,7 +31,7 @@ if (!defined('ABSPATH')) { exit; }
             <form method="post">
                 <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
                 <input type="hidden" name="subscription_id" value="<?php echo esc_attr($sub['subscription_id']); ?>">
-                <p style="margin-bottom:8px;">Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html(date_i18n('d.m.Y', $cancelable_ts)); ?>).</p>
+                <p class="abo-info" style="margin-bottom:8px;">Sie können jetzt kündigen – die Kündigung wird zum Ende der Mindestlaufzeit wirksam (<?php echo esc_html(date_i18n('d.m.Y', $cancelable_ts)); ?>).</p>
                 <button type="submit" name="cancel_subscription" style="background:#dc3545;color:white;border:none;padding:10px 20px;border-radius:5px;">Zum Laufzeitende kündigen</button>
             </form>
         <?php elseif (!$cancelable) : ?>
@@ -40,12 +40,10 @@ if (!defined('ABSPATH')) { exit; }
         <p class="abo-info">Nach Ablauf der Mindestlaufzeit verlängert sich das Abo automatisch monatlich. Sie können jederzeit zum Ende des laufenden Abrechnungszeitraums kündigen.</p>
     </div>
     <?php if ($order) : ?>
-        <div class="image-box">
-            <?php if ($image_url) : ?>
-                <img src="<?php echo esc_url($image_url); ?>" alt="">
-            <?php endif; ?>
-        </div>
         <div class="order-box">
+            <?php if ($image_url) : ?>
+                <img class="order-product-image" src="<?php echo esc_url($image_url); ?>" alt="">
+            <?php endif; ?>
             <h3>Abo-Details</h3>
             <p><strong>Name:</strong> <?php echo esc_html($order->customer_name); ?></p>
             <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>
@@ -63,7 +61,6 @@ if (!defined('ABSPATH')) { exit; }
             <?php if (!empty($order->zustand_text)) : ?>
                 <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
             <?php endif; ?>
-            <p><strong>Mietbeginn:</strong> <?php echo esc_html($start_formatted); ?></p>
         </div>
     <?php endif; ?>
 </div>

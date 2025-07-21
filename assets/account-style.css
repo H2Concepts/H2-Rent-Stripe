@@ -54,30 +54,30 @@ img.wp-smiley, img.emoji {
 /* Grid with three cards per subscription */
 .abo-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 24px;
     margin-bottom: 40px;
 }
 
 .abo-box,
-.order-box,
-.image-box {
+.order-box {
     background: #f4f4f4;
     border-radius: 12px;
     padding: 24px;
 }
 
-.image-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.order-product-image {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
-.order-box img,
-.image-box img {
-    width: 100%;
-    height: auto;
-    border-radius: 8px;
+.order-box {
+    position: relative;
 }
 
 .abo-box h3 {
@@ -121,8 +121,8 @@ img.wp-smiley, img.emoji {
 }
 
 .abo-info {
-    font-size: 0.875rem;
-    color: #666;
+    font-size: 0.775rem;
+    color: #000;
     margin-top: 12px;
 }
 
