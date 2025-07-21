@@ -93,7 +93,6 @@ img.wp-smiley, img.emoji {
 .abo-title {
     display: flex;
     flex-direction: column;
-    margin-left: 12px;
 }
 
 .abo-title .status-badge {
@@ -106,6 +105,7 @@ img.wp-smiley, img.emoji {
     font-size: 12px;
     font-weight: 600;
     color: #fff;
+    display: inline-block;
 }
 
 .status-badge.active {
