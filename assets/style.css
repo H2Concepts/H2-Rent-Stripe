@@ -1870,6 +1870,7 @@ body.shop-filter-open {
 
 .content-block-compact .shop-product-image {
     position: relative;
+    border-radius: .5rem .5rem 0 0;
 }
 
 .content-block-compact .content-block-badge {
