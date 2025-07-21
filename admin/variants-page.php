@@ -79,8 +79,8 @@ foreach ($availability_columns as $column) {
 // Handle form submissions only on POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce'])) {
     \ProduktVerleih\Admin::verify_admin_action();
-    $category_id = intval($_POST['category_id']);
-    $name = sanitize_text_field($_POST['name']);
+    $category_id = intval($_POST['category_id'] ?? 0);
+    $name = sanitize_text_field($_POST['name'] ?? '');
     $stripe_product_id = '';
     if (!empty($_POST['id'])) {
         $stripe_product_id = $wpdb->get_var($wpdb->prepare(
@@ -91,14 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
     if (!empty($stripe_product_id)) {
         StripeService::update_product_name($stripe_product_id, $name);
     }
-    $description = sanitize_textarea_field($_POST['description']);
-    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
-    $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+    $description = sanitize_textarea_field($_POST['description'] ?? '');
+    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich'] ?? 0);
+    $verkaufspreis_einmalig = floatval($_POST['verkaufspreis_einmalig'] ?? 0);
     $available = isset($_POST['available']) ? 1 : 0;
-    $availability_note = sanitize_text_field($_POST['availability_note']);
-    $delivery_time = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
-    $active = isset($_POST['active']) ? 1 : 0;
-    $sort_order = intval($_POST['sort_order']);
+    $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
+    $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
+    $active = 1;
+    $sort_order = 0;
 
     $mode       = get_option('produkt_betriebsmodus', 'miete');
     $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
@@ -110,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $image_data['image_url_' . $i] = (is_string($image_raw) && filter_var($image_raw, FILTER_VALIDATE_URL))
             ? esc_url_raw($image_raw) : '';
     }
+    $image_data = is_array($image_data ?? null) ? $image_data : [];
 
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
