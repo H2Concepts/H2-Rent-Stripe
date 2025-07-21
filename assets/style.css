@@ -1005,6 +1005,25 @@ img.wp-smiley, img.emoji {
     display: block;
 }
 
+.produkt-info-section {
+    margin: 3rem 0;
+}
+.produkt-info-section h3 {
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+.produkt-info-block {
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .produkt-info-section h3 {
+        font-size: 30px;
+    }
+}
+
 @media (max-width: 768px) {
     .produkt-seo-block,
     .produkt-seo-block.reverse {

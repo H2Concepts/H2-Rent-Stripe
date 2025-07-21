@@ -133,7 +133,67 @@ global $wpdb;
                     </div>
                 </div>
             </div>
-            <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
+        <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
+    </div>
+
+        <div class="produkt-form-section">
+            <h4>Details</h4>
+            <div id="details-blocks-container">
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="detail_block_titles[]">
+                        </div>
+                        <button type="button" class="button produkt-remove-detail-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="detail_block_texts[]" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-detail-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>Technische Daten</h4>
+            <div id="tech-blocks-container">
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="tech_block_titles[]">
+                        </div>
+                        <button type="button" class="button produkt-remove-tech-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="tech_block_texts[]" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-tech-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>Lieferumfang</h4>
+            <div id="scope-blocks-container">
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="scope_block_titles[]">
+                        </div>
+                        <button type="button" class="button produkt-remove-scope-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="scope_block_texts[]" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-scope-block" class="button">+ Block hinzufügen</button>
         </div>
         
         <!-- Features -->
@@ -372,6 +432,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('page-blocks-container').addEventListener('click', function(e) {
         if (e.target.classList.contains('produkt-remove-page-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    let detailBlockIndex = document.querySelectorAll('#details-blocks-container .produkt-page-block').length;
+    document.getElementById('add-detail-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="detail_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-detail-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="detail_block_texts[]" rows="3"></textarea></div>';
+        document.getElementById('details-blocks-container').appendChild(div);
+        detailBlockIndex++;
+    });
+    document.getElementById('details-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-detail-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    let techBlockIndex = document.querySelectorAll('#tech-blocks-container .produkt-page-block').length;
+    document.getElementById('add-tech-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="tech_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-tech-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="tech_block_texts[]" rows="3"></textarea></div>';
+        document.getElementById('tech-blocks-container').appendChild(div);
+        techBlockIndex++;
+    });
+    document.getElementById('tech-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-tech-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    let scopeBlockIndex = document.querySelectorAll('#scope-blocks-container .produkt-page-block').length;
+    document.getElementById('add-scope-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="scope_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-scope-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="scope_block_texts[]" rows="3"></textarea></div>';
+        document.getElementById('scope-blocks-container').appendChild(div);
+        scopeBlockIndex++;
+    });
+    document.getElementById('scope-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-scope-block')) {
             e.preventDefault();
             e.target.closest('.produkt-page-block').remove();
         }

@@ -126,6 +126,12 @@ $accordions = isset($category) && property_exists($category, 'accordion_data') ?
 if (!is_array($accordions)) { $accordions = []; }
 $page_blocks = isset($category) && property_exists($category, 'page_blocks') ? json_decode($category->page_blocks, true) : [];
 if (!is_array($page_blocks)) { $page_blocks = []; }
+$detail_blocks = isset($category) && property_exists($category, 'detail_blocks') ? json_decode($category->detail_blocks, true) : [];
+if (!is_array($detail_blocks)) { $detail_blocks = []; }
+$tech_blocks = isset($category) && property_exists($category, 'tech_blocks') ? json_decode($category->tech_blocks, true) : [];
+if (!is_array($tech_blocks)) { $tech_blocks = []; }
+$scope_blocks = isset($category) && property_exists($category, 'scope_blocks') ? json_decode($category->scope_blocks, true) : [];
+if (!is_array($scope_blocks)) { $scope_blocks = []; }
 
 $shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
 $shipping_price_id = $shipping->stripe_price_id ?? '';
@@ -602,6 +608,54 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             </div>
         </div>
         <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?php if (!empty($detail_blocks)): ?>
+    <div class="produkt-info-section">
+        <h3>Details</h3>
+        <?php foreach ($detail_blocks as $block): ?>
+        <div class="produkt-info-block">
+            <?php if (!empty($block['title'])): ?>
+            <h4><?php echo esc_html($block['title']); ?></h4>
+            <?php endif; ?>
+            <?php if (!empty($block['text'])): ?>
+            <p><?php echo wp_kses_post(wpautop($block['text'])); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($tech_blocks)): ?>
+    <div class="produkt-info-section">
+        <h3>Technische Daten</h3>
+        <?php foreach ($tech_blocks as $block): ?>
+        <div class="produkt-info-block">
+            <?php if (!empty($block['title'])): ?>
+            <h4><?php echo esc_html($block['title']); ?></h4>
+            <?php endif; ?>
+            <?php if (!empty($block['text'])): ?>
+            <p><?php echo wp_kses_post(wpautop($block['text'])); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($scope_blocks)): ?>
+    <div class="produkt-info-section">
+        <h3>Lieferumfang</h3>
+        <?php foreach ($scope_blocks as $block): ?>
+        <div class="produkt-info-block">
+            <?php if (!empty($block['title'])): ?>
+            <h4><?php echo esc_html($block['title']); ?></h4>
+            <?php endif; ?>
+            <?php if (!empty($block['text'])): ?>
+            <p><?php echo wp_kses_post(wpautop($block['text'])); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
     <?php endif; ?>
 </div>
 

@@ -490,6 +490,39 @@ class Admin {
             }
             $page_blocks = json_encode($blocks);
 
+            $detail_titles = isset($_POST['detail_block_titles']) ? array_map('sanitize_text_field', (array) $_POST['detail_block_titles']) : array();
+            $detail_texts  = isset($_POST['detail_block_texts'])  ? array_map('wp_kses_post', (array) $_POST['detail_block_texts'])  : array();
+            $detail_data   = array();
+            foreach ($detail_titles as $k => $t) {
+                $txt = $detail_texts[$k] ?? '';
+                if ($t !== '' || $txt !== '') {
+                    $detail_data[] = array('title' => $t, 'text' => $txt);
+                }
+            }
+            $detail_blocks = json_encode($detail_data);
+
+            $tech_titles = isset($_POST['tech_block_titles']) ? array_map('sanitize_text_field', (array) $_POST['tech_block_titles']) : array();
+            $tech_texts  = isset($_POST['tech_block_texts'])  ? array_map('wp_kses_post', (array) $_POST['tech_block_texts'])  : array();
+            $tech_data   = array();
+            foreach ($tech_titles as $k => $t) {
+                $txt = $tech_texts[$k] ?? '';
+                if ($t !== '' || $txt !== '') {
+                    $tech_data[] = array('title' => $t, 'text' => $txt);
+                }
+            }
+            $tech_blocks = json_encode($tech_data);
+
+            $scope_titles = isset($_POST['scope_block_titles']) ? array_map('sanitize_text_field', (array) $_POST['scope_block_titles']) : array();
+            $scope_texts  = isset($_POST['scope_block_texts'])  ? array_map('wp_kses_post', (array) $_POST['scope_block_texts'])  : array();
+            $scope_data   = array();
+            foreach ($scope_titles as $k => $t) {
+                $txt = $scope_texts[$k] ?? '';
+                if ($t !== '' || $txt !== '') {
+                    $scope_data[] = array('title' => $t, 'text' => $txt);
+                }
+            }
+            $scope_blocks = json_encode($scope_data);
+
             $table_name = $wpdb->prefix . 'produkt_categories';
 
             // Ensure new short_description column exists to prevent SQL errors
@@ -528,6 +561,9 @@ class Admin {
                         'payment_icons' => $payment_icons,
                         'accordion_data' => $accordion_data,
                         'page_blocks'   => $page_blocks,
+                        'detail_blocks' => $detail_blocks,
+                        'tech_blocks'   => $tech_blocks,
+                        'scope_blocks'  => $scope_blocks,
                         'price_label' => $price_label,
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
@@ -542,7 +578,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -608,6 +644,9 @@ class Admin {
                         'payment_icons' => $payment_icons,
                         'accordion_data' => $accordion_data,
                         'page_blocks'   => $page_blocks,
+                        'detail_blocks' => $detail_blocks,
+                        'tech_blocks'   => $tech_blocks,
+                        'scope_blocks'  => $scope_blocks,
                         'price_label' => $price_label,
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
@@ -621,7 +660,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 $produkt_id = $wpdb->insert_id;

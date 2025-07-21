@@ -195,7 +195,91 @@
                 </div>
                 <?php endforeach; ?>
             </div>
-            <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
+        <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
+    </div>
+
+        <div class="produkt-form-section">
+            <h4>Details</h4>
+            <?php
+                $detail_blocks = !empty($edit_item->detail_blocks) ? json_decode($edit_item->detail_blocks, true) : [];
+                if (!is_array($detail_blocks) || empty($detail_blocks)) {
+                    $detail_blocks = [['title' => '', 'text' => '']];
+                }
+            ?>
+            <div id="details-blocks-container">
+                <?php foreach ($detail_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="detail_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-detail-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="detail_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-detail-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>Technische Daten</h4>
+            <?php
+                $tech_blocks = !empty($edit_item->tech_blocks) ? json_decode($edit_item->tech_blocks, true) : [];
+                if (!is_array($tech_blocks) || empty($tech_blocks)) {
+                    $tech_blocks = [['title' => '', 'text' => '']];
+                }
+            ?>
+            <div id="tech-blocks-container">
+                <?php foreach ($tech_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="tech_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-tech-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="tech_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-tech-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>Lieferumfang</h4>
+            <?php
+                $scope_blocks = !empty($edit_item->scope_blocks) ? json_decode($edit_item->scope_blocks, true) : [];
+                if (!is_array($scope_blocks) || empty($scope_blocks)) {
+                    $scope_blocks = [['title' => '', 'text' => '']];
+                }
+            ?>
+            <div id="scope-blocks-container">
+                <?php foreach ($scope_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="scope_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-scope-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="scope_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-scope-block" class="button">+ Block hinzufügen</button>
         </div>
         
 
@@ -481,6 +565,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('page-blocks-container').addEventListener('click', function(e) {
         if (e.target.classList.contains('produkt-remove-page-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    let detailBlockIndex = document.querySelectorAll('#details-blocks-container .produkt-page-block').length;
+    document.getElementById('add-detail-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="detail_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-detail-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="detail_block_texts[]" rows="3"></textarea></div>';
+        document.getElementById('details-blocks-container').appendChild(div);
+        detailBlockIndex++;
+    });
+    document.getElementById('details-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-detail-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    let techBlockIndex = document.querySelectorAll('#tech-blocks-container .produkt-page-block').length;
+    document.getElementById('add-tech-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="tech_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-tech-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="tech_block_texts[]" rows="3"></textarea></div>';
+        document.getElementById('tech-blocks-container').appendChild(div);
+        techBlockIndex++;
+    });
+    document.getElementById('tech-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-tech-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    let scopeBlockIndex = document.querySelectorAll('#scope-blocks-container .produkt-page-block').length;
+    document.getElementById('add-scope-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="scope_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-scope-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="scope_block_texts[]" rows="3"></textarea></div>';
+        document.getElementById('scope-blocks-container').appendChild(div);
+        scopeBlockIndex++;
+    });
+    document.getElementById('scope-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-scope-block')) {
             e.preventDefault();
             e.target.closest('.produkt-page-block').remove();
         }
