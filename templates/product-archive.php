@@ -166,7 +166,7 @@ foreach ($content_blocks as $b) {
 
             <div class="shop-product-grid">
         <?php $position = 0; foreach (($categories ?? []) as $cat): ?>
-        <?php while (pv_render_content_blocks($position + 1, $blocks_by_position_desktop, $blocks_by_position_mobile)) { $position++; } ?>
+        <?php while (($added = pv_render_content_blocks($position + 1, $blocks_by_position_desktop, $blocks_by_position_mobile)) > 0) { $position += $added; } ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
         <?php $price_data = pv_get_lowest_stripe_price_by_category($cat->id); ?>
         <div class="shop-product-item">
@@ -196,7 +196,7 @@ foreach ($content_blocks as $b) {
             </a>
         </div>
         <?php $position++; endforeach; ?>
-        <?php while (pv_render_content_blocks($position + 1, $blocks_by_position_desktop, $blocks_by_position_mobile)) { $position++; } ?>
+        <?php while (($added = pv_render_content_blocks($position + 1, $blocks_by_position_desktop, $blocks_by_position_mobile)) > 0) { $position += $added; } ?>
 
         </div>
     </div>

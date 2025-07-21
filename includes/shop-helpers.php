@@ -78,6 +78,7 @@ function pv_format_price_label($price_data) {
 function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
     $count = 0;
 
+    $desktop_count = 0;
     if (isset($desktop_blocks[$index])) {
         foreach ($desktop_blocks[$index] as $block) {
             if (($block->style ?? 'wide') === 'compact') {
@@ -119,11 +120,12 @@ function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
                 </div>
                 <?php
             }
-            $count++;
+            $desktop_count++;
         }
         unset($desktop_blocks[$index]);
     }
 
+    $mobile_count = 0;
     if (isset($mobile_blocks[$index])) {
         foreach ($mobile_blocks[$index] as $block) {
             if (($block->style ?? 'wide') === 'compact') {
@@ -165,11 +167,11 @@ function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
                 </div>
                 <?php
             }
-            $count++;
+            $mobile_count++;
         }
         unset($mobile_blocks[$index]);
     }
 
-    return $count;
+    return max($desktop_count, $mobile_count);
 }
 
