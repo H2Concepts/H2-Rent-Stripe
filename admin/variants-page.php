@@ -79,7 +79,6 @@ foreach ($availability_columns as $column) {
 // Handle form submissions only on POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce'])) {
     \ProduktVerleih\Admin::verify_admin_action();
-    $category_id = intval($_POST['category_id'] ?? 0);
     $name = sanitize_text_field($_POST['name'] ?? '');
     $stripe_product_id = '';
     if (!empty($_POST['id'])) {
@@ -91,18 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
     if (!empty($stripe_product_id)) {
         StripeService::update_product_name($stripe_product_id, $name);
     }
-    $description = sanitize_textarea_field($_POST['description'] ?? '');
-    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich'] ?? 0);
-    $verkaufspreis_einmalig = floatval($_POST['verkaufspreis_einmalig'] ?? 0);
-    $available = isset($_POST['available']) ? 1 : 0;
-    $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
-    $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
-    $active = 1;
-    $sort_order = 0;
-
-    $mode       = get_option('produkt_betriebsmodus', 'miete');
-    $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
-    
     // Handle multiple images
     $image_data = array();
     for ($i = 1; $i <= 5; $i++) {
@@ -114,6 +101,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
 
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
+        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+        $name = sanitize_text_field($_POST['name'] ?? '');
+        $description = sanitize_textarea_field($_POST['description'] ?? '');
+        $mietpreis_monatlich = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
+        $available = isset($_POST['available']) ? 1 : 0;
+        $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
+        $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
+        $active = 1;
+        $sort_order = 0;
+        $image_data = is_array($image_data ?? null) ? $image_data : [];
+
         $update_data = array_merge(array(
             'category_id'            => $category_id,
             'name'                   => $name,
@@ -214,6 +214,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         }
     } else {
         // Insert
+        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+        $name = sanitize_text_field($_POST['name'] ?? '');
+        $description = sanitize_textarea_field($_POST['description'] ?? '');
+        $mietpreis_monatlich = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
+        $available = isset($_POST['available']) ? 1 : 0;
+        $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
+        $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
+        $active = 1;
+        $sort_order = 0;
+        $image_data = is_array($image_data ?? null) ? $image_data : [];
+
         $insert_data = array_merge(array(
             'category_id'            => $category_id,
             'name'                   => $name,
