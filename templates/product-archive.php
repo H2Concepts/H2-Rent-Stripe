@@ -203,7 +203,7 @@ foreach ($content_blocks as $b) {
                 foreach ($blocks_by_position_desktop[$next_index] as $block) {
                     if (($block->style ?? 'wide') === 'compact') {
                         ?>
-                        <div class="shop-product-item desktop-only content-block-compact"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
+                        <div class="shop-product-item desktop-only content-block-compact"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>; --block-bg: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
                             <a href="<?php echo esc_url($block->button_url); ?>">
                                 <div class="shop-product-image">
                                     <?php if (!empty($block->image_url)): ?>
@@ -213,6 +213,9 @@ foreach ($content_blocks as $b) {
                                         <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
                                     <?php endif; ?>
                                 </div>
+                                <svg class="content-block-wave" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+                                    <path d="M0,0L30,42.7C60,85,120,171,180,186.7C240,203,300,149,360,128C420,107,480,117,540,128C600,139,660,149,720,133.3C780,117,840,75,900,58.7C960,43,1020,53,1080,90.7C1140,128,1200,192,1260,224C1320,256,1380,256,1410,256L1440,256L1440,320L1410,320C1380,320,1320,320,1260,320C1200,320,1140,320,1080,320C1020,320,960,320,900,320C840,320,780,320,720,320C660,320,600,320,540,320C480,320,420,320,360,320C300,320,240,320,180,320C120,320,60,320,30,320L0,320Z"/>
+                                </svg>
                                 <h3 class="shop-product-title"><?php echo esc_html($block->title); ?></h3>
                                 <div class="shop-product-shortdesc"><?php echo wpautop($block->content); ?></div>
                             </a>
@@ -243,7 +246,7 @@ foreach ($content_blocks as $b) {
                 foreach ($blocks_by_position_mobile[$next_index] as $block) {
                     if (($block->style ?? 'wide') === 'compact') {
                         ?>
-                        <div class="shop-product-item mobile-only content-block-compact"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
+                        <div class="shop-product-item mobile-only content-block-compact"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>; --block-bg: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
                             <a href="<?php echo esc_url($block->button_url); ?>">
                                 <div class="shop-product-image">
                                     <?php if (!empty($block->image_url)): ?>
@@ -253,6 +256,9 @@ foreach ($content_blocks as $b) {
                                         <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
                                     <?php endif; ?>
                                 </div>
+                                <svg class="content-block-wave" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true">
+                                    <path d="M0,0L30,42.7C60,85,120,171,180,186.7C240,203,300,149,360,128C420,107,480,117,540,128C600,139,660,149,720,133.3C780,117,840,75,900,58.7C960,43,1020,53,1080,90.7C1140,128,1200,192,1260,224C1320,256,1380,256,1410,256L1440,256L1440,320L1410,320C1380,320,1320,320,1260,320C1200,320,1140,320,1080,320C1020,320,960,320,900,320C840,320,780,320,720,320C660,320,600,320,540,320C480,320,420,320,360,320C300,320,240,320,180,320C120,320,60,320,30,320L0,320Z"/>
+                                </svg>
                                 <h3 class="shop-product-title"><?php echo esc_html($block->title); ?></h3>
                                 <div class="shop-product-shortdesc"><?php echo wpautop($block->content); ?></div>
                             </a>
