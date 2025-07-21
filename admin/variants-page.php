@@ -251,6 +251,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             'active'                 => $active,
             'sort_order'             => $sort_order
         ), $image_data);
+
+        echo '<pre>'; print_r($_POST); echo '</pre>';
+        error_log('🛠️ Variablen beim Speichern: ' . print_r($_POST, true));
+        echo '<div class="notice notice-warning"><pre>';
+        print_r([
+            'mode' => $mode,
+            'base_price' => $base_price,
+            'verkaufspreis' => $_POST['verkaufspreis_einmalig'] ?? 'leer',
+            'mietpreis' => $_POST['mietpreis_monatlich'] ?? 'leer',
+            'stripe_product_id' => $stripe_product_id ?? 'leer',
+            'image_data' => $image_data,
+        ]);
+        echo '</pre></div>';
         
         $result = $wpdb->insert(
             $table_name,
