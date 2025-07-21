@@ -7,6 +7,12 @@ use ProduktVerleih\StripeService;
 use ProduktVerleih\Database;
 
 global $wpdb;
+$early_post = ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']));
+if ($early_post) {
+    if (!wp_verify_nonce($_POST['produkt_admin_nonce'], 'produkt_admin_action')) {
+        wp_die('Ungültige Anfrage. Bitte erneut versuchen.');
+    }
+}
 $db_updater = new Database();
 $db_updater->update_database();
 $table_name = $wpdb->prefix . 'produkt_variants';
@@ -86,7 +92,7 @@ foreach ($availability_columns as $column) {
 }
 
 // Handle form submissions only on POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce'])) {
+if ($early_post) {
     \ProduktVerleih\Admin::verify_admin_action();
     $name = sanitize_text_field($_POST['name'] ?? '');
     $stripe_product_id = '';
