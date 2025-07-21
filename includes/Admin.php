@@ -402,7 +402,9 @@ class Admin {
         if (!current_user_can('manage_options')) {
             wp_die(__('Insufficient permissions.', 'h2-concepts'));
         }
-        check_admin_referer('produkt_admin_action', $nonce_field);
+        if (empty($_POST[$nonce_field]) || !wp_verify_nonce($_POST[$nonce_field], 'produkt_admin_action')) {
+            wp_die(__('Invalid nonce.', 'h2-concepts'));
+        }
     }
     
     public function admin_page() {

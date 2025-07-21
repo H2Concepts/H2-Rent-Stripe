@@ -9,7 +9,7 @@
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
-        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <input type="hidden" name="produkt_admin_nonce" value="<?php echo wp_create_nonce('produkt_admin_action'); ?>">
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
         <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
         
