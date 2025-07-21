@@ -38,6 +38,12 @@ if (is_user_logged_in()) {
     }
 
     $customer_id = Database::get_stripe_customer_id_for_user($user_id);
+    if (!$customer_id) {
+        $customer_id = Database::get_stripe_customer_id_from_orders($user_id);
+        if ($customer_id) {
+            update_user_meta($user_id, 'stripe_customer_id', $customer_id);
+        }
+    }
     if ($customer_id) {
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
         if (!is_wp_error($subs)) {

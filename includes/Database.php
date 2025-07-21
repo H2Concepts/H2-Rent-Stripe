@@ -1557,6 +1557,26 @@ class Database {
         return get_user_meta($user_id, 'stripe_customer_id', true);
     }
 
+    /**
+     * Fallback: find the Stripe customer ID from existing orders of a user.
+     *
+     * @param int $user_id User ID
+     * @return string Customer ID or empty string
+     */
+    public static function get_stripe_customer_id_from_orders($user_id) {
+        $user = get_user_by('ID', $user_id);
+        if (!$user) {
+            return '';
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_orders';
+        $email = sanitize_email($user->user_email);
+
+        $sql = "SELECT stripe_customer_id FROM $table WHERE customer_email = %s AND stripe_customer_id <> '' ORDER BY created_at DESC LIMIT 1";
+        return $wpdb->get_var($wpdb->prepare($sql, $email)) ?: '';
+    }
+
 
     /**
      * Retrieve all product categories sorted hierarchically.

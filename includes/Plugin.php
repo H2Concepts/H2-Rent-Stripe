@@ -361,6 +361,12 @@ class Plugin {
         $current_user_id = get_current_user_id();
         if ($current_user_id) {
             $customer_id = Database::get_stripe_customer_id_for_user($current_user_id);
+            if (!$customer_id) {
+                $customer_id = Database::get_stripe_customer_id_from_orders($current_user_id);
+                if ($customer_id) {
+                    update_user_meta($current_user_id, 'stripe_customer_id', $customer_id);
+                }
+            }
 
             if ($customer_id && isset($_POST['cancel_subscription'])) {
                 $sub_id = sanitize_text_field($_POST['cancel_subscription']);
