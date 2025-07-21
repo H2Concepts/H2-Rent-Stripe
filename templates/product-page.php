@@ -611,8 +611,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
     <?php endif; ?>
 
     <?php if (!empty($detail_blocks)): ?>
-    <div class="produkt-info-section">
-        <h3>Details</h3>
+    <div class="produkt-info-section produkt-accordion-item">
+        <button type="button" class="produkt-accordion-header">Details</button>
+        <div class="produkt-accordion-content">
         <div class="produkt-info-grid">
         <?php foreach ($detail_blocks as $block): ?>
         <div class="produkt-info-block">
@@ -625,12 +626,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         </div>
         <?php endforeach; ?>
         </div>
+        </div>
     </div>
     <?php endif; ?>
 
     <?php if (!empty($tech_blocks)): ?>
-    <div class="produkt-info-section">
-        <h3>Technische Daten</h3>
+    <div class="produkt-info-section produkt-accordion-item">
+        <button type="button" class="produkt-accordion-header">Technische Daten</button>
+        <div class="produkt-accordion-content">
         <div class="produkt-info-grid">
         <?php foreach ($tech_blocks as $block): ?>
         <div class="produkt-info-block">
@@ -643,12 +646,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         </div>
         <?php endforeach; ?>
         </div>
+        </div>
     </div>
     <?php endif; ?>
 
     <?php if (!empty($scope_blocks)): ?>
-    <div class="produkt-info-section">
-        <h3>Lieferumfang</h3>
+    <div class="produkt-info-section produkt-accordion-item">
+        <button type="button" class="produkt-accordion-header">Lieferumfang</button>
+        <div class="produkt-accordion-content">
         <div class="produkt-info-grid">
         <?php foreach ($scope_blocks as $block): ?>
         <div class="produkt-info-block">
@@ -660,6 +665,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
             <?php endif; ?>
         </div>
         <?php endforeach; ?>
+        </div>
         </div>
     </div>
     <?php endif; ?>
