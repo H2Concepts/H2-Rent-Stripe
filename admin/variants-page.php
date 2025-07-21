@@ -124,8 +124,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
         $name = sanitize_text_field($_POST['name'] ?? '');
         $description = sanitize_textarea_field($_POST['description'] ?? '');
-        $mietpreis_monatlich = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich'] ?? 0.0);
+        $verkaufspreis_einmalig = floatval($_POST['verkaufspreis_einmalig'] ?? 0.0);
         $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
         $available = isset($_POST['available']) ? 1 : 0;
         $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
@@ -238,8 +238,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
         $name = sanitize_text_field($_POST['name'] ?? '');
         $description = sanitize_textarea_field($_POST['description'] ?? '');
-        $mietpreis_monatlich = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich'] ?? 0.0);
+        $verkaufspreis_einmalig = floatval($_POST['verkaufspreis_einmalig'] ?? 0.0);
         $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
         $available = isset($_POST['available']) ? 1 : 0;
         $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
