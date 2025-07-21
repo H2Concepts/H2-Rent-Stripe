@@ -140,6 +140,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         <th>Kunde</th>
                         <th>Telefon</th>
                         <th>Adresse</th>
+                        <th style="width: 80px;">Produkttyp</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
                         <th style="width: 80px;">Rabatt</th>
@@ -176,6 +177,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 }
                             ?>
                         </td>
+                        <td><?php echo !empty($order->stripe_subscription_id) ? 'Miete' : 'Verkauf'; ?></td>
                         <td>
                             <div style="line-height: 1.4;">
                                 <strong><?php echo esc_html($order->category_name); ?></strong><br>

@@ -45,8 +45,11 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
-        $subscription_id   = $session->subscription ?? '';
+        $mode     = $session->mode ?? 'subscription';
+        $subscription_id   = $mode === 'subscription' ? ($session->subscription ?? '') : '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
+
+        if ($mode === 'payment' || $mode === 'subscription') {
 
         $email              = $session->customer_details->email ?? '';
         $stripe_customer_id = $session->customer ?? '';
@@ -166,7 +169,8 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             send_admin_order_email($data, $existing_id, $session->id);
             produkt_add_order_log($existing_id, 'welcome_email_sent');
         }
-    } elseif ($event->type === 'customer.subscription.deleted') {
+    }
+    elseif ($event->type === 'customer.subscription.deleted') {
         $subscription     = $event->data->object;
         $subscription_id  = $subscription->id;
         global $wpdb;

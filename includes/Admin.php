@@ -297,6 +297,7 @@ class Admin {
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
+                'betriebsmodus' => get_option('produkt_betriebsmodus', 'miete'),
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,

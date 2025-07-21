@@ -702,6 +702,18 @@ jQuery(document).ready(function($) {
                         
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
+
+                        if (produkt_ajax.betriebsmodus === 'verkauf') {
+                            $('.produkt-price-period').hide();
+                            $('.produkt-mobile-price-period').hide();
+                            $('#produkt-rent-button span').text('Jetzt kaufen');
+                            $('.produkt-mobile-button span').text('Jetzt kaufen');
+                        } else {
+                            $('.produkt-price-period').show().text('/Monat');
+                            $('.produkt-mobile-price-period').show().text('/Monat');
+                            $('#produkt-rent-button span').text('Jetzt mieten');
+                            $('.produkt-mobile-button span').text('Jetzt mieten');
+                        }
                     }
                 },
                 error: function() {
@@ -724,6 +736,18 @@ jQuery(document).ready(function($) {
             
             // Hide mobile sticky price
             hideMobileStickyPrice();
+
+            if (produkt_ajax.betriebsmodus === 'verkauf') {
+                $('.produkt-price-period').hide();
+                $('.produkt-mobile-price-period').hide();
+                $('#produkt-rent-button span').text('Jetzt kaufen');
+                $('.produkt-mobile-button span').text('Jetzt kaufen');
+            } else {
+                $('.produkt-price-period').show().text('/Monat');
+                $('.produkt-mobile-price-period').show().text('/Monat');
+                $('#produkt-rent-button span').text('Jetzt mieten');
+                $('.produkt-mobile-button span').text('Jetzt mieten');
+            }
         }
     }
 
@@ -731,11 +755,14 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainButton = $('#produkt-rent-button');
-            const mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
+            let mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
+            if (produkt_ajax.betriebsmodus === 'verkauf') {
+                mainLabel = 'Jetzt kaufen';
+            }
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
-            const suffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
+            const suffix = produkt_ajax.betriebsmodus === 'verkauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
             const stickyHtml = `
                 <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
                     <div class="produkt-mobile-sticky-content">
@@ -755,6 +782,9 @@ jQuery(document).ready(function($) {
                 </div>
             `;
             $('body').append(stickyHtml);
+            if (produkt_ajax.betriebsmodus === 'verkauf') {
+                $('.produkt-mobile-price-period').hide();
+            }
             
             // Show/hide based on scroll position
             $(window).scroll(function() {
