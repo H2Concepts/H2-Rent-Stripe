@@ -215,7 +215,10 @@ foreach ($content_blocks as $b) {
                                 <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
                             <?php endif; ?>
                         </div>
-                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
+                        <div class="content-block-image">
+                            <?php if (!empty($block->image_url)): ?>
+                                <img src="<?php echo esc_url($block->image_url); ?>" alt="<?php echo esc_attr($block->title); ?>">
+                            <?php endif; ?>
                         </div>
                     </div>
                     <?php
@@ -237,7 +240,10 @@ foreach ($content_blocks as $b) {
                                 <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
                             <?php endif; ?>
                         </div>
-                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
+                        <div class="content-block-image">
+                            <?php if (!empty($block->image_url)): ?>
+                                <img src="<?php echo esc_url($block->image_url); ?>" alt="<?php echo esc_attr($block->title); ?>">
+                            <?php endif; ?>
                         </div>
                     </div>
                     <?php
