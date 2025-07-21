@@ -76,8 +76,6 @@ function pv_format_price_label($price_data) {
  * @return int Number of blocks rendered.
  */
 function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
-    $count = 0;
-
     $desktop_count = 0;
     if (isset($desktop_blocks[$index])) {
         foreach ($desktop_blocks[$index] as $block) {
@@ -172,6 +170,6 @@ function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
         unset($mobile_blocks[$index]);
     }
 
-    return max($desktop_count, $mobile_count);
+    return $desktop_count;
 }
 

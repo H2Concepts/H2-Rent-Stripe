@@ -196,7 +196,13 @@ foreach ($content_blocks as $b) {
             </a>
         </div>
         <?php $position++; endforeach; ?>
-        <?php while (($added = pv_render_content_blocks($position + 1, $blocks_by_position_desktop, $blocks_by_position_mobile)) > 0) { $position += $added; } ?>
+        <?php
+            $next = $position + 1;
+            while (!empty($blocks_by_position_desktop) || !empty($blocks_by_position_mobile)) {
+                pv_render_content_blocks($next, $blocks_by_position_desktop, $blocks_by_position_mobile);
+                $next++;
+            }
+        ?>
 
         </div>
     </div>
