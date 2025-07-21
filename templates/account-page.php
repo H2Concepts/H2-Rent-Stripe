@@ -1,5 +1,6 @@
 <?php
 use ProduktVerleih\Database;
+use ProduktVerleih\OrderService;
 
 require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
@@ -28,7 +29,7 @@ $full_name     = '';
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
-    $orders  = Database::get_orders_for_user($user_id);
+    $orders  = OrderService::get_orders_by_user($user_id);
 
     foreach ($orders as $o) {
         if (!empty($o->subscription_id)) {

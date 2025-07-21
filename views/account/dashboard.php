@@ -99,6 +99,42 @@
                 </table>
             </div>
         <?php endif; ?>
+
+        <?php if (!empty($orders)) : ?>
+            <div class="produkt-section">
+                <h3>Meine bisherigen Bestellungen</h3>
+                <table class="plugin-orders-table">
+                    <thead>
+                        <tr>
+                            <th>Produkt</th>
+                            <th>Details</th>
+                            <th>Zeitraum</th>
+                            <th>Preis</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($orders as $o) : ?>
+                        <tr>
+                            <td><?php echo esc_html($o->produkt_name); ?></td>
+                            <td>
+                                <?php echo esc_html($o->zustand_text); ?><br>
+                                <?php echo esc_html($o->produktfarbe_text); ?> / <?php echo esc_html($o->gestellfarbe_text); ?>
+                            </td>
+                            <td><?php echo esc_html($o->dauer_text); ?></td>
+                            <td><?php echo esc_html(number_format($o->amount_total / 100, 2, ',', '.')); ?> €</td>
+                            <td><?php echo esc_html(ucfirst($o->status)); ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php else : ?>
+            <div class="produkt-section">
+                <h3>Meine bisherigen Bestellungen</h3>
+                <p>Sie haben bisher keine Bestellungen aufgegeben.</p>
+            </div>
+        <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>

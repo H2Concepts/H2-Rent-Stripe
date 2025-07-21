@@ -158,6 +158,13 @@ img.wp-smiley, img.emoji {
     font-size: 0.875rem;
 }
 
+.plugin-orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+}
+
 .stripe-invoice-table th,
 .stripe-invoice-table td {
     padding: 6px 8px;
@@ -165,7 +172,18 @@ img.wp-smiley, img.emoji {
     text-align: left;
 }
 
+.plugin-orders-table th,
+.plugin-orders-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
 .stripe-invoice-table th {
+    background: #f4f4f4;
+}
+
+.plugin-orders-table th {
     background: #f4f4f4;
 }
 
