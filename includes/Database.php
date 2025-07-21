@@ -290,6 +290,7 @@ class Database {
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
                 'filter_button_color'  => '#5f7f5f',
+                'product_padding'     => '1',
                 'login_bg_image' => '',
                 'footer_text' => 'Powered by H2 Concepts',
                 'custom_css' => ''
@@ -313,6 +314,7 @@ class Database {
             'front_border_color'       => '#a4b8a4',
             'front_button_text_color'  => '#ffffff',
             'filter_button_color'      => '#5f7f5f',
+            'product_padding'          => '1',
             'login_bg_image'           => ''
         );
         foreach ($branding_defaults as $key => $value) {
@@ -1285,6 +1287,7 @@ class Database {
                 'front_text_color'      => '#4a674a',
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
+                'product_padding'       => '1',
                 'login_bg_image'         => '',
                 'footer_text' => '',
                 'custom_css' => ''
