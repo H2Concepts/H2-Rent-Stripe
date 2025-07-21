@@ -1,5 +1,6 @@
 <?php
 // Categories Add Tab Content
+global $wpdb;
 ?>
 
 <div class="produkt-add-category">
@@ -101,6 +102,38 @@
                 </div>
                 <small>Fallback-Bild wenn für Ausführungen kein spezifisches Bild hinterlegt ist</small>
             </div>
+        </div>
+
+        <!-- Content Blöcke -->
+        <div class="produkt-form-section">
+            <h4>Content Blöcke</h4>
+            <div id="page-blocks-container">
+                <div class="produkt-page-block">
+                    <div class="produkt-form-row">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="page_block_titles[]">
+                        </div>
+                        <button type="button" class="button produkt-remove-page-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="page_block_texts[]" rows="3"></textarea>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Bild</label>
+                        <div class="produkt-upload-area">
+                            <input type="url" name="page_block_images[]" id="page_block_image_0">
+                            <button type="button" class="button produkt-media-button" data-target="page_block_image_0">📁</button>
+                        </div>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Alt-Text</label>
+                        <input type="text" name="page_block_alts[]">
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
         </div>
         
         <!-- Features -->
@@ -309,6 +342,56 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    let pageBlockIndex = document.querySelectorAll('#page-blocks-container .produkt-page-block').length;
+    document.getElementById('add-page-block').addEventListener('click', function(e) {
+        e.preventDefault();
+        const id = 'page_block_image_' + pageBlockIndex;
+        const div = document.createElement('div');
+        div.className = 'produkt-page-block';
+        div.innerHTML = '<div class="produkt-form-row">'
+            + '<div class="produkt-form-group" style="flex:1;">'
+            + '<label>Titel</label>'
+            + '<input type="text" name="page_block_titles[]" />'
+            + '</div>'
+            + '<button type="button" class="button produkt-remove-page-block">-</button>'
+            + '</div>'
+            + '<div class="produkt-form-group"><label>Text</label>'
+            + '<textarea name="page_block_texts[]" rows="3"></textarea></div>'
+            + '<div class="produkt-form-group"><label>Bild</label>'
+            + '<div class="produkt-upload-area">'
+            + '<input type="url" name="page_block_images[]" id="' + id + '">' 
+            + '<button type="button" class="button produkt-media-button" data-target="' + id + '">📁</button>'
+            + '</div></div>'
+            + '<div class="produkt-form-group"><label>Alt-Text</label>'
+            + '<input type="text" name="page_block_alts[]"></div>';
+        document.getElementById('page-blocks-container').appendChild(div);
+        attachMediaButton(div.querySelector('.produkt-media-button'));
+        pageBlockIndex++;
+    });
+
+    document.getElementById('page-blocks-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-remove-page-block')) {
+            e.preventDefault();
+            e.target.closest('.produkt-page-block').remove();
+        }
+    });
+
+    function attachMediaButton(btn) {
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const field = document.getElementById(targetId);
+            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function() {
+                const att = frame.state().get('selection').first().toJSON();
+                field.value = att.url;
+            });
+            frame.open();
+        });
+    }
+    document.querySelectorAll('.produkt-media-button').forEach(attachMediaButton);
 
     // Accordion fields are handled in admin-script.js
 });

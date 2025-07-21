@@ -2,6 +2,8 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+
+global $wpdb;
 ?>
 
 <div class="wrap">

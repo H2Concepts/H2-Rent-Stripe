@@ -20,6 +20,7 @@ if (isset($_POST['submit_branding'])) {
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
     $custom_css = sanitize_textarea_field($_POST['custom_css']);
+    $product_padding = isset($_POST['product_padding']) ? 1 : 0;
 
     $table_name = $wpdb->prefix . 'produkt_branding';
 
@@ -36,6 +37,7 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'footer_text' => $footer_text,
         'custom_css' => $custom_css
@@ -182,6 +184,15 @@ if (isset($_POST['submit_branding'])) {
                         <label>Button-Textfarbe</label>
                         <input type="color" name="front_button_text_color" value="<?php echo esc_attr($branding['front_button_text_color'] ?? '#ffffff'); ?>" class="produkt-color-picker">
                         <small>Textfarbe der Buttons im Frontend</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label class="produkt-toggle-label">
+                            <input type="checkbox" name="product_padding" value="1" <?php echo empty($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>Padding um Produktboxen</span>
+                        </label>
+                        <small>Aktiviert 1.5&nbsp;rem Innenabstand und geringere Spaltenabst&auml;nde</small>
                     </div>
 
                     <div class="produkt-form-group full-width">

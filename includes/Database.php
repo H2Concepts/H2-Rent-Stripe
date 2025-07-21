@@ -187,6 +187,7 @@ class Database {
                 'button_icon' => 'TEXT',
                 'payment_icons'   => 'TEXT',
                 'accordion_data'  => 'LONGTEXT',
+                'page_blocks'     => 'LONGTEXT',
                 'shipping_cost'   => 'DECIMAL(10,2) DEFAULT 0',
                 'shipping_provider' => 'VARCHAR(50) DEFAULT ""',
                 'shipping_price_id' => 'VARCHAR(255) DEFAULT ""',
@@ -201,7 +202,8 @@ class Database {
                 'show_tooltips' => 'TINYINT(1) DEFAULT 1',
                 'show_rating' => 'TINYINT(1) DEFAULT 0',
                 'rating_value' => 'DECIMAL(3,1) DEFAULT 0',
-                'rating_link' => 'TEXT'
+                'rating_link' => 'TEXT',
+                'page_blocks' => 'LONGTEXT'
             );
             
             foreach ($new_columns as $column => $type) {
@@ -288,6 +290,7 @@ class Database {
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
                 'filter_button_color'  => '#5f7f5f',
+                'product_padding'     => '1',
                 'login_bg_image' => '',
                 'footer_text' => 'Powered by H2 Concepts',
                 'custom_css' => ''
@@ -311,6 +314,7 @@ class Database {
             'front_border_color'       => '#a4b8a4',
             'front_button_text_color'  => '#ffffff',
             'filter_button_color'      => '#5f7f5f',
+            'product_padding'          => '1',
             'login_bg_image'           => ''
         );
         foreach ($branding_defaults as $key => $value) {
@@ -672,6 +676,7 @@ class Database {
                 category_id INT NOT NULL,
                 position INT NOT NULL,
                 position_mobile INT NOT NULL DEFAULT 6,
+                style VARCHAR(20) DEFAULT 'wide',
                 title TEXT NOT NULL,
                 content TEXT NOT NULL,
                 image_url TEXT,
@@ -697,6 +702,10 @@ class Database {
             $badge_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'badge_text'");
             if (empty($badge_exists)) {
                 $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN badge_text TEXT AFTER background_color");
+            }
+            $style_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_blocks LIKE 'style'");
+            if (empty($style_exists)) {
+                $wpdb->query("ALTER TABLE $table_blocks ADD COLUMN style VARCHAR(20) DEFAULT 'wide' AFTER position_mobile");
             }
         }
 
@@ -839,6 +848,7 @@ class Database {
             button_icon text DEFAULT '',
             payment_icons text DEFAULT '',
             accordion_data longtext DEFAULT NULL,
+            page_blocks longtext DEFAULT NULL,
             shipping_cost decimal(10,2) DEFAULT 0,
             shipping_provider varchar(50) DEFAULT '',
             shipping_price_id varchar(255) DEFAULT '',
@@ -1090,6 +1100,7 @@ class Database {
             category_id INT NOT NULL,
             position INT NOT NULL,
             position_mobile INT NOT NULL DEFAULT 6,
+            style VARCHAR(20) DEFAULT 'wide',
             title TEXT NOT NULL,
             content TEXT NOT NULL,
             image_url TEXT,
@@ -1249,6 +1260,7 @@ class Database {
                     'button_icon' => '',
                     'payment_icons' => '',
                     'accordion_data' => '',
+                    'page_blocks' => '',
                     'shipping_cost' => 0,
                     'shipping_provider' => '',
                     'shipping_price_id' => '',
@@ -1281,6 +1293,7 @@ class Database {
                 'front_text_color'      => '#4a674a',
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
+                'product_padding'       => '1',
                 'login_bg_image'         => '',
                 'footer_text' => '',
                 'custom_css' => ''
@@ -1526,6 +1539,16 @@ class Database {
         $sql = "SELECT *, stripe_subscription_id AS subscription_id FROM $table WHERE customer_email = %s ORDER BY created_at";
         return $wpdb->get_results($wpdb->prepare($sql, $email));
     }
+    /**
+     * Get the Stripe customer ID for a WordPress user.
+     *
+     * @param int $user_id User ID
+     * @return string Customer ID or empty string if none found
+     */
+    public static function get_stripe_customer_id_for_user($user_id) {
+        return get_user_meta($user_id, 'stripe_customer_id', true);
+    }
+
 
     /**
      * Retrieve all product categories sorted hierarchically.

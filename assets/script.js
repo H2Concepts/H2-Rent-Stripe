@@ -913,6 +913,7 @@ jQuery(document).ready(function($) {
         '0',
         10
     );
+    const daysSetting = parseInt(popupData.days || '7', 10);
 
     function showPopup() {
         if (exitShown) return;
@@ -924,20 +925,33 @@ jQuery(document).ready(function($) {
     function hidePopup() {
         popup.hide();
         $('body').removeClass('produkt-popup-open');
-        const days = parseInt(popupData.days || '7', 10);
-        const expire = Date.now() + days * 86400000;
-        localStorage.setItem('produkt_exit_hide_until', expire.toString());
+        if (daysSetting > 0) {
+            const expire = Date.now() + daysSetting * 86400000;
+            localStorage.setItem('produkt_exit_hide_until', expire.toString());
+            exitShown = true;
+        } else {
+            localStorage.removeItem('produkt_exit_hide_until');
+            exitShown = false;
+        }
         localStorage.removeItem(legacyExitKey);
     }
 
-    if (popup.length && popupData.enabled && popupData.title && Date.now() > hideUntil) {
+    if (popup.length && popupData.enabled && popupData.title && (daysSetting === 0 || Date.now() > hideUntil)) {
         $('#produkt-exit-title').text(popupData.title);
         $('#produkt-exit-message').html(popupData.content);
+        let showSend = false;
         if (popupData.options && popupData.options.length) {
             popupData.options.forEach(opt => {
                 $('#produkt-exit-select').append(`<option value="${opt}">${opt}</option>`);
             });
             $('#produkt-exit-select-wrapper').show();
+            showSend = true;
+        }
+        if (popupData.email) {
+            $('#produkt-exit-email-wrapper').show();
+            showSend = true;
+        }
+        if (showSend) {
             $('#produkt-exit-send').show();
         }
 
@@ -981,9 +995,11 @@ jQuery(document).ready(function($) {
 
         $('#produkt-exit-send').on('click', function(){
             const opt = $('#produkt-exit-select').val() || '';
+            const emailVal = $('#produkt-exit-email').val() || '';
             $.post(produkt_ajax.ajax_url, {
                 action: 'exit_intent_feedback',
                 option: opt,
+                user_email: emailVal,
                 variant_id: selectedVariant || '',
                 extra_ids: selectedExtras.join(','),
                 duration_id: selectedDuration || '',

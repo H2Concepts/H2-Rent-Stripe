@@ -239,7 +239,11 @@ class Admin {
         $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
         $filter_button_color = $branding['filter_button_color'] ?? '#5f7f5f';
         $custom_css = $branding['custom_css'] ?? '';
+        $product_padding = $branding['product_padding'] ?? '1';
         $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};}";
+        if ($product_padding !== '1') {
+            $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
+        }
         if (!empty($custom_css)) {
             $inline_css .= "\n" . $custom_css;
         }
@@ -282,6 +286,7 @@ class Admin {
         }
         $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
         $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
+        $popup_email   = isset($popup_settings['email_enabled']) ? intval($popup_settings['email_enabled']) : 0;
 
         if ($load_script) {
             wp_localize_script('produkt-script', 'produkt_ajax', [
@@ -295,6 +300,7 @@ class Admin {
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,
+                    'email'   => $popup_email,
                     'title'   => $popup_settings['title'] ?? '',
                     'content' => wpautop($popup_settings['content'] ?? ''),
                     'options' => $options,
@@ -469,6 +475,21 @@ class Admin {
             }
             $accordion_data = json_encode($acc_data);
 
+            $block_titles = isset($_POST['page_block_titles']) ? array_map('sanitize_text_field', (array) $_POST['page_block_titles']) : array();
+            $block_texts  = isset($_POST['page_block_texts'])  ? array_map('wp_kses_post', (array) $_POST['page_block_texts'])   : array();
+            $block_images = isset($_POST['page_block_images']) ? array_map('esc_url_raw', (array) $_POST['page_block_images']) : array();
+            $block_alts   = isset($_POST['page_block_alts'])   ? array_map('sanitize_text_field', (array) $_POST['page_block_alts'])   : array();
+            $blocks = array();
+            foreach ($block_titles as $k => $t) {
+                $text  = $block_texts[$k] ?? '';
+                $img   = $block_images[$k] ?? '';
+                $alt   = $block_alts[$k] ?? '';
+                if ($t !== '' || $text !== '' || $img !== '') {
+                    $blocks[] = array('title' => $t, 'text' => $text, 'image' => $img, 'alt' => $alt);
+                }
+            }
+            $page_blocks = json_encode($blocks);
+
             $table_name = $wpdb->prefix . 'produkt_categories';
 
             // Ensure new short_description column exists to prevent SQL errors
@@ -506,6 +527,7 @@ class Admin {
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
                         'accordion_data' => $accordion_data,
+                        'page_blocks'   => $page_blocks,
                         'price_label' => $price_label,
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
@@ -520,7 +542,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -585,6 +607,7 @@ class Admin {
                         'button_icon' => $button_icon,
                         'payment_icons' => $payment_icons,
                         'accordion_data' => $accordion_data,
+                        'page_blocks'   => $page_blocks,
                         'price_label' => $price_label,
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
@@ -598,7 +621,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                     ],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d')
                 );
 
                 $produkt_id = $wpdb->insert_id;

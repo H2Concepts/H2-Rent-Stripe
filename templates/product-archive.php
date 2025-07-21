@@ -9,6 +9,7 @@ get_header();
 
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
+require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
 $categories = Database::get_all_categories(true);
 if (!is_array($categories)) {
@@ -75,43 +76,6 @@ $blocks_by_position_mobile  = [];
 foreach ($content_blocks as $b) {
     $blocks_by_position_desktop[$b->position][] = $b;
     $blocks_by_position_mobile[$b->position_mobile][] = $b;
-}
-
-if (!function_exists('get_lowest_stripe_price_by_category')) {
-    function get_lowest_stripe_price_by_category($category_id) {
-        global $wpdb;
-
-        $variant_ids  = $wpdb->get_col($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
-            $category_id
-        ));
-        $duration_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
-            $category_id
-        ));
-
-        $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
-
-        // Zähle alle gültigen Preis-Kombinationen (für Anzeige von "ab")
-        $price_count = 0;
-        if (!empty($variant_ids) && !empty($duration_ids)) {
-            $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
-            $placeholders_duration = implode(',', array_fill(0, count($duration_ids), '%d'));
-            $count_query = $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_duration_prices
-                 WHERE variant_id IN ($placeholders_variant)
-                   AND duration_id IN ($placeholders_duration)",
-                array_merge($variant_ids, $duration_ids)
-            );
-            $price_count = (int) $wpdb->get_var($count_query);
-        }
-
-        return [
-            'amount'     => $price_data['amount'] ?? null,
-            'price_id'   => $price_data['price_id'] ?? null,
-            'count'      => $price_count
-        ];
-    }
 }
 
 ?>
@@ -203,7 +167,7 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
             <div class="shop-product-grid">
         <?php $produkt_index = 0; foreach (($categories ?? []) as $cat): $produkt_index++; ?>
         <?php $url = home_url('/shop/produkt/' . sanitize_title($cat->product_title)); ?>
-        <?php $price_data = get_lowest_stripe_price_by_category($cat->id); ?>
+        <?php $price_data = pv_get_lowest_stripe_price_by_category($cat->id); ?>
         <div class="shop-product-item">
             <a href="<?php echo esc_url($url); ?>">
                 <div class="shop-product-image">
@@ -225,63 +189,94 @@ if (!function_exists('get_lowest_stripe_price_by_category')) {
                         </div>
                     <?php endif; ?>
                     <div class="shop-product-price">
-                        <?php if ($price_data && isset($price_data['amount'])): ?>
-                            <?php if ($price_data['count'] > 1): ?>
-                                ab <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php else: ?>
-                                <?php echo esc_html(number_format((float)$price_data['amount'], 2, ',', '.')); ?>€
-                            <?php endif; ?>
-                        <?php else: ?>
-                            Preis auf Anfrage
-                        <?php endif; ?>
+                        <?php echo esc_html(pv_format_price_label($price_data)); ?>
                     </div>
                 </div>
             </a>
         </div>
         <?php
             $next_index = $produkt_index + 1;
+            if (!isset($blocks_by_position_desktop[$next_index]) && !isset($blocks_by_position_mobile[$next_index])) {
+                continue;
+            }
             if (isset($blocks_by_position_desktop[$next_index])) {
                 foreach ($blocks_by_position_desktop[$next_index] as $block) {
-                    ?>
-                    <div class="content-block desktop-only"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
-                        <div class="content-block-text">
-                            <?php if (!empty($block->badge_text)): ?>
-                                <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
-                            <?php endif; ?>
-                            <h3><?php echo esc_html($block->title); ?></h3>
-                            <div class="content-block-description">
-                                <?php echo wpautop($block->content); ?>
+                    if (($block->style ?? 'wide') === 'compact') {
+                        ?>
+                        <div class="shop-product-item desktop-only content-block-compact">
+                            <a href="<?php echo esc_url($block->button_url); ?>">
+                                <div class="shop-product-image">
+                                    <?php if (!empty($block->image_url)): ?>
+                                        <img src="<?php echo esc_url($block->image_url); ?>" alt="<?php echo esc_attr($block->title); ?>">
+                                    <?php endif; ?>
+                                    <?php if (!empty($block->badge_text)): ?>
+                                        <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <h3 class="shop-product-title"><?php echo esc_html($block->title); ?></h3>
+                                <div class="shop-product-shortdesc"><?php echo wpautop($block->content); ?></div>
+                            </a>
+                        </div>
+                        <?php
+                    } else {
+                        ?>
+                        <div class="content-block desktop-only"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
+                            <div class="content-block-text">
+                                <?php if (!empty($block->badge_text)): ?>
+                                    <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
+                                <?php endif; ?>
+                                <h3><?php echo esc_html($block->title); ?></h3>
+                                <div class="content-block-description">
+                                    <?php echo wpautop($block->content); ?>
+                                </div>
+                                <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
+                                    <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
+                                <?php endif; ?>
                             </div>
-                            <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
-                                <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
-                            <?php endif; ?>
+                            <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>></div>
                         </div>
-                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
-                        </div>
-                    </div>
-                    <?php
+                        <?php
+                    }
                 }
             }
             if (isset($blocks_by_position_mobile[$next_index])) {
                 foreach ($blocks_by_position_mobile[$next_index] as $block) {
-                    ?>
-                    <div class="content-block mobile-only"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
-                        <div class="content-block-text">
-                            <?php if (!empty($block->badge_text)): ?>
-                                <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
-                            <?php endif; ?>
-                            <h3><?php echo esc_html($block->title); ?></h3>
-                            <div class="content-block-description">
-                                <?php echo wpautop($block->content); ?>
+                    if (($block->style ?? 'wide') === 'compact') {
+                        ?>
+                        <div class="shop-product-item mobile-only content-block-compact">
+                            <a href="<?php echo esc_url($block->button_url); ?>">
+                                <div class="shop-product-image">
+                                    <?php if (!empty($block->image_url)): ?>
+                                        <img src="<?php echo esc_url($block->image_url); ?>" alt="<?php echo esc_attr($block->title); ?>">
+                                    <?php endif; ?>
+                                    <?php if (!empty($block->badge_text)): ?>
+                                        <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
+                                    <?php endif; ?>
+                                </div>
+                                <h3 class="shop-product-title"><?php echo esc_html($block->title); ?></h3>
+                                <div class="shop-product-shortdesc"><?php echo wpautop($block->content); ?></div>
+                            </a>
+                        </div>
+                        <?php
+                    } else {
+                        ?>
+                        <div class="content-block mobile-only"<?php if (!empty($block->background_color)): ?> style="background-color: <?php echo esc_attr($block->background_color); ?>"<?php endif; ?>>
+                            <div class="content-block-text">
+                                <?php if (!empty($block->badge_text)): ?>
+                                    <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
+                                <?php endif; ?>
+                                <h3><?php echo esc_html($block->title); ?></h3>
+                                <div class="content-block-description">
+                                    <?php echo wpautop($block->content); ?>
+                                </div>
+                                <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
+                                    <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
+                                <?php endif; ?>
                             </div>
-                            <?php if (!empty($block->button_text) && !empty($block->button_url)): ?>
-                                <a class="content-block-button" href="<?php echo esc_url($block->button_url); ?>"><?php echo esc_html($block->button_text); ?></a>
-                            <?php endif; ?>
+                            <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>></div>
                         </div>
-                        <div class="content-block-image"<?php if (!empty($block->image_url)): ?> style="background-image:url('<?php echo esc_url($block->image_url); ?>')"<?php endif; ?>>
-                        </div>
-                    </div>
-                    <?php
+                        <?php
+                    }
                 }
             }
         ?>

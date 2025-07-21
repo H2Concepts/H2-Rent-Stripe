@@ -14,6 +14,7 @@ if (isset($_POST['save_block'])) {
     \ProduktVerleih\Admin::verify_admin_action();
     $data = [
         'category_id' => $selected_category,
+        'style'        => sanitize_text_field($_POST['style']),
         'position'     => intval($_POST['position']),
         'position_mobile' => intval($_POST['position_mobile']),
         'title'        => sanitize_text_field($_POST['title']),
@@ -67,6 +68,15 @@ $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
             <input type="hidden" name="id" value="<?php echo esc_attr($block->id ?? ''); ?>">
             <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
             <table class="form-table">
+                <tr>
+                    <th><label>Layout</label></th>
+                    <td>
+                        <select name="style">
+                            <option value="compact" <?php selected($block->style ?? 'wide', 'compact'); ?>>Kompakt</option>
+                            <option value="wide" <?php selected($block->style ?? 'wide', 'wide'); ?>>Weit</option>
+                        </select>
+                    </td>
+                </tr>
                 <tr>
                     <th><label>Position Desktop *</label></th>
                     <td><input type="number" name="position" required value="<?php echo esc_attr($block->position ?? 9); ?>"></td>
