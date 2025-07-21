@@ -32,6 +32,8 @@ class Database {
         $table_variants = $wpdb->prefix . 'produkt_variants';
         $columns_to_add = array(
             'stripe_price_id'        => 'VARCHAR(255) DEFAULT ""',
+            'stripe_price_id_sale'   => 'VARCHAR(255) DEFAULT NULL',
+            'stripe_price_id_rent'   => 'VARCHAR(255) DEFAULT NULL',
             'stripe_product_id'      => 'VARCHAR(255) DEFAULT NULL',
             'mietpreis_monatlich'    => 'DECIMAL(10,2) DEFAULT 0',
             'verkaufspreis_einmalig' => 'DECIMAL(10,2) DEFAULT 0',
@@ -51,8 +53,12 @@ class Database {
             if (empty($column_exists)) {
                 if ($column === 'stripe_price_id') {
                     $after = 'name';
-                } elseif ($column === 'stripe_product_id') {
+                } elseif ($column === 'stripe_price_id_sale') {
                     $after = 'stripe_price_id';
+                } elseif ($column === 'stripe_price_id_rent') {
+                    $after = 'stripe_price_id_sale';
+                } elseif ($column === 'stripe_product_id') {
+                    $after = 'stripe_price_id_rent';
                 } elseif ($column === 'mietpreis_monatlich') {
                     $after = 'stripe_product_id';
                 } elseif ($column === 'verkaufspreis_einmalig') {
@@ -883,6 +889,8 @@ class Database {
             description text,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_price_id_sale varchar(255) DEFAULT NULL,
+            stripe_price_id_rent varchar(255) DEFAULT NULL,
             stripe_archived tinyint(1) DEFAULT 0,
             mietpreis_monatlich decimal(10,2) DEFAULT 0,
             verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
