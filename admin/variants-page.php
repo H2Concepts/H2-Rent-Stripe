@@ -24,7 +24,6 @@ foreach ($image_columns as $column) {
     if (empty($column_exists)) {
         $wpdb->query("ALTER TABLE $table_name ADD COLUMN $column TEXT AFTER base_price");
     }
-}
 
 // Ensure stripe price ID columns exist
 $price_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
@@ -155,8 +154,8 @@ if (isset($_POST['submit'])) {
                 $price_id = ($mode === 'kauf') ? $ids->stripe_price_id_sale : $ids->stripe_price_id_rent;
             }
 
-            if ($product_id) {
-                if ($mode !== 'kauf' || $verkaufspreis_einmalig > 0.01) {
+            $should_sync = $mode === 'kauf' ? ($verkaufspreis_einmalig > 0.01) : true;
+            if ($product_id && $should_sync) {
                     $existing_amount = \ProduktVerleih\StripeService::get_price_amount($price_id);
                     if (!is_wp_error($existing_amount) && $existing_amount != $base_price) {
                         $new_price = \ProduktVerleih\StripeService::create_price(
@@ -180,7 +179,8 @@ if (isset($_POST['submit'])) {
                         }
                     }
                 }
-            } elseif ($mode !== 'kauf' || $verkaufspreis_einmalig > 0.01) {
+            }
+            elseif ($should_sync) {
                 $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
                     'plugin_product_id' => $variant_id,
                     'variant_id'        => $variant_id,
@@ -238,7 +238,8 @@ if (isset($_POST['submit'])) {
         $variant_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
-            if ($mode !== 'kauf' || $verkaufspreis_einmalig > 0.01) {
+            $should_sync = $mode === 'kauf' ? ($verkaufspreis_einmalig > 0.01) : true;
+            if ($should_sync) {
                 $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
                     'plugin_product_id' => $variant_id,
                     'variant_id'        => $variant_id,
