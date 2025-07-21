@@ -4,8 +4,11 @@ if (!defined('ABSPATH')) {
 }
 
 use ProduktVerleih\StripeService;
+use ProduktVerleih\Database;
 
 global $wpdb;
+$db_updater = new Database();
+$db_updater->update_database();
 $table_name = $wpdb->prefix . 'produkt_variants';
 
 // Get all categories for dropdown
