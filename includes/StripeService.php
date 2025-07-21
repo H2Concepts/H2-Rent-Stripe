@@ -293,6 +293,28 @@ class StripeService {
     }
 
     /**
+     * Retrieve invoices for a given customer.
+     *
+     * @param string $customer_id Stripe customer ID
+     * @return array
+     */
+    public static function get_customer_invoices($customer_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return [];
+        }
+        try {
+            $invoices = \Stripe\Invoice::all([
+                'customer' => $customer_id,
+                'limit'    => 100,
+            ]);
+            return $invoices->data;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
      * Mark a subscription to cancel at the period end.
      *
      * @param string $subscription_id
