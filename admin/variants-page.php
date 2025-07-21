@@ -24,6 +24,7 @@ foreach ($image_columns as $column) {
     if (empty($column_exists)) {
         $wpdb->query("ALTER TABLE $table_name ADD COLUMN $column TEXT AFTER base_price");
     }
+}
 
 // Ensure stripe price ID columns exist
 $price_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
@@ -270,7 +271,6 @@ if (isset($_POST['submit'])) {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
     }
-}
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
