@@ -251,74 +251,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
     } else {
-        // Insert
-        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-        $name = sanitize_text_field($_POST['name'] ?? '');
-        $description = sanitize_textarea_field($_POST['description'] ?? '');
-        $mietpreis_monatlich    = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
-        $mode = sanitize_text_field($_POST['mode'] ?? 'miete');
-        $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
-        $available = isset($_POST['available']) ? 1 : 0;
-        $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
-        $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
-        $active = 1;
-        $sort_order = intval($_POST['sort_order'] ?? 0);
-        $image_data = is_array($image_data ?? null) ? $image_data : [];
+        // POST wurde empfangen und KEINE ID -> INSERT
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']) && empty($_POST['id'])) {
 
-        $variablen = [
-            'category_id' => $category_id,
-            'name' => $name,
-            'description' => $description,
-            'mietpreis_monatlich' => $mietpreis_monatlich,
-            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'base_price' => $base_price,
-            'available' => $available,
-            'availability_note' => $availability_note,
-            'delivery_time' => $delivery_time,
-            'active' => $active,
-            'sort_order' => $sort_order,
-            'mode' => $mode,
-        ];
-        error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
+            $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
+            $name = sanitize_text_field($_POST['name'] ?? '');
+            $description = sanitize_textarea_field($_POST['description'] ?? '');
+            $mietpreis_monatlich = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
+            $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+            $mode = sanitize_text_field($_POST['mode'] ?? 'miete');
+            $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
+            $available = isset($_POST['available']) ? 1 : 0;
+            $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
+            $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
+            $active = 1;
+            $sort_order = intval($_POST['sort_order'] ?? 0);
+            $image_data = [];
 
-        $insert_data = array_merge(array(
-            'category_id'            => $category_id,
-            'name'                   => $name,
-            'description'            => $description,
-            'mietpreis_monatlich'    => $mietpreis_monatlich,
-            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'base_price'             => $base_price,
-            'mode'                   => $mode,
-            'available'              => $available,
-            'availability_note'      => $availability_note,
-            'delivery_time'          => $delivery_time,
-            'active'                 => $active,
-            'sort_order'             => $sort_order
-        ), $image_data);
+            $variablen = [
+                'category_id' => $category_id,
+                'name' => $name,
+                'description' => $description,
+                'mietpreis_monatlich' => $mietpreis_monatlich,
+                'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+                'base_price' => $base_price,
+                'available' => $available,
+                'availability_note' => $availability_note,
+                'delivery_time' => $delivery_time,
+                'active' => $active,
+                'sort_order' => $sort_order,
+                'mode' => $mode
+            ];
+            error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
 
-        echo '<pre>'; print_r($_POST); echo '</pre>';
-        echo '<div class="notice notice-warning"><pre>';
-        print_r([
-            'mode' => $mode,
-            'base_price' => $base_price,
-            'verkaufspreis' => $_POST['verkaufspreis_einmalig'] ?? 'leer',
-            'mietpreis' => $_POST['mietpreis_monatlich'] ?? 'leer',
-            'stripe_product_id' => $stripe_product_id ?? 'leer',
-            'image_data' => $image_data,
-        ]);
-        echo '</pre></div>';
-        
-        $result = $wpdb->insert(
-            $table_name,
-            $insert_data,
-            array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%s', '%d', '%s', '%s', '%d', '%d'),
-                array_fill(0, 5, '%s')
-            )
-        );
+            // insert_data jetzt aufbauen
+            $insert_data = array_merge($variablen, $image_data);
 
-        $variant_id = $wpdb->insert_id;
+            // insert durchführen (nur wenn Kategorie und Name gesetzt sind)
+            if ($category_id > 0 && $name !== '') {
+                $result = $wpdb->insert($table_name, $insert_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'));
+            }
+
+            $variant_id = $wpdb->insert_id;
+        }
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
             $should_sync = $mode === 'kauf' ? ($verkaufspreis_einmalig > 0.01) : true;
