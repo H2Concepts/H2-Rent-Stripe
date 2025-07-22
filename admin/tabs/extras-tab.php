@@ -199,14 +199,15 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                     <input type="text" name="name" value="<?php echo $edit_item ? esc_attr($edit_item->name) : ''; ?>" required>
                 </div>
 
-                <div class="produkt-form-group">
-                    <label>Preis (EUR)<?php echo $modus === 'kauf' ? '' : ' *'; ?></label>
-                    <input type="number" step="0.01" name="price" value="<?php echo $edit_item ? esc_attr($edit_item->price) : ''; ?>" placeholder="0.00" <?php echo $modus === 'kauf' ? '' : 'required'; ?>>
-                </div>
                 <?php if ($modus === 'kauf'): ?>
                 <div class="produkt-form-group">
-                    <label>Einmalpreis (EUR) *</label>
+                    <label>Preis / Tag (EUR) *</label>
                     <input type="number" step="0.01" name="sale_price" value="<?php echo esc_attr($sale_price); ?>" placeholder="0.00" required>
+                </div>
+                <?php else: ?>
+                <div class="produkt-form-group">
+                    <label>Preis (EUR) *</label>
+                    <input type="number" step="0.01" name="price" value="<?php echo $edit_item ? esc_attr($edit_item->price) : ''; ?>" placeholder="0.00" required>
                 </div>
                 <?php endif; ?>
                 

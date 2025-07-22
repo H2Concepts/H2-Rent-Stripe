@@ -47,6 +47,15 @@ $extras = $wpdb->get_results($wpdb->prepare(
     $category_id
 ));
 
+// Filter extras based on Betriebsmodus
+$extras = array_values(array_filter($extras, function ($e) {
+    $modus = get_option('produkt_betriebsmodus', 'miete');
+    $pid = $modus === 'kauf'
+        ? ($e->stripe_price_id_sale ?: ($e->stripe_price_id ?? ''))
+        : ($e->stripe_price_id_rent ?: ($e->stripe_price_id ?? ''));
+    return !empty($pid);
+}));
+
 $durations = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY sort_order",
     $category_id
