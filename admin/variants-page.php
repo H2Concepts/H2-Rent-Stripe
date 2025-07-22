@@ -134,6 +134,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $sort_order = 0;
         $image_data = is_array($image_data ?? null) ? $image_data : [];
 
+        $variablen = [
+            'category_id' => $category_id,
+            'name' => $name,
+            'description' => $description,
+            'mietpreis_monatlich' => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'base_price' => $base_price,
+            'available' => $available,
+            'availability_note' => $availability_note,
+            'delivery_time' => $delivery_time,
+            'active' => $active,
+            'sort_order' => $sort_order,
+            'mode' => $mode,
+        ];
+        error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
+
         $update_data = array_merge(array(
             'category_id'            => $category_id,
             'name'                   => $name,
@@ -248,6 +264,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $sort_order = 0;
         $image_data = is_array($image_data ?? null) ? $image_data : [];
 
+        $variablen = [
+            'category_id' => $category_id,
+            'name' => $name,
+            'description' => $description,
+            'mietpreis_monatlich' => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'base_price' => $base_price,
+            'available' => $available,
+            'availability_note' => $availability_note,
+            'delivery_time' => $delivery_time,
+            'active' => $active,
+            'sort_order' => $sort_order,
+            'mode' => $mode,
+        ];
+        error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
+
         $insert_data = array_merge(array(
             'category_id'            => $category_id,
             'name'                   => $name,
@@ -264,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         ), $image_data);
 
         echo '<pre>'; print_r($_POST); echo '</pre>';
-        error_log('🛠️ Variablen beim Speichern: ' . print_r($_POST, true));
+        error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
         echo '<div class="notice notice-warning"><pre>';
         print_r([
             'mode' => $mode,
