@@ -1005,14 +1005,6 @@ function produkt_create_checkout_session() {
             $metadata['shipping_price_id'] = $shipping_price_id;
         }
 
-        $dauer_text = $metadata['dauer_name'];
-        if ($modus === 'kauf' && $days > 0) {
-            $dauer_text = $days . ' Tag' . ($days > 1 ? 'e' : '');
-            if ($start_date && $end_date) {
-                $dauer_text .= ' (' . $start_date . ' - ' . $end_date . ')';
-            }
-        }
-
         $line_items = [[
             'price'    => $price_id,
             'quantity' => $days,
@@ -1136,7 +1128,7 @@ function produkt_create_checkout_session() {
                 'produktfarbe_text'=> $metadata['produktfarbe'],
                 'gestellfarbe_text'=> $metadata['gestellfarbe'],
                 'extra_text'       => $metadata['extra'],
-                'dauer_text'       => $dauer_text,
+                'dauer_text'       => $metadata['dauer_name'],
                 'customer_name'    => '',
                 'customer_email'   => $customer_email,
                 'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
@@ -1219,14 +1211,6 @@ function produkt_create_embedded_checkout_session() {
         ];
         if ($shipping_price_id) {
             $metadata['shipping_price_id'] = $shipping_price_id;
-        }
-
-        $dauer_text = $metadata['dauer_name'];
-        if ($modus === 'kauf' && $days > 0) {
-            $dauer_text = $days . ' Tag' . ($days > 1 ? 'e' : '');
-            if ($start_date && $end_date) {
-                $dauer_text .= ' (' . $start_date . ' - ' . $end_date . ')';
-            }
         }
 
         $line_items = [[
@@ -1318,7 +1302,7 @@ function produkt_create_embedded_checkout_session() {
                 'produktfarbe_text'=> $metadata['produktfarbe'],
                 'gestellfarbe_text'=> $metadata['gestellfarbe'],
                 'extra_text'       => $metadata['extra'],
-                'dauer_text'       => $dauer_text,
+                'dauer_text'       => $metadata['dauer_name'],
                 'customer_name'    => '',
                 'customer_email'   => $customer_email,
                 'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
