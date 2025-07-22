@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+global $wpdb;
+
 $monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 $dayNames   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 
