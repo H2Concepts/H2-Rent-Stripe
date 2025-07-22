@@ -16,7 +16,15 @@
         <!-- Grunddaten -->
         <div class="produkt-form-section">
             <h4>📝 Grunddaten</h4>
-            <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
+            <?php $modus = get_option('produkt_betriebsmodus', 'miete');
+                  $sale_price = 0;
+                  if ($modus === 'kauf' && !empty($edit_item->stripe_price_id)) {
+                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id);
+                      if (!is_wp_error($p)) {
+                          $sale_price = $p;
+                      }
+                  }
+            ?>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Name *</label>
@@ -29,7 +37,7 @@
                 <?php if ($modus === 'kauf'): ?>
                 <div class="produkt-form-group">
                     <label>Einmalpreis (EUR) *</label>
-                    <input type="number" step="0.01" name="sale_price" value="<?php echo esc_attr($edit_item->price); ?>" required>
+                    <input type="number" step="0.01" name="sale_price" value="<?php echo esc_attr($sale_price); ?>" required>
                 </div>
                 <?php endif; ?>
             </div>
