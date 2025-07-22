@@ -2081,6 +2081,8 @@ body.shop-filter-open {
 }
 #booking-calendar .calendar-day.blocked {
     position: relative;
+    background: #eee;
+    color: #999;
 }
 #booking-calendar .calendar-day.blocked::after {
     content: '✖';

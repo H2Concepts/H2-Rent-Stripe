@@ -149,11 +149,12 @@ foreach ($orders as $o) {
 #produkt-admin-calendar .day-name,
 #produkt-admin-calendar .calendar-day{
     text-align:center;
-    padding:8px;
+    padding:18px;
     border-radius:4px;
-    min-height:40px;
+    min-height:60px;
     border:1px solid #ddd;
     position:relative;
+    background-color:#fff;
 }
 #produkt-admin-calendar .booked-open{
     background:#fff3cd;
