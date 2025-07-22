@@ -7,7 +7,7 @@ class Admin {
         $menu_title = $branding['plugin_name'] ?? 'Produkt';
         
         $modus    = get_option('produkt_betriebsmodus', 'miete');
-        $is_sale  = in_array($modus, ['kauf', 'verkauf'], true);
+        $is_sale  = ($modus === 'kauf');
 
         add_menu_page(
             $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
@@ -301,7 +301,7 @@ class Admin {
                 'publishable_key' => StripeService::get_publishable_key(),
                 'checkout_url' => Plugin::get_checkout_page_url(),
                 'price_period' => $category->price_period ?? 'month',
-                'price_label' => $category->price_label ?? ($modus === 'verkauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
+                'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
                 'popup_settings' => [

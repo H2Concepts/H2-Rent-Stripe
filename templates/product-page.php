@@ -138,7 +138,7 @@ $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
 $modus = get_option('produkt_betriebsmodus', 'miete');
-$price_label = $ui['price_label'] ?? ($modus === 'verkauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
+$price_label = $ui['price_label'] ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
 $shipping_label = 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';
 $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
@@ -263,7 +263,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
                 <?php endif; ?>
 
-                <?php if ($modus === 'verkauf'): ?>
+                <?php if ($modus === 'kauf'): ?>
                 <div class="produkt-section" id="booking-section">
                     <h3>Buchungszeitraum</h3>
                     <div class="produkt-booking-range">
@@ -301,7 +301,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <p><?php echo esc_html($variant->description); ?></p>
                                 <?php
                                     $display_price = 0;
-                                    if ($modus === 'verkauf') {
+                                    if ($modus === 'kauf') {
                                         $display_price = floatval($variant->verkaufspreis_einmalig);
                                     } else {
                                         if (!empty($variant->stripe_price_id)) {
@@ -312,7 +312,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                         }
                                     }
                                 ?>
-                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'verkauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
+                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'kauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
                                         <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>

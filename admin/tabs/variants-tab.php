@@ -114,7 +114,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                     <input type="text" name="name" value="<?php echo $edit_item ? esc_attr($edit_item->name) : ''; ?>" required>
                 </div>
                 
-                <?php if ($modus !== 'kauf' && $modus !== 'verkauf'): ?>
+                <?php if ($modus !== 'kauf'): ?>
                 <div class="produkt-form-group">
                     <label>Monatlicher Mietpreis *</label>
                     <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo $edit_item ? esc_attr($edit_item->mietpreis_monatlich) : ''; ?>" required>
@@ -123,7 +123,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                     <input type="hidden" name="mietpreis_monatlich" value="0">
                 <?php endif; ?>
                 <div class="produkt-form-group">
-                    <label><?php echo ($modus === 'kauf' || $modus === 'verkauf') ? 'Preis pro Tag' : 'Einmaliger Verkaufspreis'; ?></label>
+                    <label><?php echo ($modus === 'kauf') ? 'Preis pro Tag' : 'Einmaliger Verkaufspreis'; ?></label>
                     <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo $edit_item ? esc_attr($edit_item->verkaufspreis_einmalig) : ''; ?>">
                 </div>
                 

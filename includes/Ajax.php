@@ -50,11 +50,11 @@ class Ajax {
         
         
         
-        if ($variant && ($duration || $modus === 'verkauf')) {
+        if ($variant && ($duration || $modus === 'kauf')) {
             $variant_price = 0;
             $used_price_id  = '';
 
-            if ($modus === 'verkauf') {
+            if ($modus === 'kauf') {
                 $variant_price = floatval($variant->verkaufspreis_einmalig);
                 $used_price_id = $variant->stripe_price_id;
             } else {
@@ -109,7 +109,7 @@ class Ajax {
             // Base price for the variant
             $base_price = $variant_price;
 
-            if ($modus === 'verkauf' || $modus === 'kauf') {
+            if ($modus === 'kauf') {
                 $final_price = ($base_price + $extras_price) * $days;
                 $duration_price = $base_price;
                 $original_price = null;
@@ -917,7 +917,7 @@ function produkt_create_subscription() {
         ];
 
         $mode = get_option('produkt_betriebsmodus', 'miete');
-        if ($mode === 'verkauf') {
+        if ($mode === 'kauf') {
             $session = StripeService::create_checkout_session_for_sale([
                 'price_id'       => $price_id,
                 'quantity'       => $days,
