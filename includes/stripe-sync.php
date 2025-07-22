@@ -107,14 +107,27 @@ function produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $stripe_p
         $mode = get_option('produkt_betriebsmodus', 'miete');
     }
 
-    if ($verkaufspreis_einmalig > 0 && $mode === 'kauf' && $stripe_product_id) {
+    if ($verkaufspreis_einmalig > 0 && $stripe_product_id) {
         try {
-            $stripe_price = \Stripe\Price::create([
-                'unit_amount' => intval($verkaufspreis_einmalig * 100),
-                'currency'    => 'eur',
-                'product'     => $stripe_product_id,
-                'nickname'    => 'Einmalverkauf',
-            ]);
+            $modus = $mode;
+            if ($modus === 'kauf' || $modus === 'verkauf') {
+                $stripe_price = \Stripe\Price::create([
+                    'unit_amount' => intval($verkaufspreis_einmalig * 100),
+                    'currency'    => 'eur',
+                    'product'     => $stripe_product_id,
+                    'nickname'    => 'Einmalverkauf',
+                ]);
+            } else {
+                $stripe_price = \Stripe\Price::create([
+                    'unit_amount' => intval($verkaufspreis_einmalig * 100),
+                    'currency'    => 'eur',
+                    'product'     => $stripe_product_id,
+                    'recurring'   => [
+                        'interval' => 'month',
+                    ],
+                    'nickname'    => 'Monatspreis',
+                ]);
+            }
 
             global $wpdb;
             $wpdb->update(
