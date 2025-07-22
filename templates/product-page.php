@@ -263,16 +263,6 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
                 <?php endif; ?>
 
-                <?php if ($modus === 'kauf'): ?>
-                <div class="produkt-section" id="booking-section">
-                    <h3>Buchungszeitraum</h3>
-                    <div class="produkt-booking-range">
-                        <input type="date" id="produkt-date-start">
-                        <span class="produkt-date-separator">bis</span>
-                        <input type="date" id="produkt-date-end">
-                    </div>
-                </div>
-                <?php endif; ?>
             </div>
         </div>
 
@@ -326,6 +316,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         </div>
                         <?php endforeach; ?>
                     </div>
+                </div>
+                <?php endif; ?>
+
+                <?php if ($modus === 'kauf'): ?>
+                <div class="produkt-section" id="booking-section">
+                    <h3>Mietzeitraum</h3>
+                    <div class="produkt-booking-calendar" id="booking-calendar"></div>
+                    <div id="booking-info"></div>
                 </div>
                 <?php endif; ?>
 

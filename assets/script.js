@@ -19,6 +19,7 @@ jQuery(document).ready(function($) {
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
+    let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     // Get category ID from container
     const container = $('.produkt-container');
@@ -34,6 +35,10 @@ jQuery(document).ready(function($) {
         }
     }
 
+    if (produkt_ajax.betriebsmodus === 'kauf') {
+        renderCalendar(calendarMonth);
+    }
+
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
 
@@ -47,6 +52,8 @@ jQuery(document).ready(function($) {
         startDate = null;
         endDate = null;
         selectedDays = 0;
+        renderCalendar(calendarMonth);
+        updateSelectedDays();
 
         $('.produkt-option.selected').removeClass('selected');
         $('#selected-product-color-name').text('');
@@ -68,10 +75,6 @@ jQuery(document).ready(function($) {
         }
     });
 
-    $('#produkt-date-start, #produkt-date-end').on('change', function() {
-        updateSelectedDays();
-        updatePriceAndButton();
-    });
 
     // Handle option selection
     $('.produkt-option').on('click', function() {
@@ -863,11 +866,72 @@ jQuery(document).ready(function($) {
         }
     }
 
+    function renderCalendar(date) {
+        const cal = $('#booking-calendar');
+        if (!cal.length) return;
+
+        const month = date.getMonth();
+        const year = date.getFullYear();
+        calendarMonth = new Date(year, month, 1);
+
+        const monthNames = ['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+        const dayNames = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+        let html = '<div class="calendar-header">' +
+            '<button class="prev-month">&lt;</button>' +
+            '<span class="calendar-title">' + monthNames[month] + ' ' + year + '</span>' +
+            '<button class="next-month">&gt;</button>' +
+            '</div>';
+
+        html += '<div class="calendar-grid">';
+        dayNames.forEach(function(d){ html += '<div class="day-name">' + d + '</div>'; });
+
+        const firstDay = new Date(year, month, 1);
+        const startIndex = (firstDay.getDay() + 6) % 7;
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        for(let i=0;i<startIndex;i++) { html += '<div class="empty"></div>'; }
+        for(let d=1; d<=lastDate; d++) {
+            const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            const cellDate = new Date(year, month, d);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let cls = 'calendar-day';
+            if (cellDate < today) cls += ' disabled';
+            if (startDate === dateStr) cls += ' start';
+            if (endDate === dateStr) cls += ' end';
+            if (startDate && endDate && cellDate > new Date(startDate) && cellDate < new Date(endDate)) cls += ' in-range';
+            html += '<div class="' + cls + '" data-date="' + dateStr + '">' + d + '</div>';
+        }
+        html += '</div>';
+        cal.html(html);
+    }
+
+    $(document).on('click', '#booking-calendar .prev-month', function(){
+        calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+        renderCalendar(calendarMonth);
+    });
+    $(document).on('click', '#booking-calendar .next-month', function(){
+        calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+        renderCalendar(calendarMonth);
+    });
+    $(document).on('click', '#booking-calendar .calendar-day:not(.disabled)', function(){
+        const dateStr = $(this).data('date');
+        if (!startDate || (startDate && endDate)) {
+            startDate = dateStr;
+            endDate = null;
+        } else if (new Date(dateStr) < new Date(startDate)) {
+            startDate = dateStr;
+            endDate = null;
+        } else {
+            endDate = dateStr;
+        }
+        renderCalendar(calendarMonth);
+        updateSelectedDays();
+        updatePriceAndButton();
+    });
+
     function updateSelectedDays() {
-        const start = $('#produkt-date-start').val();
-        const end = $('#produkt-date-end').val();
-        startDate = start || null;
-        endDate = end || null;
         selectedDays = 0;
         if (startDate && endDate) {
             const s = new Date(startDate);
@@ -880,6 +944,11 @@ jQuery(document).ready(function($) {
         $('#produkt-field-start-date').val(startDate || '');
         $('#produkt-field-end-date').val(endDate || '');
         $('#produkt-field-days').val(selectedDays);
+        if (selectedDays > 0) {
+            $('#booking-info').text('Mietzeitraum ' + selectedDays + ' Tag' + (selectedDays > 1 ? 'e' : ''));
+        } else {
+            $('#booking-info').text('');
+        }
     }
 
     function showGalleryNotification() {

@@ -2037,4 +2037,62 @@ body.shop-filter-open {
     }
 }
 
+/* Booking Calendar */
+#booking-calendar {
+    max-width: 340px;
+    user-select: none;
+}
+
+#booking-calendar .calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+#booking-calendar .calendar-header button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+#booking-calendar .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+#booking-calendar .day-name {
+    text-align: center;
+    font-weight: 600;
+}
+
+#booking-calendar .calendar-day {
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#booking-calendar .calendar-day.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+#booking-calendar .calendar-day.start,
+#booking-calendar .calendar-day.end {
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
+}
+
+#booking-calendar .calendar-day.in-range {
+    background: rgba(95, 127, 95, 0.15);
+}
+
+#booking-info {
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
 
