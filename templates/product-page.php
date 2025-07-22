@@ -52,6 +52,9 @@ $durations = $wpdb->get_results($wpdb->prepare(
     $category_id
 ));
 
+// Get blocked days for booking calendar
+$blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
+
 // Determine lowest price across all variants and durations
 $variant_ids  = array_map(fn($v) => (int) $v->id, $variants);
 $duration_ids = array_map(fn($d) => (int) $d->id, $durations);
@@ -707,4 +710,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         <button id="produkt-exit-send" style="display:none;">Senden</button>
     </div>
 </div>
+<script>
+if (typeof produkt_ajax !== 'undefined') {
+    produkt_ajax.blocked_days = <?php echo json_encode($blocked_days); ?>;
+}
+</script>
 <?php get_footer(); ?>

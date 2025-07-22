@@ -26,6 +26,7 @@ $start_index   = (int)date('N', $first_day_ts) - 1; // 0=Mo
 // collect booking days and orders per day
 $booked        = [];
 $orders_by_day = [];
+$blocked_days  = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
 $orders = $wpdb->get_results(
     "SELECT o.*, c.name as category_name,
             COALESCE(v.name, o.produkt_name) as variant_name,
@@ -81,8 +82,19 @@ foreach ($orders as $o) {
         <div class="produkt-admin-title">
             <h1>Kalender</h1>
             <p>Übersicht der Verkaufstage</p>
+</div>
+</div>
+
+<div id="day-action-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align:center;">
+        <button type="button" class="modal-close" onclick="closeDayAction()">&times;</button>
+        <h3 style="margin-top:0;">Aktion f&uuml;r <span id="action-modal-date"></span></h3>
+        <div style="margin-top:15px;">
+            <button type="button" id="block-day-btn" class="button button-primary"></button>
+            <button type="button" id="view-orders-btn" class="button">Buchungen ansehen</button>
         </div>
     </div>
+</div>
 
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
         <a class="button" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>">&laquo; <?php echo $monthNames[$prev_month-1]; ?></a>
@@ -113,8 +125,12 @@ foreach ($orders as $o) {
                 }
             }
         ?>
-            <div class="calendar-day <?php echo $cls; ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>>
+            <?php $blocked = in_array($date, $blocked_days, true); ?>
+            <div class="calendar-day <?php echo $cls . ($blocked ? ' day-blocked' : ''); ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>>
                 <?php echo $d; ?>
+                <?php if ($blocked): ?>
+                    <span class="blocked-marker">✖</span>
+                <?php endif; ?>
                 <?php if ($count > 1): ?>
                     <span class="booking-count"><?php echo $count; ?></span>
                 <?php endif; ?>
@@ -148,6 +164,17 @@ foreach ($orders as $o) {
 #produkt-admin-calendar .booked-multiple{
     background:#f8d7da;
 }
+#produkt-admin-calendar .day-blocked{
+    background:#eee;
+    color:#999;
+}
+#produkt-admin-calendar .blocked-marker{
+    position:absolute;
+    top:2px;
+    right:2px;
+    font-size:12px;
+    color:#dc3545;
+}
 #produkt-admin-calendar .booking-count{
     position:absolute;
     right:2px;
@@ -157,7 +184,7 @@ foreach ($orders as $o) {
     color:#fff;
     border-radius:50%;
     padding:1px 4px;
-    min-width:16px;
+    min-width:10px;
     line-height:1.2;
 }
 </style>
@@ -172,28 +199,62 @@ foreach ($orders as $o) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
-    const ordersByDay = <?php echo json_encode($orders_by_day); ?>;
-    const orderLogs  = <?php echo json_encode($order_logs); ?>;
-    const modal = document.getElementById('order-details-modal');
-    const modalDate = document.getElementById('modal-date');
-    const content = document.getElementById('order-details-content');
+    const ordersByDay   = <?php echo json_encode($orders_by_day); ?>;
+    const orderLogs     = <?php echo json_encode($order_logs); ?>;
+    const blockedDays   = <?php echo json_encode(array_fill_keys($blocked_days, true)); ?>;
+    const ajaxUrl       = ajaxurl;
+    const nonce         = '<?php echo wp_create_nonce('produkt_nonce'); ?>';
+
+    const modal         = document.getElementById('order-details-modal');
+    const modalDate     = document.getElementById('modal-date');
+    const content       = document.getElementById('order-details-content');
+
+    const actionModal   = document.getElementById('day-action-modal');
+    const actionDate    = document.getElementById('action-modal-date');
+    const blockBtn      = document.getElementById('block-day-btn');
+    const viewBtn       = document.getElementById('view-orders-btn');
 
     document.querySelectorAll('#produkt-admin-calendar .calendar-day').forEach(function(day){
         day.addEventListener('click', function(){
             const date = this.dataset.date;
-            if (!date || !ordersByDay[date]) return;
-            modalDate.textContent = date;
-            let html = '';
-            ordersByDay[date].forEach(function(o){
-                html += buildOrderDetails(o, orderLogs[o.id] || []);
-            });
-            content.innerHTML = html;
-            modal.style.display = 'block';
+            if (!date) return;
+            actionModal.dataset.date = date;
+            actionDate.textContent = date;
+            const blocked = !!blockedDays[date];
+            blockBtn.textContent = blocked ? 'Tag freigeben' : 'Tag sperren';
+            blockBtn.dataset.action = blocked ? 'unblock' : 'block';
+            viewBtn.style.display = ordersByDay[date] ? 'inline-block' : 'none';
+            actionModal.style.display = 'block';
         });
     });
 
-    modal.addEventListener('click', function(e){
-        if (e.target === modal) modal.style.display = 'none';
+    blockBtn.addEventListener('click', function(){
+        const action = this.dataset.action;
+        const date = actionModal.dataset.date;
+        const data = new URLSearchParams();
+        data.append('action', action === 'block' ? 'produkt_block_day' : 'produkt_unblock_day');
+        data.append('nonce', nonce);
+        data.append('date', date);
+        fetch(ajaxUrl, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:data.toString()})
+            .then(r => r.json())
+            .then(res => { if(res.success){ location.reload(); } else { alert(res.data || 'Fehler'); } });
+    });
+
+    viewBtn.addEventListener('click', function(){
+        const date = actionModal.dataset.date;
+        actionModal.style.display = 'none';
+        if (!ordersByDay[date]) return;
+        modalDate.textContent = date;
+        let html = '';
+        ordersByDay[date].forEach(function(o){
+            html += buildOrderDetails(o, orderLogs[o.id] || []);
+        });
+        content.innerHTML = html;
+        modal.style.display = 'block';
+    });
+
+    [modal, actionModal].forEach(function(m){
+        m.addEventListener('click', function(e){ if(e.target === m) m.style.display = 'none'; });
     });
 });
 
@@ -248,5 +309,9 @@ function buildOrderDetails(order, logs) {
 
 function closeOrderDetails(){
     document.getElementById('order-details-modal').style.display = 'none';
+}
+
+function closeDayAction(){
+    document.getElementById('day-action-modal').style.display = 'none';
 }
 </script>

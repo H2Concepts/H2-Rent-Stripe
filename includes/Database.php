@@ -759,6 +759,23 @@ class Database {
             }
         }
 
+        // Create blocked days table if it doesn't exist
+        $table_blocked = $wpdb->prefix . 'produkt_blocked_days';
+        $blocked_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_blocked'");
+        if (!$blocked_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_blocked (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                day date NOT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY day (day)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create filter groups table
         $table_filter_groups = $wpdb->prefix . 'produkt_filter_groups';
         $groups_exists      = $wpdb->get_var("SHOW TABLES LIKE '$table_filter_groups'");
@@ -1161,6 +1178,17 @@ class Database {
             PRIMARY KEY (id)
         ) $charset_collate;";
         dbDelta($sql_shipping);
+
+        // Blocked days table
+        $table_blocked = $wpdb->prefix . 'produkt_blocked_days';
+        $sql_blocked    = "CREATE TABLE $table_blocked (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            day date NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY day (day)
+        ) $charset_collate;";
+        dbDelta($sql_blocked);
 
         // Filter groups table
         $table_filter_groups = $wpdb->prefix . 'produkt_filter_groups';

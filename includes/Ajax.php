@@ -1382,3 +1382,30 @@ function produkt_get_checkout_session_status() {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
+
+add_action('wp_ajax_produkt_block_day', __NAMESPACE__ . '\\produkt_block_day');
+add_action('wp_ajax_produkt_unblock_day', __NAMESPACE__ . '\\produkt_unblock_day');
+
+function produkt_block_day() {
+    check_ajax_referer('produkt_nonce', 'nonce');
+    $date = sanitize_text_field($_POST['date'] ?? '');
+    if (!$date) {
+        wp_send_json_error('no date');
+    }
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_blocked_days';
+    $wpdb->replace($table, ['day' => $date], ['%s']);
+    wp_send_json_success();
+}
+
+function produkt_unblock_day() {
+    check_ajax_referer('produkt_nonce', 'nonce');
+    $date = sanitize_text_field($_POST['date'] ?? '');
+    if (!$date) {
+        wp_send_json_error('no date');
+    }
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_blocked_days';
+    $wpdb->delete($table, ['day' => $date], ['%s']);
+    wp_send_json_success();
+}

@@ -2079,6 +2079,17 @@ body.shop-filter-open {
     color: #ccc;
     cursor: not-allowed;
 }
+#booking-calendar .calendar-day.blocked {
+    position: relative;
+}
+#booking-calendar .calendar-day.blocked::after {
+    content: '✖';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 10px;
+    color: #dc3545;
+}
 
 #booking-calendar .calendar-day.start,
 #booking-calendar .calendar-day.end {

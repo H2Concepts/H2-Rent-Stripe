@@ -898,6 +898,7 @@ jQuery(document).ready(function($) {
             today.setHours(0,0,0,0);
             let cls = 'calendar-day';
             if (cellDate < today) cls += ' disabled';
+            if (Array.isArray(produkt_ajax.blocked_days) && produkt_ajax.blocked_days.includes(dateStr)) cls += ' disabled blocked';
             if (startDate === dateStr) cls += ' start';
             if (endDate === dateStr) cls += ' end';
             if (startDate && endDate && cellDate > new Date(startDate) && cellDate < new Date(endDate)) cls += ' in-range';
