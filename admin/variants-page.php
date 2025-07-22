@@ -99,6 +99,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
     error_log(print_r($_POST, true));
 
     \ProduktVerleih\Admin::verify_admin_action();
+
+    $result      = false;
+    $variant_id  = 0;
+    $name        = '';
+    $base_price  = 0;
+    $category_id = 0;
+
     $name = sanitize_text_field($_POST['name'] ?? '');
     $stripe_product_id = '';
     if (!empty($_POST['id'])) {
