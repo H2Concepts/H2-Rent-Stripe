@@ -101,6 +101,7 @@ foreach ($orders as $o) {
             $date  = sprintf('%04d-%02d-%02d', $year, $month, $d);
             $cls   = '';
             $title = '';
+            $count = 0;
             if (isset($orders_by_day[$date])) {
                 $count = count($orders_by_day[$date]);
                 if ($count === 1) {
@@ -112,7 +113,12 @@ foreach ($orders as $o) {
                 }
             }
         ?>
-            <div class="calendar-day <?php echo $cls; ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>><?php echo $d; ?></div>
+            <div class="calendar-day <?php echo $cls; ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>>
+                <?php echo $d; ?>
+                <?php if ($count > 1): ?>
+                    <span class="booking-count"><?php echo $count; ?></span>
+                <?php endif; ?>
+            </div>
         <?php endfor; ?>
     </div>
 </div>
@@ -131,6 +137,7 @@ foreach ($orders as $o) {
     border-radius:4px;
     min-height:40px;
     border:1px solid #ddd;
+    position:relative;
 }
 #produkt-admin-calendar .booked-open{
     background:#fff3cd;
@@ -140,6 +147,18 @@ foreach ($orders as $o) {
 }
 #produkt-admin-calendar .booked-multiple{
     background:#f8d7da;
+}
+#produkt-admin-calendar .booking-count{
+    position:absolute;
+    right:2px;
+    bottom:2px;
+    font-size:12px;
+    background:#dc3545;
+    color:#fff;
+    border-radius:50%;
+    padding:1px 4px;
+    min-width:16px;
+    line-height:1.2;
 }
 </style>
 
