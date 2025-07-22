@@ -534,7 +534,7 @@ class StripeService {
      * @param string $related_product_name Related product name
      * @return array|\WP_Error
      */
-    public static function create_extra_price($name, $price, $related_product_name = '') {
+    public static function create_extra_price($name, $price, $related_product_name = '', $mode = null) {
         $init = self::init();
         if (is_wp_error($init)) {
             return $init;
@@ -560,7 +560,9 @@ class StripeService {
                 ]);
             }
 
-            $mode       = get_option('produkt_betriebsmodus', 'miete');
+            if ($mode === null) {
+                $mode = get_option('produkt_betriebsmodus', 'miete');
+            }
             $price_args = [
                 'unit_amount' => intval(round($price * 100)),
                 'currency'    => 'eur',

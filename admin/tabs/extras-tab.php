@@ -66,7 +66,7 @@ if (isset($_POST['submit_extra'])) {
                     $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
                 }
             } else {
-                $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name);
+                $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name, $mode);
                 if (!is_wp_error($res)) {
                     $wpdb->update($table_name, [
                         'stripe_product_id' => $res['product_id'],
@@ -93,7 +93,7 @@ if (isset($_POST['submit_extra'])) {
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
             $mode         = get_option('produkt_betriebsmodus', 'miete');
-            $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name);
+            $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name, $mode);
             if (!is_wp_error($res)) {
                 $wpdb->update($table_name, [
                     'stripe_product_id' => $res['product_id'],
