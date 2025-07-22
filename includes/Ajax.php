@@ -88,8 +88,9 @@ class Ajax {
 
             $extras_price = 0;
             foreach ($extras as $ex) {
-                if (!empty($ex->stripe_price_id)) {
-                    $pr = StripeService::get_price_amount($ex->stripe_price_id);
+                $pid = ($modus === 'kauf') ? ($ex->stripe_price_id_sale ?? '') : ($ex->stripe_price_id_rent ?? $ex->stripe_price_id);
+                if (!empty($pid)) {
+                    $pr = StripeService::get_price_amount($pid);
                     if (is_wp_error($pr)) {
                         wp_send_json_error('Price fetch failed');
                     }
@@ -210,8 +211,10 @@ class Ajax {
     
     public function ajax_get_variant_options() {
         check_ajax_referer('produkt_nonce', 'nonce');
-        
+
         $variant_id = intval($_POST['variant_id']);
+
+        $modus = get_option('produkt_betriebsmodus', 'miete');
         
         global $wpdb;
         
