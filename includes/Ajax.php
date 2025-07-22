@@ -32,6 +32,8 @@ class Ajax {
             $extras = $wpdb->get_results($query);
         }
         
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
             $duration_id
@@ -47,36 +49,42 @@ class Ajax {
         
         
         
-        if ($variant && $duration) {
+        if ($variant && ($duration || $modus === 'verkauf')) {
             $variant_price = 0;
             $used_price_id  = '';
 
-            // Determine the Stripe price ID to send to checkout
-            $price_id_to_use = $wpdb->get_var($wpdb->prepare(
-                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
-                $duration_id,
-                $variant_id
-            ));
-
-            if (empty($price_id_to_use)) {
-                $price_id_to_use = $variant->stripe_price_id;
-            }
-
-            $used_price_id = $price_id_to_use;
-
-            // For display always use the variant's own Stripe price ID
-            if (!empty($variant->stripe_price_id)) {
-                $price_res = StripeService::get_price_amount($variant->stripe_price_id);
-                if (is_wp_error($price_res)) {
-                    wp_send_json_error('Price fetch failed');
-                }
-                $variant_price = floatval($price_res);
+            if ($modus === 'verkauf') {
+                $variant_price = floatval($variant->verkaufspreis_einmalig);
+                $used_price_id = $variant->stripe_price_id;
             } else {
-                $variant_price = floatval($variant->base_price);
-                if ($variant_price <= 0) {
-                    $variant_price = floatval($variant->mietpreis_monatlich);
+                // Determine the Stripe price ID to send to checkout
+                $price_id_to_use = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $duration_id,
+                    $variant_id
+                ));
+
+                if (empty($price_id_to_use)) {
+                    $price_id_to_use = $variant->stripe_price_id;
+                }
+
+                $used_price_id = $price_id_to_use;
+
+                // For display always use the variant's own Stripe price ID
+                if (!empty($variant->stripe_price_id)) {
+                    $price_res = StripeService::get_price_amount($variant->stripe_price_id);
+                    if (is_wp_error($price_res)) {
+                        wp_send_json_error('Price fetch failed');
+                    }
+                    $variant_price = floatval($price_res);
+                } else {
+                    $variant_price = floatval($variant->base_price);
+                    if ($variant_price <= 0) {
+                        $variant_price = floatval($variant->mietpreis_monatlich);
+                    }
                 }
             }
+
             $extras_price = 0;
             foreach ($extras as $ex) {
                 if (!empty($ex->stripe_price_id)) {
@@ -100,21 +108,28 @@ class Ajax {
             // Base price for the variant
             $base_price = $variant_price;
 
-            $duration_custom_price = $wpdb->get_var($wpdb->prepare(
-                "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
-                $duration_id,
-                $variant_id
-            ));
-            $duration_price = ($duration_custom_price !== null) ? floatval($duration_custom_price) : $base_price;
+            if ($modus === 'verkauf') {
+                $final_price = $base_price + $extras_price;
+                $duration_price = $base_price;
+                $original_price = null;
+                $discount = 0;
+            } else {
+                $duration_custom_price = $wpdb->get_var($wpdb->prepare(
+                    "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $duration_id,
+                    $variant_id
+                ));
+                $duration_price = ($duration_custom_price !== null) ? floatval($duration_custom_price) : $base_price;
 
-            $original_price = null;
-            $discount = 0;
-            if ($duration->show_badge && $duration_price < $base_price) {
-                $original_price = $base_price;
-                $discount = 1 - ($duration_price / $base_price);
+                $original_price = null;
+                $discount = 0;
+                if ($duration->show_badge && $duration_price < $base_price) {
+                    $original_price = $base_price;
+                    $discount = 1 - ($duration_price / $base_price);
+                }
+
+                $final_price = $duration_price + $extras_price;
             }
-
-            $final_price = $duration_price + $extras_price;
             $shipping_cost = 0;
             $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
             if ($shipping) {
@@ -893,15 +908,34 @@ function produkt_create_subscription() {
             ],
         ];
 
-        $subscription = StripeService::create_subscription($sub_params);
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        if ($mode === 'verkauf') {
+            $session = StripeService::create_checkout_session_for_sale([
+                'price_id'       => $price_id,
+                'quantity'       => 1,
+                'customer_email' => sanitize_email($body['email'] ?? ''),
+                'metadata'       => $sub_params['metadata'],
+                'reference'      => $variant_id ? "var-$variant_id" : null,
+                'success_url'    => get_option('produkt_success_url', home_url('/danke')),
+                'cancel_url'     => get_option('produkt_cancel_url', home_url('/abbrechen')),
+            ]);
 
-        if (is_wp_error($subscription)) {
-            throw new \Exception($subscription->get_error_message());
+            if (is_wp_error($session)) {
+                throw new \Exception($session->get_error_message());
+            }
+
+            wp_send_json(['url' => $session->url]);
+        } else {
+            $subscription = StripeService::create_subscription($sub_params);
+
+            if (is_wp_error($subscription)) {
+                throw new \Exception($subscription->get_error_message());
+            }
+
+            $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
+
+            wp_send_json(['client_secret' => $client_secret]);
         }
-
-        $client_secret = $subscription->latest_invoice->payment_intent->client_secret;
-
-        wp_send_json(['client_secret' => $client_secret]);
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
