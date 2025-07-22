@@ -153,12 +153,16 @@ if (isset($_POST['submit'])) {
                     'mode'              => $mode,
                 ]);
                 if (!is_wp_error($res)) {
+                    $product_id = $res['stripe_product_id'];
                     $wpdb->update($table_name, [
-                        'stripe_product_id' => $res['stripe_product_id'],
+                        'stripe_product_id' => $product_id,
                         'stripe_price_id'   => $res['stripe_price_id'],
                     ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
                 }
             }
+
+            require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+            produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $product_id, $mode);
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
@@ -206,7 +210,13 @@ if (isset($_POST['submit'])) {
                     'stripe_product_id' => $res['stripe_product_id'],
                     'stripe_price_id'   => $res['stripe_price_id'],
                 ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+                $product_id = $res['stripe_product_id'];
+            } else {
+                $product_id = '';
             }
+
+            require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
+            produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $product_id, $mode);
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
