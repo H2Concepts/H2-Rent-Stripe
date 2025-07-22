@@ -23,6 +23,11 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 
 // Get current category info
 $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
+$variants_table = $wpdb->prefix . 'produkt_variants';
+$category_column = $wpdb->get_results("SHOW COLUMNS FROM $variants_table LIKE 'category_id'");
+if (empty($category_column)) {
+    $wpdb->query("ALTER TABLE $variants_table ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
+}
 $has_variants = (int) $wpdb->get_var($wpdb->prepare(
     "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
     $selected_category
