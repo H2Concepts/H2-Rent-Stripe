@@ -4,15 +4,9 @@ if (!defined('ABSPATH')) {
 }
 
 use ProduktVerleih\StripeService;
-use ProduktVerleih\Database;
 
 global $wpdb;
-
-$db_updater = new Database();
-$db_updater->update_database();
 $table_name = $wpdb->prefix . 'produkt_variants';
-
-// Check if a form was submitted
 
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
@@ -23,12 +17,6 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
-// Determine the current mode from request or database
-$variant_lookup_id = isset($_GET['id']) ? intval($_GET['id']) : (isset($_POST['id']) ? intval($_POST['id']) : 0);
-$mode = $_POST['mode'] ?? $_GET['mode'] ?? $wpdb->get_var(
-    $wpdb->prepare("SELECT mode FROM $table_name WHERE id = %d", $variant_lookup_id)
-) ?? 'miete';
-
 // Ensure all image columns exist
 $image_columns = array('image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5');
 foreach ($image_columns as $column) {
@@ -38,34 +26,16 @@ foreach ($image_columns as $column) {
     }
 }
 
-// Ensure stripe price ID columns exist
+// Ensure stripe_price_id column exists
 $price_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id'");
 if (empty($price_column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
-}
-$sale_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id_sale'");
-if (empty($sale_column_exists)) {
-    $after = !empty($price_column_exists) ? 'stripe_price_id' : 'name';
-    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id_sale VARCHAR(255) DEFAULT NULL AFTER $after");
-}
-$rent_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id_rent'");
-if (empty($rent_column_exists)) {
-    $after = !empty($sale_column_exists) ? 'stripe_price_id_sale' : 'stripe_price_id';
-    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id_rent VARCHAR(255) DEFAULT NULL AFTER $after");
 }
 
 // Ensure stripe_archived column exists
 $archived_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_archived'");
 if (empty($archived_column_exists)) {
-    if (!empty($rent_column_exists)) {
-        $after = 'stripe_price_id_rent';
-    } elseif (!empty($sale_column_exists)) {
-        $after = 'stripe_price_id_sale';
-    } elseif (!empty($price_column_exists)) {
-        $after = 'stripe_price_id';
-    } else {
-        $after = 'name';
-    }
+    $after = !empty($price_column_exists) ? 'stripe_price_id' : 'name';
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
 }
 
@@ -88,25 +58,11 @@ foreach ($availability_columns as $column) {
     }
 }
 
-// Handle form submissions only on POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce'])) {
-    if (!wp_verify_nonce($_POST['produkt_admin_nonce'], 'produkt_admin_action')) {
-        wp_die('Ungültige Anfrage.');
-    }
-
-    // → Speicher-Logik beginnt hier:
-    error_log('✅ POST erfolgreich empfangen');
-    error_log(print_r($_POST, true));
-
+// Handle form submissions
+if (isset($_POST['submit'])) {
     \ProduktVerleih\Admin::verify_admin_action();
-
-    $result      = false;
-    $variant_id  = 0;
-    $name        = '';
-    $base_price  = 0;
-    $category_id = 0;
-
-    $name = sanitize_text_field($_POST['name'] ?? '');
+    $category_id = intval($_POST['category_id']);
+    $name = sanitize_text_field($_POST['name']);
     $stripe_product_id = '';
     if (!empty($_POST['id'])) {
         $stripe_product_id = $wpdb->get_var($wpdb->prepare(
@@ -117,6 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
     if (!empty($stripe_product_id)) {
         StripeService::update_product_name($stripe_product_id, $name);
     }
+    $description = sanitize_textarea_field($_POST['description']);
+    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+    $available = isset($_POST['available']) ? 1 : 0;
+    $availability_note = sanitize_text_field($_POST['availability_note']);
+    $delivery_time = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
+    $active = isset($_POST['active']) ? 1 : 0;
+    $sort_order = intval($_POST['sort_order']);
+    
     // Handle multiple images
     $image_data = array();
     for ($i = 1; $i <= 5; $i++) {
@@ -124,48 +89,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $image_data['image_url_' . $i] = (is_string($image_raw) && filter_var($image_raw, FILTER_VALIDATE_URL))
             ? esc_url_raw($image_raw) : '';
     }
-    $image_data = is_array($image_data ?? null) ? $image_data : [];
 
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
-        $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-        $name = sanitize_text_field($_POST['name'] ?? '');
-        $description = sanitize_textarea_field($_POST['description'] ?? '');
-        $mietpreis_monatlich    = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
-        $mode = sanitize_text_field($_POST['mode'] ?? 'miete');
-        $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
-        $available = isset($_POST['available']) ? 1 : 0;
-        $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
-        $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
-        $active = 1;
-        $sort_order = intval($_POST['sort_order'] ?? 0);
-        $image_data = is_array($image_data ?? null) ? $image_data : [];
-
-        $variablen = [
-            'category_id' => $category_id,
-            'name' => $name,
-            'description' => $description,
-            'mietpreis_monatlich' => $mietpreis_monatlich,
-            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'base_price' => $base_price,
-            'available' => $available,
-            'availability_note' => $availability_note,
-            'delivery_time' => $delivery_time,
-            'active' => $active,
-            'sort_order' => $sort_order,
-            'mode' => $mode,
-        ];
-        error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
-
         $update_data = array_merge(array(
             'category_id'            => $category_id,
             'name'                   => $name,
             'description'            => $description,
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'base_price'             => $base_price,
-            'mode'                   => $mode,
+            'base_price'             => $mietpreis_monatlich,
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
@@ -178,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%s', '%d', '%s', '%s', '%d', '%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
@@ -191,65 +124,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             } else {
                 echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
             }
-            $ids = $wpdb->get_row($wpdb->prepare(
-                "SELECT stripe_product_id, stripe_price_id_sale, stripe_price_id_rent FROM $table_name WHERE id = %d",
-                $variant_id
-            ));
+            $mode       = get_option('produkt_betriebsmodus', 'miete');
+            $ids        = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d", $variant_id));
             $product_id = $ids ? $ids->stripe_product_id : '';
-            $price_id   = '';
-            if ($ids) {
-                $price_id = ($mode === 'kauf') ? $ids->stripe_price_id_sale : $ids->stripe_price_id_rent;
-            }
+            $price_id   = $ids ? $ids->stripe_price_id : '';
 
-            $should_sync = $mode === 'kauf' ? ($verkaufspreis_einmalig > 0.01) : true;
-            if ($product_id && $should_sync) {
-                    $existing_amount = \ProduktVerleih\StripeService::get_price_amount($price_id);
-                    if (!is_wp_error($existing_amount) && $existing_amount != $base_price) {
-                        $new_price = \ProduktVerleih\StripeService::create_price(
-                            $product_id,
-                            round($base_price * 100),
-                            $mode,
-                            $mode === 'kauf' ? 'Einmalverkaufspreis' : null,
-                            $mode === 'kauf' ? ['typ' => 'verkauf'] : []
-                        );
-                        if (!is_wp_error($new_price)) {
-                            $update_fields = ['stripe_price_id' => $new_price->id];
-                            $formats       = ['%s'];
-                            if ($mode === 'kauf') {
-                                $update_fields['stripe_price_id_sale'] = $new_price->id;
-                                $formats[] = '%s';
-                            } else {
-                                $update_fields['stripe_price_id_rent'] = $new_price->id;
-                                $formats[] = '%s';
-                            }
-                            $wpdb->update($table_name, $update_fields, ['id' => $variant_id], $formats, ['%d']);
-                        }
+            if ($product_id) {
+                $existing_amount = \ProduktVerleih\StripeService::get_price_amount($price_id);
+                if (!is_wp_error($existing_amount) && $existing_amount != $mietpreis_monatlich) {
+                    $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($mietpreis_monatlich * 100), $mode);
+                    if (!is_wp_error($new_price)) {
+                        $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $variant_id], ['%s'], ['%d']);
                     }
                 }
-            }
-            elseif ($should_sync) {
+            } else {
                 $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
                     'plugin_product_id' => $variant_id,
                     'variant_id'        => $variant_id,
                     'duration_id'       => null,
                     'name'              => $name,
-                    'price'             => $base_price,
+                    'price'             => $mietpreis_monatlich,
                     'mode'              => $mode,
                 ]);
                 if (!is_wp_error($res)) {
-                    $update_fields = [
+                    $wpdb->update($table_name, [
                         'stripe_product_id' => $res['stripe_product_id'],
                         'stripe_price_id'   => $res['stripe_price_id'],
-                    ];
-                    $formats = ['%s', '%s'];
-                    if ($mode === 'kauf') {
-                        $update_fields['stripe_price_id_sale'] = $res['stripe_price_id'];
-                        $formats[] = '%s';
-                    } else {
-                        $update_fields['stripe_price_id_rent'] = $res['stripe_price_id'];
-                        $formats[] = '%s';
-                    }
-                    $wpdb->update($table_name, $update_fields, ['id' => $variant_id], $formats, ['%d']);
+                    ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
                 }
             }
 
@@ -258,76 +159,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
     } else {
-        // POST wurde empfangen und KEINE ID -> INSERT
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']) && empty($_POST['id'])) {
+        // Insert
+        $insert_data = array_merge(array(
+            'category_id'            => $category_id,
+            'name'                   => $name,
+            'description'            => $description,
+            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'base_price'             => $mietpreis_monatlich,
+            'available'              => $available,
+            'availability_note'      => $availability_note,
+            'delivery_time'          => $delivery_time,
+            'active'                 => $active,
+            'sort_order'             => $sort_order
+        ), $image_data);
+        
+        $result = $wpdb->insert(
+            $table_name,
+            $insert_data,
+            array_merge(
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array_fill(0, 5, '%s')
+            )
+        );
 
-            $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
-            $name = sanitize_text_field($_POST['name'] ?? '');
-            $description = sanitize_textarea_field($_POST['description'] ?? '');
-            $mietpreis_monatlich = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
-            $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
-            $mode = sanitize_text_field($_POST['mode'] ?? 'miete');
-            $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
-            $available = isset($_POST['available']) ? 1 : 0;
-            $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
-            $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
-            $active = 1;
-            $sort_order = intval($_POST['sort_order'] ?? 0);
-            $image_data = [];
-
-            $variablen = [
-                'category_id' => $category_id,
-                'name' => $name,
-                'description' => $description,
-                'mietpreis_monatlich' => $mietpreis_monatlich,
-                'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-                'base_price' => $base_price,
-                'available' => $available,
-                'availability_note' => $availability_note,
-                'delivery_time' => $delivery_time,
-                'active' => $active,
-                'sort_order' => $sort_order,
-                'mode' => $mode
-            ];
-            error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
-
-            // insert_data jetzt aufbauen
-            $insert_data = array_merge($variablen, $image_data);
-
-            // insert durchführen (nur wenn Kategorie und Name gesetzt sind)
-            if ($category_id > 0 && $name !== '') {
-                $result = $wpdb->insert($table_name, $insert_data, array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'));
-            }
-
-            $variant_id = $wpdb->insert_id;
-        }
+        $variant_id = $wpdb->insert_id;
         if ($result !== false) {
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
-            $should_sync = $mode === 'kauf' ? ($verkaufspreis_einmalig > 0.01) : true;
-            if ($should_sync) {
-                $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
-                    'plugin_product_id' => $variant_id,
-                    'variant_id'        => $variant_id,
-                    'duration_id'       => null,
-                    'name'              => $name,
-                    'price'             => $base_price,
-                    'mode'              => $mode,
-                ]);
-                if (!is_wp_error($res)) {
-                    $update_fields = [
-                        'stripe_product_id' => $res['stripe_product_id'],
-                        'stripe_price_id'   => $res['stripe_price_id'],
-                    ];
-                    $formats = ['%s', '%s'];
-                    if ($mode === 'kauf') {
-                        $update_fields['stripe_price_id_sale'] = $res['stripe_price_id'];
-                        $formats[] = '%s';
-                    } else {
-                        $update_fields['stripe_price_id_rent'] = $res['stripe_price_id'];
-                        $formats[] = '%s';
-                    }
-                    $wpdb->update($table_name, $update_fields, ['id' => $variant_id], $formats, ['%d']);
-                }
+            $mode = get_option('produkt_betriebsmodus', 'miete');
+            $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                'plugin_product_id' => $variant_id,
+                'variant_id'        => $variant_id,
+                'duration_id'       => null,
+                'name'              => $name,
+                'price'             => $mietpreis_monatlich,
+                'mode'              => $mode,
+            ]);
+            if (!is_wp_error($res)) {
+                $wpdb->update($table_name, [
+                    'stripe_product_id' => $res['stripe_product_id'],
+                    'stripe_price_id'   => $res['stripe_price_id'],
+                ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
             }
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
@@ -335,6 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
         }
     }
+}
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {

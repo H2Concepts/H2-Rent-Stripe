@@ -99,7 +99,7 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
     <!-- Form -->
     <div class="produkt-form-card">
         <form method="post" action="">
-            <input type="hidden" name="produkt_admin_nonce" value="<?php echo wp_create_nonce('produkt_admin_action'); ?>">
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <?php if ($edit_item): ?>
                 <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
                 <h4>Ausführung bearbeiten</h4>

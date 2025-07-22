@@ -9,7 +9,7 @@
     </div>
     
     <form method="post" action="" class="produkt-compact-form">
-        <input type="hidden" name="produkt_admin_nonce" value="<?php echo wp_create_nonce('produkt_admin_action'); ?>">
+        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
         <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
         
@@ -28,13 +28,6 @@
                 <div class="produkt-form-group">
                     <label>Einmaliger Verkaufspreis</label>
                     <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($edit_item->verkaufspreis_einmalig); ?>">
-                </div>
-                <div class="produkt-form-group">
-                    <label for="mode">Produkttyp:</label>
-                    <select name="mode" id="mode">
-                        <option value="miete" <?php selected($mode, 'miete'); ?>>Miete</option>
-                        <option value="kauf" <?php selected($mode, 'kauf'); ?>>Einmalverkauf</option>
-                    </select>
                 </div>
             </div>
             
