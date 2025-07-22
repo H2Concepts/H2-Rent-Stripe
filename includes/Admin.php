@@ -6,6 +6,9 @@ class Admin {
         $branding = $this->get_branding_settings();
         $menu_title = $branding['plugin_name'] ?? 'Produkt';
         
+        $modus    = get_option('produkt_betriebsmodus', 'miete');
+        $is_sale  = in_array($modus, ['kauf', 'verkauf'], true);
+
         add_menu_page(
             $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
             $menu_title,
@@ -69,14 +72,16 @@ class Admin {
             array($this, 'extras_page')
         );
         
-        add_submenu_page(
-            'produkt-verleih',
-            'Mietdauer',
-            'Mietdauer',
-            'manage_options',
-            'produkt-durations',
-            array($this, 'durations_page')
-        );
+        if (!$is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Mietdauer',
+                'Mietdauer',
+                'manage_options',
+                'produkt-durations',
+                array($this, 'durations_page')
+            );
+        }
         
         // New submenu items
         add_submenu_page(

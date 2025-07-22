@@ -1,5 +1,6 @@
 <?php
 // Variants Tab Content
+$modus = get_option('produkt_betriebsmodus', 'miete');
 $table_name = $wpdb->prefix . 'produkt_variants';
 require_once plugin_dir_path(__FILE__) . '/../../includes/stripe-sync.php';
 
@@ -8,7 +9,7 @@ if (isset($_POST['submit_variant'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $description = sanitize_textarea_field($_POST['description']);
-    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $mietpreis_monatlich    = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
     $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
@@ -113,12 +114,16 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE c
                     <input type="text" name="name" value="<?php echo $edit_item ? esc_attr($edit_item->name) : ''; ?>" required>
                 </div>
                 
+                <?php if ($modus !== 'kauf' && $modus !== 'verkauf'): ?>
                 <div class="produkt-form-group">
                     <label>Monatlicher Mietpreis *</label>
                     <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo $edit_item ? esc_attr($edit_item->mietpreis_monatlich) : ''; ?>" required>
                 </div>
+                <?php else: ?>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
+                <?php endif; ?>
                 <div class="produkt-form-group">
-                    <label>Einmaliger Verkaufspreis</label>
+                    <label><?php echo ($modus === 'kauf' || $modus === 'verkauf') ? 'Preis pro Tag' : 'Einmaliger Verkaufspreis'; ?></label>
                     <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo $edit_item ? esc_attr($edit_item->verkaufspreis_einmalig) : ''; ?>">
                 </div>
                 
