@@ -306,6 +306,7 @@ class Admin {
 
         if ($load_script) {
             $modus = get_option('produkt_betriebsmodus', 'miete');
+            $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
             wp_localize_script('produkt-script', 'produkt_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('produkt_nonce'),
@@ -315,6 +316,7 @@ class Admin {
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
+                'blocked_days' => $blocked_days,
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,
