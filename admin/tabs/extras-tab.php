@@ -61,7 +61,7 @@ if (isset($_POST['submit_extra'])) {
 
             if ($ids && $ids->stripe_product_id) {
                 \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $stripe_product_name);
-                $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), 'miete');
+                $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($price * 100), $mode);
                 if (!is_wp_error($new_price)) {
                     $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
                 }

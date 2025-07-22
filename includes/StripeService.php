@@ -560,12 +560,18 @@ class StripeService {
                 ]);
             }
 
-            $price_obj = \Stripe\Price::create([
+            $mode       = get_option('produkt_betriebsmodus', 'miete');
+            $price_args = [
                 'unit_amount' => intval(round($price * 100)),
                 'currency'    => 'eur',
-                'recurring'   => ['interval' => 'month'],
                 'product'     => $product->id,
-            ]);
+            ];
+
+            if ($mode === 'miete') {
+                $price_args['recurring'] = ['interval' => 'month'];
+            }
+
+            $price_obj = \Stripe\Price::create($price_args);
 
             return [
                 'product_id' => $product->id,
