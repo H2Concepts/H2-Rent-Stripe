@@ -40,7 +40,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
 <div class="produkt-tab-section">
     <h3>🏪 Lagerverwaltung</h3>
     <?php if (empty($variants)) : ?>
-        <p><strong>❗Bitte erstellen Sie zuerst mindestens eine Ausführung, um Lagerbestände zu verwalten.</strong></p>
+        <p><strong>Bitte zuerst eine Ausführung erstellen!</strong></p>
     <?php else: ?>
     <form method="post">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
