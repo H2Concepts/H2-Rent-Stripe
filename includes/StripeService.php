@@ -54,6 +54,42 @@ class StripeService {
         return \Stripe\Subscription::create($params);
     }
 
+    /**
+     * Create a Stripe Checkout Session for one-time sales.
+     *
+     * @param array $args Session parameters
+     * @return \Stripe\Checkout\Session|\WP_Error
+     */
+    public static function create_checkout_session_for_sale(array $args) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        $success_url = $args['success_url'] ?? home_url('/danke');
+        $cancel_url  = $args['cancel_url'] ?? home_url('/abbrechen');
+
+        try {
+            $session = \Stripe\Checkout\Session::create([
+                'mode' => 'payment',
+                'payment_method_types' => ['card'],
+                'line_items' => [[
+                    'price'    => $args['price_id'],
+                    'quantity' => $args['quantity'] ?? 1,
+                ]],
+                'customer_email' => $args['customer_email'] ?? null,
+                'client_reference_id' => $args['reference'] ?? null,
+                'metadata' => $args['metadata'] ?? [],
+                'success_url' => $success_url . '?session_id={CHECKOUT_SESSION_ID}',
+                'cancel_url'  => $cancel_url,
+            ]);
+
+            return $session;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_checkout_error', $e->getMessage());
+        }
+    }
+
     public static function get_price_amount($price_id) {
         $init = self::init();
         if (is_wp_error($init)) {
@@ -498,7 +534,7 @@ class StripeService {
      * @param string $related_product_name Related product name
      * @return array|\WP_Error
      */
-    public static function create_extra_price($name, $price, $related_product_name = '') {
+    public static function create_extra_price($name, $price, $related_product_name = '', $mode = 'miete') {
         $init = self::init();
         if (is_wp_error($init)) {
             return $init;
@@ -521,15 +557,24 @@ class StripeService {
                 $product = \Stripe\Product::create([
                     'name'        => $full_name,
                     'description' => 'Extra für Produkt: ' . $related_product_name,
+                    'type'        => 'service',
+                    'active'      => true,
                 ]);
+            } elseif (!$product->active) {
+                \Stripe\Product::update($product->id, ['active' => true]);
             }
 
-            $price_obj = \Stripe\Price::create([
+            $price_params = [
                 'unit_amount' => intval(round($price * 100)),
                 'currency'    => 'eur',
-                'recurring'   => ['interval' => 'month'],
                 'product'     => $product->id,
-            ]);
+            ];
+
+            if ($mode === 'miete') {
+                $price_params['recurring'] = ['interval' => 'month'];
+            }
+
+            $price_obj = \Stripe\Price::create($price_params);
 
             return [
                 'product_id' => $product->id,

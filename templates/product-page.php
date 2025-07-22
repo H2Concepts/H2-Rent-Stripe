@@ -52,6 +52,9 @@ $durations = $wpdb->get_results($wpdb->prepare(
     $category_id
 ));
 
+// Get blocked days for booking calendar
+$blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
+
 // Determine lowest price across all variants and durations
 $variant_ids  = array_map(fn($v) => (int) $v->id, $variants);
 $duration_ids = array_map(fn($d) => (int) $d->id, $durations);
@@ -137,7 +140,8 @@ $shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_method
 $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
-$price_label = $ui['price_label'] ?? 'Monatlicher Mietpreis';
+$modus = get_option('produkt_betriebsmodus', 'miete');
+$price_label = $ui['price_label'] ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
 $shipping_label = 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';
 $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
@@ -261,6 +265,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
+
             </div>
         </div>
 
@@ -289,14 +294,18 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <p><?php echo esc_html($variant->description); ?></p>
                                 <?php
                                     $display_price = 0;
-                                    if (!empty($variant->stripe_price_id)) {
-                                        $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
-                                        if (!is_wp_error($p)) {
-                                            $display_price = $p;
+                                    if ($modus === 'kauf') {
+                                        $display_price = floatval($variant->verkaufspreis_einmalig);
+                                    } else {
+                                        if (!empty($variant->stripe_price_id)) {
+                                            $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                            if (!is_wp_error($p)) {
+                                                $display_price = $p;
+                                            }
                                         }
                                     }
                                 ?>
-                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $price_period === 'month' ? '/Monat' : ''; ?></p>
+                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'kauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
                                         <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>
@@ -313,20 +322,32 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
                 <?php endif; ?>
 
+                <?php if ($modus === 'kauf'): ?>
+                <div class="produkt-section" id="booking-section">
+                    <h3>Mietzeitraum</h3>
+                    <div class="produkt-booking-calendar" id="booking-calendar"></div>
+                    <div id="booking-info"></div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Extras Selection -->
                 <?php if (!empty($extras)): ?>
                 <div class="produkt-section" id="extras-section">
                     <h3>Wählen Sie Ihre Extras</h3>
                     <div class="produkt-options extras layout-<?php echo esc_attr($layout_style); ?>" id="extras-container">
-                        <?php foreach ($extras as $extra): ?>
+                        <?php foreach ($extras as $extra):
+                            $pid = $modus === 'kauf'
+                                ? ($extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? ''))
+                                : ($extra->stripe_price_id_rent ?: ($extra->stripe_price_id ?? ''));
+                        ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
-                             data-price-id="<?php echo esc_attr($extra->stripe_price_id ?? ''); ?>"
+                             data-price-id="<?php echo esc_attr($pid); ?>"
                              data-available="true">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
-                                <?php if (!empty($extra->stripe_price_id)) {
-                                    $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                                <?php if (!empty($pid)) {
+                                    $p = \ProduktVerleih\StripeService::get_price_amount($pid);
                                     if (!is_wp_error($p) && $p > 0) {
                                         echo '<div class="produkt-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
                                     }
@@ -458,6 +479,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="shipping" id="produkt-field-shipping">
                         <input type="hidden" name="variant_id" id="produkt-field-variant-id">
                         <input type="hidden" name="duration_id" id="produkt-field-duration-id">
+                        <input type="hidden" name="start_date" id="produkt-field-start-date">
+                        <input type="hidden" name="end_date" id="produkt-field-end-date">
+                        <input type="hidden" name="days" id="produkt-field-days">
                         <input type="hidden" name="price_id" id="produkt-field-price-id">
                         <input type="hidden" name="jetzt_mieten" value="1">
                     <div class="produkt-availability-wrapper" id="produkt-availability-wrapper" style="display:none;">
@@ -686,4 +710,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         <button id="produkt-exit-send" style="display:none;">Senden</button>
     </div>
 </div>
+<script>
+if (typeof produkt_ajax !== 'undefined') {
+    produkt_ajax.blocked_days = <?php echo json_encode($blocked_days); ?>;
+}
+</script>
 <?php get_footer(); ?>

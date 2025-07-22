@@ -6,6 +6,9 @@ class Admin {
         $branding = $this->get_branding_settings();
         $menu_title = $branding['plugin_name'] ?? 'Produkt';
         
+        $modus    = get_option('produkt_betriebsmodus', 'miete');
+        $is_sale  = ($modus === 'kauf');
+
         add_menu_page(
             $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
             $menu_title,
@@ -69,14 +72,16 @@ class Admin {
             array($this, 'extras_page')
         );
         
-        add_submenu_page(
-            'produkt-verleih',
-            'Mietdauer',
-            'Mietdauer',
-            'manage_options',
-            'produkt-durations',
-            array($this, 'durations_page')
-        );
+        if (!$is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Mietdauer',
+                'Mietdauer',
+                'manage_options',
+                'produkt-durations',
+                array($this, 'durations_page')
+            );
+        }
         
         // New submenu items
         add_submenu_page(
@@ -116,6 +121,17 @@ class Admin {
             'produkt-orders',
             array($this, 'orders_page')
         );
+
+        if ($is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Kalender',
+                'Kalender',
+                'manage_options',
+                'produkt-calendar',
+                array($this, 'calendar_page')
+            );
+        }
 
         // Global shipping settings
         add_submenu_page(
@@ -289,14 +305,18 @@ class Admin {
         $popup_email   = isset($popup_settings['email_enabled']) ? intval($popup_settings['email_enabled']) : 0;
 
         if ($load_script) {
+            $modus = get_option('produkt_betriebsmodus', 'miete');
+            $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
             wp_localize_script('produkt-script', 'produkt_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('produkt_nonce'),
                 'publishable_key' => StripeService::get_publishable_key(),
                 'checkout_url' => Plugin::get_checkout_page_url(),
                 'price_period' => $category->price_period ?? 'month',
-                'price_label' => $category->price_label ?? 'Monatlicher Mietpreis',
+                'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
+                'betriebsmodus' => $modus,
+                'blocked_days' => $blocked_days,
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,
@@ -401,7 +421,9 @@ class Admin {
         if (!current_user_can('manage_options')) {
             wp_die(__('Insufficient permissions.', 'h2-concepts'));
         }
-        check_admin_referer('produkt_admin_action', $nonce_field);
+        if (empty($_POST[$nonce_field]) || !wp_verify_nonce($_POST[$nonce_field], 'produkt_admin_action')) {
+            wp_die(__('Invalid nonce.', 'h2-concepts'));
+        }
     }
     
     public function admin_page() {
@@ -923,6 +945,9 @@ class Admin {
         include PRODUKT_PLUGIN_PATH . 'admin/filters-page.php';
     }
 
+    public function calendar_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/calendar-page.php';
+    }
 
     public function settings_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/settings-page.php';

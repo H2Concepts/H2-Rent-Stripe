@@ -140,6 +140,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         <th>Kunde</th>
                         <th>Telefon</th>
                         <th>Adresse</th>
+                        <th style="width: 80px;">Produkttyp</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
                         <th style="width: 80px;">Rabatt</th>
@@ -176,12 +177,25 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 }
                             ?>
                         </td>
+                        <?php
+                            $type = 'Verkauf';
+                            if (isset($order->mode)) {
+                                $type = ($order->mode === 'kauf') ? 'Verkauf' : 'Miete';
+                            } elseif (!empty($order->stripe_subscription_id)) {
+                                $type = 'Miete';
+                            }
+                        ?>
+                        <td><?php echo esc_html($type); ?></td>
                         <td>
                             <div style="line-height: 1.4;">
                                 <strong><?php echo esc_html($order->category_name); ?></strong><br>
                                 <span style="color: #666;">📦 <?php echo esc_html($order->variant_name); ?></span><br>
                                 <span style="color: #666;">🎁 <?php echo esc_html($order->extra_names); ?></span><br>
-                                <span style="color: #666;">⏰ <?php echo esc_html($order->duration_name); ?></span><br>
+                                <?php if ($type === 'Verkauf'): ?>
+                                    <span style="color: #666;">⏰ Miettage: <?php echo esc_html($order->duration_name); ?></span><br>
+                                <?php else: ?>
+                                    <span style="color: #666;">⏰ Mietdauer: <?php echo esc_html($order->duration_name); ?></span><br>
+                                <?php endif; ?>
                                 
                                 <?php if ($order->condition_name): ?>
                                     <span style="color: #666;">🔄 <?php echo esc_html($order->condition_name); ?></span><br>
@@ -200,7 +214,9 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             <strong style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>; font-size: 16px;">
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
-                            <small style="color: #666;">/Monat</small>
+                            <?php if ($type !== 'Verkauf'): ?>
+                                <small style="color: #666;">/Monat</small>
+                            <?php endif; ?>
                             <?php if ($order->shipping_cost > 0): ?>
                                 <br><span style="color:#666;">+ <?php echo number_format($order->shipping_cost, 2, ',', '.'); ?>€ einmalig</span>
                             <?php endif; ?>
@@ -327,7 +343,7 @@ function showOrderDetails(orderId) {
                 <h4>📋 Bestellinformationen</h4>
                 <p><strong>Bestellnummer:</strong> #${order.id}</p>
                 <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
-                <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€/Monat</p>
+                <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
                 ${order.shipping_cost > 0 ? `<p><strong>Versand:</strong> ${parseFloat(order.shipping_cost).toFixed(2).replace('.', ',')}€ (einmalig)</p>` : ''}
                 <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-'+parseFloat(order.discount_amount).toFixed(2).replace('.', ',')+'€' : '–'}</p>
             </div>
@@ -345,7 +361,7 @@ function showOrderDetails(orderId) {
         <ul>
             <li><strong>Ausführung:</strong> ${order.variant_name}</li>
             <li><strong>Extra:</strong> ${order.extra_names}</li>
-            <li><strong>Mietdauer:</strong> ${order.duration_name}</li>
+            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.duration_name}</li>
     `;
     
     if (order.condition_name) {

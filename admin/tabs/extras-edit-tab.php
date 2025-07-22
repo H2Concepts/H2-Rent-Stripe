@@ -16,15 +16,30 @@
         <!-- Grunddaten -->
         <div class="produkt-form-section">
             <h4>📝 Grunddaten</h4>
+            <?php $modus = get_option('produkt_betriebsmodus', 'miete');
+                  $sale_price = 0;
+                  if ($modus === 'kauf' && !empty($edit_item->stripe_price_id_sale)) {
+                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
+                      if (!is_wp_error($p)) {
+                          $sale_price = $p;
+                      }
+                  }
+            ?>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Name *</label>
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                 </div>
                 <div class="produkt-form-group">
-                    <label>Preis (EUR) *</label>
-                    <input type="number" step="0.01" name="price" value="<?php echo esc_attr($edit_item->price); ?>" required>
+                    <label>Preis (EUR)<?php echo $modus === 'kauf' ? '' : ' *'; ?></label>
+                    <input type="number" step="0.01" name="price" value="<?php echo esc_attr($edit_item->price); ?>" <?php echo $modus === 'kauf' ? '' : 'required'; ?>>
                 </div>
+                <?php if ($modus === 'kauf'): ?>
+                <div class="produkt-form-group">
+                    <label>Einmalpreis (EUR) *</label>
+                    <input type="number" step="0.01" name="sale_price" value="<?php echo esc_attr($sale_price); ?>" required>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         

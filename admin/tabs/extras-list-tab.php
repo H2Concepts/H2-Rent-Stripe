@@ -51,11 +51,15 @@
                 <div class="produkt-extra-meta">
                     <div class="produkt-extra-price">
                         <?php
-                        $display_price = $extra->price;
+                        $modus = get_option('produkt_betriebsmodus', 'miete');
+                        $display_price = ($modus === 'kauf') ? 0 : $extra->price;
                         $missing_price = false;
-                        if (!empty($extra->stripe_price_id)) {
-                            if (\ProduktVerleih\StripeService::price_exists($extra->stripe_price_id)) {
-                                $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+
+                        $price_col = $modus === 'kauf' ? ($extra->stripe_price_id_sale ?? '') : ($extra->stripe_price_id_rent ?? '');
+
+                        if (!empty($price_col)) {
+                            if (\ProduktVerleih\StripeService::price_exists($price_col)) {
+                                $p = \ProduktVerleih\StripeService::get_price_amount($price_col);
                                 if (!is_wp_error($p)) {
                                     $display_price = $p;
                                 }
@@ -63,6 +67,7 @@
                                 $missing_price = true;
                             }
                         }
+
                         if ($display_price > 0) {
                             echo '<strong>' . number_format($display_price, 2, ',', '.') . "€</strong>";
                         }

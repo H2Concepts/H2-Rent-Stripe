@@ -102,6 +102,32 @@ function produkt_deactivate_stripe_price($price_id) {
     );
 }
 
+function produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $stripe_product_id, $mode = '') {
+    if ($mode === '') {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+    }
+
+    if ($verkaufspreis_einmalig > 0 && $mode === 'kauf' && $stripe_product_id) {
+        try {
+            $stripe_price = \Stripe\Price::create([
+                'unit_amount' => intval($verkaufspreis_einmalig * 100),
+                'currency'    => 'eur',
+                'product'     => $stripe_product_id,
+                'nickname'    => 'Einmalverkauf',
+            ]);
+
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->prefix . 'produkt_variants',
+                ['stripe_price_id' => $stripe_price->id],
+                ['id' => $variant_id]
+            );
+        } catch (\Exception $e) {
+            error_log('❌ Stripe-Verkaufspreis fehlgeschlagen: ' . $e->getMessage());
+        }
+    }
+}
+
 function produkt_hard_delete($produkt_id) {
     if (!$produkt_id) {
         return;

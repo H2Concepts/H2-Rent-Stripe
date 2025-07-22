@@ -1,5 +1,6 @@
 <?php
 // Variants Add Tab Content
+$modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
 <div class="produkt-add-variant">
@@ -20,13 +21,17 @@
                     <label>Name *</label>
                     <input type="text" name="name" required placeholder="z.B. Premium Produkt">
                 </div>
+                <?php if ($modus !== 'kauf'): ?>
                 <div class="produkt-form-group">
                     <label>Monatlicher Mietpreis *</label>
                     <input type="number" step="0.01" name="mietpreis_monatlich" required placeholder="29.90">
                 </div>
+                <?php else: ?>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
+                <?php endif; ?>
                 <div class="produkt-form-group">
-                    <label>Einmaliger Verkaufspreis</label>
-                    <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="199.00">
+                    <label><?php echo ($modus === 'kauf') ? 'Preis pro Tag' : 'Einmaliger Verkaufspreis'; ?></label>
+                    <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="z.B. 199.00">
                 </div>
             </div>
             

@@ -1,5 +1,6 @@
 <?php
 // Variants List Tab Content
+$modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
 <div class="produkt-variants-list">
@@ -85,10 +86,16 @@
                             }
                         }
                     ?>
+                    <?php if ($modus !== 'kauf'): ?>
                     <div class="produkt-variant-price">
                         <strong><?php echo number_format($price, 2, ',', '.'); ?>€</strong>
                         <small>/Monat</small>
                     </div>
+                    <?php else: ?>
+                    <div class="produkt-variant-sale-price">
+                        <strong><?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€</strong>
+                    </div>
+                    <?php endif; ?>
                     <?php if ($missing_price): ?>
                         <span class="badge badge-warning">Preis fehlt bei Stripe</span>
                     <?php endif; ?>

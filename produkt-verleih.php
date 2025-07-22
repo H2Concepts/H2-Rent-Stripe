@@ -3,7 +3,7 @@
  * Plugin Name: H2 Concepts Rental Pro
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
- * Version: 2.8.42
+* Version: 2.8.43
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const PRODUKT_PLUGIN_VERSION = '2.8.42';
+const PRODUKT_PLUGIN_VERSION = '2.8.43';
 const PRODUKT_PLUGIN_DIR = __DIR__ . '/';
 define('PRODUKT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);
@@ -122,6 +122,9 @@ function produkt_simple_checkout_button($atts = []) {
         'zustand'       => isset($_GET['zustand']) ? sanitize_text_field($_GET['zustand']) : '',
         'produktfarbe'  => isset($_GET['produktfarbe']) ? sanitize_text_field($_GET['produktfarbe']) : '',
         'gestellfarbe'  => isset($_GET['gestellfarbe']) ? sanitize_text_field($_GET['gestellfarbe']) : '',
+        'start_date'   => isset($_GET['start_date']) ? sanitize_text_field($_GET['start_date']) : '',
+        'end_date'     => isset($_GET['end_date']) ? sanitize_text_field($_GET['end_date']) : '',
+        'days'         => isset($_GET['days']) ? intval($_GET['days']) : 1,
     ];
 
     ob_start();
@@ -156,7 +159,10 @@ function produkt_simple_checkout_button($atts = []) {
                     dauer_name: <?php echo json_encode($metadata['dauer_name']); ?>,
                     zustand: <?php echo json_encode($metadata['zustand']); ?>,
                     produktfarbe: <?php echo json_encode($metadata['produktfarbe']); ?>,
-                    gestellfarbe: <?php echo json_encode($metadata['gestellfarbe']); ?>
+                    gestellfarbe: <?php echo json_encode($metadata['gestellfarbe']); ?>,
+                    start_date: <?php echo json_encode($metadata['start_date']); ?>,
+                    end_date: <?php echo json_encode($metadata['end_date']); ?>,
+                    days: <?php echo json_encode($metadata['days']); ?>
                 })
             });
             const data = await res.json();

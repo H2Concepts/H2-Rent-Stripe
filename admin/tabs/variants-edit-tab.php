@@ -1,5 +1,7 @@
 <?php
 // Variants Edit Tab Content
+$verkaufspreis_einmalig = floatval($edit_item->verkaufspreis_einmalig);
+$modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
 <div class="produkt-edit-variant">
@@ -21,13 +23,17 @@
                     <label>Name *</label>
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                 </div>
+                <?php if ($modus !== 'kauf'): ?>
                 <div class="produkt-form-group">
                     <label>Monatlicher Mietpreis *</label>
                     <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo esc_attr($edit_item->mietpreis_monatlich); ?>" required>
                 </div>
+                <?php else: ?>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
+                <?php endif; ?>
                 <div class="produkt-form-group">
-                    <label>Einmaliger Verkaufspreis</label>
-                    <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($edit_item->verkaufspreis_einmalig); ?>">
+                    <label><?php echo ($modus === 'kauf') ? 'Preis pro Tag' : 'Einmaliger Verkaufspreis'; ?></label>
+                    <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($verkaufspreis_einmalig); ?>">
                 </div>
             </div>
             

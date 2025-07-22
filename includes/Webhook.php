@@ -45,8 +45,11 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
-        $subscription_id   = $session->subscription ?? '';
+        $mode     = $session->mode ?? 'subscription';
+        $subscription_id   = $mode === 'subscription' ? ($session->subscription ?? '') : '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
+
+        if ($mode === 'payment' || $mode === 'subscription') {
 
         $email              = $session->customer_details->email ?? '';
         $stripe_customer_id = $session->customer ?? '';
@@ -76,6 +79,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
         $extra         = sanitize_text_field($metadata['extra'] ?? '');
         $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
+        $start_date    = sanitize_text_field($metadata['start_date'] ?? '');
+        $end_date      = sanitize_text_field($metadata['end_date'] ?? '');
+        $days          = intval($metadata['days'] ?? 0);
         $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
         $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
 
@@ -114,6 +120,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         $discount_amount = ($session->total_details->amount_discount ?? 0) / 100;
 
+        if (!$dauer && $days > 0) {
+            $dauer = $days . ' Tag' . ($days > 1 ? 'e' : '');
+            if ($start_date && $end_date) {
+                $dauer .= ' (' . $start_date . ' - ' . $end_date . ')';
+            }
+        }
+
         $data = [
             'customer_email'    => $email,
             'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
@@ -132,6 +145,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'gestellfarbe_text' => $gestellfarbe,
             'extra_text'        => $extra,
             'dauer_text'        => $dauer,
+            'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
             'user_ip'           => $user_ip,
             'user_agent'        => $user_agent,
             'stripe_subscription_id' => $subscription_id,
@@ -166,7 +180,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             send_admin_order_email($data, $existing_id, $session->id);
             produkt_add_order_log($existing_id, 'welcome_email_sent');
         }
-    } elseif ($event->type === 'customer.subscription.deleted') {
+        }
+    }
+    elseif ($event->type === 'customer.subscription.deleted') {
         $subscription     = $event->data->object;
         $subscription_id  = $subscription->id;
         global $wpdb;

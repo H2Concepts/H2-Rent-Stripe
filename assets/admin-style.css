@@ -1925,6 +1925,22 @@
     gap: 4px;
 }
 
+.produkt-variant-sale-price {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.produkt-variant-sale-price strong {
+    color: #2a372a;
+    font-size: 1.2rem;
+}
+
+.produkt-variant-sale-price small {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
 .produkt-variant-price strong {
     color: var(--produkt-primary);
     font-size: 1.2rem;

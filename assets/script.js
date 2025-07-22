@@ -16,6 +16,10 @@ jQuery(document).ready(function($) {
     let currentShippingCost = 0;
     let currentPriceId = '';
     let shippingPriceId = '';
+    let startDate = null;
+    let endDate = null;
+    let selectedDays = 0;
+    let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     // Get category ID from container
     const container = $('.produkt-container');
@@ -31,6 +35,10 @@ jQuery(document).ready(function($) {
         }
     }
 
+    if (produkt_ajax.betriebsmodus === 'kauf') {
+        renderCalendar(calendarMonth);
+    }
+
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
 
@@ -41,6 +49,11 @@ jQuery(document).ready(function($) {
         selectedCondition = null;
         selectedProductColor = null;
         selectedFrameColor = null;
+        startDate = null;
+        endDate = null;
+        selectedDays = 0;
+        renderCalendar(calendarMonth);
+        updateSelectedDays();
 
         $('.produkt-option.selected').removeClass('selected');
         $('#selected-product-color-name').text('');
@@ -61,6 +74,7 @@ jQuery(document).ready(function($) {
             destroyMobileStickyPrice();
         }
     });
+
 
     // Handle option selection
     $('.produkt-option').on('click', function() {
@@ -192,6 +206,9 @@ jQuery(document).ready(function($) {
             if (selectedVariant) params.set('variant_id', selectedVariant);
             if (extraIds) params.set('extra_ids', extraIds);
             if (selectedDuration) params.set('duration_id', selectedDuration);
+            if (startDate) params.set('start_date', startDate);
+            if (endDate) params.set('end_date', endDate);
+            if (selectedDays) params.set('days', selectedDays);
             if (selectedCondition) params.set('condition_id', selectedCondition);
             if (selectedProductColor) params.set('product_color_id', selectedProductColor);
             if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
@@ -613,7 +630,11 @@ jQuery(document).ready(function($) {
         const requiredSelections = [];
         if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
         if ($('.produkt-options.extras').length > 0) requiredSelections.push(true);
-        if ($('.produkt-options.durations').length > 0) requiredSelections.push(selectedDuration);
+        if (produkt_ajax.betriebsmodus === 'kauf') {
+            requiredSelections.push(selectedDays > 0);
+        } else if ($('.produkt-options.durations').length > 0) {
+            requiredSelections.push(selectedDuration);
+        }
         
         // Check for visible optional sections
         if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
@@ -645,6 +666,7 @@ jQuery(document).ready(function($) {
                     condition_id: selectedCondition,
                     product_color_id: selectedProductColor,
                     frame_color_id: selectedFrameColor,
+                    days: selectedDays,
                     nonce: produkt_ajax.nonce
                 },
                 success: function(response) {
@@ -702,6 +724,18 @@ jQuery(document).ready(function($) {
                         
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
+
+                        if (produkt_ajax.betriebsmodus === 'kauf') {
+                            $('.produkt-price-period').hide();
+                            $('.produkt-mobile-price-period').hide();
+                            $('#produkt-rent-button span').text('Jetzt kaufen');
+                            $('.produkt-mobile-button span').text('Jetzt kaufen');
+                        } else {
+                            $('.produkt-price-period').show().text('/Monat');
+                            $('.produkt-mobile-price-period').show().text('/Monat');
+                            $('#produkt-rent-button span').text('Jetzt mieten');
+                            $('.produkt-mobile-button span').text('Jetzt mieten');
+                        }
                     }
                 },
                 error: function() {
@@ -724,6 +758,18 @@ jQuery(document).ready(function($) {
             
             // Hide mobile sticky price
             hideMobileStickyPrice();
+
+            if (produkt_ajax.betriebsmodus === 'kauf') {
+                $('.produkt-price-period').hide();
+                $('.produkt-mobile-price-period').hide();
+                $('#produkt-rent-button span').text('Jetzt kaufen');
+                $('.produkt-mobile-button span').text('Jetzt kaufen');
+            } else {
+                $('.produkt-price-period').show().text('/Monat');
+                $('.produkt-mobile-price-period').show().text('/Monat');
+                $('#produkt-rent-button span').text('Jetzt mieten');
+                $('.produkt-mobile-button span').text('Jetzt mieten');
+            }
         }
     }
 
@@ -731,11 +777,14 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainButton = $('#produkt-rent-button');
-            const mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
+            let mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
+            if (produkt_ajax.betriebsmodus === 'kauf') {
+                mainLabel = 'Jetzt kaufen';
+            }
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
-            const suffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
+            const suffix = produkt_ajax.betriebsmodus === 'kauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
             const stickyHtml = `
                 <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
                     <div class="produkt-mobile-sticky-content">
@@ -755,6 +804,9 @@ jQuery(document).ready(function($) {
                 </div>
             `;
             $('body').append(stickyHtml);
+            if (produkt_ajax.betriebsmodus === 'kauf') {
+                $('.produkt-mobile-price-period').hide();
+            }
             
             // Show/hide based on scroll position
             $(window).scroll(function() {
@@ -811,6 +863,115 @@ jQuery(document).ready(function($) {
         if ($('#mobile-sticky-price').length) {
             hideMobileStickyPrice();
             $('#mobile-sticky-price').remove();
+        }
+    }
+
+    function renderCalendar(date) {
+        const cal = $('#booking-calendar');
+        if (!cal.length) return;
+
+        const month = date.getMonth();
+        const year = date.getFullYear();
+        calendarMonth = new Date(year, month, 1);
+
+        const monthNames = ['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+        const dayNames = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+
+        let html = '<div class="calendar-header">' +
+            '<button class="prev-month">&lt;</button>' +
+            '<span class="calendar-title">' + monthNames[month] + ' ' + year + '</span>' +
+            '<button class="next-month">&gt;</button>' +
+            '</div>';
+
+        html += '<div class="calendar-grid">';
+        dayNames.forEach(function(d){ html += '<div class="day-name">' + d + '</div>'; });
+
+        const firstDay = new Date(year, month, 1);
+        const startIndex = (firstDay.getDay() + 6) % 7;
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        for(let i=0;i<startIndex;i++) { html += '<div class="empty"></div>'; }
+        for(let d=1; d<=lastDate; d++) {
+            const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            const cellDate = new Date(year, month, d);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let cls = 'calendar-day';
+            if (cellDate < today) cls += ' disabled';
+            if (Array.isArray(produkt_ajax.blocked_days) && produkt_ajax.blocked_days.includes(dateStr)) cls += ' disabled blocked';
+            if (startDate === dateStr) cls += ' start';
+            if (endDate === dateStr) cls += ' end';
+            if (startDate && endDate && cellDate > new Date(startDate) && cellDate < new Date(endDate)) cls += ' in-range';
+            html += '<div class="' + cls + '" data-date="' + dateStr + '">' + d + '</div>';
+        }
+        html += '</div>';
+        cal.html(html);
+    }
+
+    $(document).on('click', '#booking-calendar .prev-month', function(){
+        calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+        renderCalendar(calendarMonth);
+    });
+    $(document).on('click', '#booking-calendar .next-month', function(){
+        calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+        renderCalendar(calendarMonth);
+    });
+    $(document).on('click', '#booking-calendar .calendar-day:not(.disabled)', function(){
+        const dateStr = $(this).data('date');
+
+        if (!startDate || (startDate && endDate)) {
+            startDate = dateStr;
+            endDate = null;
+        } else if (new Date(dateStr) < new Date(startDate)) {
+            startDate = dateStr;
+            endDate = null;
+        } else {
+            // check for blocked days between startDate and selected end date
+            let s = new Date(startDate);
+            let e = new Date(dateStr);
+            let hasBlocked = false;
+            if (Array.isArray(produkt_ajax.blocked_days)) {
+                let d = new Date(s.getTime());
+                while (d <= e) {
+                    const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                    if (produkt_ajax.blocked_days.includes(ds)) {
+                        hasBlocked = true;
+                        break;
+                    }
+                    d.setDate(d.getDate() + 1);
+                }
+            }
+
+            if (hasBlocked) {
+                startDate = dateStr;
+                endDate = null;
+            } else {
+                endDate = dateStr;
+            }
+        }
+
+        renderCalendar(calendarMonth);
+        updateSelectedDays();
+        updatePriceAndButton();
+    });
+
+    function updateSelectedDays() {
+        selectedDays = 0;
+        if (startDate && endDate) {
+            const s = new Date(startDate);
+            const e = new Date(endDate);
+            const diff = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+            if (diff > 0) {
+                selectedDays = diff;
+            }
+        }
+        $('#produkt-field-start-date').val(startDate || '');
+        $('#produkt-field-end-date').val(endDate || '');
+        $('#produkt-field-days').val(selectedDays);
+        if (selectedDays > 0) {
+            $('#booking-info').text('Mietzeitraum ' + selectedDays + ' Tag' + (selectedDays > 1 ? 'e' : ''));
+        } else {
+            $('#booking-info').text('');
         }
     }
 

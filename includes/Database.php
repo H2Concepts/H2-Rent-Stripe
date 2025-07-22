@@ -32,10 +32,13 @@ class Database {
         $table_variants = $wpdb->prefix . 'produkt_variants';
         $columns_to_add = array(
             'stripe_price_id'        => 'VARCHAR(255) DEFAULT ""',
+            'stripe_price_id_sale'   => 'VARCHAR(255) DEFAULT NULL',
+            'stripe_price_id_rent'   => 'VARCHAR(255) DEFAULT NULL',
             'stripe_product_id'      => 'VARCHAR(255) DEFAULT NULL',
             'mietpreis_monatlich'    => 'DECIMAL(10,2) DEFAULT 0',
             'verkaufspreis_einmalig' => 'DECIMAL(10,2) DEFAULT 0',
             'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
+            'mode'                   => "VARCHAR(10) DEFAULT 'miete'",
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
             'image_url_3' => 'TEXT',
@@ -51,12 +54,18 @@ class Database {
             if (empty($column_exists)) {
                 if ($column === 'stripe_price_id') {
                     $after = 'name';
-                } elseif ($column === 'stripe_product_id') {
+                } elseif ($column === 'stripe_price_id_sale') {
                     $after = 'stripe_price_id';
+                } elseif ($column === 'stripe_price_id_rent') {
+                    $after = 'stripe_price_id_sale';
+                } elseif ($column === 'stripe_product_id') {
+                    $after = 'stripe_price_id_rent';
                 } elseif ($column === 'mietpreis_monatlich') {
                     $after = 'stripe_product_id';
                 } elseif ($column === 'verkaufspreis_einmalig') {
                     $after = 'mietpreis_monatlich';
+                } elseif ($column === 'mode') {
+                    $after = 'price_from';
                 } else {
                     $after = 'base_price';
                 }
@@ -93,6 +102,16 @@ class Database {
         if (empty($price_id_exists)) {
             $after = $product_id_exists ? 'stripe_product_id' : 'name';
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
+        }
+        $rent_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id_rent'");
+        if (empty($rent_id_exists)) {
+            $after = !empty($price_id_exists) ? 'stripe_price_id' : ($product_id_exists ? 'stripe_product_id' : 'name');
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id_rent VARCHAR(255) DEFAULT NULL AFTER $after");
+        }
+        $sale_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id_sale'");
+        if (empty($sale_id_exists)) {
+            $after = !empty($rent_id_exists) ? 'stripe_price_id_rent' : (!empty($price_id_exists) ? 'stripe_price_id' : ($product_id_exists ? 'stripe_product_id' : 'name'));
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id_sale VARCHAR(255) DEFAULT NULL AFTER $after");
         }
 
         // Ensure stripe_archived column exists
@@ -500,6 +519,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
                 shipping_cost decimal(10,2) DEFAULT 0,
+                mode varchar(10) DEFAULT 'miete',
                 stripe_session_id varchar(255) DEFAULT '',
                 stripe_subscription_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
@@ -541,6 +561,7 @@ class Database {
                 'customer_city'     => "varchar(100) DEFAULT ''",
                 'customer_country'  => "varchar(2) DEFAULT ''",
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
+                'mode'              => "varchar(10) DEFAULT 'miete'",
                 'status'            => "varchar(20) DEFAULT 'offen'"
             );
 
@@ -738,6 +759,23 @@ class Database {
             }
         }
 
+        // Create blocked days table if it doesn't exist
+        $table_blocked = $wpdb->prefix . 'produkt_blocked_days';
+        $blocked_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_blocked'");
+        if (!$blocked_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_blocked (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                day date NOT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY day (day)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create filter groups table
         $table_filter_groups = $wpdb->prefix . 'produkt_filter_groups';
         $groups_exists      = $wpdb->get_var("SHOW TABLES LIKE '$table_filter_groups'");
@@ -883,11 +921,14 @@ class Database {
             description text,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_price_id_sale varchar(255) DEFAULT NULL,
+            stripe_price_id_rent varchar(255) DEFAULT NULL,
             stripe_archived tinyint(1) DEFAULT 0,
             mietpreis_monatlich decimal(10,2) DEFAULT 0,
             verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
+            mode varchar(10) DEFAULT 'miete',
             image_url_1 text,
             image_url_2 text,
             image_url_3 text,
@@ -909,6 +950,8 @@ class Database {
             name varchar(255) NOT NULL,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_price_id_rent varchar(255) DEFAULT NULL,
+            stripe_price_id_sale varchar(255) DEFAULT NULL,
             stripe_archived tinyint(1) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,
@@ -1058,6 +1101,7 @@ class Database {
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
             shipping_cost decimal(10,2) DEFAULT 0,
+            mode varchar(10) DEFAULT 'miete',
             stripe_session_id varchar(255) DEFAULT '',
             stripe_subscription_id varchar(255) DEFAULT '',
             amount_total int DEFAULT 0,
@@ -1134,6 +1178,17 @@ class Database {
             PRIMARY KEY (id)
         ) $charset_collate;";
         dbDelta($sql_shipping);
+
+        // Blocked days table
+        $table_blocked = $wpdb->prefix . 'produkt_blocked_days';
+        $sql_blocked    = "CREATE TABLE $table_blocked (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            day date NOT NULL,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY day (day)
+        ) $charset_collate;";
+        dbDelta($sql_blocked);
 
         // Filter groups table
         $table_filter_groups = $wpdb->prefix . 'produkt_filter_groups';
