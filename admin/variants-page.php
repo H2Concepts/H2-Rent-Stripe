@@ -17,6 +17,12 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
+// Verkaufspreis-Feld ergänzen
+$verkaufspreis_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'verkaufspreis_einmalig'");
+if (empty($verkaufspreis_column_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN verkaufspreis_einmalig FLOAT DEFAULT 0 AFTER mietpreis_monatlich");
+}
+
 // Ensure all image columns exist
 $image_columns = array('image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5');
 foreach ($image_columns as $column) {

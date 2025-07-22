@@ -26,7 +26,7 @@
                 </div>
                 <div class="produkt-form-group">
                     <label>Einmaliger Verkaufspreis</label>
-                    <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="199.00">
+                    <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="z.B. 199.00">
                 </div>
             </div>
             
