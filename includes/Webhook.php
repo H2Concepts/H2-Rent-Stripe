@@ -197,6 +197,18 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             $send_welcome = true;
         }
 
+        $variant_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT variant_id FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $existing_id
+        ));
+        if ($variant_id) {
+            $table_var = $wpdb->prefix . 'produkt_variants';
+            $wpdb->query($wpdb->prepare(
+                "UPDATE $table_var SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                $variant_id
+            ));
+        }
+
         if ($send_welcome) {
             produkt_add_order_log($existing_id, 'checkout_completed');
             send_produkt_welcome_email($data, $existing_id);

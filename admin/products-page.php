@@ -23,6 +23,10 @@ $selected_category = isset($_GET['category']) ? intval($_GET['category']) : (iss
 
 // Get current category info
 $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
+$has_variants = (int) $wpdb->get_var($wpdb->prepare(
+    "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+    $selected_category
+));
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'variants';
@@ -89,10 +93,16 @@ foreach ($branding_results as $result) {
            class="produkt-tab <?php echo $active_tab === 'conditions' ? 'active' : ''; ?>">
             🔄 Zustände
         </a>
-        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=colors'); ?>" 
+        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=colors'); ?>"
            class="produkt-tab <?php echo $active_tab === 'colors' ? 'active' : ''; ?>">
             🎨 Farben
         </a>
+        <?php if ($has_variants): ?>
+        <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=inventory'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'inventory' ? 'active' : ''; ?>">
+            🏪 Lagerverwaltung
+        </a>
+        <?php endif; ?>
     </div>
     
     <!-- Tab Content -->
@@ -110,6 +120,9 @@ foreach ($branding_results as $result) {
                 break;
             case 'colors':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/colors-tab.php';
+                break;
+            case 'inventory':
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/inventory-tab.php';
                 break;
             default:
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-tab.php';
