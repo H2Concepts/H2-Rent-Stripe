@@ -15,15 +15,22 @@
         <!-- Grunddaten -->
         <div class="produkt-form-section">
             <h4>📝 Grunddaten</h4>
+            <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Name *</label>
                     <input type="text" name="name" required placeholder="z.B. Himmel, Zubehör-Set">
                 </div>
                 <div class="produkt-form-group">
-                    <label>Preis (EUR) *</label>
-                    <input type="number" step="0.01" name="price" placeholder="0.00" required>
+                    <label>Preis (EUR)<?php echo $modus === 'kauf' ? '' : ' *'; ?></label>
+                    <input type="number" step="0.01" name="price" placeholder="0.00" <?php echo $modus === 'kauf' ? '' : 'required'; ?>>
                 </div>
+                <?php if ($modus === 'kauf'): ?>
+                <div class="produkt-form-group">
+                    <label>Einmalpreis (EUR) *</label>
+                    <input type="number" step="0.01" name="sale_price" placeholder="0.00" required>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         

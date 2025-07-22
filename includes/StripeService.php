@@ -534,7 +534,7 @@ class StripeService {
      * @param string $related_product_name Related product name
      * @return array|\WP_Error
      */
-    public static function create_extra_price($name, $price, $related_product_name = '') {
+    public static function create_extra_price($name, $price, $related_product_name = '', $mode = 'miete') {
         $init = self::init();
         if (is_wp_error($init)) {
             return $init;
@@ -560,12 +560,17 @@ class StripeService {
                 ]);
             }
 
-            $price_obj = \Stripe\Price::create([
+            $price_params = [
                 'unit_amount' => intval(round($price * 100)),
                 'currency'    => 'eur',
-                'recurring'   => ['interval' => 'month'],
                 'product'     => $product->id,
-            ]);
+            ];
+
+            if ($mode === 'miete') {
+                $price_params['recurring'] = ['interval' => 'month'];
+            }
+
+            $price_obj = \Stripe\Price::create($price_params);
 
             return [
                 'product_id' => $product->id,
