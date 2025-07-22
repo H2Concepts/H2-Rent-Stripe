@@ -1134,7 +1134,10 @@ function produkt_create_checkout_session() {
                 'produktfarbe_text'=> $metadata['produktfarbe'],
                 'gestellfarbe_text'=> $metadata['gestellfarbe'],
                 'extra_text'       => $metadata['extra'],
-                'dauer_text'       => $metadata['dauer_name'],
+                'dauer_text'       => $modus === 'kauf' && empty($metadata['dauer_name'])
+                    ? ($days . ' Tag' . ($days > 1 ? 'e' : '')
+                        . ($start_date && $end_date ? ' (' . $start_date . ' - ' . $end_date . ')' : ''))
+                    : $metadata['dauer_name'],
                 'customer_name'    => '',
                 'customer_email'   => $customer_email,
                 'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
@@ -1308,7 +1311,10 @@ function produkt_create_embedded_checkout_session() {
                 'produktfarbe_text'=> $metadata['produktfarbe'],
                 'gestellfarbe_text'=> $metadata['gestellfarbe'],
                 'extra_text'       => $metadata['extra'],
-                'dauer_text'       => $metadata['dauer_name'],
+                'dauer_text'       => $modus === 'kauf' && empty($metadata['dauer_name'])
+                    ? ($days . ' Tag' . ($days > 1 ? 'e' : '')
+                        . ($start_date && $end_date ? ' (' . $start_date . ' - ' . $end_date . ')' : ''))
+                    : $metadata['dauer_name'],
                 'customer_name'    => '',
                 'customer_email'   => $customer_email,
                 'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
