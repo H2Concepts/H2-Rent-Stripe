@@ -177,7 +177,15 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 }
                             ?>
                         </td>
-                        <td><?php echo !empty($order->stripe_subscription_id) ? 'Miete' : 'Verkauf'; ?></td>
+                        <?php
+                            $type = 'Verkauf';
+                            if (isset($order->mode)) {
+                                $type = ($order->mode === 'kauf') ? 'Verkauf' : 'Miete';
+                            } elseif (!empty($order->stripe_subscription_id)) {
+                                $type = 'Miete';
+                            }
+                        ?>
+                        <td><?php echo esc_html($type); ?></td>
                         <td>
                             <div style="line-height: 1.4;">
                                 <strong><?php echo esc_html($order->category_name); ?></strong><br>

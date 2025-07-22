@@ -509,6 +509,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
                 shipping_cost decimal(10,2) DEFAULT 0,
+                mode varchar(10) DEFAULT 'miete',
                 stripe_session_id varchar(255) DEFAULT '',
                 stripe_subscription_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
@@ -550,6 +551,7 @@ class Database {
                 'customer_city'     => "varchar(100) DEFAULT ''",
                 'customer_country'  => "varchar(2) DEFAULT ''",
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
+                'mode'              => "varchar(10) DEFAULT 'miete'",
                 'status'            => "varchar(20) DEFAULT 'offen'"
             );
 
@@ -1070,6 +1072,7 @@ class Database {
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
             shipping_cost decimal(10,2) DEFAULT 0,
+            mode varchar(10) DEFAULT 'miete',
             stripe_session_id varchar(255) DEFAULT '',
             stripe_subscription_id varchar(255) DEFAULT '',
             amount_total int DEFAULT 0,

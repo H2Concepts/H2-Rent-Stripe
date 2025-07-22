@@ -145,6 +145,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'gestellfarbe_text' => $gestellfarbe,
             'extra_text'        => $extra,
             'dauer_text'        => $dauer,
+            'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
             'user_ip'           => $user_ip,
             'user_agent'        => $user_agent,
             'stripe_subscription_id' => $subscription_id,
