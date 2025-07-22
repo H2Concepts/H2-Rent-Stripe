@@ -190,8 +190,20 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 <h4>Neues Extra hinzufügen</h4>
             <?php endif; ?>
             
-            <?php $modus = get_option('produkt_betriebsmodus', 'miete');
-                  $sale_price = '';
+            <?php
+                  $modus       = get_option('produkt_betriebsmodus', 'miete');
+                  $sale_price  = '';
+                  $price_value = '';
+
+                  if ($edit_item && !empty($edit_item->stripe_price_id_rent)) {
+                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_rent);
+                      if (!is_wp_error($p)) {
+                          $price_value = number_format((float) $p, 2, ',', '.');
+                      }
+                  } elseif ($edit_item && $edit_item->price !== '') {
+                      $price_value = number_format((float) $edit_item->price, 2, ',', '.');
+                  }
+
                   if ($modus === 'kauf' && $edit_item && !empty($edit_item->stripe_price_id_sale)) {
                       $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
                       if (!is_wp_error($p)) {
@@ -207,12 +219,6 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
 
                 <div class="produkt-form-group">
                     <label>Preis (EUR)<?php echo $modus === 'kauf' ? '' : ' *'; ?></label>
-                    <?php
-                    $price_value = '';
-                    if ($edit_item && $edit_item->price !== '') {
-                        $price_value = number_format((float) $edit_item->price, 2, ',', '.');
-                    }
-                    ?>
                     <input type="number" step="0.01" name="price" value="<?php echo esc_attr($price_value); ?>" placeholder="0.00" <?php echo $modus === 'kauf' ? '' : 'required'; ?>>
                 </div>
                 <?php if ($modus === 'kauf'): ?>

@@ -16,8 +16,20 @@
         <!-- Grunddaten -->
         <div class="produkt-form-section">
             <h4>📝 Grunddaten</h4>
-            <?php $modus = get_option('produkt_betriebsmodus', 'miete');
-                  $sale_price = '';
+            <?php
+                  $modus       = get_option('produkt_betriebsmodus', 'miete');
+                  $sale_price  = '';
+                  $price_value = '';
+
+                  if (!empty($edit_item->stripe_price_id_rent)) {
+                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_rent);
+                      if (!is_wp_error($p)) {
+                          $price_value = number_format((float) $p, 2, ',', '.');
+                      }
+                  } elseif ($edit_item->price !== '') {
+                      $price_value = number_format((float) $edit_item->price, 2, ',', '.');
+                  }
+
                   if ($modus === 'kauf' && !empty($edit_item->stripe_price_id_sale)) {
                       $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
                       if (!is_wp_error($p)) {
@@ -32,7 +44,6 @@
                 </div>
                 <div class="produkt-form-group">
                     <label>Preis (EUR)<?php echo $modus === 'kauf' ? '' : ' *'; ?></label>
-                    <?php $price_value = $edit_item->price !== '' ? number_format((float) $edit_item->price, 2, ',', '.') : ''; ?>
                     <input type="number" step="0.01" name="price" value="<?php echo esc_attr($price_value); ?>" <?php echo $modus === 'kauf' ? '' : 'required'; ?>>
                 </div>
                 <?php if ($modus === 'kauf'): ?>
