@@ -56,6 +56,20 @@ foreach ($results as $r) {
                 $first = get_user_meta($u->ID, 'first_name', true);
                 $last  = get_user_meta($u->ID, 'last_name', true);
                 $phone = get_user_meta($u->ID, 'phone', true);
+                if (!$first && !$last) {
+                    $order = $wpdb->get_row($wpdb->prepare(
+                        "SELECT customer_name, customer_phone FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC LIMIT 1",
+                        $u->user_email
+                    ));
+                    if ($order) {
+                        $parts = explode(' ', $order->customer_name, 2);
+                        $first = $first ?: ($parts[0] ?? '');
+                        $last  = $last ?: ($parts[1] ?? '');
+                        if (!$phone) {
+                            $phone = $order->customer_phone;
+                        }
+                    }
+                }
                 $name  = trim($first . ' ' . $last);
                 if (!$name) { $name = $u->display_name; }
             ?>
@@ -79,6 +93,20 @@ foreach ($results as $r) {
         $first = get_user_meta($user->ID, 'first_name', true);
         $last  = get_user_meta($user->ID, 'last_name', true);
         $phone = get_user_meta($user->ID, 'phone', true);
+        if (!$first && !$last) {
+            $latest = $wpdb->get_row($wpdb->prepare(
+                "SELECT customer_name, customer_phone FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC LIMIT 1",
+                $user->user_email
+            ));
+            if ($latest) {
+                $parts = explode(' ', $latest->customer_name, 2);
+                $first = $first ?: ($parts[0] ?? '');
+                $last  = $last ?: ($parts[1] ?? '');
+                if (!$phone) {
+                    $phone = $latest->customer_phone;
+                }
+            }
+        }
         $orders = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC",
             $user->user_email

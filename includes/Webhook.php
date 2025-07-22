@@ -69,8 +69,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 $user_id = wp_create_user($email, wp_generate_password(), $email);
                 if (!is_wp_error($user_id)) {
                     wp_update_user([
-                        'ID'   => $user_id,
-                        'role' => 'kunde',
+                        'ID'          => $user_id,
+                        'role'        => 'kunde',
+                        'display_name'=> $full_name ?: $email,
                     ]);
                     update_user_meta($user_id, 'stripe_customer_id', $stripe_customer_id);
                     update_user_meta($user_id, 'first_name', $first_name);
@@ -80,7 +81,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                     }
                 }
             } else {
-                // Benutzer existiert – Stripe-ID ggf. ergänzen/überschreiben
+                // Benutzer existiert – Daten aktualisieren
+                wp_update_user([
+                    'ID'          => $user->ID,
+                    'role'        => 'kunde',
+                    'display_name'=> $full_name ?: $user->display_name,
+                ]);
                 update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
                 update_user_meta($user->ID, 'first_name', $first_name);
                 update_user_meta($user->ID, 'last_name', $last_name);
