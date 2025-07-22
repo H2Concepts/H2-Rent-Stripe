@@ -122,6 +122,15 @@ class Admin {
             array($this, 'orders_page')
         );
 
+        add_submenu_page(
+            'produkt-verleih',
+            'Kunden',
+            'Kunden',
+            'manage_options',
+            'produkt-customers',
+            array($this, 'customers_page')
+        );
+
         if ($is_sale) {
             add_submenu_page(
                 'produkt-verleih',
@@ -935,6 +944,10 @@ class Admin {
             'branding',
             'notice'
         ));
+    }
+
+    public function customers_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/customers-page.php';
     }
 
     public function shipping_page() {
