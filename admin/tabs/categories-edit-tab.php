@@ -43,6 +43,7 @@
             <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
             <a href="#" class="produkt-subtab" data-tab="filters">Filter</a>
+            <a href="#" class="produkt-subtab" data-tab="inventory">Lagerverwaltung</a>
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
@@ -389,6 +390,15 @@
             </div>
         </div>
         </div><!-- end tab-filters -->
+
+        <div id="tab-inventory" class="produkt-tab-section">
+            <?php
+                // Prüfen ob Lagerdaten geladen werden können oder einfach Info anzeigen
+                echo '<p>Hier wird künftig die Lagerverwaltung erscheinen.</p>';
+                // include 'inventory-tab.php';
+            ?>
+        </div>
+
 
 
 
