@@ -98,13 +98,21 @@ foreach ($orders as $o) {
             <div class="empty"></div>
         <?php endfor; ?>
         <?php for ($d=1; $d<=$last_day; $d++):
-            $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
-            $cls = '';
-            if (isset($booked[$date])) {
-                $cls = $booked[$date] === 'completed' ? 'booked-completed' : 'booked-open';
+            $date  = sprintf('%04d-%02d-%02d', $year, $month, $d);
+            $cls   = '';
+            $title = '';
+            if (isset($orders_by_day[$date])) {
+                $count = count($orders_by_day[$date]);
+                if ($count === 1) {
+                    $status = $orders_by_day[$date][0]->status === 'abgeschlossen' ? 'completed' : 'open';
+                    $cls    = $status === 'open' ? 'booked-open' : 'booked-completed';
+                } elseif ($count > 1) {
+                    $cls   = 'booked-multiple';
+                    $title = $count . ' Buchungen';
+                }
             }
         ?>
-            <div class="calendar-day <?php echo $cls; ?>" data-date="<?php echo $date; ?>"><?php echo $d; ?></div>
+            <div class="calendar-day <?php echo $cls; ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>><?php echo $d; ?></div>
         <?php endfor; ?>
     </div>
 </div>
@@ -129,6 +137,9 @@ foreach ($orders as $o) {
 }
 #produkt-admin-calendar .booked-completed{
     background:#d4edda;
+}
+#produkt-admin-calendar .booked-multiple{
+    background:#f8d7da;
 }
 </style>
 
