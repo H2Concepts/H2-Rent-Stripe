@@ -521,9 +521,7 @@ jQuery(document).ready(function($) {
                     </div>
                 `;
             } else if (optionType === 'extra') {
-                let priceSuffix = '';
-                if (produkt_ajax.price_period === 'month') priceSuffix = '/Monat';
-                else if (produkt_ajax.price_period === 'day') priceSuffix = '/Tag';
+                const priceSuffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
                 const priceHtml = option.price > 0 ? `+${parseFloat(option.price).toFixed(2).replace('.', ',')}€${priceSuffix}` : '';
                 optionHtml = `
                     <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}"
@@ -706,8 +704,8 @@ jQuery(document).ready(function($) {
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
 
                         if (produkt_ajax.betriebsmodus === 'verkauf') {
-                            $('.produkt-price-period').show().text('/Tag');
-                            $('.produkt-mobile-price-period').show().text('/Tag');
+                            $('.produkt-price-period').hide();
+                            $('.produkt-mobile-price-period').hide();
                             $('#produkt-rent-button span').text('Jetzt kaufen');
                             $('.produkt-mobile-button span').text('Jetzt kaufen');
                         } else {
@@ -740,8 +738,8 @@ jQuery(document).ready(function($) {
             hideMobileStickyPrice();
 
             if (produkt_ajax.betriebsmodus === 'verkauf') {
-                $('.produkt-price-period').show().text('/Tag');
-                $('.produkt-mobile-price-period').show().text('/Tag');
+                $('.produkt-price-period').hide();
+                $('.produkt-mobile-price-period').hide();
                 $('#produkt-rent-button span').text('Jetzt kaufen');
                 $('.produkt-mobile-button span').text('Jetzt kaufen');
             } else {
@@ -764,9 +762,7 @@ jQuery(document).ready(function($) {
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
-            let suffix = '';
-            if (produkt_ajax.price_period === 'month') suffix = '/Monat';
-            if (produkt_ajax.price_period === 'day') suffix = '/Tag';
+            const suffix = produkt_ajax.betriebsmodus === 'verkauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
             const stickyHtml = `
                 <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
                     <div class="produkt-mobile-sticky-content">
@@ -786,6 +782,9 @@ jQuery(document).ready(function($) {
                 </div>
             `;
             $('body').append(stickyHtml);
+            if (produkt_ajax.betriebsmodus === 'verkauf') {
+                $('.produkt-mobile-price-period').hide();
+            }
             
             // Show/hide based on scroll position
             $(window).scroll(function() {

@@ -34,9 +34,8 @@
                     <label>Name *</label>
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                 </div>
-                <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
                 <div class="produkt-form-group">
-                    <label>Mindestmietdauer (<?php echo $modus === 'verkauf' ? 'Tage' : 'Monate'; ?>) *</label>
+                    <label>Mindestmonate *</label>
                     <input type="number" name="months_minimum" value="<?php echo $edit_item->months_minimum; ?>" min="1" required>
                 </div>
             </div>

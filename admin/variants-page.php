@@ -23,12 +23,6 @@ if (empty($verkaufspreis_column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN verkaufspreis_einmalig FLOAT DEFAULT 0 AFTER mietpreis_monatlich");
 }
 
-// Tagespreis-Feld ergänzen
-$preis_pro_tag_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'preis_pro_tag'");
-if (empty($preis_pro_tag_exists)) {
-    $wpdb->query("ALTER TABLE $table_name ADD COLUMN preis_pro_tag FLOAT DEFAULT 0 AFTER verkaufspreis_einmalig");
-}
-
 // Ensure all image columns exist
 $image_columns = array('image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5');
 foreach ($image_columns as $column) {
@@ -88,7 +82,6 @@ if (isset($_POST['submit'])) {
     $description = sanitize_textarea_field($_POST['description']);
     $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
     $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
-    $preis_pro_tag          = isset($_POST['preis_pro_tag']) ? floatval($_POST['preis_pro_tag']) : 0;
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
     $delivery_time = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
@@ -111,7 +104,6 @@ if (isset($_POST['submit'])) {
             'description'            => $description,
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'preis_pro_tag'         => $preis_pro_tag,
             'base_price'             => $mietpreis_monatlich,
             'available'              => $available,
             'availability_note'      => $availability_note,
@@ -125,7 +117,7 @@ if (isset($_POST['submit'])) {
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
@@ -170,7 +162,7 @@ if (isset($_POST['submit'])) {
             }
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
-            produkt_sync_sale_price($variant_id, $preis_pro_tag, $product_id, $mode);
+            produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $product_id, $mode);
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
@@ -184,7 +176,6 @@ if (isset($_POST['submit'])) {
             'description'            => $description,
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'preis_pro_tag'         => $preis_pro_tag,
             'base_price'             => $mietpreis_monatlich,
             'available'              => $available,
             'availability_note'      => $availability_note,
@@ -197,7 +188,7 @@ if (isset($_POST['submit'])) {
             $table_name,
             $insert_data,
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
                 array_fill(0, 5, '%s')
             )
         );
@@ -225,7 +216,7 @@ if (isset($_POST['submit'])) {
             }
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
-            produkt_sync_sale_price($variant_id, $preis_pro_tag, $product_id, $mode);
+            produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $product_id, $mode);
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {

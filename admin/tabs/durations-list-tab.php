@@ -43,10 +43,9 @@
             
             <div class="produkt-duration-content">
                 <div class="produkt-duration-info">
-                    <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
                     <div class="produkt-duration-months">
                         <strong><?php echo $duration->months_minimum; ?></strong>
-                        <small><?php echo $modus === 'verkauf' ? 'Tag' . ($duration->months_minimum != 1 ? 'e' : '') : 'Monat' . ($duration->months_minimum > 1 ? 'e' : ''); ?> Mindestlaufzeit</small>
+                        <small>Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?> Mindestlaufzeit</small>
                     </div>
                     
                     <?php if ($duration->show_badge): ?>

@@ -28,10 +28,6 @@
                     <label>Einmaliger Verkaufspreis</label>
                     <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="z.B. 199.00">
                 </div>
-                <div class="produkt-form-group">
-                    <label>Preis pro Tag</label>
-                    <input type="number" step="0.01" name="preis_pro_tag" placeholder="z.B. 5.00">
-                </div>
             </div>
             
             <div class="produkt-form-group">
