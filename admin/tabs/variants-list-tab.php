@@ -93,6 +93,10 @@
                         <strong><?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€</strong>
                         <small>einmalig</small>
                     </div>
+                    <div class="produkt-variant-sale-price">
+                        <strong><?php echo number_format($variant->preis_pro_tag, 2, ',', '.'); ?>€</strong>
+                        <small>/Tag</small>
+                    </div>
                     <?php if ($missing_price): ?>
                         <span class="badge badge-warning">Preis fehlt bei Stripe</span>
                     <?php endif; ?>

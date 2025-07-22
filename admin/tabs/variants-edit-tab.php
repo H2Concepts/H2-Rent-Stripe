@@ -30,6 +30,10 @@ $verkaufspreis_einmalig = floatval($edit_item->verkaufspreis_einmalig);
                     <label>Einmaliger Verkaufspreis</label>
                     <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($verkaufspreis_einmalig); ?>">
                 </div>
+                <div class="produkt-form-group">
+                    <label>Preis pro Tag</label>
+                    <input type="number" step="0.01" name="preis_pro_tag" value="<?php echo esc_attr($edit_item->preis_pro_tag); ?>">
+                </div>
             </div>
             
             <div class="produkt-form-group">

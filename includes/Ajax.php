@@ -49,13 +49,16 @@ class Ajax {
         
         
         
-        if ($variant && ($duration || $modus === 'verkauf')) {
+        if ($variant && $duration) {
             $variant_price = 0;
             $used_price_id  = '';
 
             if ($modus === 'verkauf') {
-                $variant_price = floatval($variant->verkaufspreis_einmalig);
+                $days = intval($duration->months_minimum);
+                $variant_price = floatval($variant->preis_pro_tag);
                 $used_price_id = $variant->stripe_price_id;
+                $base_price = $variant_price * $days;
+                $duration_price = $base_price;
             } else {
                 // Determine the Stripe price ID to send to checkout
                 $price_id_to_use = $wpdb->get_var($wpdb->prepare(
@@ -106,14 +109,14 @@ class Ajax {
             }
 
             // Base price for the variant
-            $base_price = $variant_price;
-
             if ($modus === 'verkauf') {
+                $base_price = $variant_price * $days;
                 $final_price = $base_price + $extras_price;
                 $duration_price = $base_price;
                 $original_price = null;
                 $discount = 0;
             } else {
+                $base_price = $variant_price;
                 $duration_custom_price = $wpdb->get_var($wpdb->prepare(
                     "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
                     $duration_id,
@@ -874,6 +877,12 @@ function produkt_create_subscription() {
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
 
+        $duration_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+            $duration_id
+        ));
+        $days_count = $duration_row ? intval($duration_row->months_minimum) : 1;
+
         $items = [[ 'price' => $price_id, 'quantity' => 1 ]];
         $sub_params = [
             'customer' => $customer->id,
@@ -912,7 +921,7 @@ function produkt_create_subscription() {
         if ($mode === 'verkauf') {
             $session = StripeService::create_checkout_session_for_sale([
                 'price_id'       => $price_id,
-                'quantity'       => 1,
+                'quantity'       => max(1, $days_count),
                 'customer_email' => sanitize_email($body['email'] ?? ''),
                 'metadata'       => $sub_params['metadata'],
                 'reference'      => $variant_id ? "var-$variant_id" : null,
@@ -974,6 +983,12 @@ function produkt_create_checkout_session() {
         $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
 
+        $duration_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT months_minimum FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+            $duration_id
+        ));
+        $days_count = $duration_row ? intval($duration_row->months_minimum) : 1;
+
         $metadata = [
             'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
             'extra'         => sanitize_text_field($body['extra'] ?? ''),
@@ -999,7 +1014,7 @@ function produkt_create_checkout_session() {
         if ($modus === 'kauf') {
             $session = StripeService::create_checkout_session_for_sale([
                 'price_id'       => $price_id,
-                'quantity'       => 1,
+                'quantity'       => max(1, $days_count),
                 'customer_email' => $customer_email,
                 'metadata'       => $metadata,
                 'reference'      => $variant_id ? "var-$variant_id" : null,

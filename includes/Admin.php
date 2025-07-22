@@ -295,8 +295,8 @@ class Admin {
                 'nonce' => wp_create_nonce('produkt_nonce'),
                 'publishable_key' => StripeService::get_publishable_key(),
                 'checkout_url' => Plugin::get_checkout_page_url(),
-                'price_period' => $category->price_period ?? 'month',
-                'price_label' => $category->price_label ?? ($modus === 'verkauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
+                'price_period' => $category->price_period ?? ($modus === 'verkauf' ? 'day' : 'month'),
+                'price_label' => $category->price_label ?? ($modus === 'verkauf' ? 'Tagespreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
                 'popup_settings' => [

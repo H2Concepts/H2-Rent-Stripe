@@ -102,18 +102,18 @@ function produkt_deactivate_stripe_price($price_id) {
     );
 }
 
-function produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $stripe_product_id, $mode = '') {
+function produkt_sync_sale_price($variant_id, $preis_pro_tag, $stripe_product_id, $mode = '') {
     if ($mode === '') {
         $mode = get_option('produkt_betriebsmodus', 'miete');
     }
 
-    if ($verkaufspreis_einmalig > 0 && $mode === 'kauf' && $stripe_product_id) {
+    if ($preis_pro_tag > 0 && $mode === 'kauf' && $stripe_product_id) {
         try {
             $stripe_price = \Stripe\Price::create([
-                'unit_amount' => intval($verkaufspreis_einmalig * 100),
+                'unit_amount' => intval($preis_pro_tag * 100),
                 'currency'    => 'eur',
                 'product'     => $stripe_product_id,
-                'nickname'    => 'Einmalverkauf',
+                'nickname'    => 'Tagespreis',
             ]);
 
             global $wpdb;

@@ -20,8 +20,9 @@
                     <label>Name *</label>
                     <input type="text" name="name" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
                 </div>
+                <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
                 <div class="produkt-form-group">
-                    <label>Mindestmonate *</label>
+                    <label>Mindestmietdauer (<?php echo $modus === 'verkauf' ? 'Tage' : 'Monate'; ?>) *</label>
                     <input type="number" name="months_minimum" min="1" required placeholder="1">
                 </div>
             </div>

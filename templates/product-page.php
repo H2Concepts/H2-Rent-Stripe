@@ -138,7 +138,7 @@ $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
 $modus = get_option('produkt_betriebsmodus', 'miete');
-$price_label = $ui['price_label'] ?? ($modus === 'verkauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
+$price_label = $ui['price_label'] ?? ($modus === 'verkauf' ? 'Tagespreis' : 'Monatlicher Mietpreis');
 $shipping_label = 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';
 $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
@@ -291,7 +291,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <?php
                                     $display_price = 0;
                                     if ($modus === 'verkauf') {
-                                        $display_price = floatval($variant->verkaufspreis_einmalig);
+                                        $display_price = floatval($variant->preis_pro_tag);
                                     } else {
                                         if (!empty($variant->stripe_price_id)) {
                                             $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
@@ -301,7 +301,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                         }
                                     }
                                 ?>
-                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'verkauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
+                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'verkauf' ? '/Tag' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
                                         <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>
@@ -373,7 +373,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                     <?php endif; ?>
                                 </div>
                                 <p class="produkt-duration-info">
-                                    Mindestlaufzeit: <?php echo $duration->months_minimum; ?> Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?>
+                                    Mindestlaufzeit: <?php echo $duration->months_minimum; ?> <?php echo $modus === 'verkauf' ? 'Tag' . ($duration->months_minimum != 1 ? 'e' : '') : 'Monat' . ($duration->months_minimum > 1 ? 'e' : ''); ?>
                                 </p>
                             </div>
                             <div class="produkt-option-check">✓</div>
