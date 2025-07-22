@@ -1729,7 +1729,7 @@ class Database {
     /**
      * Check if a product has at least one variant.
      *
-     * @param int $produkt_id ID of the product/category
+     * @param int $produkt_id ID of the product
      * @return bool True if variants exist, false otherwise
      */
     public static function has_variants($produkt_id) {
@@ -1737,7 +1737,7 @@ class Database {
         $table = $wpdb->prefix . 'produkt_variants';
         $count = $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(*) FROM $table WHERE category_id = %d",
+                "SELECT COUNT(*) FROM $table WHERE produkt_id = %d",
                 $produkt_id
             )
         );
