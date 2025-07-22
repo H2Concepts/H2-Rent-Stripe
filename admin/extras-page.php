@@ -54,7 +54,8 @@ if (isset($_POST['submit'])) {
     $modus       = get_option('produkt_betriebsmodus', 'miete');
     $sale_price  = isset($_POST['sale_price']) ? floatval($_POST['sale_price']) : 0;
     $price       = isset($_POST['price']) ? floatval($_POST['price']) : 0;
-    $stripe_price = $modus === 'kauf' ? $sale_price : $price;
+    $price_input = $modus === 'kauf' ? ($_POST['sale_price'] ?? '') : ($_POST['price'] ?? '');
+    $stripe_price = floatval($price_input);
     $image_url = esc_url_raw($_POST['image_url']);
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
