@@ -118,7 +118,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         global $wpdb;
         $existing_order = $wpdb->get_row($wpdb->prepare(
-            "SELECT id, status, created_at, category_id, shipping_cost FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+            "SELECT id, status, created_at, category_id, shipping_cost, variant_id FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
             $session->id
         ));
         $existing_id = $existing_order->id ?? 0;
@@ -202,6 +202,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             send_produkt_welcome_email($data, $existing_id);
             send_admin_order_email($data, $existing_id, $session->id);
             produkt_add_order_log($existing_id, 'welcome_email_sent');
+        }
+
+        if ($existing_order && $existing_order->variant_id) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                $existing_order->variant_id
+            ));
         }
         }
     }

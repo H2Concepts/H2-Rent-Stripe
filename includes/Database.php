@@ -46,7 +46,10 @@ class Database {
             'image_url_5' => 'TEXT',
             'available' => 'TINYINT(1) DEFAULT 1',
             'availability_note' => 'VARCHAR(255) DEFAULT ""',
-            'delivery_time' => 'VARCHAR(255) DEFAULT ""'
+            'delivery_time' => 'VARCHAR(255) DEFAULT ""',
+            'sku' => 'VARCHAR(100) DEFAULT ""',
+            'stock_available' => 'INT DEFAULT 0',
+            'stock_rented' => 'INT DEFAULT 0'
         );
         
         foreach ($columns_to_add as $column => $type) {
@@ -66,6 +69,12 @@ class Database {
                     $after = 'mietpreis_monatlich';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
+                } elseif ($column === 'sku') {
+                    $after = 'delivery_time';
+                } elseif ($column === 'stock_available') {
+                    $after = 'sku';
+                } elseif ($column === 'stock_rented') {
+                    $after = 'stock_available';
                 } else {
                     $after = 'base_price';
                 }
@@ -937,6 +946,9 @@ class Database {
             available tinyint(1) DEFAULT 1,
             availability_note varchar(255) DEFAULT '',
             delivery_time varchar(255) DEFAULT '',
+            sku varchar(100) DEFAULT '',
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)

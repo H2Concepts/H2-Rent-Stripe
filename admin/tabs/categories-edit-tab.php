@@ -43,6 +43,7 @@
             <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
             <a href="#" class="produkt-subtab" data-tab="filters">Filter</a>
+            <a href="#" class="produkt-subtab" data-tab="inventory">Lagerverwaltung</a>
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
@@ -390,6 +391,62 @@
         </div>
         </div><!-- end tab-filters -->
 
+        <div id="tab-inventory" class="produkt-subtab-content">
+        <div class="produkt-form-section">
+            <h4>📦 Lagerverwaltung</h4>
+            <?php
+                $variants = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+                        $edit_item->id
+                    )
+                );
+            ?>
+            <?php if (empty($variants)): ?>
+                <p>Bitte zuerst eine Ausführung erstellen.</p>
+            <?php else: ?>
+                <table class="produkt-inventory-table widefat striped">
+                    <thead>
+                        <tr>
+                            <th>Ausführung</th>
+                            <th>Preis</th>
+                            <th>Menge</th>
+                            <th>SKU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($variants as $v): ?>
+                        <tr>
+                            <td><?php echo esc_html($v->name); ?></td>
+                            <td><?php echo number_format((float)$v->base_price, 2, ',', '.'); ?>€</td>
+                            <td class="inventory-cell">
+                                <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
+                                    <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
+                                </div>
+                                <div class="inventory-popup" id="inv-popup-<?php echo $v->id; ?>">
+                                    <label>Verfügbar</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">-</button>
+                                        <input type="number" id="avail-<?php echo $v->id; ?>" name="stock_available[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_available); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">+</button>
+                                    </div>
+                                    <label>In Vermietung</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $v->id; ?>">-</button>
+                                        <input type="number" id="rent-<?php echo $v->id; ?>" name="stock_rented[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_rented); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $v->id; ?>">+</button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        </div><!-- end tab-inventory -->
+
 
 
 
@@ -641,6 +698,47 @@ document.addEventListener('DOMContentLoaded', function() {
             e.target.closest('.produkt-page-block').remove();
         }
     });
+
+    // Inventory management popup logic
+    document.querySelectorAll('.inventory-trigger').forEach(function(trig){
+        trig.addEventListener('click', function(e){
+            e.preventDefault();
+            var id = this.dataset.variant;
+            var popup = document.getElementById('inv-popup-' + id);
+            if (popup) {
+                popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    });
+    document.querySelectorAll('.inventory-popup .inv-minus').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var target = document.getElementById(this.dataset.target);
+            if (target) {
+                target.value = Math.max(0, parseInt(target.value || 0) - 1);
+                if (this.dataset.variant) updateAvail(this.dataset.variant);
+            }
+        });
+    });
+    document.querySelectorAll('.inventory-popup .inv-plus').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var target = document.getElementById(this.dataset.target);
+            if (target) {
+                target.value = parseInt(target.value || 0) + 1;
+                if (this.dataset.variant) updateAvail(this.dataset.variant);
+            }
+        });
+    });
+    document.querySelectorAll('.inventory-popup input').forEach(function(inp){
+        inp.addEventListener('input', function(){
+            var id = this.id.replace(/^(avail|rent)-/, '');
+            updateAvail(id);
+        });
+    });
+    function updateAvail(id){
+        var input = document.getElementById('avail-' + id);
+        var span = document.querySelector('.inventory-trigger[data-variant="' + id + '"] .inventory-available-count');
+        if (input && span) span.textContent = input.value;
+    }
 
     function attachMediaButton(btn) {
         if (!btn) return;

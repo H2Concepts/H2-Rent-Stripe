@@ -2676,3 +2676,43 @@
     border-radius: 4px;
     cursor: pointer;
 }
+
+/* Inventory table */
+.produkt-inventory-table .inventory-trigger {
+    cursor: pointer;
+    display: inline-block;
+    padding: 4px 8px;
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.produkt-inventory-table td {
+    position: relative;
+}
+.inventory-popup {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    padding: 10px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.inventory-popup label {
+    display: block;
+    margin-top: 6px;
+    font-weight: 600;
+}
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+.quantity-control button {
+    width: 24px;
+    height: 24px;
+    line-height: 1;
+}
+
