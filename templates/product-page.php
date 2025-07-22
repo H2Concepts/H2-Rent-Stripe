@@ -262,6 +262,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
+
+                <?php if ($modus === 'verkauf'): ?>
+                <div class="produkt-section" id="booking-section">
+                    <h3>Buchungszeitraum</h3>
+                    <div class="produkt-booking-range">
+                        <input type="date" id="produkt-date-start">
+                        <span class="produkt-date-separator">bis</span>
+                        <input type="date" id="produkt-date-end">
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -463,6 +474,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <input type="hidden" name="shipping" id="produkt-field-shipping">
                         <input type="hidden" name="variant_id" id="produkt-field-variant-id">
                         <input type="hidden" name="duration_id" id="produkt-field-duration-id">
+                        <input type="hidden" name="start_date" id="produkt-field-start-date">
+                        <input type="hidden" name="end_date" id="produkt-field-end-date">
+                        <input type="hidden" name="days" id="produkt-field-days">
                         <input type="hidden" name="price_id" id="produkt-field-price-id">
                         <input type="hidden" name="jetzt_mieten" value="1">
                     <div class="produkt-availability-wrapper" id="produkt-availability-wrapper" style="display:none;">

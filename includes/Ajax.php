@@ -14,6 +14,7 @@ class Ajax {
         $condition_id = isset($_POST['condition_id']) ? intval($_POST['condition_id']) : null;
         $product_color_id = isset($_POST['product_color_id']) ? intval($_POST['product_color_id']) : null;
         $frame_color_id = isset($_POST['frame_color_id']) ? intval($_POST['frame_color_id']) : null;
+        $days = isset($_POST['days']) ? max(1, intval($_POST['days'])) : 1;
         
         global $wpdb;
         
@@ -108,8 +109,8 @@ class Ajax {
             // Base price for the variant
             $base_price = $variant_price;
 
-            if ($modus === 'verkauf') {
-                $final_price = $base_price + $extras_price;
+            if ($modus === 'verkauf' || $modus === 'kauf') {
+                $final_price = ($base_price + $extras_price) * $days;
                 $duration_price = $base_price;
                 $original_price = null;
                 $discount = 0;
@@ -783,6 +784,10 @@ function produkt_create_payment_intent() {
 
     $body = json_decode(file_get_contents('php://input'), true);
 
+    $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
+    $start_date = sanitize_text_field($body['start_date'] ?? '');
+    $end_date   = sanitize_text_field($body['end_date'] ?? '');
+
     try {
         $preis = intval($body['preis']);
         $beschreibung = sprintf(
@@ -905,6 +910,9 @@ function produkt_create_subscription() {
                 'postal'      => $body['postal'] ?? '',
                 'city'        => $body['city'] ?? '',
                 'country'     => $body['country'] ?? '',
+                'start_date'  => $start_date,
+                'end_date'    => $end_date,
+                'days'        => $days,
             ],
         ];
 
@@ -912,7 +920,7 @@ function produkt_create_subscription() {
         if ($mode === 'verkauf') {
             $session = StripeService::create_checkout_session_for_sale([
                 'price_id'       => $price_id,
-                'quantity'       => 1,
+                'quantity'       => $days,
                 'customer_email' => sanitize_email($body['email'] ?? ''),
                 'metadata'       => $sub_params['metadata'],
                 'reference'      => $variant_id ? "var-$variant_id" : null,
@@ -949,6 +957,9 @@ function produkt_create_checkout_session() {
         }
 
         $body = json_decode(file_get_contents('php://input'), true);
+        $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
+        $start_date = sanitize_text_field($body['start_date'] ?? '');
+        $end_date   = sanitize_text_field($body['end_date'] ?? '');
         $price_id = sanitize_text_field($body['price_id'] ?? '');
         if (!$price_id) {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
@@ -985,6 +996,9 @@ function produkt_create_checkout_session() {
             'email'         => $customer_email,
             'user_ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent'    => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+            'start_date'    => $start_date,
+            'end_date'      => $end_date,
+            'days'          => $days,
         ];
         if ($shipping_price_id) {
             $metadata['shipping_price_id'] = $shipping_price_id;
@@ -992,14 +1006,14 @@ function produkt_create_checkout_session() {
 
         $line_items = [[
             'price'    => $price_id,
-            'quantity' => 1,
+            'quantity' => $days,
         ]];
 
         $modus = get_option('produkt_betriebsmodus', 'miete');
         if ($modus === 'kauf') {
             $session = StripeService::create_checkout_session_for_sale([
                 'price_id'       => $price_id,
-                'quantity'       => 1,
+                'quantity'       => $days,
                 'customer_email' => $customer_email,
                 'metadata'       => $metadata,
                 'reference'      => $variant_id ? "var-$variant_id" : null,
@@ -1026,7 +1040,7 @@ function produkt_create_checkout_session() {
                 if (!empty($price)) {
                     $line_items[] = [
                         'price'    => $price,
-                        'quantity' => 1,
+                        'quantity' => ($modus === 'kauf') ? $days : 1,
                     ];
                 }
             }
@@ -1136,7 +1150,10 @@ function produkt_create_embedded_checkout_session() {
         }
 
         $body = json_decode(file_get_contents('php://input'), true);
-        $price_id = sanitize_text_field($body['price_id'] ?? '');
+        $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
+        $start_date = sanitize_text_field($body['start_date'] ?? '');
+        $end_date   = sanitize_text_field($body['end_date'] ?? '');
+        $price_id   = sanitize_text_field($body['price_id'] ?? '');
         if (!$price_id) {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
@@ -1183,6 +1200,9 @@ function produkt_create_embedded_checkout_session() {
             'email'         => $customer_email,
             'user_ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent'    => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+            'start_date'    => $start_date,
+            'end_date'      => $end_date,
+            'days'          => $days,
         ];
         if ($shipping_price_id) {
             $metadata['shipping_price_id'] = $shipping_price_id;
@@ -1190,13 +1210,13 @@ function produkt_create_embedded_checkout_session() {
 
         $line_items = [[
             'price'    => $price_id,
-            'quantity' => 1,
+            'quantity' => $days,
         ]];
 
         foreach ($extra_price_ids as $extra_price_id) {
             $line_items[] = [
                 'price'    => $extra_price_id,
-                'quantity' => 1,
+                'quantity' => ($modus === 'kauf') ? $days : 1,
             ];
         }
 
@@ -1233,7 +1253,7 @@ function produkt_create_embedded_checkout_session() {
         $session = \Stripe\Checkout\Session::create([
             'ui_mode'      => 'embedded',
             'line_items'   => $line_items,
-            'mode'         => 'subscription',
+            'mode'         => ($modus === 'kauf' ? 'payment' : 'subscription'),
             'allow_promotion_codes' => true,
             'return_url'   => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'automatic_tax'=> ['enabled' => true],

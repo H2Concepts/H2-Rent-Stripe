@@ -16,6 +16,9 @@ jQuery(document).ready(function($) {
     let currentShippingCost = 0;
     let currentPriceId = '';
     let shippingPriceId = '';
+    let startDate = null;
+    let endDate = null;
+    let selectedDays = 0;
     let colorNotificationTimeout = null;
     // Get category ID from container
     const container = $('.produkt-container');
@@ -41,6 +44,9 @@ jQuery(document).ready(function($) {
         selectedCondition = null;
         selectedProductColor = null;
         selectedFrameColor = null;
+        startDate = null;
+        endDate = null;
+        selectedDays = 0;
 
         $('.produkt-option.selected').removeClass('selected');
         $('#selected-product-color-name').text('');
@@ -60,6 +66,11 @@ jQuery(document).ready(function($) {
         } else {
             destroyMobileStickyPrice();
         }
+    });
+
+    $('#produkt-date-start, #produkt-date-end').on('change', function() {
+        updateSelectedDays();
+        updatePriceAndButton();
     });
 
     // Handle option selection
@@ -192,6 +203,9 @@ jQuery(document).ready(function($) {
             if (selectedVariant) params.set('variant_id', selectedVariant);
             if (extraIds) params.set('extra_ids', extraIds);
             if (selectedDuration) params.set('duration_id', selectedDuration);
+            if (startDate) params.set('start_date', startDate);
+            if (endDate) params.set('end_date', endDate);
+            if (selectedDays) params.set('days', selectedDays);
             if (selectedCondition) params.set('condition_id', selectedCondition);
             if (selectedProductColor) params.set('product_color_id', selectedProductColor);
             if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
@@ -613,7 +627,11 @@ jQuery(document).ready(function($) {
         const requiredSelections = [];
         if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
         if ($('.produkt-options.extras').length > 0) requiredSelections.push(true);
-        if ($('.produkt-options.durations').length > 0) requiredSelections.push(selectedDuration);
+        if (produkt_ajax.betriebsmodus === 'verkauf') {
+            requiredSelections.push(selectedDays > 0);
+        } else if ($('.produkt-options.durations').length > 0) {
+            requiredSelections.push(selectedDuration);
+        }
         
         // Check for visible optional sections
         if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
@@ -645,6 +663,7 @@ jQuery(document).ready(function($) {
                     condition_id: selectedCondition,
                     product_color_id: selectedProductColor,
                     frame_color_id: selectedFrameColor,
+                    days: selectedDays,
                     nonce: produkt_ajax.nonce
                 },
                 success: function(response) {
@@ -842,6 +861,25 @@ jQuery(document).ready(function($) {
             hideMobileStickyPrice();
             $('#mobile-sticky-price').remove();
         }
+    }
+
+    function updateSelectedDays() {
+        const start = $('#produkt-date-start').val();
+        const end = $('#produkt-date-end').val();
+        startDate = start || null;
+        endDate = end || null;
+        selectedDays = 0;
+        if (startDate && endDate) {
+            const s = new Date(startDate);
+            const e = new Date(endDate);
+            const diff = Math.round((e - s) / (1000 * 60 * 60 * 24)) + 1;
+            if (diff > 0) {
+                selectedDays = diff;
+            }
+        }
+        $('#produkt-field-start-date').val(startDate || '');
+        $('#produkt-field-end-date').val(endDate || '');
+        $('#produkt-field-days').val(selectedDays);
     }
 
     function showGalleryNotification() {

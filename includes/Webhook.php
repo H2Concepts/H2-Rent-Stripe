@@ -79,6 +79,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
         $extra         = sanitize_text_field($metadata['extra'] ?? '');
         $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
+        $start_date    = sanitize_text_field($metadata['start_date'] ?? '');
+        $end_date      = sanitize_text_field($metadata['end_date'] ?? '');
+        $days          = intval($metadata['days'] ?? 0);
         $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
         $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
 
@@ -116,6 +119,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         }
 
         $discount_amount = ($session->total_details->amount_discount ?? 0) / 100;
+
+        if (!$dauer && $days > 0) {
+            $dauer = $days . ' Tag' . ($days > 1 ? 'e' : '');
+            if ($start_date && $end_date) {
+                $dauer .= ' (' . $start_date . ' - ' . $end_date . ')';
+            }
+        }
 
         $data = [
             'customer_email'    => $email,
