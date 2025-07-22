@@ -122,6 +122,17 @@ class Admin {
             array($this, 'orders_page')
         );
 
+        if ($is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Kalender',
+                'Kalender',
+                'manage_options',
+                'produkt-calendar',
+                array($this, 'calendar_page')
+            );
+        }
+
         // Global shipping settings
         add_submenu_page(
             'produkt-verleih',
@@ -932,6 +943,9 @@ class Admin {
         include PRODUKT_PLUGIN_PATH . 'admin/filters-page.php';
     }
 
+    public function calendar_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/calendar-page.php';
+    }
 
     public function settings_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/settings-page.php';
