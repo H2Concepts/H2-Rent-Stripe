@@ -23,9 +23,10 @@ $first_day_ts = strtotime(sprintf('%04d-%02d-01', $year, $month));
 $last_day      = intval(date('t', $first_day_ts));
 $start_index   = (int)date('N', $first_day_ts) - 1; // 0=Mo
 
-// collect booking days per status
-$booked = [];
-$orders = $wpdb->get_results("SELECT dauer_text, status FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf'");
+// collect booking days and orders per day
+$booked        = [];
+$orders_by_day = [];
+$orders = $wpdb->get_results("SELECT id, dauer_text, status, final_price, produkt_name, customer_name, customer_email, extra_text FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf'");
 foreach ($orders as $o) {
     if (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $o->dauer_text, $m)) {
         $start = strtotime($m[1]);
@@ -39,6 +40,15 @@ foreach ($orders as $o) {
             if ($status === 'open') {
                 $booked[$d] = 'open';
             }
+            $orders_by_day[$d][] = [
+                'id'       => $o->id,
+                'produkt'  => $o->produkt_name,
+                'customer' => $o->customer_name,
+                'email'    => $o->customer_email,
+                'price'    => $o->final_price,
+                'status'   => $o->status,
+                'extras'   => $o->extra_text,
+            ];
             $start = strtotime('+1 day', $start);
         }
     }
@@ -74,7 +84,7 @@ foreach ($orders as $o) {
                 $cls = $booked[$date] === 'completed' ? 'booked-completed' : 'booked-open';
             }
         ?>
-            <div class="calendar-day <?php echo $cls; ?>"><?php echo $d; ?></div>
+            <div class="calendar-day <?php echo $cls; ?>" data-date="<?php echo $date; ?>"><?php echo $d; ?></div>
         <?php endfor; ?>
     </div>
 </div>
@@ -101,3 +111,48 @@ foreach ($orders as $o) {
     background:#d4edda;
 }
 </style>
+
+<div id="order-details-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button type="button" class="modal-close" onclick="closeOrderDetails()">&times;</button>
+        <h3 style="margin-top:0;">Bestellungen am <span id="modal-date"></span></h3>
+        <div id="order-details-content"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const ordersByDay = <?php echo json_encode($orders_by_day); ?>;
+    const modal = document.getElementById('order-details-modal');
+    const modalDate = document.getElementById('modal-date');
+    const content = document.getElementById('order-details-content');
+
+    document.querySelectorAll('#produkt-admin-calendar .calendar-day').forEach(function(day){
+        day.addEventListener('click', function(){
+            const date = this.dataset.date;
+            if (!date || !ordersByDay[date]) return;
+            modalDate.textContent = date;
+            let html = '';
+            ordersByDay[date].forEach(function(o){
+                html += '<div style="margin-bottom:15px;">';
+                html += '<strong>#'+o.id+'</strong> '+o.produkt+'<br>';
+                if (o.customer) html += o.customer+'<br>';
+                if (o.email) html += o.email+'<br>';
+                html += parseFloat(o.price).toFixed(2).replace('.', ',')+'€ - '+o.status;
+                if (o.extras) html += '<br>Extras: '+o.extras;
+                html += '</div>';
+            });
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        });
+    });
+
+    modal.addEventListener('click', function(e){
+        if (e.target === modal) modal.style.display = 'none';
+    });
+});
+
+function closeOrderDetails(){
+    document.getElementById('order-details-modal').style.display = 'none';
+}
+</script>
