@@ -124,14 +124,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
         $name = sanitize_text_field($_POST['name'] ?? '');
         $description = sanitize_textarea_field($_POST['description'] ?? '');
-        $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich'] ?? 0.0);
-        $verkaufspreis_einmalig = floatval($_POST['verkaufspreis_einmalig'] ?? 0.0);
+        $mietpreis_monatlich    = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $mode = sanitize_text_field($_POST['mode'] ?? 'miete');
         $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
         $available = isset($_POST['available']) ? 1 : 0;
         $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
         $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
         $active = 1;
-        $sort_order = 0;
+        $sort_order = intval($_POST['sort_order'] ?? 0);
         $image_data = is_array($image_data ?? null) ? $image_data : [];
 
         $variablen = [
@@ -254,14 +255,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         $category_id = isset($_POST['category_id']) ? intval($_POST['category_id']) : 0;
         $name = sanitize_text_field($_POST['name'] ?? '');
         $description = sanitize_textarea_field($_POST['description'] ?? '');
-        $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich'] ?? 0.0);
-        $verkaufspreis_einmalig = floatval($_POST['verkaufspreis_einmalig'] ?? 0.0);
+        $mietpreis_monatlich    = isset($_POST['mietpreis_monatlich']) ? floatval($_POST['mietpreis_monatlich']) : 0;
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $mode = sanitize_text_field($_POST['mode'] ?? 'miete');
         $base_price = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
         $available = isset($_POST['available']) ? 1 : 0;
         $availability_note = sanitize_text_field($_POST['availability_note'] ?? '');
         $delivery_time = sanitize_text_field($_POST['delivery_time'] ?? '');
         $active = 1;
-        $sort_order = 0;
+        $sort_order = intval($_POST['sort_order'] ?? 0);
         $image_data = is_array($image_data ?? null) ? $image_data : [];
 
         $variablen = [
@@ -296,7 +298,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['produkt_admin_nonce']
         ), $image_data);
 
         echo '<pre>'; print_r($_POST); echo '</pre>';
-        error_log('🛠️ Variablen beim Speichern: ' . print_r($variablen, true));
         echo '<div class="notice notice-warning"><pre>';
         print_r([
             'mode' => $mode,
