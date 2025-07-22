@@ -13,6 +13,16 @@ if (empty($price_id_exists)) {
     $after = $product_id_exists ? 'stripe_product_id' : 'name';
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
 }
+$rent_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id_rent'");
+if (empty($rent_id_exists)) {
+    $after = !empty($price_id_exists) ? 'stripe_price_id' : ($product_id_exists ? 'stripe_product_id' : 'name');
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id_rent VARCHAR(255) DEFAULT NULL AFTER $after");
+}
+$sale_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id_sale'");
+if (empty($sale_id_exists)) {
+    $after = !empty($rent_id_exists) ? 'stripe_price_id_rent' : (!empty($price_id_exists) ? 'stripe_price_id' : ($product_id_exists ? 'stripe_product_id' : 'name'));
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id_sale VARCHAR(255) DEFAULT NULL AFTER $after");
+}
 
 // Handle form submissions
 if (isset($_POST['submit_extra'])) {
@@ -67,7 +77,13 @@ if (isset($_POST['submit_extra'])) {
                 \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $stripe_product_name);
                 $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($stripe_price * 100), $modus);
                 if (!is_wp_error($new_price)) {
-                    $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $extra_id], ['%s'], ['%d']);
+                    $update = ['stripe_price_id' => $new_price->id];
+                    if ($modus === 'kauf') {
+                        $update['stripe_price_id_sale'] = $new_price->id;
+                    } else {
+                        $update['stripe_price_id_rent'] = $new_price->id;
+                    }
+                    $wpdb->update($table_name, $update, ['id' => $extra_id], null, ['%d']);
                 }
             } else {
                 $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $stripe_price, $main_product_name, $modus);
@@ -75,10 +91,16 @@ if (isset($_POST['submit_extra'])) {
                     error_log('❌ Fehler beim Stripe Extra-Preis: ' . $res->get_error_message());
                 } elseif (!empty($res['price_id'])) {
                     error_log('✅ Extra-Preis erfolgreich erstellt: ' . $res['price_id']);
-                    $wpdb->update($table_name, [
+                    $update = [
                         'stripe_product_id' => $res['product_id'],
                         'stripe_price_id'   => $res['price_id'],
-                    ], ['id' => $extra_id]);
+                    ];
+                    if ($modus === 'kauf') {
+                        $update['stripe_price_id_sale'] = $res['price_id'];
+                    } else {
+                        $update['stripe_price_id_rent'] = $res['price_id'];
+                    }
+                    $wpdb->update($table_name, $update, ['id' => $extra_id]);
                 } else {
                     error_log('⚠️ Keine Fehler, aber auch kein Preis erstellt.');
                 }
@@ -107,10 +129,16 @@ if (isset($_POST['submit_extra'])) {
                 error_log('❌ Fehler beim Stripe Extra-Preis: ' . $res->get_error_message());
             } elseif (!empty($res['price_id'])) {
                 error_log('✅ Extra-Preis erfolgreich erstellt: ' . $res['price_id']);
-                $wpdb->update($table_name, [
+                $update = [
                     'stripe_product_id' => $res['product_id'],
                     'stripe_price_id'   => $res['price_id'],
-                ], ['id' => $extra_id]);
+                ];
+                if ($modus === 'kauf') {
+                    $update['stripe_price_id_sale'] = $res['price_id'];
+                } else {
+                    $update['stripe_price_id_rent'] = $res['price_id'];
+                }
+                $wpdb->update($table_name, $update, ['id' => $extra_id]);
             } else {
                 error_log('⚠️ Keine Fehler, aber auch kein Preis erstellt.');
             }
@@ -158,8 +186,8 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
             
             <?php $modus = get_option('produkt_betriebsmodus', 'miete');
                   $sale_price = 0;
-                  if ($modus === 'kauf' && $edit_item && !empty($edit_item->stripe_price_id)) {
-                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id);
+                  if ($modus === 'kauf' && $edit_item && !empty($edit_item->stripe_price_id_sale)) {
+                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
                       if (!is_wp_error($p)) {
                           $sale_price = $p;
                       }
@@ -244,8 +272,9 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                     <div class="produkt-item-meta">
                         <?php
                         $display_price = $extra->price;
-                        if (!empty($extra->stripe_price_id)) {
-                            $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                        $price_col = ($modus === 'kauf') ? ($extra->stripe_price_id_sale ?? '') : ($extra->stripe_price_id_rent ?? '');
+                        if (!empty($price_col)) {
+                            $p = \ProduktVerleih\StripeService::get_price_amount($price_col);
                             if (!is_wp_error($p)) {
                                 $display_price = $p;
                             }

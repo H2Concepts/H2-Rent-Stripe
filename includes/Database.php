@@ -103,6 +103,16 @@ class Database {
             $after = $product_id_exists ? 'stripe_product_id' : 'name';
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT NULL AFTER $after");
         }
+        $rent_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id_rent'");
+        if (empty($rent_id_exists)) {
+            $after = !empty($price_id_exists) ? 'stripe_price_id' : ($product_id_exists ? 'stripe_product_id' : 'name');
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id_rent VARCHAR(255) DEFAULT NULL AFTER $after");
+        }
+        $sale_id_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_price_id_sale'");
+        if (empty($sale_id_exists)) {
+            $after = !empty($rent_id_exists) ? 'stripe_price_id_rent' : (!empty($price_id_exists) ? 'stripe_price_id' : ($product_id_exists ? 'stripe_product_id' : 'name'));
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_price_id_sale VARCHAR(255) DEFAULT NULL AFTER $after");
+        }
 
         // Ensure stripe_archived column exists
         $archived_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stripe_archived'");
@@ -923,6 +933,8 @@ class Database {
             name varchar(255) NOT NULL,
             stripe_product_id varchar(255) DEFAULT NULL,
             stripe_price_id varchar(255) DEFAULT NULL,
+            stripe_price_id_rent varchar(255) DEFAULT NULL,
+            stripe_price_id_sale varchar(255) DEFAULT NULL,
             stripe_archived tinyint(1) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,

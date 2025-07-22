@@ -332,15 +332,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 <div class="produkt-section" id="extras-section">
                     <h3>Wählen Sie Ihre Extras</h3>
                     <div class="produkt-options extras layout-<?php echo esc_attr($layout_style); ?>" id="extras-container">
-                        <?php foreach ($extras as $extra): ?>
+                        <?php foreach ($extras as $extra):
+                            $pid = ($modus === 'kauf') ? ($extra->stripe_price_id_sale ?? '') : ($extra->stripe_price_id_rent ?? '');
+                        ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
-                             data-price-id="<?php echo esc_attr($extra->stripe_price_id ?? ''); ?>"
+                             data-price-id="<?php echo esc_attr($pid); ?>"
                              data-available="true">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
-                                <?php if (!empty($extra->stripe_price_id)) {
-                                    $p = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id);
+                                <?php if (!empty($pid)) {
+                                    $p = \ProduktVerleih\StripeService::get_price_amount($pid);
                                     if (!is_wp_error($p) && $p > 0) {
                                         echo '<div class="produkt-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
                                     }

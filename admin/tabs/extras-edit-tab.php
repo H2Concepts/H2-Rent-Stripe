@@ -18,8 +18,8 @@
             <h4>📝 Grunddaten</h4>
             <?php $modus = get_option('produkt_betriebsmodus', 'miete');
                   $sale_price = 0;
-                  if ($modus === 'kauf' && !empty($edit_item->stripe_price_id)) {
-                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id);
+                  if ($modus === 'kauf' && !empty($edit_item->stripe_price_id_sale)) {
+                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
                       if (!is_wp_error($p)) {
                           $sale_price = $p;
                       }

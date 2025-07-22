@@ -283,20 +283,21 @@ class Ajax {
                             $option->option_id
                         ));
                         if ($extra) {
-                            $extra_data = [
-                                'id'             => (int) $extra->id,
-                                'name'           => $extra->name,
-                                'price'          => $extra->price,
-                                'stripe_price_id'=> $extra->stripe_price_id,
-                                'image_url'      => $extra->image_url ?? '',
-                                'available'      => intval($option->available),
-                            ];
-                            if (!empty($extra->stripe_price_id)) {
-                                $amount = StripeService::get_price_amount($extra->stripe_price_id);
-                                if (!is_wp_error($amount)) {
-                                    $extra_data['price'] = $amount;
-                                }
+                        $extra_data = [
+                            'id'             => (int) $extra->id,
+                            'name'           => $extra->name,
+                            'price'          => $extra->price,
+                            'stripe_price_id'=> ($modus === 'kauf') ? $extra->stripe_price_id_sale : $extra->stripe_price_id_rent,
+                            'image_url'      => $extra->image_url ?? '',
+                            'available'      => intval($option->available),
+                        ];
+                        $pid = $extra_data['stripe_price_id'];
+                        if (!empty($pid)) {
+                            $amount = StripeService::get_price_amount($pid);
+                            if (!is_wp_error($amount)) {
+                                $extra_data['price'] = $amount;
                             }
+                        }
                             $extras[] = $extra_data;
                         }
                         break;
@@ -358,12 +359,13 @@ class Ajax {
                         'id'             => (int) $e->id,
                         'name'           => $e->name,
                         'price'          => $e->price,
-                        'stripe_price_id'=> $e->stripe_price_id,
+                        'stripe_price_id'=> ($modus === 'kauf') ? $e->stripe_price_id_sale : $e->stripe_price_id_rent,
                         'image_url'      => $e->image_url ?? '',
                         'available'      => 1,
                     ];
-                    if (!empty($e->stripe_price_id)) {
-                        $amount = StripeService::get_price_amount($e->stripe_price_id);
+                    $pid = $extra_data['stripe_price_id'];
+                    if (!empty($pid)) {
+                        $amount = StripeService::get_price_amount($pid);
                         if (!is_wp_error($amount)) {
                             $extra_data['price'] = $amount;
                         }
@@ -1031,9 +1033,10 @@ function produkt_create_checkout_session() {
         if (!empty($extra_ids)) {
             global $wpdb;
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+            $price_col = ($modus === 'kauf') ? 'stripe_price_id_sale' : 'stripe_price_id_rent';
             $extra_prices = $wpdb->get_col(
                 $wpdb->prepare(
-                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                    "SELECT {$price_col} FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
                     ...$extra_ids
                 )
             );
