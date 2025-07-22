@@ -333,7 +333,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <h3>Wählen Sie Ihre Extras</h3>
                     <div class="produkt-options extras layout-<?php echo esc_attr($layout_style); ?>" id="extras-container">
                         <?php foreach ($extras as $extra):
-                            $pid = ($modus === 'kauf') ? ($extra->stripe_price_id_sale ?? '') : ($extra->stripe_price_id_rent ?? '');
+                            $pid = $modus === 'kauf'
+                                ? ($extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? ''))
+                                : ($extra->stripe_price_id_rent ?: ($extra->stripe_price_id ?? ''));
                         ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"

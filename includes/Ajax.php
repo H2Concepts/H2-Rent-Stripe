@@ -88,7 +88,9 @@ class Ajax {
 
             $extras_price = 0;
             foreach ($extras as $ex) {
-                $pid = ($modus === 'kauf') ? ($ex->stripe_price_id_sale ?? '') : ($ex->stripe_price_id_rent ?? $ex->stripe_price_id);
+                $pid = ($modus === 'kauf')
+                    ? ($ex->stripe_price_id_sale ?: $ex->stripe_price_id)
+                    : ($ex->stripe_price_id_rent ?: $ex->stripe_price_id);
                 if (!empty($pid)) {
                     $pr = StripeService::get_price_amount($pid);
                     if (is_wp_error($pr)) {
@@ -290,7 +292,9 @@ class Ajax {
                             'id'             => (int) $extra->id,
                             'name'           => $extra->name,
                             'price'          => $extra->price,
-                            'stripe_price_id'=> ($modus === 'kauf') ? $extra->stripe_price_id_sale : $extra->stripe_price_id_rent,
+                            'stripe_price_id'=> ($modus === 'kauf')
+                                ? ($extra->stripe_price_id_sale ?: $extra->stripe_price_id)
+                                : ($extra->stripe_price_id_rent ?: $extra->stripe_price_id),
                             'image_url'      => $extra->image_url ?? '',
                             'available'      => intval($option->available),
                         ];
@@ -362,7 +366,9 @@ class Ajax {
                         'id'             => (int) $e->id,
                         'name'           => $e->name,
                         'price'          => $e->price,
-                        'stripe_price_id'=> ($modus === 'kauf') ? $e->stripe_price_id_sale : $e->stripe_price_id_rent,
+                        'stripe_price_id'=> ($modus === 'kauf')
+                            ? ($e->stripe_price_id_sale ?: $e->stripe_price_id)
+                            : ($e->stripe_price_id_rent ?: $e->stripe_price_id),
                         'image_url'      => $e->image_url ?? '',
                         'available'      => 1,
                     ];
@@ -1036,14 +1042,16 @@ function produkt_create_checkout_session() {
         if (!empty($extra_ids)) {
             global $wpdb;
             $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
-            $price_col = ($modus === 'kauf') ? 'stripe_price_id_sale' : 'stripe_price_id_rent';
-            $extra_prices = $wpdb->get_col(
+            $rows = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT {$price_col} FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                    "SELECT stripe_price_id, stripe_price_id_sale, stripe_price_id_rent FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
                     ...$extra_ids
                 )
             );
-            foreach ($extra_prices as $price) {
+            foreach ($rows as $row) {
+                $price = $modus === 'kauf'
+                    ? ($row->stripe_price_id_sale ?: $row->stripe_price_id)
+                    : ($row->stripe_price_id_rent ?: $row->stripe_price_id);
                 if (!empty($price)) {
                     $line_items[] = [
                         'price'    => $price,
@@ -1184,6 +1192,24 @@ function produkt_create_embedded_checkout_session() {
 
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
         $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        if (empty($extra_price_ids) && !empty($extra_ids)) {
+            global $wpdb;
+            $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT stripe_price_id, stripe_price_id_sale, stripe_price_id_rent FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                    ...$extra_ids
+                )
+            );
+            foreach ($rows as $row) {
+                $pid = $modus === 'kauf'
+                    ? ($row->stripe_price_id_sale ?: $row->stripe_price_id)
+                    : ($row->stripe_price_id_rent ?: $row->stripe_price_id);
+                if (!empty($pid)) {
+                    $extra_price_ids[] = $pid;
+                }
+            }
+        }
         $category_id      = intval($body['category_id'] ?? 0);
         $variant_id       = intval($body['variant_id'] ?? 0);
         $duration_id      = intval($body['duration_id'] ?? 0);
