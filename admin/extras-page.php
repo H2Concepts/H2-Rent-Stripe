@@ -71,6 +71,9 @@ if (isset($_POST['submit'])) {
         $stripe_product_name .= ' – ' . $main_product_name;
     }
 
+    // Determine Betriebsmodus once for use in all database operations
+    $mode = get_option('produkt_betriebsmodus', 'miete');
+
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
         $result = $wpdb->update(
@@ -91,7 +94,6 @@ if (isset($_POST['submit'])) {
         if ($result !== false) {
             $extra_id = intval($_POST['id']);
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich aktualisiert!</p></div>';
-            $mode = get_option('produkt_betriebsmodus', 'miete');
             $ids  = $wpdb->get_row($wpdb->prepare("SELECT stripe_product_id FROM $table_name WHERE id = %d", $extra_id));
             if ($ids && $ids->stripe_product_id) {
                 \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $stripe_product_name);
@@ -129,7 +131,7 @@ if (isset($_POST['submit'])) {
         if ($result !== false) {
             $extra_id = $wpdb->insert_id;
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
-                $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name, $mode);
+            $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $price, $main_product_name, $mode);
             if (!is_wp_error($res)) {
                 $wpdb->update($table_name, [
                     'stripe_product_id' => $res['product_id'],
