@@ -918,6 +918,7 @@ jQuery(document).ready(function($) {
     });
     $(document).on('click', '#booking-calendar .calendar-day:not(.disabled)', function(){
         const dateStr = $(this).data('date');
+
         if (!startDate || (startDate && endDate)) {
             startDate = dateStr;
             endDate = null;
@@ -925,8 +926,30 @@ jQuery(document).ready(function($) {
             startDate = dateStr;
             endDate = null;
         } else {
-            endDate = dateStr;
+            // check for blocked days between startDate and selected end date
+            let s = new Date(startDate);
+            let e = new Date(dateStr);
+            let hasBlocked = false;
+            if (Array.isArray(produkt_ajax.blocked_days)) {
+                let d = new Date(s.getTime());
+                while (d <= e) {
+                    const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                    if (produkt_ajax.blocked_days.includes(ds)) {
+                        hasBlocked = true;
+                        break;
+                    }
+                    d.setDate(d.getDate() + 1);
+                }
+            }
+
+            if (hasBlocked) {
+                startDate = dateStr;
+                endDate = null;
+            } else {
+                endDate = dateStr;
+            }
         }
+
         renderCalendar(calendarMonth);
         updateSelectedDays();
         updatePriceAndButton();
