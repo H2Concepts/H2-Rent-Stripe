@@ -39,8 +39,8 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 <div class="produkt-tab-section">
     <h3>🏪 Lagerverwaltung</h3>
-    <?php if (empty($variants)): ?>
-        <p>Keine Ausführungen vorhanden.</p>
+    <?php if (empty($variants)) : ?>
+        <p><strong>❗Bitte erstellen Sie zuerst mindestens eine Ausführung, um Lagerbestände zu verwalten.</strong></p>
     <?php else: ?>
     <form method="post">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
@@ -85,7 +85,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                 <?php endforeach; ?>
             </tbody>
         </table>
-        <p><button type="submit" name="update_inventory" class="button button-primary">Speichern</button></p>
+        <p><button type="submit" name="update_inventory" class="button button-primary">Lager speichern</button></p>
     </form>
     <?php endif; ?>
 </div>

@@ -28,7 +28,6 @@ $category_column = $wpdb->get_results("SHOW COLUMNS FROM $variants_table LIKE 'c
 if (empty($category_column)) {
     $wpdb->query("ALTER TABLE $variants_table ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
 }
-$has_variants = \ProduktVerleih\Database::has_variants($selected_category);
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'variants';
@@ -99,12 +98,10 @@ foreach ($branding_results as $result) {
            class="produkt-tab <?php echo $active_tab === 'colors' ? 'active' : ''; ?>">
             🎨 Farben
         </a>
-        <?php if ($has_variants): ?>
         <a href="<?php echo admin_url('admin.php?page=produkt-products&category=' . $selected_category . '&tab=inventory'); ?>"
            class="produkt-tab <?php echo $active_tab === 'inventory' ? 'active' : ''; ?>">
             🏪 Lagerverwaltung
         </a>
-        <?php endif; ?>
     </div>
     
     <!-- Tab Content -->
