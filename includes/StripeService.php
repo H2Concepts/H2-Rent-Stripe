@@ -557,7 +557,11 @@ class StripeService {
                 $product = \Stripe\Product::create([
                     'name'        => $full_name,
                     'description' => 'Extra für Produkt: ' . $related_product_name,
+                    'type'        => 'service',
+                    'active'      => true,
                 ]);
+            } elseif (!$product->active) {
+                \Stripe\Product::update($product->id, ['active' => true]);
             }
 
             $price_params = [
