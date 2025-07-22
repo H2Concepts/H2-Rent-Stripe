@@ -104,11 +104,16 @@ if (isset($_POST['submit'])) {
                 }
             } else {
                 $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $stripe_price, $main_product_name, $modus);
-                if (!is_wp_error($res)) {
+                if (is_wp_error($res)) {
+                    error_log('❌ Fehler beim Stripe Extra-Preis: ' . $res->get_error_message());
+                } elseif (!empty($res['price_id'])) {
+                    error_log('✅ Extra-Preis erfolgreich erstellt: ' . $res['price_id']);
                     $wpdb->update($table_name, [
                         'stripe_product_id' => $res['product_id'],
                         'stripe_price_id'   => $res['price_id'],
                     ], ['id' => $extra_id]);
+                } else {
+                    error_log('⚠️ Keine Fehler, aber auch kein Preis erstellt.');
                 }
             }
         } else {
@@ -133,11 +138,16 @@ if (isset($_POST['submit'])) {
             $extra_id = $wpdb->insert_id;
             echo '<div class="notice notice-success"><p>✅ Extra erfolgreich hinzugefügt!</p></div>';
             $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $stripe_price, $main_product_name, $modus);
-            if (!is_wp_error($res)) {
+            if (is_wp_error($res)) {
+                error_log('❌ Fehler beim Stripe Extra-Preis: ' . $res->get_error_message());
+            } elseif (!empty($res['price_id'])) {
+                error_log('✅ Extra-Preis erfolgreich erstellt: ' . $res['price_id']);
                 $wpdb->update($table_name, [
                     'stripe_product_id' => $res['product_id'],
                     'stripe_price_id'   => $res['price_id'],
                 ], ['id' => $extra_id]);
+            } else {
+                error_log('⚠️ Keine Fehler, aber auch kein Preis erstellt.');
             }
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
