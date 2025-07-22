@@ -960,6 +960,7 @@ function produkt_create_checkout_session() {
         $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
         $start_date = sanitize_text_field($body['start_date'] ?? '');
         $end_date   = sanitize_text_field($body['end_date'] ?? '');
+        $modus      = get_option('produkt_betriebsmodus', 'miete');
         $price_id = sanitize_text_field($body['price_id'] ?? '');
         if (!$price_id) {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
@@ -1077,7 +1078,7 @@ function produkt_create_checkout_session() {
         }
 
         $session_args = [
-            'mode'                     => 'subscription',
+            'mode'                     => ($modus === 'kauf' ? 'payment' : 'subscription'),
             'payment_method_types'     => ['card', 'paypal'],
             'allow_promotion_codes'    => true,
             'line_items'               => $line_items,
@@ -1150,6 +1151,7 @@ function produkt_create_embedded_checkout_session() {
         }
 
         $body = json_decode(file_get_contents('php://input'), true);
+        $modus      = get_option('produkt_betriebsmodus', 'miete');
         $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
         $start_date = sanitize_text_field($body['start_date'] ?? '');
         $end_date   = sanitize_text_field($body['end_date'] ?? '');
