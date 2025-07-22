@@ -1725,4 +1725,22 @@ class Database {
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
     }
+
+    /**
+     * Check if a product has at least one variant.
+     *
+     * @param int $produkt_id ID of the product/category
+     * @return bool True if variants exist, false otherwise
+     */
+    public static function has_variants($produkt_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_variants';
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM $table WHERE category_id = %d",
+                $produkt_id
+            )
+        );
+        return $count > 0;
+    }
 }
