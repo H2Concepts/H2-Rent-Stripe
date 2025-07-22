@@ -26,7 +26,35 @@ $start_index   = (int)date('N', $first_day_ts) - 1; // 0=Mo
 // collect booking days and orders per day
 $booked        = [];
 $orders_by_day = [];
-$orders = $wpdb->get_results("SELECT id, dauer_text, status, final_price, produkt_name, customer_name, customer_email, extra_text FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf'");
+$orders = $wpdb->get_results(
+    "SELECT o.*, c.name as category_name,
+            COALESCE(v.name, o.produkt_name) as variant_name,
+            COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+            COALESCE(d.name, o.dauer_text) as duration_name,
+            COALESCE(cond.name, o.zustand_text) as condition_name,
+            COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+            COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
+     FROM {$wpdb->prefix}produkt_orders o
+     LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+     LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+     LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+     LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+     LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+     LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+     LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+     WHERE o.mode = 'kauf'
+     GROUP BY o.id"
+);
+
+$order_logs = [];
+foreach ($orders as $o) {
+    $order_logs[$o->id] = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
+            $o->id
+        )
+    );
+}
 foreach ($orders as $o) {
     if (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $o->dauer_text, $m)) {
         $start = strtotime($m[1]);
@@ -40,15 +68,7 @@ foreach ($orders as $o) {
             if ($status === 'open') {
                 $booked[$d] = 'open';
             }
-            $orders_by_day[$d][] = [
-                'id'       => $o->id,
-                'produkt'  => $o->produkt_name,
-                'customer' => $o->customer_name,
-                'email'    => $o->customer_email,
-                'price'    => $o->final_price,
-                'status'   => $o->status,
-                'extras'   => $o->extra_text,
-            ];
+            $orders_by_day[$d][] = $o;
             $start = strtotime('+1 day', $start);
         }
     }
@@ -123,6 +143,7 @@ foreach ($orders as $o) {
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     const ordersByDay = <?php echo json_encode($orders_by_day); ?>;
+    const orderLogs  = <?php echo json_encode($order_logs); ?>;
     const modal = document.getElementById('order-details-modal');
     const modalDate = document.getElementById('modal-date');
     const content = document.getElementById('order-details-content');
@@ -134,13 +155,7 @@ document.addEventListener('DOMContentLoaded', function(){
             modalDate.textContent = date;
             let html = '';
             ordersByDay[date].forEach(function(o){
-                html += '<div style="margin-bottom:15px;">';
-                html += '<strong>#'+o.id+'</strong> '+o.produkt+'<br>';
-                if (o.customer) html += o.customer+'<br>';
-                if (o.email) html += o.email+'<br>';
-                html += parseFloat(o.price).toFixed(2).replace('.', ',')+'€ - '+o.status;
-                if (o.extras) html += '<br>Extras: '+o.extras;
-                html += '</div>';
+                html += buildOrderDetails(o, orderLogs[o.id] || []);
             });
             content.innerHTML = html;
             modal.style.display = 'block';
@@ -151,6 +166,55 @@ document.addEventListener('DOMContentLoaded', function(){
         if (e.target === modal) modal.style.display = 'none';
     });
 });
+
+function buildOrderDetails(order, logs) {
+    let detailsHtml = `
+        <div style="margin-bottom:20px;border-bottom:1px solid #ddd;padding-bottom:15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>📋 Bestellinformationen</h4>
+                    <p><strong>Bestellnummer:</strong> #${order.id}</p>
+                    <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
+                    <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
+                    ${order.shipping_cost > 0 ? `<p><strong>Versand:</strong> ${parseFloat(order.shipping_cost).toFixed(2).replace('.', ',')}€ (einmalig)</p>` : ''}
+                    <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-' + parseFloat(order.discount_amount).toFixed(2).replace('.', ',') + '€' : '–'}</p>
+                </div>
+                <div>
+                    <h4>👤 Kundendaten</h4>
+                    <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
+                    <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
+                    <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
+                    <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+                    <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
+                </div>
+            </div>
+
+            <h4>🛍️ Produktauswahl</h4>
+            <ul>
+                <li><strong>Ausführung:</strong> ${order.variant_name}</li>
+                <li><strong>Extra:</strong> ${order.extra_names}</li>
+                <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.duration_name}</li>
+                ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
+                ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
+                ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}
+            </ul>
+
+            <h4>🖥️ Technische Daten</h4>
+            <p><strong>User Agent:</strong> ${order.user_agent}</p>
+    `;
+
+    if (logs.length) {
+        detailsHtml += '<h4>📑 Verlauf</h4><ul>';
+        logs.forEach(function(l){
+            const date = new Date(l.created_at).toLocaleString('de-DE');
+            detailsHtml += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
+        });
+        detailsHtml += '</ul>';
+    }
+
+    detailsHtml += '</div>';
+    return detailsHtml;
+}
 
 function closeOrderDetails(){
     document.getElementById('order-details-modal').style.display = 'none';
