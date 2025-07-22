@@ -1082,7 +1082,6 @@ function produkt_create_checkout_session() {
             'payment_method_types'     => ['card', 'paypal'],
             'allow_promotion_codes'    => true,
             'line_items'               => $line_items,
-            'subscription_data'        => [ 'metadata' => $metadata ],
             'metadata'                 => $metadata,
             'billing_address_collection' => 'required',
             'shipping_address_collection' => ['allowed_countries' => ['DE']],
@@ -1096,6 +1095,9 @@ function produkt_create_checkout_session() {
             ],
             'custom_text'              => $custom_text,
         ];
+        if ($modus !== 'kauf') {
+            $session_args['subscription_data'] = [ 'metadata' => $metadata ];
+        }
         if (!empty($customer_email)) {
             $session_args['customer_email'] = $customer_email;
         }
@@ -1252,7 +1254,7 @@ function produkt_create_embedded_checkout_session() {
             $custom_text['after_submit'] = [ 'message' => $ct_after ];
         }
 
-        $session = \Stripe\Checkout\Session::create([
+        $session_params = [
             'ui_mode'      => 'embedded',
             'line_items'   => $line_items,
             'mode'         => ($modus === 'kauf' ? 'payment' : 'subscription'),
@@ -1260,9 +1262,6 @@ function produkt_create_embedded_checkout_session() {
             'return_url'   => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'automatic_tax'=> ['enabled' => true],
             'metadata'     => $metadata,
-            'subscription_data' => [
-                'metadata' => $metadata
-            ],
             'billing_address_collection' => 'required',
             'shipping_address_collection' => [ 'allowed_countries' => ['DE'] ],
             'phone_number_collection' => [
@@ -1272,7 +1271,12 @@ function produkt_create_embedded_checkout_session() {
                 'terms_of_service' => 'required',
             ],
             'custom_text' => $custom_text,
-        ]);
+        ];
+        if ($modus !== 'kauf') {
+            $session_params['subscription_data'] = [ 'metadata' => $metadata ];
+        }
+
+        $session = \Stripe\Checkout\Session::create($session_params);
 
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
