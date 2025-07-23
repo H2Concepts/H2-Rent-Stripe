@@ -57,6 +57,8 @@ class Plugin {
         add_action('wp_ajax_nopriv_track_interaction', [$this->ajax, 'ajax_track_interaction']);
         add_action('wp_ajax_get_variant_options', [$this->ajax, 'ajax_get_variant_options']);
         add_action('wp_ajax_nopriv_get_variant_options', [$this->ajax, 'ajax_get_variant_options']);
+        add_action('wp_ajax_get_variant_booked_days', [$this->ajax, 'ajax_get_variant_booked_days']);
+        add_action('wp_ajax_nopriv_get_variant_booked_days', [$this->ajax, 'ajax_get_variant_booked_days']);
         add_action('wp_ajax_notify_availability', [$this->ajax, 'ajax_notify_availability']);
         add_action('wp_ajax_nopriv_notify_availability', [$this->ajax, 'ajax_notify_availability']);
 

@@ -445,6 +445,41 @@ class Ajax {
             'duration_discounts' => $duration_discounts
         ));
     }
+
+    public function ajax_get_variant_booked_days() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $variant_id = intval($_POST['variant_id']);
+        if (!$variant_id) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        global $wpdb;
+        $available = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+            $variant_id
+        ));
+        if ($available > 0) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE variant_id = %d AND mode = 'kauf' AND status IN ('offen','abgeschlossen')",
+            $variant_id
+        ));
+        $days = [];
+        foreach ($rows as $r) {
+            if ($r->start_date && $r->end_date) {
+                $s = strtotime($r->start_date);
+                $e = strtotime($r->end_date);
+                while ($s <= $e) {
+                    $days[] = date('Y-m-d', $s);
+                    $s = strtotime('+1 day', $s);
+                }
+            }
+        }
+        $days = array_values(array_unique($days));
+        wp_send_json_success(['days' => $days]);
+    }
     
     
     public function ajax_track_interaction() {
@@ -1136,6 +1171,9 @@ function produkt_create_checkout_session() {
                 'final_price'      => $final_price,
                 'shipping_cost'    => $shipping_cost,
                 'mode'             => $modus,
+                'start_date'       => $start_date ?: null,
+                'end_date'         => $end_date ?: null,
+                'inventory_reverted' => 0,
                 'stripe_session_id'=> $session->id,
                 'amount_total'     => 0,
                 'produkt_name'     => $metadata['produkt'],
@@ -1331,6 +1369,9 @@ function produkt_create_embedded_checkout_session() {
                 'final_price'      => $final_price,
                 'shipping_cost'    => $shipping_cost,
                 'mode'             => $modus,
+                'start_date'       => $start_date ?: null,
+                'end_date'         => $end_date ?: null,
+                'inventory_reverted' => 0,
                 'stripe_session_id'=> $session->id,
                 'amount_total'     => 0,
                 'produkt_name'     => $metadata['produkt'],

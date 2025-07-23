@@ -326,6 +326,7 @@ class Admin {
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
                 'blocked_days' => $blocked_days,
+                'variant_blocked_days' => [],
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,

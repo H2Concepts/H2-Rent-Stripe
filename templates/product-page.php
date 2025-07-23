@@ -722,6 +722,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 <script>
 if (typeof produkt_ajax !== 'undefined') {
     produkt_ajax.blocked_days = <?php echo json_encode($blocked_days); ?>;
+    produkt_ajax.variant_blocked_days = [];
 }
 </script>
 <?php get_footer(); ?>

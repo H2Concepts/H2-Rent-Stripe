@@ -3,7 +3,7 @@
  * Plugin Name: H2 Concepts Rental Pro
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
-* Version: 2.8.43
+* Version: 2.8.44
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const PRODUKT_PLUGIN_VERSION = '2.8.43';
+const PRODUKT_PLUGIN_VERSION = '2.8.44';
 const PRODUKT_PLUGIN_DIR = __DIR__ . '/';
 define('PRODUKT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);
@@ -69,14 +69,19 @@ register_activation_hook(__FILE__, function () {
     if (!wp_next_scheduled('produkt_stripe_status_cron')) {
         wp_schedule_event(time(), 'daily', 'produkt_stripe_status_cron');
     }
+    if (!wp_next_scheduled('produkt_inventory_return_cron')) {
+        wp_schedule_event(time(), 'daily', 'produkt_inventory_return_cron');
+    }
 });
 
 // Clear cron job on deactivation
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('produkt_stripe_status_cron');
+    wp_clear_scheduled_hook('produkt_inventory_return_cron');
 });
 
 add_action('produkt_stripe_status_cron', ['\ProduktVerleih\StripeService', 'cron_refresh_stripe_archive_cache']);
+add_action('produkt_inventory_return_cron', ['\ProduktVerleih\Database', 'process_inventory_returns']);
 
 // Initialize the plugin after WordPress has loaded
 add_action('plugins_loaded', function () {
