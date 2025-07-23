@@ -232,38 +232,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         }
     }
     elseif ($event->type === 'payment_intent.succeeded') {
-        $paymentIntent = $event->data->object;
-
-        $customer_id = $paymentIntent->customer;
-        $amount      = $paymentIntent->amount_received;
-        $currency    = $paymentIntent->currency ?? 'eur';
-
-        if ($customer_id && $amount > 0) {
-            \Stripe\InvoiceItem::create([
-                'customer'    => $customer_id,
-                'amount'      => $amount,
-                'currency'    => $currency,
-                'description' => 'Miete laut Bestellung',
-            ]);
-
-            $invoice = \Stripe\Invoice::create([
-                'customer'          => $customer_id,
-                'collection_method' => 'charge_automatically',
-                'auto_advance'      => true,
-                'pending_invoice_items_behavior' => 'include',
-            ]);
-
-            try {
-                $invoice->finalizeInvoice();
-                error_log('Rechnung finalisiert: ' . $invoice->id);
-            } catch (\Exception $e) {
-                error_log('Fehler beim Finalisieren der Rechnung: ' . $e->getMessage());
-            }
-
-            error_log('Rechnung erstellt: ' . $invoice->id);
-        }
-
-        return new WP_REST_Response(['status' => 'invoice created'], 200);
+        return new WP_REST_Response(['status' => 'payment intent processed'], 200);
     }
     elseif ($event->type === 'customer.subscription.deleted') {
         $subscription     = $event->data->object;
@@ -456,36 +425,55 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
     error_log("Rechnung wird erstellt fuer Order {$order_id}, Customer {$customer_id}, Betrag {$amount_cents}");
 
     \Stripe\Stripe::setApiKey($secret);
+    global $wpdb;
+
+    $order = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+        $order_id
+    ));
 
     try {
         \Stripe\InvoiceItem::create([
             'customer'    => $customer_id,
-            'amount'      => $amount_cents,
+            'amount'      => intval(($order->final_price ?? 0) * 100),
             'currency'    => 'eur',
-            'description' => $product_name ?: 'Einmaliger Kauf',
+            'description' => $order->produkt_name ?: 'Produktmiete',
         ]);
 
+        if (!empty($order->extra_text)) {
+            \Stripe\InvoiceItem::create([
+                'customer'    => $customer_id,
+                'amount'      => 0,
+                'currency'    => 'eur',
+                'description' => 'Extra: ' . $order->extra_text,
+            ]);
+        }
+
+        if ($order->shipping_cost > 0) {
+            \Stripe\InvoiceItem::create([
+                'customer'    => $customer_id,
+                'amount'      => intval($order->shipping_cost * 100),
+                'currency'    => 'eur',
+                'description' => 'Versandkosten',
+            ]);
+        }
+
         $invoice = \Stripe\Invoice::create([
-            'customer'          => $customer_id,
-            'collection_method' => 'charge_automatically',
-            'auto_advance'      => true,
-            'metadata'          => ['bestell_id' => $order_id],
+            'customer' => $customer_id,
+            'auto_advance' => true,
             'pending_invoice_items_behavior' => 'include',
         ]);
 
-        try {
-            $invoice->finalizeInvoice();
-            error_log('Rechnung finalisiert: ' . $invoice->id);
-        } catch (\Exception $e) {
-            error_log('Fehler beim Finalisieren der Rechnung: ' . $e->getMessage());
-        }
+        $invoice->finalizeInvoice();
 
-        global $wpdb;
         $wpdb->update(
             $wpdb->prefix . 'produkt_orders',
             ['invoice_url' => $invoice->invoice_pdf],
             ['id' => $order_id]
         );
+
+        error_log('Rechnung finalisiert: ' . $invoice->id);
+
     } catch (\Exception $e) {
         error_log('Invoice generation failed: ' . $e->getMessage());
     }
