@@ -78,6 +78,7 @@ class StripeService {
                     'quantity' => $args['quantity'] ?? 1,
                 ]],
                 'customer' => $args['customer'] ?? null,
+                'customer_creation' => 'always',
                 'client_reference_id' => $args['reference'] ?? null,
                 'metadata' => $args['metadata'] ?? [],
                 'success_url' => $success_url . '?session_id={CHECKOUT_SESSION_ID}',

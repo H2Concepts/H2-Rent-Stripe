@@ -1206,6 +1206,7 @@ function produkt_create_checkout_session() {
             'phone_number_collection'     => [
                 'enabled' => true,
             ],
+            'customer_creation'        => 'always',
             'success_url'              => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'cancel_url'               => get_option('produkt_cancel_url', home_url('/abbrechen')),
             'consent_collection'       => [
@@ -1429,6 +1430,7 @@ function produkt_create_embedded_checkout_session() {
             'phone_number_collection' => [
                 'enabled' => true,
             ],
+            'customer_creation' => 'always',
             'consent_collection' => [
                 'terms_of_service' => 'required',
             ],
