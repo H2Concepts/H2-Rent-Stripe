@@ -38,6 +38,7 @@ class Plugin {
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_shortcode('produkt_register_form', [$this, 'render_registration_page']);
+        add_shortcode('produkt_login_form', [$this, 'render_login_page']);
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
@@ -92,8 +93,8 @@ class Plugin {
                 $classes[] = 'ast-no-sidebar';
             }
 
-            $cust_page = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-            if ($cust_page && is_page($cust_page) && !is_user_logged_in()) {
+            $login_page = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+            if ($login_page && is_page($login_page)) {
                 $classes[] = 'produkt-login-page';
                 $classes[] = 'page';
                 $classes[] = 'type-page';
@@ -143,6 +144,7 @@ class Plugin {
         $this->create_customer_page();
         $this->create_checkout_page();
         $this->create_registration_page();
+        $this->create_login_page();
         flush_rewrite_rules();
     }
 
@@ -191,6 +193,7 @@ class Plugin {
             PRODUKT_CUSTOMER_PAGE_OPTION,
             PRODUKT_CHECKOUT_PAGE_OPTION,
             PRODUKT_REGISTER_PAGE_OPTION,
+            PRODUKT_LOGIN_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -215,6 +218,11 @@ class Plugin {
         $reg_page_id = get_option(PRODUKT_REGISTER_PAGE_OPTION);
         if ($reg_page_id) {
             wp_delete_post($reg_page_id, true);
+        }
+
+        $login_page_id = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+        if ($login_page_id) {
+            wp_delete_post($login_page_id, true);
         }
     }
 
@@ -440,6 +448,12 @@ class Plugin {
         return ob_get_clean();
     }
 
+    public function render_login_page() {
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/login-page.php';
+        return ob_get_clean();
+    }
+
 
     /**
      * Handle the product form submission and redirect to the checkout page
@@ -647,6 +661,24 @@ class Plugin {
         update_option(PRODUKT_REGISTER_PAGE_OPTION, $page_id);
     }
 
+    private function create_login_page() {
+        $page = get_page_by_path('login');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Login',
+                'post_name'    => 'login',
+                'post_content' => '[produkt_login_form]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_LOGIN_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
@@ -663,6 +695,10 @@ class Plugin {
         $register_page_id = get_option(PRODUKT_REGISTER_PAGE_OPTION);
         if ($post->ID == $register_page_id) {
             $states[] = __('Registrierungs-Seite', 'h2-concepts');
+        }
+        $login_page_id = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+        if ($post->ID == $login_page_id) {
+            $states[] = __('Login-Seite', 'h2-concepts');
         }
         return $states;
     }
@@ -726,6 +762,11 @@ add_filter('template_include', function ($template) {
     $register_page = get_page_by_path('registrieren');
     if ($register_page && is_page($register_page)) {
         return PRODUKT_PLUGIN_PATH . 'templates/register-page.php';
+    }
+
+    $login_page = get_page_by_path('login');
+    if ($login_page && is_page($login_page)) {
+        return PRODUKT_PLUGIN_PATH . 'templates/login-page.php';
     }
 
     $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);

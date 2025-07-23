@@ -24,6 +24,7 @@ define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
 define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
 define('PRODUKT_CHECKOUT_PAGE_OPTION', 'produkt_checkout_page_id');
 define('PRODUKT_REGISTER_PAGE_OPTION', 'produkt_register_page_id');
+define('PRODUKT_LOGIN_PAGE_OPTION', 'produkt_login_page_id');
 
 // Load Stripe SDK if available
 require_once plugin_dir_path(__FILE__) . 'includes/stripe-autoload.php';
