@@ -477,7 +477,19 @@
                         <?php foreach ($extras as $e): ?>
                         <tr>
                             <td><?php echo esc_html($e->name); ?></td>
-                            <td><?php echo number_format((float)$e->price, 2, ',', '.'); ?>€</td>
+                            <?php
+                                $display_price = (float) $e->price;
+                                $price_id = $modus === 'kauf'
+                                    ? ($e->stripe_price_id_sale ?: ($e->stripe_price_id ?? ''))
+                                    : ($e->stripe_price_id_rent ?: ($e->stripe_price_id ?? ''));
+                                if ($price_id) {
+                                    $p = \ProduktVerleih\StripeService::get_price_amount($price_id);
+                                    if (!is_wp_error($p)) {
+                                        $display_price = $p;
+                                    }
+                                }
+                            ?>
+                            <td><?php echo number_format((float) $display_price, 2, ',', '.'); ?>€</td>
                             <td class="inventory-cell">
                                 <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
                                     <span class="inventory-available-count"><?php echo intval($e->stock_available); ?></span>
