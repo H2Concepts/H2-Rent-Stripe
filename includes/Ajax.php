@@ -1014,16 +1014,6 @@ function produkt_create_subscription() {
                     Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
                 }
             }
-            if (!$stripe_customer_id) {
-                $customer = \Stripe\Customer::create([
-                    'email' => $cust_email,
-                    'name'  => $fullname,
-                ]);
-                $stripe_customer_id = $customer->id;
-                Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
-            }
-
-            error_log('Stripe Customer ID used: ' . $stripe_customer_id);
 
             $session_args = [
                 'price_id'    => $price_id,
@@ -1033,9 +1023,15 @@ function produkt_create_subscription() {
                 'success_url' => get_option('produkt_success_url', home_url('/danke')),
                 'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
             ];
+
             if (!empty($stripe_customer_id)) {
                 $session_args['customer'] = $stripe_customer_id;
+            } else {
+                $session_args['customer_email'] = $cust_email;
+                $session_args['customer_creation'] = 'always';
             }
+
+            error_log('Stripe Customer ID used: ' . ($stripe_customer_id ?: 'new'));
 
             $session = StripeService::create_checkout_session_for_sale($session_args);
 
@@ -1134,17 +1130,6 @@ function produkt_create_checkout_session() {
                         Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
                     }
                 }
-                $fullname = sanitize_text_field($body['fullname'] ?? '');
-                if (!$stripe_customer_id) {
-                    $customer = \Stripe\Customer::create([
-                        'email' => $customer_email,
-                        'name'  => $fullname,
-                        'phone' => $phone,
-                    ]);
-                    $stripe_customer_id = $customer->id;
-                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                }
-                error_log('Stripe Customer ID used: ' . $stripe_customer_id);
             }
             $session_data = [
                 'price_id'    => $price_id,
@@ -1156,7 +1141,12 @@ function produkt_create_checkout_session() {
             ];
             if (!empty($stripe_customer_id)) {
                 $session_data['customer'] = $stripe_customer_id;
+            } else {
+                $session_data['customer_email'] = $customer_email;
+                $session_data['customer_creation'] = 'always';
             }
+
+            error_log('Stripe Customer ID used: ' . ($stripe_customer_id ?: 'new'));
 
             $session = StripeService::create_checkout_session_for_sale($session_data);
             if (is_wp_error($session)) {
@@ -1250,25 +1240,15 @@ function produkt_create_checkout_session() {
                 }
             }
 
-            if (!$stripe_customer_id) {
-                // Erstelle neuen Stripe-Kunden
-                $customer = \Stripe\Customer::create([
-                    'email' => $customer_email,
-                    'name'  => $fullname,
-                ]);
-
-                $stripe_customer_id = $customer->id;
-
-                // Speichere die ID in deiner Kundentabelle
-                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-            }
-
-            error_log('Stripe Customer ID used: ' . $stripe_customer_id);
-
             if (!empty($stripe_customer_id)) {
                 // Verwende den Stripe-Kunden für die Checkout Session
                 $session_args['customer'] = $stripe_customer_id;
+            } else {
+                $session_args['customer_email'] = $customer_email;
+                $session_args['customer_creation'] = 'always';
             }
+
+            error_log('Stripe Customer ID used: ' . ($stripe_customer_id ?: 'new'));
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
@@ -1479,21 +1459,15 @@ function produkt_create_embedded_checkout_session() {
                         Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
                     }
                 }
-                if (!$stripe_customer_id) {
-                    $customer = \Stripe\Customer::create([
-                        'email' => $customer_email,
-                        'name'  => $fullname,
-                        'phone' => $phone,
-                    ]);
-                    $stripe_customer_id = $customer->id;
-                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                }
-
-                error_log('Stripe Customer ID used: ' . $stripe_customer_id);
 
                 if (!empty($stripe_customer_id)) {
                     $session_params['customer'] = $stripe_customer_id;
+                } else {
+                    $session_params['customer_email'] = $customer_email;
+                    $session_params['customer_creation'] = 'always';
                 }
+
+                error_log('Stripe Customer ID used: ' . ($stripe_customer_id ?: 'new'));
             }
         }
 

@@ -1732,6 +1732,11 @@ class Database {
                 ['%s', '%s']
             );
         }
+
+        $user = get_user_by('email', sanitize_email($email));
+        if ($user) {
+            update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+        }
     }
 
     public static function get_stripe_customer_id_from_usermeta($email) {

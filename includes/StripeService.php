@@ -86,6 +86,8 @@ class StripeService {
             if (!empty($args['customer'])) {
                 $session_data['customer'] = $args['customer'];
                 error_log('StripeService customer for sale: ' . $args['customer']);
+            } else {
+                $session_data['customer_creation'] = 'always';
             }
 
             $session = \Stripe\Checkout\Session::create($session_data);
