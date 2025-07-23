@@ -430,9 +430,9 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
 
         $invoice = \Stripe\Invoice::create([
             'customer'          => $customer_id,
-            'collection_method' => 'send_invoice',
-            'days_until_due'    => 0,
+            'collection_method' => 'charge_automatically',
             'auto_advance'      => true,
+            'metadata'          => ['bestell_id' => $order_id],
         ]);
 
         global $wpdb;
