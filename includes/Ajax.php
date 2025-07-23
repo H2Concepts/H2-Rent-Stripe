@@ -962,6 +962,18 @@ function produkt_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
+        Database::upsert_customer(
+            sanitize_email($body['email'] ?? ''),
+            $customer->id,
+            $body['first_name'] ?? '',
+            $body['last_name'] ?? '',
+            $body['phone'] ?? '',
+            $body['street'] ?? '',
+            $body['postal'] ?? '',
+            $body['city'] ?? '',
+            $body['country'] ?? ''
+        );
+
         global $wpdb;
         $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
@@ -1015,6 +1027,17 @@ function produkt_create_subscription() {
                 ]);
                 $stripe_customer_id = $customer->id;
                 Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
+                Database::upsert_customer(
+                    $cust_email,
+                    $stripe_customer_id,
+                    $body['first_name'] ?? '',
+                    $body['last_name'] ?? '',
+                    $body['phone'] ?? '',
+                    $body['street'] ?? '',
+                    $body['postal'] ?? '',
+                    $body['city'] ?? '',
+                    $body['country'] ?? ''
+                );
             }
 
             $session = StripeService::create_checkout_session_for_sale([
@@ -1118,14 +1141,25 @@ function produkt_create_checkout_session() {
                 $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
                 $fullname = sanitize_text_field($body['fullname'] ?? '');
                 if (!$stripe_customer_id) {
-                    $customer = \Stripe\Customer::create([
-                        'email' => $customer_email,
-                        'name'  => $fullname,
-                        'phone' => $phone,
-                    ]);
-                    $stripe_customer_id = $customer->id;
-                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                }
+                $customer = \Stripe\Customer::create([
+                    'email' => $customer_email,
+                    'name'  => $fullname,
+                    'phone' => $phone,
+                ]);
+                $stripe_customer_id = $customer->id;
+                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                Database::upsert_customer(
+                    $customer_email,
+                    $stripe_customer_id,
+                    $body['first_name'] ?? '',
+                    $body['last_name'] ?? '',
+                    $body['phone'] ?? '',
+                    $body['street'] ?? '',
+                    $body['postal'] ?? '',
+                    $body['city'] ?? '',
+                    $body['country'] ?? ''
+                );
+            }
             }
             $session = StripeService::create_checkout_session_for_sale([
                 'price_id'    => $price_id,
@@ -1232,6 +1266,17 @@ function produkt_create_checkout_session() {
 
                 // Speichere die ID in deiner Kundentabelle
                 Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                Database::upsert_customer(
+                    $customer_email,
+                    $stripe_customer_id,
+                    $body['first_name'] ?? '',
+                    $body['last_name'] ?? '',
+                    $body['phone'] ?? '',
+                    $body['street'] ?? '',
+                    $body['postal'] ?? '',
+                    $body['city'] ?? '',
+                    $body['country'] ?? ''
+                );
             }
 
             // Verwende den Stripe-Kunden für die Checkout Session
@@ -1449,6 +1494,17 @@ function produkt_create_embedded_checkout_session() {
                     ]);
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                    Database::upsert_customer(
+                        $customer_email,
+                        $stripe_customer_id,
+                        $body['first_name'] ?? '',
+                        $body['last_name'] ?? '',
+                        $body['phone'] ?? '',
+                        $body['street'] ?? '',
+                        $body['postal'] ?? '',
+                        $body['city'] ?? '',
+                        $body['country'] ?? ''
+                    );
                 }
                 $session_params['customer'] = $stripe_customer_id;
             }

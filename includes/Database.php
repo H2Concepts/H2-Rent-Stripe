@@ -620,6 +620,30 @@ class Database {
             }
         }
 
+        // Create customers table if it doesn't exist
+        $table_customers = $wpdb->prefix . 'produkt_customers';
+        $customers_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_customers'");
+
+        if (!$customers_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_customers (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                email varchar(255) NOT NULL,
+                stripe_customer_id varchar(255) NOT NULL,
+                first_name varchar(255) DEFAULT '',
+                last_name varchar(255) DEFAULT '',
+                phone varchar(50) DEFAULT '',
+                street varchar(255) DEFAULT '',
+                postal_code varchar(20) DEFAULT '',
+                city_country varchar(255) DEFAULT '',
+                PRIMARY KEY (id),
+                UNIQUE KEY email (email)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create metadata table if it doesn't exist
         $table_metadata = $wpdb->prefix . 'produkt_stripe_metadata';
         $metadata_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_metadata'");
@@ -1217,6 +1241,23 @@ class Database {
         dbDelta($sql_content_blocks);
         dbDelta($sql_orders);
 
+        // Customers table
+        $table_customers = $wpdb->prefix . 'produkt_customers';
+        $sql_customers = "CREATE TABLE $table_customers (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            email varchar(255) NOT NULL,
+            stripe_customer_id varchar(255) NOT NULL,
+            first_name varchar(255) DEFAULT '',
+            last_name varchar(255) DEFAULT '',
+            phone varchar(50) DEFAULT '',
+            street varchar(255) DEFAULT '',
+            postal_code varchar(20) DEFAULT '',
+            city_country varchar(255) DEFAULT '',
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
+        ) $charset_collate;";
+        dbDelta($sql_customers);
+
         // Shipping methods table
         $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
         $sql_shipping = "CREATE TABLE $table_shipping (
@@ -1691,6 +1732,41 @@ class Database {
         $user = get_user_by('email', sanitize_email($email));
         if ($user) {
             update_user_meta($user->ID, 'stripe_customer_id', $customer_id);
+        }
+    }
+
+    /**
+     * Insert or update a customer record in the custom customers table.
+     */
+    public static function upsert_customer($email, $stripe_customer_id, $first_name = '', $last_name = '', $phone = '', $street = '', $postal = '', $city = '', $country = '') {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_customers';
+
+        $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE email = %s", $email));
+
+        if ($existing) {
+            $wpdb->update(
+                $table,
+                ['stripe_customer_id' => $stripe_customer_id],
+                ['id' => $existing],
+                ['%s'],
+                ['%d']
+            );
+        } else {
+            $wpdb->insert(
+                $table,
+                [
+                    'email'              => $email,
+                    'stripe_customer_id' => $stripe_customer_id,
+                    'first_name'         => $first_name,
+                    'last_name'          => $last_name,
+                    'phone'              => $phone,
+                    'street'             => $street,
+                    'postal_code'        => $postal,
+                    'city_country'       => $city . ' - ' . $country,
+                ],
+                ['%s','%s','%s','%s','%s','%s','%s','%s']
+            );
         }
     }
 
