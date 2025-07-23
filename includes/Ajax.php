@@ -1085,6 +1085,7 @@ function produkt_create_checkout_session() {
         $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
         $fullname          = sanitize_text_field($body['fullname'] ?? '');
+        $phone             = sanitize_text_field($body['phone'] ?? '');
 
         $metadata = [
             'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
@@ -1120,6 +1121,7 @@ function produkt_create_checkout_session() {
                     $customer = \Stripe\Customer::create([
                         'email' => $customer_email,
                         'name'  => $fullname,
+                        'phone' => $phone,
                     ]);
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
@@ -1340,6 +1342,8 @@ function produkt_create_embedded_checkout_session() {
         $frame_color_id   = intval($body['frame_color_id'] ?? 0);
         $final_price      = floatval($body['final_price'] ?? 0);
         $customer_email   = sanitize_email($body['email'] ?? '');
+        $fullname         = sanitize_text_field($body['fullname'] ?? '');
+        $phone            = sanitize_text_field($body['phone'] ?? '');
 
         $shipping_price_id = '';
         $shipping_cost = 0;
@@ -1439,6 +1443,7 @@ function produkt_create_embedded_checkout_session() {
                     $customer = \Stripe\Customer::create([
                         'email' => $customer_email,
                         'name'  => $fullname,
+                        'phone' => $phone,
                     ]);
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
