@@ -1,9 +1,9 @@
 <?php
 require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) { exit; }
+
+get_header();
 
 if (isset($_GET['logout'])) {
     produkt_customer_logout();
@@ -13,6 +13,7 @@ if (isset($_GET['logout'])) {
 
 if (produkt_is_customer_logged_in()) {
     include plugin_dir_path(__FILE__) . '../views/account/dashboard.php';
+    get_footer();
     return;
 }
 
@@ -52,24 +53,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login_email'], $_POST
     }
 }
 ?>
-<div class="kundenkonto-wrap">
-    <h1>Kundenkonto</h1>
+<div class="produkt-login-wrapper produkt-container shop-overview-container">
+    <div class="login-box">
+        <h1>Kundenkonto</h1>
+        <?php if ($sent): ?>
+            <p>Ein Code wurde an Ihre E-Mail-Adresse gesendet. Bitte prüfen Sie Ihr Postfach.</p>
+            <form method="post" class="login-code-form">
+                <input type="hidden" name="login_email" value="<?php echo esc_attr($email); ?>">
+                <input type="text" name="login_code" placeholder="Einmalcode" required>
+                <button type="submit">Einloggen</button>
+            </form>
+        <?php else: ?>
+            <p>Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.</p>
+            <form method="post" class="login-email-form">
+                <input type="email" name="customer_email" placeholder="E-Mail-Adresse" required>
+                <button type="submit">Login-Code senden</button>
+            </form>
+        <?php endif; ?>
 
-    <?php if ($sent): ?>
-        <p>Ein Code wurde an Ihre E-Mail-Adresse gesendet. Bitte prüfen Sie Ihr Postfach.</p>
-        <form method="post">
-            <input type="hidden" name="login_email" value="<?php echo esc_attr($email); ?>">
-            <input type="text" name="login_code" placeholder="Einmalcode" required>
-            <button type="submit">Anmelden</button>
-        </form>
-    <?php else: ?>
-        <form method="post">
-            <input type="email" name="customer_email" placeholder="E-Mail-Adresse" required>
-            <button type="submit">Login-Code senden</button>
-        </form>
-    <?php endif; ?>
-
-    <?php if (!empty($error)): ?>
-        <p style="color:red;"><?php echo esc_html($error); ?></p>
-    <?php endif; ?>
+        <?php if (!empty($error)): ?>
+            <p style="color:red;"><?php echo esc_html($error); ?></p>
+        <?php endif; ?>
+    </div>
 </div>
+<?php get_footer(); ?>
