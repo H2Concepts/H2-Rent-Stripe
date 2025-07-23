@@ -37,6 +37,7 @@ class Plugin {
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
+        add_shortcode('produkt_register_form', [$this, 'render_registration_page']);
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
@@ -634,7 +635,7 @@ class Plugin {
             $page_data = [
                 'post_title'   => 'Registrieren',
                 'post_name'    => 'registrieren',
-                'post_content' => '[produkt_register]',
+                'post_content' => '[produkt_register_form]',
                 'post_status'  => 'publish',
                 'post_type'    => 'page'
             ];
@@ -720,6 +721,11 @@ add_filter('template_include', function ($template) {
 
     if (get_query_var('produkt_category_slug')) {
         return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+    }
+
+    $register_page = get_page_by_path('registrieren');
+    if ($register_page && is_page($register_page)) {
+        return PRODUKT_PLUGIN_PATH . 'templates/register-page.php';
     }
 
     $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
