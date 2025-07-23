@@ -28,7 +28,7 @@
                 <h2>Hallo <?php echo esc_html($full_name); ?></h2>
                 <ul>
                     <li>
-                        <a href="#" class="active">Abos</a>
+                        <a href="#" class="active"><?php echo $is_sale ? 'Bestellungen' : 'Abos'; ?></a>
                     </li>
                     <li>
                         <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Logout</a>
@@ -36,42 +36,56 @@
                 </ul>
             </aside>
             <div>
-        <?php if (!empty($subscriptions)) : ?>
-            <?php foreach ($subscriptions as $sub) : ?>
-                <?php
-                $order = $order_map[$sub['subscription_id']] ?? null;
-                if (!$order) {
-                    continue;
-                }
-                $product_name = $order->produkt_name ?? $sub['subscription_id'];
-                $start_ts = strtotime($sub['start_date']);
-                $start_formatted = date_i18n('d.m.Y', $start_ts);
-                $laufzeit_in_monaten = pv_get_minimum_duration_months($order);
-                $cancelable_ts            = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
-                $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
-                $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
-                $cancelable               = time() >= $kuendigungsfenster_ts;
-                $is_extended              = time() > $cancelable_ts;
-
-                $period_end_ts   = null;
-                $period_end_date = '';
-                if (!empty($sub['current_period_end'])) {
-                    $period_end_ts   = strtotime($sub['current_period_end']);
-                    $period_end_date = date_i18n('d.m.Y', $period_end_ts);
-                }
-
-                $variant_id = $order->variant_id ?? 0;
-                $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
-
-                $address = '';
-                if (!empty($order->customer_street) && !empty($order->customer_postal) && !empty($order->customer_city)) {
-                    $address = esc_html(trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city));
-                }
-                ?>
-                <?php include PRODUKT_PLUGIN_PATH . 'includes/render-subscription.php'; ?>
-            <?php endforeach; ?>
+        <?php if ($is_sale) : ?>
+            <?php if (!empty($sale_orders)) : ?>
+                <?php foreach ($sale_orders as $order) : ?>
+                    <?php
+                        $variant_id = $order->variant_id ?? 0;
+                        $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+                    ?>
+                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order.php'; ?>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <p>Keine Bestellungen.</p>
+            <?php endif; ?>
         <?php else : ?>
-            <p>Keine aktiven Abos.</p>
+            <?php if (!empty($subscriptions)) : ?>
+                <?php foreach ($subscriptions as $sub) : ?>
+                    <?php
+                    $order = $order_map[$sub['subscription_id']] ?? null;
+                    if (!$order) {
+                        continue;
+                    }
+                    $product_name = $order->produkt_name ?? $sub['subscription_id'];
+                    $start_ts = strtotime($sub['start_date']);
+                    $start_formatted = date_i18n('d.m.Y', $start_ts);
+                    $laufzeit_in_monaten = pv_get_minimum_duration_months($order);
+                    $cancelable_ts            = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
+                    $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
+                    $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
+                    $cancelable               = time() >= $kuendigungsfenster_ts;
+                    $is_extended              = time() > $cancelable_ts;
+
+                    $period_end_ts   = null;
+                    $period_end_date = '';
+                    if (!empty($sub['current_period_end'])) {
+                        $period_end_ts   = strtotime($sub['current_period_end']);
+                        $period_end_date = date_i18n('d.m.Y', $period_end_ts);
+                    }
+
+                    $variant_id = $order->variant_id ?? 0;
+                    $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+
+                    $address = '';
+                    if (!empty($order->customer_street) && !empty($order->customer_postal) && !empty($order->customer_city)) {
+                        $address = esc_html(trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city));
+                    }
+                    ?>
+                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-subscription.php'; ?>
+                <?php endforeach; ?>
+            <?php else : ?>
+                <p>Keine aktiven Abos.</p>
+            <?php endif; ?>
         <?php endif; ?>
 
         <?php if (!empty($invoices)) : ?>
