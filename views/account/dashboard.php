@@ -17,6 +17,7 @@
             <button type="submit" name="verify_login_code">Einloggen</button>
         </form>
         <?php endif; ?>
+        <a class="back-to-shop" href="<?php echo esc_url(home_url('/shop')); ?>">Zurück zum Shop</a>
     </div>
 </div>
 <?php else : ?>
