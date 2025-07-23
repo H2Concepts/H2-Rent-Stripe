@@ -1673,11 +1673,27 @@ class Database {
      * @return string Customer ID or empty string when none found
      */
     public static function get_stripe_customer_id_by_email($email) {
-        $user = get_user_by('email', sanitize_email($email));
-        if (!$user) {
-            return '';
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'produkt_customers';
+        $email  = sanitize_email($email);
+
+        $stripe_customer_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT stripe_customer_id FROM $table WHERE email = %s LIMIT 1",
+                $email
+            )
+        );
+
+        if (!$stripe_customer_id) {
+            $stripe_customer_id = self::get_stripe_customer_id_from_usermeta($email);
+
+            if ($stripe_customer_id) {
+                self::update_stripe_customer_id_by_email($email, $stripe_customer_id);
+            }
         }
-        return get_user_meta($user->ID, 'stripe_customer_id', true);
+
+        return $stripe_customer_id ?: '';
     }
 
     /**
@@ -1692,6 +1708,44 @@ class Database {
         if ($user) {
             update_user_meta($user->ID, 'stripe_customer_id', $customer_id);
         }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_customers';
+        $email  = sanitize_email($email);
+        $exists = $wpdb->get_var(
+            $wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s", $email)
+        );
+        if ($exists) {
+            $wpdb->update(
+                $table,
+                ['stripe_customer_id' => $customer_id],
+                ['email' => $email],
+                ['%s'],
+                ['%s']
+            );
+        } else {
+            $wpdb->insert(
+                $table,
+                ['email' => $email, 'stripe_customer_id' => $customer_id],
+                ['%s', '%s']
+            );
+        }
+    }
+
+    public static function get_stripe_customer_id_from_usermeta($email) {
+        global $wpdb;
+
+        $user_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->prefix}users WHERE user_email = %s LIMIT 1",
+            $email
+        ));
+
+        if (!$user_id) return null;
+
+        return $wpdb->get_var($wpdb->prepare(
+            "SELECT meta_value FROM {$wpdb->prefix}usermeta WHERE user_id = %d AND meta_key = 'stripe_customer_id' LIMIT 1",
+            $user_id
+        ));
     }
 
 

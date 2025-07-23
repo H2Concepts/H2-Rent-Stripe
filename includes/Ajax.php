@@ -1009,6 +1009,12 @@ function produkt_create_subscription() {
             $fullname   = sanitize_text_field($body['fullname'] ?? '');
             $stripe_customer_id = Database::get_stripe_customer_id_by_email($cust_email);
             if (!$stripe_customer_id) {
+                $stripe_customer_id = Database::get_stripe_customer_id_from_usermeta($cust_email);
+                if ($stripe_customer_id) {
+                    Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
+                }
+            }
+            if (!$stripe_customer_id) {
                 $customer = \Stripe\Customer::create([
                     'email' => $cust_email,
                     'name'  => $fullname,
@@ -1122,6 +1128,12 @@ function produkt_create_checkout_session() {
             $stripe_customer_id = null;
             if ($customer_email) {
                 $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                if (!$stripe_customer_id) {
+                    $stripe_customer_id = Database::get_stripe_customer_id_from_usermeta($customer_email);
+                    if ($stripe_customer_id) {
+                        Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                    }
+                }
                 $fullname = sanitize_text_field($body['fullname'] ?? '');
                 if (!$stripe_customer_id) {
                     $customer = \Stripe\Customer::create([
@@ -1230,6 +1242,13 @@ function produkt_create_checkout_session() {
         if (!empty($customer_email)) {
             // Prüfe, ob Stripe-Kunde mit dieser E-Mail bereits existiert
             $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+
+            if (!$stripe_customer_id) {
+                $stripe_customer_id = Database::get_stripe_customer_id_from_usermeta($customer_email);
+                if ($stripe_customer_id) {
+                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                }
+            }
 
             if (!$stripe_customer_id) {
                 // Erstelle neuen Stripe-Kunden
@@ -1454,6 +1473,12 @@ function produkt_create_embedded_checkout_session() {
         } else {
             if (!empty($customer_email)) {
                 $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                if (!$stripe_customer_id) {
+                    $stripe_customer_id = Database::get_stripe_customer_id_from_usermeta($customer_email);
+                    if ($stripe_customer_id) {
+                        Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                    }
+                }
                 if (!$stripe_customer_id) {
                     $customer = \Stripe\Customer::create([
                         'email' => $customer_email,
