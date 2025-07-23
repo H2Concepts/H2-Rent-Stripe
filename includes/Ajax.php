@@ -1017,6 +1017,8 @@ function produkt_create_subscription() {
                 Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
             }
 
+            error_log('Stripe Customer ID used: ' . $stripe_customer_id);
+
             $session_args = [
                 'price_id'    => $price_id,
                 'quantity'    => $days,
@@ -1130,6 +1132,7 @@ function produkt_create_checkout_session() {
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
                 }
+                error_log('Stripe Customer ID used: ' . $stripe_customer_id);
             }
             $session_data = [
                 'price_id'    => $price_id,
@@ -1240,6 +1243,8 @@ function produkt_create_checkout_session() {
                 // Speichere die ID in deiner Kundentabelle
                 Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
             }
+
+            error_log('Stripe Customer ID used: ' . $stripe_customer_id);
 
             if (!empty($stripe_customer_id)) {
                 // Verwende den Stripe-Kunden für die Checkout Session
@@ -1458,6 +1463,9 @@ function produkt_create_embedded_checkout_session() {
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
                 }
+
+                error_log('Stripe Customer ID used: ' . $stripe_customer_id);
+
                 if (!empty($stripe_customer_id)) {
                     $session_params['customer'] = $stripe_customer_id;
                 }
