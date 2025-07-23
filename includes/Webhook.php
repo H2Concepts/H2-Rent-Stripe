@@ -250,6 +250,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 'customer'          => $customer_id,
                 'collection_method' => 'charge_automatically',
                 'auto_advance'      => true,
+                'pending_invoice_items_behavior' => 'include',
             ]);
 
             try {
@@ -469,6 +470,7 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
             'collection_method' => 'charge_automatically',
             'auto_advance'      => true,
             'metadata'          => ['bestell_id' => $order_id],
+            'pending_invoice_items_behavior' => 'include',
         ]);
 
         try {
