@@ -1017,15 +1017,19 @@ function produkt_create_subscription() {
                 Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
             }
 
-            $session = StripeService::create_checkout_session_for_sale([
+            $session_args = [
                 'price_id'    => $price_id,
                 'quantity'    => $days,
-                'customer'    => $stripe_customer_id,
                 'metadata'    => $sub_params['metadata'],
                 'reference'   => $variant_id ? "var-$variant_id" : null,
                 'success_url' => get_option('produkt_success_url', home_url('/danke')),
                 'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
-            ]);
+            ];
+            if (!empty($stripe_customer_id)) {
+                $session_args['customer'] = $stripe_customer_id;
+            }
+
+            $session = StripeService::create_checkout_session_for_sale($session_args);
 
             if (is_wp_error($session)) {
                 throw new \Exception($session->get_error_message());
@@ -1127,15 +1131,19 @@ function produkt_create_checkout_session() {
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
                 }
             }
-            $session = StripeService::create_checkout_session_for_sale([
+            $session_data = [
                 'price_id'    => $price_id,
                 'quantity'    => $days,
-                'customer'    => $stripe_customer_id,
                 'metadata'    => $metadata,
                 'reference'   => $variant_id ? "var-$variant_id" : null,
                 'success_url' => get_option('produkt_success_url', home_url('/danke')),
                 'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
-            ]);
+            ];
+            if (!empty($stripe_customer_id)) {
+                $session_data['customer'] = $stripe_customer_id;
+            }
+
+            $session = StripeService::create_checkout_session_for_sale($session_data);
             if (is_wp_error($session)) {
                 throw new \Exception($session->get_error_message());
             }
@@ -1206,7 +1214,6 @@ function produkt_create_checkout_session() {
             'phone_number_collection'     => [
                 'enabled' => true,
             ],
-            'customer_creation'        => 'always',
             'success_url'              => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'cancel_url'               => get_option('produkt_cancel_url', home_url('/abbrechen')),
             'consent_collection'       => [
@@ -1234,8 +1241,10 @@ function produkt_create_checkout_session() {
                 Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
             }
 
-            // Verwende den Stripe-Kunden für die Checkout Session
-            $session_args['customer'] = $stripe_customer_id;
+            if (!empty($stripe_customer_id)) {
+                // Verwende den Stripe-Kunden für die Checkout Session
+                $session_args['customer'] = $stripe_customer_id;
+            }
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
@@ -1430,7 +1439,6 @@ function produkt_create_embedded_checkout_session() {
             'phone_number_collection' => [
                 'enabled' => true,
             ],
-            'customer_creation' => 'always',
             'consent_collection' => [
                 'terms_of_service' => 'required',
             ],
@@ -1450,7 +1458,9 @@ function produkt_create_embedded_checkout_session() {
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
                 }
-                $session_params['customer'] = $stripe_customer_id;
+                if (!empty($stripe_customer_id)) {
+                    $session_params['customer'] = $stripe_customer_id;
+                }
             }
         }
 
