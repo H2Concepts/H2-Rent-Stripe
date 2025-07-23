@@ -230,6 +230,32 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         }
         }
     }
+    elseif ($event->type === 'payment_intent.succeeded') {
+        $paymentIntent = $event->data->object;
+
+        $customer_id = $paymentIntent->customer;
+        $amount      = $paymentIntent->amount_received;
+        $currency    = $paymentIntent->currency ?? 'eur';
+
+        if ($customer_id && $amount > 0) {
+            \Stripe\InvoiceItem::create([
+                'customer'    => $customer_id,
+                'amount'      => $amount,
+                'currency'    => $currency,
+                'description' => 'Miete laut Bestellung',
+            ]);
+
+            $invoice = \Stripe\Invoice::create([
+                'customer'          => $customer_id,
+                'collection_method' => 'charge_automatically',
+                'auto_advance'      => true,
+            ]);
+
+            error_log('Rechnung erstellt: ' . $invoice->id);
+        }
+
+        return new WP_REST_Response(['status' => 'invoice created'], 200);
+    }
     elseif ($event->type === 'customer.subscription.deleted') {
         $subscription     = $event->data->object;
         $subscription_id  = $subscription->id;
