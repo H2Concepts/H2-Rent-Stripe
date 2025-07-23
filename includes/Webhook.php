@@ -252,6 +252,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 'auto_advance'      => true,
             ]);
 
+            try {
+                $invoice->finalizeInvoice();
+                error_log('Rechnung finalisiert: ' . $invoice->id);
+            } catch (\Exception $e) {
+                error_log('Fehler beim Finalisieren der Rechnung: ' . $e->getMessage());
+            }
+
             error_log('Rechnung erstellt: ' . $invoice->id);
         }
 
@@ -463,6 +470,13 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
             'auto_advance'      => true,
             'metadata'          => ['bestell_id' => $order_id],
         ]);
+
+        try {
+            $invoice->finalizeInvoice();
+            error_log('Rechnung finalisiert: ' . $invoice->id);
+        } catch (\Exception $e) {
+            error_log('Fehler beim Finalisieren der Rechnung: ' . $e->getMessage());
+        }
 
         global $wpdb;
         $wpdb->update(
