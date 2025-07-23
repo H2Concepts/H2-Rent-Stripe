@@ -9,6 +9,8 @@ if (!produkt_is_customer_logged_in()) {
     exit;
 }
 
+echo '<div class="produkt-account-wrapper produkt-container shop-overview-container">';
 include plugin_dir_path(__FILE__) . '../views/account/dashboard.php';
+echo '</div>';
 
 get_footer();

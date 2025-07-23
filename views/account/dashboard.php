@@ -39,7 +39,6 @@ if ($customer->stripe_customer_id) {
 
 $full_name = trim($customer->first_name . ' ' . $customer->last_name);
 ?>
-<div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>
     <?php if (!empty($message)) { echo $message; } ?>
         <div class="account-layout">
@@ -134,4 +133,3 @@ $full_name = trim($customer->first_name . ' ' . $customer->last_name);
         <?php endif; ?>
             </div>
         </div>
-</div>
