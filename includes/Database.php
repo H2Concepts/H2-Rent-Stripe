@@ -46,7 +46,10 @@ class Database {
             'image_url_5' => 'TEXT',
             'available' => 'TINYINT(1) DEFAULT 1',
             'availability_note' => 'VARCHAR(255) DEFAULT ""',
-            'delivery_time' => 'VARCHAR(255) DEFAULT ""'
+            'delivery_time' => 'VARCHAR(255) DEFAULT ""',
+            'sku' => 'VARCHAR(100) DEFAULT ""',
+            'stock_available' => 'INT DEFAULT 0',
+            'stock_rented' => 'INT DEFAULT 0'
         );
         
         foreach ($columns_to_add as $column => $type) {
@@ -66,6 +69,12 @@ class Database {
                     $after = 'mietpreis_monatlich';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
+                } elseif ($column === 'sku') {
+                    $after = 'delivery_time';
+                } elseif ($column === 'stock_available') {
+                    $after = 'sku';
+                } elseif ($column === 'stock_rented') {
+                    $after = 'stock_available';
                 } else {
                     $after = 'base_price';
                 }
@@ -119,6 +128,22 @@ class Database {
         if (empty($archived_exists)) {
             $after = !empty($price_id_exists) ? 'stripe_price_id' : 'name';
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
+        }
+
+        // Ensure inventory columns exist for extras
+        $sku_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'sku'");
+        if (empty($sku_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN sku VARCHAR(100) DEFAULT '' AFTER image_url");
+        }
+        $avail_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_available'");
+        if (empty($avail_exists)) {
+            $after = !empty($sku_exists) ? 'sku' : 'image_url';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_available INT DEFAULT 0 AFTER $after");
+        }
+        $rented_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_rented'");
+        if (empty($rented_exists)) {
+            $after = !empty($avail_exists) ? 'stock_available' : (!empty($sku_exists) ? 'sku' : 'image_url');
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_rented INT DEFAULT 0 AFTER $after");
         }
 
         // Ensure show_badge column exists for durations
@@ -253,6 +278,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
+                invoice_url varchar(255) DEFAULT '',
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY category_id (category_id),
@@ -520,6 +546,9 @@ class Database {
                 final_price decimal(10,2) NOT NULL,
                 shipping_cost decimal(10,2) DEFAULT 0,
                 mode varchar(10) DEFAULT 'miete',
+                start_date date DEFAULT NULL,
+                end_date date DEFAULT NULL,
+                inventory_reverted tinyint(1) DEFAULT 0,
                 stripe_session_id varchar(255) DEFAULT '',
                 stripe_subscription_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
@@ -562,13 +591,31 @@ class Database {
                 'customer_country'  => "varchar(2) DEFAULT ''",
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
                 'mode'              => "varchar(10) DEFAULT 'miete'",
-                'status'            => "varchar(20) DEFAULT 'offen'"
+                'start_date'        => 'date DEFAULT NULL',
+                'end_date'          => 'date DEFAULT NULL',
+                'inventory_reverted'=> 'tinyint(1) DEFAULT 0',
+                'status'            => "varchar(20) DEFAULT 'offen'",
+                'invoice_url'       => "varchar(255) DEFAULT ''"
             );
 
             foreach ($new_order_columns as $column => $type) {
                 $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_orders LIKE '$column'");
                 if (empty($column_exists)) {
                     $wpdb->query("ALTER TABLE $table_orders ADD COLUMN $column $type AFTER extra_id");
+                }
+            }
+
+            // Fill newly added date columns from dauer_text if possible
+            $missing_dates = $wpdb->get_results("SELECT id, dauer_text FROM $table_orders WHERE start_date IS NULL AND dauer_text LIKE '%-%'");
+            foreach ($missing_dates as $row) {
+                if (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $row->dauer_text, $m)) {
+                    $wpdb->update(
+                        $table_orders,
+                        ['start_date' => $m[1], 'end_date' => $m[2]],
+                        ['id' => $row->id],
+                        ['%s','%s'],
+                        ['%d']
+                    );
                 }
             }
         }
@@ -937,6 +984,9 @@ class Database {
             available tinyint(1) DEFAULT 1,
             availability_note varchar(255) DEFAULT '',
             delivery_time varchar(255) DEFAULT '',
+            sku varchar(100) DEFAULT '',
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -955,6 +1005,9 @@ class Database {
             stripe_archived tinyint(1) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,
+            sku varchar(100) DEFAULT '',
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1120,6 +1173,7 @@ class Database {
             dauer_text varchar(255) DEFAULT '',
             user_ip varchar(45) DEFAULT NULL,
             user_agent text DEFAULT NULL,
+            invoice_url varchar(255) DEFAULT '',
             status varchar(20) DEFAULT 'offen',
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -1712,5 +1766,43 @@ class Database {
         global $wpdb;
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
+    }
+
+    /**
+     * Increase available stock after rental period ends.
+     * Runs via WP-Cron.
+     */
+    public static function process_inventory_returns() {
+        global $wpdb;
+        $today = current_time('Y-m-d');
+        $orders = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND end_date IS NOT NULL AND end_date < %s AND inventory_reverted = 0",
+            $today
+        ));
+        foreach ($orders as $o) {
+            if ($o->variant_id) {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                    $o->variant_id
+                ));
+            }
+            if (!empty($o->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $o->extra_ids)));
+                foreach ($ids as $eid) {
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                        $eid
+                    ));
+                }
+            }
+            $wpdb->update(
+                $wpdb->prefix . 'produkt_orders',
+                ['inventory_reverted' => 1],
+                ['id' => $o->id],
+                ['%d'],
+                ['%d']
+            );
+            produkt_add_order_log((int)$o->id, 'inventory_returned');
+        }
     }
 }

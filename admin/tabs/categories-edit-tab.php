@@ -36,6 +36,7 @@
                 $edit_item->id
             )
         );
+        $modus = get_option('produkt_betriebsmodus', 'miete');
         ?>
 
         <div class="produkt-subtab-nav">
@@ -43,6 +44,7 @@
             <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
             <a href="#" class="produkt-subtab" data-tab="filters">Filter</a>
+            <a href="#" class="produkt-subtab" data-tab="inventory">Lagerverwaltung</a>
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
@@ -390,6 +392,132 @@
         </div>
         </div><!-- end tab-filters -->
 
+        <div id="tab-inventory" class="produkt-subtab-content">
+        <div class="produkt-form-section">
+            <h4>📦 Lagerverwaltung</h4>
+            <?php
+                $variants = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+                        $edit_item->id
+                    )
+                );
+            ?>
+            <?php if (empty($variants)): ?>
+                <p>Bitte zuerst eine Ausführung erstellen.</p>
+            <?php else: ?>
+                <table class="produkt-inventory-table widefat striped">
+                    <thead>
+                        <tr>
+                            <th>Ausführung</th>
+                            <th>Preis</th>
+                            <th>Menge</th>
+                            <th>SKU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($variants as $v): ?>
+                        <tr>
+                            <td><?php echo esc_html($v->name); ?></td>
+                            <?php
+                                $price_val = ($modus === 'kauf')
+                                    ? $v->verkaufspreis_einmalig
+                                    : $v->base_price;
+                            ?>
+                            <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                            <td class="inventory-cell">
+                                <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
+                                    <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
+                                </div>
+                                <div class="inventory-popup" id="inv-popup-<?php echo $v->id; ?>">
+                                    <label>Verfügbar</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">-</button>
+                                        <input type="number" id="avail-<?php echo $v->id; ?>" name="stock_available[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_available); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">+</button>
+                                    </div>
+                                    <label>In Vermietung</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $v->id; ?>">-</button>
+                                        <input type="number" id="rent-<?php echo $v->id; ?>" name="stock_rented[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_rented); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $v->id; ?>">+</button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+
+            <?php
+                $extras = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order, name",
+                        $edit_item->id
+                    )
+                );
+            ?>
+
+            <h4 style="margin-top:30px;">🎁 Extras</h4>
+            <?php if (empty($extras)): ?>
+                <p>Bitte zuerst ein Extra erstellen.</p>
+            <?php else: ?>
+                <table class="produkt-inventory-table widefat striped">
+                    <thead>
+                        <tr>
+                            <th>Extra</th>
+                            <th>Preis</th>
+                            <th>Menge</th>
+                            <th>SKU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($extras as $e): ?>
+                        <tr>
+                            <td><?php echo esc_html($e->name); ?></td>
+                            <?php
+                                $display_price = (float) $e->price;
+                                $price_id = $modus === 'kauf'
+                                    ? ($e->stripe_price_id_sale ?: ($e->stripe_price_id ?? ''))
+                                    : ($e->stripe_price_id_rent ?: ($e->stripe_price_id ?? ''));
+                                if ($price_id) {
+                                    $p = \ProduktVerleih\StripeService::get_price_amount($price_id);
+                                    if (!is_wp_error($p)) {
+                                        $display_price = $p;
+                                    }
+                                }
+                            ?>
+                            <td><?php echo number_format((float) $display_price, 2, ',', '.'); ?>€</td>
+                            <td class="inventory-cell">
+                                <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
+                                    <span class="inventory-available-count"><?php echo intval($e->stock_available); ?></span>
+                                </div>
+                                <div class="inventory-popup" id="inv-popup-<?php echo $e->id; ?>">
+                                    <label>Verfügbar</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">-</button>
+                                        <input type="number" id="avail-<?php echo $e->id; ?>" name="extra_stock_available[<?php echo $e->id; ?>]" value="<?php echo intval($e->stock_available); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">+</button>
+                                    </div>
+                                    <label>In Vermietung</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $e->id; ?>">-</button>
+                                        <input type="number" id="rent-<?php echo $e->id; ?>" name="extra_stock_rented[<?php echo $e->id; ?>]" value="<?php echo intval($e->stock_rented); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $e->id; ?>">+</button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><input type="text" name="extra_sku[<?php echo $e->id; ?>]" value="<?php echo esc_attr($e->sku); ?>"></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
+        </div>
+        </div><!-- end tab-inventory -->
+
 
 
 
@@ -641,6 +769,49 @@ document.addEventListener('DOMContentLoaded', function() {
             e.target.closest('.produkt-page-block').remove();
         }
     });
+
+    // Inventory management popup logic
+    document.querySelectorAll('.inventory-trigger').forEach(function(trig){
+        trig.addEventListener('click', function(e){
+            e.preventDefault();
+            var id = this.dataset.variant || this.dataset.extra;
+            var popup = document.getElementById('inv-popup-' + id);
+            if (popup) {
+                popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+            }
+        });
+    });
+    document.querySelectorAll('.inventory-popup .inv-minus').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var target = document.getElementById(this.dataset.target);
+            if (target) {
+                target.value = Math.max(0, parseInt(target.value || 0) - 1);
+                var id = this.dataset.variant || this.dataset.extra;
+                if (id) updateAvail(id);
+            }
+        });
+    });
+    document.querySelectorAll('.inventory-popup .inv-plus').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var target = document.getElementById(this.dataset.target);
+            if (target) {
+                target.value = parseInt(target.value || 0) + 1;
+                var id = this.dataset.variant || this.dataset.extra;
+                if (id) updateAvail(id);
+            }
+        });
+    });
+    document.querySelectorAll('.inventory-popup input').forEach(function(inp){
+        inp.addEventListener('input', function(){
+            var id = this.id.replace(/^(avail|rent)-/, '');
+            updateAvail(id);
+        });
+    });
+    function updateAvail(id){
+        var input = document.getElementById('avail-' + id);
+        var span = document.querySelector('.inventory-trigger[data-variant="' + id + '"] .inventory-available-count, .inventory-trigger[data-extra="' + id + '"] .inventory-available-count');
+        if (input && span) span.textContent = input.value;
+    }
 
     function attachMediaButton(btn) {
         if (!btn) return;

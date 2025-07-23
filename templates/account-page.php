@@ -7,6 +7,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$modus    = get_option('produkt_betriebsmodus', 'miete');
+$is_sale  = ($modus === 'kauf');
+
 if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
         $sub_id = sanitize_text_field($_POST['subscription_id']);
@@ -20,10 +23,11 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 }
 
 
-$orders       = [];
-$order_map    = [];
+$orders        = [];
+$sale_orders   = [];
+$order_map     = [];
 $subscriptions = [];
-$invoices     = [];
+$invoices      = [];
 $full_name     = '';
 
 if (is_user_logged_in()) {
@@ -33,6 +37,9 @@ if (is_user_logged_in()) {
     foreach ($orders as $o) {
         if (!empty($o->subscription_id)) {
             $order_map[$o->subscription_id] = $o;
+        }
+        if ($o->mode === 'kauf') {
+            $sale_orders[] = $o;
         }
     }
 

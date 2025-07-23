@@ -118,7 +118,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         global $wpdb;
         $existing_order = $wpdb->get_row($wpdb->prepare(
-            "SELECT id, status, created_at, category_id, shipping_cost FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+            "SELECT id, status, created_at, category_id, shipping_cost, variant_id FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
             $session->id
         ));
         $existing_id = $existing_order->id ?? 0;
@@ -169,6 +169,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'extra_text'        => $extra,
             'dauer_text'        => $dauer,
             'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
+            'start_date'        => $start_date ?: null,
+            'end_date'          => $end_date ?: null,
+            'inventory_reverted'=> 0,
             'user_ip'           => $user_ip,
             'user_agent'        => $user_agent,
             'stripe_subscription_id' => $subscription_id,
@@ -203,7 +206,33 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             send_admin_order_email($data, $existing_id, $session->id);
             produkt_add_order_log($existing_id, 'welcome_email_sent');
         }
+
+        if ($existing_order) {
+            if ($existing_order->variant_id) {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                    $existing_order->variant_id
+                ));
+            }
+            if (!empty($existing_order->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $existing_order->extra_ids)));
+                foreach ($ids as $eid) {
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                        $eid
+                    ));
+                }
+            }
         }
+
+        if ($data['mode'] === 'kauf') {
+            error_log('Checkout-Mode: ' . $data['mode']);
+            produkt_generate_invoice($existing_id, $stripe_customer_id, $session->amount_total ?? 0, $produkt_name);
+        }
+        }
+    }
+    elseif ($event->type === 'payment_intent.succeeded') {
+        return new WP_REST_Response(['status' => 'payment intent processed'], 200);
     }
     elseif ($event->type === 'customer.subscription.deleted') {
         $subscription     = $event->data->object;
@@ -385,6 +414,69 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $from_email = get_option('admin_email');
     $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
     wp_mail(get_option('admin_email'), $subject, $message, $headers);
+}
+
+function produkt_generate_invoice(int $order_id, string $customer_id, int $amount_cents, string $product_name = ''): void {
+    $secret = get_option('produkt_stripe_secret_key', '');
+    if (!$secret || empty($customer_id) || $amount_cents <= 0) {
+        return;
+    }
+
+    error_log("Rechnung wird erstellt fuer Order {$order_id}, Customer {$customer_id}, Betrag {$amount_cents}");
+
+    \Stripe\Stripe::setApiKey($secret);
+    global $wpdb;
+
+    $order = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+        $order_id
+    ));
+
+    try {
+        \Stripe\InvoiceItem::create([
+            'customer'    => $customer_id,
+            'amount'      => intval(($order->final_price ?? 0) * 100),
+            'currency'    => 'eur',
+            'description' => $order->produkt_name ?: 'Produktmiete',
+        ]);
+
+        if (!empty($order->extra_text)) {
+            \Stripe\InvoiceItem::create([
+                'customer'    => $customer_id,
+                'amount'      => 0,
+                'currency'    => 'eur',
+                'description' => 'Extra: ' . $order->extra_text,
+            ]);
+        }
+
+        if ($order->shipping_cost > 0) {
+            \Stripe\InvoiceItem::create([
+                'customer'    => $customer_id,
+                'amount'      => intval($order->shipping_cost * 100),
+                'currency'    => 'eur',
+                'description' => 'Versandkosten',
+            ]);
+        }
+
+        $invoice = \Stripe\Invoice::create([
+            'customer' => $customer_id,
+            'auto_advance' => true,
+            'pending_invoice_items_behavior' => 'include',
+        ]);
+
+        $invoice->finalizeInvoice();
+
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['invoice_url' => $invoice->invoice_pdf],
+            ['id' => $order_id]
+        );
+
+        error_log('Rechnung finalisiert: ' . $invoice->id);
+
+    } catch (\Exception $e) {
+        error_log('Invoice generation failed: ' . $e->getMessage());
+    }
 }
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {

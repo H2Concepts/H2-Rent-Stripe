@@ -326,6 +326,7 @@ class Admin {
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
                 'blocked_days' => $blocked_days,
+                'variant_blocked_days' => [],
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,
@@ -639,6 +640,46 @@ class Admin {
                                 'category_id' => $produkt_id,
                                 'filter_id'   => $fid
                             ]);
+                        }
+                    }
+
+                    if (!empty($_POST['stock_available']) && is_array($_POST['stock_available'])) {
+                        foreach ($_POST['stock_available'] as $vid => $qty) {
+                            $vid = intval($vid);
+                            $available = intval($qty);
+                            $rented = intval($_POST['stock_rented'][$vid] ?? 0);
+                            $sku = sanitize_text_field($_POST['sku'][$vid] ?? '');
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_variants',
+                                [
+                                    'stock_available' => $available,
+                                    'stock_rented'    => $rented,
+                                    'sku'             => $sku
+                                ],
+                                ['id' => $vid],
+                                ['%d','%d','%s'],
+                                ['%d']
+                            );
+                        }
+                    }
+
+                    if (!empty($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
+                        foreach ($_POST['extra_stock_available'] as $eid => $qty) {
+                            $eid = intval($eid);
+                            $available = intval($qty);
+                            $rented = intval($_POST['extra_stock_rented'][$eid] ?? 0);
+                            $sku = sanitize_text_field($_POST['extra_sku'][$eid] ?? '');
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_extras',
+                                [
+                                    'stock_available' => $available,
+                                    'stock_rented'    => $rented,
+                                    'sku'             => $sku
+                                ],
+                                ['id' => $eid],
+                                ['%d','%d','%s'],
+                                ['%d']
+                            );
                         }
                     }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';

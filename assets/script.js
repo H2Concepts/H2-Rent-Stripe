@@ -38,6 +38,12 @@ jQuery(document).ready(function($) {
     if (produkt_ajax.betriebsmodus === 'kauf') {
         renderCalendar(calendarMonth);
     }
+    if (!Array.isArray(produkt_ajax.variant_blocked_days)) {
+        produkt_ajax.variant_blocked_days = [];
+    }
+    if (!Array.isArray(produkt_ajax.extra_blocked_days)) {
+        produkt_ajax.extra_blocked_days = [];
+    }
 
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
@@ -54,6 +60,9 @@ jQuery(document).ready(function($) {
         selectedDays = 0;
         renderCalendar(calendarMonth);
         updateSelectedDays();
+
+        produkt_ajax.variant_blocked_days = [];
+        produkt_ajax.extra_blocked_days = [];
 
         $('.produkt-option.selected').removeClass('selected');
         $('#selected-product-color-name').text('');
@@ -141,6 +150,8 @@ jQuery(document).ready(function($) {
 
             updateVariantImages($(this));
             updateVariantOptions(id);
+            updateVariantBookings(id);
+            updateExtraBookings([]);
         } else if (type === 'extra') {
             const index = selectedExtras.indexOf(id);
             if (index > -1) {
@@ -149,6 +160,7 @@ jQuery(document).ready(function($) {
                 selectedExtras.push(id);
             }
             updateExtraImage($(this));
+            updateExtraBookings(selectedExtras);
         } else if (type === 'duration') {
             selectedDuration = id;
         } else if (type === 'condition') {
@@ -486,9 +498,61 @@ jQuery(document).ready(function($) {
                     $('.produkt-options.durations .produkt-option').removeClass('selected');
                     updateExtraImage(null);
                     updateColorImage(null);
+                    updateExtraBookings([]);
 
                     updateDiscountBadges(data.duration_discounts || {});
                     updatePriceAndButton();
+                }
+            }
+        });
+    }
+
+    function updateVariantBookings(variantId) {
+        if (produkt_ajax.betriebsmodus !== 'kauf') {
+            produkt_ajax.variant_blocked_days = [];
+            renderCalendar(calendarMonth);
+            return;
+        }
+        $.ajax({
+            url: produkt_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'get_variant_booked_days',
+                variant_id: variantId,
+                nonce: produkt_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    produkt_ajax.variant_blocked_days = response.data.days || [];
+                    renderCalendar(calendarMonth);
+                }
+            }
+        });
+    }
+
+    function updateExtraBookings(extraIds) {
+        if (produkt_ajax.betriebsmodus !== 'kauf') {
+            produkt_ajax.extra_blocked_days = [];
+            renderCalendar(calendarMonth);
+            return;
+        }
+        if (!extraIds || !extraIds.length) {
+            produkt_ajax.extra_blocked_days = [];
+            renderCalendar(calendarMonth);
+            return;
+        }
+        $.ajax({
+            url: produkt_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'get_extra_booked_days',
+                extra_ids: extraIds.join(','),
+                nonce: produkt_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    produkt_ajax.extra_blocked_days = response.data.days || [];
+                    renderCalendar(calendarMonth);
                 }
             }
         });
@@ -898,7 +962,11 @@ jQuery(document).ready(function($) {
             today.setHours(0,0,0,0);
             let cls = 'calendar-day';
             if (cellDate < today) cls += ' disabled';
-            if (Array.isArray(produkt_ajax.blocked_days) && produkt_ajax.blocked_days.includes(dateStr)) cls += ' disabled blocked';
+            let bdays = [];
+            if (Array.isArray(produkt_ajax.blocked_days)) bdays = bdays.concat(produkt_ajax.blocked_days);
+            if (Array.isArray(produkt_ajax.variant_blocked_days)) bdays = bdays.concat(produkt_ajax.variant_blocked_days);
+            if (Array.isArray(produkt_ajax.extra_blocked_days)) bdays = bdays.concat(produkt_ajax.extra_blocked_days);
+            if (bdays.includes(dateStr)) cls += ' disabled blocked';
             if (startDate === dateStr) cls += ' start';
             if (endDate === dateStr) cls += ' end';
             if (startDate && endDate && cellDate > new Date(startDate) && cellDate < new Date(endDate)) cls += ' in-range';
@@ -930,11 +998,15 @@ jQuery(document).ready(function($) {
             let s = new Date(startDate);
             let e = new Date(dateStr);
             let hasBlocked = false;
-            if (Array.isArray(produkt_ajax.blocked_days)) {
+            let blockedList = [];
+            if (Array.isArray(produkt_ajax.blocked_days)) blockedList = blockedList.concat(produkt_ajax.blocked_days);
+            if (Array.isArray(produkt_ajax.variant_blocked_days)) blockedList = blockedList.concat(produkt_ajax.variant_blocked_days);
+            if (Array.isArray(produkt_ajax.extra_blocked_days)) blockedList = blockedList.concat(produkt_ajax.extra_blocked_days);
+            if (blockedList.length) {
                 let d = new Date(s.getTime());
                 while (d <= e) {
                     const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-                    if (produkt_ajax.blocked_days.includes(ds)) {
+                    if (blockedList.includes(ds)) {
                         hasBlocked = true;
                         break;
                     }
