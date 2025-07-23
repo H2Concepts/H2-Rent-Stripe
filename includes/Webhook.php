@@ -227,7 +227,6 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         if ($data['mode'] === 'kauf') {
             error_log('Checkout-Mode: ' . $data['mode']);
-            produkt_generate_invoice($existing_id, $stripe_customer_id, $session->amount_total ?? 0, $produkt_name);
         }
         }
     }
@@ -416,68 +415,6 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     wp_mail(get_option('admin_email'), $subject, $message, $headers);
 }
 
-function produkt_generate_invoice(int $order_id, string $customer_id, int $amount_cents, string $product_name = ''): void {
-    $secret = get_option('produkt_stripe_secret_key', '');
-    if (!$secret || empty($customer_id) || $amount_cents <= 0) {
-        return;
-    }
-
-    error_log("Rechnung wird erstellt fuer Order {$order_id}, Customer {$customer_id}, Betrag {$amount_cents}");
-
-    \Stripe\Stripe::setApiKey($secret);
-    global $wpdb;
-
-    $order = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
-        $order_id
-    ));
-
-    try {
-        \Stripe\InvoiceItem::create([
-            'customer'    => $customer_id,
-            'amount'      => intval(($order->final_price ?? 0) * 100),
-            'currency'    => 'eur',
-            'description' => $order->produkt_name ?: 'Produktmiete',
-        ]);
-
-        if (!empty($order->extra_text)) {
-            \Stripe\InvoiceItem::create([
-                'customer'    => $customer_id,
-                'amount'      => 0,
-                'currency'    => 'eur',
-                'description' => 'Extra: ' . $order->extra_text,
-            ]);
-        }
-
-        if ($order->shipping_cost > 0) {
-            \Stripe\InvoiceItem::create([
-                'customer'    => $customer_id,
-                'amount'      => intval($order->shipping_cost * 100),
-                'currency'    => 'eur',
-                'description' => 'Versandkosten',
-            ]);
-        }
-
-        $invoice = \Stripe\Invoice::create([
-            'customer' => $customer_id,
-            'auto_advance' => true,
-            'pending_invoice_items_behavior' => 'include',
-        ]);
-
-        $invoice->finalizeInvoice();
-
-        $wpdb->update(
-            $wpdb->prefix . 'produkt_orders',
-            ['invoice_url' => $invoice->invoice_pdf],
-            ['id' => $order_id]
-        );
-
-        error_log('Rechnung finalisiert: ' . $invoice->id);
-
-    } catch (\Exception $e) {
-        error_log('Invoice generation failed: ' . $e->getMessage());
-    }
-}
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {
     global $wpdb;

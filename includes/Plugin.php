@@ -326,14 +326,6 @@ class Plugin {
             $email_value = $email;
             $user        = get_user_by('email', $email);
 
-            if (!$user) {
-                $user_id = wp_create_user($email, wp_generate_password(), $email);
-                if (!is_wp_error($user_id)) {
-                    wp_update_user(['ID' => $user_id, 'role' => 'kunde']);
-                    $user = get_user_by('ID', $user_id);
-                }
-            }
-
             if ($user) {
                 $code    = random_int(100000, 999999);
                 $expires = time() + 15 * MINUTE_IN_SECONDS;
@@ -356,6 +348,9 @@ class Plugin {
                 );
                 $message        = '<p>Login-Code gesendet.</p>';
                 $show_code_form = true;
+            } else {
+                $message        = '<p style="color:red;">Email nicht gefunden.</p>';
+                $show_code_form = false;
             }
 
         }

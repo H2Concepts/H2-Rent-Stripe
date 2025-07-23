@@ -1666,6 +1666,34 @@ class Database {
         return get_user_meta($user_id, 'stripe_customer_id', true);
     }
 
+    /**
+     * Get the Stripe customer ID for a user by email address.
+     *
+     * @param string $email User email
+     * @return string Customer ID or empty string when none found
+     */
+    public static function get_stripe_customer_id_by_email($email) {
+        $user = get_user_by('email', sanitize_email($email));
+        if (!$user) {
+            return '';
+        }
+        return get_user_meta($user->ID, 'stripe_customer_id', true);
+    }
+
+    /**
+     * Update the Stripe customer ID for a user identified by email.
+     *
+     * @param string $email       User email
+     * @param string $customer_id Stripe customer ID
+     * @return void
+     */
+    public static function update_stripe_customer_id_by_email($email, $customer_id) {
+        $user = get_user_by('email', sanitize_email($email));
+        if ($user) {
+            update_user_meta($user->ID, 'stripe_customer_id', $customer_id);
+        }
+    }
+
 
     /**
      * Retrieve all product categories sorted hierarchically.

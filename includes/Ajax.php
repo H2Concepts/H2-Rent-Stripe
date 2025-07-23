@@ -971,7 +971,6 @@ function produkt_create_subscription() {
         $sub_params = [
             'customer' => $customer->id,
             'items' => $items,
-            'add_invoice_items' => [],
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
                 'payment_method_types' => ['card', 'paypal'],
@@ -1006,14 +1005,26 @@ function produkt_create_subscription() {
 
         $mode = get_option('produkt_betriebsmodus', 'miete');
         if ($mode === 'kauf') {
+            $cust_email = sanitize_email($body['email'] ?? '');
+            $fullname   = sanitize_text_field($body['fullname'] ?? '');
+            $stripe_customer_id = Database::get_stripe_customer_id_by_email($cust_email);
+            if (!$stripe_customer_id) {
+                $customer = \Stripe\Customer::create([
+                    'email' => $cust_email,
+                    'name'  => $fullname,
+                ]);
+                $stripe_customer_id = $customer->id;
+                Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
+            }
+
             $session = StripeService::create_checkout_session_for_sale([
-                'price_id'       => $price_id,
-                'quantity'       => $days,
-                'customer_email' => sanitize_email($body['email'] ?? ''),
-                'metadata'       => $sub_params['metadata'],
-                'reference'      => $variant_id ? "var-$variant_id" : null,
-                'success_url'    => get_option('produkt_success_url', home_url('/danke')),
-                'cancel_url'     => get_option('produkt_cancel_url', home_url('/abbrechen')),
+                'price_id'    => $price_id,
+                'quantity'    => $days,
+                'customer'    => $stripe_customer_id,
+                'metadata'    => $sub_params['metadata'],
+                'reference'   => $variant_id ? "var-$variant_id" : null,
+                'success_url' => get_option('produkt_success_url', home_url('/danke')),
+                'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
             ]);
 
             if (is_wp_error($session)) {
@@ -1073,6 +1084,8 @@ function produkt_create_checkout_session() {
         $frame_color_id    = intval($body['frame_color_id'] ?? 0);
         $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
+        $fullname          = sanitize_text_field($body['fullname'] ?? '');
+        $phone             = sanitize_text_field($body['phone'] ?? '');
 
         $metadata = [
             'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
@@ -1100,14 +1113,28 @@ function produkt_create_checkout_session() {
 
         $modus = get_option('produkt_betriebsmodus', 'miete');
         if ($modus === 'kauf') {
+            $stripe_customer_id = null;
+            if ($customer_email) {
+                $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                $fullname = sanitize_text_field($body['fullname'] ?? '');
+                if (!$stripe_customer_id) {
+                    $customer = \Stripe\Customer::create([
+                        'email' => $customer_email,
+                        'name'  => $fullname,
+                        'phone' => $phone,
+                    ]);
+                    $stripe_customer_id = $customer->id;
+                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                }
+            }
             $session = StripeService::create_checkout_session_for_sale([
-                'price_id'       => $price_id,
-                'quantity'       => $days,
-                'customer_email' => $customer_email,
-                'metadata'       => $metadata,
-                'reference'      => $variant_id ? "var-$variant_id" : null,
-                'success_url'    => get_option('produkt_success_url', home_url('/danke')),
-                'cancel_url'     => get_option('produkt_cancel_url', home_url('/abbrechen')),
+                'price_id'    => $price_id,
+                'quantity'    => $days,
+                'customer'    => $stripe_customer_id,
+                'metadata'    => $metadata,
+                'reference'   => $variant_id ? "var-$variant_id" : null,
+                'success_url' => get_option('produkt_success_url', home_url('/danke')),
+                'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
             ]);
             if (is_wp_error($session)) {
                 throw new \Exception($session->get_error_message());
@@ -1179,6 +1206,7 @@ function produkt_create_checkout_session() {
             'phone_number_collection'     => [
                 'enabled' => true,
             ],
+            'customer_creation'        => 'always',
             'success_url'              => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'cancel_url'               => get_option('produkt_cancel_url', home_url('/abbrechen')),
             'consent_collection'       => [
@@ -1190,7 +1218,24 @@ function produkt_create_checkout_session() {
             $session_args['subscription_data'] = [ 'metadata' => $metadata ];
         }
         if (!empty($customer_email)) {
-            $session_args['customer_email'] = $customer_email;
+            // Prüfe, ob Stripe-Kunde mit dieser E-Mail bereits existiert
+            $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+
+            if (!$stripe_customer_id) {
+                // Erstelle neuen Stripe-Kunden
+                $customer = \Stripe\Customer::create([
+                    'email' => $customer_email,
+                    'name'  => $fullname,
+                ]);
+
+                $stripe_customer_id = $customer->id;
+
+                // Speichere die ID in deiner Kundentabelle
+                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+            }
+
+            // Verwende den Stripe-Kunden für die Checkout Session
+            $session_args['customer'] = $stripe_customer_id;
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
@@ -1298,6 +1343,8 @@ function produkt_create_embedded_checkout_session() {
         $frame_color_id   = intval($body['frame_color_id'] ?? 0);
         $final_price      = floatval($body['final_price'] ?? 0);
         $customer_email   = sanitize_email($body['email'] ?? '');
+        $fullname         = sanitize_text_field($body['fullname'] ?? '');
+        $phone            = sanitize_text_field($body['phone'] ?? '');
 
         $shipping_price_id = '';
         $shipping_cost = 0;
@@ -1383,6 +1430,7 @@ function produkt_create_embedded_checkout_session() {
             'phone_number_collection' => [
                 'enabled' => true,
             ],
+            'customer_creation' => 'always',
             'consent_collection' => [
                 'terms_of_service' => 'required',
             ],
@@ -1392,9 +1440,18 @@ function produkt_create_embedded_checkout_session() {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
         } else {
             if (!empty($customer_email)) {
-                $session_params['customer_email'] = $customer_email;
+                $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                if (!$stripe_customer_id) {
+                    $customer = \Stripe\Customer::create([
+                        'email' => $customer_email,
+                        'name'  => $fullname,
+                        'phone' => $phone,
+                    ]);
+                    $stripe_customer_id = $customer->id;
+                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                }
+                $session_params['customer'] = $stripe_customer_id;
             }
-            $session_params['customer_creation'] = 'always';
         }
 
         $session = \Stripe\Checkout\Session::create($session_params);

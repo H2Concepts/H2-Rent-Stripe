@@ -25,12 +25,36 @@ if (!defined('ABSPATH')) { exit; }
         <?php if (!empty($order->zustand_text)) : ?>
             <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
         <?php endif; ?>
-<?php if (!empty($order->invoice_url) && $order->mode === 'kauf') : ?>
-    <p>
-        📄 <a href="<?php echo esc_url($order->invoice_url); ?>" target="_blank">
-            Rechnung herunterladen
-        </a>
-    </p>
-<?php endif; ?>
+        <?php if (!empty($order->dauer_text)) : ?>
+            <p><strong>Miettage:</strong> <?php echo esc_html($order->dauer_text); ?></p>
+        <?php endif; ?>
+    </div>
+    <div class="order-box">
+        <h3>Kundendaten</h3>
+        <?php if (!empty($order->customer_name)) : ?>
+            <p><strong>Name:</strong> <?php echo esc_html($order->customer_name); ?></p>
+        <?php endif; ?>
+        <?php if (!empty($order->customer_email)) : ?>
+            <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email); ?></p>
+        <?php endif; ?>
+        <?php if (!empty($order->customer_phone)) : ?>
+            <p><strong>Telefon:</strong> <?php echo esc_html($order->customer_phone); ?></p>
+        <?php endif; ?>
+        <?php
+        $address_parts = [];
+        if (!empty($order->customer_street)) {
+            $address_parts[] = $order->customer_street;
+        }
+        if (!empty($order->customer_postal) || !empty($order->customer_city)) {
+            $address_parts[] = trim(($order->customer_postal ?: '') . ' ' . ($order->customer_city ?: ''));
+        }
+        if (!empty($order->customer_country)) {
+            $address_parts[] = $order->customer_country;
+        }
+        $address = implode(', ', array_filter($address_parts));
+        ?>
+        <?php if ($address) : ?>
+            <p><strong>Adresse:</strong> <?php echo esc_html($address); ?></p>
+        <?php endif; ?>
     </div>
 </div>

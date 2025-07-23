@@ -27,7 +27,6 @@ $orders        = [];
 $sale_orders   = [];
 $order_map     = [];
 $subscriptions = [];
-$invoices      = [];
 $full_name     = '';
 
 if (is_user_logged_in()) {
@@ -50,7 +49,6 @@ if (is_user_logged_in()) {
             $subscriptions = $subs;
         }
 
-        $invoices = \ProduktVerleih\StripeService::get_customer_invoices($customer_id);
     }
 
     foreach ($orders as $o) {
