@@ -88,31 +88,6 @@
             <?php endif; ?>
         <?php endif; ?>
 
-        <?php if (!$is_sale && !empty($invoices)) : ?>
-            <div class="produkt-section">
-                <h3>Rechnungen</h3>
-                <table class="stripe-invoice-table">
-                    <thead>
-                        <tr>
-                            <th>Datum</th>
-                            <th>Betrag</th>
-                            <th>Status</th>
-                            <th>PDF</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php foreach ($invoices as $invoice) : ?>
-                        <tr>
-                            <td><?php echo esc_html(date_i18n('d.m.Y', $invoice->created)); ?></td>
-                            <td><?php echo esc_html(number_format($invoice->amount_due / 100, 2, ',', '.')); ?> €</td>
-                            <td><?php echo esc_html(ucfirst($invoice->status)); ?></td>
-                            <td><a href="<?php echo esc_url($invoice->invoice_pdf); ?>" target="_blank">Download</a></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>

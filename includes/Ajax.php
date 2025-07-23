@@ -971,7 +971,6 @@ function produkt_create_subscription() {
         $sub_params = [
             'customer' => $customer->id,
             'items' => $items,
-            'add_invoice_items' => [],
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
                 'payment_method_types' => ['card', 'paypal'],
