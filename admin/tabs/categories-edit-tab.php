@@ -450,6 +450,59 @@
                     </tbody>
                 </table>
             <?php endif; ?>
+
+            <?php
+                $extras = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order, name",
+                        $edit_item->id
+                    )
+                );
+            ?>
+
+            <h4 style="margin-top:30px;">🎁 Extras</h4>
+            <?php if (empty($extras)): ?>
+                <p>Bitte zuerst ein Extra erstellen.</p>
+            <?php else: ?>
+                <table class="produkt-inventory-table widefat striped">
+                    <thead>
+                        <tr>
+                            <th>Extra</th>
+                            <th>Preis</th>
+                            <th>Menge</th>
+                            <th>SKU</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($extras as $e): ?>
+                        <tr>
+                            <td><?php echo esc_html($e->name); ?></td>
+                            <td><?php echo number_format((float)$e->price, 2, ',', '.'); ?>€</td>
+                            <td class="inventory-cell">
+                                <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
+                                    <span class="inventory-available-count"><?php echo intval($e->stock_available); ?></span>
+                                </div>
+                                <div class="inventory-popup" id="inv-popup-<?php echo $e->id; ?>">
+                                    <label>Verfügbar</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">-</button>
+                                        <input type="number" id="avail-<?php echo $e->id; ?>" name="extra_stock_available[<?php echo $e->id; ?>]" value="<?php echo intval($e->stock_available); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">+</button>
+                                    </div>
+                                    <label>In Vermietung</label>
+                                    <div class="quantity-control">
+                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $e->id; ?>">-</button>
+                                        <input type="number" id="rent-<?php echo $e->id; ?>" name="extra_stock_rented[<?php echo $e->id; ?>]" value="<?php echo intval($e->stock_rented); ?>" min="0">
+                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $e->id; ?>">+</button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><input type="text" name="extra_sku[<?php echo $e->id; ?>]" value="<?php echo esc_attr($e->sku); ?>"></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php endif; ?>
         </div>
         </div><!-- end tab-inventory -->
 
@@ -709,7 +762,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.inventory-trigger').forEach(function(trig){
         trig.addEventListener('click', function(e){
             e.preventDefault();
-            var id = this.dataset.variant;
+            var id = this.dataset.variant || this.dataset.extra;
             var popup = document.getElementById('inv-popup-' + id);
             if (popup) {
                 popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
@@ -721,7 +774,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var target = document.getElementById(this.dataset.target);
             if (target) {
                 target.value = Math.max(0, parseInt(target.value || 0) - 1);
-                if (this.dataset.variant) updateAvail(this.dataset.variant);
+                var id = this.dataset.variant || this.dataset.extra;
+                if (id) updateAvail(id);
             }
         });
     });
@@ -730,7 +784,8 @@ document.addEventListener('DOMContentLoaded', function() {
             var target = document.getElementById(this.dataset.target);
             if (target) {
                 target.value = parseInt(target.value || 0) + 1;
-                if (this.dataset.variant) updateAvail(this.dataset.variant);
+                var id = this.dataset.variant || this.dataset.extra;
+                if (id) updateAvail(id);
             }
         });
     });
@@ -742,7 +797,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     function updateAvail(id){
         var input = document.getElementById('avail-' + id);
-        var span = document.querySelector('.inventory-trigger[data-variant="' + id + '"] .inventory-available-count');
+        var span = document.querySelector('.inventory-trigger[data-variant="' + id + '"] .inventory-available-count, .inventory-trigger[data-extra="' + id + '"] .inventory-available-count');
         if (input && span) span.textContent = input.value;
     }
 

@@ -352,7 +352,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
-                             data-available="true">
+                             data-available="<?php echo $extra->stock_available > 0 ? 'true' : 'false'; ?>">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
                                 <?php if (!empty($pid)) {
@@ -723,6 +723,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 if (typeof produkt_ajax !== 'undefined') {
     produkt_ajax.blocked_days = <?php echo json_encode($blocked_days); ?>;
     produkt_ajax.variant_blocked_days = [];
+    produkt_ajax.extra_blocked_days = [];
 }
 </script>
 <?php get_footer(); ?>

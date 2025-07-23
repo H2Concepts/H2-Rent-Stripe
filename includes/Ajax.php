@@ -374,7 +374,7 @@ class Ajax {
                         'price'          => $e->price,
                         'stripe_price_id'=> $pid,
                         'image_url'      => $e->image_url ?? '',
-                        'available'      => 1,
+                        'available'      => intval($e->stock_available) > 0 ? 1 : 0,
                     ];
                     $amount = StripeService::get_price_amount($pid);
                     if (!is_wp_error($amount)) {
@@ -466,6 +466,47 @@ class Ajax {
             "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE variant_id = %d AND mode = 'kauf' AND status IN ('offen','abgeschlossen')",
             $variant_id
         ));
+        $days = [];
+        foreach ($rows as $r) {
+            if ($r->start_date && $r->end_date) {
+                $s = strtotime($r->start_date);
+                $e = strtotime($r->end_date);
+                while ($s <= $e) {
+                    $days[] = date('Y-m-d', $s);
+                    $s = strtotime('+1 day', $s);
+                }
+            }
+        }
+        $days = array_values(array_unique($days));
+        wp_send_json_success(['days' => $days]);
+    }
+
+    public function ajax_get_extra_booked_days() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        if (empty($extra_ids)) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        global $wpdb;
+        $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+        $min_available = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT MIN(stock_available) FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+            ...$extra_ids
+        ));
+        if ($min_available > 0) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $conds = [];
+        foreach ($extra_ids as $eid) {
+            $conds[] = $wpdb->prepare('FIND_IN_SET(%d, extra_ids)', $eid);
+        }
+        $where = implode(' OR ', $conds);
+        $rows = $wpdb->get_results(
+            "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE ($where) AND mode = 'kauf' AND status IN ('offen','abgeschlossen')"
+        );
         $days = [];
         foreach ($rows as $r) {
             if ($r->start_date && $r->end_date) {

@@ -662,6 +662,26 @@ class Admin {
                             );
                         }
                     }
+
+                    if (!empty($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
+                        foreach ($_POST['extra_stock_available'] as $eid => $qty) {
+                            $eid = intval($eid);
+                            $available = intval($qty);
+                            $rented = intval($_POST['extra_stock_rented'][$eid] ?? 0);
+                            $sku = sanitize_text_field($_POST['extra_sku'][$eid] ?? '');
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_extras',
+                                [
+                                    'stock_available' => $available,
+                                    'stock_rented'    => $rented,
+                                    'sku'             => $sku
+                                ],
+                                ['id' => $eid],
+                                ['%d','%d','%s'],
+                                ['%d']
+                            );
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';

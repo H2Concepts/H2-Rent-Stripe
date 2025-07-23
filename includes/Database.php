@@ -130,6 +130,22 @@ class Database {
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
         }
 
+        // Ensure inventory columns exist for extras
+        $sku_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'sku'");
+        if (empty($sku_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN sku VARCHAR(100) DEFAULT '' AFTER image_url");
+        }
+        $avail_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_available'");
+        if (empty($avail_exists)) {
+            $after = !empty($sku_exists) ? 'sku' : 'image_url';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_available INT DEFAULT 0 AFTER $after");
+        }
+        $rented_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_rented'");
+        if (empty($rented_exists)) {
+            $after = !empty($avail_exists) ? 'stock_available' : (!empty($sku_exists) ? 'sku' : 'image_url');
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_rented INT DEFAULT 0 AFTER $after");
+        }
+
         // Ensure show_badge column exists for durations
         $table_durations = $wpdb->prefix . 'produkt_durations';
         $badge_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'show_badge'");
@@ -987,6 +1003,9 @@ class Database {
             stripe_archived tinyint(1) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,
+            sku varchar(100) DEFAULT '',
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1754,15 +1773,25 @@ class Database {
         global $wpdb;
         $today = current_time('Y-m-d');
         $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, variant_id FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND end_date IS NOT NULL AND end_date < %s AND inventory_reverted = 0",
+            "SELECT id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND end_date IS NOT NULL AND end_date < %s AND inventory_reverted = 0",
             $today
         ));
         foreach ($orders as $o) {
-            if (!$o->variant_id) continue;
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
-                $o->variant_id
-            ));
+            if ($o->variant_id) {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                    $o->variant_id
+                ));
+            }
+            if (!empty($o->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $o->extra_ids)));
+                foreach ($ids as $eid) {
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                        $eid
+                    ));
+                }
+            }
             $wpdb->update(
                 $wpdb->prefix . 'produkt_orders',
                 ['inventory_reverted' => 1],
