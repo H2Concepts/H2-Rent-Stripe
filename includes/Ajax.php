@@ -1072,6 +1072,7 @@ function produkt_create_checkout_session() {
         $frame_color_id    = intval($body['frame_color_id'] ?? 0);
         $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
+        $fullname          = sanitize_text_field($body['fullname'] ?? '');
 
         $metadata = [
             'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
@@ -1189,7 +1190,24 @@ function produkt_create_checkout_session() {
             $session_args['subscription_data'] = [ 'metadata' => $metadata ];
         }
         if (!empty($customer_email)) {
-            $session_args['customer_email'] = $customer_email;
+            // Prüfe, ob Stripe-Kunde mit dieser E-Mail bereits existiert
+            $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+
+            if (!$stripe_customer_id) {
+                // Erstelle neuen Stripe-Kunden
+                $customer = \Stripe\Customer::create([
+                    'email' => $customer_email,
+                    'name'  => $fullname,
+                ]);
+
+                $stripe_customer_id = $customer->id;
+
+                // Speichere die ID in deiner Kundentabelle
+                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+            }
+
+            // Verwende den Stripe-Kunden für die Checkout Session
+            $session_args['customer'] = $stripe_customer_id;
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
@@ -1391,7 +1409,16 @@ function produkt_create_embedded_checkout_session() {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
         } else {
             if (!empty($customer_email)) {
-                $session_params['customer_email'] = $customer_email;
+                $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                if (!$stripe_customer_id) {
+                    $customer = \Stripe\Customer::create([
+                        'email' => $customer_email,
+                        'name'  => $fullname,
+                    ]);
+                    $stripe_customer_id = $customer->id;
+                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                }
+                $session_params['customer'] = $stripe_customer_id;
             }
             $session_params['customer_creation'] = 'always';
         }

@@ -1666,6 +1666,23 @@ class Database {
         return get_user_meta($user_id, 'stripe_customer_id', true);
     }
 
+    public static function get_stripe_customer_id_by_email($email) {
+        global $wpdb;
+        return $wpdb->get_var($wpdb->prepare(
+            "SELECT stripe_customer_id FROM {$wpdb->prefix}produkt_customers WHERE email = %s LIMIT 1",
+            $email
+        ));
+    }
+
+    public static function update_stripe_customer_id_by_email($email, $stripe_customer_id) {
+        global $wpdb;
+        $wpdb->update(
+            "{$wpdb->prefix}produkt_customers",
+            ['stripe_customer_id' => $stripe_customer_id],
+            ['email' => $email]
+        );
+    }
+
 
     /**
      * Retrieve all product categories sorted hierarchically.
