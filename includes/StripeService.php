@@ -81,6 +81,15 @@ class StripeService {
                 'customer_creation'=> 'always',
                 'client_reference_id' => $args['reference'] ?? null,
                 'metadata' => $args['metadata'] ?? [],
+                'invoice_creation' => [
+                    'enabled' => true,
+                    'invoice_data' => [
+                        'description' => 'Automatische Rechnung zur Bestellung',
+                        'metadata' => [
+                            'order_id' => $args['order_id'] ?? '',
+                        ],
+                    ],
+                ],
                 'success_url' => $success_url . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url'  => $cancel_url,
             ]);

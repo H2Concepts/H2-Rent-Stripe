@@ -225,10 +225,6 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             }
         }
 
-        if ($data['mode'] === 'kauf') {
-            error_log('Checkout-Mode: ' . $data['mode']);
-            produkt_generate_invoice($existing_id, $stripe_customer_id, $session->amount_total ?? 0, $produkt_name);
-        }
         }
     }
     elseif ($event->type === 'payment_intent.succeeded') {
