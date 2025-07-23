@@ -226,6 +226,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         }
 
         if ($data['mode'] === 'kauf') {
+            error_log('Checkout-Mode: ' . $data['mode']);
             produkt_generate_invoice($existing_id, $stripe_customer_id, $session->amount_total ?? 0, $produkt_name);
         }
         }
@@ -443,6 +444,8 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
     if (!$secret || empty($customer_id) || $amount_cents <= 0) {
         return;
     }
+
+    error_log("Rechnung wird erstellt fuer Order {$order_id}, Customer {$customer_id}, Betrag {$amount_cents}");
 
     \Stripe\Stripe::setApiKey($secret);
 
