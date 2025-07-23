@@ -37,7 +37,7 @@ if ($customer->stripe_customer_id) {
     $invoices = \ProduktVerleih\StripeService::get_customer_invoices($customer->stripe_customer_id);
 }
 
-$full_name = $customer->name;
+$full_name = trim($customer->first_name . ' ' . $customer->last_name);
 ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>

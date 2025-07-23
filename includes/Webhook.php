@@ -46,7 +46,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
         $email   = sanitize_email($session->customer_details->email ?? '');
-        $name    = sanitize_text_field($session->customer_details->name ?? '');
+        $full    = sanitize_text_field($session->customer_details->name ?? '');
+        $first   = $full;
+        $last    = '';
+        if (strpos($full, ' ') !== false) {
+            list($first, $last) = explode(' ', $full, 2);
+        }
         $phone   = sanitize_text_field($session->customer_details->phone ?? '');
         $addr    = $session->customer_details->address ?? null;
 
@@ -67,7 +72,8 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 $wpdb->prefix . 'produkt_customers',
                 [
                     'email'              => $email,
-                    'name'               => $name,
+                    'first_name'         => $first,
+                    'last_name'          => $last,
                     'phone'              => $phone,
                     'street'             => $street,
                     'postal_code'        => $postal,

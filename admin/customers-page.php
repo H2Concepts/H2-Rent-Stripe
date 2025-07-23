@@ -33,9 +33,10 @@ foreach ($results as $r) {
         $table = $wpdb->prefix . 'produkt_customers';
         $sql = "SELECT * FROM $table";
         if ($search) {
-            $sql .= $wpdb->prepare(" WHERE name LIKE %s OR email LIKE %s", "%$search%", "%$search%");
+            $like = '%' . $wpdb->esc_like($search) . '%';
+            $sql .= $wpdb->prepare(" WHERE CONCAT(first_name,' ',last_name) LIKE %s OR email LIKE %s", $like, $like);
         }
-        $sql .= " ORDER BY name ASC";
+        $sql .= " ORDER BY first_name ASC";
         $customers = $wpdb->get_results($sql);
     ?>
     <table class="wp-list-table widefat fixed striped">
@@ -50,7 +51,7 @@ foreach ($results as $r) {
         <tbody>
             <?php foreach ($customers as $c): ?>
             <tr>
-                <td><?php echo esc_html($c->name); ?></td>
+                <td><?php echo esc_html(trim($c->first_name . ' ' . $c->last_name)); ?></td>
                 <td><?php echo esc_html($c->email); ?></td>
                 <td><?php echo esc_html($c->phone ?: '–'); ?></td>
                 <td><a href="<?php echo admin_url('admin.php?page=produkt-customers&customer=' . $c->id); ?>" class="button">Details</a></td>
@@ -67,9 +68,8 @@ foreach ($results as $r) {
             echo '<p>Kunde nicht gefunden.</p></div>';
             return;
         }
-        $parts = explode(' ', $customer->name, 2);
-        $first = $parts[0] ?? '';
-        $last  = $parts[1] ?? '';
+        $first = $customer->first_name;
+        $last  = $customer->last_name;
         $phone = $customer->phone;
         $orders = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC",

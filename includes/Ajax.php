@@ -1168,6 +1168,12 @@ function produkt_create_checkout_session() {
             $custom_text['after_submit'] = [ 'message' => $ct_after ];
         }
 
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        $logged_customer = \produkt_is_customer_logged_in() ? \produkt_get_current_customer_data() : null;
+
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        $logged_customer = \produkt_is_customer_logged_in() ? \produkt_get_current_customer_data() : null;
+
         $session_args = [
             'mode'                     => ($modus === 'kauf' ? 'payment' : 'subscription'),
             'payment_method_types'     => ['card', 'paypal'],
@@ -1189,7 +1195,26 @@ function produkt_create_checkout_session() {
         if ($modus !== 'kauf') {
             $session_args['subscription_data'] = [ 'metadata' => $metadata ];
         }
-        if (!empty($customer_email)) {
+
+        if ($logged_customer) {
+            $session_args['customer_email'] = $logged_customer->email;
+            if (!empty($logged_customer->stripe_customer_id)) {
+                $session_args['customer'] = $logged_customer->stripe_customer_id;
+            }
+            $session_args['customer_update'] = ['address' => 'auto'];
+            $session_args['customer_creation'] = 'if_required';
+            $session_args['payment_intent_data'] = [
+                'shipping' => [
+                    'name'    => trim($logged_customer->first_name . ' ' . $logged_customer->last_name),
+                    'address' => [
+                        'line1'       => $logged_customer->street,
+                        'postal_code' => $logged_customer->postal_code,
+                        'city'        => $logged_customer->city,
+                        'country'     => $logged_customer->country,
+                    ]
+                ]
+            ];
+        } elseif (!empty($customer_email)) {
             $session_args['customer_email'] = $customer_email;
         }
 
@@ -1390,6 +1415,26 @@ function produkt_create_embedded_checkout_session() {
         ];
         if ($modus !== 'kauf') {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
+        }
+
+        if ($logged_customer) {
+            $session_params['customer_email'] = $logged_customer->email;
+            if (!empty($logged_customer->stripe_customer_id)) {
+                $session_params['customer'] = $logged_customer->stripe_customer_id;
+            }
+            $session_params['customer_update'] = ['address' => 'auto'];
+            $session_params['customer_creation'] = 'if_required';
+            $session_params['payment_intent_data'] = [
+                'shipping' => [
+                    'name'    => trim($logged_customer->first_name . ' ' . $logged_customer->last_name),
+                    'address' => [
+                        'line1'       => $logged_customer->street,
+                        'postal_code' => $logged_customer->postal_code,
+                        'city'        => $logged_customer->city,
+                        'country'     => $logged_customer->country,
+                    ]
+                ]
+            ];
         } else {
             if (!empty($customer_email)) {
                 $session_params['customer_email'] = $customer_email;

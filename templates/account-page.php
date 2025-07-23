@@ -16,8 +16,13 @@ if (produkt_is_customer_logged_in()) {
     return;
 }
 
-$sent = false;
+$sent  = false;
 $error = '';
+$email = '';
+if (isset($_GET['sent'], $_GET['email']) && $_GET['sent'] == 1) {
+    $sent  = true;
+    $email = sanitize_email($_GET['email']);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['customer_email'])) {
     $email = sanitize_email($_POST['customer_email']);

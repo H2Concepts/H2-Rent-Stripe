@@ -141,6 +141,7 @@ class Plugin {
         $this->create_shop_page();
         $this->create_customer_page();
         $this->create_checkout_page();
+        $this->create_registration_page();
         flush_rewrite_rules();
     }
 
@@ -188,6 +189,7 @@ class Plugin {
             PRODUKT_SHOP_PAGE_OPTION,
             PRODUKT_CUSTOMER_PAGE_OPTION,
             PRODUKT_CHECKOUT_PAGE_OPTION,
+            PRODUKT_REGISTER_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -207,6 +209,11 @@ class Plugin {
         $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if ($checkout_page_id) {
             wp_delete_post($checkout_page_id, true);
+        }
+
+        $reg_page_id = get_option(PRODUKT_REGISTER_PAGE_OPTION);
+        if ($reg_page_id) {
+            wp_delete_post($reg_page_id, true);
         }
     }
 
@@ -426,6 +433,12 @@ class Plugin {
         return ob_get_clean();
     }
 
+    public function render_registration_page() {
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/register-page.php';
+        return ob_get_clean();
+    }
+
 
     /**
      * Handle the product form submission and redirect to the checkout page
@@ -615,6 +628,24 @@ class Plugin {
         update_option(PRODUKT_CHECKOUT_PAGE_OPTION, $page_id);
     }
 
+    private function create_registration_page() {
+        $page = get_page_by_path('registrieren');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Registrieren',
+                'post_name'    => 'registrieren',
+                'post_content' => '[produkt_register]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_REGISTER_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
@@ -627,6 +658,10 @@ class Plugin {
         $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if ($post->ID == $checkout_page_id) {
             $states[] = __('Checkout-Seite', 'h2-concepts');
+        }
+        $register_page_id = get_option(PRODUKT_REGISTER_PAGE_OPTION);
+        if ($post->ID == $register_page_id) {
+            $states[] = __('Registrierungs-Seite', 'h2-concepts');
         }
         return $states;
     }
