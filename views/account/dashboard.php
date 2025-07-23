@@ -1,25 +1,44 @@
-<?php if (!is_user_logged_in()) : ?>
-<div class="produkt-login-wrapper">
-    <div class="login-box">
-        <h1>Login</h1>
-        <p>Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.</p>
-        <?php if (!empty($message)) { echo $message; } ?>
-        <form method="post" class="login-email-form">
-            <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
-            <input type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
-            <button type="submit" name="request_login_code">Code zum einloggen anfordern</button>
-        </form>
-        <?php if ($show_code_form) : ?>
-        <form method="post" class="login-code-form">
-            <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
-            <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
-            <input type="text" name="code" placeholder="6-stelliger Code" required>
-            <button type="submit" name="verify_login_code">Einloggen</button>
-        </form>
-        <?php endif; ?>
-    </div>
-</div>
-<?php else : ?>
+<?php
+$customer = produkt_get_current_customer_data();
+if (!$customer) {
+    echo '<p>Kunde nicht gefunden.</p>';
+    return;
+}
+
+$modus    = get_option('produkt_betriebsmodus', 'miete');
+$is_sale  = ($modus === 'kauf');
+
+global $wpdb;
+$orders = $wpdb->get_results(
+    $wpdb->prepare(
+        "SELECT *, stripe_subscription_id AS subscription_id FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at",
+        $customer->email
+    )
+);
+
+$sale_orders = [];
+$order_map   = [];
+foreach ($orders as $o) {
+    if (!empty($o->subscription_id)) {
+        $order_map[$o->subscription_id] = $o;
+    }
+    if ($o->mode === 'kauf') {
+        $sale_orders[] = $o;
+    }
+}
+
+$subscriptions = [];
+$invoices      = [];
+if ($customer->stripe_customer_id) {
+    $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer->stripe_customer_id);
+    if (!is_wp_error($subs)) {
+        $subscriptions = $subs;
+    }
+    $invoices = \ProduktVerleih\StripeService::get_customer_invoices($customer->stripe_customer_id);
+}
+
+$full_name = $customer->name;
+?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>
     <?php if (!empty($message)) { echo $message; } ?>
@@ -31,7 +50,7 @@
                         <a href="#" class="active"><?php echo $is_sale ? 'Bestellungen' : 'Abos'; ?></a>
                     </li>
                     <li>
-                        <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Logout</a>
+                        <a href="<?php echo esc_url(home_url('/kundenkonto?logout=1')); ?>">Logout</a>
                     </li>
                 </ul>
             </aside>
@@ -115,5 +134,4 @@
         <?php endif; ?>
             </div>
         </div>
-    <?php endif; ?>
 </div>

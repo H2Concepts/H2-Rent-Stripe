@@ -13,6 +13,9 @@ class Plugin {
     private $login_error = '';
 
     public function __construct() {
+        if (!session_id()) {
+            session_start();
+        }
         $this->db = new Database();
         $this->ajax = new Ajax();
         $this->admin = new Admin();

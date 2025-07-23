@@ -78,3 +78,34 @@ function pv_get_image_url_by_variant_or_category($variant_id, $category_id) {
 
     return $image_url ?: '';
 }
+
+function produkt_is_customer_logged_in() {
+    return isset($_SESSION['produkt_customer_id']);
+}
+
+function produkt_get_current_customer_id() {
+    return $_SESSION['produkt_customer_id'] ?? 0;
+}
+
+function produkt_get_current_customer_data() {
+    global $wpdb;
+    $id = produkt_get_current_customer_id();
+    if (!$id) return null;
+    $table = $wpdb->prefix . 'produkt_customers';
+    return $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
+}
+
+function produkt_customer_login($email) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_customers';
+    $id = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE email = %s", sanitize_email($email)));
+    if ($id) {
+        $_SESSION['produkt_customer_id'] = $id;
+        return true;
+    }
+    return false;
+}
+
+function produkt_customer_logout() {
+    unset($_SESSION['produkt_customer_id']);
+}
