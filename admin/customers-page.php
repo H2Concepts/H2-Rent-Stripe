@@ -30,16 +30,13 @@ foreach ($results as $r) {
     </form>
 
     <?php
-        $args = [
-            'role'    => 'kunde',
-            'orderby' => 'display_name',
-            'order'   => 'ASC',
-        ];
+        $table = $wpdb->prefix . 'produkt_customers';
+        $sql = "SELECT * FROM $table";
         if ($search) {
-            $args['search']         = '*' . $search . '*';
-            $args['search_columns'] = ['user_nicename', 'user_email', 'display_name'];
+            $sql .= $wpdb->prepare(" WHERE name LIKE %s OR email LIKE %s", "%$search%", "%$search%");
         }
-        $users = get_users($args);
+        $sql .= " ORDER BY name ASC";
+        $customers = $wpdb->get_results($sql);
     ?>
     <table class="wp-list-table widefat fixed striped">
         <thead>
@@ -51,33 +48,12 @@ foreach ($results as $r) {
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($users as $u): ?>
-            <?php
-                $first = get_user_meta($u->ID, 'first_name', true);
-                $last  = get_user_meta($u->ID, 'last_name', true);
-                $phone = get_user_meta($u->ID, 'phone', true);
-                if (!$first && !$last) {
-                    $order = $wpdb->get_row($wpdb->prepare(
-                        "SELECT customer_name, customer_phone FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC LIMIT 1",
-                        $u->user_email
-                    ));
-                    if ($order) {
-                        $parts = explode(' ', $order->customer_name, 2);
-                        $first = $first ?: ($parts[0] ?? '');
-                        $last  = $last ?: ($parts[1] ?? '');
-                        if (!$phone) {
-                            $phone = $order->customer_phone;
-                        }
-                    }
-                }
-                $name  = trim($first . ' ' . $last);
-                if (!$name) { $name = $u->display_name; }
-            ?>
+            <?php foreach ($customers as $c): ?>
             <tr>
-                <td><?php echo esc_html($name); ?></td>
-                <td><?php echo esc_html($u->user_email); ?></td>
-                <td><?php echo esc_html($phone ?: '–'); ?></td>
-                <td><a href="<?php echo admin_url('admin.php?page=produkt-customers&customer=' . $u->ID); ?>" class="button">Details</a></td>
+                <td><?php echo esc_html($c->name); ?></td>
+                <td><?php echo esc_html($c->email); ?></td>
+                <td><?php echo esc_html($c->phone ?: '–'); ?></td>
+                <td><a href="<?php echo admin_url('admin.php?page=produkt-customers&customer=' . $c->id); ?>" class="button">Details</a></td>
             </tr>
             <?php endforeach; ?>
         </tbody>
@@ -85,31 +61,19 @@ foreach ($results as $r) {
 
     <?php else: ?>
     <?php
-        $user = get_user_by('ID', $customer_id);
-        if (!$user) {
+        $table = $wpdb->prefix . 'produkt_customers';
+        $customer = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $customer_id));
+        if (!$customer) {
             echo '<p>Kunde nicht gefunden.</p></div>';
             return;
         }
-        $first = get_user_meta($user->ID, 'first_name', true);
-        $last  = get_user_meta($user->ID, 'last_name', true);
-        $phone = get_user_meta($user->ID, 'phone', true);
-        if (!$first && !$last) {
-            $latest = $wpdb->get_row($wpdb->prepare(
-                "SELECT customer_name, customer_phone FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC LIMIT 1",
-                $user->user_email
-            ));
-            if ($latest) {
-                $parts = explode(' ', $latest->customer_name, 2);
-                $first = $first ?: ($parts[0] ?? '');
-                $last  = $last ?: ($parts[1] ?? '');
-                if (!$phone) {
-                    $phone = $latest->customer_phone;
-                }
-            }
-        }
+        $parts = explode(' ', $customer->name, 2);
+        $first = $parts[0] ?? '';
+        $last  = $parts[1] ?? '';
+        $phone = $customer->phone;
         $orders = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC",
-            $user->user_email
+            $customer->email
         ));
     ?>
     <p><a href="<?php echo admin_url('admin.php?page=produkt-customers'); ?>" class="button">&larr; Zurück</a></p>
@@ -118,7 +82,7 @@ foreach ($results as $r) {
             <h2>Kunden Details</h2>
             <p><strong>Vorname:</strong> <?php echo esc_html($first); ?></p>
             <p><strong>Nachname:</strong> <?php echo esc_html($last); ?></p>
-            <p><strong>E-Mail:</strong> <?php echo esc_html($user->user_email); ?></p>
+            <p><strong>E-Mail:</strong> <?php echo esc_html($customer->email); ?></p>
             <p><strong>Telefon:</strong> <?php echo esc_html($phone ?: '–'); ?></p>
 
             <h2>Bestellungen</h2>
