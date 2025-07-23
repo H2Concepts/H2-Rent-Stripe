@@ -1390,6 +1390,11 @@ function produkt_create_embedded_checkout_session() {
         ];
         if ($modus !== 'kauf') {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
+        } else {
+            if (!empty($customer_email)) {
+                $session_params['customer_email'] = $customer_email;
+            }
+            $session_params['customer_creation'] = 'always';
         }
 
         $session = \Stripe\Checkout\Session::create($session_params);
