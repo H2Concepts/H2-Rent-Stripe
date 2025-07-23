@@ -278,6 +278,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
+                invoice_url varchar(255) DEFAULT '',
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY category_id (category_id),
@@ -593,7 +594,8 @@ class Database {
                 'start_date'        => 'date DEFAULT NULL',
                 'end_date'          => 'date DEFAULT NULL',
                 'inventory_reverted'=> 'tinyint(1) DEFAULT 0',
-                'status'            => "varchar(20) DEFAULT 'offen'"
+                'status'            => "varchar(20) DEFAULT 'offen'",
+                'invoice_url'       => "varchar(255) DEFAULT ''"
             );
 
             foreach ($new_order_columns as $column => $type) {
@@ -1171,6 +1173,7 @@ class Database {
             dauer_text varchar(255) DEFAULT '',
             user_ip varchar(45) DEFAULT NULL,
             user_agent text DEFAULT NULL,
+            invoice_url varchar(255) DEFAULT '',
             status varchar(20) DEFAULT 'offen',
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),

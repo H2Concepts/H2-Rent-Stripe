@@ -224,6 +224,10 @@ function handle_stripe_webhook(WP_REST_Request $request) {
                 }
             }
         }
+
+        if ($data['mode'] === 'kauf') {
+            produkt_generate_invoice($existing_id, $stripe_customer_id, $session->amount_total ?? 0, $produkt_name);
+        }
         }
     }
     elseif ($event->type === 'customer.subscription.deleted') {
@@ -406,6 +410,40 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $from_email = get_option('admin_email');
     $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
     wp_mail(get_option('admin_email'), $subject, $message, $headers);
+}
+
+function produkt_generate_invoice(int $order_id, string $customer_id, int $amount_cents, string $product_name = ''): void {
+    $secret = get_option('produkt_stripe_secret_key', '');
+    if (!$secret || empty($customer_id) || $amount_cents <= 0) {
+        return;
+    }
+
+    \Stripe\Stripe::setApiKey($secret);
+
+    try {
+        \Stripe\InvoiceItem::create([
+            'customer'    => $customer_id,
+            'amount'      => $amount_cents,
+            'currency'    => 'eur',
+            'description' => $product_name ?: 'Einmaliger Kauf',
+        ]);
+
+        $invoice = \Stripe\Invoice::create([
+            'customer'          => $customer_id,
+            'collection_method' => 'send_invoice',
+            'days_until_due'    => 0,
+            'auto_advance'      => true,
+        ]);
+
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['invoice_url' => $invoice->invoice_pdf],
+            ['id' => $order_id]
+        );
+    } catch (\Exception $e) {
+        error_log('Invoice generation failed: ' . $e->getMessage());
+    }
 }
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {

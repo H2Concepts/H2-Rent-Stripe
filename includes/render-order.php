@@ -25,5 +25,8 @@ if (!defined('ABSPATH')) { exit; }
         <?php if (!empty($order->zustand_text)) : ?>
             <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
         <?php endif; ?>
+        <?php if ($order->mode === 'kauf' && !empty($order->invoice_url)) : ?>
+            <p><a class="btn btn-invoice" target="_blank" href="<?php echo esc_url($order->invoice_url); ?>">Rechnung herunterladen</a></p>
+        <?php endif; ?>
     </div>
 </div>

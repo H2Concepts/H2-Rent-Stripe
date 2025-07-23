@@ -88,7 +88,7 @@
             <?php endif; ?>
         <?php endif; ?>
 
-        <?php if (!empty($invoices)) : ?>
+        <?php if (!$is_sale && !empty($invoices)) : ?>
             <div class="produkt-section">
                 <h3>Rechnungen</h3>
                 <table class="stripe-invoice-table">
