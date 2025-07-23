@@ -1703,30 +1703,32 @@ class Database {
      * @param string $customer_id Stripe customer ID
      * @return void
      */
-    public static function update_stripe_customer_id_by_email($email, $customer_id) {
-        $user = get_user_by('email', sanitize_email($email));
-        if ($user) {
-            update_user_meta($user->ID, 'stripe_customer_id', $customer_id);
-        }
-
+    public static function update_stripe_customer_id_by_email($email, $stripe_customer_id) {
         global $wpdb;
         $table = $wpdb->prefix . 'produkt_customers';
-        $email  = sanitize_email($email);
-        $exists = $wpdb->get_var(
-            $wpdb->prepare("SELECT COUNT(*) FROM $table WHERE email = %s", $email)
-        );
+
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $table WHERE email = %s",
+            $email
+        ));
+
         if ($exists) {
+            // Update bestehender Eintrag
             $wpdb->update(
                 $table,
-                ['stripe_customer_id' => $customer_id],
+                ['stripe_customer_id' => $stripe_customer_id],
                 ['email' => $email],
                 ['%s'],
                 ['%s']
             );
         } else {
+            // Fallback: neuer Eintrag mit minimalen Infos
             $wpdb->insert(
                 $table,
-                ['email' => $email, 'stripe_customer_id' => $customer_id],
+                [
+                    'email' => $email,
+                    'stripe_customer_id' => $stripe_customer_id,
+                ],
                 ['%s', '%s']
             );
         }
