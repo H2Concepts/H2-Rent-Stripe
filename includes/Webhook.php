@@ -422,6 +422,8 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
         return;
     }
 
+    error_log("Rechnung wird erstellt fuer Order {$order_id}, Customer {$customer_id}, Betrag {$amount_cents}");
+
     \Stripe\Stripe::setApiKey($secret);
     global $wpdb;
 
@@ -431,29 +433,22 @@ function produkt_generate_invoice(int $order_id, string $customer_id, int $amoun
     ));
 
     try {
-        $days = max(1, (int) $order->days);
-
-        // Zelt
-        $zelt_price_per_day = 1800; // 18,00 €
         \Stripe\InvoiceItem::create([
-            'customer' => $customer_id,
-            'amount'   => $zelt_price_per_day * $days,
-            'currency' => 'eur',
-            'description' => 'Zelt für 15 Personen – Anzahl: ' . $days,
+            'customer'    => $customer_id,
+            'amount'      => intval(($order->final_price ?? 0) * 100),
+            'currency'    => 'eur',
+            'description' => $order->produkt_name ?: 'Produktmiete',
         ]);
 
-        // Extra
         if (!empty($order->extra_text)) {
-            $extra_price_per_day = 800; // Beispiel: 8,00 €
             \Stripe\InvoiceItem::create([
-                'customer' => $customer_id,
-                'amount'   => $extra_price_per_day * $days,
-                'currency' => 'eur',
-                'description' => 'Extra: ' . $order->extra_text . ' – Anzahl: ' . $days,
+                'customer'    => $customer_id,
+                'amount'      => 0,
+                'currency'    => 'eur',
+                'description' => 'Extra: ' . $order->extra_text,
             ]);
         }
 
-        // Versand
         if ($order->shipping_cost > 0) {
             \Stripe\InvoiceItem::create([
                 'customer'    => $customer_id,
