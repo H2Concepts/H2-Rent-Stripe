@@ -36,6 +36,7 @@
                 $edit_item->id
             )
         );
+        $modus = get_option('produkt_betriebsmodus', 'miete');
         ?>
 
         <div class="produkt-subtab-nav">
@@ -418,7 +419,12 @@
                         <?php foreach ($variants as $v): ?>
                         <tr>
                             <td><?php echo esc_html($v->name); ?></td>
-                            <td><?php echo number_format((float)$v->base_price, 2, ',', '.'); ?>€</td>
+                            <?php
+                                $price_val = ($modus === 'kauf')
+                                    ? $v->verkaufspreis_einmalig
+                                    : $v->base_price;
+                            ?>
+                            <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
                             <td class="inventory-cell">
                                 <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
                                     <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
