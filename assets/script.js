@@ -711,7 +711,7 @@ jQuery(document).ready(function($) {
             requiredSelections.push(selectedFrameColor);
         }
         
-        const allSelected = requiredSelections.every(selection => selection !== null);
+        const allSelected = requiredSelections.every(selection => selection !== null && selection !== false);
         
         if (allSelected) {
             // Show loading state
