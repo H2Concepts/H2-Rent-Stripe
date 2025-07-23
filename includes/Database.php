@@ -651,6 +651,31 @@ class Database {
             }
         }
 
+        // Create customers table if not exists
+        $table_customers = $wpdb->prefix . 'produkt_customers';
+        $customers_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_customers'");
+
+        if (!$customers_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_customers (
+                id INT NOT NULL AUTO_INCREMENT,
+                stripe_customer_id VARCHAR(255),
+                email VARCHAR(255) NOT NULL UNIQUE,
+                first_name VARCHAR(100),
+                last_name VARCHAR(100),
+                phone VARCHAR(50),
+                street VARCHAR(255),
+                postal_code VARCHAR(20),
+                city VARCHAR(100),
+                country VARCHAR(2),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create notifications table if it doesn't exist
         $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $notifications_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_notifications'");
@@ -1180,6 +1205,23 @@ class Database {
             KEY category_id (category_id),
             KEY created_at (created_at)
         ) $charset_collate;";
+
+        // Customers table
+        $table_customers = $wpdb->prefix . 'produkt_customers';
+        $sql_customers = "CREATE TABLE $table_customers (
+            id INT NOT NULL AUTO_INCREMENT,
+            stripe_customer_id VARCHAR(255),
+            email VARCHAR(255) NOT NULL UNIQUE,
+            first_name VARCHAR(100),
+            last_name VARCHAR(100),
+            phone VARCHAR(50),
+            street VARCHAR(255),
+            postal_code VARCHAR(20),
+            city VARCHAR(100),
+            country VARCHAR(2),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_prod_categories);
@@ -1216,6 +1258,7 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_content_blocks);
         dbDelta($sql_orders);
+        dbDelta($sql_customers);
 
         // Shipping methods table
         $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
