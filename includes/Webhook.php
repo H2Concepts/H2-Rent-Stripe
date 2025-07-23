@@ -45,6 +45,46 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
+        $email   = sanitize_email($session->customer_details->email ?? '');
+        $name    = sanitize_text_field($session->customer_details->name ?? '');
+        $phone   = sanitize_text_field($session->customer_details->phone ?? '');
+        $addr    = $session->customer_details->address ?? null;
+
+        $street  = $addr ? sanitize_text_field(($addr->line1 ?? '') . ' ' . ($addr->line2 ?? '')) : '';
+        $postal  = $addr ? sanitize_text_field($addr->postal_code ?? '') : '';
+        $city    = $addr ? sanitize_text_field($addr->city ?? '') : '';
+        $country = $addr ? sanitize_text_field($addr->country ?? '') : '';
+        $stripe_customer_id = $session->customer ?? '';
+
+        global $wpdb;
+        $existing = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
+            $email
+        ));
+
+        if (!$existing) {
+            $wpdb->insert(
+                $wpdb->prefix . 'produkt_customers',
+                [
+                    'email'              => $email,
+                    'name'               => $name,
+                    'phone'              => $phone,
+                    'street'             => $street,
+                    'postal_code'        => $postal,
+                    'city'               => $city,
+                    'country'            => $country,
+                    'stripe_customer_id' => $stripe_customer_id,
+                    'created_at'         => current_time('mysql')
+                ]
+            );
+        }
+
+        $order_table = $wpdb->prefix . 'produkt_orders';
+        $wpdb->update(
+            $order_table,
+            ['stripe_customer_id' => $stripe_customer_id],
+            ['stripe_session_id' => $session->id]
+        );
         $mode     = $session->mode ?? 'subscription';
         $subscription_id   = $mode === 'subscription' ? ($session->subscription ?? '') : '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
