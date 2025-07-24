@@ -1260,7 +1260,6 @@ function produkt_create_checkout_session() {
             'phone_number_collection'     => [
                 'enabled' => true,
             ],
-            'customer_creation'        => 'always',
             'success_url'              => add_query_arg('session_id', '{CHECKOUT_SESSION_ID}', get_option('produkt_success_url', home_url('/danke'))),
             'cancel_url'               => get_option('produkt_cancel_url', home_url('/abbrechen')),
             'consent_collection'       => [
@@ -1303,8 +1302,13 @@ function produkt_create_checkout_session() {
                 }
             }
 
-            // Verwende den Stripe-Kunden für die Checkout Session
-            $session_args['customer'] = $stripe_customer_id;
+            if ($stripe_customer_id) {
+                $session_args['customer'] = $stripe_customer_id;
+            }
+        }
+
+        if (empty($session_args['customer'])) {
+            $session_args['customer_creation'] = 'always';
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
@@ -1503,7 +1507,6 @@ function produkt_create_embedded_checkout_session() {
             'phone_number_collection' => [
                 'enabled' => true,
             ],
-            'customer_creation' => 'always',
             'consent_collection' => [
                 'terms_of_service' => 'required',
             ],
@@ -1538,7 +1541,13 @@ function produkt_create_embedded_checkout_session() {
                         update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
                     }
                 }
-                $session_params['customer'] = $stripe_customer_id;
+                if ($stripe_customer_id) {
+                    $session_params['customer'] = $stripe_customer_id;
+                }
+            }
+
+            if (empty($session_params['customer'])) {
+                $session_params['customer_creation'] = 'always';
             }
         }
 
