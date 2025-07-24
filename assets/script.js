@@ -1,3 +1,4 @@
+var pendingCheckoutUrl = '';
 jQuery(document).ready(function($) {
     let selectedVariant = null;
     let selectedExtras = [];
@@ -5,7 +6,6 @@ jQuery(document).ready(function($) {
     let selectedCondition = null;
     let selectedProductColor = null;
     let selectedFrameColor = null;
-    let pendingCheckoutUrl = '';
     let currentVariantImages = [];
     let currentMainImageIndex = 0;
     let currentProductColorImage = null;
