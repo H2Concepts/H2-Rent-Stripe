@@ -1553,7 +1553,9 @@ function produkt_create_embedded_checkout_session() {
         }
 
         if (!empty($session_params['automatic_tax']['enabled'])) {
-            $session_params['customer_update'] = ['shipping' => 'auto'];
+            if (!empty($session_params['customer']) || !empty($session_params['customer_creation'])) {
+                $session_params['customer_update'] = ['shipping' => 'auto'];
+            }
         }
 
         $session = \Stripe\Checkout\Session::create($session_params);
