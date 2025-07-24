@@ -134,18 +134,18 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         );
 
         global $wpdb;
-        $existing_order = $wpdb->get_row($wpdb->prepare(
+        $existing_orders = $wpdb->get_results($wpdb->prepare(
             "SELECT id, status, created_at, category_id, shipping_cost, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
             $session->id
         ));
-        $existing_id = $existing_order->id ?? 0;
         $shipping_cost = 0;
-        if ($existing_id) {
-            $shipping_cost = floatval($existing_order->shipping_cost);
-            if (!$shipping_cost && !empty($existing_order->category_id)) {
+        if (!empty($existing_orders)) {
+            $order_ref = $existing_orders[0];
+            $shipping_cost = floatval($order_ref->shipping_cost);
+            if (!$shipping_cost && !empty($order_ref->category_id)) {
                 $shipping_cost = (float) $wpdb->get_var($wpdb->prepare(
                     "SELECT shipping_cost FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
-                    $existing_order->category_id
+                    $order_ref->category_id
                 ));
             }
         } else {
@@ -196,50 +196,57 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             'created_at'        => current_time('mysql', 1),
         ];
 
-        $send_welcome = false;
-        if ($existing_id) {
-            $send_welcome = ($existing_order->status !== 'abgeschlossen');
-            $data['created_at'] = $existing_order->created_at;
-            $wpdb->update(
-                "{$wpdb->prefix}produkt_orders",
-                $data,
-                ['id' => $existing_id]
-            );
-            if ($send_welcome) {
-                produkt_add_order_log($existing_id, 'status_updated', 'offen -> abgeschlossen');
+        $welcome_sent = false;
+        if (!empty($existing_orders)) {
+            foreach ($existing_orders as $ord) {
+                $send_welcome = ($ord->status !== 'abgeschlossen');
+                $update_data = $data;
+                $update_data['created_at'] = $ord->created_at;
+                $wpdb->update(
+                    "{$wpdb->prefix}produkt_orders",
+                    $update_data,
+                    ['id' => $ord->id]
+                );
+                if ($send_welcome) {
+                    produkt_add_order_log($ord->id, 'status_updated', 'offen -> abgeschlossen');
+                }
+
+                if ($send_welcome && !$welcome_sent) {
+                    produkt_add_order_log($ord->id, 'checkout_completed');
+                    send_produkt_welcome_email($update_data, $ord->id);
+                    send_admin_order_email($update_data, $ord->id, $session->id);
+                    produkt_add_order_log($ord->id, 'welcome_email_sent');
+                    $welcome_sent = true;
+                }
+
+                if ($ord->status === 'offen') {
+                    if ($ord->variant_id) {
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                            $ord->variant_id
+                        ));
+                    }
+                    if (!empty($ord->extra_ids)) {
+                        $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
+                        foreach ($ids as $eid) {
+                            $wpdb->query($wpdb->prepare(
+                                "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                $eid
+                            ));
+                        }
+                    }
+                }
             }
         } else {
             $data['stripe_session_id'] = $session->id;
             $data['stripe_subscription_id'] = $subscription_id;
             $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);
-            $existing_id = $wpdb->insert_id;
-            produkt_add_order_log($existing_id, 'order_created');
-            $send_welcome = true;
-        }
-
-        if ($send_welcome) {
-            produkt_add_order_log($existing_id, 'checkout_completed');
-            send_produkt_welcome_email($data, $existing_id);
-            send_admin_order_email($data, $existing_id, $session->id);
-            produkt_add_order_log($existing_id, 'welcome_email_sent');
-
-            if ($existing_order && $existing_order->status === 'offen') {
-                if ($existing_order->variant_id) {
-                    $wpdb->query($wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                        $existing_order->variant_id
-                    ));
-                }
-                if (!empty($existing_order->extra_ids)) {
-                    $ids = array_filter(array_map('intval', explode(',', $existing_order->extra_ids)));
-                    foreach ($ids as $eid) {
-                        $wpdb->query($wpdb->prepare(
-                            "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                            $eid
-                        ));
-                    }
-                }
-            }
+            $order_id = $wpdb->insert_id;
+            produkt_add_order_log($order_id, 'order_created');
+            produkt_add_order_log($order_id, 'checkout_completed');
+            send_produkt_welcome_email($data, $order_id);
+            send_admin_order_email($data, $order_id, $session->id);
+            produkt_add_order_log($order_id, 'welcome_email_sent');
         }
 
         if ($data['mode'] === 'kauf') {
