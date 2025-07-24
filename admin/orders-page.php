@@ -89,7 +89,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 
         <div class="produkt-summary-card">
             <h3>💰 Gesamt-Umsatz</h3>
-            <div class="produkt-summary-value" style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;">
+            <div class="produkt-summary-value" style="color: #666666;">
                 <?php echo number_format($total_revenue, 2, ',', '.'); ?>€
             </div>
             <p class="produkt-summary-note">Monatlicher Mietumsatz</p>
@@ -220,7 +220,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             </div>
                         </td>
                         <td>
-                            <strong style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>; font-size: 16px;">
+                            <strong style="color: #666666; font-size: 16px;">
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
                             <?php if ($type !== 'Verkauf'): ?>
