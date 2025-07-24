@@ -53,13 +53,18 @@
                             <p><strong>Telefon:</strong> <?php echo esc_html($first->customer_phone); ?></p>
                         <?php endif; ?>
                         <?php
-                            $addr = trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city);
-                            $country = $first->customer_country ? ', ' . $first->customer_country : '';
+                            $addr = $customer_addr;
+                            if (!$addr) {
+                                $addr = trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city);
+                                if ($first->customer_country) {
+                                    $addr .= ', ' . $first->customer_country;
+                                }
+                            }
                         ?>
                         <h4>Versandadresse</h4>
-                        <p><?php echo esc_html($addr . $country); ?></p>
+                        <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
                         <h4>Rechnungsadresse</h4>
-                        <p><?php echo esc_html($addr . $country); ?></p>
+                        <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
                     </div>
                     <div class="orders-column">
                         <?php foreach ($sale_orders as $order) : ?>
