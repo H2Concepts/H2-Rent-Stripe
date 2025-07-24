@@ -322,6 +322,7 @@ class Admin {
                 'publishable_key' => StripeService::get_publishable_key(),
                 'checkout_url' => Plugin::get_checkout_page_url(),
                 'account_url' => Plugin::get_customer_page_url(),
+                'login_nonce' => wp_create_nonce('request_login_code_action'),
                 'is_logged_in' => is_user_logged_in(),
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),

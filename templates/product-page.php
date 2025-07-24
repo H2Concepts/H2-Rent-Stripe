@@ -706,9 +706,11 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 
 <div id="checkout-login-modal" class="checkout-login-modal" style="display:none;">
     <div class="modal-content">
-        <p>Sind Sie bereits Kunde?</p>
-        <button id="checkout-login-btn">Login</button>
-        <button id="checkout-guest-btn">Als Gast bestellen</button>
+        <h3>Login</h3>
+        <p>Zum Einloggen bitte Ihre Email Adresse verwenden</p>
+        <input type="email" id="checkout-login-email" placeholder="Ihre E-Mail">
+        <button id="checkout-login-btn">Code zum einloggen anfordern</button>
+        <p class="guest-text"><a href="#" id="checkout-guest-link">Als Gast fortfahren</a></p>
     </div>
 </div>
 

@@ -1257,15 +1257,24 @@ jQuery(document).ready(function($) {
 });
 
 jQuery(function($) {
-    $('#checkout-login-btn').on('click', function(){
-        $('#checkout-login-modal').hide();
-        $('body').removeClass('produkt-popup-open');
-        if (pendingCheckoutUrl) {
-            window.location.href = produkt_ajax.account_url + '?redirect_to=' + encodeURIComponent(pendingCheckoutUrl);
+    $('#checkout-login-btn').on('click', function(e){
+        e.preventDefault();
+        const email = $('#checkout-login-email').val().trim();
+        if (!email) {
+            alert('Bitte E-Mail eingeben');
+            return;
         }
+        const form = $('<form>', {method: 'POST', action: produkt_ajax.account_url});
+        form.append($('<input>', {type: 'hidden', name: 'request_login_code_nonce', value: produkt_ajax.login_nonce}));
+        form.append($('<input>', {type: 'hidden', name: 'request_login_code', value: '1'}));
+        form.append($('<input>', {type: 'hidden', name: 'email', value: email}));
+        form.append($('<input>', {type: 'hidden', name: 'redirect_to', value: pendingCheckoutUrl}));
+        $('body').append(form);
+        form.submit();
     });
 
-    $('#checkout-guest-btn').on('click', function(){
+    $('#checkout-guest-link').on('click', function(e){
+        e.preventDefault();
         $('#checkout-login-modal').hide();
         $('body').removeClass('produkt-popup-open');
         if (pendingCheckoutUrl) {
