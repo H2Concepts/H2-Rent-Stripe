@@ -1413,6 +1413,7 @@ img.wp-smiley, img.emoji {
     position: relative;
     background: #fff;
     padding: 20px;
+    padding-right: 3rem;
     border-radius: 8px;
     max-width: 400px;
     width: 90%;
@@ -1427,6 +1428,12 @@ img.wp-smiley, img.emoji {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+    color: #000000;
+    box-shadow: none;
+}
+
+.produkt-tooltip-modal .modal-text {
+    word-break: break-word;
 }
 
 .produkt-exit-popup-close {
