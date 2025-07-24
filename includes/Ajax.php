@@ -135,9 +135,17 @@ class Ajax {
                 $final_price = $duration_price + $extras_price;
             }
             $shipping_cost = 0;
-            $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
-            if ($shipping) {
-                $shipping_cost = floatval($shipping->price);
+            if (!empty($_POST['shipping_price_id'])) {
+                $spid = sanitize_text_field($_POST['shipping_price_id']);
+                $amt = StripeService::get_price_amount($spid);
+                if (!is_wp_error($amt)) {
+                    $shipping_cost = floatval($amt);
+                }
+            } else {
+                $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+                if ($shipping) {
+                    $shipping_cost = floatval($shipping->price);
+                }
             }
             
             wp_send_json_success(array(

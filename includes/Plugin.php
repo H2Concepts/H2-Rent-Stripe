@@ -431,7 +431,11 @@ class Plugin {
 
         $price_id = sanitize_text_field($_POST['price_id'] ?? '');
         global $wpdb;
-        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+        if (!empty($_POST['shipping_price_id'])) {
+            $shipping_price_id = sanitize_text_field($_POST['shipping_price_id']);
+        } else {
+            $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+        }
 
         $init = StripeService::init();
         if (is_wp_error($init)) {

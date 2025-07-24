@@ -34,6 +34,15 @@ jQuery(document).ready(function($) {
         if (spid) {
             shippingPriceId = spid.toString();
         }
+        const firstShip = $('.shipping-options .produkt-option.selected').first();
+        if (firstShip.length) {
+            shippingPriceId = firstShip.data('price-id').toString();
+            const cost = parseFloat(firstShip.data('price'));
+            if (!isNaN(cost)) {
+                currentShippingCost = cost;
+            }
+        }
+        $('#produkt-field-shipping').val(shippingPriceId);
     }
 
     if (produkt_ajax.betriebsmodus === 'kauf') {
@@ -162,6 +171,13 @@ jQuery(document).ready(function($) {
             }
             updateExtraImage($(this));
             updateExtraBookings(selectedExtras);
+        } else if (type === 'shipping') {
+            shippingPriceId = $(this).data('price-id') ? $(this).data('price-id').toString() : '';
+            const cost = parseFloat($(this).data('price'));
+            if (!isNaN(cost)) {
+                currentShippingCost = cost;
+            }
+            $('#produkt-field-shipping').val(shippingPriceId);
         } else if (type === 'duration') {
             selectedDuration = id;
         } else if (type === 'condition') {

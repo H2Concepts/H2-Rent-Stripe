@@ -147,6 +147,15 @@ $scope_blocks = isset($category) && property_exists($category, 'scope_blocks') ?
 if (!is_array($scope_blocks)) { $scope_blocks = []; }
 
 $shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+$shipping_methods = [];
+$select_shipping = false;
+if (!$shipping) {
+    $shipping_methods = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY price ASC");
+    if (!empty($shipping_methods)) {
+        $shipping = $shipping_methods[0];
+        $select_shipping = true;
+    }
+}
 $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
@@ -268,11 +277,28 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <p class="produkt-price-label">
                         <?php echo esc_html($shipping_label); ?>
                     </p>
+                    <?php if ($select_shipping && !empty($shipping_methods)): ?>
+                    <div class="produkt-options shipping-options layout-list">
+                        <?php foreach ($shipping_methods as $index => $method): ?>
+                        <div class="produkt-option<?php echo $index === 0 ? ' selected' : ''; ?>" data-type="shipping" data-id="<?php echo esc_attr($method->id); ?>" data-price-id="<?php echo esc_attr($method->stripe_price_id); ?>" data-price="<?php echo esc_attr($method->price); ?>" data-available="true">
+                            <div class="produkt-option-content">
+                                <span class="produkt-extra-name"><?php echo esc_html($method->name); ?></span>
+                                <div class="produkt-extra-price"><?php echo number_format($method->price, 2, ',', '.'); ?>€</div>
+                            </div>
+                            <?php if (!empty($method->service_provider) && $method->service_provider !== 'none' && $method->service_provider !== 'pickup'): ?>
+                                <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $method->service_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($method->service_provider)); ?>">
+                            <?php endif; ?>
+                            <div class="produkt-option-check">✓</div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php else: ?>
                     <div class="produkt-price-wrapper">
                         <span class="produkt-final-price"><?php echo number_format($shipping_cost, 2, ',', '.'); ?>€</span>
                     </div>
                     <?php if (!empty($shipping_provider) && $shipping_provider !== 'none' && $shipping_provider !== 'pickup'): ?>
                         <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
