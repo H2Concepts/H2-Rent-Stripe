@@ -1458,6 +1458,11 @@ img.wp-smiley, img.emoji {
     top: -8px;
     right: -10px;
     display: inline-block;
+    min-width: 1rem;
+    height: 1rem;
+    line-height: 1rem;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 /* Tooltip Modal */
