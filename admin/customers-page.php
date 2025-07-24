@@ -120,6 +120,23 @@ foreach ($results as $r) {
             <p><strong>Nachname:</strong> <?php echo esc_html($last); ?></p>
             <p><strong>E-Mail:</strong> <?php echo esc_html($user->user_email); ?></p>
             <p><strong>Telefon:</strong> <?php echo esc_html($phone ?: '–'); ?></p>
+            <?php
+                $addr_row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
+                    $user->user_email
+                ));
+                $addr = '';
+                if ($addr_row) {
+                    $addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
+                    if ($addr_row->country) {
+                        $addr .= ', ' . $addr_row->country;
+                    }
+                }
+            ?>
+            <h3>Versandadresse</h3>
+            <p><?php echo esc_html($addr); ?></p>
+            <h3>Rechnungsadresse</h3>
+            <p><?php echo esc_html($addr); ?></p>
 
             <h2>Bestellungen</h2>
             <table class="wp-list-table widefat striped">
@@ -157,10 +174,16 @@ foreach ($results as $r) {
                 <p><strong>Dauer:</strong> <?php echo esc_html($o->dauer_text); ?></p>
                 <?php endif; ?>
                 <p><strong>Preis:</strong> <?php echo number_format((float)$o->final_price, 2, ',', '.'); ?>€</p>
+                <?php
+                    $addr_o = trim($o->customer_street . ', ' . $o->customer_postal . ' ' . $o->customer_city);
+                    if (!empty($o->customer_country)) {
+                        $addr_o .= ', ' . $o->customer_country;
+                    }
+                ?>
                 <h4>Versandadresse</h4>
-                <p><?php echo esc_html(trim($o->customer_street . ', ' . $o->customer_postal . ' ' . $o->customer_city)); ?></p>
+                <p><?php echo esc_html($addr_o); ?></p>
                 <h4>Rechnungsadresse</h4>
-                <p><?php echo esc_html(trim($o->customer_street . ', ' . $o->customer_postal . ' ' . $o->customer_city)); ?></p>
+                <p><?php echo esc_html($addr_o); ?></p>
             </div>
             <?php endforeach; ?>
         </div>

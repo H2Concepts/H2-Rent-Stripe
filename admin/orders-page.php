@@ -352,7 +352,8 @@ function showOrderDetails(orderId) {
                 <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
                 <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
                 <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
-                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+                <p><strong>Versandadresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+                <p><strong>Rechnungsadresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
                 <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
             </div>
         </div>

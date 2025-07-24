@@ -52,10 +52,14 @@
                         <?php if (!empty($first->customer_phone)) : ?>
                             <p><strong>Telefon:</strong> <?php echo esc_html($first->customer_phone); ?></p>
                         <?php endif; ?>
+                        <?php
+                            $addr = trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city);
+                            $country = $first->customer_country ? ', ' . $first->customer_country : '';
+                        ?>
                         <h4>Versandadresse</h4>
-                        <p><?php echo esc_html(trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city)); ?></p>
+                        <p><?php echo esc_html($addr . $country); ?></p>
                         <h4>Rechnungsadresse</h4>
-                        <p><?php echo esc_html(trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city)); ?></p>
+                        <p><?php echo esc_html($addr . $country); ?></p>
                     </div>
                     <div class="orders-column">
                         <?php foreach ($sale_orders as $order) : ?>
