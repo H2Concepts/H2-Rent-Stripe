@@ -1512,6 +1512,10 @@ function produkt_create_embedded_checkout_session() {
             ],
             'custom_text' => $custom_text,
         ];
+
+        if (!empty($session_params['automatic_tax']) && !empty($session_params['automatic_tax']['enabled'])) {
+            $session_params['customer_update'] = ['shipping' => 'auto'];
+        }
         if ($modus !== 'kauf') {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
         } else {
