@@ -6,6 +6,7 @@
         <?php if (!empty($message)) { echo $message; } ?>
         <form method="post" class="login-email-form">
             <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
+            <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
             <input type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
             <button type="submit" name="request_login_code">Code zum einloggen anfordern</button>
         </form>
@@ -13,6 +14,7 @@
         <form method="post" class="login-code-form">
             <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
             <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
+            <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
             <input type="text" name="code" placeholder="6-stelliger Code" required>
             <button type="submit" name="verify_login_code">Einloggen</button>
         </form>
@@ -39,13 +41,43 @@
             <div>
         <?php if ($is_sale) : ?>
             <?php if (!empty($sale_orders)) : ?>
-                <?php foreach ($sale_orders as $order) : ?>
-                    <?php
-                        $variant_id = $order->variant_id ?? 0;
-                        $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
-                    ?>
-                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order.php'; ?>
-                <?php endforeach; ?>
+                <?php $first = $sale_orders[0]; ?>
+                <div class="abo-row">
+                    <div class="order-box">
+                        <h3>Kundendaten</h3>
+                        <?php if (!empty($first->customer_name)) : ?>
+                            <p><strong>Name:</strong> <?php echo esc_html($first->customer_name); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($first->customer_email)) : ?>
+                            <p><strong>E-Mail:</strong> <?php echo esc_html($first->customer_email); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($first->customer_phone)) : ?>
+                            <p><strong>Telefon:</strong> <?php echo esc_html($first->customer_phone); ?></p>
+                        <?php endif; ?>
+                        <?php
+                            $addr = $customer_addr;
+                            if (!$addr) {
+                                $addr = trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city);
+                                if ($first->customer_country) {
+                                    $addr .= ', ' . $first->customer_country;
+                                }
+                            }
+                        ?>
+                        <h4>Versandadresse</h4>
+                        <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
+                        <h4>Rechnungsadresse</h4>
+                        <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
+                    </div>
+                    <div class="orders-column">
+                        <?php foreach ($sale_orders as $order) : ?>
+                            <?php
+                                $variant_id = $order->variant_id ?? 0;
+                                $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+                            ?>
+                            <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             <?php else : ?>
                 <p>Keine Bestellungen.</p>
             <?php endif; ?>

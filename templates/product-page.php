@@ -131,7 +131,8 @@ $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 $default_feature_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81.5 81.9"><path d="M56.5,26.8l-21.7,21.7-9.7-9.7c-1.2-1.2-3.3-1.2-4.5,0s-1.2,3.3,0,4.5l12,12c.6.6,1.5.9,2.3.9s1.6-.3,2.3-.9l24-23.9c1.2-1.2,1.2-3.3,0-4.5-1.3-1.3-3.3-1.3-4.5,0Z"/><path d="M40.8,1C18.7,1,.8,18.9.8,41s17.9,40,40,40,40-17.9,40-40S62.8,1,40.8,1ZM40.8,74.6c-18.5,0-33.6-15.1-33.6-33.6S22.3,7.4,40.8,7.4s33.6,15.1,33.6,33.6-15.1,33.6-33.6,33.6Z"/></svg>';
 // Button
 $ui = get_option('produkt_ui_settings', []);
-$button_text = $ui['button_text'] ?? 'Jetzt Mieten';
+$custom_label = $ui['button_text'] ?? '';
+$button_text = $custom_label; // default, final label determined later
 $button_icon = $ui['button_icon'] ?? '';
 $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];
 $accordions = isset($category) && property_exists($category, 'accordion_data') ? json_decode($category->accordion_data, true) : [];
@@ -146,12 +147,22 @@ $scope_blocks = isset($category) && property_exists($category, 'scope_blocks') ?
 if (!is_array($scope_blocks)) { $scope_blocks = []; }
 
 $shipping = $wpdb->get_row("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+$shipping_methods = [];
+$select_shipping = false;
+if (!$shipping) {
+    $shipping_methods = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_shipping_methods ORDER BY price ASC");
+    if (!empty($shipping_methods)) {
+        $shipping = $shipping_methods[0];
+        $select_shipping = true;
+    }
+}
 $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
 $modus = get_option('produkt_betriebsmodus', 'miete');
+$button_text = $button_text !== '' ? $button_text : ($modus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
 $price_label = $ui['price_label'] ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
-$shipping_label = 'Einmalige Versandkosten:';
+$shipping_label = $ui['shipping_label'] ?? 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';
 $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 
@@ -185,7 +196,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 ));
 ?>
 
-<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>">
+<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>" data-shipping-provider="<?php echo esc_attr($shipping_provider); ?>">
 
     <div class="produkt-content">
         <div class="produkt-left">
@@ -245,7 +256,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
             </div>
 
-             <div class="produkt-price-display" id="produkt-price-display" style="display: none;">
+            <div class="produkt-price-display<?php echo $select_shipping ? ' no-default-shipping' : ''; ?>" id="produkt-price-display" style="display: none;">
                 <div class="produkt-price-box produkt-monthly-box">
                     <div class="produkt-price-content">
                         <p class="produkt-price-label"><?php echo esc_html($price_label); ?></p>
@@ -266,11 +277,50 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <p class="produkt-price-label">
                         <?php echo esc_html($shipping_label); ?>
                     </p>
+                    <?php if ($select_shipping && !empty($shipping_methods)): ?>
+                    <div class="produkt-options shipping-options layout-list">
+                        <?php foreach ($shipping_methods as $index => $method): ?>
+                        <div class="produkt-option<?php echo $index === 0 ? ' selected' : ''; ?>" data-type="shipping" data-id="<?php echo esc_attr($method->id); ?>" data-price-id="<?php echo esc_attr($method->stripe_price_id); ?>" data-price="<?php echo esc_attr($method->price); ?>" data-provider="<?php echo esc_attr($method->service_provider); ?>" data-available="true">
+                            <div class="produkt-option-content">
+                                <span class="produkt-extra-name"><?php echo esc_html($method->name); ?></span>
+                                <div class="produkt-extra-price"><?php echo number_format($method->price, 2, ',', '.'); ?>€</div>
+                            </div>
+                            <?php if (!empty($method->service_provider) && $method->service_provider !== 'none' && $method->service_provider !== 'pickup'): ?>
+                                <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $method->service_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($method->service_provider)); ?>">
+                                <?php if (!empty($method->description)): ?>
+                                    <span class="produkt-tooltip">
+                                        <?php echo $tooltip_icon; ?>
+                                        <span class="produkt-tooltiptext"><?php echo esc_html($method->description); ?></span>
+                                    </span>
+                                <?php endif; ?>
+                            <?php elseif (!empty($method->description)): ?>
+                                <span class="produkt-tooltip">
+                                    <?php echo $tooltip_icon; ?>
+                                    <span class="produkt-tooltiptext"><?php echo esc_html($method->description); ?></span>
+                                </span>
+                            <?php endif; ?>
+                            <div class="produkt-option-check">✓</div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php else: ?>
                     <div class="produkt-price-wrapper">
                         <span class="produkt-final-price"><?php echo number_format($shipping_cost, 2, ',', '.'); ?>€</span>
                     </div>
-                    <?php if (!empty($shipping_provider)): ?>
+                    <?php if (!empty($shipping_provider) && $shipping_provider !== 'none' && $shipping_provider !== 'pickup'): ?>
                         <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
+                        <?php if (!empty($shipping->description)): ?>
+                            <span class="produkt-tooltip">
+                                <?php echo $tooltip_icon; ?>
+                                <span class="produkt-tooltiptext"><?php echo esc_html($shipping->description); ?></span>
+                            </span>
+                        <?php endif; ?>
+                    <?php elseif (!empty($shipping->description)): ?>
+                        <span class="produkt-tooltip">
+                            <?php echo $tooltip_icon; ?>
+                            <span class="produkt-tooltiptext"><?php echo esc_html($shipping->description); ?></span>
+                        </span>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>
@@ -702,6 +752,26 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         </div>
     </div>
     <?php endif; ?>
+</div>
+
+<!-- Sliding Cart Panel -->
+<div id="produkt-cart-panel" class="produkt-cart-panel">
+    <div class="cart-header">
+        <h3>Warenkorb</h3>
+        <button type="button" class="cart-close">&times;</button>
+    </div>
+    <div class="cart-items"></div>
+    <button id="produkt-cart-checkout">Jetzt bestellen</button>
+</div>
+
+<div id="checkout-login-modal" class="checkout-login-modal" style="display:none;">
+    <div class="modal-content">
+        <h3>Login</h3>
+        <p>Zum Einloggen bitte Ihre Email Adresse verwenden</p>
+        <input type="email" id="checkout-login-email" placeholder="Ihre E-Mail">
+        <button id="checkout-login-btn">Code zum einloggen anfordern</button>
+        <p class="guest-text"><a href="#" id="checkout-guest-link">Als Gast fortfahren</a></p>
+    </div>
 </div>
 
 

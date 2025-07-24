@@ -8,6 +8,7 @@ if (isset($_POST['submit_buttons'])) {
         'button_icon'       => esc_url_raw($_POST['button_icon'] ?? ''),
         'payment_icons'     => isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : [],
         'price_label'       => sanitize_text_field($_POST['price_label'] ?? ''),
+        'shipping_label'    => sanitize_text_field($_POST['shipping_label'] ?? ''),
         'price_period'      => sanitize_text_field($_POST['price_period'] ?? 'month'),
         'vat_included'      => isset($_POST['vat_included']) ? 1 : 0,
         'duration_tooltip'  => sanitize_textarea_field($_POST['duration_tooltip'] ?? ''),
@@ -23,6 +24,7 @@ $ui = get_option('produkt_ui_settings', [
     'button_icon' => '',
     'payment_icons' => [],
     'price_label' => '',
+    'shipping_label' => '',
     'price_period' => 'month',
     'vat_included' => 0,
     'duration_tooltip' => '',
@@ -57,6 +59,10 @@ $ui = get_option('produkt_ui_settings', [
                 <div class="produkt-form-group">
                     <label>Preis-Label</label>
                     <input type="text" name="price_label" value="<?php echo esc_attr($ui['price_label']); ?>" placeholder="Monatlicher Mietpreis">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Versand-Label</label>
+                    <input type="text" name="shipping_label" value="<?php echo esc_attr($ui['shipping_label']); ?>" placeholder="Einmalige Versandkosten">
                 </div>
                 <div class="produkt-form-group">
                     <label>Preiszeitraum</label>
