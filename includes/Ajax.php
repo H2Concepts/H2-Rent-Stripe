@@ -1304,10 +1304,10 @@ function produkt_create_checkout_session() {
 
             if ($stripe_customer_id) {
                 $session_args['customer'] = $stripe_customer_id;
+            } else {
+                $session_args['customer_creation'] = 'always';
             }
-        }
-
-        if (empty($session_args['customer'])) {
+        } else {
             $session_args['customer_creation'] = 'always';
         }
 
@@ -1544,16 +1544,19 @@ function produkt_create_embedded_checkout_session() {
                 }
                 if ($stripe_customer_id) {
                     $session_params['customer'] = $stripe_customer_id;
+                } else {
+                    $session_params['customer_creation'] = 'always';
                 }
-            }
-
-            if (empty($session_params['customer'])) {
+            } else {
                 $session_params['customer_creation'] = 'always';
             }
         }
 
         if (!empty($session_params['automatic_tax']['enabled'])) {
-            if (!empty($session_params['customer']) || !empty($session_params['customer_creation'])) {
+            if (
+                !empty($session_params['customer']) ||
+                (isset($session_params['customer_creation']) && $session_params['customer_creation'] === 'always')
+            ) {
                 $session_params['customer_update'] = ['shipping' => 'auto'];
             }
         }
