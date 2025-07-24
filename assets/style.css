@@ -341,7 +341,7 @@ img.wp-smiley, img.emoji {
 .produkt-tooltip {
     position: relative;
     display: inline-block;
-    cursor: help;
+    cursor: pointer;
     margin-left: 5px;
 }
 
@@ -352,40 +352,19 @@ img.wp-smiley, img.emoji {
     fill: currentColor;
 }
 
+/* hide default tooltip text; handled via modal */
 .produkt-tooltiptext {
-    visibility: hidden;
-    width: 300px;
-    background-color: #333;
-    color: var(--produkt-button-text);
-    text-align: left;
-    border-radius: 6px;
-    padding: 10px;
-    position: absolute;
-    z-index: 1000;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -150px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    font-size: 12px;
-    line-height: 1.4;
-    white-space: pre-line;
+    display: none;
 }
 
+/* arrow not needed when using modal */
 .produkt-tooltiptext::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: #333 transparent transparent transparent;
+    display: none;
 }
 
+/* disable hover tooltip */
 .produkt-tooltip:hover .produkt-tooltiptext {
-    visibility: visible;
-    opacity: 1;
+    display: none;
 }
 
 /* Layout Options */
@@ -1411,6 +1390,42 @@ img.wp-smiley, img.emoji {
 .checkout-login-modal .guest-text a {
     color: var(--produkt-button-bg);
     text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Tooltip Modal */
+.produkt-tooltip-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.produkt-tooltip-modal .modal-content {
+    position: relative;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 90%;
+    text-align: left;
+}
+
+.produkt-tooltip-modal .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
     cursor: pointer;
 }
 

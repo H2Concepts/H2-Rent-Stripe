@@ -23,6 +23,31 @@ jQuery(document).ready(function($) {
     let selectedDays = 0;
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
+
+    // Tooltip modal setup
+    const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(
+        $('<div>', {class: 'modal-content'}).append(
+            $('<button>', {class: 'modal-close', 'aria-label': 'Schließen'}).text('×'),
+            $('<div>', {class: 'modal-text'})
+        )
+    );
+    $('body').append(tooltipModal);
+
+    $(document).on('click', '.produkt-tooltip', function(e){
+        e.preventDefault();
+        const text = $(this).find('.produkt-tooltiptext').text().trim();
+        if (!text) return;
+        $('#produkt-tooltip-modal .modal-text').text(text);
+        $('#produkt-tooltip-modal').css('display', 'flex');
+        $('body').addClass('produkt-popup-open');
+    });
+
+    $(document).on('click', '#produkt-tooltip-modal', function(e){
+        if (e.target === this || $(e.target).hasClass('modal-close')) {
+            $('#produkt-tooltip-modal').hide();
+            $('body').removeClass('produkt-popup-open');
+        }
+    });
     // Get category ID from container
     const container = $('.produkt-container');
     if (container.length) {
