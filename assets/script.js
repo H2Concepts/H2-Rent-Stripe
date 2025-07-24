@@ -79,7 +79,12 @@ jQuery(document).ready(function($) {
             const details = $('<div>', {class: 'cart-item-details'});
             details.append($('<div>', {class: 'cart-item-name'}).text(item.produkt || 'Produkt'));
             if (item.extra) {
-                details.append($('<div>', {class: 'cart-item-extras'}).text(item.extra));
+                const extrasContainer = $('<div>', {class: 'cart-item-extras'});
+                item.extra.split(',').forEach(function(ex){
+                    const trimmed = ex.trim();
+                    if (trimmed) extrasContainer.append($('<div>').text(trimmed));
+                });
+                details.append(extrasContainer);
             }
             let period = '';
             if (item.start_date && item.end_date) {
@@ -1423,9 +1428,6 @@ jQuery(document).ready(function($) {
 
     }
     window.openCartSidebar = openCart;
-});
-
-jQuery(function($) {
     $('#checkout-login-btn').on('click', function(e){
         e.preventDefault();
         const email = $('#checkout-login-email').val().trim();
@@ -1464,6 +1466,7 @@ jQuery(function($) {
             window.location.href = pendingCheckoutUrl;
         }
     });
+
 });
 
 document.addEventListener("DOMContentLoaded", function () {

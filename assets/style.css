@@ -1463,6 +1463,10 @@ img.wp-smiley, img.emoji {
     font-size: 0.875rem;
     color: #555;
 }
+.produkt-cart-panel .cart-item-extras {
+    display: flex;
+    flex-direction: column;
+}
 .produkt-cart-panel .cart-item-price {
     font-weight: 600;
     margin-left: auto;
