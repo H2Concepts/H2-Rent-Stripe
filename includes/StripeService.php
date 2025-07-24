@@ -861,4 +861,216 @@ class StripeService {
             );
         }
     }
+
+    /**
+     * Process a completed Stripe Checkout Session asynchronously.
+     *
+     * @param object $session The session object passed from the webhook.
+     */
+    public static function process_checkout_session($session) {
+        $mode            = $session->mode ?? 'subscription';
+        $subscription_id = $mode === 'subscription' ? ($session->subscription ?? '') : '';
+        $metadata        = $session->metadata ? $session->metadata->toArray() : [];
+
+        if ($mode === 'payment' || $mode === 'subscription') {
+            $email              = $session->customer_details->email ?? '';
+            $stripe_customer_id = $session->customer ?? '';
+            $full_name          = sanitize_text_field($session->customer_details->name ?? '');
+            $first_name         = $full_name;
+            $last_name          = '';
+            if (strpos($full_name, ' ') !== false) {
+                list($first_name, $last_name) = explode(' ', $full_name, 2);
+            }
+            $phone = sanitize_text_field($session->customer_details->phone ?? '');
+
+            if ($email && $stripe_customer_id) {
+                $user = get_user_by('email', $email);
+                if (!$user) {
+                    $user_id = wp_create_user($email, wp_generate_password(), $email);
+                    if (!is_wp_error($user_id)) {
+                        wp_update_user([
+                            'ID'          => $user_id,
+                            'role'        => 'kunde',
+                            'display_name'=> $full_name ?: $email,
+                        ]);
+                        update_user_meta($user_id, 'stripe_customer_id', $stripe_customer_id);
+                        update_user_meta($user_id, 'first_name', $first_name);
+                        update_user_meta($user_id, 'last_name', $last_name);
+                        if ($phone) {
+                            update_user_meta($user_id, 'phone', $phone);
+                        }
+                    }
+                } else {
+                    wp_update_user([
+                        'ID'          => $user->ID,
+                        'role'        => 'kunde',
+                        'display_name'=> $full_name ?: $user->display_name,
+                    ]);
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                    update_user_meta($user->ID, 'first_name', $first_name);
+                    update_user_meta($user->ID, 'last_name', $last_name);
+                    if ($phone) {
+                        update_user_meta($user->ID, 'phone', $phone);
+                    }
+                }
+            }
+
+            $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
+            $zustand       = sanitize_text_field($metadata['zustand'] ?? '');
+            $produktfarbe  = sanitize_text_field($metadata['produktfarbe'] ?? '');
+            $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
+            $extra         = sanitize_text_field($metadata['extra'] ?? '');
+            $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
+            $start_date    = sanitize_text_field($metadata['start_date'] ?? '');
+            $end_date      = sanitize_text_field($metadata['end_date'] ?? '');
+            $days          = intval($metadata['days'] ?? 0);
+            $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
+            $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
+
+            $email  = sanitize_email($session->customer_details->email ?? '');
+            $phone  = sanitize_text_field($session->customer_details->phone ?? '');
+
+            $shipping_details = $session->shipping_details ? $session->shipping_details->toArray() : [];
+            $customer_details = $session->customer_details ? $session->customer_details->toArray() : [];
+            $address = $shipping_details['address'] ?? $customer_details['address'] ?? null;
+            $street  = $address['line1'] ?? '';
+            $postal  = $address['postal_code'] ?? '';
+            $city    = $address['city'] ?? '';
+            $country = $address['country'] ?? '';
+
+            Database::upsert_customer_record_by_email(
+                $email,
+                $stripe_customer_id,
+                $full_name,
+                $phone,
+                [
+                    'street'      => $street,
+                    'postal_code' => $postal,
+                    'city'        => $city,
+                    'country'     => $country,
+                ]
+            );
+
+            global $wpdb;
+            $existing_orders = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, status, created_at, category_id, shipping_cost, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+                $session->id
+            ));
+
+            $shipping_cost = 0;
+            if (!empty($session->shipping_cost) && !empty($session->shipping_cost->amount_total)) {
+                $shipping_cost = $session->shipping_cost->amount_total / 100;
+            } elseif (!empty($existing_orders)) {
+                $order_ref = $existing_orders[0];
+                $shipping_cost = floatval($order_ref->shipping_cost);
+                if (!$shipping_cost && !empty($order_ref->category_id)) {
+                    $shipping_cost = (float) $wpdb->get_var($wpdb->prepare(
+                        "SELECT shipping_cost FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $order_ref->category_id
+                    ));
+                }
+            } else {
+                $shipping_price_id = $metadata['shipping_price_id'] ?? '';
+                if ($shipping_price_id) {
+                    $amt = self::get_price_amount($shipping_price_id);
+                    if (!is_wp_error($amt)) {
+                        $shipping_cost = floatval($amt);
+                    }
+                }
+            }
+
+            $discount_amount = ($session->total_details->amount_discount ?? 0) / 100;
+
+            if (!$dauer && $days > 0) {
+                $dauer = $days . ' Tag' . ($days > 1 ? 'e' : '');
+                if ($start_date && $end_date) {
+                    $dauer .= ' (' . $start_date . ' - ' . $end_date . ')';
+                }
+            }
+
+            $data = [
+                'customer_email'    => $email,
+                'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
+                'customer_phone'    => $phone,
+                'customer_street'   => $street,
+                'customer_postal'   => $postal,
+                'customer_city'     => $city,
+                'customer_country'  => $country,
+                'final_price'       => (($session->amount_total ?? 0) / 100) - $shipping_cost,
+                'shipping_cost'     => $shipping_cost,
+                'amount_total'      => $session->amount_total ?? 0,
+                'discount_amount'   => $discount_amount,
+                'produkt_name'      => $produkt_name,
+                'zustand_text'      => $zustand,
+                'produktfarbe_text' => $produktfarbe,
+                'gestellfarbe_text' => $gestellfarbe,
+                'extra_text'        => $extra,
+                'dauer_text'        => $dauer,
+                'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
+                'start_date'        => $start_date ?: null,
+                'end_date'          => $end_date ?: null,
+                'inventory_reverted'=> 0,
+                'user_ip'           => $user_ip,
+                'user_agent'        => $user_agent,
+                'stripe_subscription_id' => $subscription_id,
+                'status'            => 'abgeschlossen',
+                'created_at'        => current_time('mysql', 1),
+            ];
+
+            $welcome_sent = false;
+            if (!empty($existing_orders)) {
+                foreach ($existing_orders as $ord) {
+                    $send_welcome = ($ord->status !== 'abgeschlossen');
+                    $update_data = $data;
+                    $update_data['created_at'] = $ord->created_at;
+                    $wpdb->update(
+                        "{$wpdb->prefix}produkt_orders",
+                        $update_data,
+                        ['id' => $ord->id]
+                    );
+                    if ($send_welcome) {
+                        produkt_add_order_log($ord->id, 'status_updated', 'offen -> abgeschlossen');
+                    }
+                    if ($send_welcome && !$welcome_sent) {
+                        produkt_add_order_log($ord->id, 'checkout_completed');
+                        send_produkt_welcome_email($update_data, $ord->id);
+                        send_admin_order_email($update_data, $ord->id, $session->id);
+                        produkt_add_order_log($ord->id, 'welcome_email_sent');
+                        $welcome_sent = true;
+                    }
+                    if ($ord->status === 'offen') {
+                        if ($ord->variant_id) {
+                            $wpdb->query($wpdb->prepare(
+                                "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                $ord->variant_id
+                            ));
+                        }
+                        if (!empty($ord->extra_ids)) {
+                            $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
+                            foreach ($ids as $eid) {
+                                $wpdb->query($wpdb->prepare(
+                                    "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                    $eid
+                                ));
+                            }
+                        }
+                    }
+                }
+            } else {
+                $data['stripe_session_id'] = $session->id;
+                $data['stripe_subscription_id'] = $subscription_id;
+                $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);
+                $order_id = $wpdb->insert_id;
+                produkt_add_order_log($order_id, 'order_created');
+                produkt_add_order_log($order_id, 'checkout_completed');
+                send_produkt_welcome_email($data, $order_id);
+                send_admin_order_email($data, $order_id, $session->id);
+                produkt_add_order_log($order_id, 'welcome_email_sent');
+            }
+
+            if ($data['mode'] === 'kauf') {
+                error_log('Checkout-Mode: ' . $data['mode']);
+            }
+        }
+    }
 }
