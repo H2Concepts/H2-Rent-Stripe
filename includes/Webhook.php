@@ -111,7 +111,13 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $email    = sanitize_email($session->customer_details->email ?? '');
         $phone    = sanitize_text_field($session->customer_details->phone ?? '');
 
-        $address = $session->customer_details->address ?? null;
+        $shipping_details = $session->shipping_details ? $session->shipping_details->toArray() : [];
+        $customer_details = $session->customer_details ? $session->customer_details->toArray() : [];
+        $address = $shipping_details['address'] ?? $customer_details['address'] ?? null;
+        $street  = $address['line1'] ?? '';
+        $postal  = $address['postal_code'] ?? '';
+        $city    = $address['city'] ?? '';
+        $country = $address['country'] ?? '';
 
         // Persist customer information in custom table
         Database::upsert_customer_record_by_email(
@@ -120,10 +126,10 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             $full_name,
             $phone,
             [
-                'street'      => $address->line1 ?? '',
-                'postal_code' => $address->postal_code ?? '',
-                'city'        => $address->city ?? '',
-                'country'     => $address->country ?? '',
+                'street'      => $street,
+                'postal_code' => $postal,
+                'city'        => $city,
+                'country'     => $country,
             ]
         );
 

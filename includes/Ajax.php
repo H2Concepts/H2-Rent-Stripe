@@ -971,6 +971,7 @@ function produkt_create_subscription() {
                 'street'      => $body['street'] ?? '',
                 'postal_code' => $body['postal'] ?? '',
                 'city'        => $body['city'] ?? '',
+                'country'     => $body['country'] ?? '',
             ]
         );
         $user = get_user_by('email', sanitize_email($body['email'] ?? ''));
@@ -1044,6 +1045,7 @@ function produkt_create_subscription() {
                         'street'      => $body['street'] ?? '',
                         'postal_code' => $body['postal'] ?? '',
                         'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
                     ]
                 );
                 $user = get_user_by('email', $cust_email);
@@ -1173,6 +1175,7 @@ function produkt_create_checkout_session() {
                         'street'      => $body['street'] ?? '',
                         'postal_code' => $body['postal'] ?? '',
                         'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
                     ]
                 );
                 $user = get_user_by('email', $customer_email);
@@ -1294,6 +1297,7 @@ function produkt_create_checkout_session() {
                         'street'      => $body['street'] ?? '',
                         'postal_code' => $body['postal'] ?? '',
                         'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
                     ]
                 );
                 $user = get_user_by('email', $customer_email);
@@ -1304,10 +1308,10 @@ function produkt_create_checkout_session() {
 
             if ($stripe_customer_id) {
                 $session_args['customer'] = $stripe_customer_id;
+            } else {
+                $session_args['customer_creation'] = 'always';
             }
-        }
-
-        if (empty($session_args['customer'])) {
+        } else {
             $session_args['customer_creation'] = 'always';
         }
 
@@ -1535,6 +1539,7 @@ function produkt_create_embedded_checkout_session() {
                             'street'      => $body['street'] ?? '',
                             'postal_code' => $body['postal'] ?? '',
                             'city'        => $body['city'] ?? '',
+                            'country'     => $body['country'] ?? '',
                         ]
                     );
                     $user = get_user_by('email', $customer_email);
@@ -1542,18 +1547,19 @@ function produkt_create_embedded_checkout_session() {
                         update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
                     }
                 }
-                if ($stripe_customer_id) {
-                    $session_params['customer'] = $stripe_customer_id;
-                }
             }
 
-            if (empty($session_params['customer'])) {
+            if (!empty($stripe_customer_id)) {
+                $session_params['customer'] = $stripe_customer_id;
+            } else {
                 $session_params['customer_creation'] = 'always';
             }
         }
 
         if (!empty($session_params['automatic_tax']['enabled'])) {
-            $session_params['customer_update'] = ['shipping' => 'auto'];
+            if (!empty($session_params['customer'])) {
+                $session_params['customer_update'] = ['shipping' => 'auto'];
+            }
         }
 
         $session = \Stripe\Checkout\Session::create($session_params);
