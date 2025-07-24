@@ -1,3 +1,4 @@
+var pendingCheckoutUrl = '';
 jQuery(document).ready(function($) {
     let selectedVariant = null;
     let selectedExtras = [];
@@ -16,11 +17,37 @@ jQuery(document).ready(function($) {
     let currentShippingCost = 0;
     let currentPriceId = '';
     let shippingPriceId = '';
+    let shippingProvider = '';
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
+
+    // Tooltip modal setup
+    const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(
+        $('<div>', {class: 'modal-content'}).append(
+            $('<button>', {class: 'modal-close', 'aria-label': 'Schließen'}).text('×'),
+            $('<div>', {class: 'modal-text'})
+        )
+    );
+    $('body').append(tooltipModal);
+
+    $(document).on('click', '.produkt-tooltip', function(e){
+        e.preventDefault();
+        const text = $(this).find('.produkt-tooltiptext').text().trim();
+        if (!text) return;
+        $('#produkt-tooltip-modal .modal-text').text(text);
+        $('#produkt-tooltip-modal').css('display', 'flex');
+        $('body').addClass('produkt-popup-open');
+    });
+
+    $(document).on('click', '#produkt-tooltip-modal', function(e){
+        if (e.target === this || $(e.target).hasClass('modal-close')) {
+            $('#produkt-tooltip-modal').hide();
+            $('body').removeClass('produkt-popup-open');
+        }
+    });
     // Get category ID from container
     const container = $('.produkt-container');
     if (container.length) {
@@ -33,6 +60,17 @@ jQuery(document).ready(function($) {
         if (spid) {
             shippingPriceId = spid.toString();
         }
+        shippingProvider = container.data('shipping-provider') || '';
+        const firstShip = $('.shipping-options .produkt-option.selected').first();
+        if (firstShip.length) {
+            shippingPriceId = firstShip.data('price-id').toString();
+            const cost = parseFloat(firstShip.data('price'));
+            if (!isNaN(cost)) {
+                currentShippingCost = cost;
+            }
+            shippingProvider = firstShip.data('provider') || shippingProvider;
+        }
+        $('#produkt-field-shipping').val(shippingPriceId);
     }
 
     if (produkt_ajax.betriebsmodus === 'kauf') {
@@ -161,6 +199,14 @@ jQuery(document).ready(function($) {
             }
             updateExtraImage($(this));
             updateExtraBookings(selectedExtras);
+        } else if (type === 'shipping') {
+            shippingPriceId = $(this).data('price-id') ? $(this).data('price-id').toString() : '';
+            const cost = parseFloat($(this).data('price'));
+            if (!isNaN(cost)) {
+                currentShippingCost = cost;
+            }
+            shippingProvider = $(this).data('provider') || '';
+            $('#produkt-field-shipping').val(shippingPriceId);
         } else if (type === 'duration') {
             selectedDuration = id;
         } else if (type === 'condition') {
@@ -241,8 +287,15 @@ jQuery(document).ready(function($) {
             if (zustandName) params.set('zustand', zustandName);
             if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
             if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+            const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
 
-            window.location.href = produkt_ajax.checkout_url + '?' + params.toString();
+            if (produkt_ajax.is_logged_in) {
+                window.location.href = targetUrl;
+            } else {
+                pendingCheckoutUrl = targetUrl;
+                $('#checkout-login-modal').css('display', 'flex');
+                $('body').addClass('produkt-popup-open');
+            }
         }
     });
 
@@ -760,8 +813,11 @@ jQuery(document).ready(function($) {
                         if (isAvailable) {
                             $('#produkt-availability-status').removeClass('unavailable').addClass('available');
                             $('#produkt-availability-status .status-text').text('Sofort verfügbar');
-                            $('#produkt-delivery-time').text(data.delivery_time || '');
-                            $('#produkt-delivery-box').show();
+                            if (shippingProvider === 'pickup') {
+                                $('#produkt-delivery-box').text('Abholung').show();
+                            } else {
+                                $('#produkt-delivery-box').html('Lieferung in <span id="produkt-delivery-time">' + (data.delivery_time || '') + '</span>').show();
+                            }
                         } else {
                             $('#produkt-availability-status').addClass('unavailable').removeClass('available');
                             $('#produkt-availability-status .status-text').text('Nicht auf Lager');
@@ -789,17 +845,16 @@ jQuery(document).ready(function($) {
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
 
+                        const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
                         if (produkt_ajax.betriebsmodus === 'kauf') {
                             $('.produkt-price-period').hide();
                             $('.produkt-mobile-price-period').hide();
-                            $('#produkt-rent-button span').text('Jetzt kaufen');
-                            $('.produkt-mobile-button span').text('Jetzt kaufen');
                         } else {
                             $('.produkt-price-period').show().text('/Monat');
                             $('.produkt-mobile-price-period').show().text('/Monat');
-                            $('#produkt-rent-button span').text('Jetzt mieten');
-                            $('.produkt-mobile-button span').text('Jetzt mieten');
                         }
+                        $('#produkt-rent-button span').text(label);
+                        $('.produkt-mobile-button span').text(label);
                     }
                 },
                 error: function() {
@@ -823,17 +878,16 @@ jQuery(document).ready(function($) {
             // Hide mobile sticky price
             hideMobileStickyPrice();
 
+            const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
             if (produkt_ajax.betriebsmodus === 'kauf') {
                 $('.produkt-price-period').hide();
                 $('.produkt-mobile-price-period').hide();
-                $('#produkt-rent-button span').text('Jetzt kaufen');
-                $('.produkt-mobile-button span').text('Jetzt kaufen');
             } else {
                 $('.produkt-price-period').show().text('/Monat');
                 $('.produkt-mobile-price-period').show().text('/Monat');
-                $('#produkt-rent-button span').text('Jetzt mieten');
-                $('.produkt-mobile-button span').text('Jetzt mieten');
             }
+            $('#produkt-rent-button span').text(label);
+            $('.produkt-mobile-button span').text(label);
         }
     }
 
@@ -841,10 +895,7 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainButton = $('#produkt-rent-button');
-            let mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
-            if (produkt_ajax.betriebsmodus === 'kauf') {
-                mainLabel = 'Jetzt kaufen';
-            }
+            let mainLabel = produkt_ajax.button_text || mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
@@ -1246,6 +1297,33 @@ jQuery(document).ready(function($) {
         });
 
     }
+});
+
+jQuery(function($) {
+    $('#checkout-login-btn').on('click', function(e){
+        e.preventDefault();
+        const email = $('#checkout-login-email').val().trim();
+        if (!email) {
+            alert('Bitte E-Mail eingeben');
+            return;
+        }
+        const form = $('<form>', {method: 'POST', action: produkt_ajax.account_url});
+        form.append($('<input>', {type: 'hidden', name: 'request_login_code_nonce', value: produkt_ajax.login_nonce}));
+        form.append($('<input>', {type: 'hidden', name: 'request_login_code', value: '1'}));
+        form.append($('<input>', {type: 'hidden', name: 'email', value: email}));
+        form.append($('<input>', {type: 'hidden', name: 'redirect_to', value: pendingCheckoutUrl}));
+        $('body').append(form);
+        form.submit();
+    });
+
+    $('#checkout-guest-link').on('click', function(e){
+        e.preventDefault();
+        $('#checkout-login-modal').hide();
+        $('body').removeClass('produkt-popup-open');
+        if (pendingCheckoutUrl) {
+            window.location.href = pendingCheckoutUrl;
+        }
+    });
 });
 
 document.addEventListener("DOMContentLoaded", function () {
