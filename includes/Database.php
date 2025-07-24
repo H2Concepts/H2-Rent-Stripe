@@ -1770,6 +1770,44 @@ class Database {
         }
     }
 
+    /**
+     * Insert or update a record in the produkt_customers table using the email
+     * as unique identifier.
+     *
+     * @param string $email
+     * @param string $stripe_customer_id
+     * @param string $fullname
+     * @param string $phone
+     * @param array  $address
+     * @return void
+     */
+    public static function upsert_customer_record_by_email($email, $stripe_customer_id, $fullname = '', $phone = '', $address = []) {
+        global $wpdb;
+
+        // Check if email already exists
+        $table = $wpdb->prefix . 'produkt_customers';
+        $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE email = %s", $email));
+
+        $data = [
+            'stripe_customer_id' => $stripe_customer_id,
+            'first_name'        => $fullname,
+            'phone'             => $phone,
+            'email'             => $email,
+        ];
+
+        if (!empty($address)) {
+            $data['street']       = $address['street'] ?? '';
+            $data['postal_code']  = $address['postal_code'] ?? '';
+            $data['city_country'] = $address['city'] ?? '';
+        }
+
+        if ($existing) {
+            $wpdb->update($table, $data, ['email' => $email]);
+        } else {
+            $wpdb->insert($table, $data);
+        }
+    }
+
 
     /**
      * Retrieve all product categories sorted hierarchically.

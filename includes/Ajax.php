@@ -962,16 +962,16 @@ function produkt_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
-        Database::upsert_customer(
+        Database::upsert_customer_record_by_email(
             sanitize_email($body['email'] ?? ''),
             $customer->id,
-            $body['first_name'] ?? '',
-            $body['last_name'] ?? '',
-            $body['phone'] ?? '',
-            $body['street'] ?? '',
-            $body['postal'] ?? '',
-            $body['city'] ?? '',
-            $body['country'] ?? ''
+            sanitize_text_field($body['fullname'] ?? ''),
+            sanitize_text_field($body['phone'] ?? ''),
+            [
+                'street'      => $body['street'] ?? '',
+                'postal_code' => $body['postal'] ?? '',
+                'city'        => $body['city'] ?? '',
+            ]
         );
 
         global $wpdb;
@@ -1027,16 +1027,16 @@ function produkt_create_subscription() {
                 ]);
                 $stripe_customer_id = $customer->id;
                 Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
-                Database::upsert_customer(
+                Database::upsert_customer_record_by_email(
                     $cust_email,
                     $stripe_customer_id,
-                    $body['first_name'] ?? '',
-                    $body['last_name'] ?? '',
-                    $body['phone'] ?? '',
-                    $body['street'] ?? '',
-                    $body['postal'] ?? '',
-                    $body['city'] ?? '',
-                    $body['country'] ?? ''
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                    ]
                 );
             }
 
@@ -1148,16 +1148,16 @@ function produkt_create_checkout_session() {
                 ]);
                 $stripe_customer_id = $customer->id;
                 Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                Database::upsert_customer(
+                Database::upsert_customer_record_by_email(
                     $customer_email,
                     $stripe_customer_id,
-                    $body['first_name'] ?? '',
-                    $body['last_name'] ?? '',
-                    $body['phone'] ?? '',
-                    $body['street'] ?? '',
-                    $body['postal'] ?? '',
-                    $body['city'] ?? '',
-                    $body['country'] ?? ''
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                    ]
                 );
             }
             }
@@ -1266,16 +1266,16 @@ function produkt_create_checkout_session() {
 
                 // Speichere die ID in deiner Kundentabelle
                 Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                Database::upsert_customer(
+                Database::upsert_customer_record_by_email(
                     $customer_email,
                     $stripe_customer_id,
-                    $body['first_name'] ?? '',
-                    $body['last_name'] ?? '',
-                    $body['phone'] ?? '',
-                    $body['street'] ?? '',
-                    $body['postal'] ?? '',
-                    $body['city'] ?? '',
-                    $body['country'] ?? ''
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                    ]
                 );
             }
 
@@ -1494,16 +1494,16 @@ function produkt_create_embedded_checkout_session() {
                     ]);
                     $stripe_customer_id = $customer->id;
                     Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                    Database::upsert_customer(
+                    Database::upsert_customer_record_by_email(
                         $customer_email,
                         $stripe_customer_id,
-                        $body['first_name'] ?? '',
-                        $body['last_name'] ?? '',
-                        $body['phone'] ?? '',
-                        $body['street'] ?? '',
-                        $body['postal'] ?? '',
-                        $body['city'] ?? '',
-                        $body['country'] ?? ''
+                        $fullname,
+                        $phone,
+                        [
+                            'street'      => $body['street'] ?? '',
+                            'postal_code' => $body['postal'] ?? '',
+                            'city'        => $body['city'] ?? '',
+                        ]
                     );
                 }
                 $session_params['customer'] = $stripe_customer_id;
