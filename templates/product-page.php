@@ -162,7 +162,7 @@ $shipping_provider = $shipping->service_provider ?? '';
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $button_text = $button_text !== '' ? $button_text : ($modus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
 $price_label = $ui['price_label'] ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
-$shipping_label = 'Einmalige Versandkosten:';
+$shipping_label = $ui['shipping_label'] ?? 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';
 $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 
