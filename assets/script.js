@@ -343,7 +343,20 @@ jQuery(document).ready(function($) {
                 product_color_id: selectedProductColor,
                 frame_color_id: selectedFrameColor,
                 final_price: currentPrice,
-                image: $('#produkt-main-image').attr('src') || '',
+                image: (function(){
+                    let img = '';
+                    const variantOption = $('.produkt-option[data-type="variant"].selected');
+                    if (variantOption.length) {
+                        const imgs = variantOption.data('images');
+                        if (Array.isArray(imgs) && imgs.length) {
+                            img = imgs[0];
+                        }
+                    }
+                    if (!img) {
+                        img = $('#produkt-main-image').attr('src') || '';
+                    }
+                    return img;
+                })(),
                 produkt: produktName,
                 extra: extraNames,
                 dauer_name: dauerName,

@@ -1486,8 +1486,8 @@ img.wp-smiley, img.emoji {
 .produkt-cart-panel .cart-summary {
     display: flex;
     justify-content: space-between;
-    padding: 0 1rem 1rem;
-    font-weight: 600;
+    padding: 1rem 1rem 1rem;
+    font-weight: 700;
     border-top: 1px solid #ddd;
 }
 
