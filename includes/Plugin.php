@@ -74,9 +74,6 @@ class Plugin {
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
         add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
         add_action('wp_footer', [$this, 'render_cart_sidebar']);
-        add_action('plugin_process_checkout_session_event', function ($session) {
-            StripeService::process_checkout_session($session);
-        });
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -730,6 +727,14 @@ add_filter('template_include', function ($template) {
     }
 
     return $template;
+});
+
+add_action('produkt_async_handle_checkout_completed', function ($json) {
+    $session = json_decode($json);
+    if (!$session || !isset($session->customer)) {
+        return;
+    }
+    \ProduktVerleih\StripeService::process_checkout_session($session);
 });
 
 add_action('admin_init', function () {

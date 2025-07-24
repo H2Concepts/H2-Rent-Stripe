@@ -13,11 +13,6 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
-    $init = StripeService::init();
-    if (is_wp_error($init)) {
-        return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
-    }
-
     $secret_key = get_option('produkt_stripe_secret_key', '');
     if ($secret_key) {
         \Stripe\Stripe::setApiKey($secret_key);
@@ -30,26 +25,15 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
     } catch (\Exception $e) {
-        http_response_code(400);
-        exit('Ungültige Signatur: ' . $e->getMessage());
+        return new WP_REST_Response(['error' => 'Invalid signature'], 400);
     }
-
-    // Log webhook event with truncated data to avoid huge inserts
-    global $wpdb;
-    $log_table = $wpdb->prefix . 'produkt_webhook_logs';
-    $object_slice = array_slice((array) $event->data->object, 0, 10);
-    $wpdb->insert($log_table, [
-        'event_type'    => $event->type,
-        'stripe_object' => wp_json_encode($object_slice),
-        'message'       => 'Webhook received',
-    ]);
 
     if ($event->type === 'checkout.session.completed') {
-        $session = $event->data->object;
-        wp_schedule_single_event(time(), 'plugin_process_checkout_session_event', [$session]);
+        $session_data = $event->data->object;
+        wp_schedule_single_event(time(), 'produkt_async_handle_checkout_completed', [json_encode($session_data)]);
     }
 
-    return new WP_REST_Response(['status' => 'ok'], 200);
+    return new WP_REST_Response(['status' => 'received'], 200);
 }
 
 function send_produkt_welcome_email(array $order, int $order_id) {
