@@ -1542,19 +1542,13 @@ function produkt_create_embedded_checkout_session() {
                         update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
                     }
                 }
-                if ($stripe_customer_id) {
-                    $session_params['customer'] = $stripe_customer_id;
-                } else {
-                    $session_params['customer_creation'] = 'always';
-                }
+            }
+
+            if (!empty($stripe_customer_id)) {
+                $session_params['customer'] = $stripe_customer_id;
+                $session_params['customer_update'] = ['shipping' => 'auto'];
             } else {
                 $session_params['customer_creation'] = 'always';
-            }
-        }
-
-        if (!empty($session_params['automatic_tax']['enabled'])) {
-            if (!empty($session_params['customer']) || !empty($session_params['customer_creation'])) {
-                $session_params['customer_update'] = ['shipping' => 'auto'];
             }
         }
 
