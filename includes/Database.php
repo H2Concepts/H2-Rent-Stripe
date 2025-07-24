@@ -1713,12 +1713,31 @@ class Database {
      * @param string $email User email
      * @return string Customer ID or empty string when none found
      */
-    public static function get_stripe_customer_id_by_email($email) {
-        $user = get_user_by('email', sanitize_email($email));
-        if (!$user) {
-            return '';
+    public static function get_stripe_customer_id_from_usermeta($email) {
+        global $wpdb;
+
+        $user_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT ID FROM {$wpdb->users} WHERE user_email = %s",
+                $email
+            )
+        );
+
+        if (!$user_id) {
+            return null;
         }
-        return get_user_meta($user->ID, 'stripe_customer_id', true);
+
+        return $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key = 'stripe_customer_id'",
+                $user_id
+            )
+        );
+    }
+
+    public static function get_stripe_customer_id_by_email($email) {
+        $customer_id = self::get_stripe_customer_id_from_usermeta(sanitize_email($email));
+        return $customer_id ? $customer_id : '';
     }
 
     /**

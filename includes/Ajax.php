@@ -973,6 +973,10 @@ function produkt_create_subscription() {
                 'city'        => $body['city'] ?? '',
             ]
         );
+        $user = get_user_by('email', sanitize_email($body['email'] ?? ''));
+        if ($user) {
+            update_user_meta($user->ID, 'stripe_customer_id', $customer->id);
+        }
 
         global $wpdb;
         $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
@@ -1018,6 +1022,10 @@ function produkt_create_subscription() {
         $mode = get_option('produkt_betriebsmodus', 'miete');
         if ($mode === 'kauf') {
             $cust_email = sanitize_email($body['email'] ?? '');
+            $current_user = wp_get_current_user();
+            if ($current_user && $current_user->exists()) {
+                $cust_email = $current_user->user_email;
+            }
             $fullname   = sanitize_text_field($body['fullname'] ?? '');
             $stripe_customer_id = Database::get_stripe_customer_id_by_email($cust_email);
             if (!$stripe_customer_id) {
@@ -1038,6 +1046,10 @@ function produkt_create_subscription() {
                         'city'        => $body['city'] ?? '',
                     ]
                 );
+                $user = get_user_by('email', $cust_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                }
             }
 
             $session = StripeService::create_checkout_session_for_sale([
@@ -1107,6 +1119,10 @@ function produkt_create_checkout_session() {
         $frame_color_id    = intval($body['frame_color_id'] ?? 0);
         $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
+        $current_user = wp_get_current_user();
+        if ($current_user && $current_user->exists()) {
+            $customer_email = $current_user->user_email;
+        }
         $fullname          = sanitize_text_field($body['fullname'] ?? '');
         $phone             = sanitize_text_field($body['phone'] ?? '');
 
@@ -1159,6 +1175,10 @@ function produkt_create_checkout_session() {
                         'city'        => $body['city'] ?? '',
                     ]
                 );
+                $user = get_user_by('email', $customer_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                }
             }
             }
             $session = StripeService::create_checkout_session_for_sale([
@@ -1277,6 +1297,10 @@ function produkt_create_checkout_session() {
                         'city'        => $body['city'] ?? '',
                     ]
                 );
+                $user = get_user_by('email', $customer_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                }
             }
 
             // Verwende den Stripe-Kunden für die Checkout Session
@@ -1388,6 +1412,10 @@ function produkt_create_embedded_checkout_session() {
         $frame_color_id   = intval($body['frame_color_id'] ?? 0);
         $final_price      = floatval($body['final_price'] ?? 0);
         $customer_email   = sanitize_email($body['email'] ?? '');
+        $current_user = wp_get_current_user();
+        if ($current_user && $current_user->exists()) {
+            $customer_email = $current_user->user_email;
+        }
         $fullname         = sanitize_text_field($body['fullname'] ?? '');
         $phone            = sanitize_text_field($body['phone'] ?? '');
 
@@ -1505,6 +1533,10 @@ function produkt_create_embedded_checkout_session() {
                             'city'        => $body['city'] ?? '',
                         ]
                     );
+                    $user = get_user_by('email', $customer_email);
+                    if ($user) {
+                        update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                    }
                 }
                 $session_params['customer'] = $stripe_customer_id;
             }
