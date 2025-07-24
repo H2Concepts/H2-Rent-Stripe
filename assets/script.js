@@ -64,16 +64,38 @@ jQuery(document).ready(function($) {
         const list = $('#produkt-cart-panel .cart-items').empty();
         if (!cart.length) {
             list.append('<p>Ihr Warenkorb ist leer.</p>');
+            $('.cart-total-amount').text('0€');
             updateCartBadge();
             return;
         }
+        let total = 0;
         cart.forEach((item, idx) => {
+            total += parseFloat(item.final_price || 0);
             const row = $('<div>', {class: 'cart-item'});
-            row.append($('<span>').text(item.produkt || 'Produkt'));
+            const imgWrap = $('<div>', {class: 'cart-item-image'});
+            if (item.image) {
+                imgWrap.append($('<img>', {src: item.image, alt: 'Produkt'}));
+            }
+            const details = $('<div>', {class: 'cart-item-details'});
+            details.append($('<div>', {class: 'cart-item-name'}).text(item.produkt || 'Produkt'));
+            if (item.extra) {
+                details.append($('<div>', {class: 'cart-item-extras'}).text(item.extra));
+            }
+            let period = '';
+            if (item.start_date && item.end_date) {
+                period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';
+            } else if (item.dauer_name) {
+                period = item.dauer_name;
+            }
+            if (period) {
+                details.append($('<div>', {class: 'cart-item-period'}).text(period));
+            }
+            const price = $('<div>', {class: 'cart-item-price'}).text(formatPrice(item.final_price) + '€');
             const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
-            row.append(rem);
+            row.append(imgWrap, details, price, rem);
             list.append(row);
         });
+        $('.cart-total-amount').text(formatPrice(total) + '€');
         updateCartBadge();
     }
 
@@ -321,6 +343,7 @@ jQuery(document).ready(function($) {
                 product_color_id: selectedProductColor,
                 frame_color_id: selectedFrameColor,
                 final_price: currentPrice,
+                image: $('#produkt-main-image').attr('src') || '',
                 produkt: produktName,
                 extra: extraNames,
                 dauer_name: dauerName,

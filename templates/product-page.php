@@ -761,6 +761,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
         <button type="button" class="cart-close">&times;</button>
     </div>
     <div class="cart-items"></div>
+    <div class="cart-summary"><span>Summe</span><span class="cart-total-amount">0€</span></div>
     <button id="produkt-cart-checkout">Jetzt bestellen</button>
 </div>
 
