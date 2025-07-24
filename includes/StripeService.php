@@ -70,20 +70,27 @@ class StripeService {
         $cancel_url  = $args['cancel_url'] ?? home_url('/abbrechen');
 
         try {
-            $session = \Stripe\Checkout\Session::create([
+            $session_data = [
                 'mode' => 'payment',
                 'payment_method_types' => ['card'],
                 'line_items' => [[
                     'price'    => $args['price_id'],
                     'quantity' => $args['quantity'] ?? 1,
                 ]],
-                'customer' => $args['customer'] ?? null,
-                'customer_creation' => 'always',
                 'client_reference_id' => $args['reference'] ?? null,
                 'metadata' => $args['metadata'] ?? [],
                 'success_url' => $success_url . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url'  => $cancel_url,
-            ]);
+            ];
+
+            $customer_id = $args['customer'] ?? null;
+            if ($customer_id) {
+                $session_data['customer'] = $customer_id;
+            } else {
+                $session_data['customer_creation'] = 'always';
+            }
+
+            $session = \Stripe\Checkout\Session::create($session_data);
 
             return $session;
         } catch (\Exception $e) {
