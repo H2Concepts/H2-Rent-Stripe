@@ -57,6 +57,7 @@ img.wp-smiley, img.emoji {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
     margin-bottom: 40px;
+    align-items: start;
 }
 
 .orders-column {
@@ -203,6 +204,7 @@ img.wp-smiley, img.emoji {
     }
     .abo-row {
         grid-template-columns: 1fr;
+        align-items: start;
     }
 }
 
