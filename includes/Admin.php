@@ -189,14 +189,7 @@ class Admin {
             $is_account_page = has_shortcode($content, 'produkt_account');
         }
 
-        if (!is_page('shop') && !$is_account_page && empty($slug) && empty($category_slug)) {
-            if (!has_shortcode($content, 'produkt_product') &&
-                !has_shortcode($content, 'stripe_elements_form') &&
-                !has_shortcode($content, 'produkt_shop_grid') &&
-                !has_shortcode($content, 'produkt_account')) {
-                return;
-            }
-        }
+        // Always load basic assets so the cart icon and sidebar work site-wide
 
         wp_enqueue_emoji_styles();
         wp_enqueue_style(
@@ -223,10 +216,8 @@ class Admin {
             }
         }
 
-        $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
-            has_shortcode($content, 'produkt_product') ||
-            has_shortcode($content, 'produkt_shop_grid') ||
-            has_shortcode($content, 'stripe_elements_form');
+        // Load scripts globally so the cart sidebar is functional everywhere
+        $load_script = true;
         if ($load_script) {
             wp_enqueue_script(
                 'stripe-js',
@@ -267,12 +258,14 @@ class Admin {
         $product_padding = $branding['product_padding'] ?? '1';
         $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};}";
         if ($product_padding !== '1') {
-            $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
+        $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }
         if (!empty($custom_css)) {
             $inline_css .= "\n" . $custom_css;
         }
         wp_add_inline_style('produkt-style', $inline_css);
+
+        $ui = get_option('produkt_ui_settings', []);
 
         $category = null;
         if ($slug) {
@@ -321,10 +314,14 @@ class Admin {
                 'nonce' => wp_create_nonce('produkt_nonce'),
                 'publishable_key' => StripeService::get_publishable_key(),
                 'checkout_url' => Plugin::get_checkout_page_url(),
+                'account_url' => Plugin::get_customer_page_url(),
+                'login_nonce' => wp_create_nonce('request_login_code_action'),
+                'is_logged_in' => is_user_logged_in(),
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
+                'button_text' => $category->button_text ?? ($ui['button_text'] ?? ''),
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
                 'popup_settings' => [
