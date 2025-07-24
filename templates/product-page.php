@@ -286,7 +286,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <div class="produkt-extra-price"><?php echo number_format($method->price, 2, ',', '.'); ?>€</div>
                             </div>
                             <?php if (!empty($method->service_provider) && $method->service_provider !== 'none' && $method->service_provider !== 'pickup'): ?>
-                                <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $method->service_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($method->service_provider)); ?>">
+                                <span class="produkt-tooltip">
+                                    <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $method->service_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($method->service_provider)); ?>">
+                                    <?php if (!empty($method->description)): ?>
+                                    <span class="produkt-tooltiptext"><?php echo esc_html($method->description); ?></span>
+                                    <?php endif; ?>
+                                </span>
+                            <?php elseif (!empty($method->description)): ?>
+                                <span class="produkt-tooltip">
+                                    <?php echo $tooltip_icon; ?>
+                                    <span class="produkt-tooltiptext"><?php echo esc_html($method->description); ?></span>
+                                </span>
                             <?php endif; ?>
                             <div class="produkt-option-check">✓</div>
                         </div>
@@ -297,7 +307,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <span class="produkt-final-price"><?php echo number_format($shipping_cost, 2, ',', '.'); ?>€</span>
                     </div>
                     <?php if (!empty($shipping_provider) && $shipping_provider !== 'none' && $shipping_provider !== 'pickup'): ?>
-                        <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
+                        <span class="produkt-tooltip">
+                            <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
+                            <?php if (!empty($shipping->description)): ?>
+                            <span class="produkt-tooltiptext"><?php echo esc_html($shipping->description); ?></span>
+                            <?php endif; ?>
+                        </span>
+                    <?php elseif (!empty($shipping->description)): ?>
+                        <span class="produkt-tooltip">
+                            <?php echo $tooltip_icon; ?>
+                            <span class="produkt-tooltiptext"><?php echo esc_html($shipping->description); ?></span>
+                        </span>
                     <?php endif; ?>
                     <?php endif; ?>
                 </div>
