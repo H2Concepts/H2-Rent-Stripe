@@ -39,13 +39,34 @@
             <div>
         <?php if ($is_sale) : ?>
             <?php if (!empty($sale_orders)) : ?>
-                <?php foreach ($sale_orders as $order) : ?>
-                    <?php
-                        $variant_id = $order->variant_id ?? 0;
-                        $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
-                    ?>
-                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order.php'; ?>
-                <?php endforeach; ?>
+                <?php $first = $sale_orders[0]; ?>
+                <div class="abo-row">
+                    <div class="order-box">
+                        <h3>Kundendaten</h3>
+                        <?php if (!empty($first->customer_name)) : ?>
+                            <p><strong>Name:</strong> <?php echo esc_html($first->customer_name); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($first->customer_email)) : ?>
+                            <p><strong>E-Mail:</strong> <?php echo esc_html($first->customer_email); ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($first->customer_phone)) : ?>
+                            <p><strong>Telefon:</strong> <?php echo esc_html($first->customer_phone); ?></p>
+                        <?php endif; ?>
+                        <h4>Versandadresse</h4>
+                        <p><?php echo esc_html(trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city)); ?></p>
+                        <h4>Rechnungsadresse</h4>
+                        <p><?php echo esc_html(trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city)); ?></p>
+                    </div>
+                    <div class="orders-column">
+                        <?php foreach ($sale_orders as $order) : ?>
+                            <?php
+                                $variant_id = $order->variant_id ?? 0;
+                                $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+                            ?>
+                            <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
             <?php else : ?>
                 <p>Keine Bestellungen.</p>
             <?php endif; ?>

@@ -59,6 +59,12 @@ img.wp-smiley, img.emoji {
     margin-bottom: 40px;
 }
 
+.orders-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
 .abo-box,
 .order-box {
     background: #f4f4f4;
