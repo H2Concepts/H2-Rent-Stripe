@@ -1466,9 +1466,9 @@ img.wp-smiley, img.emoji {
     border-radius: 50%;
     padding: 2px 6px;
     position: absolute;
-    top: 0;
-    right: 0;
-    transform: translate(40%, -40%);
+    top: 50%;
+    right: -5px;
+    transform: translateY(-50%);
     display: inline-block;
     min-width: 1rem;
     height: 1rem;
