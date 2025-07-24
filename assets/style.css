@@ -1447,6 +1447,12 @@ img.wp-smiley, img.emoji {
 /* Cart icon in menu */
 .plugin-cart-icon {
     position: relative;
+    display: inline-block;
+}
+.plugin-cart-icon .cart-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
 }
 #cart-count-badge {
     background: red;
@@ -1455,8 +1461,9 @@ img.wp-smiley, img.emoji {
     border-radius: 50%;
     padding: 2px 6px;
     position: absolute;
-    top: -8px;
-    right: -10px;
+    top: 0;
+    right: 0;
+    transform: translate(40%, -40%);
     display: inline-block;
     min-width: 1rem;
     height: 1rem;
