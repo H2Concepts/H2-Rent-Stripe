@@ -73,6 +73,7 @@ class Plugin {
 
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
         add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
+        add_action('wp_footer', [$this, 'render_cart_sidebar']);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -688,6 +689,13 @@ class Plugin {
                 . '</a></li>';
         }
         return $items;
+    }
+
+    /**
+     * Output the sliding cart sidebar markup in the footer so it is available on all pages.
+     */
+    public function render_cart_sidebar() {
+        include PRODUKT_PLUGIN_PATH . 'templates/cart-sidebar.php';
     }
 
     /**

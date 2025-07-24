@@ -189,14 +189,7 @@ class Admin {
             $is_account_page = has_shortcode($content, 'produkt_account');
         }
 
-        if (!is_page('shop') && !$is_account_page && empty($slug) && empty($category_slug)) {
-            if (!has_shortcode($content, 'produkt_product') &&
-                !has_shortcode($content, 'stripe_elements_form') &&
-                !has_shortcode($content, 'produkt_shop_grid') &&
-                !has_shortcode($content, 'produkt_account')) {
-                return;
-            }
-        }
+        // Always load basic assets so the cart icon and sidebar work site-wide
 
         wp_enqueue_emoji_styles();
         wp_enqueue_style(
@@ -223,10 +216,8 @@ class Admin {
             }
         }
 
-        $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
-            has_shortcode($content, 'produkt_product') ||
-            has_shortcode($content, 'produkt_shop_grid') ||
-            has_shortcode($content, 'stripe_elements_form');
+        // Load scripts globally so the cart sidebar is functional everywhere
+        $load_script = true;
         if ($load_script) {
             wp_enqueue_script(
                 'stripe-js',
