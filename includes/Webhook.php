@@ -222,22 +222,22 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             send_produkt_welcome_email($data, $existing_id);
             send_admin_order_email($data, $existing_id, $session->id);
             produkt_add_order_log($existing_id, 'welcome_email_sent');
-        }
 
-        if ($existing_order) {
-            if ($existing_order->variant_id) {
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                    $existing_order->variant_id
-                ));
-            }
-            if (!empty($existing_order->extra_ids)) {
-                $ids = array_filter(array_map('intval', explode(',', $existing_order->extra_ids)));
-                foreach ($ids as $eid) {
+            if ($existing_order && $existing_order->status === 'offen') {
+                if ($existing_order->variant_id) {
                     $wpdb->query($wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                        $eid
+                        "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                        $existing_order->variant_id
                     ));
+                }
+                if (!empty($existing_order->extra_ids)) {
+                    $ids = array_filter(array_map('intval', explode(',', $existing_order->extra_ids)));
+                    foreach ($ids as $eid) {
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                            $eid
+                        ));
+                    }
                 }
             }
         }
