@@ -271,7 +271,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <div class="produkt-price-wrapper">
                         <span class="produkt-final-price"><?php echo number_format($shipping_cost, 2, ',', '.'); ?>€</span>
                     </div>
-                    <?php if (!empty($shipping_provider)): ?>
+                    <?php if (!empty($shipping_provider) && $shipping_provider !== 'none' && $shipping_provider !== 'pickup'): ?>
                         <img class="produkt-shipping-provider-icon" src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/shipping-icons/' . $shipping_provider . '.svg'); ?>" alt="<?php echo esc_attr(strtoupper($shipping_provider)); ?>">
                     <?php endif; ?>
                 </div>
