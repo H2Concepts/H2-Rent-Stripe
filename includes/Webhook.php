@@ -116,6 +116,19 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $city   = sanitize_text_field($addr->city ?? '');
         $country = sanitize_text_field($addr->country ?? '');
 
+        // Persist customer information in custom table
+        Database::upsert_customer(
+            $email,
+            $stripe_customer_id,
+            $first_name,
+            $last_name,
+            $phone,
+            $street,
+            $postal,
+            $city,
+            $country
+        );
+
         global $wpdb;
         $existing_order = $wpdb->get_row($wpdb->prepare(
             "SELECT id, status, created_at, category_id, shipping_cost, variant_id FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
