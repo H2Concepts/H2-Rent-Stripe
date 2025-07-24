@@ -256,7 +256,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
             </div>
 
-             <div class="produkt-price-display" id="produkt-price-display" style="display: none;">
+            <div class="produkt-price-display<?php echo $select_shipping ? ' no-default-shipping' : ''; ?>" id="produkt-price-display" style="display: none;">
                 <div class="produkt-price-box produkt-monthly-box">
                     <div class="produkt-price-content">
                         <p class="produkt-price-label"><?php echo esc_html($price_label); ?></p>

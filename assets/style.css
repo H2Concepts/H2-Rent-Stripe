@@ -232,6 +232,16 @@ img.wp-smiley, img.emoji {
     flex-direction: column;
 }
 
+.produkt-price-display.no-default-shipping {
+    background-color: #f6f7f6;
+    border: 1px solid var(--produkt-button-bg);
+}
+
+.produkt-price-display.no-default-shipping .produkt-price-box {
+    background: none;
+    border: none;
+}
+
 .produkt-price-content {
     display: flex;
     flex-direction: column;
