@@ -108,25 +108,23 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
         $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
 
-        $email  = sanitize_email($session->customer_details->email ?? '');
-        $phone  = sanitize_text_field($session->customer_details->phone ?? '');
-        $addr   = $session->customer_details->address ?? null;
-        $street = sanitize_text_field($addr->line1 ?? '');
-        $postal = sanitize_text_field($addr->postal_code ?? '');
-        $city   = sanitize_text_field($addr->city ?? '');
-        $country = sanitize_text_field($addr->country ?? '');
+        $email    = sanitize_email($session->customer_details->email ?? '');
+        $phone    = sanitize_text_field($session->customer_details->phone ?? '');
+
+        $address = $session->customer_details->address ?? null;
 
         // Persist customer information in custom table
-        Database::upsert_customer(
+        Database::upsert_customer_record_by_email(
             $email,
             $stripe_customer_id,
-            $first_name,
-            $last_name,
+            $full_name,
             $phone,
-            $street,
-            $postal,
-            $city,
-            $country
+            [
+                'street'      => $address->line1 ?? '',
+                'postal_code' => $address->postal_code ?? '',
+                'city'        => $address->city ?? '',
+                'country'     => $address->country ?? '',
+            ]
         );
 
         global $wpdb;

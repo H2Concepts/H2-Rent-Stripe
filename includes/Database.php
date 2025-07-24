@@ -635,7 +635,8 @@ class Database {
                 phone varchar(50) DEFAULT '',
                 street varchar(255) DEFAULT '',
                 postal_code varchar(20) DEFAULT '',
-                city_country varchar(255) DEFAULT '',
+                city varchar(255) DEFAULT '',
+                country varchar(50) DEFAULT '',
                 PRIMARY KEY (id),
                 UNIQUE KEY email (email)
             ) $charset_collate;";
@@ -1252,7 +1253,8 @@ class Database {
             phone varchar(50) DEFAULT '',
             street varchar(255) DEFAULT '',
             postal_code varchar(20) DEFAULT '',
-            city_country varchar(255) DEFAULT '',
+            city varchar(255) DEFAULT '',
+            country varchar(50) DEFAULT '',
             PRIMARY KEY (id),
             UNIQUE KEY email (email)
         ) $charset_collate;";
@@ -1782,9 +1784,10 @@ class Database {
                     'phone'              => $phone,
                     'street'             => $street,
                     'postal_code'        => $postal,
-                    'city_country'       => $city . ' - ' . $country,
+                    'city'               => $city,
+                    'country'            => $country,
                 ],
-                ['%s','%s','%s','%s','%s','%s','%s','%s']
+                ['%s','%s','%s','%s','%s','%s','%s','%s','%s']
             );
         }
     }
@@ -1817,7 +1820,8 @@ class Database {
         if (!empty($address)) {
             $data['street']       = $address['street'] ?? '';
             $data['postal_code']  = $address['postal_code'] ?? '';
-            $data['city_country'] = $address['city'] ?? '';
+            $data['city']         = $address['city'] ?? '';
+            $data['country']      = $address['country'] ?? '';
         }
 
         if ($existing) {
