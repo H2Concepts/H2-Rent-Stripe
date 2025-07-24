@@ -72,6 +72,7 @@ class Plugin {
         add_filter('display_post_states', [$this, 'mark_shop_page'], 10, 2);
 
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
+        add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -674,6 +675,19 @@ class Plugin {
             return false;
         }
         return $show;
+    }
+
+    /**
+     * Append a cart icon to the main navigation menu.
+     */
+    public function add_cart_icon_to_menu($items, $args) {
+        if ($args->theme_location === 'primary') {
+            $items .= '<li class="menu-item plugin-cart-icon">'
+                . '<a href="#" onclick="openCartSidebar(); return false;">'
+                . '<span class="cart-icon">🛒</span><span id="cart-count-badge">0</span>'
+                . '</a></li>';
+        }
+        return $items;
     }
 
     /**

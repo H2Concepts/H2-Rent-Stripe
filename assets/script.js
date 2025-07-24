@@ -25,6 +25,11 @@ jQuery(document).ready(function($) {
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
 
+    function updateCartBadge() {
+        $('#cart-count-badge').text(cart.length);
+    }
+    updateCartBadge();
+
     // Tooltip modal setup
     const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(
         $('<div>', {class: 'modal-content'}).append(
@@ -52,12 +57,14 @@ jQuery(document).ready(function($) {
 
     function saveCart() {
         localStorage.setItem('produkt_cart', JSON.stringify(cart));
+        updateCartBadge();
     }
 
     function renderCart() {
         const list = $('#produkt-cart-panel .cart-items').empty();
         if (!cart.length) {
             list.append('<p>Ihr Warenkorb ist leer.</p>');
+            updateCartBadge();
             return;
         }
         cart.forEach((item, idx) => {
@@ -67,6 +74,7 @@ jQuery(document).ready(function($) {
             row.append(rem);
             list.append(row);
         });
+        updateCartBadge();
     }
 
     function openCart() {
@@ -1378,6 +1386,7 @@ jQuery(document).ready(function($) {
         });
 
     }
+    window.openCartSidebar = openCart;
 });
 
 jQuery(function($) {
