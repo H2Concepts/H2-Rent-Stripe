@@ -139,7 +139,8 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         <th style="width: 120px;">Datum</th>
                         <th>Kunde</th>
                         <th>Telefon</th>
-                        <th>Adresse</th>
+                        <th>Versandadresse</th>
+                        <th>Rechnungsadresse</th>
                         <th style="width: 80px;">Produkttyp</th>
                         <th>Produktdetails</th>
                         <th style="width: 100px;">Preis</th>
@@ -168,6 +169,14 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         </td>
                         <td>
                             <?php echo esc_html($order->customer_phone); ?>
+                        </td>
+                        <td>
+                            <?php
+                                $addr = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
+                                if ($addr || $order->customer_country) {
+                                    echo esc_html(trim($addr . ', ' . $order->customer_country));
+                                }
+                            ?>
                         </td>
                         <td>
                             <?php
