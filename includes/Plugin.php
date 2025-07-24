@@ -288,6 +288,7 @@ class Plugin {
         $message        = $this->login_error;
         $show_code_form = isset($_POST['verify_login_code']);
         $email_value    = '';
+        $redirect_to    = isset($_REQUEST['redirect_to']) ? esc_url_raw($_REQUEST['redirect_to']) : '';
 
         if (
             isset($_POST['verify_login_code_nonce'], $_POST['verify_login_code']) &&
@@ -509,8 +510,12 @@ class Plugin {
 
                 wp_set_current_user($user->ID);
                 wp_set_auth_cookie($user->ID, true);
-                $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-                wp_safe_redirect(get_permalink($page_id));
+                $redirect = isset($_POST['redirect_to']) ? esc_url_raw($_POST['redirect_to']) : '';
+                if (empty($redirect)) {
+                    $page_id  = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                    $redirect = get_permalink($page_id);
+                }
+                wp_safe_redirect($redirect);
                 exit;
             }
         }
@@ -641,6 +646,17 @@ class Plugin {
         }
 
         return null;
+    }
+
+    /**
+     * Return the URL of the customer account page.
+     */
+    public static function get_customer_page_url() {
+        $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($page_id) {
+            return get_permalink($page_id);
+        }
+        return home_url('/kundenkonto');
     }
 
     public function register_customer_role() {

@@ -5,6 +5,7 @@ jQuery(document).ready(function($) {
     let selectedCondition = null;
     let selectedProductColor = null;
     let selectedFrameColor = null;
+    let pendingCheckoutUrl = '';
     let currentVariantImages = [];
     let currentMainImageIndex = 0;
     let currentProductColorImage = null;
@@ -241,8 +242,15 @@ jQuery(document).ready(function($) {
             if (zustandName) params.set('zustand', zustandName);
             if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
             if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+            const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
 
-            window.location.href = produkt_ajax.checkout_url + '?' + params.toString();
+            if (produkt_ajax.is_logged_in) {
+                window.location.href = targetUrl;
+            } else {
+                pendingCheckoutUrl = targetUrl;
+                $('#checkout-login-modal').css('display', 'flex');
+                $('body').addClass('produkt-popup-open');
+            }
         }
     });
 
@@ -1246,6 +1254,24 @@ jQuery(document).ready(function($) {
         });
 
     }
+});
+
+jQuery(function($) {
+    $('#checkout-login-btn').on('click', function(){
+        $('#checkout-login-modal').hide();
+        $('body').removeClass('produkt-popup-open');
+        if (pendingCheckoutUrl) {
+            window.location.href = produkt_ajax.account_url + '?redirect_to=' + encodeURIComponent(pendingCheckoutUrl);
+        }
+    });
+
+    $('#checkout-guest-btn').on('click', function(){
+        $('#checkout-login-modal').hide();
+        $('body').removeClass('produkt-popup-open');
+        if (pendingCheckoutUrl) {
+            window.location.href = pendingCheckoutUrl;
+        }
+    });
 });
 
 document.addEventListener("DOMContentLoaded", function () {

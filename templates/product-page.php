@@ -704,6 +704,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
     <?php endif; ?>
 </div>
 
+<div id="checkout-login-modal" class="checkout-login-modal" style="display:none;">
+    <div class="modal-content">
+        <p>Sind Sie bereits Kunde?</p>
+        <button id="checkout-login-btn">Login</button>
+        <button id="checkout-guest-btn">Als Gast bestellen</button>
+    </div>
+</div>
+
 
 <div id="produkt-exit-popup" class="produkt-exit-popup" style="display:none;">
     <div class="produkt-exit-popup-content">
