@@ -754,6 +754,16 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
     <?php endif; ?>
 </div>
 
+<!-- Sliding Cart Panel -->
+<div id="produkt-cart-panel" class="produkt-cart-panel">
+    <div class="cart-header">
+        <h3>Warenkorb</h3>
+        <button type="button" class="cart-close">&times;</button>
+    </div>
+    <div class="cart-items"></div>
+    <button id="produkt-cart-checkout">Jetzt bestellen</button>
+</div>
+
 <div id="checkout-login-modal" class="checkout-login-modal" style="display:none;">
     <div class="modal-content">
         <h3>Login</h3>

@@ -23,6 +23,7 @@ jQuery(document).ready(function($) {
     let selectedDays = 0;
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
+    let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
 
     // Tooltip modal setup
     const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(
@@ -46,6 +47,46 @@ jQuery(document).ready(function($) {
         if (e.target === this || $(e.target).hasClass('modal-close')) {
             $('#produkt-tooltip-modal').hide();
             $('body').removeClass('produkt-popup-open');
+        }
+    });
+
+    function saveCart() {
+        localStorage.setItem('produkt_cart', JSON.stringify(cart));
+    }
+
+    function renderCart() {
+        const list = $('#produkt-cart-panel .cart-items').empty();
+        if (!cart.length) {
+            list.append('<p>Ihr Warenkorb ist leer.</p>');
+            return;
+        }
+        cart.forEach((item, idx) => {
+            const row = $('<div>', {class: 'cart-item'});
+            row.append($('<span>').text(item.produkt || 'Produkt'));
+            const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
+            row.append(rem);
+            list.append(row);
+        });
+    }
+
+    function openCart() {
+        renderCart();
+        $('#produkt-cart-panel').addClass('open');
+        $('body').addClass('produkt-popup-open');
+    }
+
+    function closeCart() {
+        $('#produkt-cart-panel').removeClass('open');
+        $('body').removeClass('produkt-popup-open');
+    }
+
+    $(document).on('click', '.cart-close', closeCart);
+    $(document).on('click', '.cart-item-remove', function(){
+        const idx = parseInt($(this).data('index'));
+        if (!isNaN(idx)) {
+            cart.splice(idx, 1);
+            saveCart();
+            renderCart();
         }
     });
     // Get category ID from container
@@ -242,7 +283,47 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        if (produkt_ajax.checkout_url) {
+        if (produkt_ajax.betriebsmodus === 'kauf') {
+            const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+            const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
+                .map(function(){ return $(this).text().trim(); })
+                .get().join(', ');
+            const dauerName = $('.produkt-option[data-type="duration"].selected .produkt-duration-name').text().trim();
+            const zustandName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+            const produktfarbeName = $('.produkt-option[data-type="product-color"].selected').data('color-name');
+            const gestellfarbeName = $('.produkt-option[data-type="frame-color"].selected').data('color-name');
+
+            const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
+                .map(function(){ return $(this).data('price-id'); })
+                .get()
+                .filter(id => id);
+
+            const item = {
+                price_id: currentPriceId,
+                extra_price_ids: extraPriceIds,
+                shipping_price_id: shippingPriceId,
+                category_id: currentCategoryId,
+                variant_id: selectedVariant,
+                extra_ids: selectedExtras.join(','),
+                duration_id: selectedDuration,
+                start_date: startDate,
+                end_date: endDate,
+                days: selectedDays,
+                condition_id: selectedCondition,
+                product_color_id: selectedProductColor,
+                frame_color_id: selectedFrameColor,
+                final_price: currentPrice,
+                produkt: produktName,
+                extra: extraNames,
+                dauer_name: dauerName,
+                zustand: zustandName,
+                produktfarbe: produktfarbeName,
+                gestellfarbe: gestellfarbeName
+            };
+            cart.push(item);
+            saveCart();
+            openCart();
+        } else if (produkt_ajax.checkout_url) {
             const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
                 .map(function(){ return $(this).data('price-id'); })
                 .get()
@@ -1314,6 +1395,20 @@ jQuery(function($) {
         form.append($('<input>', {type: 'hidden', name: 'redirect_to', value: pendingCheckoutUrl}));
         $('body').append(form);
         form.submit();
+    });
+
+    $('#produkt-cart-checkout').on('click', function(e){
+        e.preventDefault();
+        if (!cart.length) return;
+        saveCart();
+        const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingPriceId ? '&shipping_price_id=' + encodeURIComponent(shippingPriceId) : '');
+        if (produkt_ajax.is_logged_in) {
+            window.location.href = targetUrl;
+        } else {
+            pendingCheckoutUrl = targetUrl;
+            $('#checkout-login-modal').css('display', 'flex');
+            $('body').addClass('produkt-popup-open');
+        }
     });
 
     $('#checkout-guest-link').on('click', function(e){
