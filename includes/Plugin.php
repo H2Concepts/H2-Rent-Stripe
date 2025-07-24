@@ -72,6 +72,8 @@ class Plugin {
         add_filter('display_post_states', [$this, 'mark_shop_page'], 10, 2);
 
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
+        add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
+        add_action('wp_footer', [$this, 'render_cart_sidebar']);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -288,6 +290,7 @@ class Plugin {
         $message        = $this->login_error;
         $show_code_form = isset($_POST['verify_login_code']);
         $email_value    = '';
+        $redirect_to    = isset($_REQUEST['redirect_to']) ? esc_url_raw($_REQUEST['redirect_to']) : '';
 
         if (
             isset($_POST['verify_login_code_nonce'], $_POST['verify_login_code']) &&
@@ -430,7 +433,11 @@ class Plugin {
 
         $price_id = sanitize_text_field($_POST['price_id'] ?? '');
         global $wpdb;
-        $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+        if (!empty($_POST['shipping_price_id'])) {
+            $shipping_price_id = sanitize_text_field($_POST['shipping_price_id']);
+        } else {
+            $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+        }
 
         $init = StripeService::init();
         if (is_wp_error($init)) {
@@ -509,8 +516,12 @@ class Plugin {
 
                 wp_set_current_user($user->ID);
                 wp_set_auth_cookie($user->ID, true);
-                $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-                wp_safe_redirect(get_permalink($page_id));
+                $redirect = isset($_POST['redirect_to']) ? esc_url_raw($_POST['redirect_to']) : '';
+                if (empty($redirect)) {
+                    $page_id  = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                    $redirect = get_permalink($page_id);
+                }
+                wp_safe_redirect($redirect);
                 exit;
             }
         }
@@ -643,6 +654,17 @@ class Plugin {
         return null;
     }
 
+    /**
+     * Return the URL of the customer account page.
+     */
+    public static function get_customer_page_url() {
+        $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if ($page_id) {
+            return get_permalink($page_id);
+        }
+        return home_url('/kundenkonto');
+    }
+
     public function register_customer_role() {
         add_role('kunde', 'Kunde', [
             'read' => true,
@@ -654,6 +676,26 @@ class Plugin {
             return false;
         }
         return $show;
+    }
+
+    /**
+     * Append a cart icon to the main navigation menu.
+     */
+    public function add_cart_icon_to_menu($items, $args) {
+        if ($args->theme_location === 'primary') {
+            $items .= '<li class="menu-item plugin-cart-icon">'
+                . '<a href="#" onclick="openCartSidebar(); return false;">'
+                . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg></span><span id="cart-count-badge">0</span>'
+                . '</a></li>';
+        }
+        return $items;
+    }
+
+    /**
+     * Output the sliding cart sidebar markup in the footer so it is available on all pages.
+     */
+    public function render_cart_sidebar() {
+        include PRODUKT_PLUGIN_PATH . 'templates/cart-sidebar.php';
     }
 
     /**

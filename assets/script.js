@@ -1,3 +1,4 @@
+var pendingCheckoutUrl = '';
 jQuery(document).ready(function($) {
     let selectedVariant = null;
     let selectedExtras = [];
@@ -16,11 +17,113 @@ jQuery(document).ready(function($) {
     let currentShippingCost = 0;
     let currentPriceId = '';
     let shippingPriceId = '';
+    let shippingProvider = '';
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
+    let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
+
+    function updateCartBadge() {
+        $('#cart-count-badge').text(cart.length);
+    }
+    updateCartBadge();
+
+    // Tooltip modal setup
+    const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(
+        $('<div>', {class: 'modal-content'}).append(
+            $('<button>', {class: 'modal-close', 'aria-label': 'Schließen'}).text('×'),
+            $('<div>', {class: 'modal-text'})
+        )
+    );
+    $('body').append(tooltipModal);
+
+    $(document).on('click', '.produkt-tooltip', function(e){
+        e.preventDefault();
+        const text = $(this).find('.produkt-tooltiptext').text().trim();
+        if (!text) return;
+        $('#produkt-tooltip-modal .modal-text').text(text);
+        $('#produkt-tooltip-modal').css('display', 'flex');
+        $('body').addClass('produkt-popup-open');
+    });
+
+    $(document).on('click', '#produkt-tooltip-modal', function(e){
+        if (e.target === this || $(e.target).hasClass('modal-close')) {
+            $('#produkt-tooltip-modal').hide();
+            $('body').removeClass('produkt-popup-open');
+        }
+    });
+
+    function saveCart() {
+        localStorage.setItem('produkt_cart', JSON.stringify(cart));
+        updateCartBadge();
+    }
+
+    function renderCart() {
+        const list = $('#produkt-cart-panel .cart-items').empty();
+        if (!cart.length) {
+            list.append('<p>Ihr Warenkorb ist leer.</p>');
+            $('.cart-total-amount').text('0€');
+            updateCartBadge();
+            return;
+        }
+        let total = 0;
+        cart.forEach((item, idx) => {
+            total += parseFloat(item.final_price || 0);
+            const row = $('<div>', {class: 'cart-item'});
+            const imgWrap = $('<div>', {class: 'cart-item-image'});
+            if (item.image) {
+                imgWrap.append($('<img>', {src: item.image, alt: 'Produkt'}));
+            }
+            const details = $('<div>', {class: 'cart-item-details'});
+            details.append($('<div>', {class: 'cart-item-name'}).text(item.produkt || 'Produkt'));
+            if (item.extra) {
+                const extrasContainer = $('<div>', {class: 'cart-item-extras'});
+                item.extra.split(',').forEach(function(ex){
+                    const trimmed = ex.trim();
+                    if (trimmed) extrasContainer.append($('<div>').text(trimmed));
+                });
+                details.append(extrasContainer);
+            }
+            let period = '';
+            if (item.start_date && item.end_date) {
+                period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';
+            } else if (item.dauer_name) {
+                period = item.dauer_name;
+            }
+            if (period) {
+                details.append($('<div>', {class: 'cart-item-period'}).text(period));
+            }
+            const price = $('<div>', {class: 'cart-item-price'}).text(formatPrice(item.final_price) + '€');
+            const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
+            row.append(imgWrap, details, price, rem);
+            list.append(row);
+        });
+        $('.cart-total-amount').text(formatPrice(total) + '€');
+        updateCartBadge();
+    }
+
+    function openCart() {
+        renderCart();
+        $('#produkt-cart-panel').addClass('open');
+        $('body').addClass('produkt-popup-open');
+    }
+
+    function closeCart() {
+        $('#produkt-cart-panel').removeClass('open');
+        $('body').removeClass('produkt-popup-open');
+    }
+
+    $(document).on('click', '.cart-close', closeCart);
+    $(document).on('click', '.cart-item-remove', function(){
+        const idx = parseInt($(this).data('index'));
+        if (!isNaN(idx)) {
+            cart.splice(idx, 1);
+            saveCart();
+            renderCart();
+        }
+    });
     // Get category ID from container
     const container = $('.produkt-container');
     if (container.length) {
@@ -33,6 +136,17 @@ jQuery(document).ready(function($) {
         if (spid) {
             shippingPriceId = spid.toString();
         }
+        shippingProvider = container.data('shipping-provider') || '';
+        const firstShip = $('.shipping-options .produkt-option.selected').first();
+        if (firstShip.length) {
+            shippingPriceId = firstShip.data('price-id').toString();
+            const cost = parseFloat(firstShip.data('price'));
+            if (!isNaN(cost)) {
+                currentShippingCost = cost;
+            }
+            shippingProvider = firstShip.data('provider') || shippingProvider;
+        }
+        $('#produkt-field-shipping').val(shippingPriceId);
     }
 
     if (produkt_ajax.betriebsmodus === 'kauf') {
@@ -161,6 +275,14 @@ jQuery(document).ready(function($) {
             }
             updateExtraImage($(this));
             updateExtraBookings(selectedExtras);
+        } else if (type === 'shipping') {
+            shippingPriceId = $(this).data('price-id') ? $(this).data('price-id').toString() : '';
+            const cost = parseFloat($(this).data('price'));
+            if (!isNaN(cost)) {
+                currentShippingCost = cost;
+            }
+            shippingProvider = $(this).data('provider') || '';
+            $('#produkt-field-shipping').val(shippingPriceId);
         } else if (type === 'duration') {
             selectedDuration = id;
         } else if (type === 'condition') {
@@ -196,7 +318,61 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        if (produkt_ajax.checkout_url) {
+        if (produkt_ajax.betriebsmodus === 'kauf') {
+            const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+            const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
+                .map(function(){ return $(this).text().trim(); })
+                .get().join(', ');
+            const dauerName = $('.produkt-option[data-type="duration"].selected .produkt-duration-name').text().trim();
+            const zustandName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+            const produktfarbeName = $('.produkt-option[data-type="product-color"].selected').data('color-name');
+            const gestellfarbeName = $('.produkt-option[data-type="frame-color"].selected').data('color-name');
+
+            const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
+                .map(function(){ return $(this).data('price-id'); })
+                .get()
+                .filter(id => id);
+
+            const item = {
+                price_id: currentPriceId,
+                extra_price_ids: extraPriceIds,
+                shipping_price_id: shippingPriceId,
+                category_id: currentCategoryId,
+                variant_id: selectedVariant,
+                extra_ids: selectedExtras.join(','),
+                duration_id: selectedDuration,
+                start_date: startDate,
+                end_date: endDate,
+                days: selectedDays,
+                condition_id: selectedCondition,
+                product_color_id: selectedProductColor,
+                frame_color_id: selectedFrameColor,
+                final_price: currentPrice,
+                image: (function(){
+                    let img = '';
+                    const variantOption = $('.produkt-option[data-type="variant"].selected');
+                    if (variantOption.length) {
+                        const imgs = variantOption.data('images');
+                        if (Array.isArray(imgs) && imgs.length) {
+                            img = imgs[0];
+                        }
+                    }
+                    if (!img) {
+                        img = $('#produkt-main-image').attr('src') || '';
+                    }
+                    return img;
+                })(),
+                produkt: produktName,
+                extra: extraNames,
+                dauer_name: dauerName,
+                zustand: zustandName,
+                produktfarbe: produktfarbeName,
+                gestellfarbe: gestellfarbeName
+            };
+            cart.push(item);
+            saveCart();
+            openCart();
+        } else if (produkt_ajax.checkout_url) {
             const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
                 .map(function(){ return $(this).data('price-id'); })
                 .get()
@@ -241,8 +417,15 @@ jQuery(document).ready(function($) {
             if (zustandName) params.set('zustand', zustandName);
             if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
             if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+            const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
 
-            window.location.href = produkt_ajax.checkout_url + '?' + params.toString();
+            if (produkt_ajax.is_logged_in) {
+                window.location.href = targetUrl;
+            } else {
+                pendingCheckoutUrl = targetUrl;
+                $('#checkout-login-modal').css('display', 'flex');
+                $('body').addClass('produkt-popup-open');
+            }
         }
     });
 
@@ -760,8 +943,11 @@ jQuery(document).ready(function($) {
                         if (isAvailable) {
                             $('#produkt-availability-status').removeClass('unavailable').addClass('available');
                             $('#produkt-availability-status .status-text').text('Sofort verfügbar');
-                            $('#produkt-delivery-time').text(data.delivery_time || '');
-                            $('#produkt-delivery-box').show();
+                            if (shippingProvider === 'pickup') {
+                                $('#produkt-delivery-box').text('Abholung').show();
+                            } else {
+                                $('#produkt-delivery-box').html('Lieferung in <span id="produkt-delivery-time">' + (data.delivery_time || '') + '</span>').show();
+                            }
                         } else {
                             $('#produkt-availability-status').addClass('unavailable').removeClass('available');
                             $('#produkt-availability-status .status-text').text('Nicht auf Lager');
@@ -789,17 +975,16 @@ jQuery(document).ready(function($) {
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
 
+                        const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
                         if (produkt_ajax.betriebsmodus === 'kauf') {
                             $('.produkt-price-period').hide();
                             $('.produkt-mobile-price-period').hide();
-                            $('#produkt-rent-button span').text('Jetzt kaufen');
-                            $('.produkt-mobile-button span').text('Jetzt kaufen');
                         } else {
                             $('.produkt-price-period').show().text('/Monat');
                             $('.produkt-mobile-price-period').show().text('/Monat');
-                            $('#produkt-rent-button span').text('Jetzt mieten');
-                            $('.produkt-mobile-button span').text('Jetzt mieten');
                         }
+                        $('#produkt-rent-button span').text(label);
+                        $('.produkt-mobile-button span').text(label);
                     }
                 },
                 error: function() {
@@ -823,17 +1008,16 @@ jQuery(document).ready(function($) {
             // Hide mobile sticky price
             hideMobileStickyPrice();
 
+            const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
             if (produkt_ajax.betriebsmodus === 'kauf') {
                 $('.produkt-price-period').hide();
                 $('.produkt-mobile-price-period').hide();
-                $('#produkt-rent-button span').text('Jetzt kaufen');
-                $('.produkt-mobile-button span').text('Jetzt kaufen');
             } else {
                 $('.produkt-price-period').show().text('/Monat');
                 $('.produkt-mobile-price-period').show().text('/Monat');
-                $('#produkt-rent-button span').text('Jetzt mieten');
-                $('.produkt-mobile-button span').text('Jetzt mieten');
             }
+            $('#produkt-rent-button span').text(label);
+            $('.produkt-mobile-button span').text(label);
         }
     }
 
@@ -841,10 +1025,7 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainButton = $('#produkt-rent-button');
-            let mainLabel = mainButton.find('span').text().trim() || 'Jetzt Mieten';
-            if (produkt_ajax.betriebsmodus === 'kauf') {
-                mainLabel = 'Jetzt kaufen';
-            }
+            let mainLabel = produkt_ajax.button_text || mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar
@@ -1246,6 +1427,46 @@ jQuery(document).ready(function($) {
         });
 
     }
+    window.openCartSidebar = openCart;
+    $('#checkout-login-btn').on('click', function(e){
+        e.preventDefault();
+        const email = $('#checkout-login-email').val().trim();
+        if (!email) {
+            alert('Bitte E-Mail eingeben');
+            return;
+        }
+        const form = $('<form>', {method: 'POST', action: produkt_ajax.account_url});
+        form.append($('<input>', {type: 'hidden', name: 'request_login_code_nonce', value: produkt_ajax.login_nonce}));
+        form.append($('<input>', {type: 'hidden', name: 'request_login_code', value: '1'}));
+        form.append($('<input>', {type: 'hidden', name: 'email', value: email}));
+        form.append($('<input>', {type: 'hidden', name: 'redirect_to', value: pendingCheckoutUrl}));
+        $('body').append(form);
+        form.submit();
+    });
+
+    $('#produkt-cart-checkout').on('click', function(e){
+        e.preventDefault();
+        if (!cart.length) return;
+        saveCart();
+        const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingPriceId ? '&shipping_price_id=' + encodeURIComponent(shippingPriceId) : '');
+        if (produkt_ajax.is_logged_in) {
+            window.location.href = targetUrl;
+        } else {
+            pendingCheckoutUrl = targetUrl;
+            $('#checkout-login-modal').css('display', 'flex');
+            $('body').addClass('produkt-popup-open');
+        }
+    });
+
+    $('#checkout-guest-link').on('click', function(e){
+        e.preventDefault();
+        $('#checkout-login-modal').hide();
+        $('body').removeClass('produkt-popup-open');
+        if (pendingCheckoutUrl) {
+            window.location.href = pendingCheckoutUrl;
+        }
+    });
+
 });
 
 document.addEventListener("DOMContentLoaded", function () {
