@@ -135,7 +135,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
         global $wpdb;
         $existing_order = $wpdb->get_row($wpdb->prepare(
-            "SELECT id, status, created_at, category_id, shipping_cost, variant_id FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+            "SELECT id, status, created_at, category_id, shipping_cost, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
             $session->id
         ));
         $existing_id = $existing_order->id ?? 0;
