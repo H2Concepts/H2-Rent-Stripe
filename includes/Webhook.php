@@ -45,6 +45,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
 
     if ($event->type === 'checkout.session.completed') {
         $session  = $event->data->object;
+        try {
+            $session = \Stripe\Checkout\Session::retrieve(
+                $session->id,
+                ['expand' => ['customer_details', 'shipping_details']]
+            );
+        } catch (\Exception $e) {
+            // Use original event data if retrieval fails
+        }
         $mode     = $session->mode ?? 'subscription';
         $subscription_id   = $mode === 'subscription' ? ($session->subscription ?? '') : '';
         $metadata = $session->metadata ? $session->metadata->toArray() : [];
@@ -139,7 +147,9 @@ function handle_stripe_webhook(WP_REST_Request $request) {
             $session->id
         ));
         $shipping_cost = 0;
-        if (!empty($existing_orders)) {
+        if (!empty($session->shipping_cost) && !empty($session->shipping_cost->amount_total)) {
+            $shipping_cost = $session->shipping_cost->amount_total / 100;
+        } elseif (!empty($existing_orders)) {
             $order_ref = $existing_orders[0];
             $shipping_cost = floatval($order_ref->shipping_cost);
             if (!$shipping_cost && !empty($order_ref->category_id)) {
