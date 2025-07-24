@@ -1513,7 +1513,10 @@ function produkt_create_embedded_checkout_session() {
             'custom_text' => $custom_text,
         ];
 
-        if (!empty($session_params['automatic_tax']) && !empty($session_params['automatic_tax']['enabled'])) {
+        if (
+            !empty($session_params['automatic_tax']['enabled']) &&
+            !empty($session_params['customer'])
+        ) {
             $session_params['customer_update'] = ['shipping' => 'auto'];
         }
         if ($modus !== 'kauf') {
