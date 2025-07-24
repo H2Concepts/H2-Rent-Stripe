@@ -196,7 +196,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 ));
 ?>
 
-<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>">
+<div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>" data-shipping-provider="<?php echo esc_attr($shipping_provider); ?>">
 
     <div class="produkt-content">
         <div class="produkt-left">
@@ -280,7 +280,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <?php if ($select_shipping && !empty($shipping_methods)): ?>
                     <div class="produkt-options shipping-options layout-list">
                         <?php foreach ($shipping_methods as $index => $method): ?>
-                        <div class="produkt-option<?php echo $index === 0 ? ' selected' : ''; ?>" data-type="shipping" data-id="<?php echo esc_attr($method->id); ?>" data-price-id="<?php echo esc_attr($method->stripe_price_id); ?>" data-price="<?php echo esc_attr($method->price); ?>" data-available="true">
+                        <div class="produkt-option<?php echo $index === 0 ? ' selected' : ''; ?>" data-type="shipping" data-id="<?php echo esc_attr($method->id); ?>" data-price-id="<?php echo esc_attr($method->stripe_price_id); ?>" data-price="<?php echo esc_attr($method->price); ?>" data-provider="<?php echo esc_attr($method->service_provider); ?>" data-available="true">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($method->name); ?></span>
                                 <div class="produkt-extra-price"><?php echo number_format($method->price, 2, ',', '.'); ?>€</div>

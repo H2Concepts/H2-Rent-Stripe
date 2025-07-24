@@ -17,6 +17,7 @@ jQuery(document).ready(function($) {
     let currentShippingCost = 0;
     let currentPriceId = '';
     let shippingPriceId = '';
+    let shippingProvider = '';
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
@@ -34,6 +35,7 @@ jQuery(document).ready(function($) {
         if (spid) {
             shippingPriceId = spid.toString();
         }
+        shippingProvider = container.data('shipping-provider') || '';
         const firstShip = $('.shipping-options .produkt-option.selected').first();
         if (firstShip.length) {
             shippingPriceId = firstShip.data('price-id').toString();
@@ -41,6 +43,7 @@ jQuery(document).ready(function($) {
             if (!isNaN(cost)) {
                 currentShippingCost = cost;
             }
+            shippingProvider = firstShip.data('provider') || shippingProvider;
         }
         $('#produkt-field-shipping').val(shippingPriceId);
     }
@@ -177,6 +180,7 @@ jQuery(document).ready(function($) {
             if (!isNaN(cost)) {
                 currentShippingCost = cost;
             }
+            shippingProvider = $(this).data('provider') || '';
             $('#produkt-field-shipping').val(shippingPriceId);
         } else if (type === 'duration') {
             selectedDuration = id;
@@ -784,8 +788,11 @@ jQuery(document).ready(function($) {
                         if (isAvailable) {
                             $('#produkt-availability-status').removeClass('unavailable').addClass('available');
                             $('#produkt-availability-status .status-text').text('Sofort verfügbar');
-                            $('#produkt-delivery-time').text(data.delivery_time || '');
-                            $('#produkt-delivery-box').show();
+                            if (shippingProvider === 'pickup') {
+                                $('#produkt-delivery-box').text('Abholung').show();
+                            } else {
+                                $('#produkt-delivery-box').html('Lieferung in <span id="produkt-delivery-time">' + (data.delivery_time || '') + '</span>').show();
+                            }
                         } else {
                             $('#produkt-availability-status').addClass('unavailable').removeClass('available');
                             $('#produkt-availability-status .status-text').text('Nicht auf Lager');
