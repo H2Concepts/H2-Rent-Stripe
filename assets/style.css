@@ -1398,7 +1398,7 @@ img.wp-smiley, img.emoji {
     position: fixed;
     top: 0;
     right: 0;
-    width: 320px;
+    width: 500px;
     max-width: 90%;
     height: 100%;
     background: #fff;
@@ -1434,13 +1434,17 @@ img.wp-smiley, img.emoji {
     color: #dc3545;
     margin-left: 0.5rem;
 }
+.produkt-cart-panel .cart-close {
+    padding: 6px 10px;
+    border-radius: 999px;
+}
 .produkt-cart-panel #produkt-cart-checkout {
     margin: 1rem;
-    padding: 10px;
+    padding: 20px;
     background: var(--produkt-button-bg);
     color: var(--produkt-button-text);
     border: none;
-    border-radius: 4px;
+    border-radius: 999px;
     cursor: pointer;
 }
 
@@ -1448,6 +1452,7 @@ img.wp-smiley, img.emoji {
 .plugin-cart-icon {
     position: relative;
     display: inline-block;
+    margin-left: 20px;
 }
 .plugin-cart-icon .cart-icon svg {
     width: 1.25rem;
