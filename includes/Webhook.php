@@ -13,8 +13,12 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
+    $GLOBALS['stripe_payload']   = $request->get_body();
+    $GLOBALS['stripe_signature'] = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
+
     require_once __DIR__ . '/webhook/entry.php';
-    return null;
+
+    return new WP_REST_Response(['status' => 'ok'], 200);
 }
 
 function send_produkt_welcome_email(array $order, int $order_id) {
