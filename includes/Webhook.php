@@ -38,12 +38,11 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         return new WP_REST_Response(['error' => $e->getMessage()], 400);
     }
 
-    register_shutdown_function(function () use ($event) {
-        if ($event->type === 'checkout.session.completed') {
-            $session = $event->data->object;
-            \ProduktVerleih\StripeService::process_checkout_session($session);
-        }
-    });
+
+    if ($event->type === 'checkout.session.completed') {
+        $session = $event->data->object;
+        \ProduktVerleih\StripeService::process_checkout_session($session);
+    }
 
     return new WP_REST_Response(['status' => 'ok'], 200);
 }
