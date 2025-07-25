@@ -734,13 +734,6 @@ add_filter('template_include', function ($template) {
     return $template;
 });
 
-add_action('produkt_async_handle_checkout_completed', function ($json) {
-    $session = json_decode($json);
-    if (!$session || !isset($session->customer)) {
-        return;
-    }
-    \ProduktVerleih\StripeService::process_checkout_session($session);
-});
 
 add_action('admin_init', function () {
     if (current_user_can('kunde') && !wp_doing_ajax()) {
