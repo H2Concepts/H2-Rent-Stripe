@@ -119,7 +119,14 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) &&
 }
 
 $rows      = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC");
-$providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DPD'];
+$providers = [
+    'none'   => 'Ohne',
+    'pickup' => 'Abholung',
+    'dhl'    => 'DHL',
+    'hermes' => 'Hermes',
+    'ups'    => 'UPS',
+    'dpd'    => 'DPD'
+];
 ?>
 <div class="wrap">
     <h1>Versandarten verwalten</h1>
@@ -169,7 +176,7 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
                     <tr>
                         <td><?= esc_html($r->name) ?><?= $r->is_default ? ' (Standard)' : '' ?></td>
                         <td><?= number_format($r->price, 2, ',', '.') ?> €</td>
-                        <td><span class="icon-<?= esc_attr($r->service_provider) ?>"><?= esc_html(ucfirst($r->service_provider)) ?></span></td>
+                        <td><span class="icon-<?= esc_attr($r->service_provider) ?>"><?= esc_html($providers[$r->service_provider] ?? ucfirst($r->service_provider)) ?></span></td>
                         <td><?= esc_html($r->stripe_price_id) ?></td>
                         <td>
                             <a href="<?php echo admin_url('admin.php?page=produkt-shipping&edit=' . $r->id); ?>">Bearbeiten</a>

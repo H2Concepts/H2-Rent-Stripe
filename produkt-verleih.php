@@ -109,6 +109,7 @@ function produkt_simple_checkout_button($atts = []) {
     if (isset($_GET['shipping_price_id'])) {
         $shipping_price_id = sanitize_text_field($_GET['shipping_price_id']);
     }
+    $cart_mode = isset($_GET['cart']);
 
     $extra_ids_raw   = isset($_GET['extra_ids']) ? sanitize_text_field($_GET['extra_ids']) : '';
     $category_id     = isset($_GET['category_id']) ? intval($_GET['category_id']) : 0;
@@ -143,6 +144,17 @@ function produkt_simple_checkout_button($atts = []) {
         if (!publishableKey) return;
         const stripe = Stripe(publishableKey);
         const fetchClientSecret = async () => {
+<?php if ($cart_mode): ?>
+            const items = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
+            const res = await fetch('<?php echo admin_url('admin-ajax.php?action=create_embedded_checkout_session'); ?>', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cart_items: items,
+                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>
+                })
+            });
+<?php else: ?>
             const res = await fetch('<?php echo admin_url('admin-ajax.php?action=create_embedded_checkout_session'); ?>', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -170,11 +182,15 @@ function produkt_simple_checkout_button($atts = []) {
                     days: <?php echo json_encode($metadata['days']); ?>
                 })
             });
+<?php endif; ?>
             const data = await res.json();
             return data.client_secret;
         };
         const checkout = await stripe.initEmbeddedCheckout({ fetchClientSecret });
         checkout.mount('#checkout-mount-point');
+<?php if ($cart_mode): ?>
+        localStorage.removeItem('produkt_cart');
+<?php endif; ?>
     })();
     </script>
     <?php
