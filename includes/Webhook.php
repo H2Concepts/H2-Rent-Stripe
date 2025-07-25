@@ -13,50 +13,8 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
-    $log_file = WP_CONTENT_DIR . '/uploads/webhook-test.log';
-    $payload  = $request->get_body();
-
-    file_put_contents(
-        $log_file,
-        "Webhook empfangen:\n" . json_encode(json_decode($payload, true), JSON_PRETTY_PRINT) . "\n",
-        FILE_APPEND
-    );
-
-    header('Content-Type: application/json');
-    header('Connection: close');
-    ignore_user_abort(true);
-    echo json_encode(['status' => 'ok']);
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
-    } else {
-        flush();
-    }
-
-    $secret_key = get_option('produkt_stripe_secret_key', '');
-    if ($secret_key) {
-        \Stripe\Stripe::setApiKey($secret_key);
-    }
-
-    $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
-    $secret     = get_option('produkt_stripe_webhook_secret', '');
-
-    try {
-        $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
-    } catch (\Exception $e) {
-        error_log('Webhook Signature Error: ' . $e->getMessage());
-        return;
-    }
-
-    if ($event->type === 'checkout.session.completed') {
-        $session = $event->data->object;
-        \ProduktVerleih\StripeService::process_checkout_session($session);
-    }
-
-    file_put_contents(
-        $log_file,
-        "Webhook verarbeitet:\n" . json_encode($event, JSON_PRETTY_PRINT) . "\n",
-        FILE_APPEND
-    );
+    require_once __DIR__ . '/webhook/entry.php';
+    return null;
 }
 
 function send_produkt_welcome_email(array $order, int $order_id) {
