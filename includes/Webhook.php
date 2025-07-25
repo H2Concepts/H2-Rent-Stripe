@@ -14,13 +14,22 @@ add_action('rest_api_init', function () {
 
 function handle_stripe_webhook(WP_REST_Request $request) {
     $log_file = WP_CONTENT_DIR . '/uploads/webhook-test.log';
-    $written  = file_put_contents(
+    $payload  = $request->get_body();
+
+    file_put_contents(
         $log_file,
-        "Webhook empfangen:\n" . json_encode(json_decode($request->get_body(), true), JSON_PRETTY_PRINT) . "\n",
+        "Webhook empfangen:\n" . json_encode(json_decode($payload, true), JSON_PRETTY_PRINT) . "\n",
         FILE_APPEND
     );
-    if ($written === false) {
-        error_log("🔴 Webhook konnte nicht in Logdatei geschrieben werden: $log_file");
+
+    header('Content-Type: application/json');
+    header('Connection: close');
+    ignore_user_abort(true);
+    echo json_encode(['status' => 'ok']);
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        flush();
     }
 
     $secret_key = get_option('produkt_stripe_secret_key', '');
@@ -28,23 +37,14 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         \Stripe\Stripe::setApiKey($secret_key);
     }
 
-    $payload    = $request->get_body();
     $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
     $secret     = get_option('produkt_stripe_webhook_secret', '');
 
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
     } catch (\Exception $e) {
-        return new WP_REST_Response(['error' => $e->getMessage()], 400);
-    }
-
-    // send immediate response to Stripe
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
-    } else {
-        http_response_code(200);
-        echo json_encode(['status' => 'ok']);
-        flush();
+        error_log('Webhook Signature Error: ' . $e->getMessage());
+        return;
     }
 
     if ($event->type === 'checkout.session.completed') {
@@ -52,9 +52,11 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         \ProduktVerleih\StripeService::process_checkout_session($session);
     }
 
-    file_put_contents($log_file, "Webhook verarbeitet:\n" . json_encode($event, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
-
-    return null;
+    file_put_contents(
+        $log_file,
+        "Webhook verarbeitet:\n" . json_encode($event, JSON_PRETTY_PRINT) . "\n",
+        FILE_APPEND
+    );
 }
 
 function send_produkt_welcome_email(array $order, int $order_id) {
