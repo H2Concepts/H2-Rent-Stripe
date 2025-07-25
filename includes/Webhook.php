@@ -13,6 +13,12 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
+    $log_file = __DIR__ . '/webhook-test.log';
+    file_put_contents(
+        $log_file,
+        "Webhook empfangen:\n" . json_encode(json_decode($request->get_body(), true), JSON_PRETTY_PRINT) . "\n",
+        FILE_APPEND
+    );
     $secret_key = get_option('produkt_stripe_secret_key', '');
     if ($secret_key) {
         \Stripe\Stripe::setApiKey($secret_key);
