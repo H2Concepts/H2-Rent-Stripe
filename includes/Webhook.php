@@ -13,12 +13,16 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
-    $log_file = __DIR__ . '/webhook-test.log';
-    file_put_contents(
+    $log_file = WP_CONTENT_DIR . '/uploads/webhook-test.log';
+    $written = file_put_contents(
         $log_file,
         "Webhook empfangen:\n" . json_encode(json_decode($request->get_body(), true), JSON_PRETTY_PRINT) . "\n",
         FILE_APPEND
     );
+    if ($written === false) {
+        error_log("🔴 Webhook konnte nicht in Logdatei geschrieben werden: $log_file");
+    }
+
     $secret_key = get_option('produkt_stripe_secret_key', '');
     if ($secret_key) {
         \Stripe\Stripe::setApiKey($secret_key);
@@ -31,15 +35,17 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
     } catch (\Exception $e) {
-        return new WP_REST_Response(['error' => 'Invalid signature'], 400);
+        return new WP_REST_Response(['error' => $e->getMessage()], 400);
     }
 
-    if ($event->type === 'checkout.session.completed') {
-        $session_data = $event->data->object;
-        wp_schedule_single_event(time(), 'produkt_async_handle_checkout_completed', [json_encode($session_data)]);
-    }
+    register_shutdown_function(function () use ($event) {
+        if ($event->type === 'checkout.session.completed') {
+            $session = $event->data->object;
+            \ProduktVerleih\StripeService::process_checkout_session($session);
+        }
+    });
 
-    return new WP_REST_Response(['status' => 'received'], 200);
+    return new WP_REST_Response(['status' => 'ok'], 200);
 }
 
 function send_produkt_welcome_email(array $order, int $order_id) {

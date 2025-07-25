@@ -868,6 +868,16 @@ class StripeService {
      * @param object $session The session object passed from the webhook.
      */
     public static function process_checkout_session($session) {
+        if (empty($session->customer_details) && !empty($session->id)) {
+            try {
+                $session = \Stripe\Checkout\Session::retrieve(
+                    $session->id,
+                    ['expand' => ['customer_details', 'shipping_details']]
+                );
+            } catch (\Exception $e) {
+                // keep original session data if retrieval fails
+            }
+        }
         $mode            = $session->mode ?? 'subscription';
         $subscription_id = $mode === 'subscription' ? ($session->subscription ?? '') : '';
         $metadata        = $session->metadata ? $session->metadata->toArray() : [];
