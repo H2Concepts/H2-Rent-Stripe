@@ -14,7 +14,7 @@ add_action('rest_api_init', function () {
 
 function handle_stripe_webhook(WP_REST_Request $request) {
     $log_file = WP_CONTENT_DIR . '/uploads/webhook-test.log';
-    $written = file_put_contents(
+    $written  = file_put_contents(
         $log_file,
         "Webhook empfangen:\n" . json_encode(json_decode($request->get_body(), true), JSON_PRETTY_PRINT) . "\n",
         FILE_APPEND
@@ -38,13 +38,23 @@ function handle_stripe_webhook(WP_REST_Request $request) {
         return new WP_REST_Response(['error' => $e->getMessage()], 400);
     }
 
+    // send immediate response to Stripe
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        http_response_code(200);
+        echo json_encode(['status' => 'ok']);
+        flush();
+    }
 
     if ($event->type === 'checkout.session.completed') {
         $session = $event->data->object;
         \ProduktVerleih\StripeService::process_checkout_session($session);
     }
 
-    return new WP_REST_Response(['status' => 'ok'], 200);
+    file_put_contents($log_file, "Webhook verarbeitet:\n" . json_encode($event, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+
+    return null;
 }
 
 function send_produkt_welcome_email(array $order, int $order_id) {
