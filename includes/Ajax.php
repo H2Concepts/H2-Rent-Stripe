@@ -510,7 +510,7 @@ class Ajax {
 
         $conds = [];
         foreach ($extra_ids as $eid) {
-            $conds[] = $wpdb->prepare('FIND_IN_SET(%d, extra_ids)', $eid);
+            $conds[] = $wpdb->prepare('(FIND_IN_SET(%d, extra_ids) OR extra_id = %d)', $eid, $eid);
         }
         $where = implode(' OR ', $conds);
         $rows = $wpdb->get_results(
@@ -556,7 +556,7 @@ class Ajax {
               AND e.stock_available = 0
               AND EXISTS (
                 SELECT 1 FROM {$wpdb->prefix}produkt_orders o
-                WHERE FIND_IN_SET(e.id, o.extra_ids)
+                WHERE (FIND_IN_SET(e.id, o.extra_ids) OR o.extra_id = e.id)
                   AND o.mode = 'kauf'
                   AND o.status IN ('offen','abgeschlossen')
                   AND o.start_date <= %s AND o.end_date >= %s
