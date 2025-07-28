@@ -1221,11 +1221,16 @@ jQuery(document).ready(function($) {
 
         renderCalendar(calendarMonth);
         updateSelectedDays();
+        if (startDate && endDate) {
+            updateExtraBookings(getZeroStockExtraIds());
+        } else {
+            updateExtraBookings([]);
+        }
         checkExtraAvailability();
         updatePriceAndButton();
     });
 
-    function updateSelectedDays() {
+function updateSelectedDays() {
         selectedDays = 0;
         if (startDate && endDate) {
             const s = new Date(startDate);
@@ -1243,15 +1248,20 @@ jQuery(document).ready(function($) {
         } else {
             $('#booking-info').text('');
         }
-    }
+}
 
-    function checkExtraAvailability() {
+    function getZeroStockExtraIds() {
         const ids = [];
         $('.produkt-option[data-type="extra"]').each(function(){
-            if (parseInt($(this).data('stock'),10) === 0) {
+            if (parseInt($(this).data('stock'), 10) === 0) {
                 ids.push($(this).data('id'));
             }
         });
+        return ids;
+    }
+
+    function checkExtraAvailability() {
+        const ids = getZeroStockExtraIds();
         if (!ids.length || !startDate || !endDate || !currentCategoryId) {
             $('.produkt-option[data-type="extra"].date-unavailable').each(function(){
                 $(this).removeClass('date-unavailable');
