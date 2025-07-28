@@ -1704,6 +1704,8 @@ class Database {
                     COALESCE(cond.name, o.zustand_text) as condition_name,
                     COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
                     COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name,
+                    sm.name AS shipping_name,
+                    sm.service_provider AS shipping_provider,
                     stripe_subscription_id AS subscription_id
              FROM {$table} o
              LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
@@ -1713,6 +1715,7 @@ class Database {
              LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
              LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
              LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm ON sm.stripe_price_id = c.shipping_price_id
              WHERE o.customer_email = %s
              GROUP BY o.id
              ORDER BY o.created_at DESC",

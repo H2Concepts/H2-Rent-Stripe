@@ -931,7 +931,9 @@ class Admin {
                     COALESCE(d.name, o.dauer_text) as duration_name,
                     COALESCE(cond.name, o.zustand_text) as condition_name,
                     COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
-                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
+                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name,
+                    sm.name AS shipping_name,
+                    sm.service_provider AS shipping_provider
              FROM {$wpdb->prefix}produkt_orders o
              LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
@@ -940,6 +942,7 @@ class Admin {
              LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
              LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
              LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm ON sm.stripe_price_id = c.shipping_price_id
              WHERE $where_clause
              GROUP BY o.id
             ORDER BY o.created_at DESC",
