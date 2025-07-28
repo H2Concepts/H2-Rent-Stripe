@@ -37,6 +37,7 @@ class Plugin {
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
+        add_shortcode('produkt_confirmation', [$this, 'render_order_confirmation']);
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
@@ -143,6 +144,7 @@ class Plugin {
         $this->create_shop_page();
         $this->create_customer_page();
         $this->create_checkout_page();
+        $this->create_confirmation_page();
         flush_rewrite_rules();
     }
 
@@ -190,6 +192,7 @@ class Plugin {
             PRODUKT_SHOP_PAGE_OPTION,
             PRODUKT_CUSTOMER_PAGE_OPTION,
             PRODUKT_CHECKOUT_PAGE_OPTION,
+            PRODUKT_CONFIRM_PAGE_OPTION,
         );
 
         foreach ($options as $opt) {
@@ -209,6 +212,11 @@ class Plugin {
         $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if ($checkout_page_id) {
             wp_delete_post($checkout_page_id, true);
+        }
+
+        $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if ($confirm_page_id) {
+            wp_delete_post($confirm_page_id, true);
         }
     }
 
@@ -534,6 +542,49 @@ class Plugin {
     }
 
 
+    public function render_order_confirmation() {
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        $session_id = isset($_GET['session_id']) ? sanitize_text_field($_GET['session_id']) : '';
+        if (!$session_id) {
+            return '<p>Keine Bestellung gefunden.</p>';
+        }
+
+        global $wpdb;
+        $order = $wpdb->get_row($wpdb->prepare(
+            "SELECT o.*, c.name AS category_name,
+                    COALESCE(v.name, o.produkt_name) AS variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                    sm.name AS shipping_name
+             FROM {$wpdb->prefix}produkt_orders o
+             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
+             WHERE o.stripe_session_id = %s
+             GROUP BY o.id
+             ORDER BY o.id DESC LIMIT 1",
+            $session_id
+        ));
+
+        if (!$order) {
+            return '<p>Bestellung nicht gefunden.</p>';
+        }
+
+        $variant_id = $order->variant_id ?? 0;
+        $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+
+        ob_start();
+        ?>
+        <h1>Bestellbestätigung</h1>
+        <p>Hallo <?php echo esc_html($order->customer_name); ?>, vielen Dank für deine Bestellung. Du erhältst von uns in Kürze eine Email mit allen Informationen zu deiner Bestellung.</p>
+        <h2>Deine Bestellung</h2>
+        <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order.php'; ?>
+        <p>Wir bedanken uns für Ihr Vertrauen. Bei Fragen rund um unseren Service oder Produkte, stehen wir dir gerne zur Verfügung.</p>
+        <?php
+        return ob_get_clean();
+    }
+
     public function maybe_display_product_page() {
         $slug = sanitize_title(get_query_var('produkt_slug'));
         if (empty($slug)) {
@@ -621,6 +672,24 @@ class Plugin {
         update_option(PRODUKT_CHECKOUT_PAGE_OPTION, $page_id);
     }
 
+    private function create_confirmation_page() {
+        $page = get_page_by_path('bestellbestaetigung');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Bestellbestätigung',
+                'post_name'    => 'bestellbestaetigung',
+                'post_content' => '[produkt_confirmation]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_CONFIRM_PAGE_OPTION, $page_id);
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
@@ -633,6 +702,10 @@ class Plugin {
         $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if ($post->ID == $checkout_page_id) {
             $states[] = __('Checkout-Seite', 'h2-concepts');
+        }
+        $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if ($post->ID == $confirm_page_id) {
+            $states[] = __('Bestellbestätigung', 'h2-concepts');
         }
         return $states;
     }
@@ -666,6 +739,17 @@ class Plugin {
             return get_permalink($page_id);
         }
         return home_url('/kundenkonto');
+    }
+
+    /**
+     * Return the URL of the order confirmation page.
+     */
+    public static function get_confirmation_page_url() {
+        $page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if ($page_id) {
+            return get_permalink($page_id);
+        }
+        return home_url('/bestellbestaetigung');
     }
 
     public function register_customer_role() {
@@ -727,6 +811,11 @@ add_filter('template_include', function ($template) {
     $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
     if ($checkout_page_id && is_page($checkout_page_id)) {
         return PRODUKT_PLUGIN_PATH . 'templates/checkout-page.php';
+    }
+
+    $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+    if ($confirm_page_id && is_page($confirm_page_id)) {
+        return PRODUKT_PLUGIN_PATH . 'templates/confirmation-page.php';
     }
 
     return $template;
