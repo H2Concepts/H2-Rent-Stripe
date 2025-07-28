@@ -382,7 +382,8 @@ class Ajax {
                         'price'          => $e->price,
                         'stripe_price_id'=> $pid,
                         'image_url'      => $e->image_url ?? '',
-                        'available'      => intval($e->stock_available) > 0 ? 1 : 0,
+                        'available'      => intval($e->available) ? 1 : 0,
+                        'stock_available'=> intval($e->stock_available),
                     ];
                     $amount = StripeService::get_price_amount($pid);
                     if (!is_wp_error($amount)) {

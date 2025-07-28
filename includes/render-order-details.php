@@ -27,4 +27,7 @@ if (!defined('ABSPATH')) { exit; }
     <?php if (!empty($order->dauer_text)) : ?>
         <p><strong>Miettage:</strong> <?php echo esc_html($order->dauer_text); ?></p>
     <?php endif; ?>
+    <?php if (!empty($order->start_date) && !empty($order->end_date)) : ?>
+        <p><strong>Zeitraum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->start_date))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->end_date))); ?></p>
+    <?php endif; ?>
 </div>

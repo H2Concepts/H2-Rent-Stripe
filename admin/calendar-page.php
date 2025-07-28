@@ -57,9 +57,16 @@ foreach ($orders as $o) {
     );
 }
 foreach ($orders as $o) {
-    if (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $o->dauer_text, $m)) {
+    $start = null;
+    $end   = null;
+    if (!empty($o->start_date) && !empty($o->end_date)) {
+        $start = strtotime($o->start_date);
+        $end   = strtotime($o->end_date);
+    } elseif (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $o->dauer_text, $m)) {
         $start = strtotime($m[1]);
         $end   = strtotime($m[2]);
+    }
+    if ($start && $end) {
         while ($start <= $end) {
             $d = date('Y-m-d', $start);
             $status = ($o->status === 'abgeschlossen') ? 'completed' : 'open';
@@ -286,6 +293,7 @@ function buildOrderDetails(order, logs) {
                 <li><strong>Ausführung:</strong> ${order.variant_name}</li>
                 <li><strong>Extra:</strong> ${order.extra_names}</li>
                 <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.duration_name}</li>
+                ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
                 ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
                 ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
                 ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}

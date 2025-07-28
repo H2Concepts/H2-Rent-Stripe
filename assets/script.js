@@ -793,7 +793,8 @@ jQuery(document).ready(function($) {
                          data-id="${option.id}"
                          data-price-id="${option.stripe_price_id || ''}"
                          data-extra-image="${option.image_url || ''}"
-                         data-available="${option.available == 0 ? 'false' : 'true'}">
+                         data-available="${option.available == 0 ? 'false' : 'true'}"
+                         data-stock="${option.stock_available}">
                         <div class="produkt-option-content">
                             <span class="produkt-extra-name">${option.name}</span>
                             ${priceHtml ? `<div class="produkt-extra-price">${priceHtml}</div>` : ''}
