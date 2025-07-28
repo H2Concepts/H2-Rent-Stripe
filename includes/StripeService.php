@@ -931,8 +931,10 @@ class StripeService {
             $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
             $extra         = sanitize_text_field($metadata['extra'] ?? '');
             $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
-            $start_date    = sanitize_text_field($metadata['start_date'] ?? '');
-            $end_date      = sanitize_text_field($metadata['end_date'] ?? '');
+            $start_date_raw = isset($metadata['start_date']) ? sanitize_text_field($metadata['start_date']) : '';
+            $end_date_raw   = isset($metadata['end_date']) ? sanitize_text_field($metadata['end_date']) : '';
+            $start_date    = $start_date_raw !== '' ? $start_date_raw : null;
+            $end_date      = $end_date_raw !== '' ? $end_date_raw : null;
             $days          = intval($metadata['days'] ?? 0);
             $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
             $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
@@ -1017,8 +1019,8 @@ class StripeService {
                 'extra_text'        => $extra,
                 'dauer_text'        => $dauer,
                 'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
-                'start_date'        => $start_date ?: null,
-                'end_date'          => $end_date ?: null,
+                'start_date'        => $start_date,
+                'end_date'          => $end_date,
                 'inventory_reverted'=> 0,
                 'user_ip'           => $user_ip,
                 'user_agent'        => $user_agent,
@@ -1033,6 +1035,12 @@ class StripeService {
                     $send_welcome = ($ord->status !== 'abgeschlossen');
                     $update_data = $data;
                     $update_data['created_at'] = $ord->created_at;
+                    if ($start_date === null) {
+                        unset($update_data['start_date']);
+                    }
+                    if ($end_date === null) {
+                        unset($update_data['end_date']);
+                    }
                     $wpdb->update(
                         "{$wpdb->prefix}produkt_orders",
                         $update_data,
