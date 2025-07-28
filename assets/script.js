@@ -1507,6 +1507,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
+    document.querySelectorAll('.produkt-accordion-item.active .produkt-accordion-content').forEach(content => {
+        content.style.maxHeight = content.scrollHeight + 'px';
+    });
 });
 
 jQuery(function($) {

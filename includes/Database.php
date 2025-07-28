@@ -1696,8 +1696,29 @@ class Database {
         $table = $wpdb->prefix . 'produkt_orders';
         $email = sanitize_email($user->user_email);
 
-        $sql = "SELECT *, stripe_subscription_id AS subscription_id FROM $table WHERE customer_email = %s ORDER BY created_at";
-        return $wpdb->get_results($wpdb->prepare($sql, $email));
+        $sql = $wpdb->prepare(
+            "SELECT o.*, c.name as category_name,
+                    COALESCE(v.name, o.produkt_name) as variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                    COALESCE(d.name, o.dauer_text) as duration_name,
+                    COALESCE(cond.name, o.zustand_text) as condition_name,
+                    COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name,
+                    stripe_subscription_id AS subscription_id
+             FROM {$table} o
+             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+             LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+             LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+             LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+             LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+             WHERE o.customer_email = %s
+             GROUP BY o.id
+             ORDER BY o.created_at DESC",
+            $email
+        );
+        return $wpdb->get_results($sql);
     }
     /**
      * Get the Stripe customer ID for a WordPress user.

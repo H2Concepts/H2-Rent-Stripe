@@ -68,13 +68,21 @@
                         <h4>Rechnungsadresse</h4>
                         <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
                     </div>
-                    <div class="orders-column">
-                        <?php foreach ($sale_orders as $order) : ?>
+                    <div class="orders-column produkt-accordions orders-accordion">
+                        <?php foreach ($sale_orders as $idx => $order) : ?>
                             <?php
                                 $variant_id = $order->variant_id ?? 0;
                                 $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+                                $active     = $idx === 0 ? ' active' : '';
                             ?>
-                            <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+                            <div class="produkt-accordion-item<?php echo $active; ?>">
+                                <button type="button" class="produkt-accordion-header">
+                                    Bestellung #<?php echo esc_html($order->id); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
+                                </button>
+                                <div class="produkt-accordion-content">
+                                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+                                </div>
+                            </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
