@@ -1,6 +1,8 @@
 <?php
 namespace ProduktVerleih;
 
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
 class Admin {
     public function add_admin_menu() {
         $branding = $this->get_branding_settings();
