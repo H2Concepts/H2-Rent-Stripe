@@ -402,7 +402,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
-                             data-available="<?php echo $extra->stock_available > 0 ? 'true' : 'false'; ?>">
+                             data-available="<?php echo intval($extra->available) ? 'true' : 'false'; ?>"
+                             data-stock="<?php echo intval($extra->stock_available); ?>">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
                                 <?php if (!empty($pid)) {

@@ -78,3 +78,38 @@ function pv_get_image_url_by_variant_or_category($variant_id, $category_id) {
 
     return $image_url ?: '';
 }
+
+/**
+ * Determine the start and end dates for an order.
+ * Falls back to parsing the dauer_text when the explicit
+ * date columns are empty.
+ *
+ * @param object $order Order row object
+ * @return array{0:?string,1:?string} ISO dates or null when unavailable
+ */
+function pv_get_order_period($order) {
+    $start = '';
+    $end   = '';
+    if (!empty($order->start_date) && !empty($order->end_date)) {
+        $start = $order->start_date;
+        $end   = $order->end_date;
+    } elseif (!empty($order->dauer_text)) {
+        if (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $order->dauer_text, $m)) {
+            $start = $m[1];
+            $end   = $m[2];
+        } elseif (preg_match('/(\d{2}\.\d{2}\.\d{4})\s*-\s*(\d{2}\.\d{2}\.\d{4})/', $order->dauer_text, $m)) {
+            $d1 = DateTime::createFromFormat('d.m.Y', $m[1]);
+            $d2 = DateTime::createFromFormat('d.m.Y', $m[2]);
+            if ($d1 && $d2) {
+                $start = $d1->format('Y-m-d');
+                $end   = $d2->format('Y-m-d');
+            }
+        }
+    }
+
+    if ($start && $end) {
+        return [$start, $end];
+    }
+
+    return [null, null];
+}

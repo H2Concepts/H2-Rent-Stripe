@@ -159,8 +159,9 @@ foreach ($results as $r) {
                         <td><?php echo esc_html($o->status); ?></td>
                         <td><?php echo date('d.m.Y', strtotime($o->created_at)); ?></td>
                         <td>
-                            <?php if ($o->start_date && $o->end_date): ?>
-                                <?php echo date('d.m.Y', strtotime($o->start_date)); ?> - <?php echo date('d.m.Y', strtotime($o->end_date)); ?>
+                            <?php list($sd,$ed) = pv_get_order_period($o); ?>
+                            <?php if ($sd && $ed): ?>
+                                <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?>
                             <?php endif; ?>
                         </td>
                     </tr>
@@ -179,8 +180,9 @@ foreach ($results as $r) {
                 <?php if ($o->dauer_text): ?>
                 <p><strong>Dauer:</strong> <?php echo esc_html($o->dauer_text); ?></p>
                 <?php endif; ?>
-                <?php if ($o->start_date && $o->end_date): ?>
-                <p><strong>Zeitraum:</strong> <?php echo date('d.m.Y', strtotime($o->start_date)); ?> - <?php echo date('d.m.Y', strtotime($o->end_date)); ?></p>
+                <?php list($sd,$ed) = pv_get_order_period($o); ?>
+                <?php if ($sd && $ed): ?>
+                <p><strong>Zeitraum:</strong> <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?></p>
                 <?php endif; ?>
                 <p><strong>Preis:</strong> <?php echo number_format((float)$o->final_price, 2, ',', '.'); ?>€</p>
                 <?php

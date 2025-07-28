@@ -57,15 +57,9 @@ foreach ($orders as $o) {
     );
 }
 foreach ($orders as $o) {
-    $start = null;
-    $end   = null;
-    if (!empty($o->start_date) && !empty($o->end_date)) {
-        $start = strtotime($o->start_date);
-        $end   = strtotime($o->end_date);
-    } elseif (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $o->dauer_text, $m)) {
-        $start = strtotime($m[1]);
-        $end   = strtotime($m[2]);
-    }
+    list($s, $e) = pv_get_order_period($o);
+    $start = $s ? strtotime($s) : null;
+    $end   = $e ? strtotime($e) : null;
     if ($start && $end) {
         while ($start <= $end) {
             $d = date('Y-m-d', $start);

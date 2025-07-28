@@ -724,6 +724,18 @@ jQuery(document).ready(function($) {
             renderCalendar(calendarMonth);
             return;
         }
+        let needsCheck = false;
+        extraIds.forEach(function(id){
+            const el = $('.produkt-option[data-type="extra"][data-id="' + id + '"]');
+            if (parseInt(el.data('stock'), 10) === 0) {
+                needsCheck = true;
+            }
+        });
+        if (!needsCheck) {
+            produkt_ajax.extra_blocked_days = [];
+            renderCalendar(calendarMonth);
+            return;
+        }
         $.ajax({
             url: produkt_ajax.ajax_url,
             type: 'POST',

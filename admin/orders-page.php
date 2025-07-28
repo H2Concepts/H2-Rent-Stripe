@@ -205,8 +205,9 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 <?php else: ?>
                                     <span class="text-gray">⏰ Mietdauer: <?php echo esc_html($order->duration_name); ?></span><br>
                                 <?php endif; ?>
-                                <?php if ($order->start_date && $order->end_date): ?>
-                                    <span class="text-gray">📅 <?php echo date('d.m.Y', strtotime($order->start_date)); ?> - <?php echo date('d.m.Y', strtotime($order->end_date)); ?></span><br>
+                                <?php list($sd,$ed) = pv_get_order_period($order); ?>
+                                <?php if ($sd && $ed): ?>
+                                    <span class="text-gray">📅 <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?></span><br>
                                 <?php endif; ?>
                                 
                                 <?php if ($order->condition_name): ?>
