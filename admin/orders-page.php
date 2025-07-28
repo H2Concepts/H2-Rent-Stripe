@@ -202,7 +202,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                                 <span class="text-gray">📦 <?php echo esc_html($order->variant_name); ?></span><br>
                                 <span class="text-gray">🎁 <?php echo esc_html($order->extra_names); ?></span><br>
                                 <?php if ($type === 'Verkauf'): ?>
-                                    <span class="text-gray">⏰ Miettage: <?php echo esc_html($order->duration_name); ?></span><br>
+                                    <span class="text-gray">⏰ Miettage: <?php echo esc_html($order->rental_days ?? $order->duration_name); ?></span><br>
                                 <?php else: ?>
                                     <span class="text-gray">⏰ Mietdauer: <?php echo esc_html($order->duration_name); ?></span><br>
                                 <?php endif; ?>
@@ -376,7 +376,7 @@ function showOrderDetails(orderId) {
         <ul>
             <li><strong>Ausführung:</strong> ${order.variant_name}</li>
             <li><strong>Extra:</strong> ${order.extra_names}</li>
-            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.duration_name}</li>
+            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
             ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
     `;
     

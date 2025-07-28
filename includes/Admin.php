@@ -940,9 +940,12 @@ class Admin {
              LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
              WHERE $where_clause
              GROUP BY o.id
-             ORDER BY o.created_at DESC",
+            ORDER BY o.created_at DESC",
             ...$where_values
         ));
+        foreach ($orders as $o) {
+            $o->rental_days = pv_get_order_rental_days($o);
+        }
 
         $total_orders = count($orders);
         $completed_orders = array_filter($orders, function ($o) {

@@ -113,3 +113,30 @@ function pv_get_order_period($order) {
 
     return [null, null];
 }
+
+/**
+ * Calculate the number of rental days between two dates (inclusive).
+ *
+ * @param string $start ISO start date.
+ * @param string $end   ISO end date.
+ * @return int|null Rental days or null when invalid.
+ */
+function pv_calc_rental_days($start, $end) {
+    if ($start && $end) {
+        $s = new DateTime($start);
+        $e = new DateTime($end);
+        return $e->diff($s)->days + 1;
+    }
+    return null;
+}
+
+/**
+ * Determine an order's rental days from its start and end date.
+ *
+ * @param object $order Order row object
+ * @return int|null Number of days or null when unavailable
+ */
+function pv_get_order_rental_days($order) {
+    list($s, $e) = pv_get_order_period($order);
+    return pv_calc_rental_days($s, $e);
+}

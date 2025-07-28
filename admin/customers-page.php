@@ -112,6 +112,9 @@ foreach ($results as $r) {
             "SELECT * FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s ORDER BY created_at DESC",
             $user->user_email
         ));
+        foreach ($orders as $o) {
+            $o->rental_days = pv_get_order_rental_days($o);
+        }
     ?>
     <p><a href="<?php echo admin_url('admin.php?page=produkt-customers'); ?>" class="button">&larr; Zurück</a></p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
@@ -178,8 +181,10 @@ foreach ($results as $r) {
                 <?php if ($o->extra_text): ?>
                 <p><strong>Extras:</strong> <?php echo esc_html($o->extra_text); ?></p>
                 <?php endif; ?>
-                <?php if ($o->dauer_text): ?>
-                <p><strong>Dauer:</strong> <?php echo esc_html($o->dauer_text); ?></p>
+                <?php if ($o->rental_days): ?>
+                <p><strong>Miettage:</strong> <?php echo esc_html($o->rental_days); ?></p>
+                <?php elseif ($o->dauer_text): ?>
+                <p><strong>Miettage:</strong> <?php echo esc_html($o->dauer_text); ?></p>
                 <?php endif; ?>
                 <?php list($sd,$ed) = pv_get_order_period($o); ?>
                 <?php if ($sd && $ed): ?>

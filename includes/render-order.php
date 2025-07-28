@@ -25,7 +25,10 @@ if (!defined('ABSPATH')) { exit; }
         <?php if (!empty($order->zustand_text)) : ?>
             <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
         <?php endif; ?>
-        <?php if (!empty($order->dauer_text)) : ?>
+        <?php $days = pv_get_order_rental_days($order); ?>
+        <?php if ($days !== null) : ?>
+            <p><strong>Miettage:</strong> <?php echo esc_html($days); ?></p>
+        <?php elseif (!empty($order->dauer_text)) : ?>
             <p><strong>Miettage:</strong> <?php echo esc_html($order->dauer_text); ?></p>
         <?php endif; ?>
         <?php list($sd,$ed) = pv_get_order_period($order); ?>
