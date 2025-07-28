@@ -3,11 +3,11 @@ if (!defined('ABSPATH')) { exit; }
 ?>
 <div class="abo-row">
     <div class="order-box">
+        <?php $nr = !empty($order->order_number) ? $order->order_number : $order->id; ?>
+        <h3>Bestellung #<?php echo esc_html($nr); ?></h3>
         <?php if (!empty($image_url)) : ?>
             <img class="order-product-image" src="<?php echo esc_url($image_url); ?>" alt="">
         <?php endif; ?>
-        <?php $nr = !empty($order->order_number) ? $order->order_number : $order->id; ?>
-        <h3>Bestellung #<?php echo esc_html($nr); ?></h3>
         <p><strong>Datum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?></p>
         <?php
             $prod = $order->category_name ?: $order->produkt_name;

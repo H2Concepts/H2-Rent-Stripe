@@ -576,10 +576,10 @@ class Plugin {
 
         ob_start();
         ?>
-        <h1>Deine Bestellung</h1>
+        <h1>Bestellübersicht</h1>
         <p>Hallo <?php echo esc_html($order->customer_name); ?>, vielen Dank für deine Bestellung. Du erhältst von uns in Kürze eine Email mit allen Informationen zu deiner Bestellung.</p>
         <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order.php'; ?>
-        <p>Wir bedanken uns für Ihr Vertrauen. Bei Fragen rund um unseren Service oder Produkte, stehen wir dir gerne zur Verfügung. <a href="<?php echo esc_url(home_url('/')); ?>">zurück zur Startseite</a></p>
+        <p>Wir bedanken uns für Ihr Vertrauen. Bei Fragen rund um unseren Service oder Produkte, stehen wir dir gerne zur Verfügung. <a href="<?php echo esc_url(home_url('/')); ?>" style="text-decoration: underline;">Zurück zur Startseite</a></p>
         <?php
         return ob_get_clean();
     }

@@ -1050,11 +1050,6 @@ class StripeService {
                 'created_at'        => current_time('mysql', 1),
             ];
 
-            $order_number = pv_generate_order_number();
-            if ($order_number !== '') {
-                $data['order_number'] = $order_number;
-            }
-
             $welcome_sent = false;
             if (!empty($existing_orders)) {
                 foreach ($existing_orders as $ord) {
@@ -1066,6 +1061,8 @@ class StripeService {
                         if ($gen_num !== '') {
                             $update_data['order_number'] = $gen_num;
                         }
+                    } else {
+                        unset($update_data['order_number']);
                     }
                     if ($start_date === null) {
                         unset($update_data['start_date']);
@@ -1107,6 +1104,10 @@ class StripeService {
                     }
                 }
             } else {
+                $gen_num = pv_generate_order_number();
+                if ($gen_num !== '') {
+                    $data['order_number'] = $gen_num;
+                }
                 $data['stripe_session_id'] = $session->id;
                 $data['stripe_subscription_id'] = $subscription_id;
                 $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);

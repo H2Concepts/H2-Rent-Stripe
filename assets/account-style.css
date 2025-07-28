@@ -56,7 +56,7 @@ img.wp-smiley, img.emoji {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
-    margin-bottom: 40px;
+    margin: 40px 0;
     align-items: start;
 }
 
