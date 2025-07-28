@@ -206,7 +206,7 @@ jQuery(document).ready(function($) {
 
         // Prevent selection of unavailable options
         const available = $(this).data('available');
-        if (available === false || available === 'false' || available === 0 || available === '0') {
+        if (available === false || available === 'false' || available === 0 || available === '0' || $(this).hasClass('unavailable')) {
             resetAllSelections();
             $('#produkt-rent-button').prop('disabled', true);
             $('.produkt-mobile-button').prop('disabled', true);
@@ -831,7 +831,7 @@ jQuery(document).ready(function($) {
             const id = $(this).data('id');
 
             const available = $(this).data('available');
-            if (available === false || available === 'false' || available === 0 || available === '0') {
+            if (available === false || available === 'false' || available === 0 || available === '0' || $(this).hasClass('unavailable')) {
                 resetAllSelections();
                 $('#produkt-rent-button').prop('disabled', true);
                 $('.produkt-mobile-button').prop('disabled', true);
@@ -1253,7 +1253,12 @@ jQuery(document).ready(function($) {
             }
         });
         if (!ids.length || !startDate || !endDate || !currentCategoryId) {
-            $('.produkt-option[data-type="extra"].date-unavailable').removeClass('date-unavailable');
+            $('.produkt-option[data-type="extra"].date-unavailable').each(function(){
+                $(this).removeClass('date-unavailable');
+                if ($(this).data('available') !== false && $(this).data('available') !== 'false' && $(this).data('available') !== 0 && $(this).data('available') !== '0') {
+                    $(this).removeClass('unavailable');
+                }
+            });
             return;
         }
         $.ajax({
@@ -1281,6 +1286,9 @@ jQuery(document).ready(function($) {
                             }
                         } else {
                             $(this).removeClass('date-unavailable');
+                            if ($(this).data('available') !== false && $(this).data('available') !== 'false' && $(this).data('available') !== 0 && $(this).data('available') !== '0') {
+                                $(this).removeClass('unavailable');
+                            }
                         }
                     });
                 }
