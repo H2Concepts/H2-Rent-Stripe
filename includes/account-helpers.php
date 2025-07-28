@@ -140,3 +140,29 @@ function pv_get_order_rental_days($order) {
     list($s, $e) = pv_get_order_period($order);
     return pv_calc_rental_days($s, $e);
 }
+
+/**
+ * Generate and increment the next order number.
+ *
+ * @return string Order number or empty string when numbering disabled
+ */
+function pv_generate_order_number() {
+    $next = get_option('produkt_next_order_number', '');
+    if ($next === '') {
+        return '';
+    }
+    if (preg_match('/^(.*?)(\d+)$/', $next, $m)) {
+        $prefix = $m[1];
+        $num    = (int) $m[2];
+        $len    = strlen($m[2]);
+        $next_val = $prefix . str_pad($num + 1, $len, '0', STR_PAD_LEFT);
+    } else {
+        $num = (int) $next;
+        $next_val = (string) ($num + 1);
+    }
+
+    update_option('produkt_next_order_number', $next_val);
+    update_option('produkt_last_order_number', $next);
+
+    return $next;
+}

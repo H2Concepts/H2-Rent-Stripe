@@ -6,7 +6,8 @@ if (!defined('ABSPATH')) { exit; }
         <?php if (!empty($image_url)) : ?>
             <img class="order-product-image" src="<?php echo esc_url($image_url); ?>" alt="">
         <?php endif; ?>
-        <h3>Bestellung #<?php echo esc_html($order->id); ?></h3>
+        <?php $nr = !empty($order->order_number) ? $order->order_number : $order->id; ?>
+        <h3>Bestellung #<?php echo esc_html($nr); ?></h3>
         <p><strong>Datum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?></p>
         <p><strong>Produkt:</strong> <?php echo esc_html($order->produkt_name); ?></p>
         <?php if (!empty($order->extra_text)) : ?>

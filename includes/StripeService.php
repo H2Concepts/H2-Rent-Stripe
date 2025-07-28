@@ -965,7 +965,7 @@ class StripeService {
 
             global $wpdb;
             $existing_orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
                 $session->id
             ));
 
@@ -1050,12 +1050,23 @@ class StripeService {
                 'created_at'        => current_time('mysql', 1),
             ];
 
+            $order_number = pv_generate_order_number();
+            if ($order_number !== '') {
+                $data['order_number'] = $order_number;
+            }
+
             $welcome_sent = false;
             if (!empty($existing_orders)) {
                 foreach ($existing_orders as $ord) {
                     $send_welcome = ($ord->status !== 'abgeschlossen');
                     $update_data = $data;
                     $update_data['created_at'] = $ord->created_at;
+                    if (empty($ord->order_number)) {
+                        $gen_num = pv_generate_order_number();
+                        if ($gen_num !== '') {
+                            $update_data['order_number'] = $gen_num;
+                        }
+                    }
                     if ($start_date === null) {
                         unset($update_data['start_date']);
                     }

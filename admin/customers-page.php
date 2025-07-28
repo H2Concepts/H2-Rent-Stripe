@@ -195,8 +195,9 @@ foreach ($results as $r) {
                     $order      = $o;
                 ?>
                 <div class="produkt-accordion-item<?php echo $active; ?>">
+                    <?php $n = !empty($o->order_number) ? $o->order_number : $o->id; ?>
                     <button type="button" class="produkt-accordion-header">
-                        Bestellung #<?php echo esc_html($o->id); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($o->created_at))); ?>
+                        Bestellung #<?php echo esc_html($n); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($o->created_at))); ?>
                     </button>
                     <div class="produkt-accordion-content">
                         <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>

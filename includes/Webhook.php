@@ -116,7 +116,8 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     $message .= '<h3>Ihre Bestellübersicht</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($order_id) . '</td></tr>';
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestelldatum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     $message .= '</table>';
 
@@ -189,7 +190,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 }
 
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {
-    $subject    = 'Neue Bestellung #' . $order_id;
+    $subject    = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
     $order_date = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
     $price       = number_format((float) $order['final_price'], 2, ',', '.') . '€';
@@ -241,7 +242,8 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
 
     $message .= '<h3>Bestelldetails</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($order_id) . '</td></tr>';
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Abgeschlossen</td></tr>';
     $message .= '</table>';

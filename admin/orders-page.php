@@ -154,7 +154,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                     <?php foreach ($orders as $order): ?>
                     <tr>
                         <td><input type="checkbox" class="order-checkbox" value="<?php echo $order->id; ?>"></td>
-                        <td><strong>#<?php echo $order->id; ?></strong></td>
+                        <td><strong>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?></strong></td>
                         <td>
                             <?php echo date('d.m.Y', strtotime($order->created_at)); ?><br>
                             <small class="text-gray"><?php echo date('H:i', strtotime($order->created_at)); ?> Uhr</small>
@@ -259,7 +259,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             <a href="<?php echo admin_url('admin.php?page=produkt-orders&category=' . $selected_category . '&delete_order=' . $order->id . '&date_from=' . $date_from . '&date_to=' . $date_to); ?>"
                                class="button button-small"
                                class="text-red"
-                               onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo $order->id; ?> wird unwiderruflich gelöscht!')">
+                               onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?> wird unwiderruflich gelöscht!')">
                                 🗑️ Löschen
                             </a>
                         </td>
@@ -355,7 +355,7 @@ function showOrderDetails(orderId) {
         <div class="details-grid">
             <div>
                 <h4>📋 Bestellinformationen</h4>
-                <p><strong>Bestellnummer:</strong> #${order.id}</p>
+                <p><strong>Bestellnummer:</strong> #${order.order_number ? order.order_number : order.id}</p>
                 <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
                 <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
                 ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}

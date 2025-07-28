@@ -16,6 +16,9 @@ if (isset($_POST['submit_buttons'])) {
         'show_tooltips'     => isset($_POST['show_tooltips']) ? 1 : 0,
     ];
     update_option('produkt_ui_settings', $settings);
+    if (isset($_POST['order_number_start'])) {
+        update_option('produkt_next_order_number', sanitize_text_field($_POST['order_number_start']));
+    }
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
 }
 
@@ -31,6 +34,8 @@ $ui = get_option('produkt_ui_settings', [
     'condition_tooltip' => '',
     'show_tooltips' => 1,
 ]);
+$next_order_nr = get_option('produkt_next_order_number', '');
+$last_order_nr = get_option('produkt_last_order_number', '');
 ?>
 <div class="produkt-branding-tab">
     <form method="post" action="">
@@ -108,6 +113,13 @@ $ui = get_option('produkt_ui_settings', [
             </div>
             <div class="produkt-form-group">
                 <label><input type="checkbox" name="show_tooltips" value="1" <?php checked($ui['show_tooltips'], 1); ?>> Tooltips auf Produktseite anzeigen</label>
+            </div>
+            <div class="produkt-form-group">
+                <label>Bestellnummer Startwert</label>
+                <input type="text" name="order_number_start" value="<?php echo esc_attr($next_order_nr); ?>">
+                <?php if ($last_order_nr): ?>
+                <p class="description">Letzte vergebene Bestellnummer: <?php echo esc_html($last_order_nr); ?></p>
+                <?php endif; ?>
             </div>
         </div>
         <?php submit_button('💾 Einstellungen speichern', 'primary', 'submit_buttons'); ?>

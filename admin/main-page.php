@@ -157,7 +157,7 @@ foreach ($branding_results as $result) {
         <div class="produkt-category-cards">
             <?php foreach ($recent_orders as $order): ?>
             <div class="produkt-category-card">
-                <h4>#<?php echo $order->id; ?> – <?php echo esc_html($order->category_name); ?></h4>
+                <h4>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?> – <?php echo esc_html($order->category_name); ?></h4>
                 <p style="margin-bottom:5px;">
                     <?php echo date('d.m.Y', strtotime($order->created_at)); ?>,
                     <?php echo esc_html($order->customer_name); ?>
