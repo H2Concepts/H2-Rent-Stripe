@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 $search      = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $customer_id = isset($_GET['customer']) ? intval($_GET['customer']) : 0;
 

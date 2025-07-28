@@ -4,6 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
 $monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 $dayNames   = ['Mo','Di','Mi','Do','Fr','Sa','So'];

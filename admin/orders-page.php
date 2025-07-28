@@ -17,6 +17,7 @@ if (!empty($notice)) {
 
 // Branding colors
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 $branding = [];
 $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
