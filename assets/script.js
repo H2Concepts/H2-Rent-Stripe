@@ -683,6 +683,8 @@ jQuery(document).ready(function($) {
                     updateColorImage(null);
                     updateExtraBookings([]);
 
+                    checkExtraAvailability();
+
                     updateDiscountBadges(data.duration_discounts || {});
                     updatePriceAndButton();
                 }
@@ -748,6 +750,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     produkt_ajax.extra_blocked_days = response.data.days || [];
                     renderCalendar(calendarMonth);
+                    checkExtraAvailability();
                 }
             }
         });
@@ -1218,6 +1221,7 @@ jQuery(document).ready(function($) {
 
         renderCalendar(calendarMonth);
         updateSelectedDays();
+        checkExtraAvailability();
         updatePriceAndButton();
     });
 
@@ -1239,6 +1243,50 @@ jQuery(document).ready(function($) {
         } else {
             $('#booking-info').text('');
         }
+    }
+
+    function checkExtraAvailability() {
+        const ids = [];
+        $('.produkt-option[data-type="extra"]').each(function(){
+            if (parseInt($(this).data('stock'),10) === 0) {
+                ids.push($(this).data('id'));
+            }
+        });
+        if (!ids.length || !startDate || !endDate || !currentCategoryId) {
+            $('.produkt-option[data-type="extra"].date-unavailable').removeClass('date-unavailable');
+            return;
+        }
+        $.ajax({
+            url: produkt_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'check_extra_availability',
+                category_id: currentCategoryId,
+                extra_ids: ids.join(','),
+                start_date: startDate,
+                end_date: endDate,
+                nonce: produkt_ajax.nonce
+            },
+            success: function(resp){
+                if (resp.success) {
+                    const unavailable = resp.data.unavailable || [];
+                    $('.produkt-option[data-type="extra"]').each(function(){
+                        const id = parseInt($(this).data('id'),10);
+                        if (unavailable.includes(id)) {
+                            $(this).addClass('date-unavailable unavailable');
+                            if ($(this).hasClass('selected')) {
+                                $(this).removeClass('selected');
+                                const idx = selectedExtras.indexOf(id);
+                                if (idx > -1) selectedExtras.splice(idx,1);
+                            }
+                        } else {
+                            $(this).removeClass('date-unavailable');
+                        }
+                    });
+                }
+                updatePriceAndButton();
+            }
+        });
     }
 
     function showGalleryNotification() {

@@ -530,6 +530,44 @@ class Ajax {
         $days = array_values(array_unique($days));
         wp_send_json_success(['days' => $days]);
     }
+
+    public function ajax_check_extra_availability() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+
+        $category_id = intval($_POST['category_id'] ?? 0);
+        $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $start_date = sanitize_text_field($_POST['start_date'] ?? '');
+        $end_date   = sanitize_text_field($_POST['end_date'] ?? '');
+
+        if (!$category_id || empty($extra_ids) || !$start_date || !$end_date) {
+            wp_send_json_success(['unavailable' => []]);
+        }
+
+        global $wpdb;
+
+        $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+
+        $params = array_merge([$category_id], $extra_ids, [$end_date, $start_date]);
+
+        $query = "SELECT e.id FROM {$wpdb->prefix}produkt_extras e
+            WHERE e.category_id = %d
+              AND e.id IN ($placeholders)
+              AND e.stock_available = 0
+              AND EXISTS (
+                SELECT 1 FROM {$wpdb->prefix}produkt_orders o
+                WHERE FIND_IN_SET(e.id, o.extra_ids)
+                  AND o.mode = 'kauf'
+                  AND o.status IN ('offen','abgeschlossen')
+                  AND o.start_date <= %s AND o.end_date >= %s
+              )";
+        $prepared = $wpdb->prepare($query, ...$params);
+        $unavailable = $wpdb->get_col($prepared);
+
+        $unavailable = array_map('intval', $unavailable);
+
+        wp_send_json_success(['unavailable' => $unavailable]);
+    }
     
     
     public function ajax_track_interaction() {
