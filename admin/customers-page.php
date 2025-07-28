@@ -118,7 +118,8 @@ foreach ($results as $r) {
              LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
              LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm ON sm.stripe_price_id = c.shipping_price_id
+             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
              WHERE o.customer_email = %s
              GROUP BY o.id
              ORDER BY o.created_at DESC",

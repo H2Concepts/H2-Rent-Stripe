@@ -942,7 +942,8 @@ class Admin {
              LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
              LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
              LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
-             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm ON sm.stripe_price_id = c.shipping_price_id
+             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
              WHERE $where_clause
              GROUP BY o.id
             ORDER BY o.created_at DESC",

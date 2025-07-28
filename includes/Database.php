@@ -590,6 +590,7 @@ class Database {
                 'customer_city'     => "varchar(100) DEFAULT ''",
                 'customer_country'  => "varchar(2) DEFAULT ''",
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
+                'shipping_price_id' => "varchar(255) DEFAULT ''",
                 'mode'              => "varchar(10) DEFAULT 'miete'",
                 'start_date'        => 'date DEFAULT NULL',
                 'end_date'          => 'date DEFAULT NULL',
@@ -1179,6 +1180,7 @@ class Database {
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
             shipping_cost decimal(10,2) DEFAULT 0,
+            shipping_price_id varchar(255) DEFAULT '',
             mode varchar(10) DEFAULT 'miete',
             stripe_session_id varchar(255) DEFAULT '',
             stripe_subscription_id varchar(255) DEFAULT '',
@@ -1715,7 +1717,8 @@ class Database {
              LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
              LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
              LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
-             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm ON sm.stripe_price_id = c.shipping_price_id
+            LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
              WHERE o.customer_email = %s
              GROUP BY o.id
              ORDER BY o.created_at DESC",

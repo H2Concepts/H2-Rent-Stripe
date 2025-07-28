@@ -965,15 +965,36 @@ class StripeService {
 
             global $wpdb;
             $existing_orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, status, created_at, category_id, shipping_cost, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
                 $session->id
             ));
+
+            $shipping_price_id = $metadata['shipping_price_id'] ?? '';
+            if (!$shipping_price_id && !empty($existing_orders)) {
+                $order_ref = $existing_orders[0];
+                $shipping_price_id = $order_ref->shipping_price_id ?: '';
+                if (!$shipping_price_id && !empty($order_ref->category_id)) {
+                    $shipping_price_id = $wpdb->get_var($wpdb->prepare(
+                        "SELECT shipping_price_id FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $order_ref->category_id
+                    ));
+                }
+            }
 
             $shipping_cost = 0;
             if (!empty($session->shipping_cost) && !empty($session->shipping_cost->amount_total)) {
                 $shipping_cost = $session->shipping_cost->amount_total / 100;
             } elseif (!empty($existing_orders)) {
                 $order_ref = $existing_orders[0];
+                if (!$shipping_price_id) {
+                    $shipping_price_id = $order_ref->shipping_price_id ?: '';
+                    if (!$shipping_price_id && !empty($order_ref->category_id)) {
+                        $shipping_price_id = $wpdb->get_var($wpdb->prepare(
+                            "SELECT shipping_price_id FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                            $order_ref->category_id
+                        ));
+                    }
+                }
                 $shipping_cost = floatval($order_ref->shipping_cost);
                 if (!$shipping_cost && !empty($order_ref->category_id)) {
                     $shipping_cost = (float) $wpdb->get_var($wpdb->prepare(
@@ -981,13 +1002,12 @@ class StripeService {
                         $order_ref->category_id
                     ));
                 }
-            } else {
-                $shipping_price_id = $metadata['shipping_price_id'] ?? '';
-                if ($shipping_price_id) {
-                    $amt = self::get_price_amount($shipping_price_id);
-                    if (!is_wp_error($amt)) {
-                        $shipping_cost = floatval($amt);
-                    }
+            }
+
+            if (!$shipping_cost && $shipping_price_id) {
+                $amt = self::get_price_amount($shipping_price_id);
+                if (!is_wp_error($amt)) {
+                    $shipping_cost = floatval($amt);
                 }
             }
 
@@ -1010,6 +1030,7 @@ class StripeService {
                 'customer_country'  => $country,
                 'final_price'       => (($session->amount_total ?? 0) / 100) - $shipping_cost,
                 'shipping_cost'     => $shipping_cost,
+                'shipping_price_id' => $shipping_price_id,
                 'amount_total'      => $session->amount_total ?? 0,
                 'discount_amount'   => $discount_amount,
                 'produkt_name'      => $produkt_name,
