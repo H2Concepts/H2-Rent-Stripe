@@ -63,6 +63,40 @@ function send_produkt_welcome_email(array $order, int $order_id) {
         $last  = '';
     }
 
+    global $wpdb;
+    if (empty($order['produkt_name']) || empty($order['extra_text'])) {
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT variant_id, category_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($row) {
+            if (empty($order['produkt_name'])) {
+                if ($row->variant_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                        $row->variant_id
+                    ));
+                }
+                if (empty($order['produkt_name']) && $row->category_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $row->category_id
+                    ));
+                }
+            }
+            if (empty($order['extra_text']) && !empty($row->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $row->extra_ids)));
+                if (!empty($ids)) {
+                    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+                    $order['extra_text'] = implode(', ', $wpdb->get_col($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$ids
+                    )));
+                }
+            }
+        }
+    }
+
     $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date = date_i18n('d.m.Y', strtotime($order['created_at']));
     $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
@@ -163,6 +197,40 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
+
+    global $wpdb;
+    if (empty($order['produkt_name']) || empty($order['extra_text'])) {
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT variant_id, category_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($row) {
+            if (empty($order['produkt_name'])) {
+                if ($row->variant_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                        $row->variant_id
+                    ));
+                }
+                if (empty($order['produkt_name']) && $row->category_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $row->category_id
+                    ));
+                }
+            }
+            if (empty($order['extra_text']) && !empty($row->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $row->extra_ids)));
+                if (!empty($ids)) {
+                    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+                    $order['extra_text'] = implode(', ', $wpdb->get_col($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$ids
+                    )));
+                }
+            }
+        }
+    }
 
     $site_title = get_bloginfo('name');
     $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">';
