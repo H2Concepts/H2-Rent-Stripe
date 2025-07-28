@@ -41,7 +41,7 @@ $last_order_nr = get_option('produkt_last_order_number', '');
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-section">
-            <h4>🔘 Button & Tooltips</h4>
+            <h4>🔘 Buttons</h4>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Button-Text</label>
@@ -80,8 +80,11 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                     <label><input type="checkbox" name="vat_included" value="1" <?php checked($ui['vat_included'], 1); ?>> Mit MwSt.</label>
                 </div>
             </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>💳 Bezahlmethoden</h4>
             <div class="produkt-form-group">
-                <label>Bezahlmethoden</label>
                 <div class="produkt-payment-checkboxes">
                     <?php $payment_methods = [
                         'american-express' => 'American Express',
@@ -103,6 +106,10 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                     <?php endforeach; ?>
                 </div>
             </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>ℹ️ Tooltips</h4>
             <div class="produkt-form-group">
                 <label>Mietdauer-Tooltip</label>
                 <textarea name="duration_tooltip" rows="3"><?php echo esc_textarea($ui['duration_tooltip']); ?></textarea>
@@ -114,6 +121,10 @@ $last_order_nr = get_option('produkt_last_order_number', '');
             <div class="produkt-form-group">
                 <label><input type="checkbox" name="show_tooltips" value="1" <?php checked($ui['show_tooltips'], 1); ?>> Tooltips auf Produktseite anzeigen</label>
             </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>🔢 Bestellnummer</h4>
             <div class="produkt-form-group">
                 <label>Bestellnummer Startwert</label>
                 <input type="text" name="order_number_start" value="<?php echo esc_attr($next_order_nr); ?>">
