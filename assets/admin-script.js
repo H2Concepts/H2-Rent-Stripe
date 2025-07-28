@@ -136,3 +136,32 @@ jQuery(document).ready(function($) {
         });
     }
 });
+
+function produktInitAccordions() {
+    const headers = document.querySelectorAll('.produkt-accordion-header');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const item = header.closest('.produkt-accordion-item');
+            const content = item.querySelector('.produkt-accordion-content');
+            if (item.classList.contains('active')) {
+                item.classList.remove('active');
+                content.style.maxHeight = null;
+            } else {
+                document.querySelectorAll('.produkt-accordion-item.active').forEach(open => {
+                    open.classList.remove('active');
+                    const c = open.querySelector('.produkt-accordion-content');
+                    if (c) {
+                        c.style.maxHeight = null;
+                    }
+                });
+                item.classList.add('active');
+                content.style.maxHeight = content.scrollHeight + 'px';
+            }
+        });
+    });
+    document.querySelectorAll('.produkt-accordion-item.active .produkt-accordion-content').forEach(c => {
+        c.style.maxHeight = c.scrollHeight + 'px';
+    });
+}
+
+document.addEventListener('DOMContentLoaded', produktInitAccordions);

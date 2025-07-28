@@ -186,35 +186,22 @@ foreach ($results as $r) {
                 </tbody>
             </table>
         </div>
-        <div>
-            <?php foreach ($orders as $o): ?>
-            <div style="margin-bottom:20px;padding:10px;border:1px solid #ddd;background:#fff;">
-                <h3>Gekauft - Bestellung #<?php echo $o->id; ?></h3>
-                <p><strong>Produkt:</strong> <?php echo esc_html($o->produkt_name); ?></p>
-                <?php if ($o->extra_text): ?>
-                <p><strong>Extras:</strong> <?php echo esc_html($o->extra_text); ?></p>
-                <?php endif; ?>
-                <?php if ($o->rental_days): ?>
-                <p><strong>Miettage:</strong> <?php echo esc_html($o->rental_days); ?></p>
-                <?php elseif ($o->dauer_text): ?>
-                <p><strong>Miettage:</strong> <?php echo esc_html($o->dauer_text); ?></p>
-                <?php endif; ?>
-                <?php list($sd,$ed) = pv_get_order_period($o); ?>
-                <?php if ($sd && $ed): ?>
-                <p><strong>Zeitraum:</strong> <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?></p>
-                <?php endif; ?>
-                <p><strong>Preis:</strong> <?php echo number_format((float)$o->final_price, 2, ',', '.'); ?>€</p>
+        <div class="orders-column produkt-accordions orders-accordion">
+            <?php foreach ($orders as $idx => $o): ?>
                 <?php
-                    $addr_o = trim($o->customer_street . ', ' . $o->customer_postal . ' ' . $o->customer_city);
-                    if (!empty($o->customer_country)) {
-                        $addr_o .= ', ' . $o->customer_country;
-                    }
+                    $variant_id = $o->variant_id ?? 0;
+                    $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $o->category_id ?? 0);
+                    $active     = $idx === 0 ? ' active' : '';
+                    $order      = $o;
                 ?>
-                <h4>Versandadresse</h4>
-                <p><?php echo esc_html($addr_o); ?></p>
-                <h4>Rechnungsadresse</h4>
-                <p><?php echo esc_html($addr_o); ?></p>
-            </div>
+                <div class="produkt-accordion-item<?php echo $active; ?>">
+                    <button type="button" class="produkt-accordion-header">
+                        Bestellung #<?php echo esc_html($o->id); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($o->created_at))); ?>
+                    </button>
+                    <div class="produkt-accordion-content">
+                        <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+                    </div>
+                </div>
             <?php endforeach; ?>
         </div>
     </div>
