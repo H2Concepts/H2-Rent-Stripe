@@ -20,7 +20,23 @@ try {
 
 // Spezielle Event-Verarbeitung
 if ($event->type === 'checkout.session.completed') {
-    $session = $event->data->object;
+    try {
+        $session = \Stripe\Checkout\Session::retrieve(
+            $event->data->object->id,
+            [
+                'expand' => [
+                    'customer',
+                    'customer_details',
+                    'shipping_details',
+                    'payment_intent.customer',
+                    'subscription',
+                ],
+            ]
+        );
+    } catch (\Exception $e) {
+        $session = $event->data->object;
+        file_put_contents($log_file, "Retrieve Error: " . $e->getMessage() . "\n", FILE_APPEND);
+    }
     try {
         \ProduktVerleih\StripeService::process_checkout_session($session);
         file_put_contents(
