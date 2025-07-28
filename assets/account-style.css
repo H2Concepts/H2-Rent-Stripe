@@ -74,18 +74,19 @@ img.wp-smiley, img.emoji {
 }
 
 .order-product-image {
-    position: absolute;
-    top: 12px;
-    right: 12px;
     width: 64px;
     height: 64px;
-    border-radius: 50%;
+    border-radius: 6px;
     object-fit: cover;
+    margin-bottom: 12px;
 }
 
 .order-box {
+    display: flex;
+    flex-direction: column;
     position: relative;
 }
+
 
 .abo-box h3 {
     margin-bottom: 16px;

@@ -9,9 +9,17 @@ if (!defined('ABSPATH')) { exit; }
         <?php $nr = !empty($order->order_number) ? $order->order_number : $order->id; ?>
         <h3>Bestellung #<?php echo esc_html($nr); ?></h3>
         <p><strong>Datum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?></p>
-        <p><strong>Produkt:</strong> <?php echo esc_html($order->produkt_name); ?></p>
-        <?php if (!empty($order->extra_text)) : ?>
-            <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text); ?></p>
+        <?php
+            $prod = $order->category_name ?: $order->produkt_name;
+            if (!$prod && !empty($order->variant_name)) {
+                $prod = $order->variant_name;
+            }
+        ?>
+        <p><strong>Produkt:</strong> <?php echo esc_html($prod); ?></p>
+        <?php
+            $extras = $order->extra_names ?: $order->extra_text;
+            if (!empty($extras)) : ?>
+            <p><strong>Extras:</strong> <?php echo esc_html($extras); ?></p>
         <?php endif; ?>
         <?php if (!empty($order->produktfarbe_text)) : ?>
             <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
