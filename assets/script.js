@@ -1482,7 +1482,7 @@ jQuery(document).ready(function($) {
 
 });
 
-document.addEventListener("DOMContentLoaded", function () {
+function produktInitAccordions() {
     const accordionHeaders = document.querySelectorAll(".produkt-accordion-header");
 
     accordionHeaders.forEach(header => {
@@ -1508,6 +1508,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
+    document.querySelectorAll('.produkt-accordion-item.active .produkt-accordion-content').forEach(content => {
+        content.style.maxHeight = content.scrollHeight + 'px';
+    });
+}
+
+document.addEventListener("DOMContentLoaded", produktInitAccordions);
+window.addEventListener("load", () => {
     document.querySelectorAll('.produkt-accordion-item.active .produkt-accordion-content').forEach(content => {
         content.style.maxHeight = content.scrollHeight + 'px';
     });
