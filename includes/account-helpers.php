@@ -268,19 +268,28 @@ function pv_generate_invoice_pdf($order_id) {
     $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
 
     // 3. Daten aufbauen
-    $post_data = [
-        'rechnungsnummer'  => $order['order_number'] ?: ('RE-' . $order_id),
-        'rechnungsdatum'   => date('Y-m-d'),
-        'kunde_name'       => $order['customer_name'],
-        'kunde_adresse'    => trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']),
+    $sender    = pv_get_invoice_sender();
+    $product    = $order['produkt_name'];
+    if (!$product) {
+        $product = $order['variant_name'] ?? '';
+    }
 
-        // Firma (aus get_option)
-        'firma_name'       => get_option('plugin_firma_name'),
-        'firma_strasse'    => get_option('plugin_firma_strasse'),
-        'firma_ort'        => get_option('plugin_firma_plz_ort'),
-        'firma_ustid'      => get_option('plugin_firma_ust_id'),
-        'firma_email'      => get_option('plugin_firma_email'),
-        'firma_telefon'    => get_option('plugin_firma_telefon'),
+    $customer_name = trim($order['customer_name']);
+    $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
+
+    $post_data = [
+        'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
+        'rechnungsdatum'   => date('Y-m-d'),
+        'kunde_name'       => $customer_name ?: 'Kunde',
+        'kunde_adresse'    => $customer_addr,
+
+        // Firma (aus Einstellungen)
+        'firma_name'       => $sender['firma_name'],
+        'firma_strasse'    => $sender['firma_strasse'],
+        'firma_plz_ort'    => $sender['firma_plz_ort'],
+        'firma_ustid'      => $sender['firma_ust_id'],
+        'firma_email'      => $sender['firma_email'],
+        'firma_telefon'    => $sender['firma_telefon'],
     ];
 
     // 4. Artikel hinzufügen (Produkt + Extras)
@@ -288,7 +297,7 @@ function pv_generate_invoice_pdf($order_id) {
     $i = 1;
 
     $artikel[] = [
-        'name'  => $order['produkt_name'],
+        'name'  => $product,
         'menge' => 1,
         'preis' => $order['final_price'] ?? 0,
     ];
