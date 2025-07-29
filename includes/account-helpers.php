@@ -302,18 +302,45 @@ function pv_generate_invoice_pdf($order_id) {
     // 5. Artikel hinzufügen (Produkt + Extras + Versand)
     $i = 1;
 
-    // Hauptprodukt
-    $unit_price = 0;
-    if (!empty($order['final_price'])) {
-        $unit_price = round(floatval($order['final_price']) / $tage, 2);
+    $extras_total = 0.0;
+    $extras = [];
+    if (!empty($order['extra_ids'])) {
+        global $wpdb;
+        $ids = array_filter(array_map('intval', explode(',', $order['extra_ids'])));
+        if ($ids) {
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $extras = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, name, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                    ...$ids
+                )
+            );
+        }
     }
+
+    // Hauptprodukt
+    $main_total = floatval($order['final_price']);
+    foreach ($extras as $ex) {
+        $extras_total += floatval($ex->price) * $tage;
+    }
+    $main_total -= $extras_total;
+    if ($main_total < 0) { $main_total = 0; }
+
+    $unit_price = $tage ? round($main_total / $tage, 2) : 0;
     $post_data["artikel_{$i}_name"]  = $product;
     $post_data["artikel_{$i}_menge"] = $tage;
     $post_data["artikel_{$i}_preis"] = $unit_price;
     $i++;
 
     // Extras
-    if (!empty($order['extra_names'])) {
+    if ($extras) {
+        foreach ($extras as $ex) {
+            $post_data["artikel_{$i}_name"]  = $ex->name;
+            $post_data["artikel_{$i}_menge"] = $tage;
+            $post_data["artikel_{$i}_preis"] = floatval($ex->price);
+            $i++;
+        }
+    } elseif (!empty($order['extra_names'])) {
         foreach (explode(', ', $order['extra_names']) as $extra_name) {
             $post_data["artikel_{$i}_name"]  = $extra_name;
             $post_data["artikel_{$i}_menge"] = $tage;
