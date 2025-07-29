@@ -212,3 +212,122 @@ function pv_get_invoice_sender() {
     $data = get_option('produkt_invoice_sender', []);
     return wp_parse_args($data, $defaults);
 }
+
+/**
+ * Retrieve a single order with related names for invoice generation.
+ *
+ * @param int $order_id Order ID
+ * @return array|null Order data as associative array or null when not found
+ */
+function pv_get_order_by_id($order_id) {
+    global $wpdb;
+
+    $sql = $wpdb->prepare(
+        "SELECT o.*, c.name AS category_name,
+                COALESCE(v.name, o.produkt_name) AS variant_name,
+                COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                COALESCE(d.name, o.dauer_text) AS duration_name,
+                COALESCE(cond.name, o.zustand_text) AS condition_name,
+                COALESCE(pc.name, o.produktfarbe_text) AS product_color_name,
+                COALESCE(fc.name, o.gestellfarbe_text) AS frame_color_name,
+                sm.name AS shipping_name,
+                sm.service_provider AS shipping_provider
+         FROM {$wpdb->prefix}produkt_orders o
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+         LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+         LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+         LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+         LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+         LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+         LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+         LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+            ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
+         WHERE o.id = %d
+         GROUP BY o.id",
+        $order_id
+    );
+
+    $row = $wpdb->get_row($sql, ARRAY_A);
+    return $row ?: null;
+}
+
+/**
+ * Generate an invoice PDF for an order using the external API.
+ *
+ * @param int $order_id Order ID
+ * @return string|false Path to the generated PDF or false on failure
+ */
+function pv_generate_invoice_pdf($order_id) {
+    // 1. Bestelldaten auslesen
+    $order = pv_get_order_by_id($order_id);
+    if (!$order) {
+        return false;
+    }
+
+    // 2. PDF-API-Endpunkt + Key
+    $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
+
+    // 3. Daten aufbauen
+    $post_data = [
+        'rechnungsnummer'  => $order['order_number'] ?: ('RE-' . $order_id),
+        'rechnungsdatum'   => date('Y-m-d'),
+        'kunde_name'       => $order['customer_name'],
+        'kunde_adresse'    => trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']),
+
+        // Firma (aus get_option)
+        'firma_name'       => get_option('plugin_firma_name'),
+        'firma_strasse'    => get_option('plugin_firma_strasse'),
+        'firma_ort'        => get_option('plugin_firma_plz_ort'),
+        'firma_ustid'      => get_option('plugin_firma_ust_id'),
+        'firma_email'      => get_option('plugin_firma_email'),
+        'firma_telefon'    => get_option('plugin_firma_telefon'),
+    ];
+
+    // 4. Artikel hinzufügen (Produkt + Extras)
+    $artikel = [];
+    $i = 1;
+
+    $artikel[] = [
+        'name'  => $order['produkt_name'],
+        'menge' => 1,
+        'preis' => $order['final_price'] ?? 0,
+    ];
+
+    if (!empty($order['extra_names'])) {
+        foreach (explode(', ', $order['extra_names']) as $extra_name) {
+            $artikel[] = [
+                'name'  => $extra_name,
+                'menge' => 1,
+                'preis' => 0,
+            ];
+        }
+    }
+
+    foreach ($artikel as $a) {
+        $post_data["artikel_{$i}_name"]  = $a['name'];
+        $post_data["artikel_{$i}_menge"] = $a['menge'];
+        $post_data["artikel_{$i}_preis"] = $a['preis'];
+        $i++;
+    }
+
+    // 5. HTTP-Request an API
+    $response = wp_remote_post($endpoint, [
+        'timeout' => 15,
+        'body'    => $post_data,
+        'headers' => ['Accept' => 'application/pdf'],
+    ]);
+
+    if (is_wp_error($response)) {
+        return false;
+    }
+
+    $pdf_data = wp_remote_retrieve_body($response);
+
+    // 6. PDF speichern
+    $upload_dir = wp_upload_dir();
+    $file_path = trailingslashit($upload_dir['basedir']) . 'rechnung-' . $order_id . '.pdf';
+
+    file_put_contents($file_path, $pdf_data);
+
+    return $file_path;
+}
