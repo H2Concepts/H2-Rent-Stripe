@@ -101,7 +101,7 @@ if (!$customer_id) {
                                         <div class="produkt-order-entry">
                                             <?php
                                             $image_url = pv_get_image_url_by_variant_or_category($order->variant_id ?? 0, $order->category_id ?? 0);
-                                            require __DIR__ . '/render-order.php';
+                                            include PRODUKT_PLUGIN_PATH . 'includes/render-order.php';
                                             ?>
                                         </div>
                                     <?php endforeach; ?>
