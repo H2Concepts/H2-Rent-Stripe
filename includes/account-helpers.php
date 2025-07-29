@@ -292,30 +292,42 @@ function pv_generate_invoice_pdf($order_id) {
         'firma_telefon'    => $sender['firma_telefon'],
     ];
 
-    // 4. Artikel hinzufügen (Produkt + Extras)
-    $artikel = [];
+    // 4. Mietdauer bestimmen
+    $tage = pv_get_order_rental_days((object) $order);
+    if (!$tage || $tage < 1) {
+        $tage = 1;
+    }
+    $post_data['dauer'] = $tage;
+
+    // 5. Artikel hinzufügen (Produkt + Extras + Versand)
     $i = 1;
 
-    $artikel[] = [
-        'name'  => $product,
-        'menge' => 1,
-        'preis' => $order['final_price'] ?? 0,
-    ];
+    // Hauptprodukt
+    $unit_price = 0;
+    if (!empty($order['final_price'])) {
+        $unit_price = round(floatval($order['final_price']) / $tage, 2);
+    }
+    $post_data["artikel_{$i}_name"]  = $product;
+    $post_data["artikel_{$i}_menge"] = $tage;
+    $post_data["artikel_{$i}_preis"] = $unit_price;
+    $i++;
 
+    // Extras
     if (!empty($order['extra_names'])) {
         foreach (explode(', ', $order['extra_names']) as $extra_name) {
-            $artikel[] = [
-                'name'  => $extra_name,
-                'menge' => 1,
-                'preis' => 0,
-            ];
+            $post_data["artikel_{$i}_name"]  = $extra_name;
+            $post_data["artikel_{$i}_menge"] = $tage;
+            $post_data["artikel_{$i}_preis"] = 0;
+            $i++;
         }
     }
 
-    foreach ($artikel as $a) {
-        $post_data["artikel_{$i}_name"]  = $a['name'];
-        $post_data["artikel_{$i}_menge"] = $a['menge'];
-        $post_data["artikel_{$i}_preis"] = $a['preis'];
+    // Versandkosten als eigener Artikel
+    if (!empty($order['shipping_cost']) && floatval($order['shipping_cost']) > 0) {
+        $shipping_name = $order['shipping_name'] ?: 'Versand';
+        $post_data["artikel_{$i}_name"]  = $shipping_name;
+        $post_data["artikel_{$i}_menge"] = 1;
+        $post_data["artikel_{$i}_preis"] = floatval($order['shipping_cost']);
         $i++;
     }
 
