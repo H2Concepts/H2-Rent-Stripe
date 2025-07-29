@@ -193,3 +193,22 @@ function pv_get_email_footer_html() {
     return '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">'
         . implode('<br>', $parts) . '</div>';
 }
+
+/**
+ * Retrieve invoice sender data.
+ *
+ * @return array
+ */
+function pv_get_invoice_sender() {
+    $defaults = [
+        'firma_name'    => '',
+        'firma_strasse' => '',
+        'firma_plz_ort' => '',
+        'firma_ust_id'  => '',
+        'firma_email'   => '',
+        'firma_telefon' => '',
+    ];
+
+    $data = get_option('produkt_invoice_sender', []);
+    return wp_parse_args($data, $defaults);
+}
