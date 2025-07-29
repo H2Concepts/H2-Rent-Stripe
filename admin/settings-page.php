@@ -51,6 +51,10 @@ foreach ($branding_results as $result) {
            class="produkt-tab <?php echo $active_tab === 'buttons' ? 'active' : ''; ?>">
             🔘 Buttons & Tooltips
         </a>
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=email'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'email' ? 'active' : ''; ?>">
+            ✉️ E-Mail Versand
+        </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=debug'); ?>"
            class="produkt-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
             🛠 Debug
@@ -76,6 +80,9 @@ foreach ($branding_results as $result) {
                 break;
             case 'buttons':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/buttons-tab.php';
+                break;
+            case 'email':
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/email-tab.php';
                 break;
             case 'debug':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/debug-tab.php';

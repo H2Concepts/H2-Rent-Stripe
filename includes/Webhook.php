@@ -178,7 +178,10 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
     $message .= '</div>';
-    $message .= '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">Kleine Helden Verleih GbR<br>Kadir Üner &amp; Tim Braunleder<br>Siegenkamp 28<br>52499 Baesweiler</div>';
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $footer_html;
+    }
     $message .= '</div>';
     $message .= '</body></html>';
 
@@ -305,7 +308,10 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
 
     $message .= '<p>Session-ID: ' . esc_html($session_id) . '</p>';
     $message .= '</div>';
-    $message .= '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">Kleine Helden Verleih GbR<br>Kadir Üner &amp; Tim Braunleder<br>Siegenkamp 28<br>52499 Baesweiler</div>';
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $footer_html;
+    }
     $message .= '</div>';
     $message .= '</body></html>';
 

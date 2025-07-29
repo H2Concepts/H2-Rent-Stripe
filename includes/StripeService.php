@@ -1050,6 +1050,13 @@ class StripeService {
                 'created_at'        => current_time('mysql', 1),
             ];
 
+            if ($data['start_date'] === null) {
+                unset($data['start_date']);
+            }
+            if ($data['end_date'] === null) {
+                unset($data['end_date']);
+            }
+
             $welcome_sent = false;
             if (!empty($existing_orders)) {
                 foreach ($existing_orders as $ord) {

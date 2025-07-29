@@ -166,3 +166,30 @@ function pv_generate_order_number() {
 
     return $next;
 }
+
+/**
+ * Build the email footer HTML from stored settings.
+ *
+ * @return string
+ */
+function pv_get_email_footer_html() {
+    $footer = get_option('produkt_email_footer', []);
+    $parts = [];
+    if (!empty($footer['company'])) {
+        $parts[] = esc_html($footer['company']);
+    }
+    if (!empty($footer['owner'])) {
+        $parts[] = esc_html($footer['owner']);
+    }
+    if (!empty($footer['street'])) {
+        $parts[] = esc_html($footer['street']);
+    }
+    if (!empty($footer['postal_city'])) {
+        $parts[] = esc_html($footer['postal_city']);
+    }
+    if (!$parts) {
+        return '';
+    }
+    return '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">'
+        . implode('<br>', $parts) . '</div>';
+}
