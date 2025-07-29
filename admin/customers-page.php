@@ -95,23 +95,10 @@ if (!$customer_id) {
                                 </div>
                             </div>
 
-                            <?php if (!empty($kunde->orders)) : ?>
-                                <div class="produkt-order-list">
-                                    <?php foreach ($kunde->orders as $order) : ?>
-                                        <div class="produkt-order-entry">
-                                            <?php
-                                            $image_url = pv_get_image_url_by_variant_or_category($order->variant_id ?? 0, $order->category_id ?? 0);
-                                            include PRODUKT_PLUGIN_PATH . 'includes/render-order.php';
-                                            ?>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else : ?>
-                                <p style="font-size: 13px; color: #777">Keine Bestellungen vorhanden.</p>
-                            <?php endif; ?>
                         </div>
                         <div class="produkt-item-actions">
                             <a href="mailto:<?php echo esc_attr($kunde->email); ?>" class="button">E-Mail senden</a>
+                            <a href="<?php echo esc_url(admin_url('admin.php?page=produkt-customers&customer=' . $kunde->id)); ?>" class="button">Details</a>
                             <a href="<?php echo esc_url(admin_url('admin.php?page=produkt-orders')); ?>" class="button button-primary">Alle Bestellungen</a>
                         </div>
                     </div>
