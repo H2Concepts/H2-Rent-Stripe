@@ -77,7 +77,7 @@ if (isset($_POST['submit'])) {
     $stripe_price_id   = '';
     if (!empty($_POST['id'])) {
         $existing_variant = $wpdb->get_row($wpdb->prepare(
-            "SELECT name, mietpreis_monatlich, stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d",
+            "SELECT name, mietpreis_monatlich, verkaufspreis_einmalig, stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d",
             intval($_POST['id'])
         ));
         if ($existing_variant) {
@@ -154,17 +154,23 @@ if (isset($_POST['submit'])) {
 
             $needs_price_update = false;
             if ($existing_variant) {
-                if ($existing_variant->name !== $name) {
-                    $needs_price_update = true;
-                }
-                if (floatval($existing_variant->mietpreis_monatlich) != $mietpreis_monatlich) {
+                $current_price = ($mode === 'kauf')
+                    ? floatval($existing_variant->verkaufspreis_einmalig)
+                    : floatval($existing_variant->mietpreis_monatlich);
+
+                $new_price = ($mode === 'kauf')
+                    ? $verkaufspreis_einmalig
+                    : $mietpreis_monatlich;
+
+                if ($existing_variant->name !== $name || $current_price != $new_price) {
                     $needs_price_update = true;
                 }
             }
 
             if ($product_id) {
                 if ($needs_price_update) {
-                    $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($mietpreis_monatlich * 100), $mode);
+                    $amount = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
+                    $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($amount * 100), $mode);
                     if (!is_wp_error($new_price)) {
                         $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $variant_id], ['%s'], ['%d']);
                         $price_id = $new_price->id;
@@ -176,7 +182,7 @@ if (isset($_POST['submit'])) {
                     'variant_id'        => $variant_id,
                     'duration_id'       => null,
                     'name'              => $name,
-                    'price'             => $mietpreis_monatlich,
+                    'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
                     'mode'              => $mode,
                 ]);
                 if (!is_wp_error($res)) {
@@ -232,7 +238,7 @@ if (isset($_POST['submit'])) {
                 'variant_id'        => $variant_id,
                 'duration_id'       => null,
                 'name'              => $name,
-                'price'             => $mietpreis_monatlich,
+                'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
                 'mode'              => $mode,
             ]);
             if (!is_wp_error($res)) {
