@@ -2830,6 +2830,7 @@ body.admin-bar .produkt-return-banner{top:32px;}
 }
 .produkt-return-banner .produkt-return-item + .produkt-return-item{margin-top:10px;}
 .produkt-return-banner .produkt-return-item:last-child{border-bottom:none;}
+.produkt-return-confirm{color:#000;background-color:#fff;border:0;border-radius:999px;padding:5px 15px;}
 
 /* Admin Calendar */
 #produkt-admin-calendar .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
