@@ -66,6 +66,13 @@ if (isset($_POST['submit_branding'])) {
     } else {
         echo '<div class="notice notice-warning"><p>⚠️ ' . ($total_count - $success_count) . ' von ' . $total_count . ' Einstellungen konnten nicht gespeichert werden.</p></div>';
     }
+
+    // Reload settings so the form shows the updated values without refresh
+    $branding = [];
+    $results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$table_name}");
+    foreach ($results as $r) {
+        $branding[$r->setting_key] = $r->setting_value;
+    }
 }
 ?>
 
