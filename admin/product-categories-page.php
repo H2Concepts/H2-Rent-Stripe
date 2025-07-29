@@ -62,13 +62,23 @@ if (isset($_GET['edit'])) {
 }
 ?>
 
-<div class="wrap">
-    <h1>Kategorien verwalten</h1>
+<div class="wrap" id="produkt-admin-product-categories">
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-category"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Kategorien verwalten</h1>
+                <p>Produkte in Kategorien organisieren</p>
+            </div>
+        </div>
 
-    <h2><?= $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen' ?></h2>
+        <h2><?= $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen' ?></h2>
 
-    <form method="post" id="produkt-category-form">
-        <input type="hidden" name="category_id" value="<?= esc_attr($edit_category->id ?? '') ?>">
+        <form method="post" id="produkt-category-form" class="produkt-compact-form">
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+            <input type="hidden" name="category_id" value="<?= esc_attr($edit_category->id ?? '') ?>">
         <table class="form-table">
             <tr>
                 <th><label for="name">Name</label></th>
@@ -142,4 +152,5 @@ if (isset($_GET['edit'])) {
             <?php endforeach ?>
         </tbody>
     </table>
+    </div>
 </div>
