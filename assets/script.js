@@ -754,9 +754,8 @@ jQuery(document).ready(function($) {
             },
             success: function(response) {
                 if (response.success) {
-                    produkt_ajax.extra_blocked_days = response.data.days || [];
-                    renderCalendar(calendarMonth);
-                    checkExtraAvailability();
+                    produkt_ajax.extra_blocked_days = []; // keine Blockierung im Kalender
+                    checkExtraAvailability(); // nur Extras farblich anpassen
                 }
             }
         });
@@ -1168,7 +1167,6 @@ jQuery(document).ready(function($) {
             let bdays = [];
             if (Array.isArray(produkt_ajax.blocked_days)) bdays = bdays.concat(produkt_ajax.blocked_days);
             if (Array.isArray(produkt_ajax.variant_blocked_days)) bdays = bdays.concat(produkt_ajax.variant_blocked_days);
-            if (Array.isArray(produkt_ajax.extra_blocked_days)) bdays = bdays.concat(produkt_ajax.extra_blocked_days);
             if (bdays.includes(dateStr)) cls += ' disabled blocked';
             if (startDate === dateStr) cls += ' start';
             if (endDate === dateStr) cls += ' end';
@@ -1204,7 +1202,6 @@ jQuery(document).ready(function($) {
             let blockedList = [];
             if (Array.isArray(produkt_ajax.blocked_days)) blockedList = blockedList.concat(produkt_ajax.blocked_days);
             if (Array.isArray(produkt_ajax.variant_blocked_days)) blockedList = blockedList.concat(produkt_ajax.variant_blocked_days);
-            if (Array.isArray(produkt_ajax.extra_blocked_days)) blockedList = blockedList.concat(produkt_ajax.extra_blocked_days);
             if (blockedList.length) {
                 let d = new Date(s.getTime());
                 while (d <= e) {
