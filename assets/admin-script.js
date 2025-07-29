@@ -180,9 +180,13 @@ if (typeof produkt_admin !== 'undefined') {
                 .then(res => {
                     if (res.success) {
                         var item = btn.closest('.produkt-return-item');
-                        if (item) item.remove();
-                        var banner = document.querySelector('.produkt-return-banner');
-                        if (banner && !banner.querySelector('.produkt-return-item')) banner.remove();
+                        if (item) {
+                            item.remove();
+                            var banner = document.querySelector('.produkt-return-banner');
+                            if (banner && !banner.querySelector('.produkt-return-item')) banner.remove();
+                        } else {
+                            btn.remove();
+                        }
                     } else {
                         alert('Fehler beim Bestätigen');
                     }

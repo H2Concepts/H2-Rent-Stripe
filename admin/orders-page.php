@@ -255,10 +255,16 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             <button type="button" class="button button-small" onclick="showOrderDetails(<?php echo $order->id; ?>)" title="Details anzeigen">
                                 👁️ Details
                             </button>
-                             <br><br>
+                            <?php
+                                $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
+                                if ($due):
+                            ?>
+                                <br><br>
+                                <button type="button" class="button button-small produkt-return-confirm" data-id="<?php echo $order->id; ?>">Alles i.O.</button>
+                            <?php endif; ?>
+                            <br><br>
                             <a href="<?php echo admin_url('admin.php?page=produkt-orders&category=' . $selected_category . '&delete_order=' . $order->id . '&date_from=' . $date_from . '&date_to=' . $date_to); ?>"
-                               class="button button-small"
-                               class="text-red"
+                               class="button button-small text-red"
                                onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?> wird unwiderruflich gelöscht!')">
                                 🗑️ Löschen
                             </a>

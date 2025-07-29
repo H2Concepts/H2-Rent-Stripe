@@ -401,7 +401,7 @@ class Admin {
             $period = ($s && $e) ? date('d.m.Y', strtotime($s)) . ' - ' . date('d.m.Y', strtotime($e)) : '';
             $label = !empty($o->order_number) ? $o->order_number : $o->id;
             $extras = $o->extra_names ? ' + ' . $o->extra_names : '';
-            echo '<div class="produkt-return-item"><span>Bestellung #' . esc_html($label) . ': ' . esc_html($o->variant_name) . esc_html($extras) . ' (' . esc_html($period) . ') - War bei der RÃ¼ckgabe alles in Ordnung?</span> <button class="button produkt-return-confirm" data-id="' . intval($o->id) . '">Ja alles in Ordnung</button></div>';
+            echo '<div class="produkt-return-item"><span>Bestellung #' . esc_html($label) . ': ' . esc_html($o->variant_name) . esc_html($extras) . ' (' . esc_html($period) . ') - War bei der R&uuml;ckgabe alles in Ordnung?</span> <button class="button produkt-return-confirm" data-id="' . intval($o->id) . '">Ja alles in Ordnung</button></div>';
         }
         echo '</div>';
     }
