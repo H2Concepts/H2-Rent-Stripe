@@ -2818,8 +2818,18 @@
 .produkt-return-banner{position:sticky;top:0;z-index:1000;background:#dc3232;color:#fff;padding:15px 50px;}
 body.admin-bar .produkt-return-banner{top:32px;}
 @media screen and (max-width:782px){body.admin-bar .produkt-return-banner{top:46px;}}
-.produkt-return-banner .produkt-return-item{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.produkt-return-banner .produkt-return-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+    font-size:15px;
+    padding:6px 0;
+    border-bottom:1px solid rgba(255,255,255,0.3);
+}
 .produkt-return-banner .produkt-return-item + .produkt-return-item{margin-top:10px;}
+.produkt-return-banner .produkt-return-item:last-child{border-bottom:none;}
 
 /* Admin Calendar */
 #produkt-admin-calendar .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
