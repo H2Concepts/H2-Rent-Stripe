@@ -2829,6 +2829,6 @@ body.admin-bar .produkt-return-banner{top:32px;}
 #produkt-admin-calendar .calendar-day.today{background:#e0f7fa;border:2px solid var(--pv-blue);}
 #produkt-admin-calendar .calendar-day.booked{background:#e6ffed;border:1px solid #c3e6cb;}
 #produkt-admin-calendar .calendar-day.return{background:#fff5f5;border:1px solid #f5c6cb;}
-#produkt-admin-calendar .event-badge{position:relative;display:inline-block;margin-top:4px;font-size:11px;}
+#produkt-admin-calendar .event-badge{position:relative;display:inline-block;margin:4px;font-size:11px;}
 #produkt-admin-calendar .day-blocked{background:#eee;color:#999;}
 

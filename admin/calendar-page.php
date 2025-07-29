@@ -12,7 +12,7 @@ $dayNames   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 // Filter parameters
 $product_filter = isset($_GET['product']) ? intval($_GET['product']) : 0;
 $status_filter  = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-$produkte        = \ProduktVerleih\Database::get_all_categories(true);
+$produkte       = \ProduktVerleih\Database::get_all_categories(true);
 
 $year  = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
 $month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('n'));
@@ -37,11 +37,6 @@ $blocked_days  = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_
 $where = ["o.mode = 'kauf'"];
 if ($product_filter) {
     $where[] = $wpdb->prepare('o.category_id = %d', $product_filter);
-}
-if ($status_filter === 'open') {
-    $where[] = "o.status <> 'abgeschlossen'";
-} elseif ($status_filter === 'returned') {
-    $where[] = "o.status = 'abgeschlossen'";
 }
 
 $sql = "SELECT o.*, c.name as category_name,
@@ -124,7 +119,7 @@ foreach ($orders as $o) {
                 <select id="filter-status" name="status">
                     <option value="">Alle</option>
                     <option value="open" <?php selected($status_filter, 'open'); ?>>Ausgeliehen</option>
-                    <option value="returned" <?php selected($status_filter, 'returned'); ?>>Zurückgegeben</option>
+                    <option value="return" <?php selected($status_filter, 'return'); ?>>Rückgabe</option>
                 </select>
                 <button class="button button-primary" type="submit">Filtern</button>
             </form>
@@ -150,11 +145,6 @@ foreach ($orders as $o) {
     </div>
 </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <a class="button" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>">&laquo; <?php echo $monthNames[$prev_month-1]; ?></a>
-        <h2 style="margin:0;"><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
-        <a class="button" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year); ?>"><?php echo $monthNames[$next_month-1]; ?> &raquo;</a>
-    </div>
 
     <div class="calendar-grid">
         <?php foreach ($dayNames as $dn): ?>
@@ -175,13 +165,13 @@ foreach ($orders as $o) {
             }
             if (isset($orders_by_day[$date])) {
                 foreach ($orders_by_day[$date] as $o) {
-                    if ($o->start_date === $date) {
+                    if (($status_filter === '' || $status_filter === 'open') && $o->start_date === $date) {
                         $classes .= ' booked';
                         $badges .= '<div class="event-badge badge badge-success">#' . esc_html($o->id) . '</div>';
                     }
-                    if ($o->end_date === $date) {
+                    if (($status_filter === '' || $status_filter === 'return') && $o->end_date === $date) {
                         $classes .= ' return';
-                        $badges .= '<div class="event-badge badge badge-danger">Rückgabe</div>';
+                        $badges .= '<div class="event-badge badge badge-danger">#' . esc_html($o->id) . '</div>';
                     }
                 }
             }
