@@ -201,7 +201,7 @@ if (!$customer_id) {
           <p><strong>Bestellungen:</strong> <?php echo count($orders); ?></p>
         </div>
 
-        <div class="produkt-customer-orders">
+        <div class="produkt-customer-orders orders-accordion">
           <h2>Bestellübersicht</h2>
           <?php if (empty($orders)) : ?>
             <p>Keine Bestellungen gefunden.</p>
