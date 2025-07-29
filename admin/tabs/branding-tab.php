@@ -188,7 +188,7 @@ if (isset($_POST['submit_branding'])) {
 
                     <div class="produkt-form-group">
                         <label class="produkt-toggle-label">
-                            <input type="checkbox" name="product_padding" value="1" <?php echo empty($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
+                            <input type="checkbox" name="product_padding" value="1" <?php echo !isset($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
                             <span class="produkt-toggle-slider"></span>
                             <span>Padding um Produktboxen</span>
                         </label>
