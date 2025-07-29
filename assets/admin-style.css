@@ -306,7 +306,8 @@
 .produkt-form-group {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 2px;
+    margin-bottom: 20px;
 }
 
 .produkt-form-group.full-width {
@@ -1581,6 +1582,8 @@
 .produkt-form-group {
     display: flex;
     flex-direction: column;
+    gap: 2px;
+    margin-bottom: 20px;
 }
 
 .produkt-form-group.full-width {
