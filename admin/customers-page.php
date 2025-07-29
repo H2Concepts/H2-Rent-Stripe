@@ -155,84 +155,75 @@ if (!$customer_id) {
         $o->rental_days = pv_get_order_rental_days($o);
     }
 ?>
-    <p><a href="<?php echo admin_url('admin.php?page=produkt-customers'); ?>" class="button">&larr; Zurück</a></p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-        <div>
-            <h2>Kunden Details</h2>
-            <p><strong>Vorname:</strong> <?php echo esc_html($first); ?></p>
-            <p><strong>Nachname:</strong> <?php echo esc_html($last); ?></p>
-            <p><strong>E-Mail:</strong> <?php echo esc_html($user->user_email); ?></p>
-            <p><strong>Telefon:</strong> <?php echo esc_html($phone ?: '–'); ?></p>
-            <?php
-                $addr_row = $wpdb->get_row(
-                    $wpdb->prepare(
-                        "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
-                        $user->user_email
-                    )
-                );
-                $addr = '';
-                if ($addr_row) {
-                    $addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
-                    if ($addr_row->country) {
-                        $addr .= ', ' . $addr_row->country;
-                    }
-                }
-            ?>
-            <h3>Versandadresse</h3>
-            <p><?php echo esc_html($addr); ?></p>
-            <h3>Rechnungsadresse</h3>
-            <p><?php echo esc_html($addr); ?></p>
+    <div class="produkt-admin-card">
+      <div class="produkt-admin-header-compact">
+        <div class="produkt-admin-logo-compact">
+          <span class="dashicons dashicons-id"></span>
+        </div>
+        <div class="produkt-admin-title-compact">
+          <h1>Kundendetails: <?php echo esc_html($first . ' ' . $last); ?></h1>
+          <p><?php echo esc_html($user->user_email); ?></p>
+        </div>
+      </div>
 
-            <h2>Bestellungen</h2>
-            <table class="wp-list-table widefat striped">
-                <thead>
-                    <tr>
-                        <th>#ID</th>
-                        <th>Produkttyp</th>
-                        <th>Preis Gesamt</th>
-                        <th>Status</th>
-                        <th>Datum</th>
-                        <th>Zeitraum</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($orders as $o): ?>
-                    <tr>
-                        <td>#<?php echo $o->id; ?></td>
-                        <td><?php echo esc_html($o->produkt_name); ?></td>
-                        <td><?php echo number_format((float)$o->final_price, 2, ',', '.'); ?>€</td>
-                        <td><?php echo esc_html($o->status); ?></td>
-                        <td><?php echo date('d.m.Y', strtotime($o->created_at)); ?></td>
-                        <td>
-                            <?php list($sd,$ed) = pv_get_order_period($o); ?>
-                            <?php if ($sd && $ed): ?>
-                                <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+      <p><a href="<?php echo admin_url('admin.php?page=produkt-customers'); ?>" class="button">&larr; Zur Kundenübersicht</a></p>
+
+      <div class="produkt-customer-grid">
+        <div class="produkt-customer-details">
+          <h2>Kundendaten</h2>
+          <p><strong>Vorname:</strong> <?php echo esc_html($first); ?></p>
+          <p><strong>Nachname:</strong> <?php echo esc_html($last); ?></p>
+          <p><strong>Telefon:</strong> <?php echo esc_html($phone ?: '–'); ?></p>
+          <p><strong>E-Mail:</strong> <?php echo esc_html($user->user_email); ?></p>
+
+          <?php
+            $addr_row = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
+                    $user->user_email
+                )
+            );
+            $addr = '';
+            if ($addr_row) {
+                $addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
+                if ($addr_row->country) {
+                    $addr .= ', ' . $addr_row->country;
+                }
+            }
+          ?>
+          <h3>Versandadresse</h3>
+          <p><?php echo esc_html($addr ?: '–'); ?></p>
+
+          <h3>Rechnungsadresse</h3>
+          <p><?php echo esc_html($addr ?: '–'); ?></p>
+
+          <h3>Statistik</h3>
+          <p><strong>Bestellungen:</strong> <?php echo count($orders); ?></p>
         </div>
-        <div class="orders-column produkt-accordions orders-accordion">
+
+        <div class="produkt-customer-orders">
+          <h2>Bestellübersicht</h2>
+          <?php if (empty($orders)) : ?>
+            <p>Keine Bestellungen gefunden.</p>
+          <?php else : ?>
             <?php foreach ($orders as $idx => $o): ?>
-                <?php
-                    $variant_id = $o->variant_id ?? 0;
-                    $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $o->category_id ?? 0);
-                    $active     = $idx === 0 ? ' active' : '';
-                    $order      = $o;
-                ?>
-                <div class="produkt-accordion-item<?php echo $active; ?>">
-                    <?php $n = !empty($o->order_number) ? $o->order_number : $o->id; ?>
-                    <button type="button" class="produkt-accordion-header">
-                        Bestellung #<?php echo esc_html($n); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($o->created_at))); ?>
-                    </button>
-                    <div class="produkt-accordion-content">
-                        <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
-                    </div>
+              <?php
+                $variant_id = $o->variant_id ?? 0;
+                $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $o->category_id ?? 0);
+                $order      = $o;
+              ?>
+              <div class="produkt-accordion-item <?php echo $idx === 0 ? 'active' : ''; ?>">
+                <button type="button" class="produkt-accordion-header">
+                  Bestellung #<?php echo esc_html($o->order_number ?: $o->id); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($o->created_at))); ?>
+                </button>
+                <div class="produkt-accordion-content">
+                  <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
                 </div>
+              </div>
             <?php endforeach; ?>
+          <?php endif; ?>
         </div>
+      </div>
     </div>
 <?php endif; ?>
 </div>

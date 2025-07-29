@@ -2848,3 +2848,9 @@ body.admin-bar .produkt-return-banner{top:32px;}
 #produkt-admin-customers .produkt-item-content p{margin:6px 0;font-size:14px;color:#444;}
 #produkt-admin-customers .produkt-item-meta{margin-top:10px;display:flex;justify-content:space-between;align-items:center;}
 #produkt-admin-customers .produkt-item-actions{margin-top:1rem;display:flex;gap:10px;flex-wrap:wrap;}
+
+/* Customer detail layout */
+.produkt-customer-grid{display:grid;grid-template-columns:1fr 2fr;gap:2rem;margin-top:2rem;}
+.produkt-customer-details p{margin:6px 0;}
+.produkt-customer-orders{background:#f8f9fb;padding:20px;border-radius:12px;border:1px solid #e1e1e1;}
+.produkt-accordion-item + .produkt-accordion-item{margin-top:10px;}
