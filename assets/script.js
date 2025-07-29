@@ -681,7 +681,8 @@ jQuery(document).ready(function($) {
                     $('.produkt-options.durations .produkt-option').removeClass('selected');
                     updateExtraImage(null);
                     updateColorImage(null);
-                    updateExtraBookings([]);
+                    // Fetch blocked days for zero-stock extras of this variant
+                    updateExtraBookings(getZeroStockExtraIds());
 
                     checkExtraAvailability();
 
