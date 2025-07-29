@@ -2832,3 +2832,11 @@ body.admin-bar .produkt-return-banner{top:32px;}
 #produkt-admin-calendar .event-badge{position:relative;display:inline-block;margin:4px;font-size:11px;}
 #produkt-admin-calendar .day-blocked{background:#eee;color:#999;}
 
+/* Calendar modal tabs */
+#produkt-admin-calendar .modal-tabs{display:flex;gap:4px;margin-bottom:10px;}
+#produkt-admin-calendar .modal-tab{flex:1;background:#f1f1f1;border:none;padding:6px 8px;cursor:pointer;}
+#produkt-admin-calendar .modal-tab.active{background:#2271b1;color:#fff;}
+#produkt-admin-calendar .modal-tab-content.hidden{display:none;}
+#produkt-admin-calendar .order-section{margin-bottom:20px;border-bottom:1px solid #ddd;padding-bottom:15px;}
+#produkt-admin-calendar .order-heading{margin:0 0 10px;font-size:16px;}
+

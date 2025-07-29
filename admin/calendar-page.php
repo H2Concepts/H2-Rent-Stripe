@@ -157,6 +157,7 @@ foreach ($orders as $o) {
             $date    = sprintf('%04d-%02d-%02d', $year, $month, $d);
             $classes = 'calendar-day';
             $badges  = '';
+            $tips    = [];
             if ($date === current_time('Y-m-d')) {
                 $classes .= ' today';
             }
@@ -168,15 +169,18 @@ foreach ($orders as $o) {
                     if (($status_filter === '' || $status_filter === 'open') && $o->start_date === $date) {
                         $classes .= ' booked';
                         $badges .= '<div class="event-badge badge badge-success">#' . esc_html($o->id) . '</div>';
+                        $tips[]  = 'Ausgeliehen: #' . $o->id;
                     }
                     if (($status_filter === '' || $status_filter === 'return') && $o->end_date === $date) {
                         $classes .= ' return';
                         $badges .= '<div class="event-badge badge badge-danger">#' . esc_html($o->id) . '</div>';
+                        $tips[]  = 'Rückgabe: #' . $o->id;
                     }
                 }
             }
+            $title = $tips ? ' title="' . esc_attr(implode(' | ', $tips)) . '"' : '';
         ?>
-            <div class="<?php echo esc_attr($classes); ?>" data-date="<?php echo esc_attr($date); ?>">
+            <div class="<?php echo esc_attr($classes); ?>" data-date="<?php echo esc_attr($date); ?>"<?php echo $title; ?>>
                 <div class="day-number"><?php echo $d; ?></div>
                 <?php echo $badges; ?>
             </div>
@@ -246,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function(){
             html += buildOrderDetails(o, orderLogs[o.id] || []);
         });
         content.innerHTML = html;
+        initModalTabs(content);
         modal.style.display = 'block';
     });
 
@@ -255,53 +260,74 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 function buildOrderDetails(order, logs) {
-    let detailsHtml = `
-        <div style="margin-bottom:20px;border-bottom:1px solid #ddd;padding-bottom:15px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <h4>📋 Bestellinformationen</h4>
-                    <p><strong>Bestellnummer:</strong> #${order.id}</p>
-                    <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
-                    <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
-                    ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
-                    <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-' + parseFloat(order.discount_amount).toFixed(2).replace('.', ',') + '€' : '–'}</p>
-                </div>
-                <div>
-                    <h4>👤 Kundendaten</h4>
-                    <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
-                    <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
-                    <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
-                    <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
-                    <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
-                </div>
+    const id = order.id;
+    const detailsTab = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div>
+                <h4>📋 Bestellinformationen</h4>
+                <p><strong>Bestellnummer:</strong> #${id}</p>
+                <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
+                <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
+                ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
+                <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-' + parseFloat(order.discount_amount).toFixed(2).replace('.', ',') + '€' : '–'}</p>
             </div>
+            <div>
+                <h4>👤 Kundendaten</h4>
+                <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
+                <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
+                <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
+                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+            </div>
+        </div>`;
 
-            <h4>🛍️ Produktauswahl</h4>
-            <ul>
-                <li><strong>Ausführung:</strong> ${order.variant_name}</li>
-                <li><strong>Extra:</strong> ${order.extra_names}</li>
-                <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
-                ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
-                ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
-                ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
-                ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}
-            </ul>
-
-            <h4>🖥️ Technische Daten</h4>
-            <p><strong>User Agent:</strong> ${order.user_agent}</p>
-    `;
+    let extrasTab = `<h4>🛍️ Produktauswahl</h4><ul>
+            <li><strong>Ausführung:</strong> ${order.variant_name}</li>
+            <li><strong>Extra:</strong> ${order.extra_names}</li>
+            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
+            ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
+            ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
+            ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
+            ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}
+        </ul>`;
 
     if (logs.length) {
-        detailsHtml += '<h4>📑 Verlauf</h4><ul>';
+        extrasTab += '<h4>📑 Verlauf</h4><ul>';
         logs.forEach(function(l){
             const date = new Date(l.created_at).toLocaleString('de-DE');
-            detailsHtml += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
+            extrasTab += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
         });
-        detailsHtml += '</ul>';
+        extrasTab += '</ul>';
     }
 
-    detailsHtml += '</div>';
-    return detailsHtml;
+    const actionsTab = `<p><em>Aktionen folgen…</em></p>`;
+
+    return `
+        <div class="order-section">
+            <h4 class="order-heading">Bestellung #${id}</h4>
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-target="details-${id}">Details</button>
+                <button class="modal-tab" data-target="extras-${id}">Extras</button>
+                <button class="modal-tab" data-target="actions-${id}">Aktionen</button>
+            </div>
+            <div class="modal-tab-content" id="details-${id}">${detailsTab}</div>
+            <div class="modal-tab-content hidden" id="extras-${id}">${extrasTab}</div>
+            <div class="modal-tab-content hidden" id="actions-${id}">${actionsTab}</div>
+        </div>`;
+}
+
+function initModalTabs(root){
+    root.querySelectorAll('.modal-tabs').forEach(function(tabContainer){
+        tabContainer.querySelectorAll('.modal-tab').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                const parent = btn.closest('.order-section');
+                parent.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+                parent.querySelectorAll('.modal-tab-content').forEach(c => c.classList.add('hidden'));
+                btn.classList.add('active');
+                const target = parent.querySelector('#' + btn.dataset.target);
+                if (target) target.classList.remove('hidden');
+            });
+        });
+    });
 }
 
 function closeOrderDetails(){
