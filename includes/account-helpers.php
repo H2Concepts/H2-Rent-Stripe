@@ -310,24 +310,36 @@ function pv_generate_invoice_pdf($order_id) {
         $i++;
     }
 
+    $url     = $endpoint;
+    $payload = $post_data;
+
     // 5. HTTP-Request an API
-    $response = wp_remote_post($endpoint, [
+    $response = wp_remote_post($url, [
         'timeout' => 15,
-        'body'    => $post_data,
-        'headers' => ['Accept' => 'application/pdf'],
+        'body'    => $payload,
     ]);
 
-    if (is_wp_error($response)) {
+    // Logging für Debug-Zwecke
+    $response_code = wp_remote_retrieve_response_code($response);
+    $pdf_data      = wp_remote_retrieve_body($response);
+
+    error_log('[PDF] Response-Code: ' . $response_code);
+    error_log('[PDF] Länge: ' . strlen($pdf_data));
+
+    // Prüfen ob PDF-Daten plausibel sind (größer als 1000 Byte und kein HTML)
+    if (
+        $response_code !== 200 ||
+        strlen($pdf_data) < 1000 ||
+        stripos($pdf_data, '<html') !== false
+    ) {
+        error_log('[PDF] Fehlerhafte Rückgabe – keine gültige PDF.');
         return false;
     }
 
-    $pdf_data = wp_remote_retrieve_body($response);
-
-    // 6. PDF speichern
+    // PDF lokal speichern
     $upload_dir = wp_upload_dir();
-    $file_path = trailingslashit($upload_dir['basedir']) . 'rechnung-' . $order_id . '.pdf';
+    $path = trailingslashit($upload_dir['basedir']) . 'rechnung-' . $order_id . '.pdf';
+    file_put_contents($path, $pdf_data);
 
-    file_put_contents($file_path, $pdf_data);
-
-    return $file_path;
+    return $path;
 }
