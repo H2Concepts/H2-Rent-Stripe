@@ -58,7 +58,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                 </div>
                 <div class="produkt-form-group">
                     <label>Lieferzeit-Text</label>
-                    <input type="text" name="delivery_time" placeholder="z.B. 3-5 Werktagen" value="3-5 Werktagen">
+                    <input type="text" name="delivery_time" placeholder="z.B. 3-5 Werktage" value="3-5 Werktage">
                 </div>
                 <?php if ($modus === 'kauf'): ?>
                 <div class="produkt-form-group">

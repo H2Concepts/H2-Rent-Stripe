@@ -987,7 +987,7 @@ jQuery(document).ready(function($) {
                             if (shippingProvider === 'pickup') {
                                 $('#produkt-delivery-box').text('Abholung').show();
                             } else {
-                                $('#produkt-delivery-box').html('Lieferung in <span id="produkt-delivery-time">' + (data.delivery_time || '') + '</span>').show();
+                                $('#produkt-delivery-box').html('Lieferung <span id="produkt-delivery-time">' + (data.delivery_time || '') + '</span>').show();
                             }
                         } else {
                             $('#produkt-availability-status').addClass('unavailable').removeClass('available');
@@ -1184,7 +1184,7 @@ jQuery(document).ready(function($) {
             today.setHours(0,0,0,0);
             let cls = 'calendar-day';
             if (cellDate < today) cls += ' disabled';
-            if (produkt_ajax.variant_weekend_only && cellDate.getDay() !== 0 && cellDate.getDay() !== 6) cls += ' disabled';
+            if (produkt_ajax.variant_weekend_only && [5,6,0].indexOf(cellDate.getDay()) === -1) cls += ' disabled';
             let bdays = [];
             if (Array.isArray(produkt_ajax.blocked_days)) bdays = bdays.concat(produkt_ajax.blocked_days);
             if (Array.isArray(produkt_ajax.variant_blocked_days)) bdays = bdays.concat(produkt_ajax.variant_blocked_days);

@@ -552,7 +552,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <span class="status-text">Sofort verfügbar</span>
                         </div>
                         <div id="produkt-delivery-box" class="produkt-delivery-box" style="display:none;">
-                            Lieferung in <span id="produkt-delivery-time">3-5 Werktagen</span>
+                            Lieferung <span id="produkt-delivery-time">3-5 Werktage</span>
                         </div>
                     </div>
                     <?php
