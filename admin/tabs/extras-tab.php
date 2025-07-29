@@ -59,11 +59,13 @@ if (isset($_POST['submit_extra'])) {
                 'category_id' => $category_id,
                 'name'        => $name,
                 'price'       => $price,
+                'price_sale'  => ($modus === 'kauf') ? $sale_price : 0,
+                'price_rent'  => ($modus === 'kauf') ? 0 : $price,
                 'image_url'   => $image_url,
                 'sort_order'  => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%f', '%s', '%d'),
+            array('%d', '%s', '%f', '%f', '%f', '%s', '%d'),
             array('%d')
         );
 
@@ -77,7 +79,11 @@ if (isset($_POST['submit_extra'])) {
                 \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $stripe_product_name);
                 $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($stripe_price * 100), $modus);
                 if (!is_wp_error($new_price)) {
-                    $update = ['stripe_price_id' => $new_price->id];
+                    $update = [
+                        'stripe_price_id'  => $new_price->id,
+                        'price_sale'       => ($modus === 'kauf') ? $sale_price : 0,
+                        'price_rent'       => ($modus === 'kauf') ? 0 : $price,
+                    ];
                     if ($modus === 'kauf') {
                         $update['stripe_price_id_sale'] = $new_price->id;
                     } else {
@@ -114,10 +120,12 @@ if (isset($_POST['submit_extra'])) {
                 'category_id' => $category_id,
                 'name'        => $name,
                 'price'       => $price,
+                'price_sale'  => ($modus === 'kauf') ? $sale_price : 0,
+                'price_rent'  => ($modus === 'kauf') ? 0 : $price,
                 'image_url'   => $image_url,
                 'sort_order'  => $sort_order
             ),
-            array('%d', '%s', '%f', '%s', '%d')
+            array('%d', '%s', '%f', '%f', '%f', '%s', '%d')
         );
 
         $extra_id = $wpdb->insert_id;
@@ -132,6 +140,8 @@ if (isset($_POST['submit_extra'])) {
                 $update = [
                     'stripe_product_id' => $res['product_id'],
                     'stripe_price_id'   => $res['price_id'],
+                    'price_sale'        => ($modus === 'kauf') ? $sale_price : 0,
+                    'price_rent'        => ($modus === 'kauf') ? 0 : $price,
                 ];
                 if ($modus === 'kauf') {
                     $update['stripe_price_id_sale'] = $res['price_id'];
@@ -186,10 +196,16 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
             
             <?php $modus = get_option('produkt_betriebsmodus', 'miete');
                   $sale_price = 0;
-                  if ($modus === 'kauf' && $edit_item && !empty($edit_item->stripe_price_id_sale)) {
-                      $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
-                      if (!is_wp_error($p)) {
-                          $sale_price = $p;
+                  if ($modus === 'kauf') {
+                      if ($edit_item && !empty($edit_item->stripe_price_id_sale)) {
+                          $p = \ProduktVerleih\StripeService::get_price_amount($edit_item->stripe_price_id_sale);
+                          if (!is_wp_error($p)) {
+                              $sale_price = $p;
+                          } elseif (!empty($edit_item->price_sale)) {
+                              $sale_price = $edit_item->price_sale;
+                          }
+                      } elseif ($edit_item && isset($edit_item->price_sale)) {
+                          $sale_price = $edit_item->price_sale;
                       }
                   }
             ?>
@@ -207,7 +223,7 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                 <?php else: ?>
                 <div class="produkt-form-group">
                     <label>Preis (EUR) *</label>
-                    <input type="number" step="0.01" name="price" value="<?php echo $edit_item ? esc_attr($edit_item->price) : ''; ?>" placeholder="0.00" required>
+                    <input type="number" step="0.01" name="price" value="<?php echo $edit_item ? esc_attr($edit_item->price_rent ?? $edit_item->price) : ''; ?>" placeholder="0.00" required>
                 </div>
                 <?php endif; ?>
                 
@@ -272,7 +288,7 @@ $extras = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
                     <h5><?php echo esc_html($extra->name); ?></h5>
                     <div class="produkt-item-meta">
                         <?php
-                        $display_price = $extra->price;
+                        $display_price = ($modus === 'kauf') ? ($extra->price_sale ?? $extra->price) : ($extra->price_rent ?? $extra->price);
                         $price_col = ($modus === 'kauf') ? ($extra->stripe_price_id_sale ?? '') : ($extra->stripe_price_id_rent ?? '');
                         if (!empty($price_col)) {
                             $p = \ProduktVerleih\StripeService::get_price_amount($price_col);

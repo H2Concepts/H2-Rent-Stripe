@@ -91,14 +91,16 @@ if (isset($_POST['submit'])) {
             $table_name,
             array(
                 'category_id' => $category_id,
-                'name'  => $name,
-                'price' => $price,
-                'image_url' => $image_url,
-                'active' => $active,
-                'sort_order' => $sort_order
+                'name'        => $name,
+                'price'       => $price,
+                'price_sale'  => ($modus === 'kauf') ? $sale_price : 0,
+                'price_rent'  => ($modus === 'kauf') ? 0 : $price,
+                'image_url'   => $image_url,
+                'active'      => $active,
+                'sort_order'  => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%f', '%s', '%d', '%d'),
+            array('%d', '%s', '%f', '%f', '%f', '%s', '%d', '%d'),
             array('%d')
         );
         
@@ -110,7 +112,11 @@ if (isset($_POST['submit'])) {
                 \ProduktVerleih\StripeService::update_product_name($ids->stripe_product_id, $stripe_product_name);
                 $new_price = \ProduktVerleih\StripeService::create_price($ids->stripe_product_id, round($stripe_price * 100), $modus);
                 if (!is_wp_error($new_price)) {
-                    $update = ['stripe_price_id' => $new_price->id];
+                    $update = [
+                        'stripe_price_id'  => $new_price->id,
+                        'price_sale'       => ($modus === 'kauf') ? $sale_price : 0,
+                        'price_rent'       => ($modus === 'kauf') ? 0 : $price,
+                    ];
                     if ($modus === 'kauf') {
                         $update['stripe_price_id_sale'] = $new_price->id;
                     } else {
@@ -127,6 +133,8 @@ if (isset($_POST['submit'])) {
                     $update = [
                         'stripe_product_id' => $res['product_id'],
                         'stripe_price_id'   => $res['price_id'],
+                        'price_sale'        => ($modus === 'kauf') ? $sale_price : 0,
+                        'price_rent'        => ($modus === 'kauf') ? 0 : $price,
                     ];
                     if ($modus === 'kauf') {
                         $update['stripe_price_id_sale'] = $res['price_id'];
@@ -147,13 +155,15 @@ if (isset($_POST['submit'])) {
             $table_name,
             array(
                 'category_id' => $category_id,
-                'name'  => $name,
-                'price' => $price,
-                'image_url' => $image_url,
-                'active' => $active,
-                'sort_order' => $sort_order
+                'name'        => $name,
+                'price'       => $price,
+                'price_sale'  => ($modus === 'kauf') ? $sale_price : 0,
+                'price_rent'  => ($modus === 'kauf') ? 0 : $price,
+                'image_url'   => $image_url,
+                'active'      => $active,
+                'sort_order'  => $sort_order
             ),
-            array('%d', '%s', '%f', '%s', '%d', '%d')
+            array('%d', '%s', '%f', '%f', '%f', '%s', '%d', '%d')
         );
         
         if ($result !== false) {

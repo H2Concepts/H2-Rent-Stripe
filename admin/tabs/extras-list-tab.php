@@ -52,7 +52,7 @@
                     <div class="produkt-extra-price">
                         <?php
                         $modus = get_option('produkt_betriebsmodus', 'miete');
-                        $display_price = ($modus === 'kauf') ? 0 : $extra->price;
+                        $display_price = ($modus === 'kauf') ? ($extra->price_sale ?? 0) : ($extra->price_rent ?? $extra->price);
                         $missing_price = false;
 
                         $price_col = $modus === 'kauf' ? ($extra->stripe_price_id_sale ?? '') : ($extra->stripe_price_id_rent ?? '');
