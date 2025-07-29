@@ -6,15 +6,16 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 ?>
 
-<div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
-        <div class="produkt-admin-logo-compact">🏷️</div>
-        <div class="produkt-admin-title-compact">
-            <h1>Produkte verwalten</h1>
-            <p>Produkte & SEO-Einstellungen</p>
+<div class="wrap" id="produkt-admin-categories">
+    <div class="produkt-admin-card">
+        <!-- Kompakter Header -->
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">🏷️</div>
+            <div class="produkt-admin-title-compact">
+                <h1>Produkte verwalten</h1>
+                <p>Produkte & SEO-Einstellungen</p>
+            </div>
         </div>
-    </div>
     
     <!-- Breadcrumb Navigation -->
     <div class="produkt-breadcrumb">
@@ -41,24 +42,25 @@ global $wpdb;
         <?php endif; ?>
     </div>
     
-    <!-- Tab Content -->
-    <div class="produkt-tab-content">
-        <?php
-        switch ($active_tab) {
-            case 'add':
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-add-tab.php';
-                break;
-            case 'edit':
-                if ($edit_item) {
-                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-edit-tab.php';
-                } else {
+        <!-- Tab Content -->
+        <div class="produkt-tab-content">
+            <?php
+            switch ($active_tab) {
+                case 'add':
+                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-add-tab.php';
+                    break;
+                case 'edit':
+                    if ($edit_item) {
+                        include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-edit-tab.php';
+                    } else {
+                        include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
+                    }
+                    break;
+                case 'list':
+                default:
                     include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
-                }
-                break;
-            case 'list':
-            default:
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/categories-list-tab.php';
-        }
-        ?>
+            }
+            ?>
+        </div>
     </div>
 </div>
