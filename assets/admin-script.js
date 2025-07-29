@@ -165,3 +165,28 @@ function produktInitAccordions() {
 }
 
 document.addEventListener('DOMContentLoaded', produktInitAccordions);
+if (typeof produkt_admin !== 'undefined') {
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('produkt-return-confirm')) {
+            e.preventDefault();
+            var btn = e.target;
+            var id = btn.getAttribute('data-id');
+            var data = new URLSearchParams();
+            data.append('action', 'confirm_return');
+            data.append('nonce', produkt_admin.nonce);
+            data.append('order_id', id);
+            fetch(produkt_admin.ajax_url, {method: 'POST', body: data})
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        var item = btn.closest('.produkt-return-item');
+                        if (item) item.remove();
+                        var banner = document.querySelector('.produkt-return-banner');
+                        if (banner && !banner.querySelector('.produkt-return-item')) banner.remove();
+                    } else {
+                        alert('Fehler beim Bestätigen');
+                    }
+                });
+        }
+    });
+}

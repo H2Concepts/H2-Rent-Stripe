@@ -1969,11 +1969,74 @@ class Database {
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
     }
-
     /**
-     * Increase available stock after rental period ends.
-     * Runs via WP-Cron.
+     * Get orders whose rental period has ended and inventory has not yet been returned.
+     *
+     * @return array List of order objects
      */
+    public static function get_due_returns() {
+        global $wpdb;
+        $today = current_time('Y-m-d');
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT o.id, o.variant_id, o.extra_ids, o.order_number, o.produkt_name, o.start_date, o.end_date,
+                    COALESCE(v.name, o.produkt_name) AS variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+             FROM {$wpdb->prefix}produkt_orders o
+             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+             WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
+             GROUP BY o.id
+             ORDER BY o.end_date",
+            $today
+        ));
+    }
+    /**
+     * Mark a single order as returned and update inventory.
+     *
+     * @param int $order_id Order ID
+     * @return bool Success state
+     */
+    public static function process_inventory_return($order_id) {
+        global $wpdb;
+        $order = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT variant_id, extra_ids, inventory_reverted FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+                $order_id
+            )
+        );
+        if (!$order || $order->inventory_reverted) {
+            return false;
+        }
+        if ($order->variant_id) {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                    $order->variant_id
+                )
+            );
+        }
+        if (!empty($order->extra_ids)) {
+            $ids = array_filter(array_map('intval', explode(',', $order->extra_ids)));
+            foreach ($ids as $eid) {
+                $wpdb->query(
+                    $wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                        $eid
+                    )
+                );
+            }
+        }
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['inventory_reverted' => 1],
+            ['id' => $order_id],
+            ['%d'],
+            ['%d']
+        );
+        produkt_add_order_log((int)$order_id, 'inventory_returned');
+        return true;
+    }
+
     public static function process_inventory_returns() {
         global $wpdb;
         $today = current_time('Y-m-d');

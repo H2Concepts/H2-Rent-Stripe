@@ -4,6 +4,9 @@ namespace ProduktVerleih;
 require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
 class Admin {
+    public function __construct() {
+        add_action('admin_notices', [$this, 'return_banner']);
+    }
     public function add_admin_menu() {
         $branding = $this->get_branding_settings();
         $menu_title = $branding['plugin_name'] ?? 'Produkt';
@@ -359,6 +362,7 @@ class Admin {
             // Enqueue WordPress media scripts for image upload
             wp_enqueue_media();
 
+            wp_localize_script('produkt-admin-script', 'produkt_admin', ['ajax_url'=>admin_url('admin-ajax.php'), 'nonce'=>wp_create_nonce('produkt_admin_action')]);
             // Ensure WordPress editor scripts are available for dynamic accordions
             wp_enqueue_editor();
         }
@@ -386,6 +390,22 @@ class Admin {
         include PRODUKT_PLUGIN_PATH . "admin/{$slug}-page.php";
     }
     
+    public function return_banner() {
+        if (!current_user_can('manage_options')) return;
+        if (!isset($_GET['page']) || strpos($_GET['page'], 'produkt') === false) return;
+        $orders = Database::get_due_returns();
+        if (empty($orders)) return;
+        echo '<div class="produkt-return-banner">';
+        foreach ($orders as $o) {
+            list($s,$e) = pv_get_order_period($o);
+            $period = ($s && $e) ? date('d.m.Y', strtotime($s)) . ' - ' . date('d.m.Y', strtotime($e)) : '';
+            $label = !empty($o->order_number) ? $o->order_number : $o->id;
+            $extras = $o->extra_names ? ' + ' . $o->extra_names : '';
+            echo '<div class="produkt-return-item"><span>Bestellung #' . esc_html($label) . ': ' . esc_html($o->variant_name) . esc_html($extras) . ' (' . esc_html($period) . ') - War bei der RÃ¼ckgabe alles in Ordnung?</span> <button class="button produkt-return-confirm" data-id="' . intval($o->id) . '">Ja alles in Ordnung</button></div>';
+        }
+        echo '</div>';
+    }
+
     public function custom_admin_footer($text) {
         $branding = $this->get_branding_settings();
         

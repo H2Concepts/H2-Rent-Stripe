@@ -1724,3 +1724,21 @@ function produkt_unblock_day() {
     $wpdb->delete($table, ['day' => $date], ['%s']);
     wp_send_json_success();
 }
+
+function produkt_confirm_return() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+    $order_id = intval($_POST['order_id'] ?? 0);
+    if (!$order_id) {
+        wp_send_json_error('missing');
+    }
+    $res = \ProduktVerleih\Database::process_inventory_return($order_id);
+    if ($res) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('failed');
+    }
+}
+add_action('wp_ajax_confirm_return', __NAMESPACE__ . '\\produkt_confirm_return');

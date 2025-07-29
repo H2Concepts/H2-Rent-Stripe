@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-const PRODUKT_PLUGIN_VERSION = '2.8.49';
+const PRODUKT_PLUGIN_VERSION = '2.8.50';
 const PRODUKT_PLUGIN_DIR = __DIR__ . '/';
 define('PRODUKT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);
