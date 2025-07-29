@@ -60,6 +60,19 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                     <label>Lieferzeit-Text</label>
                     <input type="text" name="delivery_time" placeholder="z.B. 3-5 Werktagen" value="3-5 Werktagen">
                 </div>
+                <?php if ($modus === 'kauf'): ?>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="weekend_only" value="1">
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Nur Wochenende buchbar?</span>
+                    </label>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Mindestmiettage</label>
+                    <input type="number" name="min_rental_days" value="0" min="0">
+                </div>
+                <?php endif; ?>
             </div>
         </div>
         

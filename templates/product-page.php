@@ -336,11 +336,13 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <h3>Wählen Sie Ihre Ausführung</h3>
                     <div class="produkt-options variants layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($variants as $variant): ?>
-                        <div class="produkt-option <?php echo !($variant->available ?? 1) ? 'unavailable' : ''; ?>" 
-                             data-type="variant" 
+                        <div class="produkt-option <?php echo !($variant->available ?? 1) ? 'unavailable' : ''; ?>"
+                             data-type="variant"
                              data-id="<?php echo esc_attr($variant->id); ?>"
                              data-available="<?php echo esc_attr(($variant->available ?? 1) ? 'true' : 'false'); ?>"
                              data-delivery="<?php echo esc_attr($variant->delivery_time ?? ''); ?>"
+                             data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
+                             data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -777,6 +779,8 @@ if (typeof produkt_ajax !== 'undefined') {
     produkt_ajax.blocked_days = <?php echo json_encode($blocked_days); ?>;
     produkt_ajax.variant_blocked_days = [];
     produkt_ajax.extra_blocked_days = [];
+    produkt_ajax.variant_weekend_only = false;
+    produkt_ajax.variant_min_days = 0;
 }
 </script>
 <?php get_footer(); ?>

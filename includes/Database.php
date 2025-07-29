@@ -49,7 +49,9 @@ class Database {
             'delivery_time' => 'VARCHAR(255) DEFAULT ""',
             'sku' => 'VARCHAR(100) DEFAULT ""',
             'stock_available' => 'INT DEFAULT 0',
-            'stock_rented' => 'INT DEFAULT 0'
+            'stock_rented' => 'INT DEFAULT 0',
+            'weekend_only' => 'TINYINT(1) DEFAULT 0',
+            'min_rental_days' => 'INT DEFAULT 0'
         );
         
         foreach ($columns_to_add as $column => $type) {
@@ -75,6 +77,10 @@ class Database {
                     $after = 'sku';
                 } elseif ($column === 'stock_rented') {
                     $after = 'stock_available';
+                } elseif ($column === 'weekend_only') {
+                    $after = 'stock_rented';
+                } elseif ($column === 'min_rental_days') {
+                    $after = 'weekend_only';
                 } else {
                     $after = 'base_price';
                 }
@@ -1015,6 +1021,8 @@ class Database {
             sku varchar(100) DEFAULT '',
             stock_available int DEFAULT 0,
             stock_rented int DEFAULT 0,
+            weekend_only tinyint(1) DEFAULT 0,
+            min_rental_days int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)

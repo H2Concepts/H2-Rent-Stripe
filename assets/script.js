@@ -21,6 +21,8 @@ jQuery(document).ready(function($) {
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
+    let variantWeekendOnly = false;
+    let variantMinDays = 0;
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
@@ -158,6 +160,14 @@ jQuery(document).ready(function($) {
     if (!Array.isArray(produkt_ajax.extra_blocked_days)) {
         produkt_ajax.extra_blocked_days = [];
     }
+    if (typeof produkt_ajax.variant_weekend_only === 'undefined') {
+        produkt_ajax.variant_weekend_only = false;
+    }
+    if (typeof produkt_ajax.variant_min_days === 'undefined') {
+        produkt_ajax.variant_min_days = 0;
+    }
+    variantWeekendOnly = produkt_ajax.variant_weekend_only;
+    variantMinDays = produkt_ajax.variant_min_days;
 
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
@@ -244,6 +254,10 @@ jQuery(document).ready(function($) {
         // Update selection variables
         if (type === 'variant') {
             selectedVariant = id;
+            variantWeekendOnly = $(this).data('weekend') == 1;
+            variantMinDays = parseInt($(this).data('min-days'),10) || 0;
+            produkt_ajax.variant_weekend_only = variantWeekendOnly;
+            produkt_ajax.variant_min_days = variantMinDays;
 
             // Reset selections when switching variants so the rent button
             // becomes inactive immediately
@@ -252,6 +266,11 @@ jQuery(document).ready(function($) {
             selectedFrameColor = null;
             selectedExtras = [];
             selectedDuration = null;
+            startDate = null;
+            endDate = null;
+            selectedDays = 0;
+            renderCalendar(calendarMonth);
+            updateSelectedDays();
 
             $('.produkt-option[data-type="condition"]').removeClass('selected');
             $('.produkt-option[data-type="product-color"]').removeClass('selected');
@@ -916,8 +935,9 @@ jQuery(document).ready(function($) {
         }
         
         const allSelected = requiredSelections.every(selection => selection !== null && selection !== false);
-        
-        if (allSelected) {
+        const minOk = !(variantMinDays > 0 && selectedDays > 0 && selectedDays < variantMinDays);
+
+        if (allSelected && minOk) {
             // Show loading state
             $('#produkt-price-display').show();
             $('#produkt-final-price').text('Lädt...');
@@ -1164,6 +1184,7 @@ jQuery(document).ready(function($) {
             today.setHours(0,0,0,0);
             let cls = 'calendar-day';
             if (cellDate < today) cls += ' disabled';
+            if (produkt_ajax.variant_weekend_only && cellDate.getDay() !== 0 && cellDate.getDay() !== 6) cls += ' disabled';
             let bdays = [];
             if (Array.isArray(produkt_ajax.blocked_days)) bdays = bdays.concat(produkt_ajax.blocked_days);
             if (Array.isArray(produkt_ajax.variant_blocked_days)) bdays = bdays.concat(produkt_ajax.variant_blocked_days);
@@ -1247,9 +1268,16 @@ function updateSelectedDays() {
         $('#produkt-field-end-date').val(endDate || '');
         $('#produkt-field-days').val(selectedDays);
         if (selectedDays > 0) {
-            $('#booking-info').text('Mietzeitraum ' + selectedDays + ' Tag' + (selectedDays > 1 ? 'e' : ''));
+            let info = 'Mietzeitraum ' + selectedDays + ' Tag' + (selectedDays > 1 ? 'e' : '');
+            if (variantMinDays > 0 && selectedDays < variantMinDays) {
+                info += ' (mind. ' + variantMinDays + ' Tage)';
+                $('#booking-info').addClass('error');
+            } else {
+                $('#booking-info').removeClass('error');
+            }
+            $('#booking-info').text(info);
         } else {
-            $('#booking-info').text('');
+            $('#booking-info').removeClass('error').text('');
         }
 }
 

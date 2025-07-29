@@ -2331,5 +2331,8 @@ body.shop-filter-open {
     margin-top: 0.5rem;
     font-weight: 600;
 }
+#booking-info.error {
+    color: #dc3232;
+}
 
 

@@ -52,12 +52,16 @@ if (empty($category_column_exists)) {
 }
 
 // Ensure availability columns exist
-$availability_columns = array('available', 'availability_note');
+$availability_columns = array('available', 'availability_note', 'weekend_only', 'min_rental_days');
 foreach ($availability_columns as $column) {
     $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE '$column'");
     if (empty($column_exists)) {
         if ($column === 'available') {
             $wpdb->query("ALTER TABLE $table_name ADD COLUMN $column TINYINT(1) DEFAULT 1 AFTER image_url_5");
+        } elseif ($column === 'weekend_only') {
+            $wpdb->query("ALTER TABLE $table_name ADD COLUMN $column TINYINT(1) DEFAULT 0 AFTER stock_rented");
+        } elseif ($column === 'min_rental_days') {
+            $wpdb->query("ALTER TABLE $table_name ADD COLUMN $column INT DEFAULT 0 AFTER weekend_only");
         } else {
             $wpdb->query("ALTER TABLE $table_name ADD COLUMN $column VARCHAR(255) DEFAULT '' AFTER available");
         }
@@ -84,9 +88,11 @@ if (isset($_POST['submit'])) {
     $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
-    $delivery_time = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
-    $active = isset($_POST['active']) ? 1 : 0;
-    $sort_order = intval($_POST['sort_order']);
+    $delivery_time    = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
+    $weekend_only     = isset($_POST['weekend_only']) ? 1 : 0;
+    $min_rental_days  = isset($_POST['min_rental_days']) ? intval($_POST['min_rental_days']) : 0;
+    $active           = isset($_POST['active']) ? 1 : 0;
+    $sort_order       = intval($_POST['sort_order']);
     
     // Handle multiple images
     $image_data = array();
@@ -108,6 +114,8 @@ if (isset($_POST['submit'])) {
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
+            'weekend_only'           => $weekend_only,
+            'min_rental_days'        => $min_rental_days,
             'active'                 => $active,
             'sort_order'             => $sort_order
         ), $image_data);
@@ -117,7 +125,7 @@ if (isset($_POST['submit'])) {
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array('%d','%s','%s','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
@@ -180,6 +188,8 @@ if (isset($_POST['submit'])) {
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
+            'weekend_only'           => $weekend_only,
+            'min_rental_days'        => $min_rental_days,
             'active'                 => $active,
             'sort_order'             => $sort_order
         ), $image_data);
@@ -188,7 +198,7 @@ if (isset($_POST['submit'])) {
             $table_name,
             $insert_data,
             array_merge(
-                array('%d', '%s', '%s', '%f', '%f', '%f', '%d', '%s', '%s', '%d', '%d'),
+                array('%d','%s','%s','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
                 array_fill(0, 5, '%s')
             )
         );
