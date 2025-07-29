@@ -681,13 +681,15 @@ jQuery(document).ready(function($) {
                     $('.produkt-options.durations .produkt-option').removeClass('selected');
                     updateExtraImage(null);
                     updateColorImage(null);
-                    // Fetch blocked days for zero-stock extras of this variant
-                    updateExtraBookings(getZeroStockExtraIds());
-
-                    // Ensure availability check runs after options render
-                    setTimeout(function(){
-                        checkExtraAvailability();
-                    }, 100);
+                    // Fetch blocked days and check availability only when dates are chosen
+                    if (startDate && endDate) {
+                        updateExtraBookings(getZeroStockExtraIds());
+                        setTimeout(() => checkExtraAvailability(), 100);
+                    } else {
+                        // no dates yet -> clear blocked days and re-render calendar
+                        produkt_ajax.extra_blocked_days = [];
+                        setTimeout(() => renderCalendar(calendarMonth), 100);
+                    }
 
                     updateDiscountBadges(data.duration_discounts || {});
                     updatePriceAndButton();
