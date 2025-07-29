@@ -9,6 +9,11 @@ require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 $monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 $dayNames   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 
+// Filter parameters
+$product_filter = isset($_GET['product']) ? intval($_GET['product']) : 0;
+$status_filter  = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+$produkte        = \ProduktVerleih\Database::get_all_categories(true);
+
 $year  = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
 $month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('n'));
 if ($month < 1) { $month = 1; } elseif ($month > 12) { $month = 12; }
@@ -28,25 +33,36 @@ $start_index   = (int)date('N', $first_day_ts) - 1; // 0=Mo
 $booked        = [];
 $orders_by_day = [];
 $blocked_days  = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
-$orders = $wpdb->get_results(
-    "SELECT o.*, c.name as category_name,
-            COALESCE(v.name, o.produkt_name) as variant_name,
-            COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
-            COALESCE(d.name, o.dauer_text) as duration_name,
-            COALESCE(cond.name, o.zustand_text) as condition_name,
-            COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
-            COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
-     FROM {$wpdb->prefix}produkt_orders o
-     LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-     LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-     LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-     LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
-     LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
-     LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
-     LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
-     WHERE o.mode = 'kauf'
-     GROUP BY o.id"
-);
+
+$where = ["o.mode = 'kauf'"];
+if ($product_filter) {
+    $where[] = $wpdb->prepare('o.category_id = %d', $product_filter);
+}
+if ($status_filter === 'open') {
+    $where[] = "o.status <> 'abgeschlossen'";
+} elseif ($status_filter === 'returned') {
+    $where[] = "o.status = 'abgeschlossen'";
+}
+
+$sql = "SELECT o.*, c.name as category_name,
+               COALESCE(v.name, o.produkt_name) as variant_name,
+               COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+               COALESCE(d.name, o.dauer_text) as duration_name,
+               COALESCE(cond.name, o.zustand_text) as condition_name,
+               COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+               COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
+        FROM {$wpdb->prefix}produkt_orders o
+        LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+        LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+        LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+        LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+        LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+        LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+        LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+        WHERE " . implode(' AND ', $where) . "
+        GROUP BY o.id";
+
+$orders = $wpdb->get_results($sql);
 
 foreach ($orders as $o) {
     $o->rental_days = pv_get_order_rental_days($o);
@@ -83,13 +99,45 @@ foreach ($orders as $o) {
 ?>
 
 <div class="wrap" id="produkt-admin-calendar">
-    <div class="produkt-admin-header">
-        <div class="produkt-admin-logo">📅</div>
-        <div class="produkt-admin-title">
-            <h1>Kalender</h1>
-            <p>Übersicht der Verkaufstage</p>
-</div>
-</div>
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-calendar-alt"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Kalender-Übersicht</h1>
+                <p>Alle Buchungen und Rückgaben im Überblick</p>
+            </div>
+        </div>
+
+        <div class="produkt-category-selector">
+            <form method="get">
+                <input type="hidden" name="page" value="produkt-calendar">
+                <label for="filter-product">Produkt:</label>
+                <select id="filter-product" name="product">
+                    <option value="">Alle Produkte</option>
+                    <?php foreach ($produkte as $produkt) : ?>
+                        <option value="<?php echo esc_attr($produkt->id); ?>" <?php selected($product_filter, $produkt->id); ?>><?php echo esc_html($produkt->name); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <label for="filter-status">Status:</label>
+                <select id="filter-status" name="status">
+                    <option value="">Alle</option>
+                    <option value="open" <?php selected($status_filter, 'open'); ?>>Ausgeliehen</option>
+                    <option value="returned" <?php selected($status_filter, 'returned'); ?>>Zurückgegeben</option>
+                </select>
+                <button class="button button-primary" type="submit">Filtern</button>
+            </form>
+            <div class="produkt-category-info">
+                <code><strong>Legende:</strong> <span class="badge badge-success">Ausgeliehen</span> <span class="badge badge-danger">Rückgabe fällig</span></code>
+            </div>
+        </div>
+
+        <div class="calendar-nav" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <a class="button button-primary" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>">&larr;</a>
+            <h2 style="margin:0"><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
+            <a class="button button-primary" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year); ?>">&rarr;</a>
+        </div>
 
 <div id="day-action-modal" class="modal-overlay">
     <div class="modal-content" style="text-align:center;">
@@ -110,91 +158,42 @@ foreach ($orders as $o) {
 
     <div class="calendar-grid">
         <?php foreach ($dayNames as $dn): ?>
-            <div class="day-name"><?php echo esc_html($dn); ?></div>
+            <div class="calendar-day-name"><?php echo esc_html($dn); ?></div>
         <?php endforeach; ?>
-        <?php for ($i=0; $i<$start_index; $i++): ?>
-            <div class="empty"></div>
+        <?php for ($i = 0; $i < $start_index; $i++): ?>
+            <div class="calendar-day empty"></div>
         <?php endfor; ?>
-        <?php for ($d=1; $d<=$last_day; $d++):
-            $date  = sprintf('%04d-%02d-%02d', $year, $month, $d);
-            $cls   = '';
-            $title = '';
-            $count = 0;
+        <?php for ($d = 1; $d <= $last_day; $d++):
+            $date    = sprintf('%04d-%02d-%02d', $year, $month, $d);
+            $classes = 'calendar-day';
+            $badges  = '';
+            if ($date === current_time('Y-m-d')) {
+                $classes .= ' today';
+            }
+            if (in_array($date, $blocked_days, true)) {
+                $classes .= ' day-blocked';
+            }
             if (isset($orders_by_day[$date])) {
-                $count = count($orders_by_day[$date]);
-                if ($count === 1) {
-                    $status = $orders_by_day[$date][0]->status === 'abgeschlossen' ? 'completed' : 'open';
-                    $cls    = $status === 'open' ? 'booked-open' : 'booked-completed';
-                } elseif ($count > 1) {
-                    $cls   = 'booked-multiple';
-                    $title = $count . ' Buchungen';
+                foreach ($orders_by_day[$date] as $o) {
+                    if ($o->start_date === $date) {
+                        $classes .= ' booked';
+                        $badges .= '<div class="event-badge badge badge-success">#' . esc_html($o->id) . '</div>';
+                    }
+                    if ($o->end_date === $date) {
+                        $classes .= ' return';
+                        $badges .= '<div class="event-badge badge badge-danger">Rückgabe</div>';
+                    }
                 }
             }
         ?>
-            <?php $blocked = in_array($date, $blocked_days, true); ?>
-            <div class="calendar-day <?php echo $cls . ($blocked ? ' day-blocked' : ''); ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>>
-                <?php echo $d; ?>
-                <?php if ($blocked): ?>
-                    <span class="blocked-marker">✖</span>
-                <?php endif; ?>
-                <?php if ($count > 1): ?>
-                    <span class="booking-count"><?php echo $count; ?></span>
-                <?php endif; ?>
+            <div class="<?php echo esc_attr($classes); ?>" data-date="<?php echo esc_attr($date); ?>">
+                <div class="day-number"><?php echo $d; ?></div>
+                <?php echo $badges; ?>
             </div>
         <?php endfor; ?>
     </div>
 </div>
 
-<style>
-#produkt-admin-calendar .calendar-grid{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:6px;
-    font-size:16px;
-}
-#produkt-admin-calendar .day-name,
-#produkt-admin-calendar .calendar-day{
-    text-align:center;
-    padding:18px;
-    border-radius:4px;
-    min-height:60px;
-    border:1px solid #ddd;
-    position:relative;
-    background-color:#fff;
-}
-#produkt-admin-calendar .booked-open{
-    background:#fff3cd;
-}
-#produkt-admin-calendar .booked-completed{
-    background:#d4edda;
-}
-#produkt-admin-calendar .booked-multiple{
-    background:#f8d7da;
-}
-#produkt-admin-calendar .day-blocked{
-    background:#eee;
-    color:#999;
-}
-#produkt-admin-calendar .blocked-marker{
-    position:absolute;
-    top:2px;
-    right:2px;
-    font-size:12px;
-    color:#dc3545;
-}
-#produkt-admin-calendar .booking-count{
-    position:absolute;
-    right:2px;
-    bottom:2px;
-    font-size:12px;
-    background:#dc3545;
-    color:#fff;
-    border-radius:50%;
-    padding:1px 4px;
-    min-width:10px;
-    line-height:1.2;
-}
-</style>
 
 <div id="order-details-modal" class="modal-overlay">
     <div class="modal-content">

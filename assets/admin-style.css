@@ -2820,3 +2820,15 @@ body.admin-bar .produkt-return-banner{top:32px;}
 @media screen and (max-width:782px){body.admin-bar .produkt-return-banner{top:46px;}}
 .produkt-return-banner .produkt-return-item{display:flex;justify-content:space-between;align-items:center;gap:10px;}
 
+/* Admin Calendar */
+#produkt-admin-calendar .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
+#produkt-admin-calendar .calendar-day-name{font-weight:bold;text-align:center;padding:6px;color:#6c757d;}
+#produkt-admin-calendar .calendar-day{background:#f8f9fa;border:1px solid #e9ecef;border-radius:8px;padding:10px;min-height:80px;position:relative;transition:all .2s ease;}
+#produkt-admin-calendar .calendar-day:hover{background:#e2f0ff;cursor:pointer;}
+#produkt-admin-calendar .calendar-day .day-number{font-weight:600;margin-bottom:4px;color:#3c434a;}
+#produkt-admin-calendar .calendar-day.today{background:#e0f7fa;border:2px solid var(--pv-blue);}
+#produkt-admin-calendar .calendar-day.booked{background:#e6ffed;border:1px solid #c3e6cb;}
+#produkt-admin-calendar .calendar-day.return{background:#fff5f5;border:1px solid #f5c6cb;}
+#produkt-admin-calendar .event-badge{position:relative;display:inline-block;margin-top:4px;font-size:11px;}
+#produkt-admin-calendar .day-blocked{background:#eee;color:#999;}
+
