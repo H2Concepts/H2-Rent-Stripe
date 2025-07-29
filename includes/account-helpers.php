@@ -269,6 +269,7 @@ function pv_generate_invoice_pdf($order_id) {
 
     // 3. Daten aufbauen
     $sender    = pv_get_invoice_sender();
+    $logo_url = get_option('plugin_firma_logo_url', '');
     $product    = $order['produkt_name'];
     if (!$product) {
         $product = $order['variant_name'] ?? '';
@@ -290,6 +291,7 @@ function pv_generate_invoice_pdf($order_id) {
         'firma_ustid'      => $sender['firma_ust_id'],
         'firma_email'      => $sender['firma_email'],
         'firma_telefon'    => $sender['firma_telefon'],
+        'firma_logo_url'   => $logo_url,
     ];
 
     // 4. Mietdauer bestimmen

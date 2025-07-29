@@ -21,6 +21,13 @@ if (isset($_POST['submit_email_settings'])) {
     ];
     update_option('produkt_invoice_sender', $invoice);
 
+    // Logo für Rechnungen separat speichern
+    if (!empty($_POST['firma_logo_url'])) {
+        update_option('plugin_firma_logo_url', esc_url_raw($_POST['firma_logo_url']));
+    } else {
+        delete_option('plugin_firma_logo_url');
+    }
+
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
 }
 
@@ -39,6 +46,7 @@ $invoice = get_option('produkt_invoice_sender', [
     'firma_email'   => '',
     'firma_telefon' => '',
 ]);
+$logo_url = get_option('plugin_firma_logo_url', '');
 ?>
 <div class="produkt-branding-tab">
     <form method="post" action="">
@@ -88,7 +96,32 @@ $invoice = get_option('produkt_invoice_sender', [
                 <label>Telefon (optional)</label>
                 <input type="text" name="firma_telefon" value="<?php echo esc_attr($invoice['firma_telefon']); ?>">
             </div>
+            <div class="produkt-form-group">
+                <label>Logo für Rechnung (optional)</label>
+                <input type="url" name="firma_logo_url" id="firma_logo_url" value="<?php echo esc_attr($logo_url); ?>">
+                <button type="button" class="button produkt-media-button" data-target="firma_logo_url">📁 Aus Mediathek wählen</button>
+                <?php if ($logo_url) : ?>
+                    <div class="produkt-image-preview"><img src="<?php echo esc_url($logo_url); ?>" alt=""></div>
+                <?php endif; ?>
+            </div>
         </div>
         <?php submit_button('💾 Einstellungen speichern', 'primary', 'submit_email_settings'); ?>
     </form>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.produkt-media-button').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.getElementById(this.getAttribute('data-target'));
+            if (!target) return;
+            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function() {
+                const attachment = frame.state().get('selection').first().toJSON();
+                target.value = attachment.url;
+            });
+            frame.open();
+        });
+    });
+});
+</script>
