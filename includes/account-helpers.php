@@ -361,6 +361,9 @@ function pv_generate_invoice_pdf($order_id) {
     $url     = $endpoint;
     $payload = $post_data;
 
+    // Payload Logging
+    error_log('[PDF] Gesamter Payload: ' . print_r($post_data, true));
+
     // 5. HTTP-Request an API
     $response = wp_remote_post($url, [
         'timeout' => 15,
