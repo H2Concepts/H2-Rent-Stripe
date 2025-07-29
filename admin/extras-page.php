@@ -288,8 +288,9 @@ if ($edit_item) {
 ?>
 
 <div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
+    <div class="produkt-admin-card">
+        <!-- Kompakter Header -->
+        <div class="produkt-admin-header-compact">
         <div class="produkt-admin-logo-compact">🎁</div>
         <div class="produkt-admin-title-compact">
             <h1>Extras verwalten</h1>
@@ -364,5 +365,6 @@ if ($edit_item) {
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/extras-list-tab.php';
         }
         ?>
+    </div>
     </div>
 </div>
