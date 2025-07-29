@@ -2813,5 +2813,7 @@
 
 
 .produkt-return-banner{position:sticky;top:0;z-index:1000;background:#dc3232;color:#fff;padding:10px;}
+body.admin-bar .produkt-return-banner{top:32px;}
+@media screen and (max-width:782px){body.admin-bar .produkt-return-banner{top:46px;}}
 .produkt-return-banner .produkt-return-item{display:flex;justify-content:space-between;align-items:center;gap:10px;}
 
