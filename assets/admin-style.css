@@ -98,7 +98,7 @@
     background: transparent;
     color: #3c434a;
     padding: 15px 20px;
-    margin: 20px 0;
+    margin: 0 0 20px 0;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -2406,7 +2406,7 @@
     background: transparent;
     color: #3c434a;
     padding: 15px 20px;
-    margin: 20px 0;
+    margin: 0 0 20px 0;
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -2815,10 +2815,11 @@
 .orders-accordion .order-product-image{width:64px;height:64px;object-fit:cover;border-radius:6px;display:block;margin-bottom:10px;}
 
 
-.produkt-return-banner{position:sticky;top:0;z-index:1000;background:#dc3232;color:#fff;padding:10px;}
+.produkt-return-banner{position:sticky;top:0;z-index:1000;background:#dc3232;color:#fff;padding:15px 50px;}
 body.admin-bar .produkt-return-banner{top:32px;}
 @media screen and (max-width:782px){body.admin-bar .produkt-return-banner{top:46px;}}
 .produkt-return-banner .produkt-return-item{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.produkt-return-banner .produkt-return-item + .produkt-return-item{margin-top:10px;}
 
 /* Admin Calendar */
 #produkt-admin-calendar .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;}
