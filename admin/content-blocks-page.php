@@ -47,8 +47,17 @@ if ($action === 'edit' && $edit_id) {
 
 $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d ORDER BY position", $selected_category));
 ?>
-<div class="wrap">
-    <h1>Content-Blöcke</h1>
+<div class="wrap" id="produkt-admin-content-blocks">
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-welcome-write-blog"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Content-Blöcke</h1>
+                <p>Gestalte Texte und Bilder für Kategorien</p>
+            </div>
+        </div>
 
     <form method="get" action="">
         <input type="hidden" name="page" value="produkt-content-blocks">
@@ -164,4 +173,5 @@ $blocks = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE cat
             </table>
         <?php endif; ?>
     <?php endif; ?>
+    </div>
 </div>
