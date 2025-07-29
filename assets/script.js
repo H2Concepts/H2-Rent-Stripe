@@ -684,7 +684,10 @@ jQuery(document).ready(function($) {
                     // Fetch blocked days for zero-stock extras of this variant
                     updateExtraBookings(getZeroStockExtraIds());
 
-                    checkExtraAvailability();
+                    // Ensure availability check runs after options render
+                    setTimeout(function(){
+                        checkExtraAvailability();
+                    }, 100);
 
                     updateDiscountBadges(data.duration_discounts || {});
                     updatePriceAndButton();
