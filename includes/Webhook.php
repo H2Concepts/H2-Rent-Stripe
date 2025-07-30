@@ -189,7 +189,15 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $from_name  = get_bloginfo('name');
     $from_email = get_option('admin_email');
     $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
-    wp_mail($order['customer_email'], $subject, $message, $headers);
+
+    // Rechnung erzeugen und Anhang vorbereiten
+    $attachments = [];
+    $pdf_path    = pv_generate_invoice_pdf($order_id);
+    if ($pdf_path && file_exists($pdf_path)) {
+        $attachments[] = $pdf_path;
+    }
+
+    wp_mail($order['customer_email'], $subject, $message, $headers, $attachments);
 }
 
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {

@@ -13,6 +13,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Define plugin path constants
+if (!defined('H2_RENT_PLUGIN_DIR')) {
+    define('H2_RENT_PLUGIN_DIR', plugin_dir_path(__FILE__));
+}
+if (!defined('H2_RENT_PLUGIN_URL')) {
+    define('H2_RENT_PLUGIN_URL', plugin_dir_url(__FILE__));
+}
+
 // Plugin constants
 const PRODUKT_PLUGIN_VERSION = '2.8.52';
 const PRODUKT_PLUGIN_DIR = __DIR__ . '/';
@@ -24,6 +32,46 @@ define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
 define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
 define('PRODUKT_CHECKOUT_PAGE_OPTION', 'produkt_checkout_page_id');
 define('PRODUKT_CONFIRM_PAGE_OPTION', 'produkt_confirm_page_id');
+
+// Initialize Freemius
+if (!function_exists('hrp_fs')) {
+    function hrp_fs() {
+        global $hrp_fs;
+
+        if (!isset($hrp_fs)) {
+            $freemius_start = H2_RENT_PLUGIN_DIR . 'vendor/freemius/start.php';
+            if (file_exists($freemius_start)) {
+                require_once $freemius_start;
+                $hrp_fs = fs_dynamic_init([
+                    'id'              => 19941,
+                    'slug'            => 'h2-rental-pro',
+                    'premium_slug'    => 'h2-rental-pro',
+                    'type'            => 'plugin',
+                    'public_key'      => 'pk_e29255c0fb90b039a0e64e550b1ad',
+                    'is_premium'      => true,
+                    'is_premium_only' => true,
+                    'has_addons'      => false,
+                    'has_paid_plans'  => true,
+                    'is_org_compliant'=> false,
+                    'menu'            => [
+                        'contact' => false,
+                        'support' => false,
+                    ],
+                ]);
+            }
+        }
+
+        return $hrp_fs;
+    }
+
+    hrp_fs();
+    do_action('hrp_fs_loaded');
+}
+
+// Require valid license
+if (!hrp_fs() || !hrp_fs()->can_use_premium_code()) {
+    return;
+}
 
 // Load Stripe SDK if available
 require_once plugin_dir_path(__FILE__) . 'includes/stripe-autoload.php';

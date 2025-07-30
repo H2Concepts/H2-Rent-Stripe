@@ -152,6 +152,17 @@ class Database {
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_rented INT DEFAULT 0 AFTER $after");
         }
 
+        // Ensure separate price columns exist
+        $rent_price_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'price_rent'");
+        if (empty($rent_price_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN price_rent DECIMAL(10,2) DEFAULT 0 AFTER price");
+        }
+        $sale_price_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'price_sale'");
+        if (empty($sale_price_exists)) {
+            $after = !empty($rent_price_exists) ? 'price_rent' : 'price';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN price_sale DECIMAL(10,2) DEFAULT 0 AFTER $after");
+        }
+
         // Ensure show_badge column exists for durations
         $table_durations = $wpdb->prefix . 'produkt_durations';
         $badge_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'show_badge'");
@@ -1039,6 +1050,8 @@ class Database {
             stripe_price_id_rent varchar(255) DEFAULT NULL,
             stripe_price_id_sale varchar(255) DEFAULT NULL,
             stripe_archived tinyint(1) DEFAULT 0,
+            price_rent decimal(10,2) DEFAULT 0,
+            price_sale decimal(10,2) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,
             sku varchar(100) DEFAULT '',
