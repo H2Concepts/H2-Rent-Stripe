@@ -193,3 +193,208 @@ function pv_get_email_footer_html() {
     return '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">'
         . implode('<br>', $parts) . '</div>';
 }
+
+/**
+ * Retrieve invoice sender data.
+ *
+ * @return array
+ */
+function pv_get_invoice_sender() {
+    $defaults = [
+        'firma_name'    => '',
+        'firma_strasse' => '',
+        'firma_plz_ort' => '',
+        'firma_ust_id'  => '',
+        'firma_email'   => '',
+        'firma_telefon' => '',
+    ];
+
+    $data = get_option('produkt_invoice_sender', []);
+    return wp_parse_args($data, $defaults);
+}
+
+/**
+ * Retrieve a single order with related names for invoice generation.
+ *
+ * @param int $order_id Order ID
+ * @return array|null Order data as associative array or null when not found
+ */
+function pv_get_order_by_id($order_id) {
+    global $wpdb;
+
+    $sql = $wpdb->prepare(
+        "SELECT o.*, c.name AS category_name,
+                COALESCE(v.name, o.produkt_name) AS variant_name,
+                COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                COALESCE(d.name, o.dauer_text) AS duration_name,
+                COALESCE(cond.name, o.zustand_text) AS condition_name,
+                COALESCE(pc.name, o.produktfarbe_text) AS product_color_name,
+                COALESCE(fc.name, o.gestellfarbe_text) AS frame_color_name,
+                sm.name AS shipping_name,
+                sm.service_provider AS shipping_provider
+         FROM {$wpdb->prefix}produkt_orders o
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+         LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+         LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+         LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+         LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+         LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+         LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+         LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+            ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
+         WHERE o.id = %d
+         GROUP BY o.id",
+        $order_id
+    );
+
+    $row = $wpdb->get_row($sql, ARRAY_A);
+    return $row ?: null;
+}
+
+/**
+ * Generate an invoice PDF for an order using the external API.
+ *
+ * @param int $order_id Order ID
+ * @return string|false Path to the generated PDF or false on failure
+ */
+function pv_generate_invoice_pdf($order_id) {
+    // 1. Bestelldaten auslesen
+    $order = pv_get_order_by_id($order_id);
+    if (!$order) {
+        return false;
+    }
+
+    // 2. PDF-API-Endpunkt + Key
+    $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
+
+    // 3. Daten aufbauen
+    $sender    = pv_get_invoice_sender();
+    $logo_url = get_option('plugin_firma_logo_url', '');
+    $product    = $order['produkt_name'];
+    if (!$product) {
+        $product = $order['variant_name'] ?? '';
+    }
+
+    $customer_name = trim($order['customer_name']);
+    $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
+
+    $post_data = [
+        'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
+        'rechnungsdatum'   => date('Y-m-d'),
+        'kunde_name'       => $customer_name ?: 'Kunde',
+        'kunde_adresse'    => $customer_addr,
+
+        // Firma (aus Einstellungen)
+        'firma_name'       => $sender['firma_name'],
+        'firma_strasse'    => $sender['firma_strasse'],
+        'firma_plz_ort'    => $sender['firma_plz_ort'],
+        'firma_ustid'      => $sender['firma_ust_id'],
+        'firma_email'      => $sender['firma_email'],
+        'firma_telefon'    => $sender['firma_telefon'],
+        'firma_logo_url'   => $logo_url,
+    ];
+
+    // 4. Mietdauer bestimmen
+    $tage = pv_get_order_rental_days((object) $order);
+    if (!$tage || $tage < 1) {
+        $tage = 1;
+    }
+    $post_data['dauer'] = $tage;
+
+    // 5. Artikel hinzufügen (Produkt + Extras + Versand)
+    $i = 1;
+
+    $extras_total = 0.0;
+    $extras = [];
+    if (!empty($order['extra_ids'])) {
+        global $wpdb;
+        $ids = array_filter(array_map('intval', explode(',', $order['extra_ids'])));
+        if ($ids) {
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $extras = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, name, price_rent, price_sale, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                    ...$ids
+                )
+            );
+        }
+    }
+
+    // Hauptprodukt
+    $main_total = floatval($order['final_price']);
+    foreach ($extras as $ex) {
+        $p_field = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+        $extras_total += floatval($p_field) * $tage;
+    }
+    $main_total -= $extras_total;
+    if ($main_total < 0) { $main_total = 0; }
+
+    $unit_price = $tage ? round($main_total / $tage, 2) : 0;
+    $post_data["artikel_{$i}_name"]  = $product;
+    $post_data["artikel_{$i}_menge"] = $tage;
+    $post_data["artikel_{$i}_preis"] = $unit_price;
+    $i++;
+
+    // Extras
+    if ($extras) {
+        foreach ($extras as $ex) {
+            $price_val = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+            $post_data["artikel_{$i}_name"]  = $ex->name;
+            $post_data["artikel_{$i}_menge"] = $tage;
+            $post_data["artikel_{$i}_preis"] = floatval($price_val);
+            $i++;
+        }
+    } elseif (!empty($order['extra_names'])) {
+        foreach (explode(', ', $order['extra_names']) as $extra_name) {
+            $post_data["artikel_{$i}_name"]  = $extra_name;
+            $post_data["artikel_{$i}_menge"] = $tage;
+            $post_data["artikel_{$i}_preis"] = 0;
+            $i++;
+        }
+    }
+
+    // Versandkosten als eigener Artikel
+    if (!empty($order['shipping_cost']) && floatval($order['shipping_cost']) > 0) {
+        $shipping_name = $order['shipping_name'] ?: 'Versand';
+        $post_data["artikel_{$i}_name"]  = $shipping_name;
+        $post_data["artikel_{$i}_menge"] = 1;
+        $post_data["artikel_{$i}_preis"] = floatval($order['shipping_cost']);
+        $i++;
+    }
+
+    $url     = $endpoint;
+    $payload = $post_data;
+
+    // Payload Logging
+    error_log('[PDF] Gesamter Payload: ' . print_r($post_data, true));
+
+    // 5. HTTP-Request an API
+    $response = wp_remote_post($url, [
+        'timeout' => 15,
+        'body'    => $payload,
+    ]);
+
+    // Logging für Debug-Zwecke
+    $response_code = wp_remote_retrieve_response_code($response);
+    $pdf_data      = wp_remote_retrieve_body($response);
+
+    error_log('[PDF] Response-Code: ' . $response_code);
+    error_log('[PDF] Länge: ' . strlen($pdf_data));
+
+    // Prüfen ob PDF-Daten plausibel sind (größer als 1000 Byte und kein HTML)
+    if (
+        $response_code !== 200 ||
+        strlen($pdf_data) < 1000 ||
+        stripos($pdf_data, '<html') !== false
+    ) {
+        error_log('[PDF] Fehlerhafte Rückgabe – keine gültige PDF.');
+        return false;
+    }
+
+    // PDF lokal speichern
+    $upload_dir = wp_upload_dir();
+    $path = trailingslashit($upload_dir['basedir']) . 'rechnung-' . $order_id . '.pdf';
+    file_put_contents($path, $pdf_data);
+
+    return $path;
+}

@@ -9,6 +9,11 @@ require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 $monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 $dayNames   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 
+// Filter parameters
+$product_filter = isset($_GET['product']) ? intval($_GET['product']) : 0;
+$status_filter  = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
+$produkte       = \ProduktVerleih\Database::get_all_categories(true);
+
 $year  = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
 $month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('n'));
 if ($month < 1) { $month = 1; } elseif ($month > 12) { $month = 12; }
@@ -28,25 +33,31 @@ $start_index   = (int)date('N', $first_day_ts) - 1; // 0=Mo
 $booked        = [];
 $orders_by_day = [];
 $blocked_days  = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
-$orders = $wpdb->get_results(
-    "SELECT o.*, c.name as category_name,
-            COALESCE(v.name, o.produkt_name) as variant_name,
-            COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
-            COALESCE(d.name, o.dauer_text) as duration_name,
-            COALESCE(cond.name, o.zustand_text) as condition_name,
-            COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
-            COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
-     FROM {$wpdb->prefix}produkt_orders o
-     LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-     LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-     LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-     LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
-     LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
-     LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
-     LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
-     WHERE o.mode = 'kauf'
-     GROUP BY o.id"
-);
+
+$where = ["o.mode = 'kauf'"];
+if ($product_filter) {
+    $where[] = $wpdb->prepare('o.category_id = %d', $product_filter);
+}
+
+$sql = "SELECT o.*, c.name as category_name,
+               COALESCE(v.name, o.produkt_name) as variant_name,
+               COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+               COALESCE(d.name, o.dauer_text) as duration_name,
+               COALESCE(cond.name, o.zustand_text) as condition_name,
+               COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+               COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
+        FROM {$wpdb->prefix}produkt_orders o
+        LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+        LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+        LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+        LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+        LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+        LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+        LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+        WHERE " . implode(' AND ', $where) . "
+        GROUP BY o.id";
+
+$orders = $wpdb->get_results($sql);
 
 foreach ($orders as $o) {
     $o->rental_days = pv_get_order_rental_days($o);
@@ -83,13 +94,45 @@ foreach ($orders as $o) {
 ?>
 
 <div class="wrap" id="produkt-admin-calendar">
-    <div class="produkt-admin-header">
-        <div class="produkt-admin-logo">📅</div>
-        <div class="produkt-admin-title">
-            <h1>Kalender</h1>
-            <p>Übersicht der Verkaufstage</p>
-</div>
-</div>
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-calendar-alt"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Kalender-Übersicht</h1>
+                <p>Alle Buchungen und Rückgaben im Überblick</p>
+            </div>
+        </div>
+
+        <div class="produkt-category-selector">
+            <form method="get">
+                <input type="hidden" name="page" value="produkt-calendar">
+                <label for="filter-product">Produkt:</label>
+                <select id="filter-product" name="product">
+                    <option value="">Alle Produkte</option>
+                    <?php foreach ($produkte as $produkt) : ?>
+                        <option value="<?php echo esc_attr($produkt->id); ?>" <?php selected($product_filter, $produkt->id); ?>><?php echo esc_html($produkt->name); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <label for="filter-status">Status:</label>
+                <select id="filter-status" name="status">
+                    <option value="">Alle</option>
+                    <option value="open" <?php selected($status_filter, 'open'); ?>>Ausgeliehen</option>
+                    <option value="return" <?php selected($status_filter, 'return'); ?>>Rückgabe</option>
+                </select>
+                <button class="button button-primary" type="submit">Filtern</button>
+            </form>
+            <div class="produkt-category-info">
+                <code><strong>Legende:</strong> <span class="badge badge-success">Ausgeliehen</span> <span class="badge badge-danger">Rückgabe fällig</span></code>
+            </div>
+        </div>
+
+        <div class="calendar-nav" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <a class="button button-primary" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>">&larr;</a>
+            <h2 style="margin:0"><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
+            <a class="button button-primary" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year); ?>">&rarr;</a>
+        </div>
 
 <div id="day-action-modal" class="modal-overlay">
     <div class="modal-content" style="text-align:center;">
@@ -102,99 +145,49 @@ foreach ($orders as $o) {
     </div>
 </div>
 
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <a class="button" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>">&laquo; <?php echo $monthNames[$prev_month-1]; ?></a>
-        <h2 style="margin:0;"><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
-        <a class="button" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year); ?>"><?php echo $monthNames[$next_month-1]; ?> &raquo;</a>
-    </div>
 
     <div class="calendar-grid">
         <?php foreach ($dayNames as $dn): ?>
-            <div class="day-name"><?php echo esc_html($dn); ?></div>
+            <div class="calendar-day-name"><?php echo esc_html($dn); ?></div>
         <?php endforeach; ?>
-        <?php for ($i=0; $i<$start_index; $i++): ?>
-            <div class="empty"></div>
+        <?php for ($i = 0; $i < $start_index; $i++): ?>
+            <div class="calendar-day empty"></div>
         <?php endfor; ?>
-        <?php for ($d=1; $d<=$last_day; $d++):
-            $date  = sprintf('%04d-%02d-%02d', $year, $month, $d);
-            $cls   = '';
-            $title = '';
-            $count = 0;
+        <?php for ($d = 1; $d <= $last_day; $d++):
+            $date    = sprintf('%04d-%02d-%02d', $year, $month, $d);
+            $classes = 'calendar-day';
+            $badges  = '';
+            $tips    = [];
+            if ($date === current_time('Y-m-d')) {
+                $classes .= ' today';
+            }
+            if (in_array($date, $blocked_days, true)) {
+                $classes .= ' day-blocked';
+            }
             if (isset($orders_by_day[$date])) {
-                $count = count($orders_by_day[$date]);
-                if ($count === 1) {
-                    $status = $orders_by_day[$date][0]->status === 'abgeschlossen' ? 'completed' : 'open';
-                    $cls    = $status === 'open' ? 'booked-open' : 'booked-completed';
-                } elseif ($count > 1) {
-                    $cls   = 'booked-multiple';
-                    $title = $count . ' Buchungen';
+                foreach ($orders_by_day[$date] as $o) {
+                    if (($status_filter === '' || $status_filter === 'open') && $o->start_date === $date) {
+                        $classes .= ' booked';
+                        $badges .= '<div class="event-badge badge badge-success">#' . esc_html($o->id) . '</div>';
+                        $tips[]  = 'Ausgeliehen: #' . $o->id;
+                    }
+                    if (($status_filter === '' || $status_filter === 'return') && $o->end_date === $date) {
+                        $classes .= ' return';
+                        $badges .= '<div class="event-badge badge badge-danger">#' . esc_html($o->id) . '</div>';
+                        $tips[]  = 'Rückgabe: #' . $o->id;
+                    }
                 }
             }
+            $title = $tips ? ' title="' . esc_attr(implode(' | ', $tips)) . '"' : '';
         ?>
-            <?php $blocked = in_array($date, $blocked_days, true); ?>
-            <div class="calendar-day <?php echo $cls . ($blocked ? ' day-blocked' : ''); ?>" data-date="<?php echo $date; ?>"<?php echo $title ? ' title="' . esc_attr($title) . '"' : ''; ?>>
-                <?php echo $d; ?>
-                <?php if ($blocked): ?>
-                    <span class="blocked-marker">✖</span>
-                <?php endif; ?>
-                <?php if ($count > 1): ?>
-                    <span class="booking-count"><?php echo $count; ?></span>
-                <?php endif; ?>
+            <div class="<?php echo esc_attr($classes); ?>" data-date="<?php echo esc_attr($date); ?>"<?php echo $title; ?>>
+                <div class="day-number"><?php echo $d; ?></div>
+                <?php echo $badges; ?>
             </div>
         <?php endfor; ?>
     </div>
 </div>
 
-<style>
-#produkt-admin-calendar .calendar-grid{
-    display:grid;
-    grid-template-columns:repeat(7,1fr);
-    gap:6px;
-    font-size:16px;
-}
-#produkt-admin-calendar .day-name,
-#produkt-admin-calendar .calendar-day{
-    text-align:center;
-    padding:18px;
-    border-radius:4px;
-    min-height:60px;
-    border:1px solid #ddd;
-    position:relative;
-    background-color:#fff;
-}
-#produkt-admin-calendar .booked-open{
-    background:#fff3cd;
-}
-#produkt-admin-calendar .booked-completed{
-    background:#d4edda;
-}
-#produkt-admin-calendar .booked-multiple{
-    background:#f8d7da;
-}
-#produkt-admin-calendar .day-blocked{
-    background:#eee;
-    color:#999;
-}
-#produkt-admin-calendar .blocked-marker{
-    position:absolute;
-    top:2px;
-    right:2px;
-    font-size:12px;
-    color:#dc3545;
-}
-#produkt-admin-calendar .booking-count{
-    position:absolute;
-    right:2px;
-    bottom:2px;
-    font-size:12px;
-    background:#dc3545;
-    color:#fff;
-    border-radius:50%;
-    padding:1px 4px;
-    min-width:10px;
-    line-height:1.2;
-}
-</style>
 
 <div id="order-details-modal" class="modal-overlay">
     <div class="modal-content">
@@ -257,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function(){
             html += buildOrderDetails(o, orderLogs[o.id] || []);
         });
         content.innerHTML = html;
+        initModalTabs(content);
         modal.style.display = 'block';
     });
 
@@ -266,53 +260,74 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 function buildOrderDetails(order, logs) {
-    let detailsHtml = `
-        <div style="margin-bottom:20px;border-bottom:1px solid #ddd;padding-bottom:15px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <h4>📋 Bestellinformationen</h4>
-                    <p><strong>Bestellnummer:</strong> #${order.id}</p>
-                    <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
-                    <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
-                    ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
-                    <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-' + parseFloat(order.discount_amount).toFixed(2).replace('.', ',') + '€' : '–'}</p>
-                </div>
-                <div>
-                    <h4>👤 Kundendaten</h4>
-                    <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
-                    <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
-                    <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
-                    <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
-                    <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
-                </div>
+    const id = order.id;
+    const detailsTab = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div>
+                <h4>📋 Bestellinformationen</h4>
+                <p><strong>Bestellnummer:</strong> #${id}</p>
+                <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
+                <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
+                ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
+                <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-' + parseFloat(order.discount_amount).toFixed(2).replace('.', ',') + '€' : '–'}</p>
             </div>
+            <div>
+                <h4>👤 Kundendaten</h4>
+                <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
+                <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
+                <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
+                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+            </div>
+        </div>`;
 
-            <h4>🛍️ Produktauswahl</h4>
-            <ul>
-                <li><strong>Ausführung:</strong> ${order.variant_name}</li>
-                <li><strong>Extra:</strong> ${order.extra_names}</li>
-                <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
-                ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
-                ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
-                ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
-                ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}
-            </ul>
-
-            <h4>🖥️ Technische Daten</h4>
-            <p><strong>User Agent:</strong> ${order.user_agent}</p>
-    `;
+    let extrasTab = `<h4>🛍️ Produktauswahl</h4><ul>
+            <li><strong>Ausführung:</strong> ${order.variant_name}</li>
+            <li><strong>Extra:</strong> ${order.extra_names}</li>
+            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
+            ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
+            ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
+            ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
+            ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}
+        </ul>`;
 
     if (logs.length) {
-        detailsHtml += '<h4>📑 Verlauf</h4><ul>';
+        extrasTab += '<h4>📑 Verlauf</h4><ul>';
         logs.forEach(function(l){
             const date = new Date(l.created_at).toLocaleString('de-DE');
-            detailsHtml += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
+            extrasTab += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
         });
-        detailsHtml += '</ul>';
+        extrasTab += '</ul>';
     }
 
-    detailsHtml += '</div>';
-    return detailsHtml;
+    const actionsTab = `<p><em>Aktionen folgen…</em></p>`;
+
+    return `
+        <div class="order-section">
+            <h4 class="order-heading">Bestellung #${id}</h4>
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-target="details-${id}">Details</button>
+                <button class="modal-tab" data-target="extras-${id}">Extras</button>
+                <button class="modal-tab" data-target="actions-${id}">Aktionen</button>
+            </div>
+            <div class="modal-tab-content" id="details-${id}">${detailsTab}</div>
+            <div class="modal-tab-content hidden" id="extras-${id}">${extrasTab}</div>
+            <div class="modal-tab-content hidden" id="actions-${id}">${actionsTab}</div>
+        </div>`;
+}
+
+function initModalTabs(root){
+    root.querySelectorAll('.modal-tabs').forEach(function(tabContainer){
+        tabContainer.querySelectorAll('.modal-tab').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                const parent = btn.closest('.order-section');
+                parent.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+                parent.querySelectorAll('.modal-tab-content').forEach(c => c.classList.add('hidden'));
+                btn.classList.add('active');
+                const target = parent.querySelector('#' + btn.dataset.target);
+                if (target) target.classList.remove('hidden');
+            });
+        });
+    });
 }
 
 function closeOrderDetails(){

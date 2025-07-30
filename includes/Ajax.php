@@ -98,7 +98,8 @@ class Ajax {
                     }
                     $extras_price += floatval($pr);
                 } else {
-                    $extras_price += floatval($ex->price);
+                    $fallback = ($modus === 'kauf') ? ($ex->price_sale ?? 0) : ($ex->price_rent ?? $ex->price);
+                    $extras_price += floatval($fallback);
                 }
             }
 
@@ -303,7 +304,7 @@ class Ajax {
                                 $extra_data = [
                                     'id'             => (int) $extra->id,
                                     'name'           => $extra->name,
-                                    'price'          => $extra->price,
+                                    'price'          => ($modus === 'kauf') ? ($extra->price_sale ?? $extra->price) : ($extra->price_rent ?? $extra->price),
                                     'stripe_price_id'=> $pid,
                                     'image_url'      => $extra->image_url ?? '',
                                     'available'      => intval($option->available),

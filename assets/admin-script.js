@@ -165,6 +165,9 @@ function produktInitAccordions() {
 }
 
 document.addEventListener('DOMContentLoaded', produktInitAccordions);
+if (document.readyState !== 'loading') {
+    produktInitAccordions();
+}
 if (typeof produkt_admin !== 'undefined') {
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('produkt-return-confirm')) {

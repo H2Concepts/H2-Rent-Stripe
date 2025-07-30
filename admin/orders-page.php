@@ -26,17 +26,17 @@ foreach ($branding_results as $result) {
 $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 ?>
 
-<div class="wrap">
-    <!-- Standard Admin Header -->
-    <div class="produkt-admin-header">
-        <div class="produkt-admin-logo">
-            📋
+<div class="wrap" id="produkt-admin-orders">
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-clipboard"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Bestellungen</h1>
+                <p>Übersicht aller Kundenbestellungen mit detaillierten Produktinformationen</p>
+            </div>
         </div>
-        <div class="produkt-admin-title">
-            <h1>Bestellungen</h1>
-            <p>Übersicht aller Kundenbestellungen mit detaillierten Produktinformationen</p>
-        </div>
-    </div>
     
     
     <!-- Filter Section -->
@@ -331,6 +331,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         <div class="privacy-box">
             <strong>🔒 Datenschutz:</strong> Alle Kundendaten werden sicher gespeichert und nur für die Bestellabwicklung verwendet. IP-Adressen dienen der Fraud-Prevention und werden nach 30 Tagen anonymisiert.
         </div>
+    </div>
     </div>
 </div>
 

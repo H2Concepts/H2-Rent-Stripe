@@ -67,8 +67,17 @@ if (isset($_GET['delete_filter']) && isset($_GET['fw_nonce']) && wp_verify_nonce
 
 $groups  = $wpdb->get_results("SELECT * FROM $table_groups ORDER BY name");
 ?>
-<div class="wrap">
-    <h1>Filter verwalten</h1>
+<div class="wrap" id="produkt-admin-filters">
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-filter"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Filter verwalten</h1>
+                <p>Produktfilter und Optionen organisieren</p>
+            </div>
+        </div>
     <nav class="produkt-tab-nav">
         <a href="<?php echo admin_url('admin.php?page=produkt-filters&tab=list'); ?>" class="produkt-tab <?php echo $active_tab==='list'?'active':''; ?>">Übersicht</a>
         <a href="<?php echo admin_url('admin.php?page=produkt-filters&tab=add'); ?>" class="produkt-tab <?php echo $active_tab==='add'?'active':''; ?>">Neu</a>
@@ -146,5 +155,6 @@ $groups  = $wpdb->get_results("SELECT * FROM $table_groups ORDER BY name");
                   </tbody>
               </table>
         <?php endif; ?>
+    </div>
     </div>
 </div>

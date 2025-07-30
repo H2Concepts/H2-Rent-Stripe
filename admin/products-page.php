@@ -36,8 +36,9 @@ foreach ($branding_results as $result) {
 ?>
 
 <div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
+    <div class="produkt-admin-card">
+        <!-- Kompakter Header -->
+        <div class="produkt-admin-header-compact">
         <div class="produkt-admin-logo-compact">📦</div>
         <div class="produkt-admin-title-compact">
             <h1>Produkte verwalten</h1>
@@ -115,5 +116,6 @@ foreach ($branding_results as $result) {
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-tab.php';
         }
         ?>
+    </div>
     </div>
 </div>
