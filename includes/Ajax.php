@@ -1410,7 +1410,6 @@ function produkt_create_checkout_session() {
 
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
-        error_log('Stripe Checkout Session Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
@@ -1669,7 +1668,6 @@ function produkt_create_embedded_checkout_session() {
 
         wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {
-        error_log('Stripe Embedded Checkout Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
@@ -1694,7 +1692,6 @@ function produkt_get_checkout_session_status() {
         $email = $session->customer_details->email ?? '';
         wp_send_json(['status' => $session->status, 'customer_email' => $email]);
     } catch (\Exception $e) {
-        error_log('Stripe Session Status Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }

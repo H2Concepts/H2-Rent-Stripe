@@ -107,8 +107,6 @@ if (file_exists($plugin_file) && !class_exists('ProduktVerleih\\Plugin')) {
 $webhook_file = plugin_dir_path(__FILE__) . 'includes/Webhook.php';
 if (file_exists($webhook_file)) {
     require_once $webhook_file;
-} else {
-    error_log('Webhook.php not found at ' . $webhook_file);
 }
 
 // Register activation and deactivation hooks

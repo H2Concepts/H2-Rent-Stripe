@@ -113,9 +113,8 @@ if (isset($_POST['submit_extra'])) {
             if (!$existing || empty($existing->stripe_product_id)) {
                 $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $stripe_price, $main_product_name, $modus);
                 if (is_wp_error($res)) {
-                    error_log('❌ Fehler beim Stripe Extra-Preis: ' . $res->get_error_message());
+                    // handle Stripe error silently
                 } elseif (!empty($res['price_id'])) {
-                    error_log('✅ Extra-Preis erfolgreich erstellt: ' . $res['price_id']);
                     $update = [
                         'stripe_product_id' => $res['product_id'],
                         'stripe_price_id'   => $res['price_id'],
@@ -126,8 +125,6 @@ if (isset($_POST['submit_extra'])) {
                         $update['stripe_price_id_rent'] = $res['price_id'];
                     }
                     $wpdb->update($table_name, $update, ['id' => $extra_id]);
-                } else {
-                    error_log('⚠️ Keine Fehler, aber auch kein Preis erstellt.');
                 }
             }
         }
@@ -153,9 +150,8 @@ if (isset($_POST['submit_extra'])) {
             $mode         = get_option('produkt_betriebsmodus', 'miete');
             $res = \ProduktVerleih\StripeService::create_extra_price($extra_base_name, $stripe_price, $main_product_name, $modus);
             if (is_wp_error($res)) {
-                error_log('❌ Fehler beim Stripe Extra-Preis: ' . $res->get_error_message());
+                // handle Stripe error silently
             } elseif (!empty($res['price_id'])) {
-                error_log('✅ Extra-Preis erfolgreich erstellt: ' . $res['price_id']);
                 $update = [
                     'stripe_product_id' => $res['product_id'],
                     'stripe_price_id'   => $res['price_id'],
@@ -168,8 +164,6 @@ if (isset($_POST['submit_extra'])) {
                     $update['stripe_price_id_rent'] = $res['price_id'];
                 }
                 $wpdb->update($table_name, $update, ['id' => $extra_id]);
-            } else {
-                error_log('⚠️ Keine Fehler, aber auch kein Preis erstellt.');
             }
         }
     }

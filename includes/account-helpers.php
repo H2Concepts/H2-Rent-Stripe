@@ -365,21 +365,14 @@ function pv_generate_invoice_pdf($order_id) {
     $url     = $endpoint;
     $payload = $post_data;
 
-    // Payload Logging
-    error_log('[PDF] Gesamter Payload: ' . print_r($post_data, true));
-
     // 5. HTTP-Request an API
     $response = wp_remote_post($url, [
         'timeout' => 15,
         'body'    => $payload,
     ]);
 
-    // Logging für Debug-Zwecke
     $response_code = wp_remote_retrieve_response_code($response);
     $pdf_data      = wp_remote_retrieve_body($response);
-
-    error_log('[PDF] Response-Code: ' . $response_code);
-    error_log('[PDF] Länge: ' . strlen($pdf_data));
 
     // Prüfen ob PDF-Daten plausibel sind (größer als 1000 Byte und kein HTML)
     if (
@@ -387,7 +380,6 @@ function pv_generate_invoice_pdf($order_id) {
         strlen($pdf_data) < 1000 ||
         stripos($pdf_data, '<html') !== false
     ) {
-        error_log('[PDF] Fehlerhafte Rückgabe – keine gültige PDF.');
         return false;
     }
 

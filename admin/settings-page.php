@@ -56,10 +56,6 @@ foreach ($branding_results as $result) {
            class="produkt-tab <?php echo $active_tab === 'email' ? 'active' : ''; ?>">
             ✉️ E-Mail Versand
         </a>
-        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=debug'); ?>"
-           class="produkt-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
-            🛠 Debug
-        </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications'); ?>"
            class="produkt-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>">
             📧 Benachrichtigungen
@@ -84,9 +80,6 @@ foreach ($branding_results as $result) {
                 break;
             case 'email':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/email-tab.php';
-                break;
-            case 'debug':
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
                 break;
             case 'notifications':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';

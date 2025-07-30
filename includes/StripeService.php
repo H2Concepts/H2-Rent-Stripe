@@ -743,7 +743,6 @@ class StripeService {
 
         $secret = get_option('produkt_stripe_secret_key', '');
         if (empty($secret)) {
-            error_log('Stripe secret key not set - cannot refresh archive cache');
             return;
         }
         $stripe = new \Stripe\StripeClient($secret);
@@ -774,7 +773,6 @@ class StripeService {
             }
         }
 
-        error_log('✅ Stripe-Archivstatus erfolgreich via Cron aktualisiert');
     }
 
     /**
@@ -1127,7 +1125,7 @@ class StripeService {
             }
 
             if ($data['mode'] === 'kauf') {
-                error_log('Checkout-Mode: ' . $data['mode']);
+                // additional handling for purchase mode if needed
             }
         }
     }

@@ -43,7 +43,7 @@ function produkt_delete_or_archive_stripe_product($product_id, $local_id = null,
 
     } catch (\Stripe\Exception\InvalidRequestException $e) {
         if (strpos($e->getMessage(), 'No such product') !== false) {
-            error_log('Stripe-Produkt existiert nicht mehr – wird lokal archiviert: ' . $product_id);
+            // Stripe product no longer exists; mark local entry as archived
             if ($local_id && in_array($table, ['produkt_variants', 'produkt_extras'])) {
                 global $wpdb;
                 $wpdb->update(
@@ -55,16 +55,16 @@ function produkt_delete_or_archive_stripe_product($product_id, $local_id = null,
                 );
             }
         } else {
-            error_log('Stripe archive error: ' . $e->getMessage());
+            // ignore Stripe archive error
         }
     } catch (\Exception $e) {
-        error_log('Stripe archive error: ' . $e->getMessage());
+        // ignore Stripe archive error
     }
 }
 
 function produkt_deactivate_stripe_price($price_id) {
     if (!$price_id) {
-        error_log('Keine Stripe-Preis-ID übergeben, Abbruch.');
+        // no stripe price id provided
         return;
     }
 
@@ -74,21 +74,21 @@ function produkt_deactivate_stripe_price($price_id) {
     try {
         $price = $stripe->prices->retrieve($price_id);
     } catch (\Stripe\Exception\InvalidRequestException $e) {
-        error_log("Preis nicht gefunden, überspringe: $price_id");
+        // price not found on Stripe
         return;
     } catch (\Exception $e) {
-        error_log('Stripe price retrieve error: ' . $e->getMessage());
+        // ignore Stripe retrieve error
         return;
     }
 
     if ($price->active) {
         try {
             $stripe->prices->update($price_id, ['active' => false]);
-            error_log("Stripe-Preis {$price_id} deaktiviert.");
+            // price deactivated
         } catch (\Stripe\Exception\InvalidRequestException $e) {
-            error_log('Stripe price archive error: ' . $e->getMessage());
+            // ignore archive error
         } catch (\Exception $e) {
-            error_log('Stripe price archive error: ' . $e->getMessage());
+            // ignore archive error
         }
     }
 
@@ -123,7 +123,7 @@ function produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $stripe_p
                 ['id' => $variant_id]
             );
         } catch (\Exception $e) {
-            error_log('❌ Stripe-Verkaufspreis fehlgeschlagen: ' . $e->getMessage());
+            // ignore Stripe sale price error
         }
     }
 }

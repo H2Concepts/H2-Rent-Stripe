@@ -15,15 +15,6 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
-    $log_file = WP_CONTENT_DIR . '/uploads/webhook-test.log';
-    $written = file_put_contents(
-        $log_file,
-        "Webhook empfangen:\n" . json_encode(json_decode($request->get_body(), true), JSON_PRETTY_PRINT) . "\n",
-        FILE_APPEND
-    );
-    if ($written === false) {
-        error_log("🔴 Webhook konnte nicht in Logdatei geschrieben werden: $log_file");
-    }
 
     $secret_key = get_option('produkt_stripe_secret_key', '');
     if ($secret_key) {
