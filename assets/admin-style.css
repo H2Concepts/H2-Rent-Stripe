@@ -2856,6 +2856,19 @@ body.category-modal-open {
     gap: 1rem;
 }
 
+/* Grid layout for category statistics */
+.category-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .category-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
 .product-info-box {
     background: #f9f9f9;
     border-radius: 18px;

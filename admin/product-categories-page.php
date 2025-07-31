@@ -54,6 +54,12 @@ $counts = [];
 foreach ($raw_cats as $r) { $counts[$r->id] = $r->product_count; }
 foreach ($categories as $c) { $c->product_count = $counts[$c->id] ?? 0; }
 
+// Statistics for category overview
+$top_category_count  = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories WHERE parent_id IS NULL OR parent_id = 0");
+$sub_category_count  = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories WHERE parent_id IS NOT NULL AND parent_id != 0");
+$total_category_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories");
+$products_in_categories = $wpdb->get_var("SELECT COUNT(DISTINCT produkt_id) FROM {$wpdb->prefix}produkt_product_to_category");
+
 // Wenn Bearbeiten
 $edit_category = null;
 if (isset($_GET['edit'])) {
@@ -113,6 +119,25 @@ if (isset($_GET['edit'])) {
 <div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kategorien verwalten</p>
+
+    <div class="category-stats-grid" style="margin-bottom: 2rem;">
+        <div class="product-info-box bg-pastell-gelb">
+            <span class="label">Kategorien</span>
+            <strong class="value"><?php echo intval($top_category_count); ?></strong>
+        </div>
+        <div class="product-info-box bg-pastell-gruen">
+            <span class="label">Subkategorien</span>
+            <strong class="value"><?php echo intval($sub_category_count); ?></strong>
+        </div>
+        <div class="product-info-box bg-pastell-mint">
+            <span class="label">Gesamt</span>
+            <strong class="value"><?php echo intval($total_category_count); ?></strong>
+        </div>
+        <div class="product-info-box bg-pastell-orange">
+            <span class="label">Produkte zugeordnet</span>
+            <strong class="value"><?php echo intval($products_in_categories); ?></strong>
+        </div>
+    </div>
 
     <div class="h2-rental-card card-category-list">
         <div style="display:flex;justify-content:space-between;align-items:center;">
