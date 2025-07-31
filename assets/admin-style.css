@@ -2872,7 +2872,7 @@ body.admin-bar .produkt-return-banner{top:32px;}
 .product-info-box .value {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #111;
+    color: #fff;
 }
 
 
@@ -2943,6 +2943,9 @@ body.admin-bar .produkt-return-banner{top:32px;}
     color: #ffffff;
     margin: 4px 0;
 }
+.card-company strong {
+    color: #ffffff;
+}
 	
 .quicknav-grid {
   display: grid;
@@ -3004,6 +3007,9 @@ body.admin-bar .produkt-return-banner{top:32px;}
     border-radius: 20px;
     padding: 1.5rem;
     margin-top: 20px;
+}
+.card-returns strong {
+    color: #fff;
 }
 
 .return-list {
