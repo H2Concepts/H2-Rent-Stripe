@@ -3024,6 +3024,17 @@ body.admin-bar .produkt-return-banner{top:32px;}
     border-bottom: none;
 }
 
+.return-confirm-form button {
+    background-color: #2d6a4f;
+    color: #fff;
+    border: none;
+}
+
+.return-confirm-form button:hover {
+    background-color: #d0ecc4;
+    color: #000;
+}
+
 .quicknav-card:hover .quicknav-label {
   color: #000;
 }
@@ -3037,7 +3048,7 @@ body.admin-bar .produkt-return-banner{top:32px;}
 /* === Sidebar für Auftragsdetails === */
 #order-details-sidebar {
     position: fixed;
-    top: 0;
+    top: 32px;
     right: -100%; /* vollständig verstecken */
     width: 480px;
     max-width: 100%;

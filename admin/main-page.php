@@ -43,7 +43,7 @@ $orders = $wpdb->get_results("
 
 // Rückgaben abrufen (fällige Rückgaben, noch nicht bestätigt)
 $return_orders = $wpdb->get_results("
-    SELECT o.id, o.customer_name, c.name AS produkt_name, o.end_date
+    SELECT o.id, o.order_number, o.customer_name, c.name AS produkt_name, o.end_date
     FROM {$wpdb->prefix}produkt_orders o
     LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
     WHERE o.status = 'abgeschlossen'
@@ -90,7 +90,8 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                 <?php foreach ($return_orders as $return): ?>
                     <li class="return-item">
                         <div>
-                            <strong><?php echo esc_html($return->customer_name); ?></strong><br>
+                            <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
+                            <?php echo esc_html($return->customer_name); ?><br>
                             <?php echo esc_html($return->produkt_name); ?><br>
                             Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
                         </div>
@@ -183,6 +184,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
     <table class="activity-table">
         <thead>
             <tr>
+                <th>Bestellnr.</th>
                 <th>Kunde</th>
                 <th>Produkt</th>
                 <th>Datum</th>
@@ -193,6 +195,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <tbody>
             <?php foreach ($orders as $order): ?>
                 <tr>
+                    <td><?php echo esc_html($order->order_number ?: $order->id); ?></td>
                     <td><?php echo esc_html($order->customer_name); ?></td>
                     <td><?php echo esc_html($order->produkt_name); ?></td>
                     <td><?php echo date_i18n('d.m.Y', strtotime($order->created_at)); ?></td>
