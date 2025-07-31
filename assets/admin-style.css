@@ -2998,7 +2998,8 @@
     margin-top: 20px;
 }
 .card-returns strong {
-    color: #fff;
+    color: #000000;
+    font-weight: 700;
 }
 
 .return-list {

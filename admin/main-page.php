@@ -15,14 +15,16 @@ if (isset($_POST['confirm_return_id'])) {
 }
 
 // Umsatz berechnen (aktueller Monat)
-$start_date = date('Y-m-01');
-$end_date = date('Y-m-d');
-$monthly_income = $wpdb->get_var("
-    SELECT SUM(final_price)
-    FROM {$wpdb->prefix}produkt_orders
-    WHERE status = 'abgeschlossen' AND created_at BETWEEN '$start_date' AND '$end_date'
-");
-$monthly_income = $monthly_income ? number_format($monthly_income, 2, ',', '.') : '0,00';
+$start_date = date('Y-m-01 00:00:00');
+$end_date   = date('Y-m-d 23:59:59');
+$monthly_income = $wpdb->get_var($wpdb->prepare(
+    "SELECT SUM(final_price)
+     FROM {$wpdb->prefix}produkt_orders
+     WHERE status = 'abgeschlossen' AND created_at BETWEEN %s AND %s",
+    $start_date,
+    $end_date
+));
+$monthly_income = $monthly_income ? number_format((float) $monthly_income, 2, ',', '.') : '0,00';
 
 // Weitere Zahlen
 $products = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
