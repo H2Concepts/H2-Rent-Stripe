@@ -119,13 +119,30 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) &&
 }
 
 $rows      = $wpdb->get_results("SELECT * FROM $table ORDER BY id DESC");
-$providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DPD'];
+$providers = [
+    'none'   => 'Ohne',
+    'pickup' => 'Abholung',
+    'dhl'    => 'DHL',
+    'hermes' => 'Hermes',
+    'ups'    => 'UPS',
+    'dpd'    => 'DPD'
+];
 ?>
-<div class="wrap">
-    <h1>Versandarten verwalten</h1>
-    <form method="post">
-        <?php wp_nonce_field('save_shipping_action', 'save_shipping_nonce'); ?>
-        <table class="form-table">
+<div class="wrap" id="produkt-admin-shipping">
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-cart"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Versandarten verwalten</h1>
+                <p>Lieferoptionen für Bestellungen</p>
+            </div>
+        </div>
+
+        <form method="post" class="produkt-compact-form">
+            <?php wp_nonce_field('save_shipping_action', 'save_shipping_nonce'); ?>
+            <table class="form-table">
             <tr>
                 <th><label>Name</label></th>
                 <td><input type="text" name="shipping_name" class="regular-text" value="<?= esc_attr($edit_shipping->name ?? '') ?>" required></td>
@@ -155,10 +172,10 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
             </tr>
         </table>
         <input type="hidden" name="shipping_id" value="<?= esc_attr($edit_shipping->id ?? 0) ?>">
-        <p><input type="submit" name="save_shipping" class="button-primary" value="Versandart speichern"></p>
-    </form>
+        <p><input type="submit" name="save_shipping" class="button button-primary" value="Versandart speichern"></p>
+        </form>
 
-    <?php if ($rows): ?>
+        <?php if ($rows): ?>
         <h2>Bestehende Versandarten</h2>
         <table class="widefat striped">
             <thead>
@@ -169,7 +186,7 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
                     <tr>
                         <td><?= esc_html($r->name) ?><?= $r->is_default ? ' (Standard)' : '' ?></td>
                         <td><?= number_format($r->price, 2, ',', '.') ?> €</td>
-                        <td><span class="icon-<?= esc_attr($r->service_provider) ?>"><?= esc_html(ucfirst($r->service_provider)) ?></span></td>
+                        <td><span class="icon-<?= esc_attr($r->service_provider) ?>"><?= esc_html($providers[$r->service_provider] ?? ucfirst($r->service_provider)) ?></span></td>
                         <td><?= esc_html($r->stripe_price_id) ?></td>
                         <td>
                             <a href="<?php echo admin_url('admin.php?page=produkt-shipping&edit=' . $r->id); ?>">Bearbeiten</a>
@@ -180,5 +197,6 @@ $providers = ['dhl' => 'DHL', 'hermes' => 'Hermes', 'ups' => 'UPS', 'dpd' => 'DP
                 <?php endforeach; ?>
             </tbody>
         </table>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>

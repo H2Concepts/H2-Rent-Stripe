@@ -138,8 +138,9 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
 ?>
 
 <div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
+    <div class="produkt-admin-card">
+        <!-- Kompakter Header -->
+        <div class="produkt-admin-header-compact">
         <div class="produkt-admin-logo-compact">🔄</div>
         <div class="produkt-admin-title-compact">
             <h1>Zustände verwalten</h1>
@@ -379,5 +380,6 @@ $conditions = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE
                 <?php
         }
         ?>
+    </div>
     </div>
 </div>

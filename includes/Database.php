@@ -46,7 +46,12 @@ class Database {
             'image_url_5' => 'TEXT',
             'available' => 'TINYINT(1) DEFAULT 1',
             'availability_note' => 'VARCHAR(255) DEFAULT ""',
-            'delivery_time' => 'VARCHAR(255) DEFAULT ""'
+            'delivery_time' => 'VARCHAR(255) DEFAULT ""',
+            'sku' => 'VARCHAR(100) DEFAULT ""',
+            'stock_available' => 'INT DEFAULT 0',
+            'stock_rented' => 'INT DEFAULT 0',
+            'weekend_only' => 'TINYINT(1) DEFAULT 0',
+            'min_rental_days' => 'INT DEFAULT 0'
         );
         
         foreach ($columns_to_add as $column => $type) {
@@ -66,6 +71,16 @@ class Database {
                     $after = 'mietpreis_monatlich';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
+                } elseif ($column === 'sku') {
+                    $after = 'delivery_time';
+                } elseif ($column === 'stock_available') {
+                    $after = 'sku';
+                } elseif ($column === 'stock_rented') {
+                    $after = 'stock_available';
+                } elseif ($column === 'weekend_only') {
+                    $after = 'stock_rented';
+                } elseif ($column === 'min_rental_days') {
+                    $after = 'weekend_only';
                 } else {
                     $after = 'base_price';
                 }
@@ -119,6 +134,33 @@ class Database {
         if (empty($archived_exists)) {
             $after = !empty($price_id_exists) ? 'stripe_price_id' : 'name';
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stripe_archived TINYINT(1) DEFAULT 0 AFTER $after");
+        }
+
+        // Ensure inventory columns exist for extras
+        $sku_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'sku'");
+        if (empty($sku_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN sku VARCHAR(100) DEFAULT '' AFTER image_url");
+        }
+        $avail_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_available'");
+        if (empty($avail_exists)) {
+            $after = !empty($sku_exists) ? 'sku' : 'image_url';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_available INT DEFAULT 0 AFTER $after");
+        }
+        $rented_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_rented'");
+        if (empty($rented_exists)) {
+            $after = !empty($avail_exists) ? 'stock_available' : (!empty($sku_exists) ? 'sku' : 'image_url');
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_rented INT DEFAULT 0 AFTER $after");
+        }
+
+        // Ensure separate price columns exist
+        $rent_price_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'price_rent'");
+        if (empty($rent_price_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN price_rent DECIMAL(10,2) DEFAULT 0 AFTER price");
+        }
+        $sale_price_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'price_sale'");
+        if (empty($sale_price_exists)) {
+            $after = !empty($rent_price_exists) ? 'price_rent' : 'price';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN price_sale DECIMAL(10,2) DEFAULT 0 AFTER $after");
         }
 
         // Ensure show_badge column exists for durations
@@ -253,6 +295,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
+                invoice_url varchar(255) DEFAULT '',
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY category_id (category_id),
@@ -520,6 +563,9 @@ class Database {
                 final_price decimal(10,2) NOT NULL,
                 shipping_cost decimal(10,2) DEFAULT 0,
                 mode varchar(10) DEFAULT 'miete',
+                start_date date DEFAULT NULL,
+                end_date date DEFAULT NULL,
+                inventory_reverted tinyint(1) DEFAULT 0,
                 stripe_session_id varchar(255) DEFAULT '',
                 stripe_subscription_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
@@ -532,6 +578,7 @@ class Database {
                 dauer_text varchar(255) DEFAULT '',
                 customer_name varchar(255) DEFAULT '',
                 customer_email varchar(255) DEFAULT '',
+                order_number varchar(50) DEFAULT '',
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
@@ -561,8 +608,14 @@ class Database {
                 'customer_city'     => "varchar(100) DEFAULT ''",
                 'customer_country'  => "varchar(2) DEFAULT ''",
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
+                'shipping_price_id' => "varchar(255) DEFAULT ''",
+                'order_number'      => "varchar(50) DEFAULT ''",
                 'mode'              => "varchar(10) DEFAULT 'miete'",
-                'status'            => "varchar(20) DEFAULT 'offen'"
+                'start_date'        => 'date DEFAULT NULL',
+                'end_date'          => 'date DEFAULT NULL',
+                'inventory_reverted'=> 'tinyint(1) DEFAULT 0',
+                'status'            => "varchar(20) DEFAULT 'offen'",
+                'invoice_url'       => "varchar(255) DEFAULT ''"
             );
 
             foreach ($new_order_columns as $column => $type) {
@@ -571,6 +624,45 @@ class Database {
                     $wpdb->query("ALTER TABLE $table_orders ADD COLUMN $column $type AFTER extra_id");
                 }
             }
+
+            // Fill newly added date columns from dauer_text if possible
+            $missing_dates = $wpdb->get_results("SELECT id, dauer_text FROM $table_orders WHERE start_date IS NULL AND dauer_text LIKE '%-%'");
+            foreach ($missing_dates as $row) {
+                if (preg_match('/(\d{4}-\d{2}-\d{2})\s*-\s*(\d{4}-\d{2}-\d{2})/', $row->dauer_text, $m)) {
+                    $wpdb->update(
+                        $table_orders,
+                        ['start_date' => $m[1], 'end_date' => $m[2]],
+                        ['id' => $row->id],
+                        ['%s','%s'],
+                        ['%d']
+                    );
+                }
+            }
+        }
+
+        // Create customers table if it doesn't exist
+        $table_customers = $wpdb->prefix . 'produkt_customers';
+        $customers_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_customers'");
+
+        if (!$customers_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_customers (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                email varchar(255) NOT NULL,
+                stripe_customer_id varchar(255) NOT NULL,
+                first_name varchar(255) DEFAULT '',
+                last_name varchar(255) DEFAULT '',
+                phone varchar(50) DEFAULT '',
+                street varchar(255) DEFAULT '',
+                postal_code varchar(20) DEFAULT '',
+                city varchar(255) DEFAULT '',
+                country varchar(50) DEFAULT '',
+                PRIMARY KEY (id),
+                UNIQUE KEY email (email)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
         }
 
         // Create metadata table if it doesn't exist
@@ -937,6 +1029,11 @@ class Database {
             available tinyint(1) DEFAULT 1,
             availability_note varchar(255) DEFAULT '',
             delivery_time varchar(255) DEFAULT '',
+            sku varchar(100) DEFAULT '',
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
+            weekend_only tinyint(1) DEFAULT 0,
+            min_rental_days int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -953,8 +1050,13 @@ class Database {
             stripe_price_id_rent varchar(255) DEFAULT NULL,
             stripe_price_id_sale varchar(255) DEFAULT NULL,
             stripe_archived tinyint(1) DEFAULT 0,
+            price_rent decimal(10,2) DEFAULT 0,
+            price_sale decimal(10,2) DEFAULT 0,
             price decimal(10,2) NOT NULL,
             image_url text,
+            sku varchar(100) DEFAULT '',
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1101,6 +1203,7 @@ class Database {
             frame_color_id mediumint(9) DEFAULT NULL,
             final_price decimal(10,2) NOT NULL,
             shipping_cost decimal(10,2) DEFAULT 0,
+            shipping_price_id varchar(255) DEFAULT '',
             mode varchar(10) DEFAULT 'miete',
             stripe_session_id varchar(255) DEFAULT '',
             stripe_subscription_id varchar(255) DEFAULT '',
@@ -1120,6 +1223,7 @@ class Database {
             dauer_text varchar(255) DEFAULT '',
             user_ip varchar(45) DEFAULT NULL,
             user_agent text DEFAULT NULL,
+            invoice_url varchar(255) DEFAULT '',
             status varchar(20) DEFAULT 'offen',
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -1162,6 +1266,24 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_content_blocks);
         dbDelta($sql_orders);
+
+        // Customers table
+        $table_customers = $wpdb->prefix . 'produkt_customers';
+        $sql_customers = "CREATE TABLE $table_customers (
+            id mediumint(9) NOT NULL AUTO_INCREMENT,
+            email varchar(255) NOT NULL,
+            stripe_customer_id varchar(255) NOT NULL,
+            first_name varchar(255) DEFAULT '',
+            last_name varchar(255) DEFAULT '',
+            phone varchar(50) DEFAULT '',
+            street varchar(255) DEFAULT '',
+            postal_code varchar(20) DEFAULT '',
+            city varchar(255) DEFAULT '',
+            country varchar(50) DEFAULT '',
+            PRIMARY KEY (id),
+            UNIQUE KEY email (email)
+        ) $charset_collate;";
+        dbDelta($sql_customers);
 
         // Shipping methods table
         $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
@@ -1599,8 +1721,33 @@ class Database {
         $table = $wpdb->prefix . 'produkt_orders';
         $email = sanitize_email($user->user_email);
 
-        $sql = "SELECT *, stripe_subscription_id AS subscription_id FROM $table WHERE customer_email = %s ORDER BY created_at";
-        return $wpdb->get_results($wpdb->prepare($sql, $email));
+        $sql = $wpdb->prepare(
+            "SELECT o.*, c.name as category_name,
+                    COALESCE(v.name, o.produkt_name) as variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                    COALESCE(d.name, o.dauer_text) as duration_name,
+                    COALESCE(cond.name, o.zustand_text) as condition_name,
+                    COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
+                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name,
+                    sm.name AS shipping_name,
+                    sm.service_provider AS shipping_provider,
+                    stripe_subscription_id AS subscription_id
+             FROM {$table} o
+             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+             LEFT JOIN {$wpdb->prefix}produkt_durations d ON o.duration_id = d.id
+             LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
+             LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
+             LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+            LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
+             WHERE o.customer_email = %s
+             GROUP BY o.id
+             ORDER BY o.created_at DESC",
+            $email
+        );
+        return $wpdb->get_results($sql);
     }
     /**
      * Get the Stripe customer ID for a WordPress user.
@@ -1610,6 +1757,128 @@ class Database {
      */
     public static function get_stripe_customer_id_for_user($user_id) {
         return get_user_meta($user_id, 'stripe_customer_id', true);
+    }
+
+    /**
+     * Get the Stripe customer ID for a user by email address.
+     *
+     * @param string $email User email
+     * @return string Customer ID or empty string when none found
+     */
+    public static function get_stripe_customer_id_from_usermeta($email) {
+        global $wpdb;
+
+        $user_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT ID FROM {$wpdb->users} WHERE user_email = %s",
+                $email
+            )
+        );
+
+        if (!$user_id) {
+            return null;
+        }
+
+        return $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT meta_value FROM {$wpdb->usermeta} WHERE user_id = %d AND meta_key = 'stripe_customer_id'",
+                $user_id
+            )
+        );
+    }
+
+    public static function get_stripe_customer_id_by_email($email) {
+        $customer_id = self::get_stripe_customer_id_from_usermeta(sanitize_email($email));
+        return $customer_id ? $customer_id : '';
+    }
+
+    /**
+     * Update the Stripe customer ID for a user identified by email.
+     *
+     * @param string $email       User email
+     * @param string $customer_id Stripe customer ID
+     * @return void
+     */
+    public static function update_stripe_customer_id_by_email($email, $customer_id) {
+        $user = get_user_by('email', sanitize_email($email));
+        if ($user) {
+            update_user_meta($user->ID, 'stripe_customer_id', $customer_id);
+        }
+    }
+
+    /**
+     * Insert or update a customer record in the custom customers table.
+     */
+    public static function upsert_customer($email, $stripe_customer_id, $first_name = '', $last_name = '', $phone = '', $street = '', $postal = '', $city = '', $country = '') {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_customers';
+
+        $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE email = %s", $email));
+
+        if ($existing) {
+            $wpdb->update(
+                $table,
+                ['stripe_customer_id' => $stripe_customer_id],
+                ['id' => $existing],
+                ['%s'],
+                ['%d']
+            );
+        } else {
+            $wpdb->insert(
+                $table,
+                [
+                    'email'              => $email,
+                    'stripe_customer_id' => $stripe_customer_id,
+                    'first_name'         => $first_name,
+                    'last_name'          => $last_name,
+                    'phone'              => $phone,
+                    'street'             => $street,
+                    'postal_code'        => $postal,
+                    'city'               => $city,
+                    'country'            => $country,
+                ],
+                ['%s','%s','%s','%s','%s','%s','%s','%s','%s']
+            );
+        }
+    }
+
+    /**
+     * Insert or update a record in the produkt_customers table using the email
+     * as unique identifier.
+     *
+     * @param string $email
+     * @param string $stripe_customer_id
+     * @param string $fullname
+     * @param string $phone
+     * @param array  $address
+     * @return void
+     */
+    public static function upsert_customer_record_by_email($email, $stripe_customer_id, $fullname = '', $phone = '', $address = []) {
+        global $wpdb;
+
+        // Check if email already exists
+        $table = $wpdb->prefix . 'produkt_customers';
+        $existing = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table WHERE email = %s", $email));
+
+        $data = [
+            'stripe_customer_id' => $stripe_customer_id,
+            'first_name'        => $fullname,
+            'phone'             => $phone,
+            'email'             => $email,
+        ];
+
+        if (!empty($address)) {
+            $data['street']       = $address['street'] ?? '';
+            $data['postal_code']  = $address['postal_code'] ?? '';
+            $data['city']         = $address['city'] ?? '';
+            $data['country']      = $address['country'] ?? '';
+        }
+
+        if ($existing) {
+            $wpdb->update($table, $data, ['email' => $email]);
+        } else {
+            $wpdb->insert($table, $data);
+        }
     }
 
 
@@ -1712,5 +1981,108 @@ class Database {
         global $wpdb;
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
+    }
+    /**
+     * Get orders whose rental period has ended and inventory has not yet been returned.
+     *
+     * @return array List of order objects
+     */
+    public static function get_due_returns() {
+        global $wpdb;
+        $today = current_time('Y-m-d');
+        return $wpdb->get_results($wpdb->prepare(
+            "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                    COALESCE(c.name, o.produkt_name) AS category_name,
+                    COALESCE(v.name, o.produkt_name) AS variant_name,
+                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+             FROM {$wpdb->prefix}produkt_orders o
+             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+             WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
+             GROUP BY o.id
+             ORDER BY o.end_date",
+            $today
+        ));
+    }
+    /**
+     * Mark a single order as returned and update inventory.
+     *
+     * @param int $order_id Order ID
+     * @return bool Success state
+     */
+    public static function process_inventory_return($order_id) {
+        global $wpdb;
+        $order = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT variant_id, extra_ids, inventory_reverted FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+                $order_id
+            )
+        );
+        if (!$order || $order->inventory_reverted) {
+            return false;
+        }
+        if ($order->variant_id) {
+            $wpdb->query(
+                $wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                    $order->variant_id
+                )
+            );
+        }
+        if (!empty($order->extra_ids)) {
+            $ids = array_filter(array_map('intval', explode(',', $order->extra_ids)));
+            foreach ($ids as $eid) {
+                $wpdb->query(
+                    $wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                        $eid
+                    )
+                );
+            }
+        }
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['inventory_reverted' => 1],
+            ['id' => $order_id],
+            ['%d'],
+            ['%d']
+        );
+        produkt_add_order_log((int)$order_id, 'inventory_returned');
+        return true;
+    }
+
+    public static function process_inventory_returns() {
+        global $wpdb;
+        $today = current_time('Y-m-d');
+        $orders = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND end_date IS NOT NULL AND end_date < %s AND inventory_reverted = 0",
+            $today
+        ));
+        foreach ($orders as $o) {
+            if ($o->variant_id) {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                    $o->variant_id
+                ));
+            }
+            if (!empty($o->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $o->extra_ids)));
+                foreach ($ids as $eid) {
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                        $eid
+                    ));
+                }
+            }
+            $wpdb->update(
+                $wpdb->prefix . 'produkt_orders',
+                ['inventory_reverted' => 1],
+                ['id' => $o->id],
+                ['%d'],
+                ['%d']
+            );
+            produkt_add_order_log((int)$o->id, 'inventory_returned');
+        }
     }
 }

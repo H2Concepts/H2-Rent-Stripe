@@ -17,8 +17,9 @@ foreach ($branding_results as $result) {
 ?>
 
 <div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
+    <div class="produkt-admin-card">
+        <!-- Kompakter Header -->
+        <div class="produkt-admin-header-compact">
         <div class="produkt-admin-logo-compact">⚙️</div>
         <div class="produkt-admin-title-compact">
             <h1>Einstellungen</h1>
@@ -51,9 +52,9 @@ foreach ($branding_results as $result) {
            class="produkt-tab <?php echo $active_tab === 'buttons' ? 'active' : ''; ?>">
             🔘 Buttons & Tooltips
         </a>
-        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=debug'); ?>"
-           class="produkt-tab <?php echo $active_tab === 'debug' ? 'active' : ''; ?>">
-            🛠 Debug
+        <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=email'); ?>"
+           class="produkt-tab <?php echo $active_tab === 'email' ? 'active' : ''; ?>">
+            ✉️ E-Mail Versand
         </a>
         <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications'); ?>"
            class="produkt-tab <?php echo $active_tab === 'notifications' ? 'active' : ''; ?>">
@@ -77,8 +78,8 @@ foreach ($branding_results as $result) {
             case 'buttons':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/buttons-tab.php';
                 break;
-            case 'debug':
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/debug-tab.php';
+            case 'email':
+                include PRODUKT_PLUGIN_PATH . 'admin/tabs/email-tab.php';
                 break;
             case 'notifications':
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/notifications-tab.php';
@@ -87,5 +88,6 @@ foreach ($branding_results as $result) {
                 include PRODUKT_PLUGIN_PATH . 'admin/tabs/branding-tab.php';
         }
         ?>
+    </div>
     </div>
 </div>

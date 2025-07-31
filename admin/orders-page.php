@@ -17,6 +17,7 @@ if (!empty($notice)) {
 
 // Branding colors
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 $branding = [];
 $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
 foreach ($branding_results as $result) {
@@ -25,28 +26,28 @@ foreach ($branding_results as $result) {
 $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 ?>
 
-<div class="wrap">
-    <!-- Standard Admin Header -->
-    <div class="produkt-admin-header">
-        <div class="produkt-admin-logo">
-            📋
+<div class="wrap" id="produkt-admin-orders">
+    <div class="produkt-admin-card">
+        <div class="produkt-admin-header-compact">
+            <div class="produkt-admin-logo-compact">
+                <span class="dashicons dashicons-clipboard"></span>
+            </div>
+            <div class="produkt-admin-title-compact">
+                <h1>Bestellungen</h1>
+                <p>Übersicht aller Kundenbestellungen mit detaillierten Produktinformationen</p>
+            </div>
         </div>
-        <div class="produkt-admin-title">
-            <h1>Bestellungen</h1>
-            <p>Übersicht aller Kundenbestellungen mit detaillierten Produktinformationen</p>
-        </div>
-    </div>
     
     
     <!-- Filter Section -->
-    <div style="background: #f0f8ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+    <div class="orders-filter-box">
         <h3>🔍 Filter & Zeitraum</h3>
-        <form method="get" action="" style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+        <form method="get" action="" class="orders-filter-form">
             <input type="hidden" name="page" value="produkt-orders">
             
             <div>
                 <label for="category-select"><strong>Produkt:</strong></label>
-                <select name="category" id="category-select" style="min-width: 200px;">
+                <select name="category" id="category-select">
                     <option value="0" <?php selected($selected_category, 0); ?>>Alle Produkte</option>
                     <?php foreach ($categories as $category): ?>
                     <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
@@ -70,7 +71,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         </form>
         
         <?php if ($current_category): ?>
-        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px;">
+        <div class="current-category-box">
             <strong>📝 Aktuelle Produkt:</strong> <?php echo esc_html($current_category->name); ?>
             <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
         </div>
@@ -81,7 +82,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     <div class="produkt-summary-grid">
         <div class="produkt-summary-card">
             <h3>📋 Gesamt-Bestellungen</h3>
-            <div class="produkt-summary-value" style="color:#2a372a;">
+            <div class="produkt-summary-value summary-green">
                 <?php echo number_format($total_orders); ?>
             </div>
             <p class="produkt-summary-note">Im gewählten Zeitraum</p>
@@ -89,7 +90,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 
         <div class="produkt-summary-card">
             <h3>💰 Gesamt-Umsatz</h3>
-            <div class="produkt-summary-value" style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>;">
+            <div class="produkt-summary-value summary-gray">
                 <?php echo number_format($total_revenue, 2, ',', '.'); ?>€
             </div>
             <p class="produkt-summary-note">Monatlicher Mietumsatz</p>
@@ -97,7 +98,7 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 
         <div class="produkt-summary-card">
             <h3>📊 Durchschnittswert</h3>
-            <div class="produkt-summary-value" style="color:#dc3232;">
+            <div class="produkt-summary-value summary-red">
                 <?php echo number_format($avg_order_value, 2, ',', '.'); ?>€
             </div>
             <p class="produkt-summary-note">Pro Bestellung</p>
@@ -114,18 +115,18 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     </div>
     
     <!-- Orders Table -->
-    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+    <div class="orders-table-container">
         <h3>📋 Bestellübersicht</h3>
         <?php if (!empty($orders)): ?>
-        <div style="margin:10px 0;">
+        <div class="orders-bulk-actions">
             <button type="button" class="button" onclick="toggleSelectAll()">Alle auswählen</button>
-            <button type="button" class="button" onclick="deleteSelected()" style="color:#dc3232;">Ausgewählte löschen</button>
+            <button type="button" class="button" onclick="deleteSelected()" class="text-red">Ausgewählte löschen</button>
         </div>
         <?php endif; ?>
         
         <?php if (empty($orders)): ?>
-        <div style="text-align: center; padding: 40px;">
-            <p style="font-size: 18px; color: #666;">Keine Bestellungen im gewählten Zeitraum gefunden.</p>
+        <div class="orders-empty">
+            <p class="orders-empty-message">Keine Bestellungen im gewählten Zeitraum gefunden.</p>
             <p>Versuchen Sie einen anderen Zeitraum oder eine andere Produkt.</p>
         </div>
         <?php else: ?>
@@ -134,28 +135,29 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th style="width:40px;"><input type="checkbox" id="select-all-orders"></th>
-                        <th style="width: 80px;">ID</th>
-                        <th style="width: 120px;">Datum</th>
+                        <th class="col-checkbox"><input type="checkbox" id="select-all-orders"></th>
+                        <th class="col-id">ID</th>
+                        <th class="col-date">Datum</th>
                         <th>Kunde</th>
                         <th>Telefon</th>
-                        <th>Adresse</th>
-                        <th style="width: 80px;">Produkttyp</th>
+                        <th>Versandadresse</th>
+                        <th>Rechnungsadresse</th>
+                        <th class="col-type">Produkttyp</th>
                         <th>Produktdetails</th>
-                        <th style="width: 100px;">Preis</th>
-                        <th style="width: 80px;">Rabatt</th>
-                        <th style="width: 100px;">Status</th>
-                        <th style="width: 120px;">Aktionen</th>
+                        <th class="col-price">Preis</th>
+                        <th class="col-discount">Rabatt</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-actions">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php foreach ($orders as $order): ?>
                     <tr>
                         <td><input type="checkbox" class="order-checkbox" value="<?php echo $order->id; ?>"></td>
-                        <td><strong>#<?php echo $order->id; ?></strong></td>
+                        <td><strong>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?></strong></td>
                         <td>
                             <?php echo date('d.m.Y', strtotime($order->created_at)); ?><br>
-                            <small style="color: #666;"><?php echo date('H:i', strtotime($order->created_at)); ?> Uhr</small>
+                            <small class="text-gray"><?php echo date('H:i', strtotime($order->created_at)); ?> Uhr</small>
                         </td>
                         <td>
                             <?php if (!empty($order->customer_name)): ?>
@@ -164,10 +166,18 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             <?php if (!empty($order->customer_email)): ?>
                                 <a href="mailto:<?php echo esc_attr($order->customer_email); ?>"><?php echo esc_html($order->customer_email); ?></a><br>
                             <?php endif; ?>
-                            <small style="color: #666;">IP: <?php echo esc_html($order->user_ip); ?></small>
+                            <small class="text-gray">IP: <?php echo esc_html($order->user_ip); ?></small>
                         </td>
                         <td>
                             <?php echo esc_html($order->customer_phone); ?>
+                        </td>
+                        <td>
+                            <?php
+                                $addr = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
+                                if ($addr || $order->customer_country) {
+                                    echo esc_html(trim($addr . ', ' . $order->customer_country));
+                                }
+                            ?>
                         </td>
                         <td>
                             <?php
@@ -187,45 +197,49 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         ?>
                         <td><?php echo esc_html($type); ?></td>
                         <td>
-                            <div style="line-height: 1.4;">
+                            <div class="order-details-info">
                                 <strong><?php echo esc_html($order->category_name); ?></strong><br>
-                                <span style="color: #666;">📦 <?php echo esc_html($order->variant_name); ?></span><br>
-                                <span style="color: #666;">🎁 <?php echo esc_html($order->extra_names); ?></span><br>
+                                <span class="text-gray">📦 <?php echo esc_html($order->variant_name); ?></span><br>
+                                <span class="text-gray">🎁 <?php echo esc_html($order->extra_names); ?></span><br>
                                 <?php if ($type === 'Verkauf'): ?>
-                                    <span style="color: #666;">⏰ Miettage: <?php echo esc_html($order->duration_name); ?></span><br>
+                                    <span class="text-gray">⏰ Miettage: <?php echo esc_html($order->rental_days ?? $order->duration_name); ?></span><br>
                                 <?php else: ?>
-                                    <span style="color: #666;">⏰ Mietdauer: <?php echo esc_html($order->duration_name); ?></span><br>
+                                    <span class="text-gray">⏰ Mietdauer: <?php echo esc_html($order->duration_name); ?></span><br>
+                                <?php endif; ?>
+                                <?php list($sd,$ed) = pv_get_order_period($order); ?>
+                                <?php if ($sd && $ed): ?>
+                                    <span class="text-gray">📅 <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?></span><br>
                                 <?php endif; ?>
                                 
                                 <?php if ($order->condition_name): ?>
-                                    <span style="color: #666;">🔄 <?php echo esc_html($order->condition_name); ?></span><br>
+                                    <span class="text-gray">🔄 <?php echo esc_html($order->condition_name); ?></span><br>
                                 <?php endif; ?>
                                 
                                 <?php if ($order->product_color_name): ?>
-                                    <span style="color: #666;">🎨 Produkt: <?php echo esc_html($order->product_color_name); ?></span><br>
+                                    <span class="text-gray">🎨 Produkt: <?php echo esc_html($order->product_color_name); ?></span><br>
                                 <?php endif; ?>
                                 
                                 <?php if ($order->frame_color_name): ?>
-                                    <span style="color: #666;">🖼️ Gestell: <?php echo esc_html($order->frame_color_name); ?></span><br>
+                                    <span class="text-gray">🖼️ Gestell: <?php echo esc_html($order->frame_color_name); ?></span><br>
                                 <?php endif; ?>
                             </div>
                         </td>
                         <td>
-                            <strong style="color: <?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>; font-size: 16px;">
+                            <strong class="order-price">
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
                             <?php if ($type !== 'Verkauf'): ?>
-                                <small style="color: #666;">/Monat</small>
+                                <small class="text-gray">/Monat</small>
                             <?php endif; ?>
                             <?php if ($order->shipping_cost > 0): ?>
-                                <br><span style="color:#666;">+ <?php echo number_format($order->shipping_cost, 2, ',', '.'); ?>€ einmalig</span>
+                                <br><span class="text-gray">+ <?php echo number_format($order->shipping_cost, 2, ',', '.'); ?>€ einmalig</span>
                             <?php endif; ?>
                         </td>
                         <td>
                             <?php if ($order->discount_amount > 0): ?>
-                                <span style="color:#0073aa; font-weight:bold;">-<?php echo number_format($order->discount_amount, 2, ',', '.'); ?>€</span>
+                                <span class="text-blue">-<?php echo number_format($order->discount_amount, 2, ',', '.'); ?>€</span>
                             <?php else: ?>
-                                <span style="color:#666;">–</span>
+                                <span class="text-gray">–</span>
                             <?php endif; ?>
                         </td>
                         <td>
@@ -241,11 +255,17 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             <button type="button" class="button button-small" onclick="showOrderDetails(<?php echo $order->id; ?>)" title="Details anzeigen">
                                 👁️ Details
                             </button>
-                             <br><br>
+                            <?php
+                                $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
+                                if ($due):
+                            ?>
+                                <br><br>
+                                <button type="button" class="button button-small produkt-return-confirm" data-id="<?php echo $order->id; ?>">Alles i.O.</button>
+                            <?php endif; ?>
+                            <br><br>
                             <a href="<?php echo admin_url('admin.php?page=produkt-orders&category=' . $selected_category . '&delete_order=' . $order->id . '&date_from=' . $date_from . '&date_to=' . $date_to); ?>"
-                               class="button button-small"
-                               style="color: #dc3232;"
-                               onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo $order->id; ?> wird unwiderruflich gelöscht!')">
+                               class="button button-small text-red"
+                               onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?> wird unwiderruflich gelöscht!')">
                                 🗑️ Löschen
                             </a>
                         </td>
@@ -259,9 +279,9 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
     </div>
     
     <!-- Export Section -->
-    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+    <div class="orders-export-box">
         <h3>📤 Export & Aktionen</h3>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div class="orders-export-actions">
             <button type="button" class="button" onclick="exportOrders('csv')">
                 📊 Als CSV exportieren
             </button>
@@ -272,15 +292,15 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                 🖨️ Drucken
             </button>
         </div>
-        <p style="margin-top: 10px; color: #666; font-size: 13px;">
+        <p class="orders-export-note">
             Exportiert werden alle Bestellungen im aktuell gewählten Filter-Zeitraum und der ausgewählten Produkt.
         </p>
     </div>
     
     <!-- Info Box -->
-    <div style="background: #d1ecf1; border: 1px solid #bee5eb; padding: 20px; border-radius: 8px;">
+    <div class="info-box">
         <h3>📋 Bestellungen-System</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="info-box-grid">
             <div>
                 <h4>🎯 Was wird erfasst:</h4>
                 <ul>
@@ -304,13 +324,14 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
             </div>
         </div>
         
-        <div style="margin-top: 15px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;">
+        <div class="tip-box">
             <strong>💡 Tipp:</strong> Nutzen Sie die Filterfunktionen um spezifische Zeiträume oder Produkte zu analysieren. Die Export-Funktion hilft bei der weiteren Datenverarbeitung in Excel oder anderen Tools.
         </div>
         
-        <div style="margin-top: 10px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
+        <div class="privacy-box">
             <strong>🔒 Datenschutz:</strong> Alle Kundendaten werden sicher gespeichert und nur für die Bestellabwicklung verwendet. IP-Adressen dienen der Fraud-Prevention und werden nach 30 Tagen anonymisiert.
         </div>
+    </div>
     </div>
 </div>
 
@@ -318,9 +339,9 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 <div id="order-details-modal" class="modal-overlay">
     <div class="modal-content">
         <button type="button" class="modal-close" onclick="closeOrderDetails()">&times;</button>
-        <h3 style="margin-top: 0;">📋 Bestelldetails</h3>
+        <h3 class="modal-heading">📋 Bestelldetails</h3>
         <div id="order-details-content"></div>
-        <div style="text-align: right; margin-top: 20px;">
+        <div class="order-modal-footer">
             <button type="button" class="button-primary" onclick="closeOrderDetails()">Schließen</button>
         </div>
     </div>
@@ -338,13 +359,13 @@ function showOrderDetails(orderId) {
     if (!order) return;
     
     let detailsHtml = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="details-grid">
             <div>
                 <h4>📋 Bestellinformationen</h4>
-                <p><strong>Bestellnummer:</strong> #${order.id}</p>
+                <p><strong>Bestellnummer:</strong> #${order.order_number ? order.order_number : order.id}</p>
                 <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
                 <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
-                ${order.shipping_cost > 0 ? `<p><strong>Versand:</strong> ${parseFloat(order.shipping_cost).toFixed(2).replace('.', ',')}€ (einmalig)</p>` : ''}
+                ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
                 <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-'+parseFloat(order.discount_amount).toFixed(2).replace('.', ',')+'€' : '–'}</p>
             </div>
             <div>
@@ -352,7 +373,8 @@ function showOrderDetails(orderId) {
                 <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
                 <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
                 <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
-                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+                <p><strong>Versandadresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
+                <p><strong>Rechnungsadresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
                 <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
             </div>
         </div>
@@ -361,7 +383,8 @@ function showOrderDetails(orderId) {
         <ul>
             <li><strong>Ausführung:</strong> ${order.variant_name}</li>
             <li><strong>Extra:</strong> ${order.extra_names}</li>
-            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.duration_name}</li>
+            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
+            ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
     `;
     
     if (order.condition_name) {

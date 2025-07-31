@@ -66,6 +66,13 @@ if (isset($_POST['submit_branding'])) {
     } else {
         echo '<div class="notice notice-warning"><p>⚠️ ' . ($total_count - $success_count) . ' von ' . $total_count . ' Einstellungen konnten nicht gespeichert werden.</p></div>';
     }
+
+    // Reload settings so the form shows the updated values without refresh
+    $branding = [];
+    $results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$table_name}");
+    foreach ($results as $r) {
+        $branding[$r->setting_key] = $r->setting_value;
+    }
 }
 ?>
 
@@ -188,7 +195,7 @@ if (isset($_POST['submit_branding'])) {
 
                     <div class="produkt-form-group">
                         <label class="produkt-toggle-label">
-                            <input type="checkbox" name="product_padding" value="1" <?php echo empty($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
+                            <input type="checkbox" name="product_padding" value="1" <?php echo !isset($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
                             <span class="produkt-toggle-slider"></span>
                             <span>Padding um Produktboxen</span>
                         </label>

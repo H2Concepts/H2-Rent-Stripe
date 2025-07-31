@@ -8,6 +8,7 @@ if (isset($_POST['submit_buttons'])) {
         'button_icon'       => esc_url_raw($_POST['button_icon'] ?? ''),
         'payment_icons'     => isset($_POST['payment_icons']) ? array_map('sanitize_text_field', (array) $_POST['payment_icons']) : [],
         'price_label'       => sanitize_text_field($_POST['price_label'] ?? ''),
+        'shipping_label'    => sanitize_text_field($_POST['shipping_label'] ?? ''),
         'price_period'      => sanitize_text_field($_POST['price_period'] ?? 'month'),
         'vat_included'      => isset($_POST['vat_included']) ? 1 : 0,
         'duration_tooltip'  => sanitize_textarea_field($_POST['duration_tooltip'] ?? ''),
@@ -15,6 +16,9 @@ if (isset($_POST['submit_buttons'])) {
         'show_tooltips'     => isset($_POST['show_tooltips']) ? 1 : 0,
     ];
     update_option('produkt_ui_settings', $settings);
+    if (isset($_POST['order_number_start'])) {
+        update_option('produkt_next_order_number', sanitize_text_field($_POST['order_number_start']));
+    }
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
 }
 
@@ -23,18 +27,21 @@ $ui = get_option('produkt_ui_settings', [
     'button_icon' => '',
     'payment_icons' => [],
     'price_label' => '',
+    'shipping_label' => '',
     'price_period' => 'month',
     'vat_included' => 0,
     'duration_tooltip' => '',
     'condition_tooltip' => '',
     'show_tooltips' => 1,
 ]);
+$next_order_nr = get_option('produkt_next_order_number', '');
+$last_order_nr = get_option('produkt_last_order_number', '');
 ?>
 <div class="produkt-branding-tab">
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-section">
-            <h4>🔘 Button & Tooltips</h4>
+            <h4>🔘 Buttons</h4>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Button-Text</label>
@@ -59,6 +66,10 @@ $ui = get_option('produkt_ui_settings', [
                     <input type="text" name="price_label" value="<?php echo esc_attr($ui['price_label']); ?>" placeholder="Monatlicher Mietpreis">
                 </div>
                 <div class="produkt-form-group">
+                    <label>Versand-Label</label>
+                    <input type="text" name="shipping_label" value="<?php echo esc_attr($ui['shipping_label']); ?>" placeholder="Einmalige Versandkosten">
+                </div>
+                <div class="produkt-form-group">
                     <label>Preiszeitraum</label>
                     <select name="price_period">
                         <option value="month" <?php selected($ui['price_period'], 'month'); ?>>pro Monat</option>
@@ -69,8 +80,11 @@ $ui = get_option('produkt_ui_settings', [
                     <label><input type="checkbox" name="vat_included" value="1" <?php checked($ui['vat_included'], 1); ?>> Mit MwSt.</label>
                 </div>
             </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>💳 Bezahlmethoden</h4>
             <div class="produkt-form-group">
-                <label>Bezahlmethoden</label>
                 <div class="produkt-payment-checkboxes">
                     <?php $payment_methods = [
                         'american-express' => 'American Express',
@@ -92,6 +106,10 @@ $ui = get_option('produkt_ui_settings', [
                     <?php endforeach; ?>
                 </div>
             </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>ℹ️ Tooltips</h4>
             <div class="produkt-form-group">
                 <label>Mietdauer-Tooltip</label>
                 <textarea name="duration_tooltip" rows="3"><?php echo esc_textarea($ui['duration_tooltip']); ?></textarea>
@@ -102,6 +120,17 @@ $ui = get_option('produkt_ui_settings', [
             </div>
             <div class="produkt-form-group">
                 <label><input type="checkbox" name="show_tooltips" value="1" <?php checked($ui['show_tooltips'], 1); ?>> Tooltips auf Produktseite anzeigen</label>
+            </div>
+        </div>
+
+        <div class="produkt-form-section">
+            <h4>🔢 Bestellnummer</h4>
+            <div class="produkt-form-group">
+                <label>Bestellnummer Startwert</label>
+                <input type="text" name="order_number_start" value="<?php echo esc_attr($next_order_nr); ?>">
+                <?php if ($last_order_nr): ?>
+                <p class="description">Letzte vergebene Bestellnummer: <?php echo esc_html($last_order_nr); ?></p>
+                <?php endif; ?>
             </div>
         </div>
         <?php submit_button('💾 Einstellungen speichern', 'primary', 'submit_buttons'); ?>

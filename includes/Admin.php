@@ -1,7 +1,11 @@
 <?php
 namespace ProduktVerleih;
 
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
 class Admin {
+    public function __construct() {
+    }
     public function add_admin_menu() {
         $branding = $this->get_branding_settings();
         $menu_title = $branding['plugin_name'] ?? 'Produkt';
@@ -180,8 +184,11 @@ class Admin {
         $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
         $content       = $post->post_content ?? '';
 
-        $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-        $is_account_page  = false;
+        $customer_page_id  = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        $confirm_page_id   = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        $is_account_page   = false;
+        $is_confirm_page   = false;
+
         if ($customer_page_id) {
             $is_account_page = is_page($customer_page_id);
         }
@@ -189,14 +196,14 @@ class Admin {
             $is_account_page = has_shortcode($content, 'produkt_account');
         }
 
-        if (!is_page('shop') && !$is_account_page && empty($slug) && empty($category_slug)) {
-            if (!has_shortcode($content, 'produkt_product') &&
-                !has_shortcode($content, 'stripe_elements_form') &&
-                !has_shortcode($content, 'produkt_shop_grid') &&
-                !has_shortcode($content, 'produkt_account')) {
-                return;
-            }
+        if ($confirm_page_id) {
+            $is_confirm_page = is_page($confirm_page_id);
         }
+        if (!$is_confirm_page) {
+            $is_confirm_page = has_shortcode($content, 'produkt_confirmation');
+        }
+
+        // Always load basic assets so the cart icon and sidebar work site-wide
 
         wp_enqueue_emoji_styles();
         wp_enqueue_style(
@@ -208,7 +215,7 @@ class Admin {
 
         $branding = $this->get_branding_settings();
 
-        if ($is_account_page) {
+        if ($is_account_page || $is_confirm_page) {
             wp_enqueue_style(
                 'produkt-account-style',
                 PRODUKT_PLUGIN_URL . 'assets/account-style.css',
@@ -216,17 +223,17 @@ class Admin {
                 PRODUKT_VERSION
             );
 
-            $login_bg = $branding['login_bg_image'] ?? '';
-            if ($login_bg) {
-                $login_css = 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
-                wp_add_inline_style('produkt-account-style', $login_css);
+            if ($is_account_page) {
+                $login_bg = $branding['login_bg_image'] ?? '';
+                if ($login_bg) {
+                    $login_css = 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
+                    wp_add_inline_style('produkt-account-style', $login_css);
+                }
             }
         }
 
-        $load_script = !empty($slug) || !empty($category_slug) || is_page('shop') ||
-            has_shortcode($content, 'produkt_product') ||
-            has_shortcode($content, 'produkt_shop_grid') ||
-            has_shortcode($content, 'stripe_elements_form');
+        // Load scripts globally so the cart sidebar is functional everywhere
+        $load_script = true;
         if ($load_script) {
             wp_enqueue_script(
                 'stripe-js',
@@ -267,12 +274,14 @@ class Admin {
         $product_padding = $branding['product_padding'] ?? '1';
         $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};}";
         if ($product_padding !== '1') {
-            $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
+        $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }
         if (!empty($custom_css)) {
             $inline_css .= "\n" . $custom_css;
         }
         wp_add_inline_style('produkt-style', $inline_css);
+
+        $ui = get_option('produkt_ui_settings', []);
 
         $category = null;
         if ($slug) {
@@ -321,11 +330,16 @@ class Admin {
                 'nonce' => wp_create_nonce('produkt_nonce'),
                 'publishable_key' => StripeService::get_publishable_key(),
                 'checkout_url' => Plugin::get_checkout_page_url(),
+                'account_url' => Plugin::get_customer_page_url(),
+                'login_nonce' => wp_create_nonce('request_login_code_action'),
+                'is_logged_in' => is_user_logged_in(),
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
+                'button_text' => $category->button_text ?? ($ui['button_text'] ?? ''),
                 'blocked_days' => $blocked_days,
+                'variant_blocked_days' => [],
                 'popup_settings' => [
                     'enabled' => $popup_enabled,
                     'days'    => $popup_days,
@@ -347,6 +361,7 @@ class Admin {
             // Enqueue WordPress media scripts for image upload
             wp_enqueue_media();
 
+            wp_localize_script('produkt-admin-script', 'produkt_admin', ['ajax_url'=>admin_url('admin-ajax.php'), 'nonce'=>wp_create_nonce('produkt_admin_action')]);
             // Ensure WordPress editor scripts are available for dynamic accordions
             wp_enqueue_editor();
         }
@@ -374,6 +389,7 @@ class Admin {
         include PRODUKT_PLUGIN_PATH . "admin/{$slug}-page.php";
     }
     
+
     public function custom_admin_footer($text) {
         $branding = $this->get_branding_settings();
         
@@ -641,6 +657,46 @@ class Admin {
                             ]);
                         }
                     }
+
+                    if (!empty($_POST['stock_available']) && is_array($_POST['stock_available'])) {
+                        foreach ($_POST['stock_available'] as $vid => $qty) {
+                            $vid = intval($vid);
+                            $available = intval($qty);
+                            $rented = intval($_POST['stock_rented'][$vid] ?? 0);
+                            $sku = sanitize_text_field($_POST['sku'][$vid] ?? '');
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_variants',
+                                [
+                                    'stock_available' => $available,
+                                    'stock_rented'    => $rented,
+                                    'sku'             => $sku
+                                ],
+                                ['id' => $vid],
+                                ['%d','%d','%s'],
+                                ['%d']
+                            );
+                        }
+                    }
+
+                    if (!empty($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
+                        foreach ($_POST['extra_stock_available'] as $eid => $qty) {
+                            $eid = intval($eid);
+                            $available = intval($qty);
+                            $rented = intval($_POST['extra_stock_rented'][$eid] ?? 0);
+                            $sku = sanitize_text_field($_POST['extra_sku'][$eid] ?? '');
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_extras',
+                                [
+                                    'stock_available' => $available,
+                                    'stock_rented'    => $rented,
+                                    'sku'             => $sku
+                                ],
+                                ['id' => $eid],
+                                ['%d','%d','%s'],
+                                ['%d']
+                            );
+                        }
+                    }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';
                 } else {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -891,7 +947,9 @@ class Admin {
                     COALESCE(d.name, o.dauer_text) as duration_name,
                     COALESCE(cond.name, o.zustand_text) as condition_name,
                     COALESCE(pc.name, o.produktfarbe_text) as product_color_name,
-                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name
+                    COALESCE(fc.name, o.gestellfarbe_text) as frame_color_name,
+                    sm.name AS shipping_name,
+                    sm.service_provider AS shipping_provider
              FROM {$wpdb->prefix}produkt_orders o
              LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
@@ -900,11 +958,16 @@ class Admin {
              LEFT JOIN {$wpdb->prefix}produkt_conditions cond ON o.condition_id = cond.id
              LEFT JOIN {$wpdb->prefix}produkt_colors pc ON o.product_color_id = pc.id
              LEFT JOIN {$wpdb->prefix}produkt_colors fc ON o.frame_color_id = fc.id
+             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
              WHERE $where_clause
              GROUP BY o.id
-             ORDER BY o.created_at DESC",
+            ORDER BY o.created_at DESC",
             ...$where_values
         ));
+        foreach ($orders as $o) {
+            $o->rental_days = pv_get_order_rental_days($o);
+        }
 
         $total_orders = count($orders);
         $completed_orders = array_filter($orders, function ($o) {

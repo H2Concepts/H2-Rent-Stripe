@@ -98,7 +98,8 @@ class Ajax {
                     }
                     $extras_price += floatval($pr);
                 } else {
-                    $extras_price += floatval($ex->price);
+                    $fallback = ($modus === 'kauf') ? ($ex->price_sale ?? 0) : ($ex->price_rent ?? $ex->price);
+                    $extras_price += floatval($fallback);
                 }
             }
 
@@ -135,9 +136,17 @@ class Ajax {
                 $final_price = $duration_price + $extras_price;
             }
             $shipping_cost = 0;
-            $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
-            if ($shipping) {
-                $shipping_cost = floatval($shipping->price);
+            if (!empty($_POST['shipping_price_id'])) {
+                $spid = sanitize_text_field($_POST['shipping_price_id']);
+                $amt = StripeService::get_price_amount($spid);
+                if (!is_wp_error($amt)) {
+                    $shipping_cost = floatval($amt);
+                }
+            } else {
+                $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+                if ($shipping) {
+                    $shipping_cost = floatval($shipping->price);
+                }
             }
             
             wp_send_json_success(array(
@@ -295,10 +304,11 @@ class Ajax {
                                 $extra_data = [
                                     'id'             => (int) $extra->id,
                                     'name'           => $extra->name,
-                                    'price'          => $extra->price,
+                                    'price'          => ($modus === 'kauf') ? ($extra->price_sale ?? $extra->price) : ($extra->price_rent ?? $extra->price),
                                     'stripe_price_id'=> $pid,
                                     'image_url'      => $extra->image_url ?? '',
                                     'available'      => intval($option->available),
+                                    'stock_available' => isset($extra->stock_available) ? (int) $extra->stock_available : 0,
                                 ];
                                 $amount = StripeService::get_price_amount($pid);
                                 if (!is_wp_error($amount)) {
@@ -374,7 +384,8 @@ class Ajax {
                         'price'          => $e->price,
                         'stripe_price_id'=> $pid,
                         'image_url'      => $e->image_url ?? '',
-                        'available'      => 1,
+                        'available'      => intval($e->available) ? 1 : 0,
+                        'stock_available'=> intval($e->stock_available),
                     ];
                     $amount = StripeService::get_price_amount($pid);
                     if (!is_wp_error($amount)) {
@@ -444,6 +455,120 @@ class Ajax {
             'extras' => $extras,
             'duration_discounts' => $duration_discounts
         ));
+    }
+
+    public function ajax_get_variant_booked_days() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $variant_id = intval($_POST['variant_id']);
+        if (!$variant_id) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        global $wpdb;
+        $available = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+            $variant_id
+        ));
+        if ($available > 0) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE variant_id = %d AND mode = 'kauf' AND status IN ('offen','abgeschlossen')",
+            $variant_id
+        ));
+        $days = [];
+        foreach ($rows as $r) {
+            if ($r->start_date && $r->end_date) {
+                $s = strtotime($r->start_date);
+                $e = strtotime($r->end_date);
+                while ($s <= $e) {
+                    $days[] = date('Y-m-d', $s);
+                    $s = strtotime('+1 day', $s);
+                }
+            }
+        }
+        $days = array_values(array_unique($days));
+        wp_send_json_success(['days' => $days]);
+    }
+
+    public function ajax_get_extra_booked_days() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        if (empty($extra_ids)) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        global $wpdb;
+        $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+        $min_available = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT MIN(stock_available) FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+            ...$extra_ids
+        ));
+        if ($min_available > 0) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $conds = [];
+        foreach ($extra_ids as $eid) {
+            $conds[] = $wpdb->prepare('(FIND_IN_SET(%d, extra_ids) OR extra_id = %d)', $eid, $eid);
+        }
+        $where = implode(' OR ', $conds);
+        $rows = $wpdb->get_results(
+            "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE ($where) AND mode = 'kauf' AND status IN ('offen','abgeschlossen')"
+        );
+        $days = [];
+        foreach ($rows as $r) {
+            if ($r->start_date && $r->end_date) {
+                $s = strtotime($r->start_date);
+                $e = strtotime($r->end_date);
+                while ($s <= $e) {
+                    $days[] = date('Y-m-d', $s);
+                    $s = strtotime('+1 day', $s);
+                }
+            }
+        }
+        $days = array_values(array_unique($days));
+        wp_send_json_success(['days' => $days]);
+    }
+
+    public function ajax_check_extra_availability() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+
+        $category_id = intval($_POST['category_id'] ?? 0);
+        $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $start_date = sanitize_text_field($_POST['start_date'] ?? '');
+        $end_date   = sanitize_text_field($_POST['end_date'] ?? '');
+
+        if (!$category_id || empty($extra_ids) || !$start_date || !$end_date) {
+            wp_send_json_success(['unavailable' => []]);
+        }
+
+        global $wpdb;
+
+        $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+
+        $params = array_merge([$category_id], $extra_ids, [$end_date, $start_date]);
+
+        $query = "SELECT e.id FROM {$wpdb->prefix}produkt_extras e
+            WHERE e.category_id = %d
+              AND e.id IN ($placeholders)
+              AND e.stock_available = 0
+              AND EXISTS (
+                SELECT 1 FROM {$wpdb->prefix}produkt_orders o
+                WHERE (FIND_IN_SET(e.id, o.extra_ids) OR o.extra_id = e.id)
+                  AND o.mode = 'kauf'
+                  AND o.status IN ('offen','abgeschlossen')
+                  AND o.start_date <= %s AND o.end_date >= %s
+              )";
+        $prepared = $wpdb->prepare($query, ...$params);
+        $unavailable = $wpdb->get_col($prepared);
+
+        $unavailable = array_map('intval', $unavailable);
+
+        wp_send_json_success(['unavailable' => $unavailable]);
     }
     
     
@@ -886,6 +1011,23 @@ function produkt_create_subscription() {
             throw new \Exception($customer->get_error_message());
         }
 
+        Database::upsert_customer_record_by_email(
+            sanitize_email($body['email'] ?? ''),
+            $customer->id,
+            sanitize_text_field($body['fullname'] ?? ''),
+            sanitize_text_field($body['phone'] ?? ''),
+            [
+                'street'      => $body['street'] ?? '',
+                'postal_code' => $body['postal'] ?? '',
+                'city'        => $body['city'] ?? '',
+                'country'     => $body['country'] ?? '',
+            ]
+        );
+        $user = get_user_by('email', sanitize_email($body['email'] ?? ''));
+        if ($user) {
+            update_user_meta($user->ID, 'stripe_customer_id', $customer->id);
+        }
+
         global $wpdb;
         $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
         $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
@@ -895,7 +1037,6 @@ function produkt_create_subscription() {
         $sub_params = [
             'customer' => $customer->id,
             'items' => $items,
-            'add_invoice_items' => [],
             'payment_behavior' => 'default_incomplete',
             'payment_settings' => [
                 'payment_method_types' => ['card', 'paypal'],
@@ -930,14 +1071,46 @@ function produkt_create_subscription() {
 
         $mode = get_option('produkt_betriebsmodus', 'miete');
         if ($mode === 'kauf') {
+            $cust_email = sanitize_email($body['email'] ?? '');
+            $current_user = wp_get_current_user();
+            if ($current_user && $current_user->exists()) {
+                $cust_email = $current_user->user_email;
+            }
+            $fullname   = sanitize_text_field($body['fullname'] ?? '');
+            $stripe_customer_id = Database::get_stripe_customer_id_by_email($cust_email);
+            if (!$stripe_customer_id) {
+                $customer = \Stripe\Customer::create([
+                    'email' => $cust_email,
+                    'name'  => $fullname,
+                ]);
+                $stripe_customer_id = $customer->id;
+                Database::update_stripe_customer_id_by_email($cust_email, $stripe_customer_id);
+                Database::upsert_customer_record_by_email(
+                    $cust_email,
+                    $stripe_customer_id,
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
+                    ]
+                );
+                $user = get_user_by('email', $cust_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                }
+            }
+
             $session = StripeService::create_checkout_session_for_sale([
-                'price_id'       => $price_id,
-                'quantity'       => $days,
-                'customer_email' => sanitize_email($body['email'] ?? ''),
-                'metadata'       => $sub_params['metadata'],
-                'reference'      => $variant_id ? "var-$variant_id" : null,
-                'success_url'    => get_option('produkt_success_url', home_url('/danke')),
-                'cancel_url'     => get_option('produkt_cancel_url', home_url('/abbrechen')),
+                'price_id'    => $price_id,
+                'quantity'    => $days,
+                'customer'    => $stripe_customer_id,
+                'metadata'    => $sub_params['metadata'],
+                'reference'   => $variant_id ? "var-$variant_id" : null,
+                'success_url' => get_option('produkt_success_url', home_url('/danke')),
+                'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
             ]);
 
             if (is_wp_error($session)) {
@@ -997,6 +1170,12 @@ function produkt_create_checkout_session() {
         $frame_color_id    = intval($body['frame_color_id'] ?? 0);
         $final_price       = floatval($body['final_price'] ?? 0);
         $customer_email    = sanitize_email($body['email'] ?? '');
+        $current_user = wp_get_current_user();
+        if ($current_user && $current_user->exists()) {
+            $customer_email = $current_user->user_email;
+        }
+        $fullname          = sanitize_text_field($body['fullname'] ?? '');
+        $phone             = sanitize_text_field($body['phone'] ?? '');
 
         $metadata = [
             'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
@@ -1024,14 +1203,44 @@ function produkt_create_checkout_session() {
 
         $modus = get_option('produkt_betriebsmodus', 'miete');
         if ($modus === 'kauf') {
+            $stripe_customer_id = null;
+            if ($customer_email) {
+                $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                $fullname = sanitize_text_field($body['fullname'] ?? '');
+                if (!$stripe_customer_id) {
+                $customer = \Stripe\Customer::create([
+                    'email' => $customer_email,
+                    'name'  => $fullname,
+                    'phone' => $phone,
+                ]);
+                $stripe_customer_id = $customer->id;
+                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                Database::upsert_customer_record_by_email(
+                    $customer_email,
+                    $stripe_customer_id,
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
+                    ]
+                );
+                $user = get_user_by('email', $customer_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                }
+            }
+            }
             $session = StripeService::create_checkout_session_for_sale([
-                'price_id'       => $price_id,
-                'quantity'       => $days,
-                'customer_email' => $customer_email,
-                'metadata'       => $metadata,
-                'reference'      => $variant_id ? "var-$variant_id" : null,
-                'success_url'    => get_option('produkt_success_url', home_url('/danke')),
-                'cancel_url'     => get_option('produkt_cancel_url', home_url('/abbrechen')),
+                'price_id'    => $price_id,
+                'quantity'    => $days,
+                'customer'    => $stripe_customer_id,
+                'metadata'    => $metadata,
+                'reference'   => $variant_id ? "var-$variant_id" : null,
+                'success_url' => get_option('produkt_success_url', home_url('/danke')),
+                'cancel_url'  => get_option('produkt_cancel_url', home_url('/abbrechen')),
             ]);
             if (is_wp_error($session)) {
                 throw new \Exception($session->get_error_message());
@@ -1114,7 +1323,45 @@ function produkt_create_checkout_session() {
             $session_args['subscription_data'] = [ 'metadata' => $metadata ];
         }
         if (!empty($customer_email)) {
-            $session_args['customer_email'] = $customer_email;
+            // Prüfe, ob Stripe-Kunde mit dieser E-Mail bereits existiert
+            $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+
+            if (!$stripe_customer_id) {
+                // Erstelle neuen Stripe-Kunden
+                $customer = \Stripe\Customer::create([
+                    'email' => $customer_email,
+                    'name'  => $fullname,
+                ]);
+
+                $stripe_customer_id = $customer->id;
+
+                // Speichere die ID in deiner Kundentabelle
+                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                Database::upsert_customer_record_by_email(
+                    $customer_email,
+                    $stripe_customer_id,
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
+                    ]
+                );
+                $user = get_user_by('email', $customer_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                }
+            }
+
+            if ($stripe_customer_id) {
+                $session_args['customer'] = $stripe_customer_id;
+            } else {
+                $session_args['customer_creation'] = 'always';
+            }
+        } else {
+            $session_args['customer_creation'] = 'always';
         }
 
         $session = \Stripe\Checkout\Session::create($session_args);
@@ -1135,7 +1382,11 @@ function produkt_create_checkout_session() {
                 'frame_color_id'   => $frame_color_id ?: null,
                 'final_price'      => $final_price,
                 'shipping_cost'    => $shipping_cost,
+                'shipping_price_id'=> $shipping_price_id,
                 'mode'             => $modus,
+                'start_date'       => $start_date ?: null,
+                'end_date'         => $end_date ?: null,
+                'inventory_reverted' => 0,
                 'stripe_session_id'=> $session->id,
                 'amount_total'     => 0,
                 'produkt_name'     => $metadata['produkt'],
@@ -1159,7 +1410,6 @@ function produkt_create_checkout_session() {
 
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
-        error_log('Stripe Checkout Session Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
@@ -1173,52 +1423,20 @@ function produkt_create_embedded_checkout_session() {
 
         $body = json_decode(file_get_contents('php://input'), true);
         $modus      = get_option('produkt_betriebsmodus', 'miete');
-        $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
-        $start_date = sanitize_text_field($body['start_date'] ?? '');
-        $end_date   = sanitize_text_field($body['end_date'] ?? '');
-        $price_id   = sanitize_text_field($body['price_id'] ?? '');
-        if (!$price_id) {
-            wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
+        $cart_items = [];
+        if (!empty($body['cart_items']) && is_array($body['cart_items'])) {
+            $cart_items = $body['cart_items'];
+        } else {
+            $cart_items[] = $body;
         }
 
-        $extra_price_ids = [];
-        if (!empty($body['extra_price_ids'])) {
-            if (is_array($body['extra_price_ids'])) {
-                $extra_price_ids = array_map('sanitize_text_field', $body['extra_price_ids']);
-            } elseif (is_string($body['extra_price_ids'])) {
-                $extra_price_ids = array_map('sanitize_text_field', explode(',', $body['extra_price_ids']));
-            }
-            $extra_price_ids = array_filter($extra_price_ids);
-        }
-
-        $extra_ids_raw = sanitize_text_field($body['extra_ids'] ?? '');
-        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
-        if (empty($extra_price_ids) && !empty($extra_ids)) {
-            global $wpdb;
-            $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
-            $rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT stripe_price_id, stripe_price_id_sale, stripe_price_id_rent FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
-                    ...$extra_ids
-                )
-            );
-            foreach ($rows as $row) {
-                $pid = $modus === 'kauf'
-                    ? ($row->stripe_price_id_sale ?: $row->stripe_price_id)
-                    : ($row->stripe_price_id_rent ?: $row->stripe_price_id);
-                if (!empty($pid)) {
-                    $extra_price_ids[] = $pid;
-                }
-            }
-        }
-        $category_id      = intval($body['category_id'] ?? 0);
-        $variant_id       = intval($body['variant_id'] ?? 0);
-        $duration_id      = intval($body['duration_id'] ?? 0);
-        $condition_id     = intval($body['condition_id'] ?? 0);
-        $product_color_id = intval($body['product_color_id'] ?? 0);
-        $frame_color_id   = intval($body['frame_color_id'] ?? 0);
-        $final_price      = floatval($body['final_price'] ?? 0);
         $customer_email   = sanitize_email($body['email'] ?? '');
+        $current_user = wp_get_current_user();
+        if ($current_user && $current_user->exists()) {
+            $customer_email = $current_user->user_email;
+        }
+        $fullname         = sanitize_text_field($body['fullname'] ?? '');
+        $phone            = sanitize_text_field($body['phone'] ?? '');
 
         $shipping_price_id = '';
         $shipping_cost = 0;
@@ -1230,42 +1448,91 @@ function produkt_create_embedded_checkout_session() {
             }
         }
 
-        $metadata = [
-            'produkt'       => sanitize_text_field($body['produkt'] ?? ''),
-            'extra'         => sanitize_text_field($body['extra'] ?? ''),
-            'dauer'         => sanitize_text_field($body['dauer'] ?? ''),
-            'dauer_name'    => sanitize_text_field($body['dauer_name'] ?? ''),
-            'zustand'       => sanitize_text_field($body['zustand'] ?? ''),
-            'produktfarbe'  => sanitize_text_field($body['produktfarbe'] ?? ''),
-            'gestellfarbe'  => sanitize_text_field($body['gestellfarbe'] ?? ''),
-            'email'         => $customer_email,
-            'user_ip'       => $_SERVER['REMOTE_ADDR'] ?? '',
-            'user_agent'    => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
-            'start_date'    => $start_date,
-            'end_date'      => $end_date,
-            'days'          => $days,
-        ];
-        if ($shipping_price_id) {
-            $metadata['shipping_price_id'] = $shipping_price_id;
-        }
+        $line_items = [];
+        $orders = [];
+        foreach ($cart_items as $it) {
+            $it_days = isset($it['days']) ? max(1, intval($it['days'])) : 1;
+            $it_start = sanitize_text_field($it['start_date'] ?? '');
+            $it_end   = sanitize_text_field($it['end_date'] ?? '');
+            $pid      = sanitize_text_field($it['price_id'] ?? '');
+            if (!$pid) { continue; }
+            $line_items[] = [ 'price' => $pid, 'quantity' => $it_days ];
 
-        $line_items = [[
-            'price'    => $price_id,
-            'quantity' => $days,
-        ]];
+            $extra_price_ids = [];
+            if (!empty($it['extra_price_ids'])) {
+                if (is_array($it['extra_price_ids'])) {
+                    $extra_price_ids = array_map('sanitize_text_field', $it['extra_price_ids']);
+                } elseif (is_string($it['extra_price_ids'])) {
+                    $extra_price_ids = array_map('sanitize_text_field', explode(',', $it['extra_price_ids']));
+                }
+                $extra_price_ids = array_filter($extra_price_ids);
+            }
 
-        foreach ($extra_price_ids as $extra_price_id) {
-            $line_items[] = [
-                'price'    => $extra_price_id,
-                'quantity' => ($modus === 'kauf') ? $days : 1,
+            $extra_ids_raw = sanitize_text_field($it['extra_ids'] ?? '');
+            $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+            if (empty($extra_price_ids) && !empty($extra_ids)) {
+                global $wpdb;
+                $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+                $rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT stripe_price_id, stripe_price_id_sale, stripe_price_id_rent FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$extra_ids
+                    )
+                );
+                foreach ($rows as $row) {
+                    $eid = $modus === 'kauf'
+                        ? ($row->stripe_price_id_sale ?: $row->stripe_price_id)
+                        : ($row->stripe_price_id_rent ?: $row->stripe_price_id);
+                    if (!empty($eid)) {
+                        $extra_price_ids[] = $eid;
+                    }
+                }
+            }
+
+            foreach ($extra_price_ids as $extra_price_id) {
+                $line_items[] = [
+                    'price'    => $extra_price_id,
+                    'quantity' => ($modus === 'kauf') ? $it_days : 1,
+                ];
+            }
+
+            $orders[] = [
+                'category_id'      => intval($it['category_id'] ?? 0),
+                'variant_id'       => intval($it['variant_id'] ?? 0),
+                'extra_id'         => !empty($extra_ids) ? $extra_ids[0] : 0,
+                'extra_ids'        => $extra_ids_raw,
+                'duration_id'      => intval($it['duration_id'] ?? 0),
+                'condition_id'     => intval($it['condition_id'] ?? 0) ?: null,
+                'product_color_id' => intval($it['product_color_id'] ?? 0) ?: null,
+                'frame_color_id'   => intval($it['frame_color_id'] ?? 0) ?: null,
+                'final_price'      => floatval($it['final_price'] ?? 0),
+                'start_date'       => $it_start ?: null,
+                'end_date'         => $it_end ?: null,
+                'days'             => $it_days,
+                'metadata' => [
+                    'produkt'       => sanitize_text_field($it['produkt'] ?? ''),
+                    'extra'         => sanitize_text_field($it['extra'] ?? ''),
+                    'dauer_name'    => sanitize_text_field($it['dauer_name'] ?? ''),
+                    'zustand'       => sanitize_text_field($it['zustand'] ?? ''),
+                    'produktfarbe'  => sanitize_text_field($it['produktfarbe'] ?? ''),
+                    'gestellfarbe'  => sanitize_text_field($it['gestellfarbe'] ?? '')
+                ]
             ];
         }
-
         if ($shipping_price_id) {
             $line_items[] = [
                 'price'    => $shipping_price_id,
                 'quantity' => 1,
             ];
+        }
+        $metadata = [
+            'cart_count' => count($orders),
+            'email'      => $customer_email,
+            'user_ip'    => $_SERVER['REMOTE_ADDR'] ?? '',
+            'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+        ];
+        if ($shipping_price_id) {
+            $metadata['shipping_price_id'] = $shipping_price_id;
         }
 
         $tos_url = get_option('produkt_tos_url', home_url('/agb'));
@@ -1309,52 +1576,98 @@ function produkt_create_embedded_checkout_session() {
             ],
             'custom_text' => $custom_text,
         ];
+
         if ($modus !== 'kauf') {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
+        } else {
+            if (!empty($customer_email)) {
+                $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+                if (!$stripe_customer_id) {
+                    $customer = \Stripe\Customer::create([
+                        'email' => $customer_email,
+                        'name'  => $fullname,
+                        'phone' => $phone,
+                    ]);
+                    $stripe_customer_id = $customer->id;
+                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+                    Database::upsert_customer_record_by_email(
+                        $customer_email,
+                        $stripe_customer_id,
+                        $fullname,
+                        $phone,
+                        [
+                            'street'      => $body['street'] ?? '',
+                            'postal_code' => $body['postal'] ?? '',
+                            'city'        => $body['city'] ?? '',
+                            'country'     => $body['country'] ?? '',
+                        ]
+                    );
+                    $user = get_user_by('email', $customer_email);
+                    if ($user) {
+                        update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
+                    }
+                }
+            }
+
+            if (!empty($stripe_customer_id)) {
+                $session_params['customer'] = $stripe_customer_id;
+            } else {
+                $session_params['customer_creation'] = 'always';
+            }
+        }
+
+        if (!empty($session_params['automatic_tax']['enabled'])) {
+            if (!empty($session_params['customer'])) {
+                $session_params['customer_update'] = ['shipping' => 'auto'];
+            }
         }
 
         $session = \Stripe\Checkout\Session::create($session_params);
 
         global $wpdb;
-        $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
-        $wpdb->insert(
-            $wpdb->prefix . 'produkt_orders',
-            [
-                'category_id'      => $category_id,
-                'variant_id'       => $variant_id,
-                'extra_id'         => $extra_id,
-                'extra_ids'        => $extra_ids_raw,
-                'duration_id'      => $duration_id,
-                'condition_id'     => $condition_id ?: null,
-                'product_color_id' => $product_color_id ?: null,
-                'frame_color_id'   => $frame_color_id ?: null,
-                'final_price'      => $final_price,
-                'shipping_cost'    => $shipping_cost,
-                'mode'             => $modus,
-                'stripe_session_id'=> $session->id,
-                'amount_total'     => 0,
-                'produkt_name'     => $metadata['produkt'],
-                'zustand_text'     => $metadata['zustand'],
-                'produktfarbe_text'=> $metadata['produktfarbe'],
-                'gestellfarbe_text'=> $metadata['gestellfarbe'],
-                'extra_text'       => $metadata['extra'],
-                'dauer_text'       => $modus === 'kauf' && empty($metadata['dauer_name'])
-                    ? ($days . ' Tag' . ($days > 1 ? 'e' : '')
-                        . ($start_date && $end_date ? ' (' . $start_date . ' - ' . $end_date . ')' : ''))
-                    : $metadata['dauer_name'],
-                'customer_name'    => '',
-                'customer_email'   => $customer_email,
-                'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
-                'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
-                'discount_amount'  => 0,
-                'status'           => 'offen',
-                'created_at'       => current_time('mysql', 1)
-            ]
-        );
+        foreach ($orders as $o) {
+            $wpdb->insert(
+                $wpdb->prefix . 'produkt_orders',
+                [
+                    'category_id'      => $o['category_id'],
+                    'variant_id'       => $o['variant_id'],
+                    'extra_id'         => $o['extra_id'],
+                    'extra_ids'        => $o['extra_ids'],
+                    'duration_id'      => $o['duration_id'],
+                    'condition_id'     => $o['condition_id'],
+                    'product_color_id' => $o['product_color_id'],
+                    'frame_color_id'   => $o['frame_color_id'],
+                    'final_price'      => $o['final_price'],
+                    'shipping_cost'    => $shipping_cost,
+                    'shipping_price_id'=> $shipping_price_id,
+                    'mode'             => $modus,
+                    'start_date'       => $o['start_date'],
+                    'end_date'         => $o['end_date'],
+                    'inventory_reverted' => 0,
+                    'stripe_session_id'=> $session->id,
+                    'amount_total'     => 0,
+                    'produkt_name'     => $o['metadata']['produkt'],
+                    'zustand_text'     => $o['metadata']['zustand'],
+                    'produktfarbe_text'=> $o['metadata']['produktfarbe'],
+                    'gestellfarbe_text'=> $o['metadata']['gestellfarbe'],
+                    'extra_text'       => $o['metadata']['extra'],
+                    'dauer_text'       => $modus === 'kauf' && empty($o['metadata']['dauer_name'])
+                        ? ($o['days'] . ' Tag' . ($o['days'] > 1 ? 'e' : '')
+                            . ($o['start_date'] && $o['end_date'] ? ' (' . $o['start_date'] . ' - ' . $o['end_date'] . ')' : ''))
+                        : $o['metadata']['dauer_name'],
+                    'customer_name'    => '',
+                    'customer_email'   => $customer_email,
+                    'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
+                    'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+                    'discount_amount'  => 0,
+                    'status'           => 'offen',
+                    'created_at'       => current_time('mysql', 1)
+                ]
+            );
+        }
 
         wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {
-        error_log('Stripe Embedded Checkout Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
@@ -1379,7 +1692,6 @@ function produkt_get_checkout_session_status() {
         $email = $session->customer_details->email ?? '';
         wp_send_json(['status' => $session->status, 'customer_email' => $email]);
     } catch (\Exception $e) {
-        error_log('Stripe Session Status Error: ' . $e->getMessage());
         wp_send_json_error(['message' => $e->getMessage()]);
     }
 }
@@ -1409,4 +1721,112 @@ function produkt_unblock_day() {
     $table = $wpdb->prefix . 'produkt_blocked_days';
     $wpdb->delete($table, ['day' => $date], ['%s']);
     wp_send_json_success();
+}
+
+function produkt_confirm_return() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+    $order_id = intval($_POST['order_id'] ?? 0);
+    if (!$order_id) {
+        wp_send_json_error('missing');
+    }
+    $res = \ProduktVerleih\Database::process_inventory_return($order_id);
+    if ($res) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('failed');
+    }
+}
+add_action('wp_ajax_confirm_return', __NAMESPACE__ . '\\produkt_confirm_return');
+add_action('wp_ajax_get_order_details', __NAMESPACE__ . '\\produkt_get_order_details');
+
+function produkt_get_order_details() {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(['message' => 'Nicht autorisiert']);
+    }
+
+    $order_id = isset($_POST['order_id']) ? intval($_POST['order_id']) : 0;
+
+    if (!$order_id) {
+        wp_send_json_error(['message' => 'Keine Order-ID übermittelt']);
+    }
+
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+    $order_array = pv_get_order_by_id($order_id);
+    $order = $order_array ? (object) $order_array : null;
+
+    if (!$order) {
+        wp_send_json_error(['message' => 'Bestellung nicht gefunden']);
+    }
+
+    // Beispiel-Ausgabe (kann später erweitert werden)
+    ob_start();
+    ?>
+    <div class="order-details-inner">
+        <h3>Details zur Bestellung #<?php echo esc_html($order->id); ?></h3>
+        <p><strong>Kunde:</strong> <?php echo esc_html($order->customer_name ?? '–'); ?></p>
+<p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email ?? '–'); ?></p>
+        <p><strong>Produkt:</strong> <?php echo esc_html($order->category_name ?: $order->produkt_name ?: '–'); ?></p>
+        <?php if (!empty($order->variant_name)) : ?>
+        <p><strong>Ausführung:</strong> <?php echo esc_html($order->variant_name); ?></p>
+        <?php endif; ?>
+        <p><strong>Extras:</strong> <?php echo esc_html($order->extra_names ?: '–'); ?></p>
+        <p><strong>Mietzeitraum:</strong> <?php echo esc_html($order->start_date); ?> – <?php echo esc_html($order->end_date); ?></p>
+        <p><strong>Bestellt am:</strong> <?php echo date_i18n('d.m.Y H:i', strtotime($order->created_at)); ?></p>
+    </div>
+    <?php
+
+    $html = ob_get_clean();
+
+    wp_send_json_success(['html' => $html]);
+}
+
+add_action('wp_ajax_pv_load_order_sidebar_details', __NAMESPACE__ . '\\pv_load_order_sidebar_details');
+function pv_load_order_sidebar_details() {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Nicht autorisiert');
+    }
+
+    $order_id = isset($_POST['order_id']) ? intval($_POST['order_id']) : 0;
+    if (!$order_id) {
+        wp_send_json_error('Keine Bestell-ID übergeben');
+    }
+
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+    global $wpdb;
+    global $order; // make $order available globally for the template
+
+    $order_array = pv_get_order_by_id($order_id);
+    $order = $order_array ? (object) $order_array : null;
+
+    if (!$order) {
+        wp_send_json_error('Bestellung nicht gefunden');
+    }
+
+    $image_url = pv_get_image_url_by_variant_or_category($order->variant_id ?? 0, $order->category_id ?? 0);
+    list($sd, $ed) = pv_get_order_period($order);
+    $days = pv_get_order_rental_days($order);
+
+    // 🔍 Debug-Ausgabe (in debug.log sichtbar!)
+    error_log('DEBUG $order in Sidebar: ' . print_r($order, true));
+
+    // Logs abrufen
+    $logs = $wpdb->get_results($wpdb->prepare("
+        SELECT * FROM {$wpdb->prefix}produkt_order_logs
+        WHERE order_id = %d ORDER BY created_at DESC
+    ", $order_id));
+
+    // HTML generieren (Template einbinden)
+    global $order; // macht $order im Template sichtbar
+    ob_start();
+$order_data = $order;
+include PRODUKT_PLUGIN_PATH . 'admin/dashboard/sidebar-order-details.php';
+$html = ob_get_clean();
+
+    wp_send_json_success([
+        'html' => $html,
+    ]);
 }

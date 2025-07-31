@@ -4,6 +4,8 @@ namespace ProduktVerleih;
 use WP_REST_Request;
 use WP_REST_Response;
 
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
 add_action('rest_api_init', function () {
     register_rest_route('produkt/v1', '/stripe-webhook', [
         'methods'  => 'POST',
@@ -13,10 +15,6 @@ add_action('rest_api_init', function () {
 });
 
 function handle_stripe_webhook(WP_REST_Request $request) {
-    $init = StripeService::init();
-    if (is_wp_error($init)) {
-        return new WP_REST_Response(['error' => 'Stripe init failed'], 500);
-    }
 
     $secret_key = get_option('produkt_stripe_secret_key', '');
     if ($secret_key) {
@@ -30,230 +28,15 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     try {
         $event = \Stripe\Webhook::constructEvent($payload, $sig_header, $secret);
     } catch (\Exception $e) {
-        http_response_code(400);
-        exit('Ungültige Signatur: ' . $e->getMessage());
+        return new WP_REST_Response(['error' => $e->getMessage()], 400);
     }
 
-    // Log webhook event
-    global $wpdb;
-    $log_table = $wpdb->prefix . 'produkt_webhook_logs';
-    $wpdb->insert($log_table, [
-        'event_type'    => $event->type,
-        'stripe_object' => wp_json_encode($event->data->object),
-        'message'       => 'Webhook verarbeitet'
-    ]);
-
-    if ($event->type === 'checkout.session.completed') {
-        $session  = $event->data->object;
-        $mode     = $session->mode ?? 'subscription';
-        $subscription_id   = $mode === 'subscription' ? ($session->subscription ?? '') : '';
-        $metadata = $session->metadata ? $session->metadata->toArray() : [];
-
-        if ($mode === 'payment' || $mode === 'subscription') {
-
-        $email              = $session->customer_details->email ?? '';
-        $stripe_customer_id = $session->customer ?? '';
-        $full_name          = sanitize_text_field($session->customer_details->name ?? '');
-        $first_name = $full_name;
-        $last_name  = '';
-        if (strpos($full_name, ' ') !== false) {
-            list($first_name, $last_name) = explode(' ', $full_name, 2);
+    register_shutdown_function(function () use ($event) {
+        if ($event->type === 'checkout.session.completed') {
+            $session = $event->data->object;
+            \ProduktVerleih\StripeService::process_checkout_session($session);
         }
-        $phone = sanitize_text_field($session->customer_details->phone ?? '');
-
-        if ($email && $stripe_customer_id) {
-            $user = get_user_by('email', $email);
-
-            if (!$user) {
-                // Benutzer anlegen
-                $user_id = wp_create_user($email, wp_generate_password(), $email);
-                if (!is_wp_error($user_id)) {
-                    wp_update_user([
-                        'ID'          => $user_id,
-                        'role'        => 'kunde',
-                        'display_name'=> $full_name ?: $email,
-                    ]);
-                    update_user_meta($user_id, 'stripe_customer_id', $stripe_customer_id);
-                    update_user_meta($user_id, 'first_name', $first_name);
-                    update_user_meta($user_id, 'last_name', $last_name);
-                    if ($phone) {
-                        update_user_meta($user_id, 'phone', $phone);
-                    }
-                }
-            } else {
-                // Benutzer existiert – Daten aktualisieren
-                wp_update_user([
-                    'ID'          => $user->ID,
-                    'role'        => 'kunde',
-                    'display_name'=> $full_name ?: $user->display_name,
-                ]);
-                update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
-                update_user_meta($user->ID, 'first_name', $first_name);
-                update_user_meta($user->ID, 'last_name', $last_name);
-                if ($phone) {
-                    update_user_meta($user->ID, 'phone', $phone);
-                }
-            }
-        }
-
-        $produkt_name  = sanitize_text_field($metadata['produkt'] ?? '');
-        $zustand       = sanitize_text_field($metadata['zustand'] ?? '');
-        $produktfarbe  = sanitize_text_field($metadata['produktfarbe'] ?? '');
-        $gestellfarbe  = sanitize_text_field($metadata['gestellfarbe'] ?? '');
-        $extra         = sanitize_text_field($metadata['extra'] ?? '');
-        $dauer         = sanitize_text_field($metadata['dauer_name'] ?? '');
-        $start_date    = sanitize_text_field($metadata['start_date'] ?? '');
-        $end_date      = sanitize_text_field($metadata['end_date'] ?? '');
-        $days          = intval($metadata['days'] ?? 0);
-        $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
-        $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
-
-        $email  = sanitize_email($session->customer_details->email ?? '');
-        $phone  = sanitize_text_field($session->customer_details->phone ?? '');
-        $addr   = $session->customer_details->address ?? null;
-        $street = sanitize_text_field($addr->line1 ?? '');
-        $postal = sanitize_text_field($addr->postal_code ?? '');
-        $city   = sanitize_text_field($addr->city ?? '');
-        $country = sanitize_text_field($addr->country ?? '');
-
-        global $wpdb;
-        $existing_order = $wpdb->get_row($wpdb->prepare(
-            "SELECT id, status, created_at, category_id, shipping_cost FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
-            $session->id
-        ));
-        $existing_id = $existing_order->id ?? 0;
-        $shipping_cost = 0;
-        if ($existing_id) {
-            $shipping_cost = floatval($existing_order->shipping_cost);
-            if (!$shipping_cost && !empty($existing_order->category_id)) {
-                $shipping_cost = (float) $wpdb->get_var($wpdb->prepare(
-                    "SELECT shipping_cost FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
-                    $existing_order->category_id
-                ));
-            }
-        } else {
-            $shipping_price_id = $metadata['shipping_price_id'] ?? '';
-            if ($shipping_price_id) {
-                $amt = StripeService::get_price_amount($shipping_price_id);
-                if (!is_wp_error($amt)) {
-                    $shipping_cost = floatval($amt);
-                }
-            }
-        }
-
-        $discount_amount = ($session->total_details->amount_discount ?? 0) / 100;
-
-        if (!$dauer && $days > 0) {
-            $dauer = $days . ' Tag' . ($days > 1 ? 'e' : '');
-            if ($start_date && $end_date) {
-                $dauer .= ' (' . $start_date . ' - ' . $end_date . ')';
-            }
-        }
-
-        $data = [
-            'customer_email'    => $email,
-            'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
-            'customer_phone'    => $phone,
-            'customer_street'   => $street,
-            'customer_postal'   => $postal,
-            'customer_city'     => $city,
-            'customer_country'  => $country,
-            'final_price'       => (($session->amount_total ?? 0) / 100) - $shipping_cost,
-            'shipping_cost'     => $shipping_cost,
-            'amount_total'      => $session->amount_total ?? 0,
-            'discount_amount'   => $discount_amount,
-            'produkt_name'      => $produkt_name,
-            'zustand_text'      => $zustand,
-            'produktfarbe_text' => $produktfarbe,
-            'gestellfarbe_text' => $gestellfarbe,
-            'extra_text'        => $extra,
-            'dauer_text'        => $dauer,
-            'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
-            'user_ip'           => $user_ip,
-            'user_agent'        => $user_agent,
-            'stripe_subscription_id' => $subscription_id,
-            'status'            => 'abgeschlossen',
-            'created_at'        => current_time('mysql', 1),
-        ];
-
-        $send_welcome = false;
-        if ($existing_id) {
-            $send_welcome = ($existing_order->status !== 'abgeschlossen');
-            $data['created_at'] = $existing_order->created_at;
-            $wpdb->update(
-                "{$wpdb->prefix}produkt_orders",
-                $data,
-                ['id' => $existing_id]
-            );
-            if ($send_welcome) {
-                produkt_add_order_log($existing_id, 'status_updated', 'offen -> abgeschlossen');
-            }
-        } else {
-            $data['stripe_session_id'] = $session->id;
-            $data['stripe_subscription_id'] = $subscription_id;
-            $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);
-            $existing_id = $wpdb->insert_id;
-            produkt_add_order_log($existing_id, 'order_created');
-            $send_welcome = true;
-        }
-
-        if ($send_welcome) {
-            produkt_add_order_log($existing_id, 'checkout_completed');
-            send_produkt_welcome_email($data, $existing_id);
-            send_admin_order_email($data, $existing_id, $session->id);
-            produkt_add_order_log($existing_id, 'welcome_email_sent');
-        }
-        }
-    }
-    elseif ($event->type === 'customer.subscription.deleted') {
-        $subscription     = $event->data->object;
-        $subscription_id  = $subscription->id;
-        global $wpdb;
-        $wpdb->update(
-            "{$wpdb->prefix}produkt_orders",
-            ['status' => 'gekündigt'],
-            ['stripe_subscription_id' => $subscription_id]
-        );
-        $order_id = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}produkt_orders WHERE stripe_subscription_id = %s",
-            $subscription_id
-        ));
-        if ($order_id) {
-            produkt_add_order_log((int) $order_id, 'subscription_cancelled');
-        }
-        return new WP_REST_Response(['status' => 'subscription cancelled'], 200);
-    } elseif ($event->type === 'product.deleted') {
-        $product    = $event->data->object;
-        $product_id = $product->id;
-        global $wpdb;
-        if (!empty($product->deleted) && $product->deleted === true) {
-            $wpdb->delete("{$wpdb->prefix}produkt_variants", ['stripe_product_id' => $product_id]);
-            $wpdb->delete("{$wpdb->prefix}produkt_extras", ['stripe_product_id' => $product_id]);
-            return new WP_REST_Response(['status' => 'product removed in plugin'], 200);
-        }
-        $wpdb->update(
-            "{$wpdb->prefix}produkt_variants",
-            ['active' => 0],
-            ['stripe_product_id' => $product_id]
-        );
-        return new WP_REST_Response(['status' => 'product archived in plugin'], 200);
-    } elseif ($event->type === 'price.deleted') {
-        $price    = $event->data->object;
-        $price_id = $price->id;
-        global $wpdb;
-        if (!empty($price->deleted) && $price->deleted === true) {
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}produkt_variants SET stripe_price_id = '' WHERE stripe_price_id = %s",
-                $price_id
-            ));
-        } else {
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}produkt_variants SET active = 0 WHERE stripe_price_id = %s",
-                $price_id
-            ));
-        }
-        return new WP_REST_Response(['status' => 'price unlinked in plugin'], 200);
-    }
+    });
 
     return new WP_REST_Response(['status' => 'ok'], 200);
 }
@@ -269,6 +52,40 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     } else {
         $first = $full_name;
         $last  = '';
+    }
+
+    global $wpdb;
+    if (empty($order['produkt_name']) || empty($order['extra_text'])) {
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT variant_id, category_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($row) {
+            if (empty($order['produkt_name'])) {
+                if ($row->variant_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                        $row->variant_id
+                    ));
+                }
+                if (empty($order['produkt_name']) && $row->category_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $row->category_id
+                    ));
+                }
+            }
+            if (empty($order['extra_text']) && !empty($row->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $row->extra_ids)));
+                if (!empty($ids)) {
+                    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+                    $order['extra_text'] = implode(', ', $wpdb->get_col($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$ids
+                    )));
+                }
+            }
+        }
     }
 
     $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
@@ -290,7 +107,8 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     $message .= '<h3>Ihre Bestellübersicht</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($order_id) . '</td></tr>';
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestelldatum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     $message .= '</table>';
 
@@ -307,18 +125,54 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $message .= '</table>';
 
     $message .= '<h3>Ihre Produktdaten</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr style="background:#f8f9fa;"><th style="text-align:left;padding:6px;">Produkt</th><th style="text-align:left;padding:6px;">Menge</th><th style="text-align:left;padding:6px;">Variante</th><th style="text-align:left;padding:6px;">Extras</th><th style="text-align:left;padding:6px;">Farbe</th><th style="text-align:left;padding:6px;">Gestell</th><th style="text-align:left;padding:6px;">Mietdauer</th><th style="text-align:left;padding:6px;">Preis</th></tr>';
-    $message .= '<tr><td style="padding:6px;">' . esc_html($order['produkt_name']) . '</td><td style="padding:6px;">1</td><td style="padding:6px;">' . esc_html($order['zustand_text']) . '</td><td style="padding:6px;">' . esc_html($order['extra_text']) . '</td><td style="padding:6px;">' . esc_html($order['produktfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['gestellfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['dauer_text']) . '</td><td style="padding:6px;">' . esc_html($price) . '</td></tr>';
-    if ($order['shipping_cost'] > 0) {
-        $message .= '<tr><td colspan="7" style="text-align:right;padding:6px;">Versand (einmalig):</td><td style="padding:6px;">' . esc_html($shipping) . '</td></tr>';
+    $message .= '<div style="line-height:1.5;">';
+    $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
+    if (!empty($order['zustand_text'])) {
+        $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
     }
-    $message .= '<tr><td colspan="8" style="text-align:right;padding:6px;">Gesamtsumme: <strong>' . esc_html($total_first) . '</strong></td></tr>';
-    $message .= '</table>';
+    if (!empty($order['extra_text'])) {
+        $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
+    }
+    if (!empty($order['produktfarbe_text'])) {
+        $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
+    }
+    if (!empty($order['gestellfarbe_text'])) {
+        $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
+    }
+    $order_obj = (object) $order;
+    list($sd, $ed) = pv_get_order_period($order_obj);
+    if ($sd && $ed) {
+        $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
+    }
+    $days = pv_get_order_rental_days($order_obj);
+    if ($days !== null) {
+        $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
+    } elseif (!empty($order['dauer_text'])) {
+        $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
+    }
+    $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
+    $shipping_name = '';
+    if (!empty($order['shipping_price_id'])) {
+        global $wpdb;
+        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
+    }
+    if ($order['shipping_cost'] > 0 || $shipping_name) {
+        $ship_text = $shipping_name ?: 'Versand';
+        $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
+        if ($order['shipping_cost'] > 0) {
+            $message .= ' - ' . esc_html($shipping);
+        }
+        $message .= '</p>';
+    }
+    $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
+    $message .= '</div>';
 
     $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
     $message .= '</div>';
-    $message .= '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">Kleine Helden Verleih GbR<br>Kadir Üner &amp; Tim Braunleder<br>Siegenkamp 28<br>52499 Baesweiler</div>';
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $footer_html;
+    }
     $message .= '</div>';
     $message .= '</body></html>';
 
@@ -326,11 +180,19 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $from_name  = get_bloginfo('name');
     $from_email = get_option('admin_email');
     $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
-    wp_mail($order['customer_email'], $subject, $message, $headers);
+
+    // Rechnung erzeugen und Anhang vorbereiten
+    $attachments = [];
+    $pdf_path    = pv_generate_invoice_pdf($order_id);
+    if ($pdf_path && file_exists($pdf_path)) {
+        $attachments[] = $pdf_path;
+    }
+
+    wp_mail($order['customer_email'], $subject, $message, $headers, $attachments);
 }
 
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {
-    $subject    = 'Neue Bestellung #' . $order_id;
+    $subject    = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
     $order_date = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
     $price       = number_format((float) $order['final_price'], 2, ',', '.') . '€';
@@ -338,6 +200,40 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
+
+    global $wpdb;
+    if (empty($order['produkt_name']) || empty($order['extra_text'])) {
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT variant_id, category_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($row) {
+            if (empty($order['produkt_name'])) {
+                if ($row->variant_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                        $row->variant_id
+                    ));
+                }
+                if (empty($order['produkt_name']) && $row->category_id) {
+                    $order['produkt_name'] = $wpdb->get_var($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $row->category_id
+                    ));
+                }
+            }
+            if (empty($order['extra_text']) && !empty($row->extra_ids)) {
+                $ids = array_filter(array_map('intval', explode(',', $row->extra_ids)));
+                if (!empty($ids)) {
+                    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+                    $order['extra_text'] = implode(', ', $wpdb->get_col($wpdb->prepare(
+                        "SELECT name FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$ids
+                    )));
+                }
+            }
+        }
+    }
 
     $site_title = get_bloginfo('name');
     $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">';
@@ -348,7 +244,8 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
 
     $message .= '<h3>Bestelldetails</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($order_id) . '</td></tr>';
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Abgeschlossen</td></tr>';
     $message .= '</table>';
@@ -366,18 +263,54 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $message .= '</table>';
 
     $message .= '<h3>Produktdaten</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr style="background:#f8f9fa;"><th style="text-align:left;padding:6px;">Produkt</th><th style="text-align:left;padding:6px;">Menge</th><th style="text-align:left;padding:6px;">Variante</th><th style="text-align:left;padding:6px;">Extras</th><th style="text-align:left;padding:6px;">Farbe</th><th style="text-align:left;padding:6px;">Gestell</th><th style="text-align:left;padding:6px;">Mietdauer</th><th style="text-align:left;padding:6px;">Preis</th></tr>';
-    $message .= '<tr><td style="padding:6px;">' . esc_html($order['produkt_name']) . '</td><td style="padding:6px;">1</td><td style="padding:6px;">' . esc_html($order['zustand_text']) . '</td><td style="padding:6px;">' . esc_html($order['extra_text']) . '</td><td style="padding:6px;">' . esc_html($order['produktfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['gestellfarbe_text']) . '</td><td style="padding:6px;">' . esc_html($order['dauer_text']) . '</td><td style="padding:6px;">' . esc_html($price) . '</td></tr>';
-    if ($order['shipping_cost'] > 0) {
-        $message .= '<tr><td colspan="7" style="text-align:right;padding:6px;">Versand (einmalig):</td><td style="padding:6px;">' . esc_html($shipping) . '</td></tr>';
+    $message .= '<div style="line-height:1.5;">';
+    $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
+    if (!empty($order['zustand_text'])) {
+        $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
     }
-    $message .= '<tr><td colspan="8" style="text-align:right;padding:6px;">Gesamtsumme: <strong>' . esc_html($total_first) . '</strong></td></tr>';
-    $message .= '</table>';
+    if (!empty($order['extra_text'])) {
+        $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
+    }
+    if (!empty($order['produktfarbe_text'])) {
+        $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
+    }
+    if (!empty($order['gestellfarbe_text'])) {
+        $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
+    }
+    $order_obj = (object) $order;
+    list($sd,$ed) = pv_get_order_period($order_obj);
+    if ($sd && $ed) {
+        $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
+    }
+    $days = pv_get_order_rental_days($order_obj);
+    if ($days !== null) {
+        $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
+    } elseif (!empty($order['dauer_text'])) {
+        $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
+    }
+    $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
+    $shipping_name = '';
+    if (!empty($order['shipping_price_id'])) {
+        global $wpdb;
+        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
+    }
+    if ($order['shipping_cost'] > 0 || $shipping_name) {
+        $ship_text = $shipping_name ?: 'Versand';
+        $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
+        if ($order['shipping_cost'] > 0) {
+            $message .= ' - ' . esc_html($shipping);
+        }
+        $message .= '</p>';
+    }
+    $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
+    $message .= '</div>';
 
     $message .= '<p>Session-ID: ' . esc_html($session_id) . '</p>';
     $message .= '</div>';
-    $message .= '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">Kleine Helden Verleih GbR<br>Kadir Üner &amp; Tim Braunleder<br>Siegenkamp 28<br>52499 Baesweiler</div>';
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $footer_html;
+    }
     $message .= '</div>';
     $message .= '</body></html>';
 
@@ -386,6 +319,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
     wp_mail(get_option('admin_email'), $subject, $message, $headers);
 }
+
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {
     global $wpdb;

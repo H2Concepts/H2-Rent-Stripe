@@ -7,6 +7,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$modus    = get_option('produkt_betriebsmodus', 'miete');
+$is_sale  = ($modus === 'kauf');
+
 if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
         $sub_id = sanitize_text_field($_POST['subscription_id']);
@@ -20,19 +23,36 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 }
 
 
-$orders       = [];
-$order_map    = [];
+$orders        = [];
+$sale_orders   = [];
+$order_map     = [];
 $subscriptions = [];
-$invoices     = [];
 $full_name     = '';
+$customer_addr = '';
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
     $orders  = Database::get_orders_for_user($user_id);
 
+    $current_user = wp_get_current_user();
+    global $wpdb;
+    $addr_row = $wpdb->get_row($wpdb->prepare(
+        "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
+        $current_user->user_email
+    ));
+    if ($addr_row) {
+        $customer_addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
+        if ($addr_row->country) {
+            $customer_addr .= ', ' . $addr_row->country;
+        }
+    }
+
     foreach ($orders as $o) {
         if (!empty($o->subscription_id)) {
             $order_map[$o->subscription_id] = $o;
+        }
+        if ($o->mode === 'kauf') {
+            $sale_orders[] = $o;
         }
     }
 
@@ -43,7 +63,6 @@ if (is_user_logged_in()) {
             $subscriptions = $subs;
         }
 
-        $invoices = \ProduktVerleih\StripeService::get_customer_invoices($customer_id);
     }
 
     foreach ($orders as $o) {
