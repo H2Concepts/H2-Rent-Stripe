@@ -3076,7 +3076,7 @@
 
 /* Inhalt der Sidebar */
 .order-details-content {
-    padding: 24px;
+    padding: 25px 10px;
 }
 
 .order-details-content p {
@@ -3297,7 +3297,6 @@
 /* Gesamtpreis */
 .total-section {
     margin-bottom: 1.5rem;
-    border-top: 1px solid #eee;
     padding-top: 1rem;
 }
 .total-section p {
