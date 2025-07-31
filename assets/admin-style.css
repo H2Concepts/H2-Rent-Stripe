@@ -3351,9 +3351,9 @@ body.category-modal-open {
 }
 
 .icon-btn svg {
-    width: 20px;
-    height: 20px;
-    fill: #2d6a4f;
+    width: 24px;
+    height: 24px;
+    fill: #1e1e1e;
 }
 .icon-btn + .icon-btn {
     margin-left: 8px;
