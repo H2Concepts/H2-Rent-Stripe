@@ -3037,7 +3037,7 @@ body.category-modal-open {
     align-items: center;
     justify-content: space-between;
     padding: 0 0.5rem;
-    font-size: 0.9rem;
+    font-size: 18px;
     transition: background 0.3s ease;
 }
 
@@ -3069,6 +3069,8 @@ body.category-modal-open {
 .recent-product-tile .edit-btn svg {
     fill: #ffffff;
     stroke: none;
+    width: 15px;
+    height: 15px;
 }
 	
 .quicknav-grid {
