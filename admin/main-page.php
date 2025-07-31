@@ -1,206 +1,221 @@
 <?php
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) exit;
 
 global $wpdb;
 
-// Get categories count
-$categories_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
-$variants_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants");
-$extras_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
-$durations_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_durations");
-$colors_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_colors");
-
-// Get recently edited products (latest entries)
-$recent_products = $wpdb->get_results(
-    "SELECT id, name, product_title, default_image, meta_title
-       FROM {$wpdb->prefix}produkt_categories
-       ORDER BY id DESC
-       LIMIT 4"
-);
-
-// Get recent orders
-$recent_orders = $wpdb->get_results(
-    "SELECT o.*, c.name AS category_name, c.product_title, v.name AS variant_name
-       FROM {$wpdb->prefix}produkt_orders o
-       LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-       LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-      ORDER BY o.created_at DESC
-      LIMIT 4"
-);
-
-// Get branding settings
-$branding = array();
-$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
-foreach ($branding_results as $result) {
-    $branding[$result->setting_key] = $result->setting_value;
+// Rückgabe bestätigen (wenn Button gedrückt)
+if (isset($_POST['confirm_return_id'])) {
+    $order_id = intval($_POST['confirm_return_id']);
+    $wpdb->update(
+        "{$wpdb->prefix}produkt_orders",
+        ['return_confirmed' => 1],
+        ['id' => $order_id],
+        ['%d'],
+        ['%d']
+    );
+    echo '<div class="updated"><p>Rückgabe erfolgreich bestätigt.</p></div>';
 }
+
+// Umsatz berechnen (aktueller Monat)
+$start_date = date('Y-m-01');
+$end_date = date('Y-m-d');
+$monthly_income = $wpdb->get_var("
+    SELECT SUM(final_price)
+    FROM {$wpdb->prefix}produkt_orders
+    WHERE status = 'abgeschlossen' AND created_at BETWEEN '$start_date' AND '$end_date'
+");
+$monthly_income = $monthly_income ? number_format($monthly_income, 2, ',', '.') : '0,00';
+
+// Weitere Zahlen
+$products = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
+$extras = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_extras");
+$variants = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variants");
+$customers = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_customers");
+
+// Letzte Bestellungen
+$orders = $wpdb->get_results("
+    SELECT o.*, c.name AS produkt_name
+    FROM {$wpdb->prefix}produkt_orders o
+    LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+    ORDER BY o.created_at DESC
+    LIMIT 5
+");
+
+// Rückgaben abrufen (fällige Rückgaben, noch nicht bestätigt)
+$return_orders = $wpdb->get_results("
+    SELECT o.id, o.customer_name, c.name AS produkt_name, o.end_date
+    FROM {$wpdb->prefix}produkt_orders o
+    LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+    WHERE o.status = 'abgeschlossen'
+AND o.end_date <= CURDATE()
+    ORDER BY o.end_date ASC
+");
+
+// Branding holen
+$branding_result = $wpdb->get_row("SELECT setting_value FROM {$wpdb->prefix}produkt_branding WHERE setting_key = 'plugin_name'");
+$plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H2 Concepts Rental Pro';
 ?>
 
-<div class="wrap">
-    <!-- Kompakter Admin Header -->
-    <div class="produkt-admin-header-compact">
-        <div class="produkt-admin-logo-compact">
-            🏠
-        </div>
-        <div class="produkt-admin-title-compact">
-            <h1><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></h1>
-            <p>Dashboard & Übersicht</p>
-        </div>
-    </div>
-    
-    <!-- Kompakte Statistiken -->
-    <div class="produkt-stats-compact">
-        <div class="stat-card">
-            <div class="produkt-stat-number"><?php echo $categories_count; ?></div>
-            <div class="produkt-stat-label">Produkte</div>
-        </div>
-        <div class="stat-card">
-            <div class="produkt-stat-number"><?php echo $variants_count; ?></div>
-            <div class="produkt-stat-label">Ausführungen</div>
-        </div>
-        <div class="stat-card">
-            <div class="produkt-stat-number"><?php echo $extras_count; ?></div>
-            <div class="produkt-stat-label">Extras</div>
-        </div>
-        <div class="stat-card">
-            <div class="produkt-stat-number"><?php echo $durations_count; ?></div>
-            <div class="produkt-stat-label">Mietdauern</div>
-        </div>
-        <div class="stat-card">
-            <div class="produkt-stat-number"><?php echo $colors_count; ?></div>
-            <div class="produkt-stat-label">Farben</div>
-        </div>
-    </div>
-    
-    <!-- Hauptnavigation -->
-    <div class="produkt-main-nav">
-        <h3>🧭 Hauptbereiche</h3>
-        <div class="produkt-nav-cards">
-            <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="produkt-nav-card">
-                <div class="produkt-nav-icon">🏷️</div>
-                <div class="produkt-nav-content">
-                    <h4>Produkte</h4>
-                    <p>Produkte & SEO-Einstellungen</p>
-                </div>
-            </a>
-            
-            <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="produkt-nav-card">
-                <div class="produkt-nav-icon">📦</div>
-                <div class="produkt-nav-content">
-                    <h4>Ausführungen</h4>
-                    <p>Produktvarianten mit Bildern</p>
-                </div>
-            </a>
-            
-            <a href="<?php echo admin_url('admin.php?page=produkt-extras'); ?>" class="produkt-nav-card">
-                <div class="produkt-nav-icon">🎁</div>
-                <div class="produkt-nav-content">
-                    <h4>Extras</h4>
-                    <p>Zusatzoptionen & Zubehör</p>
-                </div>
-            </a>
-            
-            <a href="<?php echo admin_url('admin.php?page=produkt-durations'); ?>" class="produkt-nav-card">
-                <div class="produkt-nav-icon">⏰</div>
-                <div class="produkt-nav-content">
-                    <h4>Mietdauern</h4>
-                    <p>Laufzeiten & Rabatte</p>
-                </div>
-            </a>
-            
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=branding'); ?>" class="produkt-nav-card">
-                <div class="produkt-nav-icon">🎨</div>
-                <div class="produkt-nav-content">
-                    <h4>Branding</h4>
-                    <p>Design & Anpassungen</p>
-                </div>
-            </a>
-        </div>
-    </div>
-    
-    <!-- Zuletzt bearbeitete Produkte -->
-    <?php if (!empty($recent_products)): ?>
-    <div class="produkt-recent-section">
-        <h3>🛒 Letzte Produkte</h3>
-        <div class="produkt-category-cards">
-            <?php foreach ($recent_products as $prod): ?>
-            <?php $prod_url = home_url('/shop/produkt/' . sanitize_title($prod->product_title)); ?>
-            <div class="produkt-category-card">
-                <?php if (!empty($prod->default_image)): ?>
-                    <img src="<?php echo esc_url($prod->default_image); ?>" class="produkt-recent-image" alt="<?php echo esc_attr($prod->name); ?>">
-                <?php endif; ?>
-                <h4><?php echo esc_html($prod->name); ?></h4>
-                <code><?php echo esc_url($prod_url); ?></code>
-                <p class="produkt-seo-status">
-                    <?php if (!empty($prod->meta_title)): ?>
-                        <span class="badge badge-success">SEO konfiguriert</span>
-                    <?php else: ?>
-                        <span class="badge badge-warning">SEO fehlt</span>
-                    <?php endif; ?>
-                </p>
-                <div class="produkt-category-actions">
-                    <a href="<?php echo esc_url($prod_url); ?>" class="button button-small" target="_blank">Seite ansehen</a>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=edit&edit=' . $prod->id); ?>" class="button button-small">Bearbeiten</a>
-                </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endif; ?>
+<div class="produkt-admin dashboard-wrapper">
 
-    <!-- Letzte Bestellungen -->
-    <?php if (!empty($recent_orders)): ?>
-    <div class="produkt-recent-section">
-        <h3>📦 Letzte Bestellungen</h3>
-        <div class="produkt-category-cards">
-            <?php foreach ($recent_orders as $order): ?>
-            <div class="produkt-category-card">
-                <h4>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?> – <?php echo esc_html($order->category_name); ?></h4>
-                <p style="margin-bottom:5px;">
-                    <?php echo date('d.m.Y', strtotime($order->created_at)); ?>,
-                    <?php echo esc_html($order->customer_name); ?>
-                    (<?php echo esc_html($order->customer_postal . ' ' . $order->customer_city); ?>)
-                </p>
-                <p style="margin-bottom:10px;">
-                    Produkt: <?php echo esc_html($order->product_title); ?><br>
-                    Variante: <?php echo esc_html($order->variant_name); ?> – <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
-                </p>
-                <p>
-                    <?php if ($order->status === 'offen'): ?>
-                        <span class="badge badge-warning">Offen</span>
-                    <?php elseif ($order->status === 'gekündigt'): ?>
-                        <span class="badge badge-danger">Gekündigt</span>
-                    <?php else: ?>
-                        <span class="badge badge-success">Abgeschlossen</span>
-                    <?php endif; ?>
-                </p>
-                <div class="produkt-category-actions">
-                    <a href="<?php echo admin_url('admin.php?page=produkt-orders&delete_order=' . $order->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Bestellung wirklich löschen?');">Löschen</a>
+    <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline">Willkommen zu Ihrem Dashboard für Mietprodukte.</p>
+
+    <div class="dashboard-grid">
+        <!-- Linke Spalte -->
+<div class="dashboard-left">
+
+    <div class="dashboard-card card-income">
+        <h2>Gesamteinnahmen <?php echo date_i18n('F'); ?></h2>
+        <p class="card-subline">Ihre Umsatzübersicht für Mietprodukte</p>
+        <p class="income-amount">€ <?php echo $monthly_income; ?></p>
+        <small>Zwischen dem 01. – <?php echo date_i18n('d.m.Y'); ?></small>
+    </div>
+
+    <div class="dashboard-card card-company">
+        <h2><?php echo $plugin_name; ?></h2>
+        <p class="card-subline">Sie brauchen Hilfe? Dann melden Sie sich gerne bei uns</p>
+        <p>Support: <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
+        <p>Version: <?php echo PRODUKT_PLUGIN_VERSION; ?></p>
+        <p>Website: <a href="https://h2concepts.de" target="_blank">www.h2concepts.de</a></p>
+    </div>
+
+    <!-- Rückgaben-Box -->
+    <div class="dashboard-card card-returns">
+        <h2>Offene Rückgaben</h2>
+        <p class="card-subline">Folgende Rückgaben warten auf Bestätigung:</p>
+
+        <?php if (!empty($return_orders)): ?>
+            <ul class="return-list">
+                <?php foreach ($return_orders as $return): ?>
+                    <li class="return-item">
+                        <div>
+                            <strong><?php echo esc_html($return->customer_name); ?></strong><br>
+                            <?php echo esc_html($return->produkt_name); ?><br>
+                            Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
+                        </div>
+                        <form method="post" class="return-confirm-form" style="margin-left:auto;">
+                            <input type="hidden" name="confirm_return_id" value="<?php echo (int)$return->id; ?>">
+                            <button type="submit" class="button button-primary">Rückgabe bestätigen</button>
+                        </form>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php else: ?>
+            <p style="margin-top: 1rem;">✅ Aktuell stehen keine Rückgaben an.</p>
+        <?php endif; ?>
+    </div>
+
+</div>
+
+        <!-- Rechte Spalte -->
+        <div class="dashboard-right">
+
+            <div class="dashboard-row">
+                <div class="dashboard-card card-products">
+                    <h2>Produktübersicht</h2>
+                    <p class="card-subline">Ihre wichtigsten Produktdaten auf einen Blick</p>
+                    <div class="product-info-grid">
+                        <div class="product-info-box bg-pastell-orange">
+                            <span class="label">Produkte</span>
+                            <strong class="value"><?php echo $products; ?></strong>
+                        </div>
+                        <div class="product-info-box bg-pastell-mint">
+                            <span class="label">Extras</span>
+                            <strong class="value"><?php echo $extras; ?></strong>
+                        </div>
+                        <div class="product-info-box bg-pastell-gruen">
+                            <span class="label">Ausführungen</span>
+                            <strong class="value"><?php echo $variants; ?></strong>
+                        </div>
+                        <div class="product-info-box bg-pastell-gelb">
+                            <span class="label">Kunden</span>
+                            <strong class="value"><?php echo $customers; ?></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schnellnavigation -->
+                <div class="dashboard-card card-quicknav">
+                    <h2>Schnellnavigation</h2>
+                    <p class="card-subline">Nützliche Direktlinks für die tägliche Arbeit.</p>
+                    <div class="quicknav-grid">
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-orders">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">📦</div>
+                                    <div class="quicknav-label">Bestellungen</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-customers">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">👤</div>
+                                    <div class="quicknav-label">Kunden</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-products">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🛒</div>
+                                    <div class="quicknav-label">Produkte</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-settings">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">⚙️</div>
+                                    <div class="quicknav-label">Einstellungen</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <!-- Letzte Aktivitäten -->
+<div class="dashboard-card card-activity">
+    <h2>Letzte Aktivitäten</h2>
+    <p class="card-subline">Was zuletzt passiert ist</p>
+    <table class="activity-table">
+        <thead>
+            <tr>
+                <th>Kunde</th>
+                <th>Produkt</th>
+                <th>Datum</th>
+                <th>Status</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($orders as $order): ?>
+                <tr>
+                    <td><?php echo esc_html($order->customer_name); ?></td>
+                    <td><?php echo esc_html($order->produkt_name); ?></td>
+                    <td><?php echo date_i18n('d.m.Y', strtotime($order->created_at)); ?></td>
+                    <td><span class="badge status-<?php echo esc_attr($order->status); ?>"><?php echo ucfirst($order->status); ?></span></td>
+                    <td><a href="#" class="view-details-link" data-order-id="<?php echo esc_attr($order->id); ?>">Details ansehen</a></td>
+                </tr>
             <?php endforeach; ?>
-        </div>
+        </tbody>
+    </table>
+</div>
+			<!-- Sidebar-Overlay für Auftragsdetails -->
+<div id="order-details-sidebar" class="order-details-sidebar">
+    <div class="order-details-header">
+        <h3>Auftragsdetails</h3>
+        <button class="close-sidebar">&times;</button>
     </div>
-    <?php endif; ?>
-    
-    <!-- Hilfe & Tipps -->
-    <div class="produkt-help-section">
-        <h3>💡 Erste Schritte</h3>
-        <div class="produkt-help-cards">
-            <div class="produkt-help-card">
-                <h4>1. Produkt erstellen</h4>
-                <p>Erstellen Sie ein neues Produkt mit SEO-Einstellungen</p>
-                <a href="<?php echo admin_url('admin.php?page=produkt-categories'); ?>" class="button">Produkte →</a>
-            </div>
-            <div class="produkt-help-card">
-                <h4>2. Ausführungen hinzufügen</h4>
-                <p>Fügen Sie Produktvarianten mit Bildern hinzu</p>
-                <a href="<?php echo admin_url('admin.php?page=produkt-variants'); ?>" class="button">Ausführungen →</a>
-            </div>
+    <div class="order-details-content">
+        <!-- AJAX-Daten werden hier eingefügt -->
+        <p>Lade Details…</p>
+    </div>
+</div>
+<div id="order-details-overlay" class="order-details-overlay"></div>
+
         </div>
     </div>
 </div>
-
-

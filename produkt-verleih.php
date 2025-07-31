@@ -54,7 +54,7 @@ if (!function_exists('hrp_fs')) {
                     'has_paid_plans'  => true,
                     'is_org_compliant'=> false,
                     'menu'            => [
-                        'slug'    => 'h2-rent-settings',
+                        'slug'    => 'produkt-verleih',
                         'parent'  => null,
                         'support' => false,
                         'contact' => false,
