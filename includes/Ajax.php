@@ -1794,39 +1794,21 @@ function pv_load_order_sidebar_details() {
         wp_send_json_error('Keine Bestell-ID übergeben');
     }
 
-    global $wpdb;
-    global $order; // make \$order available globally for the template
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
-    // Bestellung abrufen (inkl. Produktname, Varianten, Extras, Farben etc.)
-    $order = $wpdb->get_row($wpdb->prepare(
-        "SELECT
-            o.*,
-            c.name AS category_name,
-            COALESCE(v.name, o.produkt_name) AS variant_name,
-            COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
-            COALESCE(dur.name, o.dauer_text) AS dauer_text,
-            con.name AS condition_name,
-            pc.name AS produktfarbe_text,
-            fc.name AS gestellfarbe_text,
-            s.name AS shipping_name
-         FROM {$wpdb->prefix}produkt_orders o
-         LEFT JOIN {$wpdb->prefix}produkt_categories c ON c.id = o.category_id
-         LEFT JOIN {$wpdb->prefix}produkt_variants v ON v.id = o.variant_id
-         LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-         LEFT JOIN {$wpdb->prefix}produkt_durations dur ON dur.id = o.duration_id
-         LEFT JOIN {$wpdb->prefix}produkt_conditions con ON con.id = o.condition_id
-         LEFT JOIN {$wpdb->prefix}produkt_colors pc ON pc.id = o.product_color_id
-         LEFT JOIN {$wpdb->prefix}produkt_colors fc ON fc.id = o.frame_color_id
-        LEFT JOIN {$wpdb->prefix}produkt_shipping_methods s
-            ON s.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
-         WHERE o.id = %d
-         GROUP BY o.id",
-        $order_id
-    ));
+    global $wpdb;
+    global $order; // make $order available globally for the template
+
+    $order_array = pv_get_order_by_id($order_id);
+    $order = $order_array ? (object) $order_array : null;
 
     if (!$order) {
         wp_send_json_error('Bestellung nicht gefunden');
     }
+
+    $image_url = pv_get_image_url_by_variant_or_category($order->variant_id ?? 0, $order->category_id ?? 0);
+    list($sd, $ed) = pv_get_order_period($order);
+    $days = pv_get_order_rental_days($order);
 
     // 🔍 Debug-Ausgabe (in debug.log sichtbar!)
     error_log('DEBUG $order in Sidebar: ' . print_r($order, true));

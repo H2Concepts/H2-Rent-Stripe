@@ -7,19 +7,13 @@ if (empty($order) || !is_object($order)) {
     echo '<p>Fehler: Keine gültigen Auftragsdaten übergeben.</p>';
     return;
 }
-// Debug direkt sichtbar
-echo '<pre style="background:#eee;padding:10px;font-size:12px">';
-print_r($order);
-echo '</pre>';
 ?>
-
-<pre style="background:#eee;padding:10px;font-size:12px"><?php print_r($order); ?></pre>
 <div class="order-box">
     <?php if (!empty($image_url)) : ?>
         <img class="order-product-image" src="<?php echo esc_url($image_url); ?>" alt="Produktbild">
     <?php endif; ?>
 
-    <p><strong>Produkt:</strong> <?php echo esc_html($order->produkt_name ?? '–'); ?></p>
+    <p><strong>Produkt:</strong> <?php echo esc_html($order->category_name ?? $order->produkt_name ?? '–'); ?></p>
 
     <?php if (!empty($order->variant_name)) : ?>
         <p><strong>Ausführung:</strong> <?php echo esc_html($order->variant_name); ?></p>
