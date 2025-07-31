@@ -2807,6 +2807,13 @@
     padding: 1.5rem;
 }
 
+.h2-rental-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-right: 20px;
+}
+
 .dashboard-greeting {
     font-size: 2rem;
     margin: 3.5rem 1.5rem 0;

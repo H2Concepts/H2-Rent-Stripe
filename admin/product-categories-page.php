@@ -66,7 +66,7 @@ if (isset($_GET['edit'])) {
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kategorien verwalten</p>
 
-    <div class="dashboard-card card-category-form">
+    <div class="h2-rental-card card-category-form">
         <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
         <form method="post" id="produkt-category-form" class="produkt-compact-form">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
@@ -104,7 +104,7 @@ if (isset($_GET['edit'])) {
         </form>
     </div>
 
-    <div class="dashboard-card card-category-list">
+    <div class="h2-rental-card card-category-list">
         <h2>Bestehende Kategorien</h2>
         <table class="activity-table">
             <thead>
