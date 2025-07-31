@@ -3025,14 +3025,14 @@ body.admin-bar .produkt-return-banner{top:32px;}
 }
 
 .return-confirm-form button {
-    background-color: #2d6a4f;
-    color: #fff;
-    border: none;
+    background-color: #2d6a4f !important;
+    color: #fff !important;
+    border: none !important;
 }
 
 .return-confirm-form button:hover {
-    background-color: #d0ecc4;
-    color: #000;
+    background-color: #d0ecc4 !important;
+    color: #000 !important;
 }
 
 .quicknav-card:hover .quicknav-label {

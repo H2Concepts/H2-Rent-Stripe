@@ -6,14 +6,12 @@ global $wpdb;
 // Rückgabe bestätigen (wenn Button gedrückt)
 if (isset($_POST['confirm_return_id'])) {
     $order_id = intval($_POST['confirm_return_id']);
-    $wpdb->update(
-        "{$wpdb->prefix}produkt_orders",
-        ['return_confirmed' => 1],
-        ['id' => $order_id],
-        ['%d'],
-        ['%d']
-    );
-    echo '<div class="updated"><p>Rückgabe erfolgreich bestätigt.</p></div>';
+    $success = \ProduktVerleih\Database::process_inventory_return($order_id);
+    if ($success) {
+        echo '<div class="updated"><p>Rückgabe erfolgreich bestätigt.</p></div>';
+    } else {
+        echo '<div class="error"><p>Fehler beim Bestätigen der Rückgabe.</p></div>';
+    }
 }
 
 // Umsatz berechnen (aktueller Monat)
@@ -42,14 +40,7 @@ $orders = $wpdb->get_results("
 ");
 
 // Rückgaben abrufen (fällige Rückgaben, noch nicht bestätigt)
-$return_orders = $wpdb->get_results("
-    SELECT o.id, o.order_number, o.customer_name, c.name AS produkt_name, o.end_date
-    FROM {$wpdb->prefix}produkt_orders o
-    LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-    WHERE o.status = 'abgeschlossen'
-AND o.end_date <= CURDATE()
-    ORDER BY o.end_date ASC
-");
+$return_orders = \ProduktVerleih\Database::get_due_returns();
 
 // Branding holen
 $branding_result = $wpdb->get_row("SELECT setting_value FROM {$wpdb->prefix}produkt_branding WHERE setting_key = 'plugin_name'");
@@ -92,7 +83,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                         <div>
                             <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
                             <?php echo esc_html($return->customer_name); ?><br>
-                            <?php echo esc_html($return->produkt_name); ?><br>
+                            <?php echo esc_html($return->category_name); ?><br>
                             Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
                         </div>
                         <form method="post" class="return-confirm-form" style="margin-left:auto;">
