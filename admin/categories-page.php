@@ -64,6 +64,44 @@ $edit_item         = $edit_item ?? null;
                         </svg>
                     </a>
                 </div>
+                <div class="dashboard-card card-quicknav">
+                    <h2>Schnellnavigation</h2>
+                    <p class="card-subline">Direkt zu wichtigen Listen</p>
+                    <div class="quicknav-grid">
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-variants">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🧩</div>
+                                    <div class="quicknav-label">Ausführungen</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-extras">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">✨</div>
+                                    <div class="quicknav-label">Extras</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-conditions">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🔧</div>
+                                    <div class="quicknav-label">Zustand</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-colors">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🎨</div>
+                                    <div class="quicknav-label">Farben</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="dashboard-card">
                 <div class="card-header-flex">
