@@ -65,20 +65,24 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 
     <?php
     // Stelle sicher, dass die Freemius-Funktion geladen ist
-    if (!function_exists('fs')) {
+    if (!function_exists('hrp_fs')) {
         $freemius_start = plugin_dir_path(__FILE__) . '../vendor/freemius/start.php';
         if (file_exists($freemius_start)) {
             require_once $freemius_start;
         }
     }
 
-    // Freemius SDK Objekt abrufen
-    $fs = function_exists('hrp_fs') ? hrp_fs() : (function_exists('fs') ? fs() : null);
-
-    // Lizenzinfos holen
-    $license = ($fs && $fs->can_use_premium_code()) ? $fs->get_site()->license : null;
-    $license_status = ($license && $license->is_active) ? 'Aktiv' : 'Nicht aktiviert';
-    $valid_until = ($license && $license->is_active) ? date('d.m.Y', strtotime($license->expiration)) : '–';
+    if (function_exists('hrp_fs')) {
+        $fs = hrp_fs();
+        $license_status = $fs->can_use_premium_code() ? 'Aktiv' : 'Nicht aktiviert';
+        $valid_until = ($fs->can_use_premium_code() && $fs->get_license() && $fs->get_license()->expires)
+            ? date_i18n('d.m.Y', strtotime($fs->get_license()->expires))
+            : '–';
+    } else {
+        $fs = null;
+        $license_status = 'Nicht verfügbar';
+        $valid_until = '–';
+    }
     ?>
 
     <div class="dashboard-card card-company">
