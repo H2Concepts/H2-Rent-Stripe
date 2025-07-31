@@ -2915,7 +2915,10 @@ body.admin-bar .produkt-return-banner{top:32px;}
 }
 
 .status-offen { background: #f39c12; }
-.status-abgeschlossen { background: #2ecc71; }
+.status-abgeschlossen {
+    background: #2ecc71;
+    color: #FFFFFF;
+}
 .status-storniert { background: #e74c3c; }
 	
 .card-company {
@@ -3037,6 +3040,17 @@ body.admin-bar .produkt-return-banner{top:32px;}
 }
 
 .return-confirm-form button:hover {
+    background-color: #d0ecc4 !important;
+    color: #000 !important;
+}
+
+.card-company .license-button {
+    background-color: #2d6a4f !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.card-company .license-button:hover {
     background-color: #d0ecc4 !important;
     color: #000 !important;
 }

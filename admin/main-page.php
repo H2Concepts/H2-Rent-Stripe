@@ -73,9 +73,6 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 
     // Lizenz prüfen
     $license_status = ($fs && $fs->can_use_premium_code()) ? 'Aktiv' : 'Nicht aktiviert';
-    $valid_until = ($fs && $fs->can_use_premium_code() && $fs->get_site()->license && isset($fs->get_site()->license->expiration))
-        ? date_i18n('d.m.Y', strtotime($fs->get_site()->license->expiration))
-        : '–';
     ?>
 
     <div class="dashboard-card card-company">
@@ -84,7 +81,6 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
             <div>
                 <h2>Lizenzstatus</h2>
                 <p><strong>Status:</strong> <?php if ($license_status === 'Aktiv') : ?><span class="badge status-abgeschlossen"><?php echo esc_html($license_status); ?></span><?php else : ?><?php echo esc_html($license_status); ?><?php endif; ?></p>
-                <p><strong>Gültig bis:</strong> <?php echo esc_html($valid_until); ?></p>
             </div>
         </div>
 
@@ -96,7 +92,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 
         <?php if ($fs) : ?>
         <div style="margin-top: 1.5rem;">
-            <a href="<?php echo esc_url($fs->get_account_url()); ?>" class="button button-primary">Lizenz verwalten</a>
+            <a href="<?php echo esc_url($fs->get_account_url()); ?>" class="button button-primary license-button">Lizenz verwalten</a>
         </div>
         <?php endif; ?>
     </div>
