@@ -2944,7 +2944,7 @@ body.category-modal-open {
 }
 
 .card-new-product {
-    background: linear-gradient(210deg, #3858e9, #15287a);
+    background: linear-gradient(210deg, #315143, #062216);
     color: #ffffff !important;
     border-radius: 20px;
     padding: 1.5rem;
@@ -2984,14 +2984,13 @@ body.category-modal-open {
 
 /* Search/filter bar within product list */
 .product-search-bar {
-    background: #f5f5f5;
+    background: #fdfaf1;
     border-radius: 999px;
-    padding: 1.2rem 1.5rem;
+    padding: 0.3rem 2.5rem;
     display: flex;
     align-items: center;
     gap: 1rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    height: 60px;
+    height: 50px;
 }
 .search-input-wrapper {
     display: flex;
