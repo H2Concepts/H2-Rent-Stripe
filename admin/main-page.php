@@ -64,25 +64,18 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
     </div>
 
     <?php
-    // Stelle sicher, dass die Freemius-Funktion geladen ist
-    if (!function_exists('hrp_fs')) {
-        $freemius_start = plugin_dir_path(__FILE__) . '../vendor/freemius/start.php';
-        if (file_exists($freemius_start)) {
-            require_once $freemius_start;
-        }
+    // Freemius SDK sicher laden
+    if (!function_exists('fs') && file_exists(plugin_dir_path(__FILE__) . '../vendor/freemius/start.php')) {
+        require_once plugin_dir_path(__FILE__) . '../vendor/freemius/start.php';
     }
 
-    if (function_exists('hrp_fs')) {
-        $fs = hrp_fs();
-        $license_status = $fs->can_use_premium_code() ? 'Aktiv' : 'Nicht aktiviert';
-        $valid_until = ($fs->can_use_premium_code() && $fs->get_license() && $fs->get_license()->expires)
-            ? date_i18n('d.m.Y', strtotime($fs->get_license()->expires))
-            : '–';
-    } else {
-        $fs = null;
-        $license_status = 'Nicht verfügbar';
-        $valid_until = '–';
-    }
+    $fs = function_exists('hrp_fs') ? hrp_fs() : (function_exists('fs') ? fs() : null);
+
+    // Lizenz prüfen
+    $license_status = ($fs && $fs->can_use_premium_code()) ? 'Aktiv' : 'Nicht aktiviert';
+    $valid_until = ($fs && $fs->can_use_premium_code() && $fs->get_site()->license && isset($fs->get_site()->license->expiration))
+        ? date_i18n('d.m.Y', strtotime($fs->get_site()->license->expiration))
+        : '–';
     ?>
 
     <div class="dashboard-card card-company">
@@ -90,7 +83,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
             <div style="background: #fff; color: #000; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">H2</div>
             <div>
                 <h2>Lizenzstatus</h2>
-                <p><strong>Status:</strong> <?php echo esc_html($license_status); ?></p>
+                <p><strong>Status:</strong> <?php if ($license_status === 'Aktiv') : ?><span class="badge status-abgeschlossen"><?php echo esc_html($license_status); ?></span><?php else : ?><?php echo esc_html($license_status); ?><?php endif; ?></p>
                 <p><strong>Gültig bis:</strong> <?php echo esc_html($valid_until); ?></p>
             </div>
         </div>
