@@ -1816,7 +1816,8 @@ function pv_load_order_sidebar_details() {
          LEFT JOIN {$wpdb->prefix}produkt_conditions con ON con.id = o.condition_id
          LEFT JOIN {$wpdb->prefix}produkt_colors pc ON pc.id = o.product_color_id
          LEFT JOIN {$wpdb->prefix}produkt_colors fc ON fc.id = o.frame_color_id
-         LEFT JOIN {$wpdb->prefix}produkt_shipping_methods s ON s.id = o.shipping_method_id
+        LEFT JOIN {$wpdb->prefix}produkt_shipping_methods s
+            ON s.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
          WHERE o.id = %d
          GROUP BY o.id",
         $order_id
