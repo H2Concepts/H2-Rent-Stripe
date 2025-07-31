@@ -54,6 +54,12 @@ $counts = [];
 foreach ($raw_cats as $r) { $counts[$r->id] = $r->product_count; }
 foreach ($categories as $c) { $c->product_count = $counts[$c->id] ?? 0; }
 
+// Statistiken für Info-Boxen
+$category_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories WHERE parent_id IS NULL OR parent_id = 0");
+$subcategory_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories WHERE parent_id IS NOT NULL AND parent_id != 0");
+$total_category_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories");
+$products_with_category = $wpdb->get_var("SELECT COUNT(DISTINCT produkt_id) FROM {$wpdb->prefix}produkt_product_to_category");
+
 // Wenn Bearbeiten
 $edit_category = null;
 if (isset($_GET['edit'])) {
@@ -113,6 +119,25 @@ if (isset($_GET['edit'])) {
 <div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kategorien verwalten</p>
+
+    <div class="product-info-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+        <div class="product-info-box bg-pastell-gelb">
+            <span class="label">Kategorien</span>
+            <strong class="value"><?php echo intval($category_count); ?></strong>
+        </div>
+        <div class="product-info-box bg-pastell-gruen">
+            <span class="label">Subkategorien</span>
+            <strong class="value"><?php echo intval($subcategory_count); ?></strong>
+        </div>
+        <div class="product-info-box bg-pastell-mint">
+            <span class="label">Gesamt</span>
+            <strong class="value"><?php echo intval($total_category_count); ?></strong>
+        </div>
+        <div class="product-info-box bg-pastell-orange" style="margin-right:20px;">
+            <span class="label">Produkte zugeordnet</span>
+            <strong class="value"><?php echo intval($products_with_category); ?></strong>
+        </div>
+    </div>
 
     <div class="h2-rental-card card-category-list">
         <div style="display:flex;justify-content:space-between;align-items:center;">
