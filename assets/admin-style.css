@@ -1012,7 +1012,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     background: white;
-    border-radius: 8px;
+    border-radius: 20px;
     padding: 30px;
     max-height: 80%;
     overflow-y: auto;
@@ -3340,4 +3340,21 @@ body.category-modal-open {
     font-weight: 700;
     text-align: left;
     margin: 2.5rem 0 1.5rem;
+}
+
+/* Icon buttons */
+.icon-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.icon-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: #2d6a4f;
+}
+.icon-btn + .icon-btn {
+    margin-left: 8px;
 }
