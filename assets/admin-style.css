@@ -1002,6 +1002,8 @@
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     z-index: 10000;
 }
 .modal-content {
@@ -1029,9 +1031,6 @@
 
 body.category-modal-open {
     overflow: hidden;
-}
-body.category-modal-open .dashboard-wrapper {
-    filter: blur(5px);
 }
 
 /* Responsive tables */
