@@ -3145,3 +3145,176 @@ body.admin-bar .produkt-return-banner{top:32px;}
     grid-template-columns: 1fr;
   }
 }
+/* === Erweiterung: Sidebar Order Details Struktur === */
+
+/* Header mit Auftragsnummer */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.sidebar-header h2 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+.sidebar-header .order-id {
+    font-weight: 600;
+    color: #999;
+}
+
+/* Kundenbereich mit Initialen */
+.customer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+.customer-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+.customer-details {
+    flex-grow: 1;
+}
+.customer-details strong {
+    display: block;
+    font-size: 1rem;
+}
+.customer-details .email {
+    font-size: 0.85rem;
+    color: #555;
+}
+.customer-icons {
+    display: flex;
+    gap: 8px;
+    font-size: 1.1rem;
+    color: #666;
+}
+.customer-icons .icon {
+    cursor: pointer;
+}
+
+/* Mietzeit-Box */
+.rental-period-box {
+    background: #f9f9f9;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    position: relative;
+}
+.rental-period-box .badge-status {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: #fff7da;
+    color: #c08401;
+    font-weight: 600;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+}
+.rental-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+.rental-progress .bar {
+    flex-grow: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.rental-progress .fill {
+    height: 100%;
+    background: #34d399;
+    width: 0;
+}
+.rental-dates {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 8px;
+}
+
+/* Produktliste */
+.product-list {
+    margin-bottom: 1.5rem;
+}
+.product-list h3 {
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+.product-item {
+    display: flex;
+    gap: 12px;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid #eee;
+}
+.product-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+.product-details {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    color: #333;
+}
+.product-details strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+.product-price {
+    font-weight: bold;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    align-self: flex-start;
+    color: #000;
+}
+
+/* Gesamtpreis */
+.total-section {
+    margin-bottom: 1.5rem;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+}
+.total-section p {
+    margin: 0.3rem 0;
+    font-size: 0.95rem;
+}
+
+/* Kundendaten */
+.customer-contact {
+    margin-bottom: 2rem;
+}
+.customer-contact h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+.customer-contact p {
+    font-size: 0.95rem;
+    margin: 0.3rem 0;
+}
+
+/* Fortschrittsanzeige Zahl über Balken */
+.rental-progress-number {
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: left;
+    margin: 2.5rem 0 1.5rem;
+}
