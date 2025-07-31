@@ -1027,6 +1027,13 @@
     cursor: pointer;
 }
 
+body.category-modal-open {
+    overflow: hidden;
+}
+body.category-modal-open .dashboard-wrapper {
+    filter: blur(5px);
+}
+
 /* Responsive tables */
 .table-responsive {
     overflow-x: auto;
@@ -2812,6 +2819,10 @@
     border-radius: 20px;
     padding: 1.5rem;
     margin-right: 20px;
+}
+.h2-rental-card h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
 }
 
 .dashboard-greeting {

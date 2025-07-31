@@ -66,9 +66,11 @@ if (isset($_GET['edit'])) {
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kategorien verwalten</p>
 
-    <div class="h2-rental-card card-category-form">
-        <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
-        <form method="post" id="produkt-category-form" class="produkt-compact-form">
+    <div id="category-modal" class="modal-overlay" data-open="<?php echo $edit_category ? '1' : '0'; ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
+            <form method="post" id="produkt-category-form" class="produkt-compact-form">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
             <table class="form-table">
@@ -101,11 +103,16 @@ if (isset($_GET['edit'])) {
                 </tr>
             </table>
             <p><input type="submit" name="save_category" class="button-primary" value="Speichern"></p>
-        </form>
+            </form>
+        </div>
     </div>
 
     <div class="h2-rental-card card-category-list">
-        <h2>Bestehende Kategorien</h2>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <h2>Bestehende Kategorien</h2>
+            <button id="add-category-btn" class="button button-primary" style="margin-right:20px;">+ Hinzufügen</button>
+        </div>
+        <p class="card-subline">Was zuletzt passiert ist</p>
         <table class="activity-table">
             <thead>
                 <tr>

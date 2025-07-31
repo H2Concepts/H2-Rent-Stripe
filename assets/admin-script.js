@@ -162,6 +162,34 @@ jQuery(document).ready(function($) {
             localStorage.setItem('produkt_last_category', $(this).val());
         });
     }
+
+    var catModal = $('#category-modal');
+    if (catModal.length) {
+        function openCatModal() {
+            catModal.show();
+            $('body').addClass('category-modal-open');
+        }
+        function closeCatModal() {
+            catModal.hide();
+            $('body').removeClass('category-modal-open');
+        }
+        $('#add-category-btn').on('click', function(e){
+            e.preventDefault();
+            catModal.find('input[name="category_id"]').val('');
+            catModal.find('input[type="text"], textarea').val('');
+            catModal.find('select[name="parent_id"]').val('0');
+            openCatModal();
+        });
+        catModal.on('click', function(e){
+            if(e.target === this){
+                closeCatModal();
+            }
+        });
+        catModal.find('.modal-close').on('click', closeCatModal);
+        if (catModal.data('open') == 1) {
+            openCatModal();
+        }
+    }
 });
 
 document.addEventListener('DOMContentLoaded', produktInitAccordions);
