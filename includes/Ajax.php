@@ -1795,6 +1795,7 @@ function pv_load_order_sidebar_details() {
     }
 
     global $wpdb;
+    global $order; // make \$order available globally for the template
 
     // Bestellung abrufen (inkl. Produktname, Varianten, Extras, Farben etc.)
     $order = $wpdb->get_row($wpdb->prepare(
