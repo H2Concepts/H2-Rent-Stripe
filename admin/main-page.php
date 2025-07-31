@@ -63,12 +63,45 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <small>Zwischen dem 01. – <?php echo date_i18n('d.m.Y'); ?></small>
     </div>
 
+    <?php
+    // Stelle sicher, dass die Freemius-Funktion geladen ist
+    if (!function_exists('fs')) {
+        $freemius_start = plugin_dir_path(__FILE__) . '../vendor/freemius/start.php';
+        if (file_exists($freemius_start)) {
+            require_once $freemius_start;
+        }
+    }
+
+    // Freemius SDK Objekt abrufen
+    $fs = function_exists('hrp_fs') ? hrp_fs() : (function_exists('fs') ? fs() : null);
+
+    // Lizenzinfos holen
+    $license = ($fs && $fs->can_use_premium_code()) ? $fs->get_site()->license : null;
+    $license_status = ($license && $license->is_active) ? 'Aktiv' : 'Nicht aktiviert';
+    $valid_until = ($license && $license->is_active) ? date('d.m.Y', strtotime($license->expiration)) : '–';
+    ?>
+
     <div class="dashboard-card card-company">
-        <h2><?php echo $plugin_name; ?></h2>
-        <p class="card-subline">Sie brauchen Hilfe? Dann melden Sie sich gerne bei uns</p>
-        <p>Support: <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
-        <p>Version: <?php echo PRODUKT_PLUGIN_VERSION; ?></p>
-        <p>Website: <a href="https://h2concepts.de" target="_blank">www.h2concepts.de</a></p>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="background: #fff; color: #000; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">H2</div>
+            <div>
+                <h2>Lizenzstatus</h2>
+                <p><strong>Status:</strong> <?php echo esc_html($license_status); ?></p>
+                <p><strong>Gültig bis:</strong> <?php echo esc_html($valid_until); ?></p>
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+            <p><strong>Version:</strong> <?php echo esc_html(PRODUKT_PLUGIN_VERSION); ?></p>
+            <p><strong>Support:</strong> <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
+            <p><strong>Website:</strong> <a href="https://www.h2concepts.de" target="_blank">www.h2concepts.de</a></p>
+        </div>
+
+        <?php if ($fs) : ?>
+        <div style="margin-top: 1.5rem;">
+            <a href="<?php echo esc_url($fs->get_account_url()); ?>" class="button button-primary">Lizenz verwalten</a>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Rückgaben-Box -->
