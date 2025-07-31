@@ -54,21 +54,6 @@ $edit_item         = $edit_item ?? null;
         </div>
         <div class="dashboard-right">
             <div class="dashboard-row">
-                <div class="dashboard-card">
-                    <h2>Filter</h2>
-                    <p class="card-subline">Produkte nach Kategorien anzeigen lassen</p>
-                    <form method="get" class="produkt-filter-form">
-                        <input type="hidden" name="page" value="produkt-categories">
-                        <select name="prodcat">
-                            <option value="0">Alle Kategorien</option>
-                            <?php foreach ($product_categories as $pc): ?>
-                                <option value="<?php echo $pc->id; ?>" <?php selected($selected_prodcat, $pc->id); ?>><?php echo str_repeat('--', $pc->depth) . ' ' . esc_html($pc->name); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <input type="text" name="s" placeholder="Produkt suchen..." value="<?php echo esc_attr($search_term); ?>">
-                        <button type="submit" class="button">Filtern</button>
-                    </form>
-                </div>
                 <div class="dashboard-card card-new-product">
                     <h2>Neues Produkt</h2>
                     <p class="card-subline">Produkt erstellen</p>
@@ -81,8 +66,27 @@ $edit_item         = $edit_item ?? null;
                 </div>
             </div>
             <div class="dashboard-card">
-                <h2>Alle Produkte</h2>
-                <p class="card-subline">Übersicht Ihrer Produkte</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Alle Produkte</h2>
+                        <p class="card-subline">Produkte nach Kategorien anzeigen lassen</p>
+                    </div>
+                    <form method="get" class="produkt-filter-form product-search-bar">
+                        <input type="hidden" name="page" value="produkt-categories">
+                        <div class="search-input-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                                <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+                            </svg>
+                            <input type="text" name="s" placeholder="Suchen nach Produkten" value="<?php echo esc_attr($search_term); ?>">
+                        </div>
+                        <select name="prodcat">
+                            <option value="0">Alle Kategorien</option>
+                            <?php foreach ($product_categories as $pc): ?>
+                                <option value="<?php echo $pc->id; ?>" <?php selected($selected_prodcat, $pc->id); ?>><?php echo str_repeat('--', $pc->depth) . ' ' . esc_html($pc->name); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </form>
+                </div>
                 <table class="activity-table">
                     <thead>
                         <tr>
