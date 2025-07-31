@@ -1753,12 +1753,9 @@ function produkt_get_order_details() {
         wp_send_json_error(['message' => 'Keine Order-ID übermittelt']);
     }
 
-    global $wpdb;
-    $table_orders = $wpdb->prefix . 'produkt_orders';
-
-    $order = $wpdb->get_row(
-        $wpdb->prepare("SELECT * FROM $table_orders WHERE id = %d", $order_id)
-    );
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+    $order_array = pv_get_order_by_id($order_id);
+    $order = $order_array ? (object) $order_array : null;
 
     if (!$order) {
         wp_send_json_error(['message' => 'Bestellung nicht gefunden']);
@@ -1771,8 +1768,11 @@ function produkt_get_order_details() {
         <h3>Details zur Bestellung #<?php echo esc_html($order->id); ?></h3>
         <p><strong>Kunde:</strong> <?php echo esc_html($order->customer_name ?? '–'); ?></p>
 <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email ?? '–'); ?></p>
-        <p><strong>Produkt:</strong> <?php echo esc_html($order->produkt_name ?? $order->category_name ?? '–'); ?></p>
-        <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text ?: '–'); ?></p>
+        <p><strong>Produkt:</strong> <?php echo esc_html($order->category_name ?: $order->produkt_name ?: '–'); ?></p>
+        <?php if (!empty($order->variant_name)) : ?>
+        <p><strong>Ausführung:</strong> <?php echo esc_html($order->variant_name); ?></p>
+        <?php endif; ?>
+        <p><strong>Extras:</strong> <?php echo esc_html($order->extra_names ?: '–'); ?></p>
         <p><strong>Mietzeitraum:</strong> <?php echo esc_html($order->start_date); ?> – <?php echo esc_html($order->end_date); ?></p>
         <p><strong>Bestellt am:</strong> <?php echo date_i18n('d.m.Y H:i', strtotime($order->created_at)); ?></p>
     </div>
@@ -1783,7 +1783,7 @@ function produkt_get_order_details() {
     wp_send_json_success(['html' => $html]);
 }
 
-add_action('wp_ajax_pv_load_order_sidebar_details', 'pv_load_order_sidebar_details');
+add_action('wp_ajax_pv_load_order_sidebar_details', __NAMESPACE__ . '\\pv_load_order_sidebar_details');
 function pv_load_order_sidebar_details() {
     if (!current_user_can('manage_options')) {
         wp_send_json_error('Nicht autorisiert');
@@ -1794,34 +1794,21 @@ function pv_load_order_sidebar_details() {
         wp_send_json_error('Keine Bestell-ID übergeben');
     }
 
-    global $wpdb;
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
-    // Bestellung abrufen (inkl. Produktname, Extras, Farben etc.)
-    $order = $wpdb->get_row($wpdb->prepare("
-        SELECT 
-    o.*,
-    COALESCE(c.name, o.produkt_name) AS produkt_name,
-    o.extra_names,
-    v.name AS variant_name,
-    con.name AS condition_name,
-    pc.name AS produktfarbe_text,
-    fc.name AS gestellfarbe_text,
-    dur.name AS dauer_text,
-    s.name AS shipping_name
-FROM {$wpdb->prefix}produkt_orders o
-LEFT JOIN {$wpdb->prefix}produkt_categories c ON c.id = o.category_id
-LEFT JOIN {$wpdb->prefix}produkt_variants v ON v.id = o.variant_id
-LEFT JOIN {$wpdb->prefix}produkt_conditions con ON con.id = o.condition_id
-LEFT JOIN {$wpdb->prefix}produkt_colors pc ON pc.id = o.product_color_id
-LEFT JOIN {$wpdb->prefix}produkt_colors fc ON fc.id = o.frame_color_id
-LEFT JOIN {$wpdb->prefix}produkt_durations dur ON dur.id = o.duration_id
-LEFT JOIN {$wpdb->prefix}produkt_shipping_methods s ON s.id = o.shipping_method_id
-WHERE o.id = %d
-    ", $order_id));
+    global $wpdb;
+    global $order; // make $order available globally for the template
+
+    $order_array = pv_get_order_by_id($order_id);
+    $order = $order_array ? (object) $order_array : null;
 
     if (!$order) {
         wp_send_json_error('Bestellung nicht gefunden');
     }
+
+    $image_url = pv_get_image_url_by_variant_or_category($order->variant_id ?? 0, $order->category_id ?? 0);
+    list($sd, $ed) = pv_get_order_period($order);
+    $days = pv_get_order_rental_days($order);
 
     // 🔍 Debug-Ausgabe (in debug.log sichtbar!)
     error_log('DEBUG $order in Sidebar: ' . print_r($order, true));

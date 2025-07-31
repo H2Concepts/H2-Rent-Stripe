@@ -1991,10 +1991,12 @@ class Database {
         global $wpdb;
         $today = current_time('Y-m-d');
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT o.id, o.variant_id, o.extra_ids, o.order_number, o.produkt_name, o.start_date, o.end_date,
+            "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                    COALESCE(c.name, o.produkt_name) AS category_name,
                     COALESCE(v.name, o.produkt_name) AS variant_name,
                     COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
              FROM {$wpdb->prefix}produkt_orders o
+             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
              LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
              WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0

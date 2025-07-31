@@ -12,13 +12,10 @@ if (!defined('ABSPATH')) {
  * @param int $order_id
  */
 function render_order_details($order_id) {
-    global $wpdb;
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
-    $table_orders = $wpdb->prefix . 'produkt_orders';
-
-    $order = $wpdb->get_row(
-        $wpdb->prepare("SELECT * FROM $table_orders WHERE id = %d", $order_id)
-    );
+    $order_data = pv_get_order_by_id($order_id);
+    $order = $order_data ? (object) $order_data : null;
 
     if (!$order) {
         echo '<p>Keine Daten gefunden.</p>';

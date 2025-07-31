@@ -6,25 +6,25 @@ global $wpdb;
 // Rückgabe bestätigen (wenn Button gedrückt)
 if (isset($_POST['confirm_return_id'])) {
     $order_id = intval($_POST['confirm_return_id']);
-    $wpdb->update(
-        "{$wpdb->prefix}produkt_orders",
-        ['return_confirmed' => 1],
-        ['id' => $order_id],
-        ['%d'],
-        ['%d']
-    );
-    echo '<div class="updated"><p>Rückgabe erfolgreich bestätigt.</p></div>';
+    $success = \ProduktVerleih\Database::process_inventory_return($order_id);
+    if ($success) {
+        echo '<div class="updated"><p>Rückgabe erfolgreich bestätigt.</p></div>';
+    } else {
+        echo '<div class="error"><p>Fehler beim Bestätigen der Rückgabe.</p></div>';
+    }
 }
 
 // Umsatz berechnen (aktueller Monat)
-$start_date = date('Y-m-01');
-$end_date = date('Y-m-d');
-$monthly_income = $wpdb->get_var("
-    SELECT SUM(final_price)
-    FROM {$wpdb->prefix}produkt_orders
-    WHERE status = 'abgeschlossen' AND created_at BETWEEN '$start_date' AND '$end_date'
-");
-$monthly_income = $monthly_income ? number_format($monthly_income, 2, ',', '.') : '0,00';
+$start_date = date('Y-m-01 00:00:00');
+$end_date   = date('Y-m-d 23:59:59');
+$monthly_income = $wpdb->get_var($wpdb->prepare(
+    "SELECT SUM(final_price)
+     FROM {$wpdb->prefix}produkt_orders
+     WHERE status = 'abgeschlossen' AND created_at BETWEEN %s AND %s",
+    $start_date,
+    $end_date
+));
+$monthly_income = $monthly_income ? number_format((float) $monthly_income, 2, ',', '.') : '0,00';
 
 // Weitere Zahlen
 $products = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_categories");
@@ -42,14 +42,7 @@ $orders = $wpdb->get_results("
 ");
 
 // Rückgaben abrufen (fällige Rückgaben, noch nicht bestätigt)
-$return_orders = $wpdb->get_results("
-    SELECT o.id, o.customer_name, c.name AS produkt_name, o.end_date
-    FROM {$wpdb->prefix}produkt_orders o
-    LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-    WHERE o.status = 'abgeschlossen'
-AND o.end_date <= CURDATE()
-    ORDER BY o.end_date ASC
-");
+$return_orders = \ProduktVerleih\Database::get_due_returns();
 
 // Branding holen
 $branding_result = $wpdb->get_row("SELECT setting_value FROM {$wpdb->prefix}produkt_branding WHERE setting_key = 'plugin_name'");
@@ -59,7 +52,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 <div class="produkt-admin dashboard-wrapper">
 
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Willkommen zu Ihrem Dashboard für Mietprodukte.</p>
+    <p class="dashboard-subline">Willkommen in Ihrem Dashboard für Mietprodukte.</p>
 
     <div class="dashboard-grid">
         <!-- Linke Spalte -->
@@ -72,12 +65,38 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <small>Zwischen dem 01. – <?php echo date_i18n('d.m.Y'); ?></small>
     </div>
 
+    <?php
+    // Freemius SDK sicher laden
+    if (!function_exists('fs') && file_exists(plugin_dir_path(__FILE__) . '../vendor/freemius/start.php')) {
+        require_once plugin_dir_path(__FILE__) . '../vendor/freemius/start.php';
+    }
+
+    $fs = function_exists('hrp_fs') ? hrp_fs() : (function_exists('fs') ? fs() : null);
+
+    // Lizenz prüfen
+    $license_status = ($fs && $fs->can_use_premium_code()) ? 'Aktiv' : 'Nicht aktiviert';
+    ?>
+
     <div class="dashboard-card card-company">
-        <h2><?php echo $plugin_name; ?></h2>
-        <p class="card-subline">Sie brauchen Hilfe? Dann melden Sie sich gerne bei uns</p>
-        <p>Support: <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
-        <p>Version: <?php echo PRODUKT_PLUGIN_VERSION; ?></p>
-        <p>Website: <a href="https://h2concepts.de" target="_blank">www.h2concepts.de</a></p>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div style="background: #fff; color: #000; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">H2</div>
+            <div>
+                <h2>Lizenzstatus</h2>
+                <p><strong>Status:</strong> <?php if ($license_status === 'Aktiv') : ?><span class="badge status-abgeschlossen"><?php echo esc_html($license_status); ?></span><?php else : ?><?php echo esc_html($license_status); ?><?php endif; ?></p>
+            </div>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+            <p><strong>Version:</strong> <?php echo esc_html(PRODUKT_PLUGIN_VERSION); ?></p>
+            <p><strong>Support:</strong> <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
+            <p><strong>Website:</strong> <a href="https://www.h2concepts.de" target="_blank">www.h2concepts.de</a></p>
+        </div>
+
+        <?php if ($fs) : ?>
+        <div style="margin-top: 1.5rem;">
+            <a href="<?php echo esc_url($fs->get_account_url()); ?>" class="button button-primary license-button">Lizenz verwalten</a>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Rückgaben-Box -->
@@ -90,8 +109,9 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                 <?php foreach ($return_orders as $return): ?>
                     <li class="return-item">
                         <div>
-                            <strong><?php echo esc_html($return->customer_name); ?></strong><br>
-                            <?php echo esc_html($return->produkt_name); ?><br>
+                            <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
+                            <?php echo esc_html($return->customer_name); ?><br>
+                            <?php echo esc_html($return->category_name); ?><br>
                             Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
                         </div>
                         <form method="post" class="return-confirm-form" style="margin-left:auto;">
@@ -183,6 +203,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
     <table class="activity-table">
         <thead>
             <tr>
+                <th>Bestellnr.</th>
                 <th>Kunde</th>
                 <th>Produkt</th>
                 <th>Datum</th>
@@ -193,6 +214,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <tbody>
             <?php foreach ($orders as $order): ?>
                 <tr>
+                    <td><?php echo esc_html($order->order_number ?: $order->id); ?></td>
                     <td><?php echo esc_html($order->customer_name); ?></td>
                     <td><?php echo esc_html($order->produkt_name); ?></td>
                     <td><?php echo date_i18n('d.m.Y', strtotime($order->created_at)); ?></td>
