@@ -116,7 +116,10 @@ if (isset($_GET['edit'])) {
 
     <div class="h2-rental-card card-category-list">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-            <h2>Bestehende Kategorien</h2>
+            <div>
+                <h2>Bestehende Kategorien</h2>
+                <p class="card-subline">Verwalten Sie Ihre Kategorien</p>
+            </div>
             <button id="add-category-btn" type="button" class="icon-btn" style="margin-right:20px;" aria-label="Hinzufügen">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
                     <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
@@ -124,7 +127,6 @@ if (isset($_GET['edit'])) {
                 </svg>
             </button>
         </div>
-        <p class="card-subline">Verwalten Sie Ihre Kategorien</p>
         <table class="activity-table">
             <thead>
                 <tr>
