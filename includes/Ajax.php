@@ -1783,7 +1783,7 @@ function produkt_get_order_details() {
     wp_send_json_success(['html' => $html]);
 }
 
-add_action('wp_ajax_pv_load_order_sidebar_details', 'pv_load_order_sidebar_details');
+add_action('wp_ajax_pv_load_order_sidebar_details', __NAMESPACE__ . '\\pv_load_order_sidebar_details');
 function pv_load_order_sidebar_details() {
     if (!current_user_can('manage_options')) {
         wp_send_json_error('Nicht autorisiert');
