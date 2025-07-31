@@ -2993,9 +2993,16 @@ body.category-modal-open {
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
     height: 60px;
 }
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 .product-search-bar .search-icon {
     width: 20px;
     height: 20px;
+    flex-shrink: 0;
+    display: block;
     fill: #15287a;
 }
 .product-search-bar input[type="text"] {
