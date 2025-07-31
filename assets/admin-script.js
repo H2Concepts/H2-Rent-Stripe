@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
             url: ajaxurl,
             method: 'POST',
             data: {
-                action: 'get_order_details',
+                action: 'pv_load_order_sidebar_details',
                 order_id: orderId
             },
             success: function(response) {

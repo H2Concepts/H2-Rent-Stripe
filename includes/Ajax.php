@@ -1753,12 +1753,9 @@ function produkt_get_order_details() {
         wp_send_json_error(['message' => 'Keine Order-ID übermittelt']);
     }
 
-    global $wpdb;
-    $table_orders = $wpdb->prefix . 'produkt_orders';
-
-    $order = $wpdb->get_row(
-        $wpdb->prepare("SELECT * FROM $table_orders WHERE id = %d", $order_id)
-    );
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+    $order_array = pv_get_order_by_id($order_id);
+    $order = $order_array ? (object) $order_array : null;
 
     if (!$order) {
         wp_send_json_error(['message' => 'Bestellung nicht gefunden']);
@@ -1771,8 +1768,11 @@ function produkt_get_order_details() {
         <h3>Details zur Bestellung #<?php echo esc_html($order->id); ?></h3>
         <p><strong>Kunde:</strong> <?php echo esc_html($order->customer_name ?? '–'); ?></p>
 <p><strong>E-Mail:</strong> <?php echo esc_html($order->customer_email ?? '–'); ?></p>
-        <p><strong>Produkt:</strong> <?php echo esc_html($order->produkt_name ?? $order->category_name ?? '–'); ?></p>
-        <p><strong>Extras:</strong> <?php echo esc_html($order->extra_text ?: '–'); ?></p>
+        <p><strong>Produkt:</strong> <?php echo esc_html($order->category_name ?: $order->produkt_name ?: '–'); ?></p>
+        <?php if (!empty($order->variant_name)) : ?>
+        <p><strong>Ausführung:</strong> <?php echo esc_html($order->variant_name); ?></p>
+        <?php endif; ?>
+        <p><strong>Extras:</strong> <?php echo esc_html($order->extra_names ?: '–'); ?></p>
         <p><strong>Mietzeitraum:</strong> <?php echo esc_html($order->start_date); ?> – <?php echo esc_html($order->end_date); ?></p>
         <p><strong>Bestellt am:</strong> <?php echo date_i18n('d.m.Y H:i', strtotime($order->created_at)); ?></p>
     </div>
@@ -1796,28 +1796,31 @@ function pv_load_order_sidebar_details() {
 
     global $wpdb;
 
-    // Bestellung abrufen (inkl. Produktname, Extras, Farben etc.)
-    $order = $wpdb->get_row($wpdb->prepare("
-        SELECT 
-    o.*,
-    COALESCE(c.name, o.produkt_name) AS produkt_name,
-    o.extra_names,
-    v.name AS variant_name,
-    con.name AS condition_name,
-    pc.name AS produktfarbe_text,
-    fc.name AS gestellfarbe_text,
-    dur.name AS dauer_text,
-    s.name AS shipping_name
-FROM {$wpdb->prefix}produkt_orders o
-LEFT JOIN {$wpdb->prefix}produkt_categories c ON c.id = o.category_id
-LEFT JOIN {$wpdb->prefix}produkt_variants v ON v.id = o.variant_id
-LEFT JOIN {$wpdb->prefix}produkt_conditions con ON con.id = o.condition_id
-LEFT JOIN {$wpdb->prefix}produkt_colors pc ON pc.id = o.product_color_id
-LEFT JOIN {$wpdb->prefix}produkt_colors fc ON fc.id = o.frame_color_id
-LEFT JOIN {$wpdb->prefix}produkt_durations dur ON dur.id = o.duration_id
-LEFT JOIN {$wpdb->prefix}produkt_shipping_methods s ON s.id = o.shipping_method_id
-WHERE o.id = %d
-    ", $order_id));
+    // Bestellung abrufen (inkl. Produktname, Varianten, Extras, Farben etc.)
+    $order = $wpdb->get_row($wpdb->prepare(
+        "SELECT
+            o.*,
+            c.name AS category_name,
+            COALESCE(v.name, o.produkt_name) AS variant_name,
+            COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+            COALESCE(dur.name, o.dauer_text) AS dauer_text,
+            con.name AS condition_name,
+            pc.name AS produktfarbe_text,
+            fc.name AS gestellfarbe_text,
+            s.name AS shipping_name
+         FROM {$wpdb->prefix}produkt_orders o
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON c.id = o.category_id
+         LEFT JOIN {$wpdb->prefix}produkt_variants v ON v.id = o.variant_id
+         LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+         LEFT JOIN {$wpdb->prefix}produkt_durations dur ON dur.id = o.duration_id
+         LEFT JOIN {$wpdb->prefix}produkt_conditions con ON con.id = o.condition_id
+         LEFT JOIN {$wpdb->prefix}produkt_colors pc ON pc.id = o.product_color_id
+         LEFT JOIN {$wpdb->prefix}produkt_colors fc ON fc.id = o.frame_color_id
+         LEFT JOIN {$wpdb->prefix}produkt_shipping_methods s ON s.id = o.shipping_method_id
+         WHERE o.id = %d
+         GROUP BY o.id",
+        $order_id
+    ));
 
     if (!$order) {
         wp_send_json_error('Bestellung nicht gefunden');
