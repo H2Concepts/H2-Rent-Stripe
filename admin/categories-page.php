@@ -44,13 +44,15 @@ $edit_item         = $edit_item ?? null;
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <h4><?php echo esc_html($prod->name); ?></h4>
-                            <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-categories&tab=edit&edit=<?php echo $prod->id; ?>'" style="position:absolute;top:10px;right:10px;">
+                            <div class="prod-card-title" style="display:flex;justify-content:space-between;align-items:center;font-size:18px;">
+                                <span><?php echo esc_html($prod->name); ?></span>
+                                <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-categories&tab=edit&edit=<?php echo $prod->id; ?>'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
                                     <path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/>
                                     <path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/>
                                 </svg>
-                            </button>
+                                </button>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -72,10 +74,15 @@ $edit_item         = $edit_item ?? null;
                         <button type="submit" class="button">Filtern</button>
                     </form>
                 </div>
-                <div class="dashboard-card" style="flex:1;">
+                <div class="dashboard-card card-new-product" style="flex:1; position:relative;">
                     <h2>Neues Produkt</h2>
                     <p class="card-subline">Produkt erstellen</p>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="button button-primary">+ Produkt</a>
+                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="icon-btn add-product-btn" style="position:absolute;bottom:15px;right:15px;" aria-label="Hinzufügen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
+                            <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
+                            <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
             <div class="dashboard-card">

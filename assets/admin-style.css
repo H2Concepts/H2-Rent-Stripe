@@ -2932,6 +2932,22 @@ body.category-modal-open {
     margin-top: 20px;
 }
 
+.card-new-product {
+    background: linear-gradient(210deg, #3858e9, #15287a);
+    color: #ffffff !important;
+    border-radius: 20px;
+    padding: 1.5rem;
+}
+.card-new-product h2,
+.card-new-product p {
+    color: #ffffff;
+}
+.add-product-btn svg {
+    width: 48px;
+    height: 48px;
+    fill: #ffffff;
+}
+
 .card-company a {
     color: #ffffff;
     text-decoration: underline;
