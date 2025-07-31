@@ -2728,20 +2728,6 @@
 .orders-accordion .order-product-image{width:64px;height:64px;object-fit:cover;border-radius:6px;display:block;margin-bottom:10px;}
 
 
-.produkt-return-banner{position:sticky;top:0;z-index:1000;background:#dc3232;color:#fff;padding:15px 50px;}
-body.admin-bar .produkt-return-banner{top:32px;}
-@media screen and (max-width:782px){body.admin-bar .produkt-return-banner{top:46px;}}
-.produkt-return-banner .produkt-return-item{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:10px;
-    font-weight:700;
-    font-size:15px;
-    padding:10px 0;
-    border-bottom:1px solid rgba(255,255,255,0.3);
-}
-.produkt-return-banner .produkt-return-item:last-child{border-bottom:none;}
 .produkt-return-confirm{color:#000;background-color:#fff;border:0;border-radius:999px;padding:5px 15px;}
 
 /* Admin Calendar */
@@ -2922,7 +2908,7 @@ body.admin-bar .produkt-return-banner{top:32px;}
 .status-storniert { background: #e74c3c; }
 	
 .card-company {
-    background: #1a1a1a;
+    background: #253f34;
     color: #ffffff !important;
     border-radius: 20px;
     padding: 1.5rem;

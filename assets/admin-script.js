@@ -210,8 +210,6 @@ document.addEventListener('click', function(e) {
                     var item = btn.closest('.produkt-return-item');
                     if (item) {
                         item.remove();
-                        var banner = document.querySelector('.produkt-return-banner');
-                        if (banner && !banner.querySelector('.produkt-return-item')) banner.remove();
                     } else {
                         btn.remove();
                     }
