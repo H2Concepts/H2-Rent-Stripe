@@ -52,7 +52,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 <div class="produkt-admin dashboard-wrapper">
 
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Willkommen zu Ihrem Dashboard für Mietprodukte.</p>
+    <p class="dashboard-subline">Willkommen in Ihrem Dashboard für Mietprodukte.</p>
 
     <div class="dashboard-grid">
         <!-- Linke Spalte -->

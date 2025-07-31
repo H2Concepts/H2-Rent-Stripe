@@ -2809,14 +2809,14 @@
 
 .dashboard-greeting {
     font-size: 2rem;
-    margin-bottom: 0.5rem;
+    margin: 3.5rem 1.5rem 0;
 }
 
 .dashboard-subline {
     font-size: 1rem;
     color: #333d48;
-    margin-bottom: 2rem;
-	font-family: 'Manrope', sans-serif;
+    font-family: 'Manrope', sans-serif;
+    margin: 0.5rem 1.5rem 4.5rem;
 }
 
 .card-subline {
@@ -2856,7 +2856,7 @@
 }
 
 .product-info-box .value {
-    font-size: 2.5rem;
+    font-size: 3.5rem;
     font-weight: 700;
     color: #000000;
 }
@@ -2908,7 +2908,7 @@
 .status-storniert { background: #e74c3c; }
 	
 .card-company {
-    background: #253f34;
+    background: linear-gradient(210deg, #315143, #062216);
     color: #ffffff !important;
     border-radius: 20px;
     padding: 1.5rem;
