@@ -3037,8 +3037,12 @@ body.category-modal-open {
     align-items: center;
     justify-content: space-between;
     padding: 0 0.5rem;
-    font-size: 18px;
+    font-size: 13px;
     transition: background 0.3s ease;
+}
+
+.recent-product-tile .tile-overlay span {
+    color: #ffffff;
 }
 
 .recent-product-tile:hover .tile-overlay {
