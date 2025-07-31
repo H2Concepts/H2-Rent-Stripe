@@ -3519,3 +3519,10 @@ body.category-modal-open {
 .icon-btn + .icon-btn {
     margin-left: 8px;
 }
+.filter-submit-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #fdfaf1;
+    stroke-width: 2px;
+}

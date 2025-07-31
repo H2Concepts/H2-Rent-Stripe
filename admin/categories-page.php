@@ -123,6 +123,11 @@ $edit_item         = $edit_item ?? null;
                                 <option value="<?php echo $pc->id; ?>" <?php selected($selected_prodcat, $pc->id); ?>><?php echo str_repeat('--', $pc->depth) . ' ' . esc_html($pc->name); ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <button type="submit" class="icon-btn filter-submit-btn" aria-label="Filtern">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">
+                                <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
+                            </svg>
+                        </button>
                     </form>
                 </div>
                 <table class="activity-table">
