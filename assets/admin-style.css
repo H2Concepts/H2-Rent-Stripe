@@ -3354,6 +3354,8 @@ body.category-modal-open {
     width: 24px;
     height: 24px;
     fill: #1e1e1e;
+    stroke: white;
+    stroke-width: 3px;
 }
 .icon-btn + .icon-btn {
     margin-left: 8px;
