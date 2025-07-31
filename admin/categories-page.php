@@ -33,7 +33,7 @@ $edit_item         = $edit_item ?? null;
                 <p class="card-subline">Die zuletzt hinzugefügten Produkte</p>
                 <div class="produkt-category-cards">
                     <?php foreach ($recent_products as $prod): ?>
-                        <div class="produkt-category-card" style="position:relative;">
+                        <div class="produkt-category-card">
                             <div class="produkt-category-image">
                                 <?php if (!empty($prod->default_image)): ?>
                                     <img src="<?php echo esc_url($prod->default_image); ?>" alt="<?php echo esc_attr($prod->name); ?>">
@@ -44,7 +44,7 @@ $edit_item         = $edit_item ?? null;
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <div class="prod-card-title" style="display:flex;justify-content:space-between;align-items:center;font-size:18px;">
+                            <div class="prod-card-title">
                                 <span><?php echo esc_html($prod->name); ?></span>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-categories&tab=edit&edit=<?php echo $prod->id; ?>'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
@@ -60,8 +60,9 @@ $edit_item         = $edit_item ?? null;
         </div>
         <div class="dashboard-right">
             <div class="dashboard-row">
-                <div class="dashboard-card" style="flex:1;">
+                <div class="dashboard-card">
                     <h2>Filter</h2>
+                    <p class="card-subline">Produkte nach Kategorien anzeigen lassen</p>
                     <form method="get" class="produkt-filter-form">
                         <input type="hidden" name="page" value="produkt-categories">
                         <select name="prodcat">
@@ -74,10 +75,10 @@ $edit_item         = $edit_item ?? null;
                         <button type="submit" class="button">Filtern</button>
                     </form>
                 </div>
-                <div class="dashboard-card card-new-product" style="flex:1; position:relative;">
+                <div class="dashboard-card card-new-product">
                     <h2>Neues Produkt</h2>
                     <p class="card-subline">Produkt erstellen</p>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="icon-btn add-product-btn" style="position:absolute;bottom:15px;right:15px;" aria-label="Hinzufügen">
+                    <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=add'); ?>" class="icon-btn add-product-btn" aria-label="Hinzufügen">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
                             <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
                             <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>

@@ -120,7 +120,7 @@ if (isset($_GET['edit'])) {
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kategorien verwalten</p>
 
-    <div class="product-info-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 2rem;">
+    <div class="product-info-grid cols-4">
         <div class="product-info-box bg-pastell-gelb">
             <span class="label">Kategorien</span>
             <strong class="value"><?php echo intval($category_count); ?></strong>
@@ -133,19 +133,19 @@ if (isset($_GET['edit'])) {
             <span class="label">Gesamt</span>
             <strong class="value"><?php echo intval($total_category_count); ?></strong>
         </div>
-        <div class="product-info-box bg-pastell-orange" style="margin-right:20px;">
+        <div class="product-info-box bg-pastell-orange">
             <span class="label">Produkte zugeordnet</span>
             <strong class="value"><?php echo intval($products_with_category); ?></strong>
         </div>
     </div>
 
     <div class="h2-rental-card card-category-list">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="card-header-flex">
             <div>
                 <h2>Bestehende Kategorien</h2>
                 <p class="card-subline">Verwalten Sie Ihre Kategorien</p>
             </div>
-            <button id="add-category-btn" type="button" class="icon-btn" style="margin-right:20px;" aria-label="Hinzufügen">
+            <button id="add-category-btn" type="button" class="icon-btn add-category-btn" aria-label="Hinzufügen">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
                     <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
                     <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
