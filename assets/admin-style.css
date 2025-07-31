@@ -2960,10 +2960,10 @@ body.category-modal-open {
     right: 15px;
 }
 .add-product-btn svg {
-    width: 48px;
-    height: 48px;
-    fill: #ffffff;
-    stroke: none;
+    width: 48px !important;
+    height: 48px !important;
+    fill: #ffffff !important;
+    stroke: none !important;
 }
 .add-category-btn {
     margin-right: 20px;
@@ -3001,6 +3001,74 @@ body.category-modal-open {
 }
 .card-company strong {
     color: #ffffff;
+}
+
+/* Mini tiles for recent products */
+.recent-product-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.recent-product-tile {
+    position: relative;
+    height: 160px;
+    border-radius: 12px;
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.recent-product-tile:hover {
+    transform: scale(1.05);
+}
+
+.recent-product-tile .tile-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 25%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.5rem;
+    font-size: 0.9rem;
+    transition: background 0.3s ease;
+}
+
+.recent-product-tile:hover .tile-overlay {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.recent-product-tile .edit-btn {
+    display: none;
+}
+
+.recent-product-tile:hover .edit-btn {
+    display: block;
+}
+
+.recent-product-tile.no-image {
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    font-size: 2rem;
+}
+
+.recent-product-tile .placeholder-icon {
+    pointer-events: none;
+}
+
+.recent-product-tile .edit-btn svg {
+    fill: #ffffff;
+    stroke: none;
 }
 	
 .quicknav-grid {

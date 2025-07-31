@@ -31,26 +31,20 @@ $edit_item         = $edit_item ?? null;
             <div class="dashboard-card">
                 <h2>Neueste Produkte</h2>
                 <p class="card-subline">Die zuletzt hinzugefügten Produkte</p>
-                <div class="produkt-category-cards">
+                <div class="recent-product-tiles">
                     <?php foreach ($recent_products as $prod): ?>
-                        <div class="produkt-category-card">
-                            <div class="produkt-category-image">
-                                <?php if (!empty($prod->default_image)): ?>
-                                    <img src="<?php echo esc_url($prod->default_image); ?>" alt="<?php echo esc_attr($prod->name); ?>">
-                                <?php else: ?>
-                                    <div class="produkt-category-placeholder">
-                                        <span>🏷️</span>
-                                        <small>Kein Bild</small>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            <div class="prod-card-title">
+                        <?php $has_image = !empty($prod->default_image); ?>
+                        <div class="recent-product-tile<?php echo $has_image ? '' : ' no-image'; ?>"<?php echo $has_image ? ' style="background-image:url(' . esc_url($prod->default_image) . ')"' : ''; ?> onclick="window.location.href='?page=produkt-categories&tab=edit&edit=<?php echo $prod->id; ?>'">
+                            <?php if (!$has_image): ?>
+                                <div class="placeholder-icon">🏷️</div>
+                            <?php endif; ?>
+                            <div class="tile-overlay">
                                 <span><?php echo esc_html($prod->name); ?></span>
-                                <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-categories&tab=edit&edit=<?php echo $prod->id; ?>'">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
-                                    <path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/>
-                                    <path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/>
-                                </svg>
+                                <button type="button" class="icon-btn edit-btn" aria-label="Bearbeiten" onclick="event.stopPropagation();window.location.href='?page=produkt-categories&tab=edit&edit=<?php echo $prod->id; ?>'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
+                                        <path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/>
+                                        <path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/>
+                                    </svg>
                                 </button>
                             </div>
                         </div>
