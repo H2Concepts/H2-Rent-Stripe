@@ -2663,13 +2663,6 @@ body.category-modal-open {
     background: #fff;
     border-radius: 4px;
 }
-.orders-table-container {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-}
 .orders-bulk-actions { margin:10px 0; }
 .orders-empty { text-align:center; padding:40px; }
 .orders-empty-message { font-size:18px; color:#666; }
@@ -2679,7 +2672,7 @@ body.category-modal-open {
 .text-blue { color:#0073aa; font-weight:bold; }
 .order-details-info { line-height:1.4; }
 .order-price { color:#666666; font-size:16px; }
-.orders-stat-value { font-size:2rem; }
+.orders-stat-value { font-size:2rem !important; }
 .modal-heading { margin-top:0; }
 .order-modal-footer { text-align:right; margin-top:20px; }
 .details-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }

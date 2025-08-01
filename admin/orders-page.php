@@ -87,7 +87,7 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
                 </div>
     
     <!-- Orders Table -->
-    <div class="orders-table-container">
+    <div>
         <?php if (empty($orders)): ?>
         <div class="orders-empty">
             <p class="orders-empty-message">Keine Bestellungen im gewählten Zeitraum gefunden.</p>
@@ -219,7 +219,7 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
     </div>
     
 
-    </div> <!-- end orders-table-container card -->
+    </div> <!-- end orders card -->
 </div>
 
 <!-- Order Details Modal -->
