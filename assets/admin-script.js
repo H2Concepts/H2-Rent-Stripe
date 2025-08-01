@@ -21,6 +21,8 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     content.html(response.data.html);
+                    // Re-initialize accordions for dynamically loaded content
+                    produktInitAccordions();
                 } else {
                     content.html('<p>Details konnten nicht geladen werden.</p>');
                 }
