@@ -35,8 +35,9 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <!-- Header -->
     <div class="sidebar-header">
         <h2>Bestellübersicht</h2>
-        <span class="order-id">#<?php echo esc_html($order->id ?? '–'); ?></span>
+        <span class="order-id">#<?php echo esc_html(!empty($order->order_number) ? $order->order_number : $order->id); ?></span>
     </div>
+    <p class="order-date"><?php echo date_i18n('d.m.Y H:i', strtotime($order->created_at)); ?> Uhr</p>
 
     <!-- Kundeninfo -->
     <div class="customer-info">
@@ -59,18 +60,24 @@ $produkte = $order->produkte ?? [$order]; // fallback
             <p><strong>Telefon:</strong> <?php echo esc_html($order->customer_phone); ?></p>
         <?php endif; ?>
 
-        <?php if (!empty($order->customer_street)) : ?>
-            <p><strong>Adresse:</strong>
-                <?php
-                echo esc_html($order->customer_street);
-                if (!empty($order->customer_postal) || !empty($order->customer_city)) {
-                    echo ', ' . esc_html(trim($order->customer_postal . ' ' . $order->customer_city));
-                }
-                if (!empty($order->customer_country)) {
-                    echo ', ' . esc_html($order->customer_country);
-                }
-                ?>
-            </p>
+        <?php
+            $addr_parts = [];
+            if (!empty($order->customer_street)) {
+                $addr_parts[] = $order->customer_street;
+            }
+            if (!empty($order->customer_postal) || !empty($order->customer_city)) {
+                $addr_parts[] = trim(($order->customer_postal ?: '') . ' ' . ($order->customer_city ?: ''));
+            }
+            if (!empty($order->customer_country)) {
+                $addr_parts[] = $order->customer_country;
+            }
+            $full_address = implode(', ', array_filter($addr_parts));
+        ?>
+        <?php if ($full_address) : ?>
+            <h4>Versandadresse</h4>
+            <p><?php echo esc_html($full_address); ?></p>
+            <h4>Rechnungsadresse</h4>
+            <p><?php echo esc_html($full_address); ?></p>
         <?php endif; ?>
     </div>
 
@@ -110,7 +117,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->extra_names)) : ?>
                         <div>Extras: <?php echo esc_html($p->extra_names); ?></div>
                     <?php endif; ?>
-                    <div>Miettage: <?php echo esc_html($p->dauer_text ?? '–'); ?></div>
+                    <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
                 </div>
 
                 <div class="product-price">
@@ -132,5 +139,29 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <?php endif; ?>
             </p>
         <?php endif; ?>
+    </div>
+
+    <div class="orders-accordion">
+        <div class="produkt-accordion-item">
+            <button type="button" class="produkt-accordion-header">Technische Daten</button>
+            <div class="produkt-accordion-content">
+                <p><strong>User Agent:</strong> <?php echo esc_html($order->user_agent ?: '–'); ?></p>
+                <p><strong>IP-Adresse:</strong> <?php echo esc_html($order->user_ip ?: '–'); ?></p>
+            </div>
+        </div>
+        <div class="produkt-accordion-item">
+            <button type="button" class="produkt-accordion-header">Verlauf</button>
+            <div class="produkt-accordion-content">
+                <?php if (!empty($order_logs)) : ?>
+                    <ul class="order-log-list">
+                        <?php foreach ($order_logs as $log) : ?>
+                            <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at))); ?> – <?php echo esc_html($log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else : ?>
+                    <p>Keine Einträge</p>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>

@@ -3586,3 +3586,20 @@ NDE1LjIgLTYzLjMgNDIxLjkgMEwwIDBaIiBmaWxsPSIjZDJhZjdiIj48L3BhdGg+PC9nPjwvc3ZnPg==
     stroke: none;
     stroke-width: 0;
 }
+
+/* Sidebar order details extras */
+#order-details-sidebar .order-date {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.order-log-list {
+    list-style: disc;
+    margin: 0 0 0 1.2rem;
+    padding: 0;
+    font-size: 0.85rem;
+}
+.order-log-list li {
+    margin: 0.25rem 0;
+}
