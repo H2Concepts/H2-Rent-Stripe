@@ -2983,7 +2983,7 @@ body.category-modal-open {
 .selected-product-preview img,
 .selected-product-preview .placeholder-icon {
     width: 100%;
-    max-height: 300px;
+    height: 300px;
     display: block;
     object-fit: cover;
 }
@@ -3003,7 +3003,7 @@ body.category-modal-open {
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
     padding: 0.3rem 0.5rem;
-    font-size: 18px;
+    font-size: 14px;
 }
 .selected-product-preview .tile-overlay span {
     color: #ffffff !important;
@@ -3112,7 +3112,7 @@ body.category-modal-open {
     align-items: center;
     justify-content: space-between;
     padding: 0 0.5rem;
-    font-size: 18px;
+    font-size: 14px;
     transition: background 0.3s ease;
 }
 
