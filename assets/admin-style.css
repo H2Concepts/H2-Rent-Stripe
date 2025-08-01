@@ -2778,7 +2778,7 @@ body.category-modal-open {
     display: flex;
     gap: 2rem;
     align-items: flex-start;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .dashboard-card h2 {
@@ -3005,6 +3005,9 @@ body.category-modal-open {
     padding: 0.3rem 0.5rem;
     font-size: 18px;
 }
+.selected-product-preview .tile-overlay span {
+    color: #ffffff !important;
+}
 
 .prod-card-title {
     margin-top: 20px;
@@ -3114,7 +3117,7 @@ body.category-modal-open {
 }
 
 .recent-product-tile .tile-overlay span {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 .recent-product-tile:hover .tile-overlay {
@@ -3366,6 +3369,9 @@ body.category-modal-open {
   }
 }
 @media (max-width: 1500px) {
+  .dashboard-grid {
+    flex-wrap: wrap;
+  }
   .dashboard-left,
   .dashboard-right {
     flex-basis: 100%;
