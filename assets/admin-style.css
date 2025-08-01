@@ -2976,15 +2976,30 @@ body.category-modal-open {
 }
 .selected-product-preview {
     margin-top: 1rem;
+    text-align: center;
+}
+.selected-product-preview img,
+.selected-product-preview .placeholder-icon {
+    width: 100%;
+    border-radius: 8px;
+    display: block;
+}
+.selected-product-preview .placeholder-icon {
+    height: 160px;
+    background: #f0f0f0;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    font-size: 2rem;
+    color: #777;
 }
 .selected-product-preview img {
-    width: 60px;
-    height: 60px;
+    height: auto;
     object-fit: cover;
-    border-radius: 8px;
+}
+.selected-product-preview strong {
+    display: block;
+    margin-top: 0.5rem;
 }
 
 .prod-card-title {
