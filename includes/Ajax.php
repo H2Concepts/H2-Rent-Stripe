@@ -1822,7 +1822,7 @@ function pv_load_order_sidebar_details() {
     $order_logs = $logs;
 
     $order_notes = $wpdb->get_results($wpdb->prepare(
-        "SELECT message, created_at FROM {$wpdb->prefix}produkt_order_logs
+        "SELECT id, message, created_at FROM {$wpdb->prefix}produkt_order_logs
          WHERE order_id = %d AND event = 'Notiz' ORDER BY created_at DESC",
         $order_id
     ));
@@ -1863,6 +1863,30 @@ function pv_save_order_note() {
         '%d', '%s', '%s', '%s'
     ]);
 
+    $note_id = $wpdb->insert_id;
     $date = date_i18n('d.m.Y H:i', current_time('timestamp'));
-    wp_send_json_success(['date' => $date]);
+    wp_send_json_success(['date' => $date, 'id' => $note_id]);
+}
+
+add_action('wp_ajax_pv_delete_order_note', __NAMESPACE__ . '\\pv_delete_order_note');
+function pv_delete_order_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $note_id = intval($_POST['note_id'] ?? 0);
+    if (!$note_id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_order_logs';
+    $deleted = $wpdb->delete($table, ['id' => $note_id], ['%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('db');
+    }
 }

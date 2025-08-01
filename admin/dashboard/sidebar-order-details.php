@@ -179,9 +179,12 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <div class="order-notes-section">
         <?php if (!empty($order_notes)) : ?>
             <?php foreach ($order_notes as $note) : ?>
-                <div class="order-note">
+                <div class="order-note" data-note-id="<?php echo intval($note->id); ?>">
                     <div class="note-text"><?php echo esc_html($note->message); ?></div>
                     <div class="note-date"><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($note->created_at))); ?></div>
+                    <button type="button" class="icon-btn note-delete-btn" title="Notiz löschen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                    </button>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>

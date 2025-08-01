@@ -285,7 +285,8 @@ document.addEventListener('click', function(e) {
                     if (container) {
                         var div = document.createElement('div');
                         div.className = 'order-note';
-                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div>';
+                        div.setAttribute('data-note-id', res.data.id);
+                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div><button type="button" class="icon-btn note-delete-btn" title="Notiz löschen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>';
                         div.querySelector('.note-text').textContent = note;
                         div.querySelector('.note-date').textContent = res.data.date;
                         container.prepend(div);
@@ -294,6 +295,29 @@ document.addEventListener('click', function(e) {
                     form.classList.remove('visible');
                 } else {
                     alert('Fehler beim Speichern');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.note-delete-btn')) {
+        e.preventDefault();
+        var btn = e.target.closest('.note-delete-btn');
+        var noteEl = btn.closest('.order-note');
+        if (!noteEl) return;
+        var noteId = noteEl.getAttribute('data-note-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_delete_order_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('note_id', noteId);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    noteEl.remove();
+                } else {
+                    alert('Fehler beim Löschen');
                 }
             });
     }

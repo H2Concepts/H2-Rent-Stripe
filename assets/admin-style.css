@@ -3685,9 +3685,23 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     border-radius: 6px;
     margin-top: 0.5rem;
     font-size: 0.9rem;
+    position: relative;
 }
 .order-note .note-date {
     text-align: right;
     font-size: 0.75rem;
     color: #666;
+}
+.order-note .note-delete-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+.order-note .note-delete-btn svg {
+    width: 12px;
+    height: 12px;
 }
