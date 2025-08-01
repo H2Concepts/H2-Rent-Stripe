@@ -388,7 +388,7 @@ foreach ($branding_results as $result) {
                     </div>
                 </div>
             </div>
-            <div class="dashboard-card">
+            <div class="h2-rental-card">
                 <div class="card-header-flex">
                     <div>
                         <h2>Ausführungen</h2>

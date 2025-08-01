@@ -3021,6 +3021,11 @@ body.category-modal-open {
     justify-content: space-between;
     align-items: center;
 }
+.card-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
 
 /* Search/filter bar within product list */
 .product-search-bar {

@@ -96,13 +96,13 @@ $blocks = !empty($params) ? $wpdb->get_results($wpdb->prepare($sql_blocks, ...$p
         </div>
     </div>
 
-    <div class="dashboard-card">
+    <div class="h2-rental-card">
         <div class="card-header-flex">
             <div>
                 <h2>Content Blöcke</h2>
                 <p class="card-subline">Blöcke verwalten</p>
             </div>
-            <div style="display:flex;gap:1rem;align-items:center;">
+            <div class="card-header-actions">
                 <form method="get" class="produkt-filter-form product-search-bar">
                     <input type="hidden" name="page" value="produkt-content-blocks">
                     <div class="search-input-wrapper">
@@ -123,7 +123,7 @@ $blocks = !empty($params) ? $wpdb->get_results($wpdb->prepare($sql_blocks, ...$p
                         </svg>
                     </button>
                 </form>
-                <a href="<?php echo admin_url('admin.php?page=produkt-content-blocks&action=add'); ?>" class="icon-btn add-product-btn" aria-label="Hinzufügen">
+                <a id="add-category-btn" href="<?php echo admin_url('admin.php?page=produkt-content-blocks&action=add'); ?>" class="icon-btn add-category-btn" aria-label="Hinzufügen">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
                         <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
                         <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
