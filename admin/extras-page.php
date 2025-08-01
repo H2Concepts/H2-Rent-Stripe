@@ -282,7 +282,7 @@ if ($edit_item) {
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
-    <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Extras verwalten</p>
 
 <?php if ($active_tab === 'list'): ?>

@@ -73,7 +73,7 @@ $sql_blocks .= ' ORDER BY position';
 $blocks = !empty($params) ? $wpdb->get_results($wpdb->prepare($sql_blocks, ...$params)) : $wpdb->get_results($sql_blocks);
 ?>
 <div class="produkt-admin dashboard-wrapper">
-    <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Content-Blöcke verwalten</p>
 
 <?php if ($action === 'list'): ?>
