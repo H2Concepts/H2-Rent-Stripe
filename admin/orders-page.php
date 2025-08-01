@@ -95,10 +95,19 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
         </div>
         <?php else: ?>
         
+        <form method="post" action="?page=produkt-orders&category=<?php echo $selected_category; ?>&date_from=<?php echo $date_from; ?>&date_to=<?php echo $date_to; ?>&s=<?php echo urlencode($search_term); ?>">
         <table class="activity-table">
                 <thead>
                     <tr>
-                        <th class="col-checkbox"><input type="checkbox" id="select-all-orders"></th>
+                        <th class="col-checkbox">
+                            <input type="checkbox" id="select-all-orders">
+                            <button type="submit" class="icon-btn bulk-delete-btn" onclick="return confirm('Ausgewählte Bestellungen wirklich löschen?');" aria-label="Ausgewählte löschen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
+                                    <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
+                                    <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
+                                </svg>
+                            </button>
+                        </th>
                         <th class="col-id">ID</th>
                         <th class="col-date">Datum</th>
                         <th>Kunde</th>
@@ -117,7 +126,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                         $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
                     ?>
                     <tr<?php echo $due ? ' class="pending-return"' : ''; ?>>
-                        <td><input type="checkbox" class="order-checkbox" value="<?php echo $order->id; ?>"></td>
+                        <td><input type="checkbox" class="order-checkbox" name="delete_orders[]" value="<?php echo $order->id; ?>"></td>
                         <td><strong>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?></strong></td>
                         <td>
                             <?php echo date('d.m.Y', strtotime($order->created_at)); ?><br>
@@ -212,7 +221,8 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                     <?php endforeach; ?>
                 </tbody>
             </table>
-        
+        </form>
+
         <?php endif; ?>
     </div>
     
