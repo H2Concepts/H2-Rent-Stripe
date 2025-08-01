@@ -95,8 +95,7 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
         </div>
         <?php else: ?>
         
-        <div class="table-responsive">
-            <table class="wp-list-table widefat fixed striped">
+        <table class="activity-table">
                 <thead>
                     <tr>
                         <th class="col-checkbox"><input type="checkbox" id="select-all-orders"></th>
@@ -215,7 +214,6 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
                     <?php endforeach; ?>
                 </tbody>
             </table>
-        </div>
         
         <?php endif; ?>
     </div>
