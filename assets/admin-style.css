@@ -3003,7 +3003,7 @@ body.category-modal-open {
     background: rgba(0, 0, 0, 0.6);
     color: #fff;
     padding: 0.3rem 0.5rem;
-    font-size: 13px;
+    font-size: 18px;
 }
 
 .prod-card-title {
@@ -3109,7 +3109,7 @@ body.category-modal-open {
     align-items: center;
     justify-content: space-between;
     padding: 0 0.5rem;
-    font-size: 13px;
+    font-size: 18px;
     transition: background 0.3s ease;
 }
 
@@ -3363,6 +3363,15 @@ body.category-modal-open {
 @media (max-width: 768px) {
   .quicknav-grid {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 1500px) {
+  .dashboard-left,
+  .dashboard-right {
+    flex-basis: 100%;
+  }
+  .dashboard-right {
+    padding-right: 0;
   }
 }
 /* === Erweiterung: Sidebar Order Details Struktur === */
