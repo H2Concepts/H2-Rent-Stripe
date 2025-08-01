@@ -25,8 +25,8 @@ foreach ($branding_results as $result) {
 }
 $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
 
-// Search term (not yet used in query but kept for UI consistency)
-$search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
+// Search term for filtering
+$search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '');
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
@@ -36,7 +36,7 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
     <div class="h2-rental-card">
         <h2>Statistik</h2>
         <p class="card-subline">Kennzahlen zum gewählten Zeitraum</p>
-        <div class="product-info-grid cols-4">
+        <div class="orders-info-grid">
             <div class="product-info-box bg-pastell-orange">
                 <span class="label">Gesamt-Umsatz</span>
                 <strong class="value orders-stat-value">€ <?php echo number_format($total_revenue, 2, ',', '.'); ?></strong>

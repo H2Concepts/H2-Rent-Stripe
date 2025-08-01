@@ -2832,6 +2832,17 @@ body.category-modal-open {
     margin-right: 20px;
 }
 
+/* Orders page stats grid without bottom margin */
+.orders-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 0;
+}
+.orders-info-grid .product-info-box:last-child {
+    margin-right: 20px;
+}
+
 .product-info-box {
     background: #f9f9f9;
     border-radius: 18px;
