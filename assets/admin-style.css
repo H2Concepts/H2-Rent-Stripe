@@ -2682,7 +2682,7 @@ body.category-modal-open {
 .summary-green { color:#2a372a; }
 .summary-red { color:#dc3232; }
 .summary-gray { color:#666666; }
-.col-checkbox{width:40px;}
+.col-checkbox{width:60px; white-space:nowrap;}
 .col-id{width:80px;}
 .col-date{width:120px;}
 .col-type{width:80px;}
