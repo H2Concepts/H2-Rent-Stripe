@@ -3538,6 +3538,10 @@ body.category-modal-open {
     stroke: white;
     stroke-width: 3px;
 }
+.icon-btn-no-stroke svg {
+    stroke: none;
+    stroke-width: 0;
+}
 .icon-btn + .icon-btn {
     margin-left: 8px;
 }
