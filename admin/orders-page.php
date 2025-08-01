@@ -219,19 +219,19 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
     
 
     </div> <!-- end orders card -->
-</div>
 
-<!-- Sidebar-Overlay für Bestelldetails -->
-<div id="order-details-sidebar" class="order-details-sidebar">
-    <div class="order-details-header">
-        <h3>Bestelldetails</h3>
-        <button class="close-sidebar">&times;</button>
+    <!-- Sidebar-Overlay für Bestelldetails -->
+    <div id="order-details-sidebar" class="order-details-sidebar">
+        <div class="order-details-header">
+            <h3>Bestelldetails</h3>
+            <button class="close-sidebar">&times;</button>
+        </div>
+        <div class="order-details-content">
+            <p>Lade Details…</p>
+        </div>
     </div>
-    <div class="order-details-content">
-        <p>Lade Details…</p>
-    </div>
+    <div id="order-details-overlay" class="order-details-overlay"></div>
 </div>
-<div id="order-details-overlay" class="order-details-overlay"></div>
 
 
 <script>
