@@ -37,7 +37,6 @@ $produkte = $order->produkte ?? [$order]; // fallback
         <h2>Bestellübersicht</h2>
         <span class="order-id">#<?php echo esc_html(!empty($order->order_number) ? $order->order_number : $order->id); ?></span>
     </div>
-    <p class="order-date"><?php echo date_i18n('d.m.Y H:i', strtotime($order->created_at)); ?> Uhr</p>
 
     <!-- Kundeninfo -->
     <div class="customer-info">
@@ -74,10 +73,8 @@ $produkte = $order->produkte ?? [$order]; // fallback
             $full_address = implode(', ', array_filter($addr_parts));
         ?>
         <?php if ($full_address) : ?>
-            <h4>Versandadresse</h4>
-            <p><?php echo esc_html($full_address); ?></p>
-            <h4>Rechnungsadresse</h4>
-            <p><?php echo esc_html($full_address); ?></p>
+            <p><strong>Rechnung:</strong> <?php echo esc_html($full_address); ?></p>
+            <p><strong>Versand:</strong> <?php echo esc_html($full_address); ?></p>
         <?php endif; ?>
     </div>
 
