@@ -2854,9 +2854,13 @@ body.category-modal-open {
 }
 
 .product-info-box .label {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: #fff;
+    background: #1d2327;
+    max-width: fit-content;
+    padding: 8px 20px;
+    border-radius: 999px;
 }
 
 .product-info-box .value {
