@@ -139,7 +139,7 @@ if (isset($_GET['edit'])) {
         </div>
     </div>
 
-    <div class="h2-rental-card card-category-list">
+    <div class="dashboard-card card-category-list">
         <div class="card-header-flex">
             <div>
                 <h2>Bestehende Kategorien</h2>

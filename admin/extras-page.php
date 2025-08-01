@@ -364,7 +364,7 @@ if ($edit_item) {
                     </div>
                 </div>
             </div>
-            <div class="h2-rental-card">
+            <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
                         <h2>Extras</h2>
