@@ -36,7 +36,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
     <div class="h2-rental-card">
         <h2>Statistik</h2>
         <p class="card-subline">Kennzahlen zum gewählten Zeitraum</p>
-        <div class="orders-info-grid">
+        <div class="orders-info-grid-tight">
             <div class="product-info-box bg-pastell-orange">
                 <span class="label">Gesamt-Umsatz</span>
                 <strong class="value orders-stat-value">€ <?php echo number_format($total_revenue, 2, ',', '.'); ?></strong>

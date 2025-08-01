@@ -2846,6 +2846,16 @@ body.category-modal-open {
     margin-right: 20px;
 }
 
+.orders-info-grid-tight {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 0;
+}
+.orders-info-grid-tight .product-info-box:last-child {
+    margin-right: 0;
+}
+
 .product-info-box {
     background: #f9f9f9;
     border-radius: 18px;
