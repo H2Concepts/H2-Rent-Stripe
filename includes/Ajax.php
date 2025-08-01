@@ -1797,7 +1797,7 @@ function pv_load_order_sidebar_details() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
     global $wpdb;
-    global $order; // make $order available globally for the template
+    global $order, $order_logs, $sd, $ed, $days; // make variables available to the template
 
     $order_array = pv_get_order_by_id($order_id);
     $order = $order_array ? (object) $order_array : null;
@@ -1814,17 +1814,19 @@ function pv_load_order_sidebar_details() {
     error_log('DEBUG $order in Sidebar: ' . print_r($order, true));
 
     // Logs abrufen
-    $logs = $wpdb->get_results($wpdb->prepare("
-        SELECT * FROM {$wpdb->prefix}produkt_order_logs
-        WHERE order_id = %d ORDER BY created_at DESC
-    ", $order_id));
+    $logs = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}produkt_order_logs
+        WHERE order_id = %d ORDER BY created_at DESC",
+        $order_id
+    ));
+    $order_logs = $logs;
 
     // HTML generieren (Template einbinden)
-    global $order; // macht $order im Template sichtbar
+    global $order, $order_logs, $sd, $ed, $days; // macht $order im Template sichtbar
     ob_start();
-$order_data = $order;
-include PRODUKT_PLUGIN_PATH . 'admin/dashboard/sidebar-order-details.php';
-$html = ob_get_clean();
+    $order_data = $order;
+    include PRODUKT_PLUGIN_PATH . 'admin/dashboard/sidebar-order-details.php';
+    $html = ob_get_clean();
 
     wp_send_json_success([
         'html' => $html,
