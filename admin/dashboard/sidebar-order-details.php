@@ -26,6 +26,14 @@ if (!empty($sd) && !empty($ed)) {
     $percent = floor(($elapsed / $total) * 100);
 }
 
+// Status-Text für den Badge ermitteln
+$badge_status = 'In Vermietung';
+if ($percent >= 100) {
+    $badge_status = 'Abgeschlossen';
+} elseif ($percent <= 0) {
+    $badge_status = 'Ausstehend';
+}
+
 // Produkte ermitteln
 $produkte = $order->produkte ?? [$order]; // fallback
 ?>
@@ -80,7 +88,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
 
     <!-- Mietzeitraum -->
     <div class="rental-period-box">
-        <div class="badge-status">In Progress</div>
+        <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
         <h3>Mietzeitraum</h3>
         <div class="rental-progress-number"><?php echo $percent; ?>%</div>
         <div class="rental-progress">

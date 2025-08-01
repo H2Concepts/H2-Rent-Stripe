@@ -2671,7 +2671,10 @@ body.category-modal-open {
 .text-green-dark { color:#2a372a; }
 .text-blue { color:#0073aa; font-weight:bold; }
 .order-details-info { line-height:1.4; }
-.order-price { color:#666666; font-size:16px; }
+.order-price {
+    color: #000000;
+    font-size: 14px;
+}
 .orders-stat-value { font-size:2rem !important; }
 .modal-heading { margin-top:0; }
 .order-modal-footer { text-align:right; margin-top:20px; }
@@ -3111,7 +3114,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 
 .card-company a {
     color: #ffffff;
-    text-decoration: underline;
+    text-decoration: none;
 }
 	
 .card-company h2 {
