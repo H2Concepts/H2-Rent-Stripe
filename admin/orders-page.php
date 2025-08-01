@@ -193,7 +193,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                             <?php elseif ($order->status === 'gekündigt'): ?>
                                 <span class="badge badge-danger">Gekündigt</span>
                             <?php else: ?>
-                                <span class="badge badge-success">Abgeschlossen</span>
+                                <span class="badge badge-success">Bezahlt</span>
                             <?php endif; ?>
                         </td>
                         <td>

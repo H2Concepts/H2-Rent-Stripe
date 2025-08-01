@@ -247,7 +247,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Abgeschlossen</td></tr>';
+    $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Bezahlt</td></tr>';
     $message .= '</table>';
 
     $message .= '<h3>Kundendaten</h3>';

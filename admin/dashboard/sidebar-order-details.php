@@ -29,7 +29,7 @@ if (!empty($sd) && !empty($ed)) {
 // Status-Text für den Badge ermitteln
 $badge_status = 'In Vermietung';
 if ($percent >= 100) {
-    $badge_status = 'Abgeschlossen';
+    $badge_status = 'Bezahlt';
 } elseif ($percent <= 0) {
     $badge_status = 'Ausstehend';
 }
