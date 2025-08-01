@@ -103,7 +103,7 @@ $edit_item         = $edit_item ?? null;
                     </div>
                 </div>
             </div>
-            <div class="h2-rental-card">
+            <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
                         <h2>Alle Produkte</h2>
