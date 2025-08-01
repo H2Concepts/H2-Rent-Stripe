@@ -249,3 +249,52 @@ document.addEventListener('click', function(e) {
             });
     }
 });
+
+// Order note functionality
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.note-icon')) {
+        e.preventDefault();
+        var form = document.getElementById('order-note-form');
+        if (form) {
+            form.classList.toggle('visible');
+            var ta = form.querySelector('textarea');
+            if (ta) ta.focus();
+        }
+    }
+    if (e.target.classList.contains('note-cancel')) {
+        e.preventDefault();
+        document.getElementById('order-note-form').classList.remove('visible');
+    }
+    if (e.target.classList.contains('note-save')) {
+        e.preventDefault();
+        var form = document.getElementById('order-note-form');
+        var note = form.querySelector('textarea').value.trim();
+        if (!note) return;
+        var orderIdEl = document.querySelector('.sidebar-wrapper');
+        var orderId = orderIdEl ? orderIdEl.getAttribute('data-order-id') : 0;
+        var data = new URLSearchParams();
+        data.append('action', 'pv_save_order_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('order_id', orderId);
+        data.append('note', note);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var container = document.querySelector('.order-notes-section');
+                    if (container) {
+                        var div = document.createElement('div');
+                        div.className = 'order-note';
+                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div>';
+                        div.querySelector('.note-text').textContent = note;
+                        div.querySelector('.note-date').textContent = res.data.date;
+                        container.prepend(div);
+                    }
+                    form.querySelector('textarea').value = '';
+                    form.classList.remove('visible');
+                } else {
+                    alert('Fehler beim Speichern');
+                }
+            });
+    }
+});

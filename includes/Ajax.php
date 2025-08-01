@@ -1797,7 +1797,7 @@ function pv_load_order_sidebar_details() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
     global $wpdb;
-    global $order, $order_logs, $sd, $ed, $days; // make variables available to the template
+    global $order, $order_logs, $order_notes, $sd, $ed, $days; // make variables available to the template
 
     $order_array = pv_get_order_by_id($order_id);
     $order = $order_array ? (object) $order_array : null;
@@ -1816,13 +1816,19 @@ function pv_load_order_sidebar_details() {
     // Logs abrufen
     $logs = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM {$wpdb->prefix}produkt_order_logs
-        WHERE order_id = %d ORDER BY created_at DESC",
+         WHERE order_id = %d ORDER BY created_at DESC",
         $order_id
     ));
     $order_logs = $logs;
 
+    $order_notes = $wpdb->get_results($wpdb->prepare(
+        "SELECT message, created_at FROM {$wpdb->prefix}produkt_order_logs
+         WHERE order_id = %d AND event = 'Notiz' ORDER BY created_at DESC",
+        $order_id
+    ));
+
     // HTML generieren (Template einbinden)
-    global $order, $order_logs, $sd, $ed, $days; // macht $order im Template sichtbar
+    global $order, $order_logs, $order_notes, $sd, $ed, $days; // macht $order im Template sichtbar
     ob_start();
     $order_data = $order;
     include PRODUKT_PLUGIN_PATH . 'admin/dashboard/sidebar-order-details.php';
@@ -1831,4 +1837,32 @@ function pv_load_order_sidebar_details() {
     wp_send_json_success([
         'html' => $html,
     ]);
+}
+
+add_action('wp_ajax_pv_save_order_note', __NAMESPACE__ . '\\pv_save_order_note');
+function pv_save_order_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $note = sanitize_textarea_field($_POST['note'] ?? '');
+    if (!$order_id || $note === '') {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_order_logs';
+    $wpdb->insert($table, [
+        'order_id'   => $order_id,
+        'event'      => 'Notiz',
+        'message'    => $note,
+        'created_at' => current_time('mysql'),
+    ], [
+        '%d', '%s', '%s', '%s'
+    ]);
+
+    $date = date_i18n('d.m.Y H:i', current_time('timestamp'));
+    wp_send_json_success(['date' => $date]);
 }

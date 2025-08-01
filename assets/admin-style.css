@@ -3496,11 +3496,12 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .customer-icons {
     display: flex;
     gap: 8px;
-    font-size: 1.1rem;
-    color: #666;
 }
-.customer-icons .icon {
-    cursor: pointer;
+.customer-icons .icon-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: #666;
+    stroke: none;
 }
 
 /* Mietzeit-Box */
@@ -3664,4 +3665,29 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 }
 .order-log-list li {
     margin: 0.25rem 0;
+}
+
+.order-note-form {
+    display: none;
+    margin-top: 1rem;
+}
+.order-note-form.visible {
+    display: block;
+}
+.order-note-form textarea {
+    width: 100%;
+    height: 80px;
+    margin-bottom: 0.5rem;
+}
+.order-note {
+    background: #fff8b5;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+.order-note .note-date {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #666;
 }
