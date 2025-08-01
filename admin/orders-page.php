@@ -33,41 +33,30 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
     <h1 class="dashboard-greeting">Hallo, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Bestellungen verwalten</p>
 
-    <div class="dashboard-grid">
-        <div class="dashboard-left">
-            <div class="dashboard-card card-income">
-                <h2>Gesamt-Umsatz</h2>
-                <p class="card-subline">Umsatz des Zeitraums</p>
-                <p class="income-amount">€ <?php echo number_format($total_revenue, 2, ',', '.'); ?></p>
-                <small><?php echo date('d.m.Y', strtotime($date_from)); ?> – <?php echo date('d.m.Y', strtotime($date_to)); ?></small>
+    <div class="h2-rental-card">
+        <h2>Statistik</h2>
+        <p class="card-subline">Kennzahlen zum gewählten Zeitraum</p>
+        <div class="product-info-grid cols-4">
+            <div class="product-info-box bg-pastell-orange">
+                <span class="label">Gesamt-Umsatz</span>
+                <strong class="value">€ <?php echo number_format($total_revenue, 2, ',', '.'); ?></strong>
+            </div>
+            <div class="product-info-box bg-pastell-mint">
+                <span class="label">Durchschnitt</span>
+                <strong class="value">€ <?php echo number_format($avg_order_value, 2, ',', '.'); ?></strong>
+            </div>
+            <div class="product-info-box bg-pastell-gruen">
+                <span class="label">Zeitraum</span>
+                <strong class="value"><?php echo date('d.m.', strtotime($date_from)); ?>–<?php echo date('d.m.', strtotime($date_to)); ?></strong>
+            </div>
+            <div class="product-info-box bg-pastell-gelb">
+                <span class="label">Bestellungen</span>
+                <strong class="value"><?php echo intval($total_orders); ?></strong>
             </div>
         </div>
+    </div>
 
-        <div class="dashboard-right">
-            <div class="dashboard-card card-products">
-                <h2>Statistik</h2>
-                <p class="card-subline">Kennzahlen zum gewählten Zeitraum</p>
-                <div class="product-info-grid cols-4">
-                    <div class="product-info-box bg-pastell-orange">
-                        <span class="label">Gesamt-Umsatz</span>
-                        <strong class="value">€ <?php echo number_format($total_revenue, 2, ',', '.'); ?></strong>
-                    </div>
-                    <div class="product-info-box bg-pastell-mint">
-                        <span class="label">Durchschnitt</span>
-                        <strong class="value">€ <?php echo number_format($avg_order_value, 2, ',', '.'); ?></strong>
-                    </div>
-                    <div class="product-info-box bg-pastell-gruen">
-                        <span class="label">Zeitraum</span>
-                        <strong class="value"><?php echo date('d.m.', strtotime($date_from)); ?>–<?php echo date('d.m.', strtotime($date_to)); ?></strong>
-                    </div>
-                    <div class="product-info-box bg-pastell-gelb">
-                        <span class="label">Bestellungen</span>
-                        <strong class="value"><?php echo intval($total_orders); ?></strong>
-                    </div>
-                </div>
-            </div>
-
-            <div class="h2-rental-card">
+    <div class="h2-rental-card">
                 <div class="card-header-flex">
                     <div>
                         <h2>Bestellübersicht</h2>
@@ -99,13 +88,6 @@ $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
     
     <!-- Orders Table -->
     <div class="orders-table-container">
-        <?php if (!empty($orders)): ?>
-            <div class="orders-bulk-actions">
-            <button type="button" class="button" onclick="toggleSelectAll()">Alle auswählen</button>
-            <button type="button" class="button" onclick="deleteSelected()" class="text-red">Ausgewählte löschen</button>
-        </div>
-        <?php endif; ?>
-        
         <?php if (empty($orders)): ?>
         <div class="orders-empty">
             <p class="orders-empty-message">Keine Bestellungen im gewählten Zeitraum gefunden.</p>
@@ -400,43 +382,6 @@ function printOrders() {
     window.print();
 }
 
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('select-all-orders');
-    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
-
-    const allChecked = Array.from(orderCheckboxes).every(cb => cb.checked);
-
-    orderCheckboxes.forEach(cb => cb.checked = !allChecked);
-    selectAllCheckbox.checked = !allChecked;
-}
-
-function deleteSelected() {
-    const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
-
-    if (selectedOrders.length === 0) {
-        alert('Bitte wählen Sie mindestens eine Bestellung aus.');
-        return;
-    }
-
-    if (!confirm(`Sind Sie sicher, dass Sie ${selectedOrders.length} Bestellung(en) löschen möchten?\n\nDieser Vorgang kann nicht rückgängig gemacht werden!`)) {
-        return;
-    }
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = window.location.href;
-
-    selectedOrders.forEach(id => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'delete_orders[]';
-        input.value = id;
-        form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
-}
 
 const selectAllOrders = document.getElementById('select-all-orders');
 if (selectAllOrders) {
