@@ -1797,7 +1797,7 @@ function pv_load_order_sidebar_details() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
     global $wpdb;
-    global $order; // make $order available globally for the template
+    global $order, $order_logs, $sd, $ed, $days; // make variables available to the template
 
     $order_array = pv_get_order_by_id($order_id);
     $order = $order_array ? (object) $order_array : null;
