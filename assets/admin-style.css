@@ -2893,6 +2893,37 @@ NDE1LjIgLTYzLjMgNDIxLjkgMEwwIDBaIiBmaWxsPSIjZDJhZjdiIj48L3BhdGg+PC9nPjwvc3ZnPg==
     background-repeat: no-repeat;
 }
 .bg-pastell-gruen  { background-color: #e6f6ce; }
+.product-info-box.bg-pastell-gruen {
+    background-image: url("data:image/svg+xml;base64,\
+PHN2ZyBpZD0idmlzdWFsIiB2aWV3Qm94PSIwIDAgOTAwIDY3NSIgd2lkdGg9Ijkw\
+MCIgaGVpZ2h0PSI2NzUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2\
+ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHZl\
+cnNpb249IjEuMSI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjkwMCIgaGVpZ2h0\
+PSI2NzUiIGZpbGw9IiNlNmY2Y2UiPjwvcmVjdD48ZGVmcz48bGluZWFyR3JhZGll\
+bnQgaWQ9ImdyYWQxXzAiIHgxPSIyNSUiIHkxPSIxMDAlIiB4Mj0iMTAwJSIgeTI9\
+IjAlIj48c3RvcCBvZmZzZXQ9IjIzLjMzMzMzMzMzMzMzMzMzNiUiIHN0b3AtY29s\
+b3I9IiNlNmY2Y2UiIHN0b3Atb3BhY2l0eT0iMSI+PC9zdG9wPjxzdG9wIG9mZnNl\
+dD0iNzYuNjY2NjY2NjY2NjY2NjYlIiBzdG9wLWNvbG9yPSIjZTZmNmNlIiBzdG9w\
+LW9wYWNpdHk9IjEiPjwvc3RvcD48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48ZGVm\
+cz48bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQyXzAiIHgxPSIwJSIgeTE9IjEwMCUi\
+IHgyPSI3NSUiIHkyPSIwJSI+PHN0b3Agb2Zmc2V0PSIyMy4zMzMzMzMzMzMzMzMz\
+MzYlIiBzdG9wLWNvbG9yPSIjZTZmNmNlIiBzdG9wLW9wYWNpdHk9IjEiPjwvc3Rv\
+cD48c3RvcCBvZmZzZXQ9Ijc2LjY2NjY2NjY2NjY2NjY2JSIgc3RvcC1jb2xvcj0i\
+I2U2ZjZjZSIgc3RvcC1vcGFjaXR5PSIxIj48L3N0b3A+PC9saW5lYXJHcmFkaWVu\
+dD48L2RlZnM+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOTAwLCA2NzUpIj48cGF0\
+aCBkPSJNLTQyMS45IDBDLTQwOS43IC01OC45IC0zOTcuNCAtMTE3LjkgLTM1OS40\
+IC0xNDguOUMtMzIxLjMgLTE3OS45IC0yNTcuNSAtMTgyLjkgLTIyNS42IC0yMjUu\
+NkMtMTkzLjcgLTI2OC4yIC0xOTMuNyAtMzUwLjQgLTE2MS40IC0zODkuOEMtMTI5\
+LjIgLTQyOS4xIC02NC42IC00MjUuNSAwIC00MjEuOUwwIDBaIiBmaWxsPSIjNjkx\
+M2U5Ij48L3BhdGg+PC9nPjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsIDApIj48\
+cGF0aCBkPSJNNDIxLjkgMEM0MTkuOCA1Ny42IDQxNy42IDExNS4zIDM4OS44IDE2\
+MS40QzM2MS45IDIwNy42IDMwOC4zIDI0Mi40IDI1OS41IDI1OS41QzIxMC43IDI3\
+Ni42IDE2Ni44IDI3Ni4xIDEyNC40IDMwMC4zQzgxLjkgMzI0LjQgNDEgMzczLjEg\
+MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
+");
+    background-size: cover;
+    background-repeat: no-repeat;
+}
 .bg-pastell-gelb   { background-color: #f8f3cd; }
 
 .quicknav-list {
@@ -2927,6 +2958,7 @@ NDE1LjIgLTYzLjMgNDIxLjkgMEwwIDBaIiBmaWxsPSIjZDJhZjdiIj48L3BhdGg+PC9nPjwvc3ZnPg==
     color: #fff;
     font-size: 0.85rem;
 }
+.activity-table tr.pending-return { background-color: #efffec; }
 
 .status-offen { background: #f39c12; }
 .status-abgeschlossen {

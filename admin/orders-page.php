@@ -113,8 +113,10 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($orders as $order): ?>
-                    <tr>
+                    <?php foreach ($orders as $order):
+                        $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
+                    ?>
+                    <tr<?php echo $due ? ' class="pending-return"' : ''; ?>>
                         <td><input type="checkbox" class="order-checkbox" value="<?php echo $order->id; ?>"></td>
                         <td><strong>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?></strong></td>
                         <td>
@@ -191,10 +193,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                                     <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
                                 </svg>
                             </button>
-                            <?php
-                                $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
-                                if ($due):
-                            ?>
+                            <?php if ($due): ?>
                                 <button type="button" class="icon-btn produkt-return-confirm" data-id="<?php echo $order->id; ?>" aria-label="Bestätigung">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
                                         <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
