@@ -2976,16 +2976,18 @@ body.category-modal-open {
 }
 .selected-product-preview {
     margin-top: 1rem;
-    text-align: center;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
 }
 .selected-product-preview img,
 .selected-product-preview .placeholder-icon {
     width: 100%;
-    border-radius: 8px;
+    max-height: 300px;
     display: block;
+    object-fit: cover;
 }
 .selected-product-preview .placeholder-icon {
-    height: 160px;
     background: #f0f0f0;
     display: flex;
     align-items: center;
@@ -2993,13 +2995,15 @@ body.category-modal-open {
     font-size: 2rem;
     color: #777;
 }
-.selected-product-preview img {
-    height: auto;
-    object-fit: cover;
-}
-.selected-product-preview strong {
-    display: block;
-    margin-top: 0.5rem;
+.selected-product-preview .tile-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 0.3rem 0.5rem;
+    font-size: 13px;
 }
 
 .prod-card-title {

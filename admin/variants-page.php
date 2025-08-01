@@ -332,7 +332,7 @@ foreach ($branding_results as $result) {
                     <?php else: ?>
                         <div class="placeholder-icon">🏷️</div>
                     <?php endif; ?>
-                    <strong><?php echo esc_html($current_category->name); ?></strong>
+                    <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
                 </div>
                 <?php endif; ?>
             </div>
