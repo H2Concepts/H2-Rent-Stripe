@@ -390,3 +390,22 @@ function pv_generate_invoice_pdf($order_id) {
 
     return $path;
 }
+
+/**
+ * Return a German greeting based on the current time of day.
+ *
+ * @return string Greeting like "Guten Morgen" or "Guten Abend".
+ */
+function pv_get_time_greeting() {
+    $hour = (int) current_time('H');
+
+    if ($hour >= 6 && $hour < 12) {
+        return 'Guten Morgen';
+    }
+
+    if ($hour >= 12 && $hour < 19) {
+        return 'Hallo';
+    }
+
+    return 'Guten Abend';
+}

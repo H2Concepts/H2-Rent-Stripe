@@ -24,106 +24,70 @@ foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
 $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
+
+// Search term for filtering
+$search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '');
 ?>
 
-<div class="wrap" id="produkt-admin-orders">
-    <div class="produkt-admin-card">
-        <div class="produkt-admin-header-compact">
-            <div class="produkt-admin-logo-compact">
-                <span class="dashicons dashicons-clipboard"></span>
-            </div>
-            <div class="produkt-admin-title-compact">
-                <h1>Bestellungen</h1>
-                <p>Übersicht aller Kundenbestellungen mit detaillierten Produktinformationen</p>
-            </div>
-        </div>
-    
-    
-    <!-- Filter Section -->
-    <div class="orders-filter-box">
-        <h3>🔍 Filter & Zeitraum</h3>
-        <form method="get" action="" class="orders-filter-form">
-            <input type="hidden" name="page" value="produkt-orders">
-            
-            <div>
-                <label for="category-select"><strong>Produkt:</strong></label>
-                <select name="category" id="category-select">
-                    <option value="0" <?php selected($selected_category, 0); ?>>Alle Produkte</option>
-                    <?php foreach ($categories as $category): ?>
-                    <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
-                        <?php echo esc_html($category->name); ?>
-                    </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            
-            <div>
-                <label for="date-from"><strong>Von:</strong></label>
-                <input type="date" name="date_from" id="date-from" value="<?php echo esc_attr($date_from); ?>">
-            </div>
-            
-            <div>
-                <label for="date-to"><strong>Bis:</strong></label>
-                <input type="date" name="date_to" id="date-to" value="<?php echo esc_attr($date_to); ?>">
-            </div>
-            
-            <input type="submit" value="Filter anwenden" class="button button-primary">
-        </form>
-        
-        <?php if ($current_category): ?>
-        <div class="current-category-box">
-            <strong>📝 Aktuelle Produkt:</strong> <?php echo esc_html($current_category->name); ?>
-            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
-        </div>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Summary Statistics -->
-    <div class="produkt-summary-grid">
-        <div class="produkt-summary-card">
-            <h3>📋 Gesamt-Bestellungen</h3>
-            <div class="produkt-summary-value summary-green">
-                <?php echo number_format($total_orders); ?>
-            </div>
-            <p class="produkt-summary-note">Im gewählten Zeitraum</p>
-        </div>
+<div class="produkt-admin dashboard-wrapper">
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline">Bestellungen verwalten</p>
 
-        <div class="produkt-summary-card">
-            <h3>💰 Gesamt-Umsatz</h3>
-            <div class="produkt-summary-value summary-gray">
-                <?php echo number_format($total_revenue, 2, ',', '.'); ?>€
+    <div class="h2-rental-card">
+        <h2>Statistik</h2>
+        <p class="card-subline">Kennzahlen zum gewählten Zeitraum</p>
+        <div class="orders-info-grid-tight">
+            <div class="product-info-box bg-pastell-orange">
+                <span class="label">Gesamt-Umsatz</span>
+                <strong class="value orders-stat-value">€ <?php echo number_format($total_revenue, 2, ',', '.'); ?></strong>
             </div>
-            <p class="produkt-summary-note">Monatlicher Mietumsatz</p>
-        </div>
-
-        <div class="produkt-summary-card">
-            <h3>📊 Durchschnittswert</h3>
-            <div class="produkt-summary-value summary-red">
-                <?php echo number_format($avg_order_value, 2, ',', '.'); ?>€
+            <div class="product-info-box bg-pastell-mint">
+                <span class="label">Durchschnitt</span>
+                <strong class="value orders-stat-value">€ <?php echo number_format($avg_order_value, 2, ',', '.'); ?></strong>
             </div>
-            <p class="produkt-summary-note">Pro Bestellung</p>
-        </div>
-
-        <div class="produkt-summary-card">
-            <h3>📅 Zeitraum</h3>
-            <div class="produkt-summary-range">
-                <?php echo date('d.m.Y', strtotime($date_from)); ?><br>
-                <small>bis</small><br>
-                <?php echo date('d.m.Y', strtotime($date_to)); ?>
+            <div class="product-info-box bg-pastell-gruen">
+                <span class="label">Zeitraum</span>
+                <strong class="value orders-stat-value"><?php echo date('d.m.', strtotime($date_from)); ?>–<?php echo date('d.m.', strtotime($date_to)); ?></strong>
+            </div>
+            <div class="product-info-box bg-pastell-gelb">
+                <span class="label">Bestellungen</span>
+                <strong class="value orders-stat-value"><?php echo intval($total_orders); ?></strong>
             </div>
         </div>
     </div>
+
+    <div class="h2-rental-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Bestellübersicht</h2>
+                        <p class="card-subline">Kundenaufträge ansehen</p>
+                    </div>
+                    <form method="get" class="produkt-filter-form product-search-bar">
+                        <input type="hidden" name="page" value="produkt-orders">
+                        <div class="search-input-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                                <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+                            </svg>
+                            <input type="text" name="s" placeholder="Suchen" value="<?php echo esc_attr($search_term); ?>">
+                        </div>
+                        <select name="category">
+                            <option value="0" <?php selected($selected_category, 0); ?>>Alle Produkte</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>><?php echo esc_html($category->name); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <input type="date" name="date_from" value="<?php echo esc_attr($date_from); ?>">
+                        <input type="date" name="date_to" value="<?php echo esc_attr($date_to); ?>">
+                        <button type="submit" class="icon-btn filter-submit-btn" aria-label="Filtern">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">
+                                <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
     
     <!-- Orders Table -->
-    <div class="orders-table-container">
-        <h3>📋 Bestellübersicht</h3>
-        <?php if (!empty($orders)): ?>
-        <div class="orders-bulk-actions">
-            <button type="button" class="button" onclick="toggleSelectAll()">Alle auswählen</button>
-            <button type="button" class="button" onclick="deleteSelected()" class="text-red">Ausgewählte löschen</button>
-        </div>
-        <?php endif; ?>
-        
+    <div>
         <?php if (empty($orders)): ?>
         <div class="orders-empty">
             <p class="orders-empty-message">Keine Bestellungen im gewählten Zeitraum gefunden.</p>
@@ -131,11 +95,19 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
         </div>
         <?php else: ?>
         
-        <div class="table-responsive">
-            <table class="wp-list-table widefat fixed striped">
+        <form method="post" action="?page=produkt-orders&category=<?php echo $selected_category; ?>&date_from=<?php echo $date_from; ?>&date_to=<?php echo $date_to; ?>&s=<?php echo urlencode($search_term); ?>">
+        <table class="activity-table">
                 <thead>
                     <tr>
-                        <th class="col-checkbox"><input type="checkbox" id="select-all-orders"></th>
+                        <th class="col-checkbox">
+                            <input type="checkbox" id="select-all-orders">
+                            <button type="submit" class="icon-btn bulk-delete-btn" onclick="return confirm('Ausgewählte Bestellungen wirklich löschen?');" aria-label="Ausgewählte löschen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
+                                    <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
+                                    <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
+                                </svg>
+                            </button>
+                        </th>
                         <th class="col-id">ID</th>
                         <th class="col-date">Datum</th>
                         <th>Kunde</th>
@@ -143,7 +115,6 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         <th>Versandadresse</th>
                         <th>Rechnungsadresse</th>
                         <th class="col-type">Produkttyp</th>
-                        <th>Produktdetails</th>
                         <th class="col-price">Preis</th>
                         <th class="col-discount">Rabatt</th>
                         <th class="col-status">Status</th>
@@ -151,9 +122,11 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($orders as $order): ?>
-                    <tr>
-                        <td><input type="checkbox" class="order-checkbox" value="<?php echo $order->id; ?>"></td>
+                    <?php foreach ($orders as $order):
+                        $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
+                    ?>
+                    <tr<?php echo $due ? ' class="pending-return"' : ''; ?>>
+                        <td><input type="checkbox" class="order-checkbox" name="delete_orders[]" value="<?php echo $order->id; ?>"></td>
                         <td><strong>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?></strong></td>
                         <td>
                             <?php echo date('d.m.Y', strtotime($order->created_at)); ?><br>
@@ -197,34 +170,6 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                         ?>
                         <td><?php echo esc_html($type); ?></td>
                         <td>
-                            <div class="order-details-info">
-                                <strong><?php echo esc_html($order->category_name); ?></strong><br>
-                                <span class="text-gray">📦 <?php echo esc_html($order->variant_name); ?></span><br>
-                                <span class="text-gray">🎁 <?php echo esc_html($order->extra_names); ?></span><br>
-                                <?php if ($type === 'Verkauf'): ?>
-                                    <span class="text-gray">⏰ Miettage: <?php echo esc_html($order->rental_days ?? $order->duration_name); ?></span><br>
-                                <?php else: ?>
-                                    <span class="text-gray">⏰ Mietdauer: <?php echo esc_html($order->duration_name); ?></span><br>
-                                <?php endif; ?>
-                                <?php list($sd,$ed) = pv_get_order_period($order); ?>
-                                <?php if ($sd && $ed): ?>
-                                    <span class="text-gray">📅 <?php echo date('d.m.Y', strtotime($sd)); ?> - <?php echo date('d.m.Y', strtotime($ed)); ?></span><br>
-                                <?php endif; ?>
-                                
-                                <?php if ($order->condition_name): ?>
-                                    <span class="text-gray">🔄 <?php echo esc_html($order->condition_name); ?></span><br>
-                                <?php endif; ?>
-                                
-                                <?php if ($order->product_color_name): ?>
-                                    <span class="text-gray">🎨 Produkt: <?php echo esc_html($order->product_color_name); ?></span><br>
-                                <?php endif; ?>
-                                
-                                <?php if ($order->frame_color_name): ?>
-                                    <span class="text-gray">🖼️ Gestell: <?php echo esc_html($order->frame_color_name); ?></span><br>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                        <td>
                             <strong class="order-price">
                                 <?php echo number_format($order->final_price, 2, ',', '.'); ?>€
                             </strong><br>
@@ -248,183 +193,57 @@ $primary_color = $branding['admin_color_primary'] ?? '#5f7f5f';
                             <?php elseif ($order->status === 'gekündigt'): ?>
                                 <span class="badge badge-danger">Gekündigt</span>
                             <?php else: ?>
-                                <span class="badge badge-success">Abgeschlossen</span>
+                                <span class="badge badge-success">Bezahlt</span>
                             <?php endif; ?>
                         </td>
                         <td>
-                            <button type="button" class="button button-small" onclick="showOrderDetails(<?php echo $order->id; ?>)" title="Details anzeigen">
-                                👁️ Details
+                            <button type="button" class="icon-btn icon-btn-no-stroke view-details-link" data-order-id="<?php echo $order->id; ?>" aria-label="Details">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">
+                                    <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
+                                </svg>
                             </button>
-                            <?php
-                                $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
-                                if ($due):
-                            ?>
-                                <br><br>
-                                <button type="button" class="button button-small produkt-return-confirm" data-id="<?php echo $order->id; ?>">Alles i.O.</button>
+                            <?php if ($due): ?>
+                                <button type="button" class="icon-btn produkt-return-confirm" data-id="<?php echo $order->id; ?>" aria-label="Bestätigung">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                                        <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                                        <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+                                    </svg>
+                                </button>
                             <?php endif; ?>
-                            <br><br>
-                            <a href="<?php echo admin_url('admin.php?page=produkt-orders&category=' . $selected_category . '&delete_order=' . $order->id . '&date_from=' . $date_from . '&date_to=' . $date_to); ?>"
-                               class="button button-small text-red"
-                               onclick="return confirm('Sind Sie sicher, dass Sie diese Bestellung löschen möchten?\n\nBestellung #<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?> wird unwiderruflich gelöscht!')">
-                                🗑️ Löschen
-                            </a>
+                            <button type="button" class="icon-btn" onclick="if(confirm('Wirklich löschen?')){window.location.href='?page=produkt-orders&category=<?php echo $selected_category; ?>&delete_order=<?php echo $order->id; ?>&date_from=<?php echo $date_from; ?>&date_to=<?php echo $date_to; ?>';}" aria-label="Löschen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
+                                    <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
+                                    <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
+                                </svg>
+                            </button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
             </table>
-        </div>
-        
+        </form>
+
         <?php endif; ?>
     </div>
     
-    <!-- Export Section -->
-    <div class="orders-export-box">
-        <h3>📤 Export & Aktionen</h3>
-        <div class="orders-export-actions">
-            <button type="button" class="button" onclick="exportOrders('csv')">
-                📊 Als CSV exportieren
-            </button>
-            <button type="button" class="button" onclick="exportOrders('excel')">
-                📈 Als Excel exportieren
-            </button>
-            <button type="button" class="button" onclick="printOrders()">
-                🖨️ Drucken
-            </button>
-        </div>
-        <p class="orders-export-note">
-            Exportiert werden alle Bestellungen im aktuell gewählten Filter-Zeitraum und der ausgewählten Produkt.
-        </p>
-    </div>
-    
-    <!-- Info Box -->
-    <div class="info-box">
-        <h3>📋 Bestellungen-System</h3>
-        <div class="info-box-grid">
-            <div>
-                <h4>🎯 Was wird erfasst:</h4>
-                <ul>
-                    <li><strong>Produktauswahl:</strong> Alle gewählten Optionen</li>
-                    <li><strong>Kundendaten:</strong> E-Mail, Name, Telefon und Adresse (falls angegeben)</li>
-                    <li><strong>Preisberechnung:</strong> Finaler Mietpreis pro Monat</li>
-                    <li><strong>Zeitstempel:</strong> Exakte Bestellzeit</li>
-                    <li><strong>Tracking-Daten:</strong> IP-Adresse und Browser</li>
-                </ul>
-            </div>
-            <div>
-                <h4>📊 Verwendung der Daten:</h4>
-                <ul>
-                    <li><strong>Bestellverfolgung:</strong> Nachvollziehung aller Anfragen</li>
-                    <li><strong>Kundenservice:</strong> Support bei Fragen</li>
-                    <li><strong>Analytics:</strong> Beliebte Produktkombinationen</li>
-                    <li><strong>Umsatzanalyse:</strong> Monatliche Einnahmen</li>
-                    <li><strong>Produktoptimierung:</strong> Welche Optionen werden gewählt</li>
-                    <li><strong>E-Mail-Marketing:</strong> Kundenkommunikation</li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="tip-box">
-            <strong>💡 Tipp:</strong> Nutzen Sie die Filterfunktionen um spezifische Zeiträume oder Produkte zu analysieren. Die Export-Funktion hilft bei der weiteren Datenverarbeitung in Excel oder anderen Tools.
-        </div>
-        
-        <div class="privacy-box">
-            <strong>🔒 Datenschutz:</strong> Alle Kundendaten werden sicher gespeichert und nur für die Bestellabwicklung verwendet. IP-Adressen dienen der Fraud-Prevention und werden nach 30 Tagen anonymisiert.
-        </div>
-    </div>
-    </div>
-</div>
 
-<!-- Order Details Modal -->
-<div id="order-details-modal" class="modal-overlay">
-    <div class="modal-content">
-        <button type="button" class="modal-close" onclick="closeOrderDetails()">&times;</button>
-        <h3 class="modal-heading">📋 Bestelldetails</h3>
-        <div id="order-details-content"></div>
-        <div class="order-modal-footer">
-            <button type="button" class="button-primary" onclick="closeOrderDetails()">Schließen</button>
+    </div> <!-- end orders card -->
+
+    <!-- Sidebar-Overlay für Bestelldetails -->
+    <div id="order-details-sidebar" class="order-details-sidebar">
+        <div class="order-details-header">
+            <h3>Bestelldetails</h3>
+            <button class="close-sidebar">&times;</button>
+        </div>
+        <div class="order-details-content">
+            <p>Lade Details…</p>
         </div>
     </div>
+    <div id="order-details-overlay" class="order-details-overlay"></div>
 </div>
-
 
 
 <script>
-function showOrderDetails(orderId) {
-    // Find order data from PHP
-    const orders = <?php echo json_encode($orders); ?>;
-    const orderLogs = <?php echo json_encode($order_logs); ?>;
-    const order = orders.find(o => o.id == orderId);
-    
-    if (!order) return;
-    
-    let detailsHtml = `
-        <div class="details-grid">
-            <div>
-                <h4>📋 Bestellinformationen</h4>
-                <p><strong>Bestellnummer:</strong> #${order.order_number ? order.order_number : order.id}</p>
-                <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
-                <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
-                ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
-                <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-'+parseFloat(order.discount_amount).toFixed(2).replace('.', ',')+'€' : '–'}</p>
-            </div>
-            <div>
-                <h4>👤 Kundendaten</h4>
-                <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
-                <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
-                <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
-                <p><strong>Versandadresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
-                <p><strong>Rechnungsadresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
-                <p><strong>IP-Adresse:</strong> ${order.user_ip}</p>
-            </div>
-        </div>
-        
-        <h4>🛍️ Produktauswahl</h4>
-        <ul>
-            <li><strong>Ausführung:</strong> ${order.variant_name}</li>
-            <li><strong>Extra:</strong> ${order.extra_names}</li>
-            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
-            ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
-    `;
-    
-    if (order.condition_name) {
-        detailsHtml += `<li><strong>Zustand:</strong> ${order.condition_name}</li>`;
-    }
-    
-    if (order.product_color_name) {
-        detailsHtml += `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>`;
-    }
-    
-    if (order.frame_color_name) {
-        detailsHtml += `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>`;
-    }
-    
-    detailsHtml += `
-        </ul>
-
-
-        <h4>🖥️ Technische Daten</h4>
-        <p><strong>User Agent:</strong> ${order.user_agent}</p>
-    `;
-
-    const logs = orderLogs[order.id] || [];
-    if (logs.length) {
-        detailsHtml += '<h4>📑 Verlauf</h4><ul>';
-        logs.forEach(l => {
-            const date = new Date(l.created_at).toLocaleString('de-DE');
-            detailsHtml += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
-        });
-        detailsHtml += '</ul>';
-    }
-    
-    document.getElementById('order-details-content').innerHTML = detailsHtml;
-    document.getElementById('order-details-modal').style.display = 'block';
-}
-
-function closeOrderDetails() {
-    document.getElementById('order-details-modal').style.display = 'none';
-}
-
 function exportOrders(format) {
     const params = new URLSearchParams(window.location.search);
     params.set('export', format);
@@ -440,43 +259,6 @@ function printOrders() {
     window.print();
 }
 
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('select-all-orders');
-    const orderCheckboxes = document.querySelectorAll('.order-checkbox');
-
-    const allChecked = Array.from(orderCheckboxes).every(cb => cb.checked);
-
-    orderCheckboxes.forEach(cb => cb.checked = !allChecked);
-    selectAllCheckbox.checked = !allChecked;
-}
-
-function deleteSelected() {
-    const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
-
-    if (selectedOrders.length === 0) {
-        alert('Bitte wählen Sie mindestens eine Bestellung aus.');
-        return;
-    }
-
-    if (!confirm(`Sind Sie sicher, dass Sie ${selectedOrders.length} Bestellung(en) löschen möchten?\n\nDieser Vorgang kann nicht rückgängig gemacht werden!`)) {
-        return;
-    }
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = window.location.href;
-
-    selectedOrders.forEach(id => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'delete_orders[]';
-        input.value = id;
-        form.appendChild(input);
-    });
-
-    document.body.appendChild(form);
-    form.submit();
-}
 
 const selectAllOrders = document.getElementById('select-all-orders');
 if (selectAllOrders) {
@@ -485,11 +267,4 @@ if (selectAllOrders) {
         orderCheckboxes.forEach(cb => cb.checked = this.checked);
     });
 }
-
-// Close modal when clicking outside
-document.getElementById('order-details-modal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeOrderDetails();
-    }
-});
 </script>
