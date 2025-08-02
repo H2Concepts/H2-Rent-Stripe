@@ -2769,7 +2769,7 @@ body.block-modal-open {
 #produkt-admin-calendar .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 #produkt-admin-calendar .month-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#f0f0f0;text-decoration:none;color:#000;}
 #produkt-admin-calendar .calendar-big-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid #ccc;border-right:0;border-bottom:0;}
-#produkt-admin-calendar .day-cell{border-right:1px solid #ccc;border-bottom:1px solid #ccc;position:relative;background:#fff;min-height:200px;}
+#produkt-admin-calendar .day-cell{border-right:1px solid #ccc;border-bottom:1px solid #ccc;position:relative;background:#fff;min-height:200px;cursor:pointer;}
 #produkt-admin-calendar .day-number{position:absolute;top:8px;left:8px;font-weight:600;}
 #produkt-admin-calendar .day-number.today{background:#000;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
 #produkt-admin-calendar .weekday{position:absolute;top:8px;right:8px;color:#bbb;font-size:12px;}
@@ -2778,6 +2778,9 @@ body.block-modal-open {
 #produkt-admin-calendar .event-bar.return .count{background:#b52b3a;padding:0 4px;border-radius:2px;}
 #produkt-admin-calendar .event-bar.open{background:#28a745;bottom:36px;}
 #produkt-admin-calendar .event-bar.open .count{background:#1e7e34;padding:0 4px;border-radius:2px;}
+#produkt-admin-calendar .day-cell.blocked{background:#ffe5e5;}
+body.day-modal-open{overflow:hidden;}
+#day-modal .day-modal-actions{margin-top:20px;display:flex;gap:10px;}
 
 
 /* Customers grid */

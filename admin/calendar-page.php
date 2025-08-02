@@ -51,6 +51,8 @@ $sql = "SELECT o.*, c.name as category_name,
 
 $orders = $wpdb->get_results($sql);
 
+$blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
+
 foreach ($orders as $o) {
     $o->rental_days = pv_get_order_rental_days($o);
     list($s, $e) = pv_get_order_period($o);
@@ -121,14 +123,18 @@ foreach ($orders as $o) {
                     $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
                     $weekday = $dayNames[(int)date('N', strtotime($date)) - 1];
                     $openCount = 0; $returnCount = 0;
+                    $orders_info = [];
                     if (isset($orders_by_day[$date])) {
                         foreach ($orders_by_day[$date] as $o) {
                             if ($show_open && $o->start_date === $date) $openCount++;
                             if ($show_return && $o->end_date === $date) $returnCount++;
+                            $num = !empty($o->order_number) ? $o->order_number : $o->id;
+                            $orders_info[] = '#' . $num . ' ' . $o->customer_name;
                         }
                     }
+                    $is_blocked = in_array($date, $blocked_days, true);
                 ?>
-                <div class="day-cell">
+                <div class="day-cell<?php echo $is_blocked ? ' blocked' : ''; ?>" data-date="<?php echo esc_attr($date); ?>" data-blocked="<?php echo $is_blocked ? '1' : '0'; ?>" data-orders='<?php echo esc_attr(json_encode($orders_info)); ?>'>
                     <div class="day-number<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>"><?php echo $d; ?></div>
                     <div class="weekday"><?php echo esc_html($weekday); ?></div>
                     <?php if ($returnCount): ?>
@@ -143,3 +149,18 @@ foreach ($orders as $o) {
         </div>
     </div>
 </div>
+
+<div id="day-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button class="modal-close" type="button">&times;</button>
+        <h2 id="day-modal-title"></h2>
+        <ul id="day-modal-orders"></ul>
+        <div class="day-modal-actions">
+            <button id="block-day" class="button button-primary" type="button">Tag sperren</button>
+            <button id="unblock-day" class="button" type="button">Tag freigeben</button>
+        </div>
+    </div>
+</div>
+<script>
+var produkt_calendar_nonce = '<?php echo wp_create_nonce('produkt_nonce'); ?>';
+</script>
