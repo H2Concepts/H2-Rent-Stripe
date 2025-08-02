@@ -2726,16 +2726,15 @@ body.category-modal-open {
 
 
 /* Customers grid */
-#produkt-admin-customers .h2-rental-card{margin-right:0;}
-#produkt-admin-customers .customers-grid{display:flex;flex-wrap:wrap;gap:20px;margin-top:2rem;}
-#produkt-admin-customers .customer-card{background:#fff;border-radius:20px;padding:1.5rem;flex:1 1 250px;max-width:250px;}
+#produkt-admin-customers .customers-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px;margin-top:2rem;margin-right:20px;}
+#produkt-admin-customers .customer-card{background:#fff;border-radius:20px;padding:1.5rem;}
 #produkt-admin-customers .customer-header{display:flex;align-items:center;margin-bottom:12px;}
 #produkt-admin-customers .customer-avatar{width:50px;height:50px;border-radius:50%;background:#1d2327;color:#fff;font-weight:700;font-size:18px;display:flex;align-items:center;justify-content:center;margin-right:12px;text-transform:uppercase;}
 #produkt-admin-customers .customer-name{margin:0;font-size:16px;font-weight:600;}
 #produkt-admin-customers .customer-email{margin:2px 0 0;font-size:14px;color:#444;}
 #produkt-admin-customers .customer-phone{margin:0 0 8px;font-size:14px;}
 #produkt-admin-customers .customer-orders-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;}
-#produkt-admin-customers .customer-actions{text-align:right;}
+#produkt-admin-customers .customer-actions{text-align:right;margin-top:2rem;}
 #produkt-admin-customers .customer-actions .icon-btn svg{width:20px;height:20px;}
 
 /* Customer detail layout */
