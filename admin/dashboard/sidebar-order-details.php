@@ -156,7 +156,6 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <div class="orders-accordion">
         <div class="produkt-accordion-item">
             <button type="button" class="produkt-accordion-header">Technische Daten</button>
-            <p class="card-subline">Technische Informationen zum Nutzer</p>
             <div class="produkt-accordion-content">
                 <p><strong>User Agent:</strong> <?php echo esc_html($order->user_agent ?: '–'); ?></p>
                 <p><strong>IP-Adresse:</strong> <?php echo esc_html($order->user_ip ?: '–'); ?></p>
@@ -164,7 +163,6 @@ $produkte = $order->produkte ?? [$order]; // fallback
         </div>
         <div class="produkt-accordion-item">
             <button type="button" class="produkt-accordion-header">Verlauf</button>
-            <p class="card-subline">Benutzerverlauf im Detail</p>
             <div class="produkt-accordion-content">
                 <?php if (!empty($order_logs)) : ?>
                     <ul class="order-log-list">
@@ -180,7 +178,6 @@ $produkte = $order->produkte ?? [$order]; // fallback
     </div>
     <div class="order-notes-section">
         <h3>Notizen</h3>
-        <p class="card-subline">Anmerkungen zum Kunden</p>
         <?php if (!empty($order_notes)) : ?>
             <?php foreach ($order_notes as $note) : ?>
                 <div class="order-note" data-note-id="<?php echo intval($note->id); ?>">

@@ -275,11 +275,13 @@ if (!$customer_id) {
             <div class="customer-row">
                 <div class="dashboard-card customer-tech-card">
                     <h2>Technische Daten</h2>
+                    <p class="card-subline">Technische Informationen zum Nutzer</p>
                     <p><strong>User Agent:</strong> <?php echo esc_html($last_order->user_agent ?? '–'); ?></p>
                     <p><strong>IP-Adresse:</strong> <?php echo esc_html($last_order->user_ip ?? '–'); ?></p>
                 </div>
                 <div class="dashboard-card">
                     <h2>Verlauf</h2>
+                    <p class="card-subline">Benutzerverlauf im Detail</p>
                     <?php if ($customer_logs) : ?>
                         <ul class="order-log-list">
                             <?php foreach ($customer_logs as $log) : ?>
@@ -299,7 +301,10 @@ if (!$customer_id) {
 
             <div class="dashboard-card">
                 <div class="card-header-flex">
-                    <h2>Notizen</h2>
+                    <div>
+                        <h2>Notizen</h2>
+                        <p class="card-subline">Anmerkungen zum Kunden</p>
+                    </div>
                     <button type="button" class="icon-btn icon-btn-no-stroke customer-note-icon" title="Notiz hinzufügen">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-.6 0-1 .4-1 1v5H6c-.6 0-1 .4-1 1s.4 1 1 1h5v5c0 .6.4 1 1 1s1-.4 1-1v-5h5c.6 0 1-.4 1-1s-.4-1-1-1h-5V6c0-.6-.4-1-1-1z"/></svg>
                     </button>
