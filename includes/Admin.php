@@ -923,6 +923,7 @@ class Admin {
 
         $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
         $selected_category = isset($_GET['category']) ? intval($_GET['category']) : 0;
+        $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 
         $date_from = isset($_GET['date_from']) ? sanitize_text_field($_GET['date_from']) : date('Y-m-d', strtotime('-30 days'));
         $date_to = isset($_GET['date_to']) ? sanitize_text_field($_GET['date_to']) : date('Y-m-d');
@@ -937,6 +938,12 @@ class Admin {
         if ($selected_category > 0) {
             $where_conditions[] = "o.category_id = %d";
             $where_values[] = $selected_category;
+        }
+        if ($search_term !== '') {
+            $like = '%' . $wpdb->esc_like(ltrim($search_term, '#')) . '%';
+            $where_conditions[] = "(o.order_number LIKE %s OR CAST(o.id AS CHAR) LIKE %s)";
+            $where_values[] = $like;
+            $where_values[] = $like;
         }
         $where_clause = implode(' AND ', $where_conditions);
 
@@ -987,7 +994,7 @@ class Admin {
         foreach ($orders as $o) {
             $order_logs[$o->id] = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
+                    "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
                     $o->id
                 )
             );
@@ -999,6 +1006,7 @@ class Admin {
             'date_from',
             'date_to',
             'current_category',
+            'search_term',
             'orders',
             'order_logs',
             'total_orders',

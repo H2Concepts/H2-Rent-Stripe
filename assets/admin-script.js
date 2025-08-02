@@ -21,6 +21,8 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     content.html(response.data.html);
+                    // Re-initialize accordions for dynamically loaded content
+                    produktInitAccordions();
                 } else {
                     content.html('<p>Details konnten nicht geladen werden.</p>');
                 }
@@ -172,6 +174,9 @@ jQuery(document).ready(function($) {
         function closeCatModal() {
             catModal.hide();
             $('body').removeClass('category-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
         }
         $('#add-category-btn').on('click', function(e){
             e.preventDefault();
@@ -188,6 +193,39 @@ jQuery(document).ready(function($) {
         catModal.find('.modal-close').on('click', closeCatModal);
         if (catModal.data('open') == 1) {
             openCatModal();
+        }
+    }
+
+    var blockModal = $('#block-modal');
+    if (blockModal.length) {
+        function openBlockModal() {
+            blockModal.show();
+            $('body').addClass('block-modal-open');
+        }
+        function closeBlockModal() {
+            blockModal.hide();
+            $('body').removeClass('block-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+        $('#add-block-btn').on('click', function(e){
+            e.preventDefault();
+            blockModal.find('input[name="id"]').val('');
+            blockModal.find('input[type="text"], input[type="number"], input[type="url"], textarea').val('');
+            blockModal.find('input[type="color"]').val('#ffffff');
+            blockModal.find('select[name="style"]').val('wide');
+            blockModal.find('select[name="category_id"]').val('0');
+            openBlockModal();
+        });
+        blockModal.on('click', function(e){
+            if (e.target === this) {
+                closeBlockModal();
+            }
+        });
+        blockModal.find('.modal-close').on('click', closeBlockModal);
+        if (blockModal.data('open') == 1) {
+            openBlockModal();
         }
     }
 });
@@ -243,6 +281,176 @@ document.addEventListener('click', function(e) {
                     }
                 } else {
                     alert('Fehler beim Bestätigen');
+                }
+            });
+    }
+});
+
+// Order note functionality
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.note-icon')) {
+        e.preventDefault();
+        var form = document.getElementById('order-note-form');
+        if (form) {
+            form.classList.toggle('visible');
+            var ta = form.querySelector('textarea');
+            if (ta) ta.focus();
+        }
+    }
+    if (e.target.classList.contains('note-cancel')) {
+        e.preventDefault();
+        document.getElementById('order-note-form').classList.remove('visible');
+    }
+    if (e.target.classList.contains('note-save')) {
+        e.preventDefault();
+        var form = document.getElementById('order-note-form');
+        var note = form.querySelector('textarea').value.trim();
+        if (!note) return;
+        var orderIdEl = document.querySelector('.sidebar-wrapper');
+        var orderId = orderIdEl ? orderIdEl.getAttribute('data-order-id') : 0;
+        var data = new URLSearchParams();
+        data.append('action', 'pv_save_order_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('order_id', orderId);
+        data.append('note', note);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var container = document.querySelector('.order-notes-section');
+                    if (container) {
+                        var div = document.createElement('div');
+                        div.className = 'order-note';
+                        div.setAttribute('data-note-id', res.data.id);
+                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div><button type="button" class="icon-btn note-delete-btn" title="Notiz löschen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>';
+                        div.querySelector('.note-text').textContent = note;
+                        div.querySelector('.note-date').textContent = res.data.date;
+                        container.prepend(div);
+                    }
+                    form.querySelector('textarea').value = '';
+                    form.classList.remove('visible');
+                } else {
+                    alert('Fehler beim Speichern');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.note-delete-btn')) {
+        e.preventDefault();
+        var btn = e.target.closest('.note-delete-btn');
+        var noteEl = btn.closest('.order-note');
+        if (!noteEl) return;
+        var noteId = noteEl.getAttribute('data-note-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_delete_order_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('note_id', noteId);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    noteEl.remove();
+                } else {
+                    alert('Fehler beim Löschen');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.customer-note-icon')) {
+        var form = document.getElementById('customer-note-form');
+        if (form) form.classList.add('visible');
+    }
+    if (e.target.classList.contains('customer-note-cancel')) {
+        var form = document.getElementById('customer-note-form');
+        if (form) form.classList.remove('visible');
+    }
+    if (e.target.classList.contains('customer-note-save')) {
+        var form = document.getElementById('customer-note-form');
+        var note = form.querySelector('textarea').value.trim();
+        if (!note) return;
+        var customerId = form.getAttribute('data-customer-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_save_customer_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('customer_id', customerId);
+        data.append('note', note);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var container = document.querySelector('.customer-notes-section');
+                    if (container) {
+                        var div = document.createElement('div');
+                        div.className = 'order-note';
+                        div.setAttribute('data-note-id', res.data.id);
+                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div><button type="button" class="icon-btn customer-note-delete-btn" title="Notiz löschen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>';
+                        div.querySelector('.note-text').textContent = note;
+                        div.querySelector('.note-date').textContent = res.data.date;
+                        container.prepend(div);
+                    }
+                    form.querySelector('textarea').value = '';
+                    form.classList.remove('visible');
+                } else {
+                    alert('Fehler beim Speichern');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.customer-note-delete-btn')) {
+        e.preventDefault();
+        var btn = e.target.closest('.customer-note-delete-btn');
+        var noteEl = btn.closest('.order-note');
+        if (!noteEl) return;
+        var noteId = noteEl.getAttribute('data-note-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_delete_customer_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('note_id', noteId);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    noteEl.remove();
+                } else {
+                    alert('Fehler beim Löschen');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.customer-log-load-more');
+    if (btn) {
+        e.preventDefault();
+        var offset = parseInt(btn.getAttribute('data-offset')) || 0;
+        var total = parseInt(btn.getAttribute('data-total')) || 0;
+        var orderIds = btn.getAttribute('data-order-ids').split(',');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_load_customer_logs');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('offset', offset);
+        orderIds.forEach(function(id){ data.append('order_ids[]', id); });
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var list = document.querySelector('.order-log-list');
+                    if (list && res.data.html) {
+                        var temp = document.createElement('div');
+                        temp.innerHTML = res.data.html;
+                        Array.from(temp.children).forEach(function(li){ list.appendChild(li); });
+                        offset += res.data.count;
+                        btn.setAttribute('data-offset', offset);
+                        if (offset >= total || res.data.count < 5) {
+                            btn.remove();
+                        }
+                    }
                 }
             });
     }

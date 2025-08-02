@@ -765,6 +765,24 @@ class Database {
             dbDelta($sql);
         }
 
+        // Create customer notes table if it doesn't exist
+        $table_cnotes = $wpdb->prefix . 'produkt_customer_notes';
+        $cnotes_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_cnotes'");
+        if (!$cnotes_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_cnotes (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                customer_id mediumint(9) NOT NULL,
+                message text NOT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY customer_id (customer_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create webhook logs table if it doesn't exist
         $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
         $webhook_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_webhooks'");
@@ -1982,6 +2000,12 @@ class Database {
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
     }
+
+    public function customer_notes_table_exists() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_customer_notes';
+        return (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
+    }
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *
@@ -1990,7 +2014,7 @@ class Database {
     public static function get_due_returns() {
         global $wpdb;
         $today = current_time('Y-m-d');
-        return $wpdb->get_results($wpdb->prepare(
+        $orders = $wpdb->get_results($wpdb->prepare(
             "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
                     COALESCE(c.name, o.produkt_name) AS category_name,
                     COALESCE(v.name, o.produkt_name) AS variant_name,
@@ -2004,6 +2028,30 @@ class Database {
              ORDER BY o.end_date",
             $today
         ));
+
+        foreach ($orders as $o) {
+            self::ensure_return_pending_log((int) $o->id);
+        }
+
+        return $orders;
+    }
+
+    /**
+     * Ensure that a pending return log exists for an order.
+     *
+     * @param int $order_id Order ID
+     */
+    public static function ensure_return_pending_log(int $order_id): void {
+        global $wpdb;
+        $exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d AND event = 'inventory_returned_not_accepted'",
+                $order_id
+            )
+        );
+        if (!$exists) {
+            produkt_add_order_log($order_id, 'inventory_returned_not_accepted');
+        }
     }
     /**
      * Mark a single order as returned and update inventory.
@@ -2048,7 +2096,7 @@ class Database {
             ['%d'],
             ['%d']
         );
-        produkt_add_order_log((int)$order_id, 'inventory_returned');
+        produkt_add_order_log((int)$order_id, 'inventory_returned_accepted');
         return true;
     }
 
@@ -2082,7 +2130,7 @@ class Database {
                 ['%d'],
                 ['%d']
             );
-            produkt_add_order_log((int)$o->id, 'inventory_returned');
+            produkt_add_order_log((int)$o->id, 'inventory_returned_accepted');
         }
     }
 }
