@@ -63,7 +63,7 @@ foreach ($orders as $o) {
             'id'      => (int)$o->id,
             'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
             'name'    => $o->customer_name,
-            'product' => $o->produkt_name,
+            'product' => $o->category_name ?: $o->produkt_name,
             'variant' => $o->variant_name,
             'extras'  => $o->extra_names,
             'action'  => 'Ausgeliehen'
@@ -76,7 +76,7 @@ foreach ($orders as $o) {
             'id'      => (int)$o->id,
             'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
             'name'    => $o->customer_name,
-            'product' => $o->produkt_name,
+            'product' => $o->category_name ?: $o->produkt_name,
             'variant' => $o->variant_name,
             'extras'  => $o->extra_names,
             'action'  => 'Rückgabe'
@@ -95,7 +95,7 @@ foreach ($orders as $o) {
                     <label class="filter-option"><input class="filter-checkbox filter-open" type="checkbox" name="show_open" value="1" <?php checked($show_open); ?>> Ausgeliehen</label>
                     <label class="filter-option"><input class="filter-checkbox filter-return" type="checkbox" name="show_return" value="1" <?php checked($show_return); ?>> Rückgabe fällig</label>
                     <button type="submit" class="icon-btn icon-btn-no-stroke" aria-label="Anwenden">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#1cdd4e" d="M20.285 6.709l-11.025 11.025-5.544-5.543 1.414-1.414 4.13 4.129 9.611-9.611z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Zm8.2,26.2c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6Zm0-70.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/></svg>
                     </button>
                 </form>
             </div>
@@ -170,12 +170,15 @@ foreach ($orders as $o) {
                 </div>
                 <?php endfor; ?>
             </div>
-            <div id="day-orders-card" class="h2-rental-card">
+            <div id="day-orders-card" class="dashboard-card">
                 <div class="card-header">
                     <h2>Bestellungen am <span id="day-orders-date"></span></h2>
                     <div class="day-actions">
-                        <button id="block-day" class="button button-primary" type="button">Tag sperren</button>
-                        <button id="unblock-day" class="button" type="button">Tag freigeben</button>
+                        <button id="block-day" class="block-day-btn" type="button">
+                            <span>Tag sperren</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                        </button>
+                        <button id="unblock-day" class="block-day-btn" type="button">Tag freigeben</button>
                     </div>
                 </div>
                 <table class="activity-table">
@@ -194,6 +197,17 @@ foreach ($orders as $o) {
                 </table>
             </div>
         </div>
+
+        <div id="order-details-sidebar" class="order-details-sidebar">
+            <div class="order-details-header">
+                <h3>Bestelldetails</h3>
+                <button class="close-sidebar">&times;</button>
+            </div>
+            <div class="order-details-content">
+                <p>Lade Details…</p>
+            </div>
+        </div>
+        <div id="order-details-overlay" class="order-details-overlay"></div>
     </div>
 </div>
 <script>

@@ -2765,6 +2765,9 @@ body.block-modal-open {
 #produkt-admin-calendar .mini-day.today .num{background:#000;color:#fff;}
 #produkt-admin-calendar .mini-day .dots{margin-top:2px;height:6px;display:flex;justify-content:center;gap:3px;}
 #day-orders-card{display:none;margin-top:20px;}
+#day-orders-card .day-actions{display:flex;align-items:center;gap:10px;}
+#day-orders-card .block-day-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;}
+#day-orders-card .block-day-btn svg{width:24px;height:24px;fill:#1e1e1e;}
 #produkt-admin-calendar .mini-day .dot{width:6px;height:6px;border-radius:50%;}
 #produkt-admin-calendar .mini-day .dot.open{background:#1cdd4e;}
 #produkt-admin-calendar .mini-day .dot.return{background:#ff6617;}
