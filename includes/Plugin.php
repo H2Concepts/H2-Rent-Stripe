@@ -124,7 +124,7 @@ class Plugin {
 
     public function check_for_updates() {
         $current_version = get_option('produkt_version', '1.0.0');
-        $needs_schema = !$this->db->categories_table_has_parent_column();
+        $needs_schema = !$this->db->categories_table_has_parent_column() || !$this->db->customer_notes_table_exists();
         if (version_compare($current_version, PRODUKT_VERSION, '<') || $needs_schema) {
             $this->db->update_database();
             update_option('produkt_version', PRODUKT_VERSION);
