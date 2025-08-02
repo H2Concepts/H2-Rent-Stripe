@@ -387,3 +387,35 @@ document.addEventListener('click', function(e) {
             });
     }
 });
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('customer-log-load-more')) {
+        e.preventDefault();
+        var btn = e.target;
+        var offset = parseInt(btn.getAttribute('data-offset')) || 0;
+        var total = parseInt(btn.getAttribute('data-total')) || 0;
+        var orderIds = btn.getAttribute('data-order-ids').split(',');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_load_customer_logs');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('offset', offset);
+        orderIds.forEach(function(id){ data.append('order_ids[]', id); });
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var list = document.querySelector('.order-log-list');
+                    if (list && res.data.html) {
+                        var temp = document.createElement('div');
+                        temp.innerHTML = res.data.html;
+                        Array.from(temp.children).forEach(function(li){ list.appendChild(li); });
+                        offset += res.data.count;
+                        btn.setAttribute('data-offset', offset);
+                        if (offset >= total || res.data.count < 5) {
+                            btn.remove();
+                        }
+                    }
+                }
+            });
+    }
+});

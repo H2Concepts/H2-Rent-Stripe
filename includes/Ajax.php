@@ -1939,3 +1939,32 @@ function pv_delete_customer_note() {
         wp_send_json_error('db');
     }
 }
+
+add_action('wp_ajax_pv_load_customer_logs', __NAMESPACE__ . '\\pv_load_customer_logs');
+function pv_load_customer_logs() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_ids = isset($_POST['order_ids']) ? array_map('intval', (array)$_POST['order_ids']) : [];
+    $offset = intval($_POST['offset'] ?? 0);
+    if (!$order_ids) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
+    $params = $order_ids;
+    $params[] = $offset;
+    $sql = "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5 OFFSET %d";
+    $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
+
+    ob_start();
+    foreach ($logs as $log) {
+        echo '<li>' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' – ' . $log->event . ($log->message ? ': ' . $log->message : '')) . '</li>';
+    }
+    $html = ob_get_clean();
+
+    wp_send_json_success(['html' => $html, 'count' => count($logs)]);
+}

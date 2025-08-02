@@ -206,10 +206,13 @@ if (!$customer_id) {
     $order_ids = wp_list_pluck($orders, 'id');
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $sql = "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC";
+        $sql = "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
         $customer_logs = $wpdb->get_results($wpdb->prepare($sql, $order_ids));
+        $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
+        $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
     } else {
         $customer_logs = [];
+        $total_logs = 0;
     }
 
     $customer_notes = $wpdb->get_results($wpdb->prepare(
@@ -254,8 +257,8 @@ if (!$customer_id) {
         </div>
     </div>
 
-    <div class="dashboard-grid">
-        <div class="dashboard-left">
+    <div class="customer-detail-grid">
+        <div class="customer-left">
             <div class="dashboard-card customer-card">
                 <div class="customer-header">
                     <div class="customer-avatar"><?php echo esc_html($initials); ?></div>
@@ -269,7 +272,7 @@ if (!$customer_id) {
                 <p class="customer-address">Rechnungsadresse: <?php echo esc_html($addr ?: '–'); ?></p>
             </div>
 
-            <div class="dashboard-row">
+            <div class="customer-row">
                 <div class="dashboard-card">
                     <h2>Technische Daten</h2>
                     <p><strong>User Agent:</strong> <?php echo esc_html($last_order->user_agent ?? '–'); ?></p>
@@ -283,6 +286,9 @@ if (!$customer_id) {
                                 <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' – ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
                             <?php endforeach; ?>
                         </ul>
+                        <?php if ($total_logs > 5) : ?>
+                            <button type="button" class="button customer-log-load-more" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>">Mehr sehen</button>
+                        <?php endif; ?>
                     <?php else : ?>
                         <p>Keine Einträge</p>
                     <?php endif; ?>
@@ -315,8 +321,8 @@ if (!$customer_id) {
             </div>
         </div>
 
-        <div class="dashboard-right">
-            <div class="h2-rental-card">
+        <div class="customer-right">
+            <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
                         <h2>Bestellübersicht</h2>
