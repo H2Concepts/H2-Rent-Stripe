@@ -182,7 +182,10 @@ if (!$customer_id) {
         $activity_score = 'Hoch';
     }
 
-    $orders = $wpdb->get_results(
+    $order_search   = isset($_GET['order_s']) ? sanitize_text_field($_GET['order_s']) : '';
+    $invoice_search = isset($_GET['invoice_s']) ? sanitize_text_field($_GET['invoice_s']) : '';
+
+    $all_orders = $wpdb->get_results(
         $wpdb->prepare(
             "SELECT o.*, c.name AS category_name,
                     COALESCE(v.name, o.produkt_name) AS variant_name,
@@ -202,8 +205,26 @@ if (!$customer_id) {
         )
     );
 
-    $last_order = $orders[0] ?? null;
-    $order_ids = wp_list_pluck($orders, 'id');
+    $orders = $all_orders;
+    if ($order_search) {
+        $os = ltrim($order_search, '#');
+        $orders = array_values(array_filter($all_orders, function ($o) use ($os) {
+            return ($o->order_number === $os || (string) $o->id === $os);
+        }));
+    }
+
+    $invoices = array_values(array_filter($all_orders, function ($o) {
+        return !empty($o->invoice_url);
+    }));
+    if ($invoice_search) {
+        $is = ltrim($invoice_search, '#');
+        $invoices = array_values(array_filter($invoices, function ($o) use ($is) {
+            return ($o->order_number === $is || (string) $o->id === $is);
+        }));
+    }
+
+    $last_order = $all_orders[0] ?? null;
+    $order_ids = wp_list_pluck($all_orders, 'id');
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
         $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
@@ -302,6 +323,50 @@ if (!$customer_id) {
             <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
+                        <h2>Rechnungen</h2>
+                        <p class="card-subline">Alle Rechnungen im Überblick</p>
+                    </div>
+                    <form method="get" class="produkt-filter-form product-search-bar">
+                        <input type="hidden" name="page" value="produkt-customers">
+                        <input type="hidden" name="customer" value="<?php echo $user->ID; ?>">
+                        <div class="search-input-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon"><path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg>
+                            <input type="text" name="invoice_s" placeholder="Nach ID suchen" value="<?php echo esc_attr($invoice_search); ?>">
+                        </div>
+                        <button type="submit" class="icon-btn filter-submit-btn" aria-label="Filtern">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1"><path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/></svg>
+                        </button>
+                    </form>
+                </div>
+                <?php if ($invoices) : ?>
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>PDF</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($invoices as $inv) : ?>
+                            <tr>
+                                <td>#<?php echo esc_html($inv->order_number ?: $inv->id); ?></td>
+                                <td class="details-cell">
+                                    <a href="<?php echo esc_url($inv->invoice_url); ?>" class="icon-btn icon-btn-no-stroke" target="_blank" download aria-label="Download">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18v10l4-4 1.41 1.41L12 16.83 6.59 11.41 8 10l4 4V2h-2z"/></svg>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php else : ?>
+                    <p>Keine Rechnungen gefunden.</p>
+                <?php endif; ?>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <div>
                         <h2>Notizen</h2>
                         <p class="card-subline">Anmerkungen zum Kunden</p>
                     </div>
@@ -335,6 +400,17 @@ if (!$customer_id) {
                         <h2>Bestellübersicht</h2>
                         <p class="card-subline">Letzte Bestellungen</p>
                     </div>
+                    <form method="get" class="produkt-filter-form product-search-bar">
+                        <input type="hidden" name="page" value="produkt-customers">
+                        <input type="hidden" name="customer" value="<?php echo $user->ID; ?>">
+                        <div class="search-input-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon"><path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg>
+                            <input type="text" name="order_s" placeholder="Nach ID suchen" value="<?php echo esc_attr($order_search); ?>">
+                        </div>
+                        <button type="submit" class="icon-btn filter-submit-btn" aria-label="Filtern">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1"><path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/></svg>
+                        </button>
+                    </form>
                 </div>
                 <?php if ($orders) : ?>
                 <table class="activity-table">
