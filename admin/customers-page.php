@@ -353,7 +353,14 @@ if (!$customer_id) {
                                 <td><?php echo esc_html($o->extra_names ?: '–'); ?></td>
                                 <td><?php echo esc_html(date_i18n('d.m.Y', strtotime($o->start_date)) . ' - ' . date_i18n('d.m.Y', strtotime($o->end_date))); ?></td>
                                 <td><?php echo number_format($o->final_price, 2, ',', '.'); ?>€</td>
-                                <td><?php echo esc_html($o->shipping_name ?: '–'); ?><?php if ($o->shipping_cost > 0) : ?> (<?php echo number_format($o->shipping_cost, 2, ',', '.'); ?>€)<?php endif; ?></td>
+                                <td class="shipping-cell">
+                                    <span><?php echo esc_html($o->shipping_name ?: '–'); ?><?php if ($o->shipping_cost > 0) : ?> (<?php echo number_format($o->shipping_cost, 2, ',', '.'); ?>€)<?php endif; ?></span>
+                                    <button type="button" class="icon-btn icon-btn-no-stroke view-details-link" data-order-id="<?php echo esc_attr($o->id); ?>" aria-label="Details">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">
+                                            <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
+                                        </svg>
+                                    </button>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -365,4 +372,16 @@ if (!$customer_id) {
         </div>
     </div>
 <?php endif; ?>
+
+<!-- Sidebar-Overlay für Bestelldetails -->
+<div id="order-details-sidebar" class="order-details-sidebar">
+    <div class="order-details-header">
+        <h3>Bestelldetails</h3>
+        <button class="close-sidebar" aria-label="Schließen">&times;</button>
+    </div>
+    <div class="order-details-content">
+        <p>Lade Details…</p>
+    </div>
+</div>
+<div id="order-details-overlay" class="order-details-overlay"></div>
 </div>

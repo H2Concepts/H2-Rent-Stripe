@@ -2999,6 +2999,12 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 }
 .activity-table tr.pending-return { background-color: #efffec; }
 
+.activity-table td.shipping-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .status-offen { background: #f39c12; }
 .status-abgeschlossen {
     background: #2ecc71;
