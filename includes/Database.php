@@ -765,6 +765,24 @@ class Database {
             dbDelta($sql);
         }
 
+        // Create customer notes table if it doesn't exist
+        $table_cnotes = $wpdb->prefix . 'produkt_customer_notes';
+        $cnotes_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_cnotes'");
+        if (!$cnotes_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_cnotes (
+                id mediumint(9) NOT NULL AUTO_INCREMENT,
+                customer_id mediumint(9) NOT NULL,
+                message text NOT NULL,
+                created_at datetime DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY customer_id (customer_id)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Create webhook logs table if it doesn't exist
         $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
         $webhook_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_webhooks'");

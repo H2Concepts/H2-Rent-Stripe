@@ -155,6 +155,33 @@ if (!$customer_id) {
             }
         }
     }
+
+    $total_spent = (float) $wpdb->get_var($wpdb->prepare(
+        "SELECT SUM(final_price) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'bezahlt'",
+        $user->user_email
+    ));
+    $completed_orders = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'bezahlt'",
+        $user->user_email
+    ));
+    $canceled_orders = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'gekündigt'",
+        $user->user_email
+    ));
+    $year_start = date('Y-01-01 00:00:00');
+    $year_end   = date('Y-12-31 23:59:59');
+    $year_orders = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'bezahlt' AND created_at BETWEEN %s AND %s",
+        $user->user_email, $year_start, $year_end
+    ));
+    if ($year_orders <= 5) {
+        $activity_score = 'Gering';
+    } elseif ($year_orders <= 12) {
+        $activity_score = 'Mittel';
+    } else {
+        $activity_score = 'Hoch';
+    }
+
     $orders = $wpdb->get_results(
         $wpdb->prepare(
             "SELECT o.*, c.name AS category_name,
@@ -174,80 +201,160 @@ if (!$customer_id) {
             $user->user_email
         )
     );
-    foreach ($orders as $o) {
-        $o->rental_days = pv_get_order_rental_days($o);
+
+    $last_order = $orders[0] ?? null;
+    $order_ids = wp_list_pluck($orders, 'id');
+    if ($order_ids) {
+        $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
+        $sql = "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC";
+        $customer_logs = $wpdb->get_results($wpdb->prepare($sql, $order_ids));
+    } else {
+        $customer_logs = [];
     }
+
+    $customer_notes = $wpdb->get_results($wpdb->prepare(
+        "SELECT id, message, created_at FROM {$wpdb->prefix}produkt_customer_notes WHERE customer_id = %d ORDER BY created_at DESC",
+        $user->ID
+    ));
+
+    $addr_row = $wpdb->get_row(
+        $wpdb->prepare(
+            "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
+            $user->user_email
+        )
+    );
+    $addr = '';
+    if ($addr_row) {
+        $addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
+        if ($addr_row->country) {
+            $addr .= ', ' . $addr_row->country;
+        }
+    }
+    $initials = strtoupper(mb_substr($first,0,1) . mb_substr($last,0,1));
 ?>
-    <div class="produkt-admin-card">
-      <div class="produkt-admin-header-compact">
-        <div class="produkt-admin-logo-compact">
-          <span class="dashicons dashicons-id"></span>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline">Kundendetails</p>
+
+    <div class="product-info-grid cols-4">
+        <div class="product-info-box bg-pastell-gelb">
+            <div class="label">Ausgaben</div>
+            <div class="value"><?php echo number_format($total_spent, 2, ',', '.'); ?>€</div>
         </div>
-        <div class="produkt-admin-title-compact">
-          <h1>Kundendetails: <?php echo esc_html($first . ' ' . $last); ?></h1>
-          <p><?php echo esc_html($user->user_email); ?></p>
+        <div class="product-info-box bg-pastell-gruen">
+            <div class="label">Abgeschlossen</div>
+            <div class="value"><?php echo esc_html($completed_orders); ?></div>
         </div>
-      </div>
-
-      <p><a href="<?php echo admin_url('admin.php?page=produkt-customers'); ?>" class="button">&larr; Zur Kundenübersicht</a></p>
-
-      <div class="produkt-customer-grid">
-        <div class="produkt-customer-details">
-          <h2>Kundendaten</h2>
-          <p><strong>Vorname:</strong> <?php echo esc_html($first); ?></p>
-          <p><strong>Nachname:</strong> <?php echo esc_html($last); ?></p>
-          <p><strong>Telefon:</strong> <?php echo esc_html($phone ?: '–'); ?></p>
-          <p><strong>E-Mail:</strong> <?php echo esc_html($user->user_email); ?></p>
-
-          <?php
-            $addr_row = $wpdb->get_row(
-                $wpdb->prepare(
-                    "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
-                    $user->user_email
-                )
-            );
-            $addr = '';
-            if ($addr_row) {
-                $addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
-                if ($addr_row->country) {
-                    $addr .= ', ' . $addr_row->country;
-                }
-            }
-          ?>
-          <h3>Versandadresse</h3>
-          <p><?php echo esc_html($addr ?: '–'); ?></p>
-
-          <h3>Rechnungsadresse</h3>
-          <p><?php echo esc_html($addr ?: '–'); ?></p>
-
-          <h3>Statistik</h3>
-          <p><strong>Bestellungen:</strong> <?php echo count($orders); ?></p>
+        <div class="product-info-box bg-pastell-mint">
+            <div class="label">Abgebrochen</div>
+            <div class="value"><?php echo esc_html($canceled_orders); ?></div>
         </div>
+        <div class="product-info-box bg-pastell-orange">
+            <div class="label">Activity Score</div>
+            <div class="value"><?php echo esc_html($activity_score); ?></div>
+        </div>
+    </div>
 
-        <div class="produkt-customer-orders orders-accordion">
-          <h2>Bestellübersicht</h2>
-          <?php if (empty($orders)) : ?>
-            <p>Keine Bestellungen gefunden.</p>
-          <?php else : ?>
-            <?php foreach ($orders as $idx => $o): ?>
-              <?php
-                $variant_id = $o->variant_id ?? 0;
-                $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $o->category_id ?? 0);
-                $order      = $o;
-              ?>
-              <div class="produkt-accordion-item <?php echo $idx === 0 ? 'active' : ''; ?>">
-                <button type="button" class="produkt-accordion-header">
-                  Bestellung #<?php echo esc_html($o->order_number ?: $o->id); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($o->created_at))); ?>
-                </button>
-                <div class="produkt-accordion-content">
-                  <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+    <div class="dashboard-grid">
+        <div class="dashboard-left">
+            <div class="dashboard-card customer-card">
+                <div class="customer-header">
+                    <div class="customer-avatar"><?php echo esc_html($initials); ?></div>
+                    <div class="customer-ident">
+                        <h3 class="customer-name"><?php echo esc_html(trim($first . ' ' . $last)); ?></h3>
+                        <p class="customer-email"><?php echo esc_html($user->user_email); ?></p>
+                    </div>
                 </div>
-              </div>
-            <?php endforeach; ?>
-          <?php endif; ?>
+                <p class="customer-phone">Telefon: <?php echo esc_html($phone ?: '–'); ?></p>
+                <p class="customer-address">Versandadresse: <?php echo esc_html($addr ?: '–'); ?></p>
+                <p class="customer-address">Rechnungsadresse: <?php echo esc_html($addr ?: '–'); ?></p>
+            </div>
+
+            <div class="dashboard-row">
+                <div class="dashboard-card">
+                    <h2>Technische Daten</h2>
+                    <p><strong>User Agent:</strong> <?php echo esc_html($last_order->user_agent ?? '–'); ?></p>
+                    <p><strong>IP-Adresse:</strong> <?php echo esc_html($last_order->user_ip ?? '–'); ?></p>
+                </div>
+                <div class="dashboard-card">
+                    <h2>Verlauf</h2>
+                    <?php if ($customer_logs) : ?>
+                        <ul class="order-log-list">
+                            <?php foreach ($customer_logs as $log) : ?>
+                                <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' – ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else : ?>
+                        <p>Keine Einträge</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <h2>Notizen</h2>
+                    <button type="button" class="icon-btn icon-btn-no-stroke customer-note-icon" title="Notiz hinzufügen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-.6 0-1 .4-1 1v5H6c-.6 0-1 .4-1 1s.4 1 1 1h5v5c0 .6.4 1 1 1s1-.4 1-1v-5h5c.6 0 1-.4 1-1s-.4-1-1-1h-5V6c0-.6-.4-1-1-1z"/></svg>
+                    </button>
+                </div>
+                <div class="customer-notes-section">
+                    <?php foreach ($customer_notes as $note) : ?>
+                        <div class="order-note" data-note-id="<?php echo intval($note->id); ?>">
+                            <div class="note-text"><?php echo esc_html($note->message); ?></div>
+                            <div class="note-date"><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($note->created_at))); ?></div>
+                            <button type="button" class="icon-btn customer-note-delete-btn" title="Notiz löschen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div id="customer-note-form" class="order-note-form" data-customer-id="<?php echo $user->ID; ?>">
+                    <textarea placeholder="Notiz"></textarea>
+                    <div class="note-actions">
+                        <button type="button" class="button button-primary customer-note-save">Speichern</button>
+                        <button type="button" class="button customer-note-cancel">Abbrechen</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <div class="dashboard-right">
+            <div class="h2-rental-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Bestellübersicht</h2>
+                        <p class="card-subline">Letzte Bestellungen</p>
+                    </div>
+                </div>
+                <?php if ($orders) : ?>
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Produkte</th>
+                            <th>Ausführungen</th>
+                            <th>Extras</th>
+                            <th>Mietzeitraum</th>
+                            <th>Gesamtpreis</th>
+                            <th>Versand</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($orders as $o) : ?>
+                            <tr>
+                                <td>#<?php echo esc_html($o->order_number ?: $o->id); ?></td>
+                                <td><?php echo esc_html($o->category_name); ?></td>
+                                <td><?php echo esc_html($o->variant_name ?: '–'); ?></td>
+                                <td><?php echo esc_html($o->extra_names ?: '–'); ?></td>
+                                <td><?php echo esc_html(date_i18n('d.m.Y', strtotime($o->start_date)) . ' - ' . date_i18n('d.m.Y', strtotime($o->end_date))); ?></td>
+                                <td><?php echo number_format($o->final_price, 2, ',', '.'); ?>€</td>
+                                <td><?php echo esc_html($o->shipping_name ?: '–'); ?><?php if ($o->shipping_cost > 0) : ?> (<?php echo number_format($o->shipping_cost, 2, ',', '.'); ?>€)<?php endif; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <?php else : ?>
+                    <p>Keine Bestellungen gefunden.</p>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 <?php endif; ?>
 </div>
-

@@ -1890,3 +1890,52 @@ function pv_delete_order_note() {
         wp_send_json_error('db');
     }
 }
+
+add_action('wp_ajax_pv_save_customer_note', __NAMESPACE__ . '\\pv_save_customer_note');
+function pv_save_customer_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $customer_id = intval($_POST['customer_id'] ?? 0);
+    $note = sanitize_textarea_field($_POST['note'] ?? '');
+    if (!$customer_id || $note === '') {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_customer_notes';
+    $wpdb->insert($table, [
+        'customer_id' => $customer_id,
+        'message'     => $note,
+        'created_at'  => current_time('mysql'),
+    ], ['%d','%s','%s']);
+
+    $note_id = $wpdb->insert_id;
+    $date = date_i18n('d.m.Y H:i', current_time('timestamp'));
+    wp_send_json_success(['date' => $date, 'id' => $note_id]);
+}
+
+add_action('wp_ajax_pv_delete_customer_note', __NAMESPACE__ . '\\pv_delete_customer_note');
+function pv_delete_customer_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $note_id = intval($_POST['note_id'] ?? 0);
+    if (!$note_id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_customer_notes';
+    $deleted = $wpdb->delete($table, ['id' => $note_id], ['%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('db');
+    }
+}
