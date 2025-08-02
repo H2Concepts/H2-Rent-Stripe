@@ -2000,6 +2000,12 @@ class Database {
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
     }
+
+    public function customer_notes_table_exists() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_customer_notes';
+        return (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
+    }
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *

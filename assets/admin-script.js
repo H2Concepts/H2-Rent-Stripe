@@ -389,9 +389,9 @@ document.addEventListener('click', function(e) {
 });
 
 document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('customer-log-load-more')) {
+    var btn = e.target.closest('.customer-log-load-more');
+    if (btn) {
         e.preventDefault();
-        var btn = e.target;
         var offset = parseInt(btn.getAttribute('data-offset')) || 0;
         var total = parseInt(btn.getAttribute('data-total')) || 0;
         var orderIds = btn.getAttribute('data-order-ids').split(',');

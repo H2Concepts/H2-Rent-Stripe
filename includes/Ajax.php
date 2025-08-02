@@ -1906,11 +1906,15 @@ function pv_save_customer_note() {
 
     global $wpdb;
     $table = $wpdb->prefix . 'produkt_customer_notes';
-    $wpdb->insert($table, [
+    $inserted = $wpdb->insert($table, [
         'customer_id' => $customer_id,
         'message'     => $note,
         'created_at'  => current_time('mysql'),
     ], ['%d','%s','%s']);
+
+    if (!$inserted) {
+        wp_send_json_error('db');
+    }
 
     $note_id = $wpdb->insert_id;
     $date = date_i18n('d.m.Y H:i', current_time('timestamp'));

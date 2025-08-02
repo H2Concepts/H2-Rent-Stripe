@@ -157,11 +157,11 @@ if (!$customer_id) {
     }
 
     $total_spent = (float) $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(final_price) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'bezahlt'",
+        "SELECT SUM(final_price) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen'",
         $user->user_email
     ));
     $completed_orders = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'bezahlt'",
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen'",
         $user->user_email
     ));
     $canceled_orders = (int) $wpdb->get_var($wpdb->prepare(
@@ -171,7 +171,7 @@ if (!$customer_id) {
     $year_start = date('Y-01-01 00:00:00');
     $year_end   = date('Y-12-31 23:59:59');
     $year_orders = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'bezahlt' AND created_at BETWEEN %s AND %s",
+        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen' AND created_at BETWEEN %s AND %s",
         $user->user_email, $year_start, $year_end
     ));
     if ($year_orders <= 5) {
@@ -273,7 +273,7 @@ if (!$customer_id) {
             </div>
 
             <div class="customer-row">
-                <div class="dashboard-card">
+                <div class="dashboard-card customer-tech-card">
                     <h2>Technische Daten</h2>
                     <p><strong>User Agent:</strong> <?php echo esc_html($last_order->user_agent ?? '–'); ?></p>
                     <p><strong>IP-Adresse:</strong> <?php echo esc_html($last_order->user_ip ?? '–'); ?></p>
@@ -287,7 +287,9 @@ if (!$customer_id) {
                             <?php endforeach; ?>
                         </ul>
                         <?php if ($total_logs > 5) : ?>
-                            <button type="button" class="button customer-log-load-more" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>">Mehr sehen</button>
+                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-.6 0-1 .4-1 1v5H6c-.6 0-1 .4-1 1s.4 1 1 1h5v5c0 .6.4 1 1 1s1-.4 1-1v-5h5c.6 0 1-.4 1-1s-.4-1-1-1h-5V6c0-.6-.4-1-1-1z"/></svg>
+                            </button>
                         <?php endif; ?>
                     <?php else : ?>
                         <p>Keine Einträge</p>
