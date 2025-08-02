@@ -2014,7 +2014,7 @@ class Database {
     public static function get_due_returns() {
         global $wpdb;
         $today = current_time('Y-m-d');
-        return $wpdb->get_results($wpdb->prepare(
+        $orders = $wpdb->get_results($wpdb->prepare(
             "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
                     COALESCE(c.name, o.produkt_name) AS category_name,
                     COALESCE(v.name, o.produkt_name) AS variant_name,
@@ -2028,6 +2028,30 @@ class Database {
              ORDER BY o.end_date",
             $today
         ));
+
+        foreach ($orders as $o) {
+            self::ensure_return_pending_log((int) $o->id);
+        }
+
+        return $orders;
+    }
+
+    /**
+     * Ensure that a pending return log exists for an order.
+     *
+     * @param int $order_id Order ID
+     */
+    public static function ensure_return_pending_log(int $order_id): void {
+        global $wpdb;
+        $exists = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d AND event = 'inventory_returned_not_accepted'",
+                $order_id
+            )
+        );
+        if (!$exists) {
+            produkt_add_order_log($order_id, 'inventory_returned_not_accepted');
+        }
     }
     /**
      * Mark a single order as returned and update inventory.
@@ -2072,7 +2096,7 @@ class Database {
             ['%d'],
             ['%d']
         );
-        produkt_add_order_log((int)$order_id, 'inventory_returned');
+        produkt_add_order_log((int)$order_id, 'inventory_returned_accepted');
         return true;
     }
 
@@ -2106,7 +2130,7 @@ class Database {
                 ['%d'],
                 ['%d']
             );
-            produkt_add_order_log((int)$o->id, 'inventory_returned');
+            produkt_add_order_log((int)$o->id, 'inventory_returned_accepted');
         }
     }
 }

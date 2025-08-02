@@ -206,7 +206,7 @@ if (!$customer_id) {
     $order_ids = wp_list_pluck($orders, 'id');
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $sql = "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
+        $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
         $customer_logs = $wpdb->get_results($wpdb->prepare($sql, $order_ids));
         $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
         $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
@@ -285,7 +285,7 @@ if (!$customer_id) {
                     <?php if ($customer_logs) : ?>
                         <ul class="order-log-list">
                             <?php foreach ($customer_logs as $log) : ?>
-                                <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' – ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
+                                <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
                             <?php endforeach; ?>
                         </ul>
                         <?php if ($total_logs > 5) : ?>

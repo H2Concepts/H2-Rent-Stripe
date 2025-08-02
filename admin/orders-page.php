@@ -124,6 +124,9 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                 <tbody>
                     <?php foreach ($orders as $order):
                         $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
+                        if ($due) {
+                            \ProduktVerleih\Database::ensure_return_pending_log((int) $order->id);
+                        }
                     ?>
                     <tr<?php echo $due ? ' class="pending-return"' : ''; ?>>
                         <td><input type="checkbox" class="order-checkbox" name="delete_orders[]" value="<?php echo $order->id; ?>"></td>

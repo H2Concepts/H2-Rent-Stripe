@@ -1961,12 +1961,12 @@ function pv_load_customer_logs() {
     $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
     $params = $order_ids;
     $params[] = $offset;
-    $sql = "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5 OFFSET %d";
+    $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5 OFFSET %d";
     $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
 
     ob_start();
     foreach ($logs as $log) {
-        echo '<li>' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' – ' . $log->event . ($log->message ? ': ' . $log->message : '')) . '</li>';
+        echo '<li>' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')) . '</li>';
     }
     $html = ob_get_clean();
 

@@ -167,7 +167,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <?php if (!empty($order_logs)) : ?>
                     <ul class="order-log-list">
                         <?php foreach ($order_logs as $log) : ?>
-                            <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at))); ?> – <?php echo esc_html($log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
+                            <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
                         <?php endforeach; ?>
                     </ul>
                 <?php else : ?>

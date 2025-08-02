@@ -994,7 +994,7 @@ class Admin {
         foreach ($orders as $o) {
             $order_logs[$o->id] = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
+                    "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
                     $o->id
                 )
             );
