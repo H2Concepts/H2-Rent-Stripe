@@ -2749,7 +2749,7 @@ body.block-modal-open {
 /* Admin Calendar */
 #produkt-admin-calendar{display:flex;background:#fff;}
 #produkt-admin-calendar h2{font-size:1.5rem;margin:0 0 0.5rem;}
-#produkt-admin-calendar .calendar-sidebar{width:300px;padding:20px;border-right:1px solid #ccc;display:flex;flex-direction:column;height:100vh;}
+#produkt-admin-calendar .calendar-sidebar{width:300px;padding:20px;border-right:1px solid #f0f0f0;display:flex;flex-direction:column;height:100vh;}
 #produkt-admin-calendar .calendar-sidebar .mini-calendar-block{margin-top:auto;}
 #produkt-admin-calendar .calendar-main{flex:1;padding:20px 20px 20px 0;}
 #produkt-admin-calendar .calendar-filters label{display:flex;align-items:center;margin-bottom:0.5rem;gap:8px;}
@@ -2764,12 +2764,12 @@ body.block-modal-open {
 #produkt-admin-calendar .mini-day.today .num{background:#000;color:#fff;}
 #produkt-admin-calendar .mini-day .dots{margin-top:2px;height:6px;display:flex;justify-content:center;gap:3px;}
 #produkt-admin-calendar .mini-day .dot{width:6px;height:6px;border-radius:50%;}
-#produkt-admin-calendar .mini-day .dot.open{background:#28a745;}
-#produkt-admin-calendar .mini-day .dot.return{background:#dc3545;}
+#produkt-admin-calendar .mini-day .dot.open{background:#1cdd4e;}
+#produkt-admin-calendar .mini-day .dot.return{background:#ff6617;}
 #produkt-admin-calendar .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;margin-left:20px;}
 #produkt-admin-calendar .month-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#f0f0f0;text-decoration:none;color:#000;}
-#produkt-admin-calendar .calendar-big-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #ccc;}
-#produkt-admin-calendar .day-cell{border-right:1px solid #ccc;border-bottom:1px solid #ccc;position:relative;background:#fff;min-height:200px;cursor:pointer;}
+#produkt-admin-calendar .calendar-big-grid{display:grid;grid-template-columns:repeat(7,1fr);border-top:1px solid #f0f0f0;}
+#produkt-admin-calendar .day-cell{border-right:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;position:relative;background:#fff;min-height:200px;cursor:pointer;}
 #produkt-admin-calendar .day-number{position:absolute;top:8px;left:8px;font-weight:600;}
 #produkt-admin-calendar .day-number.today{background:#000;color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
 #produkt-admin-calendar .weekday{position:absolute;top:8px;right:8px;color:#bbb;font-size:12px;}
@@ -2777,7 +2777,9 @@ body.block-modal-open {
 #produkt-admin-calendar .event-bar.return{background:#f6e9e4;bottom:8px;}
 #produkt-admin-calendar .event-bar.return .count{background:#ff6617;padding:0px 7px;border-radius:2px;color:#FFFFFF;}
 #produkt-admin-calendar .event-bar.open{background:#e4f2eb;bottom:36px;}
-#produkt-admin-calendar .event-bar.open .count{background:#e4f2eb;padding:0 7px;border-radius:2px;color:#FFFFFF;}
+#produkt-admin-calendar .event-bar.open .count{background:#1cdd4e;padding:0 7px;border-radius:2px;color:#FFFFFF;}
+#produkt-admin-calendar .event-bar .label{display:flex;align-items:center;gap:4px;color:#1b171a;}
+#produkt-admin-calendar .event-bar .label svg{width:12px;height:12px;}
 #produkt-admin-calendar .day-cell.blocked{background:#ffe5e5;}
 body.day-modal-open{overflow:hidden;}
 #day-modal .day-modal-actions{margin-top:20px;display:flex;gap:10px;}

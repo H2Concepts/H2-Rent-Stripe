@@ -138,10 +138,22 @@ foreach ($orders as $o) {
                     <div class="day-number<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>"><?php echo $d; ?></div>
                     <div class="weekday"><?php echo esc_html($weekday); ?></div>
                     <?php if ($returnCount): ?>
-                        <div class="event-bar return"><span class="icon">&#10005;</span><span class="count"><?php echo $returnCount; ?></span></div>
+                        <div class="event-bar return">
+                            <span class="label">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ff6617" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                Rückgabe
+                            </span>
+                            <span class="count"><?php echo $returnCount; ?></span>
+                        </div>
                     <?php endif; ?>
                     <?php if ($openCount): ?>
-                        <div class="event-bar open"><span class="icon">&#10003;</span><span class="count"><?php echo $openCount; ?></span></div>
+                        <div class="event-bar open">
+                            <span class="label">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1cdd4e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                Ausgeliehen
+                            </span>
+                            <span class="count"><?php echo $openCount; ?></span>
+                        </div>
                     <?php endif; ?>
                 </div>
                 <?php endfor; ?>
