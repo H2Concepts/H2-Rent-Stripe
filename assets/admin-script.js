@@ -192,6 +192,36 @@ jQuery(document).ready(function($) {
             openCatModal();
         }
     }
+
+    var blockModal = $('#block-modal');
+    if (blockModal.length) {
+        function openBlockModal() {
+            blockModal.show();
+            $('body').addClass('block-modal-open');
+        }
+        function closeBlockModal() {
+            blockModal.hide();
+            $('body').removeClass('block-modal-open');
+        }
+        $('#add-block-btn').on('click', function(e){
+            e.preventDefault();
+            blockModal.find('input[name="id"]').val('');
+            blockModal.find('input[type="text"], input[type="number"], input[type="url"], textarea').val('');
+            blockModal.find('input[type="color"]').val('#ffffff');
+            blockModal.find('select[name="style"]').val('wide');
+            blockModal.find('select[name="category_id"]').val('0');
+            openBlockModal();
+        });
+        blockModal.on('click', function(e){
+            if (e.target === this) {
+                closeBlockModal();
+            }
+        });
+        blockModal.find('.modal-close').on('click', closeBlockModal);
+        if (blockModal.data('open') == 1) {
+            openBlockModal();
+        }
+    }
 });
 
 document.addEventListener('DOMContentLoaded', produktInitAccordions);

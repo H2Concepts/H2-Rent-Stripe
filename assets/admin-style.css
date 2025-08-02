@@ -1033,6 +1033,10 @@ body.category-modal-open {
     overflow: hidden;
 }
 
+body.block-modal-open {
+    overflow: hidden;
+}
+
 /* Responsive tables */
 .table-responsive {
     overflow-x: auto;
