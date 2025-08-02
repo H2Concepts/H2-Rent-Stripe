@@ -174,6 +174,9 @@ jQuery(document).ready(function($) {
         function closeCatModal() {
             catModal.hide();
             $('body').removeClass('category-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
         }
         $('#add-category-btn').on('click', function(e){
             e.preventDefault();
@@ -202,6 +205,9 @@ jQuery(document).ready(function($) {
         function closeBlockModal() {
             blockModal.hide();
             $('body').removeClass('block-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
         }
         $('#add-block-btn').on('click', function(e){
             e.preventDefault();

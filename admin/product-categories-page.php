@@ -73,37 +73,35 @@ if (isset($_GET['edit'])) {
         <button type="button" class="modal-close">&times;</button>
         <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
         <form method="post" id="produkt-category-form" class="produkt-compact-form">
-        <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-        <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
-        <table class="form-table">
-                <tr>
-                    <th><label for="name">Name</label></th>
-                    <td><input name="name" type="text" required value="<?php echo esc_attr($edit_category->name ?? ''); ?>" class="regular-text"></td>
-                </tr>
-                <tr>
-                    <th><label for="slug">Slug</label></th>
-                    <td><input name="slug" type="text" required value="<?php echo esc_attr($edit_category->slug ?? ''); ?>" class="regular-text"></td>
-                </tr>
-                <tr>
-                    <th><label for="parent_id">Übergeordnete Kategorie</label></th>
-                    <td>
-                        <select name="parent_id">
-                            <option value="0">Keine</option>
-                            <?php foreach ($categories as $cat_option): ?>
-                                <?php if (!isset($edit_category->id) || $cat_option->id != $edit_category->id): ?>
-                                    <option value="<?php echo $cat_option->id; ?>" <?php echo (isset($edit_category->parent_id) && $edit_category->parent_id == $cat_option->id) ? 'selected' : ''; ?>>
-                                        <?php echo str_repeat('--', $cat_option->depth) . ' ' . esc_html($cat_option->name); ?>
-                                    </option>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label for="description">Beschreibung</label></th>
-                    <td><textarea name="description" class="large-text"><?php echo esc_textarea($edit_category->description ?? ''); ?></textarea></td>
-                </tr>
-            </table>
+            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+            <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="name">Name</label>
+                    <input name="name" type="text" required value="<?php echo esc_attr($edit_category->name ?? ''); ?>" class="regular-text">
+                </div>
+                <div class="form-field">
+                    <label for="slug">Slug</label>
+                    <input name="slug" type="text" required value="<?php echo esc_attr($edit_category->slug ?? ''); ?>" class="regular-text">
+                </div>
+                <div class="form-field">
+                    <label for="parent_id">Übergeordnete Kategorie</label>
+                    <select name="parent_id">
+                        <option value="0">Keine</option>
+                        <?php foreach ($categories as $cat_option): ?>
+                            <?php if (!isset($edit_category->id) || $cat_option->id != $edit_category->id): ?>
+                                <option value="<?php echo $cat_option->id; ?>" <?php echo (isset($edit_category->parent_id) && $edit_category->parent_id == $cat_option->id) ? 'selected' : ''; ?>>
+                                    <?php echo str_repeat('--', $cat_option->depth) . ' ' . esc_html($cat_option->name); ?>
+                                </option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-field full">
+                    <label for="description">Beschreibung</label>
+                    <textarea name="description" class="large-text"><?php echo esc_textarea($edit_category->description ?? ''); ?></textarea>
+                </div>
+            </div>
             <p>
                 <button type="submit" name="save_category" class="icon-btn" aria-label="Speichern">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
@@ -112,7 +110,7 @@ if (isset($_GET['edit'])) {
                     </svg>
                 </button>
             </p>
-            </form>
+        </form>
         </div>
     </div>
 

@@ -622,19 +622,22 @@
 }
 
 /* Modal form grid */
-#block-modal .form-grid {
+#block-modal .form-grid,
+#category-modal .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
 }
 
-#block-modal .form-field {
+#block-modal .form-field,
+#category-modal .form-field {
     display: flex;
     flex-direction: column;
     gap: 5px;
 }
 
-#block-modal .form-field.full {
+#block-modal .form-field.full,
+#category-modal .form-field.full {
     grid-column: 1 / -1;
 }
 
