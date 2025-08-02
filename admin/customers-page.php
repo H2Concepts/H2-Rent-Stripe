@@ -205,6 +205,36 @@ if (!$customer_id) {
         )
     );
 
+    // Prüfe vorhandene Rechnungsdateien und setze URL falls nötig
+    $upload_dir = wp_upload_dir();
+    foreach ($all_orders as &$o) {
+        if (empty($o->invoice_url)) {
+            $filename    = 'rechnung-' . $o->id . '.pdf';
+            $new_path    = trailingslashit($upload_dir['basedir']) . 'rechnungen-h2-rental-pro/' . $filename;
+            $legacy_path = trailingslashit($upload_dir['basedir']) . $filename;
+            if (file_exists($new_path)) {
+                $o->invoice_url = trailingslashit($upload_dir['baseurl']) . 'rechnungen-h2-rental-pro/' . $filename;
+                $wpdb->update(
+                    "{$wpdb->prefix}produkt_orders",
+                    ['invoice_url' => $o->invoice_url],
+                    ['id' => $o->id],
+                    ['%s'],
+                    ['%d']
+                );
+            } elseif (file_exists($legacy_path)) {
+                $o->invoice_url = trailingslashit($upload_dir['baseurl']) . $filename;
+                $wpdb->update(
+                    "{$wpdb->prefix}produkt_orders",
+                    ['invoice_url' => $o->invoice_url],
+                    ['id' => $o->id],
+                    ['%s'],
+                    ['%d']
+                );
+            }
+        }
+    }
+    unset($o);
+
     $orders = $all_orders;
     if ($order_search) {
         $os = ltrim($order_search, '#');
@@ -255,6 +285,10 @@ if (!$customer_id) {
         }
     }
     $initials = strtoupper(mb_substr($first,0,1) . mb_substr($last,0,1));
+
+    $registered_date     = date_i18n('d.m.Y', strtotime($user->user_registered));
+    $last_activity_date  = $customer_logs ? date_i18n('d.m.Y', strtotime($customer_logs[0]->created_at)) : '–';
+    $last_order_date_card = $last_order ? date_i18n('d.m.Y', strtotime($last_order->created_at)) : '–';
 ?>
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kundendetails</p>
@@ -291,6 +325,9 @@ if (!$customer_id) {
                 <p class="customer-phone">Telefon: <?php echo esc_html($phone ?: '–'); ?></p>
                 <p class="customer-address">Versandadresse: <?php echo esc_html($addr ?: '–'); ?></p>
                 <p class="customer-address">Rechnungsadresse: <?php echo esc_html($addr ?: '–'); ?></p>
+                <p class="customer-registered">Registriert: <?php echo esc_html($registered_date); ?></p>
+                <p class="customer-last-activity">Letzte Aktivität: <?php echo esc_html($last_activity_date); ?></p>
+                <p class="customer-last-order">Letzte Bestellung: <?php echo esc_html($last_order_date_card); ?></p>
             </div>
 
             <div class="customer-row">
