@@ -2726,6 +2726,7 @@ body.category-modal-open {
 
 
 /* Customers grid */
+#produkt-admin-customers .h2-rental-card{margin-right:0;}
 #produkt-admin-customers .customers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:2rem;}
 #produkt-admin-customers .customer-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.05);}
 #produkt-admin-customers .customer-card h3{margin-top:0;font-size:18px;font-weight:600;}

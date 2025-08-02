@@ -73,36 +73,42 @@ if (!$customer_id) {
     </div>
 
     <div class="h2-rental-card">
-        <div class="card-header">
-            <h2>Kundenübersicht</h2>
-            <div class="card-header-actions">
-                <form method="get" class="product-search-bar">
-                    <input type="hidden" name="page" value="produkt-customers">
-                    <div class="search-input-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
-                            <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
-                        </svg>
-                        <input type="text" name="s" placeholder="Nach Namen suchen" value="<?php echo esc_attr($search); ?>">
-                    </div>
-                </form>
+        <div class="card-header-flex">
+            <div>
+                <h2>Kundenübersicht</h2>
+                <p class="card-subline">Kunden durchsuchen</p>
             </div>
+            <form method="get" class="produkt-filter-form product-search-bar">
+                <input type="hidden" name="page" value="produkt-customers">
+                <div class="search-input-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                        <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+                    </svg>
+                    <input type="text" name="s" placeholder="Nach Namen suchen" value="<?php echo esc_attr($search); ?>">
+                </div>
+                <button type="submit" class="icon-btn filter-submit-btn" aria-label="Filtern">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">
+                        <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
+                    </svg>
+                </button>
+            </form>
         </div>
-
-        <?php if (empty($kunden)) : ?>
-            <p>Keine Kunden gefunden.</p>
-        <?php else : ?>
-            <div class="customers-grid">
-                <?php foreach ($kunden as $kunde) : ?>
-                    <div class="customer-card">
-                        <h3 class="customer-name"><?php echo esc_html($kunde->name); ?></h3>
-                        <p class="customer-email"><?php echo esc_html($kunde->email); ?></p>
-                        <p class="customer-phone"><?php echo esc_html($kunde->telefon ?: '–'); ?></p>
-                        <p class="customer-orders"><?php echo esc_html(count($kunde->orders)); ?> Bestellungen</p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
     </div>
+
+    <?php if (empty($kunden)) : ?>
+        <p>Keine Kunden gefunden.</p>
+    <?php else : ?>
+        <div class="customers-grid">
+            <?php foreach ($kunden as $kunde) : ?>
+                <div class="customer-card">
+                    <h3 class="customer-name"><?php echo esc_html($kunde->name); ?></h3>
+                    <p class="customer-email"><?php echo esc_html($kunde->email); ?></p>
+                    <p class="customer-phone"><?php echo esc_html($kunde->telefon ?: '–'); ?></p>
+                    <p class="customer-orders"><?php echo esc_html(count($kunde->orders)); ?> Bestellungen</p>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
 <?php else: ?>
 <?php
     $user = get_user_by('ID', $customer_id);
