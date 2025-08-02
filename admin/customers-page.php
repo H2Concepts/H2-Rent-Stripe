@@ -40,6 +40,8 @@ if (!$customer_id) {
         $orders = \ProduktVerleih\Database::get_orders_for_user($u->ID);
         $kunden[] = (object) [
             'id'      => $u->ID,
+            'first'   => $first,
+            'last'    => $last,
             'name'    => $name,
             'email'   => $u->user_email,
             'telefon' => $phone,
@@ -99,12 +101,30 @@ if (!$customer_id) {
         <p>Keine Kunden gefunden.</p>
     <?php else : ?>
         <div class="customers-grid">
-            <?php foreach ($kunden as $kunde) : ?>
+            <?php foreach ($kunden as $kunde) :
+                $initials = strtoupper(mb_substr($kunde->first, 0, 1) . mb_substr($kunde->last, 0, 1));
+                $last_order_date = !empty($kunde->orders) ? date_i18n('d.m.Y', strtotime($kunde->orders[0]->created_at)) : '–';
+            ?>
                 <div class="customer-card">
-                    <h3 class="customer-name"><?php echo esc_html($kunde->name); ?></h3>
-                    <p class="customer-email"><?php echo esc_html($kunde->email); ?></p>
-                    <p class="customer-phone"><?php echo esc_html($kunde->telefon ?: '–'); ?></p>
-                    <p class="customer-orders"><?php echo esc_html(count($kunde->orders)); ?> Bestellungen</p>
+                    <div class="customer-header">
+                        <div class="customer-avatar"><?php echo esc_html($initials); ?></div>
+                        <div class="customer-ident">
+                            <h3 class="customer-name"><?php echo esc_html($kunde->name); ?></h3>
+                            <p class="customer-email"><?php echo esc_html($kunde->email); ?></p>
+                        </div>
+                    </div>
+                    <p class="customer-phone">Telefon: <?php echo esc_html($kunde->telefon ?: '–'); ?></p>
+                    <div class="customer-orders-row">
+                        <span class="customer-orders">Bestellungen: <?php echo esc_html(count($kunde->orders)); ?></span>
+                        <span class="customer-last-order">Letzte Bestellung: <?php echo esc_html($last_order_date); ?></span>
+                    </div>
+                    <div class="customer-actions">
+                        <a href="<?php echo admin_url('admin.php?page=produkt-customers&customer=' . $kunde->id); ?>" class="icon-btn icon-btn-no-stroke" aria-label="Details">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">
+                                <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             <?php endforeach; ?>
         </div>
