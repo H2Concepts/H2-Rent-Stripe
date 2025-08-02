@@ -124,7 +124,7 @@ $sql_blocks .= ' ORDER BY position';
                                 <path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/>
                             </svg>
                         </button>
-                        <button type="button" class="icon-btn icon-btn-media remove-media-button" data-target="image_url" aria-label="Bild entfernen">
+                        <button type="button" class="icon-btn" data-target="image_url" aria-label="Bild entfernen">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
                                 <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
                                 <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
             frame.open();
         });
     });
-    document.querySelectorAll('.remove-media-button').forEach(function(btn) {
+    document.querySelectorAll('button[aria-label="Bild entfernen"]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const targetId = this.getAttribute('data-target');
