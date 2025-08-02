@@ -65,72 +65,81 @@ foreach ($orders as $o) {
     }
 }
 ?>
-<div id="produkt-admin-calendar" class="calendar-layout">
-    <aside class="calendar-sidebar">
-        <form method="get" class="calendar-filters">
-            <input type="hidden" name="page" value="produkt-calendar">
-            <label><input type="checkbox" name="show_open" value="1" <?php checked($show_open); ?>> Ausgeliehen</label>
-            <label><input type="checkbox" name="show_return" value="1" <?php checked($show_return); ?>> Rückgabe fällig</label>
-            <button class="button" type="submit">Anwenden</button>
-        </form>
-        <div class="mini-calendar">
-            <?php for ($i = 0; $i < $start_index; $i++): ?>
-                <div class="mini-day empty"></div>
-            <?php endfor; ?>
-            <?php for ($d = 1; $d <= $last_day; $d++):
-                $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
-                $openCount = 0; $returnCount = 0;
-                if (isset($orders_by_day[$date])) {
-                    foreach ($orders_by_day[$date] as $o) {
-                        if ($show_open && $o->start_date === $date) $openCount++;
-                        if ($show_return && $o->end_date === $date) $returnCount++;
-                    }
-                }
-            ?>
-            <div class="mini-day<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>">
-                <span class="num"><?php echo $d; ?></span>
-                <div class="dots">
-                    <?php if ($openCount) : ?><span class="dot open"></span><?php endif; ?>
-                    <?php if ($returnCount) : ?><span class="dot return"></span><?php endif; ?>
+<div class="produkt-admin dashboard-wrapper">
+    <div id="produkt-admin-calendar" class="calendar-layout">
+        <aside class="calendar-sidebar">
+            <div class="filters-block">
+                <h2>Filter</h2>
+                <p class="subline">Einstellungen auswählen</p>
+                <form method="get" class="calendar-filters">
+                    <input type="hidden" name="page" value="produkt-calendar">
+                    <label class="filter-option"><input class="filter-checkbox filter-open" type="checkbox" name="show_open" value="1" <?php checked($show_open); ?>> Ausgeliehen</label>
+                    <label class="filter-option"><input class="filter-checkbox filter-return" type="checkbox" name="show_return" value="1" <?php checked($show_return); ?>> Rückgabe fällig</label>
+                    <button class="button" type="submit">Anwenden</button>
+                </form>
+            </div>
+            <div class="mini-calendar-block">
+                <h2><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
+                <div class="mini-calendar">
+                    <?php for ($i = 0; $i < $start_index; $i++): ?>
+                        <div class="mini-day empty"></div>
+                    <?php endfor; ?>
+                    <?php for ($d = 1; $d <= $last_day; $d++):
+                        $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
+                        $openCount = 0; $returnCount = 0;
+                        if (isset($orders_by_day[$date])) {
+                            foreach ($orders_by_day[$date] as $o) {
+                                if ($show_open && $o->start_date === $date) $openCount++;
+                                if ($show_return && $o->end_date === $date) $returnCount++;
+                            }
+                        }
+                    ?>
+                    <div class="mini-day<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>">
+                        <span class="num"><?php echo $d; ?></span>
+                        <div class="dots">
+                            <?php if ($openCount) : ?><span class="dot open"></span><?php endif; ?>
+                            <?php if ($returnCount) : ?><span class="dot return"></span><?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endfor; ?>
                 </div>
             </div>
-            <?php endfor; ?>
-        </div>
-    </aside>
-    <div class="calendar-main">
-        <div class="calendar-header">
-            <h2><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
-            <div class="month-nav">
-                <a class="month-btn" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year . ($show_open ? '&show_open=1' : '') . ($show_return ? '&show_return=1' : '')); ?>">&larr;</a>
-                <a class="month-btn" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year . ($show_open ? '&show_open=1' : '') . ($show_return ? '&show_return=1' : '')); ?>">&rarr;</a>
+        </aside>
+        <div class="calendar-main">
+            <div class="calendar-header">
+                <h2><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
+                <div class="month-nav">
+                    <a class="month-btn" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year . ($show_open ? '&show_open=1' : '') . ($show_return ? '&show_return=1' : '')); ?>">&larr;</a>
+                    <a class="month-btn" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year . ($show_open ? '&show_open=1' : '') . ($show_return ? '&show_return=1' : '')); ?>">&rarr;</a>
+                </div>
             </div>
-        </div>
-        <div class="calendar-big-grid">
-            <?php for ($i = 0; $i < $start_index; $i++): ?>
-                <div class="day-cell empty"></div>
-            <?php endfor; ?>
-            <?php for ($d = 1; $d <= $last_day; $d++):
-                $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
-                $weekday = $dayNames[(int)date('N', strtotime($date)) - 1];
-                $openCount = 0; $returnCount = 0;
-                if (isset($orders_by_day[$date])) {
-                    foreach ($orders_by_day[$date] as $o) {
-                        if ($show_open && $o->start_date === $date) $openCount++;
-                        if ($show_return && $o->end_date === $date) $returnCount++;
+            <div class="calendar-big-grid">
+                <?php for ($i = 0; $i < $start_index; $i++): ?>
+                    <div class="day-cell empty"></div>
+                <?php endfor; ?>
+                <?php for ($d = 1; $d <= $last_day; $d++):
+                    $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
+                    $weekday = $dayNames[(int)date('N', strtotime($date)) - 1];
+                    $openCount = 0; $returnCount = 0;
+                    if (isset($orders_by_day[$date])) {
+                        foreach ($orders_by_day[$date] as $o) {
+                            if ($show_open && $o->start_date === $date) $openCount++;
+                            if ($show_return && $o->end_date === $date) $returnCount++;
+                        }
                     }
-                }
-            ?>
-            <div class="day-cell">
-                <div class="day-number<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>"><?php echo $d; ?></div>
-                <div class="weekday"><?php echo esc_html($weekday); ?></div>
-                <?php if ($returnCount): ?>
-                    <div class="event-bar return"><span class="icon">&#10005;</span><span class="count"><?php echo $returnCount; ?></span></div>
-                <?php endif; ?>
-                <?php if ($openCount): ?>
-                    <div class="event-bar open"><span class="icon">&#10003;</span><span class="count"><?php echo $openCount; ?></span></div>
-                <?php endif; ?>
+                ?>
+                <div class="day-cell">
+                    <div class="day-number<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>"><?php echo $d; ?></div>
+                    <div class="weekday"><?php echo esc_html($weekday); ?></div>
+                    <?php if ($returnCount): ?>
+                        <div class="event-bar return"><span class="icon">&#10005;</span><span class="count"><?php echo $returnCount; ?></span></div>
+                    <?php endif; ?>
+                    <?php if ($openCount): ?>
+                        <div class="event-bar open"><span class="icon">&#10003;</span><span class="count"><?php echo $openCount; ?></span></div>
+                    <?php endif; ?>
+                </div>
+                <?php endfor; ?>
             </div>
-            <?php endfor; ?>
         </div>
     </div>
 </div>
