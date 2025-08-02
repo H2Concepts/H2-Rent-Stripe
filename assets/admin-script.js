@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
     // Sidebar öffnen bei Klick auf "Details ansehen"
-    $('.view-details-link').on('click', function(e) {
+    $(document).on('click', '.view-details-link', function(e) {
         e.preventDefault();
         var orderId = $(this).data('order-id');
         var sidebar = $('#order-details-sidebar');
@@ -229,53 +229,54 @@ jQuery(document).ready(function($) {
         }
     }
 
-    var dayModal = $('#day-modal');
-    if (dayModal.length) {
-        function openDayModal(date, orders, blocked, cell) {
-            $('#day-modal-title').text(date);
-            var list = $('#day-modal-orders').empty();
-            if (orders.length) {
-                orders.forEach(function(o){ $('<li>').text(o).appendTo(list); });
-            } else {
-                $('<li>').text('Keine Bestellungen').appendTo(list);
-            }
-            $('#block-day').toggle(!blocked).data('cell', cell);
-            $('#unblock-day').toggle(blocked).data('cell', cell);
-            dayModal.show();
-            $('body').addClass('day-modal-open');
-            dayModal.data('date', date);
-        }
-        function closeDayModal() {
-            dayModal.hide();
-            $('body').removeClass('day-modal-open');
-        }
+    var dayCard = $('#day-orders-card');
+    if (dayCard.length) {
+        var body = $('#day-orders-body');
         $('.calendar-big-grid .day-cell').on('click', function(){
             var date = $(this).data('date');
+            var blocked = $(this).data('blocked') == 1;
             var orders = [];
             try { orders = JSON.parse($(this).attr('data-orders')); } catch (e) {}
-            var blocked = $(this).data('blocked') == 1;
-            openDayModal(date, orders, blocked, this);
+            $('#day-orders-date').text(date);
+            body.empty();
+            if (orders.length) {
+                orders.forEach(function(o){
+                    var tr = $('<tr>');
+                    tr.append('<td>#'+o.num+'</td>');
+                    tr.append('<td>'+o.name+'</td>');
+                    tr.append('<td>'+o.product+'</td>');
+                    tr.append('<td>'+o.variant+'</td>');
+                    tr.append('<td>'+(o.extras || '-')+'</td>');
+                    tr.append('<td>'+o.action+'</td>');
+                    var btn = $('<button type="button" class="icon-btn icon-btn-no-stroke view-details-link" aria-label="Details"></button>');
+                    btn.data('order-id', o.id);
+                    btn.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#1e1e1e" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Zm11 5a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z"/></svg>');
+                    tr.append($('<td>').append(btn));
+                    body.append(tr);
+                });
+            } else {
+                body.append('<tr><td colspan="7">Keine Bestellungen</td></tr>');
+            }
+            $('#block-day').toggle(!blocked).data('date', date).data('cell', this);
+            $('#unblock-day').toggle(blocked).data('date', date).data('cell', this);
+            dayCard.show();
         });
-        dayModal.on('click', function(e){ if (e.target === this) closeDayModal(); });
-        dayModal.find('.modal-close').on('click', closeDayModal);
         $('#block-day').on('click', function(){
-            var date = dayModal.data('date');
+            var date = $(this).data('date');
             var cell = $(this).data('cell');
             $.post(produkt_admin.ajax_url, {action:'produkt_block_day', nonce: produkt_calendar_nonce, date: date}, function(res){
                 if (res && res.success) {
                     $(cell).addClass('blocked').data('blocked',1);
                 }
-                closeDayModal();
             });
         });
         $('#unblock-day').on('click', function(){
-            var date = dayModal.data('date');
+            var date = $(this).data('date');
             var cell = $(this).data('cell');
             $.post(produkt_admin.ajax_url, {action:'produkt_unblock_day', nonce: produkt_calendar_nonce, date: date}, function(res){
                 if (res && res.success) {
                     $(cell).removeClass('blocked').data('blocked',0);
                 }
-                closeDayModal();
             });
         });
     }

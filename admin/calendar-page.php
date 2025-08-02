@@ -28,7 +28,9 @@ $first_day_ts = strtotime(sprintf('%04d-%02d-01', $year, $month));
 $last_day      = intval(date('t', $first_day_ts));
 $start_index   = (int)date('N', $first_day_ts) - 1;
 
-$orders_by_day = [];
+$open_by_day = [];
+$return_by_day = [];
+$orders_detail = [];
 $where = ["o.mode = 'kauf'"];
 
 $sql = "SELECT o.*, c.name as category_name,
@@ -54,16 +56,31 @@ $orders = $wpdb->get_results($sql);
 $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
 
 foreach ($orders as $o) {
-    $o->rental_days = pv_get_order_rental_days($o);
-    list($s, $e) = pv_get_order_period($o);
-    $start = $s ? strtotime($s) : null;
-    $end   = $e ? strtotime($e) : null;
-    if ($start && $end) {
-        while ($start <= $end) {
-            $d = date('Y-m-d', $start);
-            $orders_by_day[$d][] = $o;
-            $start = strtotime('+1 day', $start);
-        }
+    if (!empty($o->start_date)) {
+        $date = $o->start_date;
+        $open_by_day[$date][] = $o;
+        $orders_detail[$date][] = [
+            'id'      => (int)$o->id,
+            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
+            'name'    => $o->customer_name,
+            'product' => $o->produkt_name,
+            'variant' => $o->variant_name,
+            'extras'  => $o->extra_names,
+            'action'  => 'Ausgeliehen'
+        ];
+    }
+    if (!empty($o->end_date)) {
+        $date = $o->end_date;
+        $return_by_day[$date][] = $o;
+        $orders_detail[$date][] = [
+            'id'      => (int)$o->id,
+            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
+            'name'    => $o->customer_name,
+            'product' => $o->produkt_name,
+            'variant' => $o->variant_name,
+            'extras'  => $o->extra_names,
+            'action'  => 'Rückgabe'
+        ];
     }
 }
 ?>
@@ -77,7 +94,9 @@ foreach ($orders as $o) {
                     <input type="hidden" name="page" value="produkt-calendar">
                     <label class="filter-option"><input class="filter-checkbox filter-open" type="checkbox" name="show_open" value="1" <?php checked($show_open); ?>> Ausgeliehen</label>
                     <label class="filter-option"><input class="filter-checkbox filter-return" type="checkbox" name="show_return" value="1" <?php checked($show_return); ?>> Rückgabe fällig</label>
-                    <button class="button" type="submit">Anwenden</button>
+                    <button type="submit" class="icon-btn icon-btn-no-stroke" aria-label="Anwenden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#1cdd4e" d="M20.285 6.709l-11.025 11.025-5.544-5.543 1.414-1.414 4.13 4.129 9.611-9.611z"/></svg>
+                    </button>
                 </form>
             </div>
             <div class="mini-calendar-block">
@@ -88,13 +107,8 @@ foreach ($orders as $o) {
                     <?php endfor; ?>
                     <?php for ($d = 1; $d <= $last_day; $d++):
                         $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
-                        $openCount = 0; $returnCount = 0;
-                        if (isset($orders_by_day[$date])) {
-                            foreach ($orders_by_day[$date] as $o) {
-                                if ($show_open && $o->start_date === $date) $openCount++;
-                                if ($show_return && $o->end_date === $date) $returnCount++;
-                            }
-                        }
+                        $openCount   = ($show_open   && isset($open_by_day[$date]))   ? count($open_by_day[$date])   : 0;
+                        $returnCount = ($show_return && isset($return_by_day[$date])) ? count($return_by_day[$date]) : 0;
                     ?>
                     <div class="mini-day<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>">
                         <span class="num"><?php echo $d; ?></span>
@@ -122,15 +136,13 @@ foreach ($orders as $o) {
                 <?php for ($d = 1; $d <= $last_day; $d++):
                     $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
                     $weekday = $dayNames[(int)date('N', strtotime($date)) - 1];
-                    $openCount = 0; $returnCount = 0;
-                    $orders_info = [];
-                    if (isset($orders_by_day[$date])) {
-                        foreach ($orders_by_day[$date] as $o) {
-                            if ($show_open && $o->start_date === $date) $openCount++;
-                            if ($show_return && $o->end_date === $date) $returnCount++;
-                            $num = !empty($o->order_number) ? $o->order_number : $o->id;
-                            $orders_info[] = '#' . $num . ' ' . $o->customer_name;
-                        }
+                    $openCount   = ($show_open   && isset($open_by_day[$date]))   ? count($open_by_day[$date])   : 0;
+                    $returnCount = ($show_return && isset($return_by_day[$date])) ? count($return_by_day[$date]) : 0;
+                    $orders_info = $orders_detail[$date] ?? [];
+                    if (!$show_open || !$show_return) {
+                        $orders_info = array_values(array_filter($orders_info, function($o) use ($show_open, $show_return) {
+                            return ($o['action'] === 'Ausgeliehen' && $show_open) || ($o['action'] === 'Rückgabe' && $show_return);
+                        }));
                     }
                     $is_blocked = in_array($date, $blocked_days, true);
                 ?>
@@ -158,18 +170,29 @@ foreach ($orders as $o) {
                 </div>
                 <?php endfor; ?>
             </div>
-        </div>
-    </div>
-</div>
-
-<div id="day-modal" class="modal-overlay">
-    <div class="modal-content">
-        <button class="modal-close" type="button">&times;</button>
-        <h2 id="day-modal-title"></h2>
-        <ul id="day-modal-orders"></ul>
-        <div class="day-modal-actions">
-            <button id="block-day" class="button button-primary" type="button">Tag sperren</button>
-            <button id="unblock-day" class="button" type="button">Tag freigeben</button>
+            <div id="day-orders-card" class="h2-rental-card">
+                <div class="card-header">
+                    <h2>Bestellungen am <span id="day-orders-date"></span></h2>
+                    <div class="day-actions">
+                        <button id="block-day" class="button button-primary" type="button">Tag sperren</button>
+                        <button id="unblock-day" class="button" type="button">Tag freigeben</button>
+                    </div>
+                </div>
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Produkte</th>
+                            <th>Ausführungen</th>
+                            <th>Extras</th>
+                            <th>Aktion</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="day-orders-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
