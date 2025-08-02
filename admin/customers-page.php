@@ -6,16 +6,18 @@ if (!defined('ABSPATH')) {
 global $wpdb;
 require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 require_once PRODUKT_PLUGIN_PATH . 'includes/Database.php';
+
 $search      = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 $customer_id = isset($_GET['customer']) ? intval($_GET['customer']) : 0;
 
-$branding = [];
-$results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
-foreach ($results as $r) {
-    $branding[$r->setting_key] = $r->setting_value;
-}
-
 if (!$customer_id) {
+    // Stats
+    $total_customers = count(get_users(['role' => 'kunde']));
+    $total_orders    = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders");
+    $total_revenue   = (float) $wpdb->get_var("SELECT SUM(final_price) FROM {$wpdb->prefix}produkt_orders");
+    $avg_per_customer = $total_customers ? $total_revenue / $total_customers : 0;
+
+    // Customer list
     $args = [
         'role'    => 'kunde',
         'orderby' => 'display_name',
@@ -36,71 +38,66 @@ if (!$customer_id) {
             $name = $u->display_name;
         }
         $orders = \ProduktVerleih\Database::get_orders_for_user($u->ID);
-        foreach ($orders as $o) {
-            $o->rental_days = pv_get_order_rental_days($o);
-        }
-        $last_date = $orders ? date_i18n('d.m.Y', strtotime($orders[0]->created_at)) : '';
-        $kunden[] = (object)[
-            'id'             => $u->ID,
-            'name'           => $name,
-            'email'          => $u->user_email,
-            'telefon'        => $phone,
-            'orders'         => $orders,
-            'last_order_date'=> $last_date,
+        $kunden[] = (object) [
+            'id'      => $u->ID,
+            'name'    => $name,
+            'email'   => $u->user_email,
+            'telefon' => $phone,
+            'orders'  => $orders,
         ];
     }
 }
 ?>
-<div class="wrap" id="produkt-admin-customers">
+<div class="produkt-admin dashboard-wrapper" id="produkt-admin-customers">
 <?php if (!$customer_id): ?>
-    <div class="produkt-admin-card">
-        <div class="produkt-admin-header-compact">
-            <div class="produkt-admin-logo-compact">
-                <span class="dashicons dashicons-groups"></span>
-            </div>
-            <div class="produkt-admin-title-compact">
-                <h1>Kundenübersicht</h1>
-                <p>Alle registrierten Kunden im Überblick</p>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline">Kunden verwalten</p>
+
+    <div class="product-info-grid cols-4">
+        <div class="product-info-box bg-pastell-gelb">
+            <div class="label">Kunden</div>
+            <div class="value"><?php echo esc_html($total_customers); ?></div>
+        </div>
+        <div class="product-info-box bg-pastell-gruen">
+            <div class="label">Bestellungen</div>
+            <div class="value"><?php echo esc_html($total_orders); ?></div>
+        </div>
+        <div class="product-info-box bg-pastell-mint">
+            <div class="label">Umsatz</div>
+            <div class="value"><?php echo number_format($total_revenue, 2, ',', '.'); ?>€</div>
+        </div>
+        <div class="product-info-box bg-pastell-orange">
+            <div class="label">Ø pro Kunde</div>
+            <div class="value"><?php echo number_format($avg_per_customer, 2, ',', '.'); ?>€</div>
+        </div>
+    </div>
+
+    <div class="h2-rental-card">
+        <div class="card-header">
+            <h2>Kundenübersicht</h2>
+            <div class="card-header-actions">
+                <form method="get" class="product-search-bar">
+                    <input type="hidden" name="page" value="produkt-customers">
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                            <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+                        </svg>
+                        <input type="text" name="s" placeholder="Nach Namen suchen" value="<?php echo esc_attr($search); ?>">
+                    </div>
+                </form>
             </div>
         </div>
 
-        <form method="get" action="" style="margin:20px 0;">
-            <input type="hidden" name="page" value="produkt-customers">
-            <input type="search" name="s" value="<?php echo esc_attr($search); ?>" placeholder="Nach Namen suchen">
-            <input type="submit" class="button" value="Suchen">
-        </form>
-
         <?php if (empty($kunden)) : ?>
-            <div class="produkt-empty-state">
-                <span class="dashicons dashicons-info"></span>
-                <h4>Keine Kunden gefunden</h4>
-                <p>Es wurden bisher keine Kunden im System erfasst.</p>
-            </div>
+            <p>Keine Kunden gefunden.</p>
         <?php else : ?>
-            <div class="produkt-items-grid">
+            <div class="customers-grid">
                 <?php foreach ($kunden as $kunde) : ?>
-                    <div class="produkt-item-card">
-                        <div class="produkt-item-content">
-                            <h5><?php echo esc_html($kunde->name); ?></h5>
-                            <p><span class="dashicons dashicons-email"></span> <?php echo esc_html($kunde->email); ?></p>
-                            <p><span class="dashicons dashicons-phone"></span> <?php echo esc_html($kunde->telefon ?: '–'); ?></p>
-
-                            <div class="produkt-item-meta">
-                                <div class="produkt-status available">
-                                    Letzte Bestellung: <br>
-                                    <strong><?php echo esc_html($kunde->last_order_date ?: '–'); ?></strong>
-                                </div>
-                                <div class="produkt-status-badge badge badge-success">
-                                    <?php echo esc_html(count($kunde->orders)); ?> Bestellungen
-                                </div>
-                            </div>
-
-                        </div>
-                        <div class="produkt-item-actions">
-                            <a href="mailto:<?php echo esc_attr($kunde->email); ?>" class="button">E-Mail senden</a>
-                            <a href="<?php echo esc_url(admin_url('admin.php?page=produkt-customers&customer=' . $kunde->id)); ?>" class="button">Details</a>
-                            <a href="<?php echo esc_url(admin_url('admin.php?page=produkt-orders')); ?>" class="button button-primary">Alle Bestellungen</a>
-                        </div>
+                    <div class="customer-card">
+                        <h3 class="customer-name"><?php echo esc_html($kunde->name); ?></h3>
+                        <p class="customer-email"><?php echo esc_html($kunde->email); ?></p>
+                        <p class="customer-phone"><?php echo esc_html($kunde->telefon ?: '–'); ?></p>
+                        <p class="customer-orders"><?php echo esc_html(count($kunde->orders)); ?> Bestellungen</p>
                     </div>
                 <?php endforeach; ?>
             </div>
