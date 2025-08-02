@@ -621,6 +621,41 @@
     flex: 1;
 }
 
+/* Modal form grid */
+#block-modal .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+#block-modal .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#block-modal .form-field.full {
+    grid-column: 1 / -1;
+}
+
+#block-modal .image-field-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#block-modal .image-preview img {
+    max-width: 120px;
+    height: auto;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#block-modal .image-preview span {
+    color: #666;
+    font-style: italic;
+}
+
 .produkt-upload-area button {
     padding: 6px 10px;
     font-size: 0.8rem;

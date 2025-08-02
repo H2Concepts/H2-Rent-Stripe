@@ -77,66 +77,74 @@ $sql_blocks .= ' ORDER BY position';
         <form method="post" id="content-block-form" class="produkt-compact-form">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <input type="hidden" name="id" value="<?php echo esc_attr($block->id ?? ''); ?>">
-            <table class="form-table">
-                <tr>
-                    <th><label>Kategorie *</label></th>
-                    <td>
-                        <select name="category_id" required>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?php echo $cat->id; ?>" <?php selected(($block->category_id ?? $selected_category), $cat->id); ?>><?php echo str_repeat('--', $cat->depth ?? 0) . ' ' . esc_html($cat->name); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label>Layout</label></th>
-                    <td>
-                        <select name="style">
-                            <option value="compact" <?php selected($block->style ?? 'wide', 'compact'); ?>>Kompakt</option>
-                            <option value="wide" <?php selected($block->style ?? 'wide', 'wide'); ?>>Weit</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label>Position Desktop *</label></th>
-                    <td><input type="number" name="position" required value="<?php echo esc_attr($block->position ?? 9); ?>"></td>
-                </tr>
-                <tr>
-                    <th><label>Position Mobil *</label></th>
-                    <td><input type="number" name="position_mobile" required value="<?php echo esc_attr($block->position_mobile ?? 6); ?>"></td>
-                </tr>
-                <tr>
-                    <th><label>Überschrift *</label></th>
-                    <td><input type="text" name="title" required value="<?php echo esc_attr($block->title ?? ''); ?>"></td>
-                </tr>
-                <tr>
-                    <th><label>Text *</label></th>
-                    <td><textarea name="content" rows="4" required><?php echo esc_textarea($block->content ?? ''); ?></textarea></td>
-                </tr>
-                <tr>
-                    <th><label>Bild</label></th>
-                    <td>
-                        <input type="url" name="image_url" id="image_url" value="<?php echo esc_attr($block->image_url ?? ''); ?>">
-                        <button type="button" class="button produkt-media-button" data-target="image_url">📁</button>
-                    </td>
-                </tr>
-                <tr>
-                    <th><label>Button-Text</label></th>
-                    <td><input type="text" name="button_text" value="<?php echo esc_attr($block->button_text ?? ''); ?>"></td>
-                </tr>
-                <tr>
-                    <th><label>Button-Link</label></th>
-                    <td><input type="url" name="button_url" value="<?php echo esc_attr($block->button_url ?? ''); ?>"></td>
-                </tr>
-                <tr>
-                    <th><label>Hintergrundfarbe</label></th>
-                    <td><input type="color" name="background_color" value="<?php echo esc_attr($block->background_color ?? '#ffffff'); ?>"></td>
-                </tr>
-                <tr>
-                    <th><label>Badge-Text</label></th>
-                    <td><input type="text" name="badge_text" value="<?php echo esc_attr($block->badge_text ?? ''); ?>"></td>
-                </tr>
-            </table>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="category_id">Kategorie *</label>
+                    <select name="category_id" id="category_id" required>
+                        <?php foreach ($categories as $cat): ?>
+                            <option value="<?php echo $cat->id; ?>" <?php selected(($block->category_id ?? $selected_category), $cat->id); ?>><?php echo str_repeat('--', $cat->depth ?? 0) . ' ' . esc_html($cat->name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="style">Layout</label>
+                    <select name="style" id="style">
+                        <option value="compact" <?php selected($block->style ?? 'wide', 'compact'); ?>>Kompakt</option>
+                        <option value="wide" <?php selected($block->style ?? 'wide', 'wide'); ?>>Weit</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="position">Position Desktop *</label>
+                    <input type="number" name="position" id="position" required value="<?php echo esc_attr($block->position ?? 9); ?>">
+                </div>
+                <div class="form-field">
+                    <label for="position_mobile">Position Mobil *</label>
+                    <input type="number" name="position_mobile" id="position_mobile" required value="<?php echo esc_attr($block->position_mobile ?? 6); ?>">
+                </div>
+                <div class="form-field full">
+                    <label for="title">Überschrift *</label>
+                    <input type="text" name="title" id="title" required value="<?php echo esc_attr($block->title ?? ''); ?>">
+                </div>
+                <div class="form-field full">
+                    <label for="content">Text *</label>
+                    <textarea name="content" id="content" rows="4" required><?php echo esc_textarea($block->content ?? ''); ?></textarea>
+                </div>
+                <div class="form-field full">
+                    <label>Bild</label>
+                    <div class="image-field-row">
+                        <div id="image_url_preview" class="image-preview">
+                            <?php if (!empty($block->image_url)): ?>
+                                <img src="<?php echo esc_url($block->image_url); ?>" alt="" />
+                            <?php else: ?>
+                                <span>Noch kein Bild vorhanden</span>
+                            <?php endif; ?>
+                        </div>
+                        <button type="button" class="icon-btn produkt-media-button" data-target="image_url" aria-label="Bild auswählen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
+                                <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
+                                <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <input type="hidden" name="image_url" id="image_url" value="<?php echo esc_attr($block->image_url ?? ''); ?>">
+                </div>
+                <div class="form-field">
+                    <label for="button_text">Button-Text</label>
+                    <input type="text" name="button_text" id="button_text" value="<?php echo esc_attr($block->button_text ?? ''); ?>">
+                </div>
+                <div class="form-field">
+                    <label for="button_url">Button-Link</label>
+                    <input type="url" name="button_url" id="button_url" value="<?php echo esc_attr($block->button_url ?? ''); ?>">
+                </div>
+                <div class="form-field">
+                    <label for="background_color">Hintergrundfarbe</label>
+                    <input type="color" name="background_color" id="background_color" value="<?php echo esc_attr($block->background_color ?? '#ffffff'); ?>">
+                </div>
+                <div class="form-field">
+                    <label for="badge_text">Badge-Text</label>
+                    <input type="text" name="badge_text" id="badge_text" value="<?php echo esc_attr($block->badge_text ?? ''); ?>">
+                </div>
+            </div>
             <p>
                 <button type="submit" name="save_block" class="icon-btn" aria-label="Speichern">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
@@ -238,11 +246,15 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetId = this.getAttribute('data-target');
             const field = document.getElementById(targetId);
+            const preview = document.getElementById(targetId + '_preview');
             if (!field) return;
             const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
             frame.on('select', function() {
                 const att = frame.state().get('selection').first().toJSON();
                 field.value = att.url;
+                if (preview) {
+                    preview.innerHTML = '<img src="' + att.url + '" alt="" />';
+                }
             });
             frame.open();
         });
