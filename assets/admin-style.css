@@ -3170,6 +3170,12 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     justify-content: space-between;
     align-items: center;
 }
+
+.inline-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
 .card-header-actions {
     display: flex;
     align-items: center;
