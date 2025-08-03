@@ -1075,6 +1075,10 @@ body.block-modal-open {
     overflow: hidden;
 }
 
+body.shipping-modal-open {
+    overflow: hidden;
+}
+
 /* Responsive tables */
 .table-responsive {
     overflow-x: auto;

@@ -229,6 +229,38 @@ jQuery(document).ready(function($) {
         }
     }
 
+    var shipModal = $('#shipping-modal');
+    if (shipModal.length) {
+        function openShipModal() {
+            shipModal.show();
+            $('body').addClass('shipping-modal-open');
+        }
+        function closeShipModal() {
+            shipModal.hide();
+            $('body').removeClass('shipping-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+        $('#add-shipping-btn').on('click', function(e){
+            e.preventDefault();
+            shipModal.find('input[name="shipping_id"]').val('');
+            shipModal.find('input[type="text"], input[type="number"], textarea').val('');
+            shipModal.find('select[name="shipping_provider"]').val('none');
+            shipModal.find('input[name="is_default"]').prop('checked', false);
+            openShipModal();
+        });
+        shipModal.on('click', function(e){
+            if (e.target === this) {
+                closeShipModal();
+            }
+        });
+        shipModal.find('.modal-close').on('click', closeShipModal);
+        if (shipModal.data('open') == 1) {
+            openShipModal();
+        }
+    }
+
     var dayCard = $('#day-orders-card');
     if (dayCard.length) {
         var body = $('#day-orders-body');
