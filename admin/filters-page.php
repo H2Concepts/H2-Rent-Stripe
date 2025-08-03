@@ -7,6 +7,17 @@ global $wpdb;
 $table_groups  = $wpdb->prefix . 'produkt_filter_groups';
 $table_filters = $wpdb->prefix . 'produkt_filters';
 
+if (!function_exists('pv_filters_redirect')) {
+    function pv_filters_redirect($url) {
+        if (!headers_sent()) {
+            wp_safe_redirect($url);
+        } else {
+            echo '<script>window.location.href="' . esc_url($url) . '";</script>';
+        }
+        exit;
+    }
+}
+
 // Handle group create/update
 if (isset($_POST['save_group'])) {
     \ProduktVerleih\Admin::verify_admin_action();
@@ -17,8 +28,7 @@ if (isset($_POST['save_group'])) {
     } else {
         $wpdb->insert($table_groups, ['name' => $name]);
     }
-    wp_redirect(admin_url('admin.php?page=produkt-filters'));
-    exit;
+    pv_filters_redirect(admin_url('admin.php?page=produkt-filters'));
 }
 
 // Handle group delete
@@ -30,8 +40,7 @@ if (isset($_GET['delete_group']) && isset($_GET['fw_nonce']) && wp_verify_nonce(
     }
     $wpdb->delete($table_groups, ['id' => $gid]);
     $wpdb->delete($table_filters, ['group_id' => $gid]);
-    wp_redirect(admin_url('admin.php?page=produkt-filters'));
-    exit;
+    pv_filters_redirect(admin_url('admin.php?page=produkt-filters'));
 }
 
 // Handle option create/update
@@ -45,8 +54,7 @@ if (isset($_POST['save_option'])) {
     } else {
         $wpdb->insert($table_filters, ['group_id' => $gid, 'name' => $name]);
     }
-    wp_redirect(admin_url('admin.php?page=produkt-filters&group=' . $gid));
-    exit;
+    pv_filters_redirect(admin_url('admin.php?page=produkt-filters&group=' . $gid));
 }
 
 // Handle option delete
@@ -55,8 +63,7 @@ if (isset($_GET['delete_option']) && isset($_GET['fw_nonce']) && wp_verify_nonce
     $gid = intval($_GET['group'] ?? 0);
     $wpdb->delete($table_filters, ['id' => $fid]);
     $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['filter_id' => $fid]);
-    wp_redirect(admin_url('admin.php?page=produkt-filters' . ($gid ? '&group=' . $gid : '')));
-    exit;
+    pv_filters_redirect(admin_url('admin.php?page=produkt-filters' . ($gid ? '&group=' . $gid : '')));
 }
 
 $selected_group_id = isset($_GET['group']) ? intval($_GET['group']) : 0;
