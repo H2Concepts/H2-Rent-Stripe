@@ -247,7 +247,6 @@ jQuery(document).ready(function($) {
             shipModal.find('input[name="shipping_id"]').val('');
             shipModal.find('input[type="text"], input[type="number"], textarea').val('');
             shipModal.find('select[name="shipping_provider"]').val('none');
-            shipModal.find('input[name="is_default"]').prop('checked', false);
             openShipModal();
         });
         shipModal.on('click', function(e){
@@ -260,6 +259,20 @@ jQuery(document).ready(function($) {
             openShipModal();
         }
     }
+
+    $('.default-shipping-checkbox').on('change', function(){
+        var $this = $(this);
+        if ($this.is(':checked')) {
+            $('.default-shipping-checkbox').not($this).prop('checked', false);
+            $.post(produkt_admin.ajax_url, {
+                action: 'pv_set_default_shipping',
+                nonce: produkt_admin.nonce,
+                id: $this.data('id')
+            });
+        } else {
+            $this.prop('checked', true);
+        }
+    });
 
     var dayCard = $('#day-orders-card');
     if (dayCard.length) {

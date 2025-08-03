@@ -64,11 +64,6 @@ if (isset($_POST['save_shipping'])) {
     $price       = floatval($_POST['shipping_price']);
     $provider    = sanitize_text_field($_POST['shipping_provider']);
     $id          = intval($_POST['shipping_id'] ?? 0);
-    $is_default  = isset($_POST['is_default']) ? 1 : 0;
-
-    if ($is_default) {
-        $wpdb->query("UPDATE $table SET is_default = 0");
-    }
 
     if ($id > 0) {
         $current = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
@@ -78,7 +73,6 @@ if (isset($_POST['save_shipping'])) {
                 'description'     => $description,
                 'price'           => $price,
                 'service_provider'=> $provider,
-                'is_default'      => $is_default,
             ], ['id' => $id]);
 
             $price_id = produkt_create_stripe_price_only($current->stripe_product_id, $price);
@@ -95,7 +89,6 @@ if (isset($_POST['save_shipping'])) {
             'service_provider' => $provider,
             'stripe_product_id'=> $stripe['product_id'],
             'stripe_price_id'  => $stripe['price_id'],
-            'is_default'       => $is_default,
         ]);
     }
 }
@@ -152,10 +145,6 @@ $providers = [
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="form-field">
-                    <label for="is_default">Standardversand</label>
-                    <input type="checkbox" id="is_default" name="is_default" value="1" <?php checked($edit_shipping && $edit_shipping->is_default); ?>>
-                </div>
                 <div class="form-field full">
                     <label for="shipping_description">Beschreibung</label>
                     <textarea id="shipping_description" name="shipping_description"><?php echo esc_textarea($edit_shipping->description ?? ''); ?></textarea>
@@ -206,7 +195,9 @@ $providers = [
                         <td><?php echo esc_html($r->name); ?></td>
                         <td><?php echo number_format($r->price, 2, ',', '.'); ?> €</td>
                         <td><?php echo esc_html($providers[$r->service_provider] ?? ucfirst($r->service_provider)); ?></td>
-                        <td><?php echo $r->is_default ? 'Ja' : 'Nein'; ?></td>
+                        <td>
+                            <input type="checkbox" class="default-shipping-checkbox" data-id="<?php echo $r->id; ?>" <?php checked($r->is_default); ?>>
+                        </td>
                         <td>
                             <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-shipping&edit=<?php echo $r->id; ?>'">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">

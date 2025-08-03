@@ -1972,3 +1972,23 @@ function pv_load_customer_logs() {
 
     wp_send_json_success(['html' => $html, 'count' => count($logs)]);
 }
+
+add_action('wp_ajax_pv_set_default_shipping', __NAMESPACE__ . '\\pv_set_default_shipping');
+function pv_set_default_shipping() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $id = intval($_POST['id'] ?? 0);
+    if (!$id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_shipping_methods';
+    $wpdb->query("UPDATE $table SET is_default = 0");
+    $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+
+    wp_send_json_success();
+}
