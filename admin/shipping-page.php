@@ -177,7 +177,7 @@ $providers = [
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Versandarten verwalten</p>
 
-    <div class="dashboard-card card-shipping-list">
+    <div class="h2-rental-card card-shipping-list">
         <div class="card-header-flex">
             <div>
                 <h2>Versandarten</h2>
