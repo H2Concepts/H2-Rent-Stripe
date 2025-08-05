@@ -621,10 +621,8 @@
     flex: 1;
 }
 
-/* Modal form grid */
-#block-modal .form-grid,
-#category-modal .form-grid,
-#shipping-modal .form-grid {
+/* Form grid */
+.form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
@@ -644,20 +642,20 @@
     grid-column: 1 / -1;
 }
 
-#block-modal .image-field-row {
+.image-field-row {
     display: flex;
     align-items: center;
     gap: 20px;
 }
 
-#block-modal .image-preview img {
+.image-preview img {
     max-width: 120px;
     height: auto;
     border-radius: 4px;
     border: 1px solid #ddd;
 }
 
-#block-modal .image-preview span {
+.image-preview span {
     color: #666;
     font-style: italic;
 }
@@ -1982,13 +1980,6 @@ body.shipping-modal-open {
     display: flex;
     flex-direction: column;
     gap: 30px;
-}
-
-.produkt-branding-form {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
 }
 
 /* Settings page layout */

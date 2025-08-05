@@ -77,7 +77,7 @@ if (isset($_POST['submit_branding'])) {
 ?>
 
 <div class="produkt-branding-tab">
-    <form method="post" action="" class="produkt-branding-form">
+    <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-sections">
             <!-- Plugin Information -->
