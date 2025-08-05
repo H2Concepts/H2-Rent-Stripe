@@ -1995,6 +1995,7 @@ body.shipping-modal-open {
 .settings-layout {
     display: flex;
     gap: 20px;
+    align-items: flex-start;
 }
 
 .settings-menu {
@@ -2024,6 +2025,11 @@ body.shipping-modal-open {
 
 .settings-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding-right: 20px;
+    box-sizing: border-box;
 }
 
 .produkt-form-sections {
