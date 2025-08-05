@@ -37,12 +37,13 @@ $ct_agb              = get_option('produkt_ct_agb', '');
 $modus               = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
-<div class="produkt-branding-tab">
+<div class="settings-tab">
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-        <div class="produkt-form-section">
-            <h4>🔑 Stripe API Keys</h4>
-            <div class="produkt-form-grid">
+        <div class="dashboard-card">
+            <h2>Stripe API Keys</h2>
+            <p class="card-subline">Zugangsdaten für den Zahlungsanbieter</p>
+            <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>Publishable Key</label>
                     <input type="text" name="stripe_publishable_key" value="<?php echo esc_attr($stripe_publishable_key); ?>">
@@ -68,45 +69,52 @@ $modus               = get_option('produkt_betriebsmodus', 'miete');
                 </div>
             </div>
         </div>
-        <div class="produkt-form-section">
-            <h4>📄 AGB-Link</h4>
-            <div class="produkt-form-group">
-                <label>URL zur AGB-Seite</label>
+        <div class="dashboard-card">
+            <h2>AGB-Link</h2>
+            <p class="card-subline">Verweis auf Ihre AGB-Seite</p>
+            <div class="form-grid">
+                <div class="form-field full">
+                    <label>URL zur AGB-Seite</label>
                 <input type="text" name="tos_url" value="<?php echo esc_attr($tos_url); ?>" placeholder="<?php echo esc_attr(home_url('/agb')); ?>">
                 <p class="description">Link, der im Checkout angezeigt wird.</p>
+                </div>
             </div>
         </div>
-        <div class="produkt-form-section">
-            <h4>🔗 Weiterleitungs-URLs</h4>
-            <div class="produkt-form-grid">
-                <div class="produkt-form-group">
+        <div class="dashboard-card">
+            <h2>Weiterleitungs-URLs</h2>
+            <p class="card-subline">Zielseiten nach dem Checkout</p>
+            <div class="form-grid">
+                <div class="form-field">
                     <label>Success URL</label>
                     <input type="text" name="success_url" value="<?php echo esc_attr($success_url); ?>" placeholder="<?php echo esc_attr(home_url('/danke')); ?>">
                     <p class="description">Der Parameter <code>?session_id=CHECKOUT_SESSION_ID</code> wird automatisch angehängt.</p>
                 </div>
-                <div class="produkt-form-group">
+                <div class="form-field">
                     <label>Cancel URL</label>
                     <input type="text" name="cancel_url" value="<?php echo esc_attr($cancel_url); ?>" placeholder="<?php echo esc_attr(home_url('/abbrechen')); ?>">
                 </div>
             </div>
         </div>
-        <div class="produkt-form-section">
-            <h4>💬 Custom Checkout Texte</h4>
-            <div class="produkt-form-group">
-                <label>Nachricht unter Versandadresse</label>
-                <textarea name="ct_shipping" rows="2" class="large-text"><?php echo esc_textarea($ct_shipping); ?></textarea>
-            </div>
-            <div class="produkt-form-group">
-                <label>Text neben AGB-Checkbox</label>
-                <textarea name="ct_agb" rows="2" class="large-text"><?php echo esc_textarea($ct_agb); ?></textarea>
-            </div>
-            <div class="produkt-form-group">
-                <label>Nachricht auf dem Bezahl-Button</label>
-                <textarea name="ct_submit" rows="2" class="large-text"><?php echo esc_textarea($ct_submit); ?></textarea>
-            </div>
-            <div class="produkt-form-group">
-                <label>Text nach Absenden</label>
-                <textarea name="ct_after_submit" rows="2" class="large-text"><?php echo esc_textarea($ct_after_submit); ?></textarea>
+        <div class="dashboard-card">
+            <h2>Custom Checkout Texte</h2>
+            <p class="card-subline">Individuelle Hinweise im Bezahlprozess</p>
+            <div class="form-grid">
+                <div class="form-field full">
+                    <label>Nachricht unter Versandadresse</label>
+                    <textarea name="ct_shipping" rows="2" class="large-text"><?php echo esc_textarea($ct_shipping); ?></textarea>
+                </div>
+                <div class="form-field full">
+                    <label>Text neben AGB-Checkbox</label>
+                    <textarea name="ct_agb" rows="2" class="large-text"><?php echo esc_textarea($ct_agb); ?></textarea>
+                </div>
+                <div class="form-field full">
+                    <label>Nachricht auf dem Bezahl-Button</label>
+                    <textarea name="ct_submit" rows="2" class="large-text"><?php echo esc_textarea($ct_submit); ?></textarea>
+                </div>
+                <div class="form-field full">
+                    <label>Text nach Absenden</label>
+                    <textarea name="ct_after_submit" rows="2" class="large-text"><?php echo esc_textarea($ct_after_submit); ?></textarea>
+                </div>
             </div>
             <p class="description">Bleibt ein Feld leer, wird kein Text angezeigt.</p>
         </div>

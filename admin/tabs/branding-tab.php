@@ -77,39 +77,14 @@ if (isset($_POST['submit_branding'])) {
 ?>
 
 <div class="produkt-branding-tab">
-    <div class="produkt-branding-info">
-        <h3>🎨 White-Label Features</h3>
-        <p>Personalisieren Sie das Plugin mit Ihrem eigenen Branding. Diese Einstellungen ändern das Erscheinungsbild im Admin-Bereich und können für White-Label-Lösungen verwendet werden.</p>
-        
-        <div class="produkt-branding-features">
-            <div class="produkt-feature-column">
-                <h4>🌟 Anpassbare Elemente:</h4>
-                <ul>
-                    <li><strong>Plugin-Name:</strong> Eigener Name im Admin-Menü</li>
-                    <li><strong>Farben:</strong> Corporate Design Farben</li>
-                    <li><strong>Footer-Text:</strong> Eigene Copyright-Hinweise</li>
-                    <li><strong>Firmeninformationen:</strong> Kontaktdaten und Website</li>
-                </ul>
-            </div>
-            <div class="produkt-feature-column">
-                <h4>💼 Professionelle Vorteile:</h4>
-                <ul>
-                    <li><strong>Markenidentität:</strong> Konsistentes Erscheinungsbild</li>
-                    <li><strong>Kundenvertrauen:</strong> Professioneller Auftritt</li>
-                    <li><strong>White-Label:</strong> Plugin unter eigenem Namen</li>
-                    <li><strong>Corporate Design:</strong> Firmenfarben verwenden</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
     <form method="post" action="" class="produkt-branding-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <div class="produkt-form-sections">
             <!-- Plugin Information -->
-            <div class="produkt-form-section">
-                <h4>🏢 Plugin-Informationen</h4>
-                <div class="produkt-form-grid">
+            <div class="dashboard-card">
+                <h2>Plugin-Informationen</h2>
+                <p class="card-subline">Basisdaten des Plugins</p>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Plugin-Name *</label>
                         <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" required>
@@ -125,9 +100,10 @@ if (isset($_POST['submit_branding'])) {
             </div>
             
             <!-- Company Information -->
-            <div class="produkt-form-section">
-                <h4>🏢 Firmen-Informationen</h4>
-                <div class="produkt-form-grid">
+            <div class="dashboard-card">
+                <h2>Firmen-Informationen</h2>
+                <p class="card-subline">Angaben zum Unternehmen</p>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Firmenname *</label>
                         <input type="text" name="company_name" value="<?php echo esc_attr($branding['company_name'] ?? 'H2 Concepts'); ?>" required>
@@ -143,9 +119,10 @@ if (isset($_POST['submit_branding'])) {
             </div>
             
             <!-- Design Settings -->
-            <div class="produkt-form-section">
-                <h4>🎨 Design-Anpassungen</h4>
-                <div class="produkt-form-grid">
+            <div class="dashboard-card">
+                <h2>Design-Anpassungen</h2>
+                <p class="card-subline">Farben und Layout</p>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Primärfarbe</label>
                         <input type="color" name="admin_color_primary" value="<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
@@ -204,11 +181,22 @@ if (isset($_POST['submit_branding'])) {
 
                     <div class="produkt-form-group full-width">
                         <label>Login Hintergrundbild</label>
-                        <input type="url" name="login_bg_image" id="login_bg_image" value="<?php echo esc_attr($branding['login_bg_image'] ?? ''); ?>">
-                        <button type="button" class="button produkt-media-button" data-target="login_bg_image">📁 Aus Mediathek wählen</button>
-                        <?php if (!empty($branding['login_bg_image'])) : ?>
-                            <div class="produkt-image-preview"><img src="<?php echo esc_url($branding['login_bg_image']); ?>" alt=""></div>
-                        <?php endif; ?>
+                        <div class="image-field-row">
+                            <div id="login_bg_image_preview" class="image-preview">
+                                <?php if (!empty($branding['login_bg_image'])): ?>
+                                    <img src="<?php echo esc_url($branding['login_bg_image']); ?>" alt="">
+                                <?php else: ?>
+                                    <span>Noch kein Bild vorhanden</span>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="login_bg_image" aria-label="Bild auswählen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                            </button>
+                            <button type="button" class="icon-btn produkt-remove-image" data-target="login_bg_image" aria-label="Bild entfernen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                            </button>
+                        </div>
+                        <input type="hidden" name="login_bg_image" id="login_bg_image" value="<?php echo esc_attr($branding['login_bg_image'] ?? ''); ?>">
                         <small>Hintergrundbild für die Login-Seite</small>
                     </div>
                     
@@ -231,61 +219,33 @@ if (isset($_POST['submit_branding'])) {
             <?php submit_button('💾 Branding-Einstellungen speichern', 'primary', 'submit_branding', false); ?>
         </div>
     </form>
-    
-    <!-- Preview Section -->
-    <div class="produkt-preview-section">
-        <h4>🎨 Design-Vorschau</h4>
-        <div class="produkt-preview-grid">
-            <div class="produkt-preview-card">
-                <h5>🎯 Aktuelle Einstellungen:</h5>
-                <div class="produkt-preview-demo">
-                    <div class="produkt-demo-header">
-                        <div class="produkt-demo-logo" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>;">
-                            🏷️
-                        </div>
-                        <div class="produkt-demo-content">
-                            <strong><?php echo esc_html($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?></strong><br>
-                            <small><?php echo esc_html($branding['company_name'] ?? 'H2 Concepts'); ?></small>
-                        </div>
-                    </div>
-                    <button class="produkt-demo-button" style="background: <?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>; color: <?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" onmouseover="this.style.background='<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>'" onmouseout="this.style.background='<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>'">
-                        Beispiel Button
-                    </button>
-                </div>
-            </div>
-            
-            <div class="produkt-preview-card">
-                <h5>📋 Verwendung:</h5>
-                <ul>
-                    <li><strong>Admin-Header:</strong> Firmenname wird in der Plugin-Oberfläche angezeigt</li>
-                    <li><strong>Buttons:</strong> Verwenden die definierten Farben</li>
-                    <li><strong>Navigation:</strong> Aktive Tabs in Primärfarbe</li>
-                    <li><strong>Footer:</strong> Eigener Copyright-Text</li>
-                </ul>
-                
-                <div class="produkt-tip">
-                    <strong>💡 Tipp:</strong> Verwenden Sie Farben aus Ihrem Corporate Design für ein konsistentes Erscheinungsbild.
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.produkt-media-button').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
-            const target = document.getElementById(this.getAttribute('data-target'));
-            if (!target) return;
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
             const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
             frame.on('select', function() {
                 const attachment = frame.state().get('selection').first().toJSON();
                 target.value = attachment.url;
+                if (preview) {
+                    preview.innerHTML = '<img src="' + attachment.url + '" alt="">';
+                }
             });
             frame.open();
         });
     });
+    document.querySelectorAll('.produkt-remove-image').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
+            if(target){ target.value = ''; }
+            if(preview){ preview.innerHTML = '<span>Noch kein Bild vorhanden</span>'; }
+        });
+    });
 });
 </script>
+
+</div>
