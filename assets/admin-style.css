@@ -3740,6 +3740,17 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     height: 16px;
 }
 
+.branding-save-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+.branding-save-btn svg {
+    width: 48px;
+    height: 48px;
+}
+
 /* Sidebar order details extras */
 
 .order-log-list {
