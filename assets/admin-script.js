@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
     // Sidebar öffnen bei Klick auf "Details ansehen"
-    $('.view-details-link').on('click', function(e) {
+    $(document).on('click', '.view-details-link', function(e) {
         e.preventDefault();
         var orderId = $(this).data('order-id');
         var sidebar = $('#order-details-sidebar');
@@ -21,6 +21,8 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     content.html(response.data.html);
+                    // Re-initialize accordions for dynamically loaded content
+                    produktInitAccordions();
                 } else {
                     content.html('<p>Details konnten nicht geladen werden.</p>');
                 }
@@ -172,6 +174,9 @@ jQuery(document).ready(function($) {
         function closeCatModal() {
             catModal.hide();
             $('body').removeClass('category-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
         }
         $('#add-category-btn').on('click', function(e){
             e.preventDefault();
@@ -189,6 +194,136 @@ jQuery(document).ready(function($) {
         if (catModal.data('open') == 1) {
             openCatModal();
         }
+    }
+
+    var blockModal = $('#block-modal');
+    if (blockModal.length) {
+        function openBlockModal() {
+            blockModal.show();
+            $('body').addClass('block-modal-open');
+        }
+        function closeBlockModal() {
+            blockModal.hide();
+            $('body').removeClass('block-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+        $('#add-block-btn').on('click', function(e){
+            e.preventDefault();
+            blockModal.find('input[name="id"]').val('');
+            blockModal.find('input[type="text"], input[type="number"], input[type="url"], textarea').val('');
+            blockModal.find('input[type="color"]').val('#ffffff');
+            blockModal.find('select[name="style"]').val('wide');
+            blockModal.find('select[name="category_id"]').val('0');
+            openBlockModal();
+        });
+        blockModal.on('click', function(e){
+            if (e.target === this) {
+                closeBlockModal();
+            }
+        });
+        blockModal.find('.modal-close').on('click', closeBlockModal);
+        if (blockModal.data('open') == 1) {
+            openBlockModal();
+        }
+    }
+
+    var shipModal = $('#shipping-modal');
+    if (shipModal.length) {
+        function openShipModal() {
+            shipModal.show();
+            $('body').addClass('shipping-modal-open');
+        }
+        function closeShipModal() {
+            shipModal.hide();
+            $('body').removeClass('shipping-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+        $('#add-shipping-btn').on('click', function(e){
+            e.preventDefault();
+            shipModal.find('input[name="shipping_id"]').val('');
+            shipModal.find('input[type="text"], input[type="number"], textarea').val('');
+            shipModal.find('select[name="shipping_provider"]').val('none');
+            openShipModal();
+        });
+        shipModal.on('click', function(e){
+            if (e.target === this) {
+                closeShipModal();
+            }
+        });
+        shipModal.find('.modal-close').on('click', closeShipModal);
+        if (shipModal.data('open') == 1) {
+            openShipModal();
+        }
+    }
+
+    $('.default-shipping-checkbox').on('change', function(){
+        var $this = $(this);
+        if ($this.is(':checked')) {
+            $('.default-shipping-checkbox').not($this).prop('checked', false);
+            $.post(produkt_admin.ajax_url, {
+                action: 'pv_set_default_shipping',
+                nonce: produkt_admin.nonce,
+                id: $this.data('id')
+            });
+        } else {
+            $this.prop('checked', true);
+        }
+    });
+
+    var dayCard = $('#day-orders-card');
+    if (dayCard.length) {
+        var body = $('#day-orders-body');
+        $('.calendar-big-grid .day-cell').on('click', function(){
+            var date = $(this).data('date');
+            var blocked = $(this).data('blocked') == 1;
+            var orders = [];
+            try { orders = JSON.parse($(this).attr('data-orders')); } catch (e) {}
+            $('#day-orders-date').text(date);
+            body.empty();
+            if (orders.length) {
+                orders.forEach(function(o){
+                    var tr = $('<tr>');
+                    tr.append('<td>#'+o.num+'</td>');
+                    tr.append('<td>'+o.name+'</td>');
+                    tr.append('<td>'+o.product+'</td>');
+                    tr.append('<td>'+o.variant+'</td>');
+                    tr.append('<td>'+(o.extras || '-')+'</td>');
+                    tr.append('<td>'+o.action+'</td>');
+                    var btn = $('<button type="button" class="icon-btn icon-btn-no-stroke view-details-link" aria-label="Details"></button>');
+                    btn.data('order-id', o.id);
+                    btn.append('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1"><path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/></svg>');
+                    tr.append($('<td>').append(btn));
+                    body.append(tr);
+                });
+            } else {
+                body.append('<tr><td colspan="7">Keine Bestellungen</td></tr>');
+            }
+            $('#block-day').toggle(!blocked).data('date', date).data('cell', this);
+            $('#unblock-day').toggle(blocked).data('date', date).data('cell', this);
+            dayCard.show();
+        });
+        $('#block-day').on('click', function(){
+            var date = $(this).data('date');
+            var cell = $(this).data('cell');
+            $.post(produkt_admin.ajax_url, {action:'produkt_block_day', nonce: produkt_calendar_nonce, date: date}, function(res){
+                if (res && res.success) {
+                    $(cell).addClass('blocked').data('blocked',1);
+                }
+            });
+        });
+        $('#unblock-day').on('click', function(){
+            var date = $(this).data('date');
+            var cell = $(this).data('cell');
+            $.post(produkt_admin.ajax_url, {action:'produkt_unblock_day', nonce: produkt_calendar_nonce, date: date}, function(res){
+                if (res && res.success) {
+                    $(cell).removeClass('blocked').data('blocked',0);
+                }
+            });
+        });
     }
 });
 
@@ -243,6 +378,176 @@ document.addEventListener('click', function(e) {
                     }
                 } else {
                     alert('Fehler beim Bestätigen');
+                }
+            });
+    }
+});
+
+// Order note functionality
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.note-icon')) {
+        e.preventDefault();
+        var form = document.getElementById('order-note-form');
+        if (form) {
+            form.classList.toggle('visible');
+            var ta = form.querySelector('textarea');
+            if (ta) ta.focus();
+        }
+    }
+    if (e.target.classList.contains('note-cancel')) {
+        e.preventDefault();
+        document.getElementById('order-note-form').classList.remove('visible');
+    }
+    if (e.target.classList.contains('note-save')) {
+        e.preventDefault();
+        var form = document.getElementById('order-note-form');
+        var note = form.querySelector('textarea').value.trim();
+        if (!note) return;
+        var orderIdEl = document.querySelector('.sidebar-wrapper');
+        var orderId = orderIdEl ? orderIdEl.getAttribute('data-order-id') : 0;
+        var data = new URLSearchParams();
+        data.append('action', 'pv_save_order_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('order_id', orderId);
+        data.append('note', note);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var container = document.querySelector('.order-notes-section');
+                    if (container) {
+                        var div = document.createElement('div');
+                        div.className = 'order-note';
+                        div.setAttribute('data-note-id', res.data.id);
+                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div><button type="button" class="icon-btn note-delete-btn" title="Notiz löschen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>';
+                        div.querySelector('.note-text').textContent = note;
+                        div.querySelector('.note-date').textContent = res.data.date;
+                        container.prepend(div);
+                    }
+                    form.querySelector('textarea').value = '';
+                    form.classList.remove('visible');
+                } else {
+                    alert('Fehler beim Speichern');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.note-delete-btn')) {
+        e.preventDefault();
+        var btn = e.target.closest('.note-delete-btn');
+        var noteEl = btn.closest('.order-note');
+        if (!noteEl) return;
+        var noteId = noteEl.getAttribute('data-note-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_delete_order_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('note_id', noteId);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    noteEl.remove();
+                } else {
+                    alert('Fehler beim Löschen');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.customer-note-icon')) {
+        var form = document.getElementById('customer-note-form');
+        if (form) form.classList.add('visible');
+    }
+    if (e.target.classList.contains('customer-note-cancel')) {
+        var form = document.getElementById('customer-note-form');
+        if (form) form.classList.remove('visible');
+    }
+    if (e.target.classList.contains('customer-note-save')) {
+        var form = document.getElementById('customer-note-form');
+        var note = form.querySelector('textarea').value.trim();
+        if (!note) return;
+        var customerId = form.getAttribute('data-customer-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_save_customer_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('customer_id', customerId);
+        data.append('note', note);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var container = document.querySelector('.customer-notes-section');
+                    if (container) {
+                        var div = document.createElement('div');
+                        div.className = 'order-note';
+                        div.setAttribute('data-note-id', res.data.id);
+                        div.innerHTML = '<div class="note-text"></div><div class="note-date"></div><button type="button" class="icon-btn customer-note-delete-btn" title="Notiz löschen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>';
+                        div.querySelector('.note-text').textContent = note;
+                        div.querySelector('.note-date').textContent = res.data.date;
+                        container.prepend(div);
+                    }
+                    form.querySelector('textarea').value = '';
+                    form.classList.remove('visible');
+                } else {
+                    alert('Fehler beim Speichern');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.customer-note-delete-btn')) {
+        e.preventDefault();
+        var btn = e.target.closest('.customer-note-delete-btn');
+        var noteEl = btn.closest('.order-note');
+        if (!noteEl) return;
+        var noteId = noteEl.getAttribute('data-note-id');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_delete_customer_note');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('note_id', noteId);
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    noteEl.remove();
+                } else {
+                    alert('Fehler beim Löschen');
+                }
+            });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.customer-log-load-more');
+    if (btn) {
+        e.preventDefault();
+        var offset = parseInt(btn.getAttribute('data-offset')) || 0;
+        var total = parseInt(btn.getAttribute('data-total')) || 0;
+        var orderIds = btn.getAttribute('data-order-ids').split(',');
+        var data = new URLSearchParams();
+        data.append('action', 'pv_load_customer_logs');
+        data.append('nonce', produkt_admin.nonce);
+        data.append('offset', offset);
+        orderIds.forEach(function(id){ data.append('order_ids[]', id); });
+        fetch(produkt_admin.ajax_url, {method:'POST', body:data})
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    var list = document.querySelector('.order-log-list');
+                    if (list && res.data.html) {
+                        var temp = document.createElement('div');
+                        temp.innerHTML = res.data.html;
+                        Array.from(temp.children).forEach(function(li){ list.appendChild(li); });
+                        offset += res.data.count;
+                        btn.setAttribute('data-offset', offset);
+                        if (offset >= total || res.data.count < 5) {
+                            btn.remove();
+                        }
+                    }
                 }
             });
     }

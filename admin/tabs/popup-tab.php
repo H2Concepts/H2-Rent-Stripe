@@ -29,12 +29,13 @@ $popup_content = $popup_settings['content'] ?? '';
 $popup_options = $popup_settings['options'] ?? '';
 ?>
 
-<div class="produkt-branding-tab">
+<div class="settings-tab">
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-        <div class="produkt-form-section">
-            <h4>📣 Popup Inhalt</h4>
-            <div class="produkt-form-grid">
+        <div class="dashboard-card">
+            <h2>Popup Inhalt</h2>
+            <p class="card-subline">Einstellungen für das Hinweis-Popup</p>
+            <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>
                         <input type="checkbox" name="popup_enabled" value="1" <?php checked($popup_enabled, 1); ?>>
@@ -64,7 +65,7 @@ $popup_options = $popup_settings['options'] ?? '';
                     <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
                 </div>
             </div>
+            <?php submit_button('💾 Einstellungen speichern', 'primary', 'submit_popup'); ?>
         </div>
-        <?php submit_button('💾 Einstellungen speichern', 'primary', 'submit_popup'); ?>
     </form>
 </div>

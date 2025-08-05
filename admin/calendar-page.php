@@ -9,10 +9,9 @@ require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 $monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 $dayNames   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 
-// Filter parameters
-$product_filter = isset($_GET['product']) ? intval($_GET['product']) : 0;
-$status_filter  = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-$produkte       = \ProduktVerleih\Database::get_all_categories(true);
+$show_open   = isset($_GET['show_open']);
+$show_return = isset($_GET['show_return']);
+if (!$show_open && !$show_return) { $show_open = $show_return = true; }
 
 $year  = isset($_GET['year']) ? intval($_GET['year']) : intval(date('Y'));
 $month = isset($_GET['month']) ? intval($_GET['month']) : intval(date('n'));
@@ -27,17 +26,12 @@ if ($next_month > 12) { $next_month = 1; $next_year++; }
 
 $first_day_ts = strtotime(sprintf('%04d-%02d-01', $year, $month));
 $last_day      = intval(date('t', $first_day_ts));
-$start_index   = (int)date('N', $first_day_ts) - 1; // 0=Mo
+$start_index   = (int)date('N', $first_day_ts) - 1;
 
-// collect booking days and orders per day
-$booked        = [];
-$orders_by_day = [];
-$blocked_days  = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
-
+$open_by_day = [];
+$return_by_day = [];
+$orders_detail = [];
 $where = ["o.mode = 'kauf'"];
-if ($product_filter) {
-    $where[] = $wpdb->prepare('o.category_id = %d', $product_filter);
-}
 
 $sql = "SELECT o.*, c.name as category_name,
                COALESCE(v.name, o.produkt_name) as variant_name,
@@ -59,282 +53,166 @@ $sql = "SELECT o.*, c.name as category_name,
 
 $orders = $wpdb->get_results($sql);
 
-foreach ($orders as $o) {
-    $o->rental_days = pv_get_order_rental_days($o);
-}
+$blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
 
-$order_logs = [];
 foreach ($orders as $o) {
-    $order_logs[$o->id] = $wpdb->get_results(
-        $wpdb->prepare(
-            "SELECT event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d ORDER BY created_at",
-            $o->id
-        )
-    );
-}
-foreach ($orders as $o) {
-    list($s, $e) = pv_get_order_period($o);
-    $start = $s ? strtotime($s) : null;
-    $end   = $e ? strtotime($e) : null;
-    if ($start && $end) {
-        while ($start <= $end) {
-            $d = date('Y-m-d', $start);
-            $status = ($o->status === 'abgeschlossen') ? 'completed' : 'open';
-            if (!isset($booked[$d]) || $booked[$d] !== 'open') {
-                $booked[$d] = $status;
-            }
-            if ($status === 'open') {
-                $booked[$d] = 'open';
-            }
-            $orders_by_day[$d][] = $o;
-            $start = strtotime('+1 day', $start);
-        }
+    if (!empty($o->start_date)) {
+        $date = $o->start_date;
+        $open_by_day[$date][] = $o;
+        $orders_detail[$date][] = [
+            'id'      => (int)$o->id,
+            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
+            'name'    => $o->customer_name,
+            'product' => $o->category_name ?: $o->produkt_name,
+            'variant' => $o->variant_name,
+            'extras'  => $o->extra_names,
+            'action'  => 'Ausgeliehen'
+        ];
+    }
+    if (!empty($o->end_date)) {
+        $date = $o->end_date;
+        $return_by_day[$date][] = $o;
+        $orders_detail[$date][] = [
+            'id'      => (int)$o->id,
+            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
+            'name'    => $o->customer_name,
+            'product' => $o->category_name ?: $o->produkt_name,
+            'variant' => $o->variant_name,
+            'extras'  => $o->extra_names,
+            'action'  => 'Rückgabe'
+        ];
     }
 }
 ?>
-
-<div class="wrap" id="produkt-admin-calendar">
-    <div class="produkt-admin-card">
-        <div class="produkt-admin-header-compact">
-            <div class="produkt-admin-logo-compact">
-                <span class="dashicons dashicons-calendar-alt"></span>
+<div class="produkt-admin dashboard-wrapper">
+    <div id="produkt-admin-calendar" class="calendar-layout">
+        <aside class="calendar-sidebar">
+            <div class="filters-block">
+                <h2>Filter</h2>
+                <p class="subline">Einstellungen auswählen</p>
+                <form method="get" class="calendar-filters">
+                    <input type="hidden" name="page" value="produkt-calendar">
+                    <label class="filter-option"><input class="filter-checkbox filter-open" type="checkbox" name="show_open" value="1" <?php checked($show_open); ?>> Ausgeliehen</label>
+                    <label class="filter-option"><input class="filter-checkbox filter-return" type="checkbox" name="show_return" value="1" <?php checked($show_return); ?>> Rückgabe fällig</label>
+                    <button type="submit" class="icon-btn" aria-label="Anwenden">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Zm8.2,26.2c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6Zm0-70.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/></svg>
+                    </button>
+                </form>
             </div>
-            <div class="produkt-admin-title-compact">
-                <h1>Kalender-Übersicht</h1>
-                <p>Alle Buchungen und Rückgaben im Überblick</p>
+            <div class="mini-calendar-block">
+                <h2><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
+                <div class="mini-calendar">
+                    <?php for ($i = 0; $i < $start_index; $i++): ?>
+                        <div class="mini-day empty"></div>
+                    <?php endfor; ?>
+                    <?php for ($d = 1; $d <= $last_day; $d++):
+                        $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
+                        $openCount   = ($show_open   && isset($open_by_day[$date]))   ? count($open_by_day[$date])   : 0;
+                        $returnCount = ($show_return && isset($return_by_day[$date])) ? count($return_by_day[$date]) : 0;
+                    ?>
+                    <div class="mini-day<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>">
+                        <span class="num"><?php echo $d; ?></span>
+                        <div class="dots">
+                            <?php if ($openCount) : ?><span class="dot open"></span><?php endif; ?>
+                            <?php if ($returnCount) : ?><span class="dot return"></span><?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endfor; ?>
+                </div>
             </div>
-        </div>
-
-        <div class="produkt-category-selector">
-            <form method="get">
-                <input type="hidden" name="page" value="produkt-calendar">
-                <label for="filter-product">Produkt:</label>
-                <select id="filter-product" name="product">
-                    <option value="">Alle Produkte</option>
-                    <?php foreach ($produkte as $produkt) : ?>
-                        <option value="<?php echo esc_attr($produkt->id); ?>" <?php selected($product_filter, $produkt->id); ?>><?php echo esc_html($produkt->name); ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <label for="filter-status">Status:</label>
-                <select id="filter-status" name="status">
-                    <option value="">Alle</option>
-                    <option value="open" <?php selected($status_filter, 'open'); ?>>Ausgeliehen</option>
-                    <option value="return" <?php selected($status_filter, 'return'); ?>>Rückgabe</option>
-                </select>
-                <button class="button button-primary" type="submit">Filtern</button>
-            </form>
-            <div class="produkt-category-info">
-                <code><strong>Legende:</strong> <span class="badge badge-success">Ausgeliehen</span> <span class="badge badge-danger">Rückgabe fällig</span></code>
+        </aside>
+        <div class="calendar-main">
+            <div class="calendar-header">
+                <h2><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
+                <div class="month-nav">
+                    <a class="month-btn" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year . ($show_open ? '&show_open=1' : '') . ($show_return ? '&show_return=1' : '')); ?>">&larr;</a>
+                    <a class="month-btn" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year . ($show_open ? '&show_open=1' : '') . ($show_return ? '&show_return=1' : '')); ?>">&rarr;</a>
+                </div>
             </div>
-        </div>
-
-        <div class="calendar-nav" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-            <a class="button button-primary" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $prev_month . '&year=' . $prev_year); ?>">&larr;</a>
-            <h2 style="margin:0"><?php echo $monthNames[$month-1] . ' ' . $year; ?></h2>
-            <a class="button button-primary" href="<?php echo admin_url('admin.php?page=produkt-calendar&month=' . $next_month . '&year=' . $next_year); ?>">&rarr;</a>
-        </div>
-
-<div id="day-action-modal" class="modal-overlay">
-    <div class="modal-content" style="text-align:center;">
-        <button type="button" class="modal-close" onclick="closeDayAction()">&times;</button>
-        <h3 style="margin-top:0;">Aktion f&uuml;r <span id="action-modal-date"></span></h3>
-        <div style="margin-top:15px;">
-            <button type="button" id="block-day-btn" class="button button-primary"></button>
-            <button type="button" id="view-orders-btn" class="button">Buchungen ansehen</button>
-        </div>
-    </div>
-</div>
-
-
-    <div class="calendar-grid">
-        <?php foreach ($dayNames as $dn): ?>
-            <div class="calendar-day-name"><?php echo esc_html($dn); ?></div>
-        <?php endforeach; ?>
-        <?php for ($i = 0; $i < $start_index; $i++): ?>
-            <div class="calendar-day empty"></div>
-        <?php endfor; ?>
-        <?php for ($d = 1; $d <= $last_day; $d++):
-            $date    = sprintf('%04d-%02d-%02d', $year, $month, $d);
-            $classes = 'calendar-day';
-            $badges  = '';
-            $tips    = [];
-            if ($date === current_time('Y-m-d')) {
-                $classes .= ' today';
-            }
-            if (in_array($date, $blocked_days, true)) {
-                $classes .= ' day-blocked';
-            }
-            if (isset($orders_by_day[$date])) {
-                foreach ($orders_by_day[$date] as $o) {
-                    if (($status_filter === '' || $status_filter === 'open') && $o->start_date === $date) {
-                        $classes .= ' booked';
-                        $badges .= '<div class="event-badge badge badge-success">#' . esc_html($o->id) . '</div>';
-                        $tips[]  = 'Ausgeliehen: #' . $o->id;
+            <div class="calendar-big-grid">
+                <?php for ($i = 0; $i < $start_index; $i++): ?>
+                    <div class="day-cell empty"></div>
+                <?php endfor; ?>
+                <?php for ($d = 1; $d <= $last_day; $d++):
+                    $date = sprintf('%04d-%02d-%02d', $year, $month, $d);
+                    $weekday = $dayNames[(int)date('N', strtotime($date)) - 1];
+                    $openCount   = ($show_open   && isset($open_by_day[$date]))   ? count($open_by_day[$date])   : 0;
+                    $returnCount = ($show_return && isset($return_by_day[$date])) ? count($return_by_day[$date]) : 0;
+                    $orders_info = $orders_detail[$date] ?? [];
+                    if (!$show_open || !$show_return) {
+                        $orders_info = array_values(array_filter($orders_info, function($o) use ($show_open, $show_return) {
+                            return ($o['action'] === 'Ausgeliehen' && $show_open) || ($o['action'] === 'Rückgabe' && $show_return);
+                        }));
                     }
-                    if (($status_filter === '' || $status_filter === 'return') && $o->end_date === $date) {
-                        $classes .= ' return';
-                        $badges .= '<div class="event-badge badge badge-danger">#' . esc_html($o->id) . '</div>';
-                        $tips[]  = 'Rückgabe: #' . $o->id;
-                    }
-                }
-            }
-            $title = $tips ? ' title="' . esc_attr(implode(' | ', $tips)) . '"' : '';
-        ?>
-            <div class="<?php echo esc_attr($classes); ?>" data-date="<?php echo esc_attr($date); ?>"<?php echo $title; ?>>
-                <div class="day-number"><?php echo $d; ?></div>
-                <?php echo $badges; ?>
+                    $is_blocked = in_array($date, $blocked_days, true);
+                ?>
+                <div class="day-cell<?php echo $is_blocked ? ' blocked' : ''; ?>" data-date="<?php echo esc_attr($date); ?>" data-blocked="<?php echo $is_blocked ? '1' : '0'; ?>" data-orders='<?php echo esc_attr(json_encode($orders_info)); ?>'>
+                    <div class="day-number<?php echo ($date === current_time('Y-m-d')) ? ' today' : ''; ?>"><?php echo $d; ?></div>
+                    <div class="weekday"><?php echo esc_html($weekday); ?></div>
+                    <?php if ($returnCount): ?>
+                        <div class="event-bar return">
+                            <span class="label">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ff6617" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                Rückgabe
+                            </span>
+                            <span class="count"><?php echo $returnCount; ?></span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($openCount): ?>
+                        <div class="event-bar open">
+                            <span class="label">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#1cdd4e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                Ausgeliehen
+                            </span>
+                            <span class="count"><?php echo $openCount; ?></span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <?php endfor; ?>
             </div>
-        <?php endfor; ?>
+            <div id="day-orders-card" class="dashboard-card">
+                <div class="card-header">
+                    <h2>Bestellungen am <span id="day-orders-date"></span></h2>
+                    <div class="day-actions">
+                        <button id="block-day" class="block-day-btn" type="button">
+                            <span>Tag sperren</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                        </button>
+                        <button id="unblock-day" class="block-day-btn" type="button">
+                            <span>Tag freigeben</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/><path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Produkte</th>
+                            <th>Ausführungen</th>
+                            <th>Extras</th>
+                            <th>Aktion</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="day-orders-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="order-details-sidebar" class="order-details-sidebar">
+            <div class="order-details-header">
+                <h3>Bestelldetails</h3>
+                <button class="close-sidebar">&times;</button>
+            </div>
+            <div class="order-details-content">
+                <p>Lade Details…</p>
+            </div>
+        </div>
+        <div id="order-details-overlay" class="order-details-overlay"></div>
     </div>
 </div>
-
-
-<div id="order-details-modal" class="modal-overlay">
-    <div class="modal-content">
-        <button type="button" class="modal-close" onclick="closeOrderDetails()">&times;</button>
-        <h3 style="margin-top:0;">Bestellungen am <span id="modal-date"></span></h3>
-        <div id="order-details-content"></div>
-    </div>
-</div>
-
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-    const ordersByDay   = <?php echo json_encode($orders_by_day); ?>;
-    const orderLogs     = <?php echo json_encode($order_logs); ?>;
-    const blockedDays   = <?php echo json_encode(array_fill_keys($blocked_days, true)); ?>;
-    const ajaxUrl       = ajaxurl;
-    const nonce         = '<?php echo wp_create_nonce('produkt_nonce'); ?>';
-
-    const modal         = document.getElementById('order-details-modal');
-    const modalDate     = document.getElementById('modal-date');
-    const content       = document.getElementById('order-details-content');
-
-    const actionModal   = document.getElementById('day-action-modal');
-    const actionDate    = document.getElementById('action-modal-date');
-    const blockBtn      = document.getElementById('block-day-btn');
-    const viewBtn       = document.getElementById('view-orders-btn');
-
-    document.querySelectorAll('#produkt-admin-calendar .calendar-day').forEach(function(day){
-        day.addEventListener('click', function(){
-            const date = this.dataset.date;
-            if (!date) return;
-            actionModal.dataset.date = date;
-            actionDate.textContent = date;
-            const blocked = !!blockedDays[date];
-            blockBtn.textContent = blocked ? 'Tag freigeben' : 'Tag sperren';
-            blockBtn.dataset.action = blocked ? 'unblock' : 'block';
-            viewBtn.style.display = ordersByDay[date] ? 'inline-block' : 'none';
-            actionModal.style.display = 'block';
-        });
-    });
-
-    blockBtn.addEventListener('click', function(){
-        const action = this.dataset.action;
-        const date = actionModal.dataset.date;
-        const data = new URLSearchParams();
-        data.append('action', action === 'block' ? 'produkt_block_day' : 'produkt_unblock_day');
-        data.append('nonce', nonce);
-        data.append('date', date);
-        fetch(ajaxUrl, {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:data.toString()})
-            .then(r => r.json())
-            .then(res => { if(res.success){ location.reload(); } else { alert(res.data || 'Fehler'); } });
-    });
-
-    viewBtn.addEventListener('click', function(){
-        const date = actionModal.dataset.date;
-        actionModal.style.display = 'none';
-        if (!ordersByDay[date]) return;
-        modalDate.textContent = date;
-        let html = '';
-        ordersByDay[date].forEach(function(o){
-            html += buildOrderDetails(o, orderLogs[o.id] || []);
-        });
-        content.innerHTML = html;
-        initModalTabs(content);
-        modal.style.display = 'block';
-    });
-
-    [modal, actionModal].forEach(function(m){
-        m.addEventListener('click', function(e){ if(e.target === m) m.style.display = 'none'; });
-    });
-});
-
-function buildOrderDetails(order, logs) {
-    const id = order.id;
-    const detailsTab = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:20px;">
-            <div>
-                <h4>📋 Bestellinformationen</h4>
-                <p><strong>Bestellnummer:</strong> #${id}</p>
-                <p><strong>Datum:</strong> ${new Date(order.created_at).toLocaleString('de-DE')}</p>
-                <p><strong>Preis:</strong> ${parseFloat(order.final_price).toFixed(2).replace('.', ',')}€${order.mode === 'kauf' ? '' : '/Monat'}</p>
-                ${(order.shipping_name || order.shipping_cost > 0) ? `<p><strong>Versand:</strong> ${order.shipping_name ? order.shipping_name : 'Versand'}${order.shipping_cost > 0 ? ' - ' + parseFloat(order.shipping_cost).toFixed(2).replace('.', ',') + '€' : ''}</p>` : ''}
-                <p><strong>Rabatt:</strong> ${order.discount_amount > 0 ? '-' + parseFloat(order.discount_amount).toFixed(2).replace('.', ',') + '€' : '–'}</p>
-            </div>
-            <div>
-                <h4>👤 Kundendaten</h4>
-                <p><strong>Name:</strong> ${order.customer_name || 'Nicht angegeben'}</p>
-                <p><strong>E-Mail:</strong> ${order.customer_email || 'Nicht angegeben'}</p>
-                <p><strong>Telefon:</strong> ${order.customer_phone || 'Nicht angegeben'}</p>
-                <p><strong>Adresse:</strong> ${order.customer_street ? order.customer_street + ', ' + order.customer_postal + ' ' + order.customer_city + ', ' + order.customer_country : 'Nicht angegeben'}</p>
-            </div>
-        </div>`;
-
-    let extrasTab = `<h4>🛍️ Produktauswahl</h4><ul>
-            <li><strong>Ausführung:</strong> ${order.variant_name}</li>
-            <li><strong>Extra:</strong> ${order.extra_names}</li>
-            <li><strong>${order.mode === 'kauf' ? 'Miettage' : 'Mietdauer'}:</strong> ${order.rental_days ? order.rental_days : order.duration_name}</li>
-            ${order.start_date && order.end_date ? `<li><strong>Zeitraum:</strong> ${new Date(order.start_date).toLocaleDateString('de-DE')} - ${new Date(order.end_date).toLocaleDateString('de-DE')}</li>` : ''}
-            ${order.condition_name ? `<li><strong>Zustand:</strong> ${order.condition_name}</li>` : ''}
-            ${order.product_color_name ? `<li><strong>Produktfarbe:</strong> ${order.product_color_name}</li>` : ''}
-            ${order.frame_color_name ? `<li><strong>Gestellfarbe:</strong> ${order.frame_color_name}</li>` : ''}
-        </ul>`;
-
-    if (logs.length) {
-        extrasTab += '<h4>📑 Verlauf</h4><ul>';
-        logs.forEach(function(l){
-            const date = new Date(l.created_at).toLocaleString('de-DE');
-            extrasTab += `<li>[${date}] ${l.event}${l.message ? ' - ' + l.message : ''}</li>`;
-        });
-        extrasTab += '</ul>';
-    }
-
-    const actionsTab = `<p><em>Aktionen folgen…</em></p>`;
-
-    return `
-        <div class="order-section">
-            <h4 class="order-heading">Bestellung #${id}</h4>
-            <div class="modal-tabs">
-                <button class="modal-tab active" data-target="details-${id}">Details</button>
-                <button class="modal-tab" data-target="extras-${id}">Extras</button>
-                <button class="modal-tab" data-target="actions-${id}">Aktionen</button>
-            </div>
-            <div class="modal-tab-content" id="details-${id}">${detailsTab}</div>
-            <div class="modal-tab-content hidden" id="extras-${id}">${extrasTab}</div>
-            <div class="modal-tab-content hidden" id="actions-${id}">${actionsTab}</div>
-        </div>`;
-}
-
-function initModalTabs(root){
-    root.querySelectorAll('.modal-tabs').forEach(function(tabContainer){
-        tabContainer.querySelectorAll('.modal-tab').forEach(function(btn){
-            btn.addEventListener('click', function(){
-                const parent = btn.closest('.order-section');
-                parent.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
-                parent.querySelectorAll('.modal-tab-content').forEach(c => c.classList.add('hidden'));
-                btn.classList.add('active');
-                const target = parent.querySelector('#' + btn.dataset.target);
-                if (target) target.classList.remove('hidden');
-            });
-        });
-    });
-}
-
-function closeOrderDetails(){
-    document.getElementById('order-details-modal').style.display = 'none';
-}
-
-function closeDayAction(){
-    document.getElementById('day-action-modal').style.display = 'none';
-}
+var produkt_calendar_nonce = '<?php echo wp_create_nonce('produkt_nonce'); ?>';
 </script>

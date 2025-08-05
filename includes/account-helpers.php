@@ -383,10 +383,46 @@ function pv_generate_invoice_pdf($order_id) {
         return false;
     }
 
-    // PDF lokal speichern
+    // PDF lokal speichern in eigenem Unterordner
     $upload_dir = wp_upload_dir();
-    $path = trailingslashit($upload_dir['basedir']) . 'rechnung-' . $order_id . '.pdf';
+    $subdir     = trailingslashit($upload_dir['basedir']) . 'rechnungen-h2-rental-pro/';
+    if (!file_exists($subdir)) {
+        wp_mkdir_p($subdir);
+    }
+
+    $filename = 'rechnung-' . $order_id . '.pdf';
+    $path     = $subdir . $filename;
     file_put_contents($path, $pdf_data);
 
+    // URL speichern
+    global $wpdb;
+    $invoice_url = trailingslashit($upload_dir['baseurl']) . 'rechnungen-h2-rental-pro/' . $filename;
+    $wpdb->update(
+        "{$wpdb->prefix}produkt_orders",
+        ['invoice_url' => $invoice_url],
+        ['id' => $order_id],
+        ['%s'],
+        ['%d']
+    );
+
     return $path;
+}
+
+/**
+ * Return a German greeting based on the current time of day.
+ *
+ * @return string Greeting like "Guten Morgen" or "Guten Abend".
+ */
+function pv_get_time_greeting() {
+    $hour = (int) current_time('H');
+
+    if ($hour >= 6 && $hour < 12) {
+        return 'Guten Morgen';
+    }
+
+    if ($hour >= 12 && $hour < 19) {
+        return 'Hallo';
+    }
+
+    return 'Guten Abend';
 }

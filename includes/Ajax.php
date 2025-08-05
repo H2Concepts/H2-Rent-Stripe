@@ -1797,7 +1797,7 @@ function pv_load_order_sidebar_details() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
     global $wpdb;
-    global $order; // make $order available globally for the template
+    global $order, $order_logs, $order_notes, $sd, $ed, $days; // make variables available to the template
 
     $order_array = pv_get_order_by_id($order_id);
     $order = $order_array ? (object) $order_array : null;
@@ -1814,19 +1814,181 @@ function pv_load_order_sidebar_details() {
     error_log('DEBUG $order in Sidebar: ' . print_r($order, true));
 
     // Logs abrufen
-    $logs = $wpdb->get_results($wpdb->prepare("
-        SELECT * FROM {$wpdb->prefix}produkt_order_logs
-        WHERE order_id = %d ORDER BY created_at DESC
-    ", $order_id));
+    $logs = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}produkt_order_logs
+         WHERE order_id = %d ORDER BY created_at DESC",
+        $order_id
+    ));
+    $order_logs = $logs;
+
+    $order_notes = $wpdb->get_results($wpdb->prepare(
+        "SELECT id, message, created_at FROM {$wpdb->prefix}produkt_order_logs
+         WHERE order_id = %d AND event = 'Notiz' ORDER BY created_at DESC",
+        $order_id
+    ));
 
     // HTML generieren (Template einbinden)
-    global $order; // macht $order im Template sichtbar
+    global $order, $order_logs, $order_notes, $sd, $ed, $days; // macht $order im Template sichtbar
     ob_start();
-$order_data = $order;
-include PRODUKT_PLUGIN_PATH . 'admin/dashboard/sidebar-order-details.php';
-$html = ob_get_clean();
+    $order_data = $order;
+    include PRODUKT_PLUGIN_PATH . 'admin/dashboard/sidebar-order-details.php';
+    $html = ob_get_clean();
 
     wp_send_json_success([
         'html' => $html,
     ]);
+}
+
+add_action('wp_ajax_pv_save_order_note', __NAMESPACE__ . '\\pv_save_order_note');
+function pv_save_order_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $note = sanitize_textarea_field($_POST['note'] ?? '');
+    if (!$order_id || $note === '') {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_order_logs';
+    $wpdb->insert($table, [
+        'order_id'   => $order_id,
+        'event'      => 'Notiz',
+        'message'    => $note,
+        'created_at' => current_time('mysql'),
+    ], [
+        '%d', '%s', '%s', '%s'
+    ]);
+
+    $note_id = $wpdb->insert_id;
+    $date = date_i18n('d.m.Y H:i', current_time('timestamp'));
+    wp_send_json_success(['date' => $date, 'id' => $note_id]);
+}
+
+add_action('wp_ajax_pv_delete_order_note', __NAMESPACE__ . '\\pv_delete_order_note');
+function pv_delete_order_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $note_id = intval($_POST['note_id'] ?? 0);
+    if (!$note_id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_order_logs';
+    $deleted = $wpdb->delete($table, ['id' => $note_id], ['%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('db');
+    }
+}
+
+add_action('wp_ajax_pv_save_customer_note', __NAMESPACE__ . '\\pv_save_customer_note');
+function pv_save_customer_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $customer_id = intval($_POST['customer_id'] ?? 0);
+    $note = sanitize_textarea_field($_POST['note'] ?? '');
+    if (!$customer_id || $note === '') {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_customer_notes';
+    $inserted = $wpdb->insert($table, [
+        'customer_id' => $customer_id,
+        'message'     => $note,
+        'created_at'  => current_time('mysql'),
+    ], ['%d','%s','%s']);
+
+    if (!$inserted) {
+        wp_send_json_error('db');
+    }
+
+    $note_id = $wpdb->insert_id;
+    $date = date_i18n('d.m.Y H:i', current_time('timestamp'));
+    wp_send_json_success(['date' => $date, 'id' => $note_id]);
+}
+
+add_action('wp_ajax_pv_delete_customer_note', __NAMESPACE__ . '\\pv_delete_customer_note');
+function pv_delete_customer_note() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $note_id = intval($_POST['note_id'] ?? 0);
+    if (!$note_id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_customer_notes';
+    $deleted = $wpdb->delete($table, ['id' => $note_id], ['%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('db');
+    }
+}
+
+add_action('wp_ajax_pv_load_customer_logs', __NAMESPACE__ . '\\pv_load_customer_logs');
+function pv_load_customer_logs() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_ids = isset($_POST['order_ids']) ? array_map('intval', (array)$_POST['order_ids']) : [];
+    $offset = intval($_POST['offset'] ?? 0);
+    if (!$order_ids) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
+    $params = $order_ids;
+    $params[] = $offset;
+    $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5 OFFSET %d";
+    $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
+
+    ob_start();
+    foreach ($logs as $log) {
+        echo '<li>' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')) . '</li>';
+    }
+    $html = ob_get_clean();
+
+    wp_send_json_success(['html' => $html, 'count' => count($logs)]);
+}
+
+add_action('wp_ajax_pv_set_default_shipping', __NAMESPACE__ . '\\pv_set_default_shipping');
+function pv_set_default_shipping() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $id = intval($_POST['id'] ?? 0);
+    if (!$id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_shipping_methods';
+    $wpdb->query("UPDATE $table SET is_default = 0");
+    $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+
+    wp_send_json_success();
 }
