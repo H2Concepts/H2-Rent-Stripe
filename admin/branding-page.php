@@ -150,6 +150,12 @@ foreach ($results as $result) {
     
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <button type="submit" name="submit_branding" class="icon-btn branding-save-btn" aria-label="Speichern">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+            </svg>
+        </button>
         <h2>🏢 Plugin-Informationen</h2>
         <table class="form-table">
             <tr>
@@ -254,7 +260,6 @@ foreach ($results as $result) {
             </tr>
         </table>
         
-        <?php submit_button('💾 Branding-Einstellungen speichern', 'primary', 'submit_branding', false, array('style' => 'font-size: 16px; padding: 10px 20px;')); ?>
     </form>
     
     <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px;">
