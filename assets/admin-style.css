@@ -2023,13 +2023,53 @@ body.shipping-modal-open {
 
 .settings-menu a.active {
     background: #1d2327;
-    color: #fff;
 }
 
 .settings-menu a svg {
     width: 24px;
     height: 24px;
     color: inherit;
+}
+
+.settings-menu svg.active.email-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.settings-menu svg.active.popup-icon {
+    width: 24px;
+    height: 24px;
+    color: inherit;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.settings-menu svg.active.branding-icon {
+    width: 24px;
+    height: 24px;
+    color: inherit;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.settings-menu svg.active.stripe-icon {
+    width: 24px;
+    height: 24px;
+    fill: #FFFFFF;
+}
+
+.settings-menu svg.active.buttons-icon {
+    width: 24px;
+    height: 24px;
+    fill: #FFFFFF;
+}
+
+.settings-menu svg.active.notifications-icon {
+    width: 24px;
+    height: 24px;
+    fill: #FFFFFF;
 }
 
 .settings-content {
