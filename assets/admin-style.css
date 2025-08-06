@@ -3745,10 +3745,15 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     bottom: 20px;
     right: 20px;
     z-index: 1000;
+    background: #000;
+    border-radius: 999px;
+    padding: 10px;
 }
 .branding-save-btn svg {
-    width: 48px;
-    height: 48px;
+    width: 30px;
+    height: 30px;
+    fill: #FFFFFF;
+    stroke: #000000;
 }
 
 /* Sidebar order details extras */
