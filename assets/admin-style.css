@@ -3761,18 +3761,16 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 }
 
 .key-input-wrapper {
-    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
 .key-input-wrapper input {
-    padding-right: 40px;
+    flex: 1;
 }
 
 .key-toggle {
-    position: absolute;
-    top: 50%;
-    right: 10px;
-    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
