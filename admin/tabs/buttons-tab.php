@@ -57,15 +57,22 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                     </div>
                     <div class="produkt-form-group">
                         <label>Button-Icon</label>
-                        <div class="produkt-upload-area">
-                            <input type="url" name="button_icon" id="ui_button_icon" value="<?php echo esc_attr($ui['button_icon']); ?>">
-                            <button type="button" class="button produkt-media-button" data-target="ui_button_icon">📁</button>
+                        <div class="image-field-row">
+                            <div id="button_icon_preview" class="image-preview">
+                                <?php if (!empty($ui['button_icon'])): ?>
+                                    <img src="<?php echo esc_url($ui['button_icon']); ?>" alt="">
+                                <?php else: ?>
+                                    <span>Noch kein Bild vorhanden</span>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="icon-btn icon-btn-eye produkt-media-button" data-target="button_icon" aria-label="Bild auswählen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                            <button type="button" class="icon-btn produkt-remove-image" data-target="button_icon" aria-label="Bild entfernen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                            </button>
                         </div>
-                        <?php if (!empty($ui['button_icon'])): ?>
-                        <div class="produkt-icon-preview">
-                            <img src="<?php echo esc_url($ui['button_icon']); ?>" alt="Button Icon">
-                        </div>
-                        <?php endif; ?>
+                        <input type="hidden" name="button_icon" id="button_icon" value="<?php echo esc_attr($ui['button_icon']); ?>">
                     </div>
                     <div class="produkt-form-group">
                         <label>Preis-Label</label>
@@ -159,18 +166,28 @@ $last_order_nr = get_option('produkt_last_order_number', '');
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.produkt-media-button').forEach(function(button){
-        button.addEventListener('click', function(e){
+    document.querySelectorAll('.produkt-media-button').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
-            const targetId = this.getAttribute('data-target');
-            const targetInput = document.getElementById(targetId);
-            if(!targetInput) return;
-            const mediaUploader = wp.media({title:'Bild auswählen',button:{text:'Bild verwenden'},multiple:false});
-            mediaUploader.on('select', function(){
-                const attachment = mediaUploader.state().get('selection').first().toJSON();
-                targetInput.value = attachment.url;
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
+            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function() {
+                const attachment = frame.state().get('selection').first().toJSON();
+                target.value = attachment.url;
+                if (preview) {
+                    preview.innerHTML = '<img src="' + attachment.url + '" alt="">';
+                }
             });
-            mediaUploader.open();
+            frame.open();
+        });
+    });
+    document.querySelectorAll('.produkt-remove-image').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
+            if(target){ target.value = ''; }
+            if(preview){ preview.innerHTML = '<span>Noch kein Bild vorhanden</span>'; }
         });
     });
 });

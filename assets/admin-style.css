@@ -3723,6 +3723,11 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     stroke: none;
     stroke-width: 0;
 }
+.icon-btn-eye svg {
+    fill: none;
+    stroke: #1e1e1e;
+    stroke-width: 2px;
+}
 .icon-btn + .icon-btn {
     margin-left: 8px;
 }
