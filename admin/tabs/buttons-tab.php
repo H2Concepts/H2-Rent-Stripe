@@ -65,8 +65,8 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                                     <span>Noch kein Bild vorhanden</span>
                                 <?php endif; ?>
                             </div>
-                            <button type="button" class="icon-btn icon-btn-eye produkt-media-button" data-target="button_icon" aria-label="Bild auswählen">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <button type="button" class="icon-btn produkt-media-button" data-target="button_icon" aria-label="Bild auswählen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             </button>
                             <button type="button" class="icon-btn produkt-remove-image" data-target="button_icon" aria-label="Bild entfernen">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
@@ -165,31 +165,28 @@ $last_order_nr = get_option('produkt_last_order_number', '');
     </form>
 </div>
 <script>
-jQuery(function($){
-    $('.produkt-media-button').on('click', function(e){
-        e.preventDefault();
-        const target  = $('#' + $(this).data('target'));
-        const preview = $('#' + $(this).data('target') + '_preview');
-        const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
-        frame.on('select', function(){
-            const attachment = frame.state().get('selection').first().toJSON();
-            target.val(attachment.url);
-            preview.html('<img src="' + attachment.url + '" alt="">');
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.produkt-media-button').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
+            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function() {
+                const attachment = frame.state().get('selection').first().toJSON();
+                if (target) { target.value = attachment.url; }
+                if (preview) { preview.innerHTML = '<img src="' + attachment.url + '" alt="">'; }
+            });
+            frame.open();
         });
-        frame.open();
     });
-
-    $('.produkt-remove-image').on('click', function(){
-        const target  = $('#' + $(this).data('target'));
-        const preview = $('#' + $(this).data('target') + '_preview');
-        target.val('');
-        preview.html('<span>Noch kein Bild vorhanden</span>');
-    });
-
-    $('.image-preview').each(function(){
-        if (!$(this).text().trim() && $(this).find('img').length === 0) {
-            $(this).html('<span>Noch kein Bild vorhanden</span>');
-        }
+    document.querySelectorAll('.produkt-remove-image').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
+            if (target) { target.value = ''; }
+            if (preview) { preview.innerHTML = '<span>Noch kein Bild vorhanden</span>'; }
+        });
     });
 });
 </script>
