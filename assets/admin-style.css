@@ -2027,8 +2027,9 @@ body.shipping-modal-open {
 }
 
 .settings-menu a svg {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
+    color: inherit;
 }
 
 .settings-content {
