@@ -2011,19 +2011,24 @@ body.shipping-modal-open {
 }
 
 .settings-menu a {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: inherit;
+    color: #000;
 }
 
 .settings-menu a.active {
     background: #1d2327;
     color: #fff;
+}
+
+.settings-menu a svg {
+    width: 30px;
+    height: 30px;
 }
 
 .settings-content {
