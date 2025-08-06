@@ -1810,9 +1810,6 @@ function pv_load_order_sidebar_details() {
     list($sd, $ed) = pv_get_order_period($order);
     $days = pv_get_order_rental_days($order);
 
-    // 🔍 Debug-Ausgabe (in debug.log sichtbar!)
-    error_log('DEBUG $order in Sidebar: ' . print_r($order, true));
-
     // Logs abrufen
     $logs = $wpdb->get_results($wpdb->prepare(
         "SELECT * FROM {$wpdb->prefix}produkt_order_logs
