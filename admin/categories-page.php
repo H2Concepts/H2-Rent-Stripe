@@ -19,11 +19,18 @@ $selected_prodcat  = $selected_prodcat ?? 0;
 $search_term       = $search_term ?? '';
 $active_tab        = $active_tab ?? 'list';
 $edit_item         = $edit_item ?? null;
+
+$subline_text = 'Produkte verwalten';
+if ($active_tab === 'add') {
+    $subline_text = 'Erstellen Sie eine Produkt und Produktseite mit individuellen Einstellungen und Konfigurationen.';
+} elseif ($active_tab === 'edit' && $edit_item) {
+    $subline_text = 'Bearbeiten Sie das Produkt "' . esc_html($edit_item->name) . '" mit allen Einstellungen und Inhalten.';
+}
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Produkte verwalten</p>
+    <p class="dashboard-subline"><?php echo $subline_text; ?></p>
 
 <?php if ($active_tab === 'list'): ?>
     <div class="dashboard-grid">

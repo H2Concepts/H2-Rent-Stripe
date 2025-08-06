@@ -2070,6 +2070,31 @@ body.shipping-modal-open {
     fill: #FFFFFF;
 }
 
+.settings-menu svg.active.general-icon,
+.settings-menu svg.active.product-icon,
+.settings-menu svg.active.features-icon,
+.settings-menu svg.active.filter-icon,
+.settings-menu svg.active.inventory-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.feature-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+}
+
+.produkt-subtab-content {
+    display: none;
+}
+
+.produkt-subtab-content.active {
+    display: block;
+}
+
 .settings-content {
     flex: 1;
     display: flex;
@@ -3817,7 +3842,8 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .buttons-save-btn,
 .email-save-btn,
 .extras-save-btn,
-.variants-save-btn {
+.variants-save-btn,
+.categories-save-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -3832,7 +3858,8 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .buttons-save-btn svg,
 .email-save-btn svg,
 .extras-save-btn svg,
-.variants-save-btn svg {
+.variants-save-btn svg,
+.categories-save-btn svg {
     width: 30px;
     height: 30px;
     fill: #FFFFFF;
