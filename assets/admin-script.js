@@ -46,7 +46,7 @@ jQuery(document).ready(function($) {
     });
 
     // Auto-format price inputs
-    $('input[name="base_price"], input[name="price"], input[name="price_from"]').on('blur', function() {
+    $('input[name="base_price"], input[name="price"], input[name="price_from"], input[name="sale_price"], input[name="mietpreis_monatlich"], input[name="verkaufspreis_einmalig"]').on('blur', function() {
         var value = parseFloat($(this).val());
         if (!isNaN(value)) {
             $(this).val(value.toFixed(2));
