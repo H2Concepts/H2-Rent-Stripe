@@ -21,6 +21,14 @@ $selected_filters = $wpdb->get_col(
         $edit_item->id
     )
 );
+$all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
+$selected_product_cats = $wpdb->get_col(
+    $wpdb->prepare(
+        "SELECT category_id FROM {$wpdb->prefix}produkt_product_to_category WHERE produkt_id = %d",
+        $edit_item->id
+    )
+);
+$modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
 <div class="produkt-edit-category">
@@ -51,91 +59,288 @@ $selected_filters = $wpdb->get_col(
             </nav>
             <div class="settings-content">
                 <div id="tab-general" class="produkt-subtab-content active">
-                    <div class="dashboard-card">
-                        <h2>Grunddaten</h2>
-                        <p class="card-subline">Name und Shortcode</p>
-                        <div class="form-grid">
-                            <div class="produkt-form-group">
-                                <label>Produkt-Name *</label>
-                                <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
-                            </div>
-                            <div class="produkt-form-group">
-                                <label>Shortcode-Bezeichnung *</label>
-                                <input type="text" name="shortcode" value="<?php echo esc_attr($edit_item->shortcode); ?>" pattern="[a-z0-9_-]+" required>
-                                <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card">
-                        <h2>Produktbild</h2>
-                        <p class="card-subline">Vorschau</p>
-                        <div class="form-grid">
-                            <div class="produkt-form-group full-width">
-                                <label>Standard-Produktbild</label>
-                                <div class="image-field-row">
-                                    <div id="default_image_preview" class="image-preview">
-                                        <?php if (!empty($edit_item->default_image)): ?>
-                                        <img src="<?php echo esc_url($edit_item->default_image); ?>" alt="">
-                                        <?php else: ?><span>Noch kein Bild vorhanden</span><?php endif; ?>
-                                    </div>
-                                    <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="default_image" aria-label="Bild auswählen">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
-                                    </button>
-                                    <button type="button" class="icon-btn produkt-remove-image" data-target="default_image" aria-label="Bild entfernen">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8Z"/></svg>
-                                    </button>
+                    <div class="produkt-form-sections">
+                        <div class="dashboard-card">
+                            <h2>Grunddaten</h2>
+                            <p class="card-subline">Name und Shortcode</p>
+                            <div class="form-grid">
+                                <div class="produkt-form-group">
+                                    <label>Produkt-Name *</label>
+                                    <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                                 </div>
-                                <input type="hidden" name="default_image" id="default_image" value="<?php echo esc_attr($edit_item->default_image); ?>">
-                                <small>Fallback-Bild wenn kein spezifisches Bild vorhanden ist</small>
+                                <div class="produkt-form-group">
+                                    <label>Shortcode-Bezeichnung *</label>
+                                    <input type="text" name="shortcode" value="<?php echo esc_attr($edit_item->shortcode); ?>" pattern="[a-z0-9_-]+" required>
+                                    <small>Nur Kleinbuchstaben, Zahlen, _ und -</small>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="dashboard-card">
-                        <h2>Produktbewertungen</h2>
-                        <p class="card-subline">Anzeige</p>
-                        <div class="form-grid">
-                            <div class="produkt-form-group">
-                                <label class="produkt-toggle-label">
-                                    <input type="checkbox" name="show_reviews" value="1" <?php checked($edit_item->show_reviews ?? 0, 1); ?>>
-                                    <span class="produkt-toggle-slider"></span>
-                                    <span>Produktbewertungen anzeigen</span>
-                                </label>
-                            </div>
+        <div class="dashboard-card">
+            <h2>Produktbild</h2>
+            <p class="card-subline">Vorschau</p>
+            <div class="form-grid">
+                <div class="produkt-form-group full-width">
+                    <label>Standard-Produktbild</label>
+                    <div class="image-field-row">
+                        <div id="default_image_preview" class="image-preview">
+                            <?php if (!empty($edit_item->default_image)): ?>
+                            <img src="<?php echo esc_url($edit_item->default_image); ?>" alt="">
+                            <?php else: ?><span>Noch kein Bild vorhanden</span><?php endif; ?>
                         </div>
+                        <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="default_image" aria-label="Bild auswählen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                        </button>
+                        <button type="button" class="icon-btn produkt-remove-image" data-target="default_image" aria-label="Bild entfernen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8Z"/></svg>
+                        </button>
                     </div>
+                    <input type="hidden" name="default_image" id="default_image" value="<?php echo esc_attr($edit_item->default_image); ?>">
+                    <small>Fallback-Bild wenn kein spezifisches Bild vorhanden ist</small>
+                </div>
+            </div>
+        </div>
 
-                    <div class="dashboard-card">
-                        <h2>Sortierung</h2>
-                        <p class="card-subline">Reihenfolge im Shop</p>
-                        <div class="form-grid">
-                            <div class="produkt-form-group">
-                                <label>Sortierung</label>
-                                <input type="number" name="sort_order" value="<?php echo esc_attr($edit_item->sort_order); ?>" min="0">
-                            </div>
-                        </div>
+        <div class="dashboard-card">
+            <h2>Produktbewertungen</h2>
+            <p class="card-subline">Anzeige</p>
+            <div class="form-grid">
+                <div class="produkt-form-group full-width">
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="show_reviews" value="1" <?php checked($edit_item->show_reviews ?? 0, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Produktbewertungen anzeigen</span>
+                    </label>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Sterne-Bewertung (1-5)</label>
+                    <input type="number" name="rating_value" value="<?php echo esc_attr($edit_item->rating_value); ?>" step="0.1" min="1" max="5">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Bewertungs-Link</label>
+                    <input type="url" name="rating_link" value="<?php echo esc_attr($edit_item->rating_link); ?>">
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2>SEO-Einstellungen</h2>
+            <p class="card-subline">Meta-Tags</p>
+            <div class="form-grid">
+                <div class="produkt-form-group">
+                    <label>SEO-Titel</label>
+                    <input type="text" name="meta_title" value="<?php echo esc_attr($edit_item->meta_title ?? ''); ?>" maxlength="60">
+                </div>
+                <div class="produkt-form-group full-width">
+                    <label>SEO-Beschreibung</label>
+                    <textarea name="meta_description" rows="2" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2>Sortierung &amp; Kategorien</h2>
+            <p class="card-subline">Reihenfolge und Zuordnung</p>
+            <div class="form-grid">
+                <div class="produkt-form-group">
+                    <label>Sortierung</label>
+                    <input type="number" name="sort_order" value="<?php echo esc_attr($edit_item->sort_order); ?>" min="0">
+                </div>
+                <div class="produkt-form-group full-width">
+                    <label>Kategorien</label>
+                    <select name="product_categories[]" multiple style="width:100%; min-height:100px;">
+                        <?php foreach ($all_product_cats as $cat): ?>
+                        <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
+                            <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+        </div>
                     </div>
                 </div>
 
                 <div id="tab-product" class="produkt-subtab-content">
-                    <div class="dashboard-card">
-                        <h2>Produktseite</h2>
-                        <p class="card-subline">Inhalt</p>
-                        <div class="form-grid">
-                            <div class="produkt-form-group full-width">
-                                <label>Kurzbeschreibung</label>
-                                <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description ?? ''); ?></textarea>
-                            </div>
-                            <div class="produkt-form-group full-width">
-                                <label>Produktbeschreibung *</label>
-                                <?php wp_editor($edit_item->product_description ?? '', 'category_product_description_edit', ['textarea_name' => 'product_description', 'textarea_rows' => 5, 'media_buttons' => false]); ?>
+                    <div class="produkt-form-sections">
+                        <div class="dashboard-card">
+                            <h2>Produktseite</h2>
+                            <p class="card-subline">Inhalt</p>
+                            <div class="form-grid">
+                                <div class="produkt-form-group full-width">
+                                    <label>Kurzbeschreibung</label>
+                                    <textarea name="short_description" rows="2"><?php echo esc_textarea($edit_item->short_description ?? ''); ?></textarea>
+                                </div>
+                                <div class="produkt-form-group full-width">
+                                    <label>Produktbeschreibung *</label>
+                                    <?php wp_editor($edit_item->product_description ?? '', 'category_product_description_edit', ['textarea_name' => 'product_description', 'textarea_rows' => 5, 'media_buttons' => false]); ?>
+                                </div>
                             </div>
                         </div>
+
+        <div class="dashboard-card">
+            <h2>Einstellungen</h2>
+            <p class="card-subline">Layout-Auswahl</p>
+            <div class="form-grid">
+                <div class="produkt-form-group">
+                    <label>Layout-Stil</label>
+                    <select name="layout_style">
+                        <option value="default" <?php selected($edit_item->layout_style ?? 'default', 'default'); ?>>Standard (Horizontal)</option>
+                        <option value="grid" <?php selected($edit_item->layout_style ?? 'default', 'grid'); ?>>Grid (Karten-Layout)</option>
+                        <option value="list" <?php selected($edit_item->layout_style ?? 'default', 'list'); ?>>Liste (Vertikal)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <?php
+            $page_blocks = !empty($edit_item->page_blocks) ? json_decode($edit_item->page_blocks, true) : [];
+            if (!is_array($page_blocks) || empty($page_blocks)) {
+                $page_blocks = [['title' => '', 'text' => '', 'image' => '', 'alt' => '']];
+            }
+        ?>
+        <div class="dashboard-card">
+            <h2>Content Blöcke</h2>
+            <p class="card-subline">Text &amp; Bild</p>
+            <div id="page-blocks-container">
+                <?php foreach ($page_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="form-grid">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="page_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-page-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="page_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <?php
+            $detail_blocks = !empty($edit_item->detail_blocks) ? json_decode($edit_item->detail_blocks, true) : [];
+            if (!is_array($detail_blocks) || empty($detail_blocks)) {
+                $detail_blocks = [['title' => '', 'text' => '']];
+            }
+        ?>
+        <div class="dashboard-card">
+            <h2>Details</h2>
+            <p class="card-subline">Auflistung</p>
+            <div id="details-blocks-container">
+                <?php foreach ($detail_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="form-grid">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="detail_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-detail-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="detail_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-detail-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <?php
+            $tech_blocks = !empty($edit_item->tech_blocks) ? json_decode($edit_item->tech_blocks, true) : [];
+            if (!is_array($tech_blocks) || empty($tech_blocks)) {
+                $tech_blocks = [['title' => '', 'text' => '']];
+            }
+        ?>
+        <div class="dashboard-card">
+            <h2>Technische Daten</h2>
+            <p class="card-subline">Informationen</p>
+            <div id="tech-blocks-container">
+                <?php foreach ($tech_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="form-grid">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="tech_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-tech-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="tech_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-tech-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <?php
+            $scope_blocks = !empty($edit_item->scope_blocks) ? json_decode($edit_item->scope_blocks, true) : [];
+            if (!is_array($scope_blocks) || empty($scope_blocks)) {
+                $scope_blocks = [['title' => '', 'text' => '']];
+            }
+        ?>
+        <div class="dashboard-card">
+            <h2>Lieferumfang</h2>
+            <p class="card-subline">Inhalt</p>
+            <div id="scope-blocks-container">
+                <?php foreach ($scope_blocks as $idx => $block): ?>
+                <div class="produkt-page-block">
+                    <div class="form-grid">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="scope_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-scope-block">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Text</label>
+                        <textarea name="scope_block_texts[]" rows="3"><?php echo esc_textarea($block['text']); ?></textarea>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-scope-block" class="button">+ Block hinzufügen</button>
+        </div>
+
+        <?php
+            $accordion_data = !empty($edit_item->accordion_data) ? json_decode($edit_item->accordion_data, true) : [];
+            if (!is_array($accordion_data) || empty($accordion_data)) {
+                $accordion_data = [['title' => '', 'content' => '']];
+            }
+        ?>
+        <div class="dashboard-card">
+            <h2>Accordion</h2>
+            <p class="card-subline">Bereiche</p>
+            <div id="accordion-container">
+                <?php foreach ($accordion_data as $idx => $acc): ?>
+                <div class="produkt-accordion-group">
+                    <div class="form-grid">
+                        <div class="produkt-form-group" style="flex:1;">
+                            <label>Titel</label>
+                            <input type="text" name="accordion_titles[]" value="<?php echo esc_attr($acc['title']); ?>">
+                        </div>
+                        <button type="button" class="button produkt-remove-accordion">-</button>
+                    </div>
+                    <div class="produkt-form-group">
+                        <?php wp_editor($acc['content'], 'accordion_content_' . $idx . '_edit', ['textarea_name' => 'accordion_contents[]', 'textarea_rows' => 3, 'media_buttons' => false]); ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-accordion" class="button">+ Accordion hinzufügen</button>
+        </div>
                     </div>
                 </div>
 
                 <div id="tab-features" class="produkt-subtab-content">
+                    <div class="produkt-form-sections">
                     <div class="dashboard-card">
                         <h2>Features-Sektion</h2>
                         <p class="card-subline">Anzeige</p>
@@ -180,9 +385,11 @@ $selected_filters = $wpdb->get_col(
                         </div>
                         <?php endfor; ?>
                     </div>
+                    </div>
                 </div>
 
                 <div id="tab-filters" class="produkt-subtab-content">
+                    <div class="produkt-form-sections">
                     <div class="dashboard-card">
                         <div class="card-header-flex">
                             <div>
@@ -208,13 +415,98 @@ $selected_filters = $wpdb->get_col(
                             <?php endforeach; ?>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div id="tab-inventory" class="produkt-subtab-content">
-                    <div class="dashboard-card">
-                        <h2>Lagerverwaltung</h2>
-                        <p class="card-subline">Optionen</p>
-                        <p>Keine Lagerverwaltung verfügbar.</p>
+                    <div class="produkt-form-sections">
+                        <div class="dashboard-card">
+                            <h2>Lagerverwaltung</h2>
+                            <p class="card-subline">Bestände</p>
+                            <?php
+                                $variants = $wpdb->get_results(
+                                    $wpdb->prepare(
+                                        "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+                                        $edit_item->id
+                                    )
+                                );
+                                $extras = $wpdb->get_results(
+                                    $wpdb->prepare(
+                                        "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order, name",
+                                        $edit_item->id
+                                    )
+                                );
+                            ?>
+                            <?php if (empty($variants) && empty($extras)): ?>
+                            <p>Keine Lagerverwaltung verfügbar.</p>
+                            <?php else: ?>
+                            <?php if (!empty($variants)): ?>
+                            <h3>Ausführungen</h3>
+                            <table class="activity-table">
+                                <thead>
+                                    <tr><th>Ausführung</th><th>Preis</th><th>Verfügbar</th><th>In Vermietung</th><th>SKU</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($variants as $v): ?>
+                                    <tr>
+                                        <td><?php echo esc_html($v->name); ?></td>
+                                        <?php $price_val = ($modus === 'kauf') ? $v->verkaufspreis_einmalig : $v->base_price; ?>
+                                        <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                        <td class="inventory-cell">
+                                            <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
+                                                <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="inventory-cell">
+                                            <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
+                                                <span class="inventory-rented-count"><?php echo intval($v->stock_rented); ?></span>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <?php endif; ?>
+                            <?php if (!empty($extras)): ?>
+                            <h3>Extras</h3>
+                            <table class="activity-table">
+                                <thead>
+                                    <tr><th>Extra</th><th>Preis</th><th>Verfügbar</th><th>In Vermietung</th><th>SKU</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($extras as $e): ?>
+                                    <tr>
+                                        <td><?php echo esc_html($e->name); ?></td>
+                                        <?php
+                                            $display_price = (float) $e->price;
+                                            $price_id = $modus === 'kauf'
+                                                ? ($e->stripe_price_id_sale ?: ($e->stripe_price_id ?? ''))
+                                                : ($e->stripe_price_id_rent ?: ($e->stripe_price_id ?? ''));
+                                            if ($price_id) {
+                                                $p = \ProduktVerleih\StripeService::get_price_amount($price_id);
+                                                if (!is_wp_error($p)) { $display_price = $p; }
+                                            }
+                                        ?>
+                                        <td><?php echo number_format((float)$display_price, 2, ',', '.'); ?>€</td>
+                                        <td class="inventory-cell">
+                                            <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
+                                                <span class="inventory-available-count"><?php echo intval($e->stock_available); ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="inventory-cell">
+                                            <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
+                                                <span class="inventory-rented-count"><?php echo intval($e->stock_rented); ?></span>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" name="extra_sku[<?php echo $e->id; ?>]" value="<?php echo esc_attr($e->sku); ?>"></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                            <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>

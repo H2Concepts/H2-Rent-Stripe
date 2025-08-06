@@ -120,6 +120,27 @@ jQuery(document).ready(function($) {
         }
     });
 
+    function initBlockClone(containerSel, addBtnSel, removeClass) {
+        var container = $(containerSel);
+        var addBtn = $(addBtnSel);
+        if (!container.length || !addBtn.length) return;
+        addBtn.on('click', function(e){
+            e.preventDefault();
+            var tmpl = container.find('.produkt-page-block').first().clone();
+            tmpl.find('input,textarea').val('');
+            container.append(tmpl);
+        });
+        container.on('click','.'+removeClass, function(e){
+            e.preventDefault();
+            $(this).closest('.produkt-page-block').remove();
+        });
+    }
+
+    initBlockClone('#page-blocks-container', '#add-page-block', 'produkt-remove-page-block');
+    initBlockClone('#details-blocks-container', '#add-detail-block', 'produkt-remove-detail-block');
+    initBlockClone('#tech-blocks-container', '#add-tech-block', 'produkt-remove-tech-block');
+    initBlockClone('#scope-blocks-container', '#add-scope-block', 'produkt-remove-scope-block');
+
     $('.produkt-color-picker').each(function() {
         var container = $(this);
         var preview = container.find('.produkt-color-preview-circle');
