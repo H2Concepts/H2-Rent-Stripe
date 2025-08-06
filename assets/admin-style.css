@@ -2104,11 +2104,25 @@ body.shipping-modal-open {
 }
 
 .produkt-color-picker {
-    width: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.produkt-color-preview-circle {
+    width: 40px;
     height: 40px;
+    border-radius: 50%;
     border: 1px solid #ddd;
-    border-radius: 4px;
     cursor: pointer;
+}
+
+.produkt-color-picker input[type="text"] {
+    flex: 1;
+}
+
+.produkt-color-picker input[type="color"] {
+    display: none;
 }
 
 

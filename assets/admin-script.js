@@ -120,6 +120,31 @@ jQuery(document).ready(function($) {
         }
     });
 
+    $('.produkt-color-picker').each(function() {
+        var container = $(this);
+        var preview = container.find('.produkt-color-preview-circle');
+        var colorInput = container.find('.produkt-color-input');
+        var textInput = container.find('.produkt-color-value');
+
+        preview.on('click', function() {
+            colorInput.trigger('click');
+        });
+
+        colorInput.on('input change', function() {
+            var val = $(this).val();
+            preview.css('background-color', val);
+            textInput.val(val);
+        });
+
+        textInput.on('input change', function() {
+            var val = $(this).val();
+            if (/^#([A-Fa-f0-9]{6})$/.test(val)) {
+                preview.css('background-color', val);
+                colorInput.val(val);
+            }
+        });
+    });
+
     var accordionIndex = $('#accordion-container .produkt-accordion-group').length;
     $('#add-accordion').on('click', function(e) {
         e.preventDefault();
