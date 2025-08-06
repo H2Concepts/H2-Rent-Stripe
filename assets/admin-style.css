@@ -2731,14 +2731,14 @@ body.shipping-modal-open {
 }
 
 /* Inventory table */
-.produkt-inventory-table .inventory-trigger {
+.inventory-trigger {
     cursor: pointer;
     display: inline-block;
     padding: 4px 8px;
     background: #f1f1f1;
     border-radius: 4px;
 }
-.produkt-inventory-table td {
+.inventory-cell {
     position: relative;
 }
 .inventory-popup {
@@ -2947,7 +2947,6 @@ body.day-modal-open{overflow:hidden;}
     background: #fff;
     border-radius: 20px;
     padding: 1.5rem;
-    margin-right: 20px;
 }
 
 .h2-rental-card {

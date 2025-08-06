@@ -112,10 +112,12 @@ $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
                                 <div class="produkt-form-group">
                                     <label>SEO-Titel</label>
                                     <input type="text" name="meta_title" maxlength="60" placeholder="Optimiert für Suchmaschinen">
+                                    <small>Max. 60 Zeichen für Google <span id="meta_title_counter" class="produkt-char-counter"></span></small>
                                 </div>
                                 <div class="produkt-form-group full-width">
                                     <label>SEO-Beschreibung</label>
                                     <textarea name="meta_description" rows="2" maxlength="160" placeholder="Beschreibung für Suchmaschinen"></textarea>
+                                    <small>Max. 160 Zeichen <span id="meta_description_counter" class="produkt-char-counter"></span></small>
                                 </div>
                             </div>
                         </div>

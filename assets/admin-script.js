@@ -320,6 +320,63 @@ jQuery(document).ready(function($) {
         }
     });
 
+    function updateCharCounter($input, $counter, min, max) {
+        var len = $input.val().length;
+        $counter.text(len + ' Zeichen');
+        $counter.removeClass('ok warning error');
+        if (len > max) { $counter.addClass('error'); }
+        else if (len >= min) { $counter.addClass('ok'); }
+        else { $counter.addClass('warning'); }
+    }
+    var $mtInput = $('input[name="meta_title"]');
+    var $mtCounter = $('#meta_title_counter');
+    if ($mtInput.length && $mtCounter.length) {
+        updateCharCounter($mtInput, $mtCounter, 50, 60);
+        $mtInput.on('input', function(){ updateCharCounter($mtInput, $mtCounter, 50, 60); });
+    }
+    var $mdInput = $('textarea[name="meta_description"]');
+    var $mdCounter = $('#meta_description_counter');
+    if ($mdInput.length && $mdCounter.length) {
+        updateCharCounter($mdInput, $mdCounter, 150, 160);
+        $mdInput.on('input', function(){ updateCharCounter($mdInput, $mdCounter, 150, 160); });
+    }
+
+    $(document).on('click', '.inventory-trigger', function(e){
+        e.preventDefault();
+        var id = $(this).data('variant') || $(this).data('extra');
+        var popup = $('#inv-popup-' + id);
+        if (popup.length) {
+            $('.inventory-popup').not(popup).hide();
+            popup.toggle();
+        }
+    });
+    $(document).on('click', '.inventory-popup .inv-minus', function(){
+        var target = $('#' + $(this).data('target'));
+        if (target.length) {
+            var val = parseInt(target.val()) || 0;
+            target.val(Math.max(0, val - 1)).trigger('input');
+        }
+    });
+    $(document).on('click', '.inventory-popup .inv-plus', function(){
+        var target = $('#' + $(this).data('target'));
+        if (target.length) {
+            var val = parseInt(target.val()) || 0;
+            target.val(val + 1).trigger('input');
+        }
+    });
+    $(document).on('input', '.inventory-popup input', function(){
+        var id = this.id.replace(/^(avail|rent)-/, '');
+        var avail = $('#avail-' + id).val();
+        var rent = $('#rent-' + id).val();
+        $('.inventory-trigger[data-variant="' + id + '"] .inventory-available-count, .inventory-trigger[data-extra="' + id + '"] .inventory-available-count').text(avail);
+        $('.inventory-trigger[data-variant="' + id + '"] .inventory-rented-count, .inventory-trigger[data-extra="' + id + '"] .inventory-rented-count').text(rent);
+    });
+    $(document).on('click', function(e){
+        if (!$(e.target).closest('.inventory-cell').length) {
+            $('.inventory-popup').hide();
+        }
+    });
+
     var dayCard = $('#day-orders-card');
     if (dayCard.length) {
         var body = $('#day-orders-body');

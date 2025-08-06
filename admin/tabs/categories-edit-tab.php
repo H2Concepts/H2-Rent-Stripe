@@ -130,10 +130,12 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                 <div class="produkt-form-group">
                     <label>SEO-Titel</label>
                     <input type="text" name="meta_title" value="<?php echo esc_attr($edit_item->meta_title ?? ''); ?>" maxlength="60">
+                    <small>Max. 60 Zeichen für Google <span id="meta_title_counter" class="produkt-char-counter"></span></small>
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>SEO-Beschreibung</label>
                     <textarea name="meta_description" rows="2" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
+                    <small>Max. 160 Zeichen <span id="meta_description_counter" class="produkt-char-counter"></span></small>
                 </div>
             </div>
         </div>
@@ -456,6 +458,20 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                                             <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
                                                 <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
                                             </div>
+                                            <div class="inventory-popup" id="inv-popup-<?php echo $v->id; ?>">
+                                                <label>Verfügbar</label>
+                                                <div class="quantity-control">
+                                                    <button type="button" class="inv-minus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">-</button>
+                                                    <input type="number" id="avail-<?php echo $v->id; ?>" name="stock_available[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_available); ?>" min="0">
+                                                    <button type="button" class="inv-plus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">+</button>
+                                                </div>
+                                                <label>In Vermietung</label>
+                                                <div class="quantity-control">
+                                                    <button type="button" class="inv-minus" data-target="rent-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">-</button>
+                                                    <input type="number" id="rent-<?php echo $v->id; ?>" name="stock_rented[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_rented); ?>" min="0">
+                                                    <button type="button" class="inv-plus" data-target="rent-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">+</button>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td class="inventory-cell">
                                             <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
@@ -493,6 +509,20 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                                             <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
                                                 <span class="inventory-available-count"><?php echo intval($e->stock_available); ?></span>
                                             </div>
+        <div class="inventory-popup" id="inv-popup-<?php echo $e->id; ?>">
+            <label>Verfügbar</label>
+            <div class="quantity-control">
+                <button type="button" class="inv-minus" data-target="avail-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">-</button>
+                <input type="number" id="avail-<?php echo $e->id; ?>" name="extra_stock_available[<?php echo $e->id; ?>]" value="<?php echo intval($e->stock_available); ?>" min="0">
+                <button type="button" class="inv-plus" data-target="avail-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">+</button>
+            </div>
+            <label>In Vermietung</label>
+            <div class="quantity-control">
+                <button type="button" class="inv-minus" data-target="rent-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">-</button>
+                <input type="number" id="rent-<?php echo $e->id; ?>" name="extra_stock_rented[<?php echo $e->id; ?>]" value="<?php echo intval($e->stock_rented); ?>" min="0">
+                <button type="button" class="inv-plus" data-target="rent-<?php echo $e->id; ?>" data-extra="<?php echo $e->id; ?>">+</button>
+            </div>
+        </div>
                                         </td>
                                         <td class="inventory-cell">
                                             <div class="inventory-trigger" data-extra="<?php echo $e->id; ?>">
