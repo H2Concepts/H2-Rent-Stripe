@@ -648,11 +648,23 @@
     gap: 20px;
 }
 
-.image-preview img {
-    max-width: 120px;
-    height: auto;
-    border-radius: 4px;
+.image-preview {
+    width: 120px;
+    height: 120px;
     border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9f9f9;
+    overflow: hidden;
+}
+
+.image-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0;
+    border: none;
 }
 
 .image-preview span {
@@ -919,7 +931,7 @@
 }
 
 .produkt-toggle-label input:checked + .produkt-toggle-slider {
-    background: var(--produkt-primary);
+    background: #000000;
 }
 
 .produkt-toggle-label input:checked + .produkt-toggle-slider::before {
@@ -1999,19 +2011,66 @@ body.shipping-modal-open {
 }
 
 .settings-menu a {
-    width: 40px;
-    height: 40px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     text-decoration: none;
-    color: inherit;
+    color: #000;
 }
 
 .settings-menu a.active {
     background: #1d2327;
-    color: #fff;
+}
+
+.settings-menu a svg {
+    width: 24px;
+    height: 24px;
+    color: inherit;
+}
+
+.settings-menu svg.active.email-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.settings-menu svg.active.popup-icon {
+    width: 24px;
+    height: 24px;
+    color: inherit;
+    fill: #ffffff;
+    stroke: none;
+}
+
+.settings-menu svg.active.branding-icon {
+    width: 24px;
+    height: 24px;
+    color: inherit;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.settings-menu svg.active.stripe-icon {
+    width: 24px;
+    height: 24px;
+    fill: #FFFFFF;
+}
+
+.settings-menu svg.active.buttons-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: #FFFFFF;
+}
+
+.settings-menu svg.active.notifications-icon {
+    width: 24px;
+    height: 24px;
+    fill: #FFFFFF;
 }
 
 .settings-content {
@@ -2045,11 +2104,25 @@ body.shipping-modal-open {
 }
 
 .produkt-color-picker {
-    width: 60px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.produkt-color-preview-circle {
+    width: 40px;
     height: 40px;
+    border-radius: 50%;
     border: 1px solid #ddd;
-    border-radius: 4px;
     cursor: pointer;
+}
+
+.produkt-color-picker input[type="text"] {
+    flex: 1;
+}
+
+.produkt-color-picker input[type="color"] {
+    display: none;
 }
 
 
@@ -3738,6 +3811,52 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .bulk-delete-btn svg {
     width: 16px;
     height: 16px;
+}
+
+.branding-save-btn,
+.popup-save-btn,
+.stripe-save-btn,
+.buttons-save-btn,
+.email-save-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: #000;
+    border-radius: 999px;
+    padding: 10px;
+}
+.branding-save-btn svg,
+.popup-save-btn svg,
+.stripe-save-btn svg,
+.buttons-save-btn svg,
+.email-save-btn svg {
+    width: 30px;
+    height: 30px;
+    fill: #FFFFFF;
+    stroke: #000000;
+}
+
+.key-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.key-input-wrapper input {
+    flex: 1;
+}
+
+.key-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.key-toggle svg {
+    width: 20px;
+    height: 20px;
 }
 
 /* Sidebar order details extras */

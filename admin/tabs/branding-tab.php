@@ -79,6 +79,12 @@ if (isset($_POST['submit_branding'])) {
 <div class="produkt-branding-tab">
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <button type="submit" name="submit_branding" class="icon-btn branding-save-btn" aria-label="Speichern">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+            </svg>
+        </button>
         <div class="produkt-form-sections">
             <!-- Plugin Information -->
             <div class="dashboard-card">
@@ -125,48 +131,88 @@ if (isset($_POST['submit_branding'])) {
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Primärfarbe</label>
-                        <input type="color" name="admin_color_primary" value="<?php echo esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $admin_color_primary = esc_attr($branding['admin_color_primary'] ?? '#5f7f5f'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $admin_color_primary; ?>;"></div>
+                            <input type="text" name="admin_color_primary" value="<?php echo $admin_color_primary; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $admin_color_primary; ?>" class="produkt-color-input">
+                        </div>
                         <small>Hauptfarbe für Buttons und Akzente</small>
                     </div>
                     
                     <div class="produkt-form-group">
                         <label>Sekundärfarbe</label>
-                        <input type="color" name="admin_color_secondary" value="<?php echo esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $admin_color_secondary = esc_attr($branding['admin_color_secondary'] ?? '#4a674a'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $admin_color_secondary; ?>;"></div>
+                            <input type="text" name="admin_color_secondary" value="<?php echo $admin_color_secondary; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $admin_color_secondary; ?>" class="produkt-color-input">
+                        </div>
                         <small>Sekundärfarbe für Hover-Effekte und Verläufe</small>
                     </div>
 
                     <div class="produkt-form-group">
                         <label>Textfarbe</label>
-                        <input type="color" name="admin_color_text" value="<?php echo esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $admin_color_text = esc_attr($branding['admin_color_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $admin_color_text; ?>;"></div>
+                            <input type="text" name="admin_color_text" value="<?php echo $admin_color_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $admin_color_text; ?>" class="produkt-color-input">
+                        </div>
                         <small>Farbe für Text auf Buttons und Tabs</small>
                     </div>
 
                     <div class="produkt-form-group">
                         <label>Button-Farbe (Frontend)</label>
-                        <input type="color" name="front_button_color" value="<?php echo esc_attr($branding['front_button_color'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $front_button_color = esc_attr($branding['front_button_color'] ?? '#5f7f5f'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $front_button_color; ?>;"></div>
+                            <input type="text" name="front_button_color" value="<?php echo $front_button_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $front_button_color; ?>" class="produkt-color-input">
+                        </div>
                         <small>Hauptfarbe der Handlungs-Buttons</small>
                     </div>
                     <div class="produkt-form-group">
                         <label>Filter-Button-Farbe</label>
-                        <input type="color" name="filter_button_color" value="<?php echo esc_attr($branding['filter_button_color'] ?? '#5f7f5f'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_color = esc_attr($branding['filter_button_color'] ?? '#5f7f5f'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_color; ?>;"></div>
+                            <input type="text" name="filter_button_color" value="<?php echo $filter_button_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_color; ?>" class="produkt-color-input">
+                        </div>
                         <small>Farbe des mobilen Filter-Buttons</small>
                     </div>
 
                     <div class="produkt-form-group">
                         <label>Textfarbe (Frontend)</label>
-                        <input type="color" name="front_text_color" value="<?php echo esc_attr($branding['front_text_color'] ?? '#4a674a'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $front_text_color = esc_attr($branding['front_text_color'] ?? '#4a674a'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $front_text_color; ?>;"></div>
+                            <input type="text" name="front_text_color" value="<?php echo $front_text_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $front_text_color; ?>" class="produkt-color-input">
+                        </div>
                         <small>Farbe für Preis- und Hinweistexte</small>
                     </div>
 
                     <div class="produkt-form-group">
                         <label>Border-Farbe</label>
-                        <input type="color" name="front_border_color" value="<?php echo esc_attr($branding['front_border_color'] ?? '#a4b8a4'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $front_border_color = esc_attr($branding['front_border_color'] ?? '#a4b8a4'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $front_border_color; ?>;"></div>
+                            <input type="text" name="front_border_color" value="<?php echo $front_border_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $front_border_color; ?>" class="produkt-color-input">
+                        </div>
                         <small>Rahmenfarbe für Optionen</small>
                     </div>
 
                     <div class="produkt-form-group">
                         <label>Button-Textfarbe</label>
-                        <input type="color" name="front_button_text_color" value="<?php echo esc_attr($branding['front_button_text_color'] ?? '#ffffff'); ?>" class="produkt-color-picker">
+                        <div class="produkt-color-picker">
+                            <?php $front_button_text_color = esc_attr($branding['front_button_text_color'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $front_button_text_color; ?>;"></div>
+                            <input type="text" name="front_button_text_color" value="<?php echo $front_button_text_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $front_button_text_color; ?>" class="produkt-color-input">
+                        </div>
                         <small>Textfarbe der Buttons im Frontend</small>
                     </div>
 
@@ -215,9 +261,6 @@ if (isset($_POST['submit_branding'])) {
             </div>
         </div>
         
-        <div class="produkt-form-actions">
-            <?php submit_button('💾 Branding-Einstellungen speichern', 'primary', 'submit_branding', false); ?>
-        </div>
     </form>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
