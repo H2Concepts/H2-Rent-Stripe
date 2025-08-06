@@ -3740,7 +3740,8 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     height: 16px;
 }
 
-.branding-save-btn {
+.branding-save-btn,
+.popup-save-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -3749,7 +3750,8 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     border-radius: 999px;
     padding: 10px;
 }
-.branding-save-btn svg {
+.branding-save-btn svg,
+.popup-save-btn svg {
     width: 30px;
     height: 30px;
     fill: #FFFFFF;
