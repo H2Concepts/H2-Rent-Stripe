@@ -3,11 +3,6 @@
 ?>
 
 <div class="produkt-add-extra">
-    <div class="produkt-form-header dashboard-subline">
-        <h3>Neues Extra hinzufügen</h3>
-        <p>Erstellen Sie ein neues Extra für das Produkt "<?php echo $current_category ? esc_html($current_category->name) : 'Unbekannt'; ?>"</p>
-    </div>
-
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">

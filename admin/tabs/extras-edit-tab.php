@@ -3,11 +3,6 @@
 ?>
 
 <div class="produkt-edit-extra">
-    <div class="produkt-form-header dashboard-subline">
-        <h3>Extra bearbeiten</h3>
-        <p>Bearbeiten Sie das Extra "<?php echo esc_html($edit_item->name); ?>" für das Produkt "<?php echo $current_category ? esc_html($current_category->name) : 'Unbekannt'; ?>"</p>
-    </div>
-
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
@@ -40,12 +35,12 @@
                     <?php if ($modus === 'kauf'): ?>
                     <div class="produkt-form-group">
                         <label>Preis / Tag (EUR) *</label>
-                        <input type="number" step="0.01" name="sale_price" value="<?php echo esc_attr($sale_price); ?>" required>
+                        <input type="number" step="0.01" name="sale_price" value="<?php echo esc_attr(number_format((float)$sale_price, 2, '.', '')); ?>" required>
                     </div>
                     <?php else: ?>
                     <div class="produkt-form-group">
                         <label>Preis (EUR) *</label>
-                        <input type="number" step="0.01" name="price" value="<?php echo esc_attr($edit_item->price); ?>" required>
+                        <input type="number" step="0.01" name="price" value="<?php echo esc_attr(number_format((float)$edit_item->price, 2, '.', '')); ?>" required>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -110,8 +105,7 @@
         <div class="produkt-form-actions">
             <a href="<?php echo admin_url('admin.php?page=produkt-extras&category=' . $selected_category . '&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                class="button button-large produkt-delete-button"
-               onclick="return confirm('Sind Sie sicher, dass Sie dieses Extra löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" wird unwiderruflich gelöscht!')"
-               style="margin-left: auto;">
+               onclick="return confirm('Sind Sie sicher, dass Sie dieses Extra löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" wird unwiderruflich gelöscht!')">
                 🗑️ Löschen
             </a>
         </div>
