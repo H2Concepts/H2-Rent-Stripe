@@ -470,7 +470,11 @@ if (!$customer_id) {
                                 <td><?php echo esc_html($o->category_name); ?></td>
                                 <td><?php echo esc_html($o->variant_name ?: '–'); ?></td>
                                 <td><?php echo esc_html($o->extra_names ?: '–'); ?></td>
-                                <td><?php echo esc_html(date_i18n('d.m.Y', strtotime($o->start_date)) . ' - ' . date_i18n('d.m.Y', strtotime($o->end_date))); ?></td>
+                                <?php
+                                $start = $o->start_date ? date_i18n('d.m.Y', strtotime($o->start_date)) : '–';
+                                $end   = $o->end_date ? date_i18n('d.m.Y', strtotime($o->end_date)) : '–';
+                                ?>
+                                <td><?php echo esc_html($start . ' - ' . $end); ?></td>
                                 <td><?php echo number_format($o->final_price, 2, ',', '.'); ?>€</td>
                                 <td><?php echo esc_html($o->shipping_name ?: '–'); ?><?php if ($o->shipping_cost > 0) : ?> (<?php echo number_format($o->shipping_cost, 2, ',', '.'); ?>€)<?php endif; ?></td>
                                 <td class="details-cell">

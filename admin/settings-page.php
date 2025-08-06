@@ -14,6 +14,16 @@ $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
+
+function produkt_settings_icon($slug, $active_tab)
+{
+    $svg = file_get_contents(PRODUKT_PLUGIN_PATH . 'assets/settings-icons/' . $slug . '.svg');
+    $classes = $slug . '-icon';
+    if ($active_tab === $slug) {
+        $classes .= ' active';
+    }
+    return str_replace('<svg', '<svg class="' . $classes . '"', $svg);
+}
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
@@ -22,12 +32,24 @@ foreach ($branding_results as $result) {
 
     <div class="settings-layout">
         <nav class="settings-menu">
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=branding'); ?>" class="<?php echo $active_tab === 'branding' ? 'active' : ''; ?>" aria-label="Branding" title="Branding">🎨</a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=popup'); ?>" class="<?php echo $active_tab === 'popup' ? 'active' : ''; ?>" aria-label="Popup" title="Popup">📣</a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=stripe'); ?>" class="<?php echo $active_tab === 'stripe' ? 'active' : ''; ?>" aria-label="Stripe" title="Stripe">💳</a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=buttons'); ?>" class="<?php echo $active_tab === 'buttons' ? 'active' : ''; ?>" aria-label="Buttons & Tooltips" title="Buttons & Tooltips">🔘</a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=email'); ?>" class="<?php echo $active_tab === 'email' ? 'active' : ''; ?>" aria-label="E-Mail Versand" title="E-Mail Versand">✉️</a>
-            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications'); ?>" class="<?php echo $active_tab === 'notifications' ? 'active' : ''; ?>" aria-label="Benachrichtigungen" title="Benachrichtigungen">📧</a>
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=branding'); ?>" class="<?php echo $active_tab === 'branding' ? 'active' : ''; ?>" aria-label="Branding" title="Branding">
+                <?php echo produkt_settings_icon('branding', $active_tab); ?>
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=popup'); ?>" class="<?php echo $active_tab === 'popup' ? 'active' : ''; ?>" aria-label="Popup" title="Popup">
+                <?php echo produkt_settings_icon('popup', $active_tab); ?>
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=stripe'); ?>" class="<?php echo $active_tab === 'stripe' ? 'active' : ''; ?>" aria-label="Stripe" title="Stripe">
+                <?php echo produkt_settings_icon('stripe', $active_tab); ?>
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=buttons'); ?>" class="<?php echo $active_tab === 'buttons' ? 'active' : ''; ?>" aria-label="Buttons & Tooltips" title="Buttons & Tooltips">
+                <?php echo produkt_settings_icon('buttons', $active_tab); ?>
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=email'); ?>" class="<?php echo $active_tab === 'email' ? 'active' : ''; ?>" aria-label="E-Mail Versand" title="E-Mail Versand">
+                <?php echo produkt_settings_icon('email', $active_tab); ?>
+            </a>
+            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications'); ?>" class="<?php echo $active_tab === 'notifications' ? 'active' : ''; ?>" aria-label="Benachrichtigungen" title="Benachrichtigungen">
+                <?php echo produkt_settings_icon('notifications', $active_tab); ?>
+            </a>
         </nav>
         <div class="settings-content">
             <?php

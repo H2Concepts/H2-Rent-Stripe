@@ -46,7 +46,7 @@ jQuery(document).ready(function($) {
     });
 
     // Auto-format price inputs
-    $('input[name="base_price"], input[name="price"], input[name="price_from"]').on('blur', function() {
+    $('input[name="base_price"], input[name="price"], input[name="price_from"], input[name="sale_price"], input[name="mietpreis_monatlich"], input[name="verkaufspreis_einmalig"]').on('blur', function() {
         var value = parseFloat($(this).val());
         if (!isNaN(value)) {
             $(this).val(value.toFixed(2));
@@ -118,6 +118,52 @@ jQuery(document).ready(function($) {
         if (swatch.length) {
             swatch.css('background-color', $(this).val());
         }
+    });
+
+    function initBlockClone(containerSel, addBtnSel, removeClass) {
+        var container = $(containerSel);
+        var addBtn = $(addBtnSel);
+        if (!container.length || !addBtn.length) return;
+        addBtn.on('click', function(e){
+            e.preventDefault();
+            var tmpl = container.find('.produkt-page-block').first().clone();
+            tmpl.find('input,textarea').val('');
+            container.append(tmpl);
+        });
+        container.on('click','.'+removeClass, function(e){
+            e.preventDefault();
+            $(this).closest('.produkt-page-block').remove();
+        });
+    }
+
+    initBlockClone('#page-blocks-container', '#add-page-block', 'produkt-remove-page-block');
+    initBlockClone('#details-blocks-container', '#add-detail-block', 'produkt-remove-detail-block');
+    initBlockClone('#tech-blocks-container', '#add-tech-block', 'produkt-remove-tech-block');
+    initBlockClone('#scope-blocks-container', '#add-scope-block', 'produkt-remove-scope-block');
+
+    $('.produkt-color-picker').each(function() {
+        var container = $(this);
+        var preview = container.find('.produkt-color-preview-circle');
+        var colorInput = container.find('.produkt-color-input');
+        var textInput = container.find('.produkt-color-value');
+
+        preview.on('click', function() {
+            colorInput.trigger('click');
+        });
+
+        colorInput.on('input change', function() {
+            var val = $(this).val();
+            preview.css('background-color', val);
+            textInput.val(val);
+        });
+
+        textInput.on('input change', function() {
+            var val = $(this).val();
+            if (/^#([A-Fa-f0-9]{6})$/.test(val)) {
+                preview.css('background-color', val);
+                colorInput.val(val);
+            }
+        });
     });
 
     var accordionIndex = $('#accordion-container .produkt-accordion-group').length;
@@ -271,6 +317,63 @@ jQuery(document).ready(function($) {
             });
         } else {
             $this.prop('checked', true);
+        }
+    });
+
+    function updateCharCounter($input, $counter, min, max) {
+        var len = $input.val().length;
+        $counter.text(len + ' Zeichen');
+        $counter.removeClass('ok warning error');
+        if (len > max) { $counter.addClass('error'); }
+        else if (len >= min) { $counter.addClass('ok'); }
+        else { $counter.addClass('warning'); }
+    }
+    var $mtInput = $('input[name="meta_title"]');
+    var $mtCounter = $('#meta_title_counter');
+    if ($mtInput.length && $mtCounter.length) {
+        updateCharCounter($mtInput, $mtCounter, 50, 60);
+        $mtInput.on('input', function(){ updateCharCounter($mtInput, $mtCounter, 50, 60); });
+    }
+    var $mdInput = $('textarea[name="meta_description"]');
+    var $mdCounter = $('#meta_description_counter');
+    if ($mdInput.length && $mdCounter.length) {
+        updateCharCounter($mdInput, $mdCounter, 150, 160);
+        $mdInput.on('input', function(){ updateCharCounter($mdInput, $mdCounter, 150, 160); });
+    }
+
+    $(document).on('click', '.inventory-trigger', function(e){
+        e.preventDefault();
+        var id = $(this).data('variant') || $(this).data('extra');
+        var popup = $('#inv-popup-' + id);
+        if (popup.length) {
+            $('.inventory-popup').not(popup).hide();
+            popup.toggle();
+        }
+    });
+    $(document).on('click', '.inventory-popup .inv-minus', function(){
+        var target = $('#' + $(this).data('target'));
+        if (target.length) {
+            var val = parseInt(target.val()) || 0;
+            target.val(Math.max(0, val - 1)).trigger('input');
+        }
+    });
+    $(document).on('click', '.inventory-popup .inv-plus', function(){
+        var target = $('#' + $(this).data('target'));
+        if (target.length) {
+            var val = parseInt(target.val()) || 0;
+            target.val(val + 1).trigger('input');
+        }
+    });
+    $(document).on('input', '.inventory-popup input', function(){
+        var id = this.id.replace(/^(avail|rent)-/, '');
+        var avail = $('#avail-' + id).val();
+        var rent = $('#rent-' + id).val();
+        $('.inventory-trigger[data-variant="' + id + '"] .inventory-available-count, .inventory-trigger[data-extra="' + id + '"] .inventory-available-count').text(avail);
+        $('.inventory-trigger[data-variant="' + id + '"] .inventory-rented-count, .inventory-trigger[data-extra="' + id + '"] .inventory-rented-count').text(rent);
+    });
+    $(document).on('click', function(e){
+        if (!$(e.target).closest('.inventory-cell').length) {
+            $('.inventory-popup').hide();
         }
     });
 

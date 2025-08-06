@@ -32,14 +32,33 @@ $popup_options = $popup_settings['options'] ?? '';
 <div class="settings-tab">
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <button type="submit" name="submit_popup" class="icon-btn popup-save-btn" aria-label="Speichern">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+            </svg>
+        </button>
         <div class="dashboard-card">
             <h2>Popup Inhalt</h2>
             <p class="card-subline">Einstellungen für das Hinweis-Popup</p>
             <div class="form-grid">
+                <div class="produkt-form-group full-width">
+                    <label>Titel</label>
+                    <input type="text" name="popup_title" value="<?php echo esc_attr($popup_title); ?>">
+                </div>
                 <div class="produkt-form-group">
-                    <label>
+                    <label>Text</label>
+                    <?php wp_editor($popup_content, 'popup_content', ['textarea_name' => 'popup_content']); ?>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Auswahloptionen (optional, eine pro Zeile)</label>
+                    <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Popup aktivieren</label>
+                    <label class="produkt-toggle-label">
                         <input type="checkbox" name="popup_enabled" value="1" <?php checked($popup_enabled, 1); ?>>
-                        Popup aktivieren
+                        <span class="produkt-toggle-slider"></span>
                     </label>
                 </div>
                 <div class="produkt-form-group">
@@ -47,25 +66,13 @@ $popup_options = $popup_settings['options'] ?? '';
                     <input type="number" name="popup_days" min="0" value="<?php echo esc_attr($popup_days); ?>">
                 </div>
                 <div class="produkt-form-group">
-                    <label>
+                    <label>E-Mail-Feld anzeigen</label>
+                    <label class="produkt-toggle-label">
                         <input type="checkbox" name="popup_email_enabled" value="1" <?php checked($popup_email_enabled, 1); ?>>
-                        E-Mail-Feld anzeigen
+                        <span class="produkt-toggle-slider"></span>
                     </label>
                 </div>
-                <div class="produkt-form-group">
-                    <label>Titel</label>
-                    <input type="text" name="popup_title" value="<?php echo esc_attr($popup_title); ?>">
-                </div>
-                <div class="produkt-form-group full-width">
-                    <label>Text</label>
-                    <?php wp_editor($popup_content, 'popup_content', ['textarea_name' => 'popup_content']); ?>
-                </div>
-                <div class="produkt-form-group full-width">
-                    <label>Auswahloptionen (optional, eine pro Zeile)</label>
-                    <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
-                </div>
             </div>
-            <?php submit_button('💾 Einstellungen speichern', 'primary', 'submit_popup'); ?>
         </div>
     </form>
 </div>

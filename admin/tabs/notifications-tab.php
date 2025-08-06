@@ -55,74 +55,75 @@ $notifications = $wpdb->get_results(
 );
 ?>
 
-<div class="produkt-notifications-tab">
-    <div class="produkt-orders-card">
-        <div class="produkt-orders-header">
-            <h4>📧 Benachrichtigungsanfragen</h4>
+<div class="settings-tab">
+    <div class="produkt-form-sections">
+        <div class="dashboard-card card-activity">
+            <h2>Benachrichtigungsanfragen</h2>
+            <p class="card-subline">Eingegangene Wünsche</p>
             <?php if (!empty($notifications)): ?>
             <div class="produkt-bulk-actions">
                 <button type="button" class="button" onclick="toggleSelectAllNotifications()">Alle auswählen</button>
                 <button type="button" class="button" onclick="deleteSelectedNotifications()" style="color: #dc3232;">Ausgewählte löschen</button>
             </div>
             <?php endif; ?>
-        </div>
-        <?php if (empty($notifications)): ?>
-            <div class="produkt-empty-state">
-                <p>Keine Einträge vorhanden.</p>
+            <?php if (empty($notifications)): ?>
+                <div class="produkt-empty-state">
+                    <p>Keine Einträge vorhanden.</p>
+                </div>
+            <?php else: ?>
+            <div style="overflow-x:auto;">
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><input type="checkbox" id="select-all-notifications"></th>
+                            <th style="width:80px;">ID</th>
+                            <th style="width:140px;">Datum</th>
+                            <th>E-Mail</th>
+                            <th>Details</th>
+                            <th style="width:120px;">Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($notifications as $note): ?>
+                        <tr>
+                            <td><input type="checkbox" class="notification-checkbox" value="<?php echo $note->id; ?>"></td>
+                            <td><strong>#<?php echo $note->id; ?></strong></td>
+                            <td><?php echo date('d.m.Y H:i', strtotime($note->created_at)); ?></td>
+                            <td><?php echo esc_html($note->email); ?></td>
+                            <td>
+                                <?php
+                                    $parts = array();
+                                    if ($note->variant_name) {
+                                        $parts[] = $note->variant_name;
+                                    }
+                                    if ($note->duration_name) {
+                                        $parts[] = 'Mietdauer: ' . $note->duration_name;
+                                    }
+                                    if ($note->condition_name) {
+                                        $parts[] = 'Zustand: ' . $note->condition_name;
+                                    }
+                                    if ($note->product_color_name) {
+                                        $parts[] = 'Produktfarbe: ' . $note->product_color_name;
+                                    }
+                                    if ($note->frame_color_name) {
+                                        $parts[] = 'Gestellfarbe: ' . $note->frame_color_name;
+                                    }
+                                    if ($note->extras_names) {
+                                        $parts[] = 'Extras: ' . $note->extras_names;
+                                    }
+                                    echo esc_html(implode(', ', $parts));
+                                ?>
+                            </td>
+                            <td>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
-        <?php else: ?>
-        <div style="overflow-x:auto;">
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
-                        <th style="width:40px;"><input type="checkbox" id="select-all-notifications"></th>
-                        <th style="width:80px;">ID</th>
-                        <th style="width:140px;">Datum</th>
-                        <th>E-Mail</th>
-                        <th>Details</th>
-                        <th style="width:120px;">Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($notifications as $note): ?>
-                    <tr>
-                        <td><input type="checkbox" class="notification-checkbox" value="<?php echo $note->id; ?>"></td>
-                        <td><strong>#<?php echo $note->id; ?></strong></td>
-                        <td><?php echo date('d.m.Y H:i', strtotime($note->created_at)); ?></td>
-                        <td><?php echo esc_html($note->email); ?></td>
-                        <td>
-                            <?php
-                                $parts = array();
-                                if ($note->variant_name) {
-                                    $parts[] = $note->variant_name;
-                                }
-                                if ($note->duration_name) {
-                                    $parts[] = 'Mietdauer: ' . $note->duration_name;
-                                }
-                                if ($note->condition_name) {
-                                    $parts[] = 'Zustand: ' . $note->condition_name;
-                                }
-                                if ($note->product_color_name) {
-                                    $parts[] = 'Produktfarbe: ' . $note->product_color_name;
-                                }
-                                if ($note->frame_color_name) {
-                                    $parts[] = 'Gestellfarbe: ' . $note->frame_color_name;
-                                }
-                                if ($note->extras_names) {
-                                    $parts[] = 'Extras: ' . $note->extras_names;
-                                }
-                                echo esc_html(implode(', ', $parts));
-                            ?>
-                        </td>
-                        <td>
-                            <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
     </div>
 </div>
 

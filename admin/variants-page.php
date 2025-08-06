@@ -303,11 +303,17 @@ $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
+$subline_text = 'Ausführungen verwalten';
+if ($active_tab === 'add') {
+    $subline_text = 'Erstellen Sie eine neue Ausführung für das Produkt "' . ($current_category ? esc_html($current_category->name) : 'Unbekannt') . '"';
+} elseif ($active_tab === 'edit' && $edit_item) {
+    $subline_text = 'Bearbeiten Sie die Ausführung "' . esc_html($edit_item->name) . '" für das Produkt "' . ($current_category ? esc_html($current_category->name) : 'Unbekannt') . '"';
+}
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Ausführungen verwalten</p>
+    <p class="dashboard-subline"><?php echo $subline_text; ?></p>
 
 <?php if ($active_tab === 'list'): ?>
     <div class="dashboard-grid">

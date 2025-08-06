@@ -143,7 +143,12 @@ $sql_blocks .= ' ORDER BY position';
                 </div>
                 <div class="form-field">
                     <label for="background_color">Hintergrundfarbe</label>
-                    <input type="color" name="background_color" id="background_color" value="<?php echo esc_attr($block->background_color ?? '#ffffff'); ?>">
+                    <div class="produkt-color-picker">
+                        <?php $background_color = esc_attr($block->background_color ?? '#ffffff'); ?>
+                        <div class="produkt-color-preview-circle" style="background-color: <?php echo $background_color; ?>;"></div>
+                        <input type="text" name="background_color" id="background_color" value="<?php echo $background_color; ?>" class="produkt-color-value">
+                        <input type="color" value="<?php echo $background_color; ?>" class="produkt-color-input">
+                    </div>
                 </div>
                 <div class="form-field">
                     <label for="badge_text">Badge-Text</label>
