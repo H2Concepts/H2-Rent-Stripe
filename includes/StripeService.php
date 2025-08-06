@@ -829,38 +829,6 @@ class StripeService {
     }
 
     /**
-     * Remove all cached price transients created by this plugin.
-     */
-    public static function clear_price_cache() {
-        global $wpdb;
-
-        $patterns = [
-            '_transient_produkt_stripe_price_%',
-            '_transient_timeout_produkt_stripe_price_%',
-            '_transient_produkt_stripe_price_formatted_%',
-            '_transient_timeout_produkt_stripe_price_formatted_%',
-            '_transient_produkt_lowest_stripe_price_%',
-            '_transient_timeout_produkt_lowest_stripe_price_%',
-            '_transient_produkt_lowest_price_formatted_%',
-            '_transient_timeout_produkt_lowest_price_formatted_%',
-            '_transient_lowest_price_cache_%',
-            '_transient_timeout_lowest_price_cache_%',
-            '_transient_produkt_stripe_pair_%',
-            '_transient_timeout_produkt_stripe_pair_%',
-        ];
-
-        $options_table = $wpdb->options;
-        foreach ($patterns as $like) {
-            $wpdb->query(
-                $wpdb->prepare(
-                    "DELETE FROM {$options_table} WHERE option_name LIKE %s",
-                    $like
-                )
-            );
-        }
-    }
-
-    /**
      * Process a completed Stripe Checkout Session asynchronously.
      *
      * @param object $session The session object passed from the webhook.

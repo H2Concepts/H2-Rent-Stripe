@@ -46,7 +46,7 @@ jQuery(document).ready(function($) {
     });
 
     // Auto-format price inputs
-    $('input[name="base_price"], input[name="price"], input[name="price_from"]').on('blur', function() {
+    $('input[name="base_price"], input[name="price"], input[name="price_from"], input[name="sale_price"], input[name="mietpreis_monatlich"], input[name="verkaufspreis_einmalig"]').on('blur', function() {
         var value = parseFloat($(this).val());
         if (!isNaN(value)) {
             $(this).val(value.toFixed(2));
@@ -118,6 +118,31 @@ jQuery(document).ready(function($) {
         if (swatch.length) {
             swatch.css('background-color', $(this).val());
         }
+    });
+
+    $('.produkt-color-picker').each(function() {
+        var container = $(this);
+        var preview = container.find('.produkt-color-preview-circle');
+        var colorInput = container.find('.produkt-color-input');
+        var textInput = container.find('.produkt-color-value');
+
+        preview.on('click', function() {
+            colorInput.trigger('click');
+        });
+
+        colorInput.on('input change', function() {
+            var val = $(this).val();
+            preview.css('background-color', val);
+            textInput.val(val);
+        });
+
+        textInput.on('input change', function() {
+            var val = $(this).val();
+            if (/^#([A-Fa-f0-9]{6})$/.test(val)) {
+                preview.css('background-color', val);
+                colorInput.val(val);
+            }
+        });
     });
 
     var accordionIndex = $('#accordion-container .produkt-accordion-group').length;

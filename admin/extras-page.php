@@ -279,11 +279,18 @@ if ($edit_item) {
         $variant_availability[$row->variant_id] = intval($row->available);
     }
 }
+
+$subline_text = 'Extras verwalten';
+if ($active_tab === 'add') {
+    $subline_text = 'Erstellen Sie ein neues Extra für das Produkt "' . ($current_category ? esc_html($current_category->name) : 'Unbekannt') . '"';
+} elseif ($active_tab === 'edit' && $edit_item) {
+    $subline_text = 'Bearbeiten Sie das Extra "' . esc_html($edit_item->name) . '" für das Produkt "' . ($current_category ? esc_html($current_category->name) : 'Unbekannt') . '"';
+}
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Extras verwalten</p>
+    <p class="dashboard-subline"><?php echo $subline_text; ?></p>
 
 <?php if ($active_tab === 'list'): ?>
     <div class="dashboard-grid">
