@@ -919,7 +919,7 @@
 }
 
 .produkt-toggle-label input:checked + .produkt-toggle-slider {
-    background: var(--produkt-primary);
+    background: #000000;
 }
 
 .produkt-toggle-label input:checked + .produkt-toggle-slider::before {

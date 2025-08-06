@@ -42,6 +42,18 @@ $popup_options = $popup_settings['options'] ?? '';
             <h2>Popup Inhalt</h2>
             <p class="card-subline">Einstellungen für das Hinweis-Popup</p>
             <div class="form-grid">
+                <div class="produkt-form-group full-width">
+                    <label>Titel</label>
+                    <input type="text" name="popup_title" value="<?php echo esc_attr($popup_title); ?>">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Text</label>
+                    <?php wp_editor($popup_content, 'popup_content', ['textarea_name' => 'popup_content']); ?>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Auswahloptionen (optional, eine pro Zeile)</label>
+                    <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
+                </div>
                 <div class="produkt-form-group">
                     <label>Popup aktivieren</label>
                     <label class="produkt-toggle-label">
@@ -52,18 +64,6 @@ $popup_options = $popup_settings['options'] ?? '';
                 <div class="produkt-form-group">
                     <label>Nicht erneut anzeigen (Tage)</label>
                     <input type="number" name="popup_days" min="0" value="<?php echo esc_attr($popup_days); ?>">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Titel</label>
-                    <input type="text" name="popup_title" value="<?php echo esc_attr($popup_title); ?>">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Text</label>
-                    <?php wp_editor($popup_content, 'popup_content', ['textarea_name' => 'popup_content']); ?>
-                </div>
-                <div class="produkt-form-group full-width">
-                    <label>Auswahloptionen (optional, eine pro Zeile)</label>
-                    <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
                 </div>
                 <div class="produkt-form-group">
                     <label>E-Mail-Feld anzeigen</label>
