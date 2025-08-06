@@ -2922,6 +2922,7 @@ body.day-modal-open{overflow:hidden;}
     background: #fff;
     border-radius: 20px;
     padding: 1.5rem;
+    margin-right: 20px;
 }
 
 .h2-rental-card {
