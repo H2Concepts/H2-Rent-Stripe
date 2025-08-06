@@ -919,7 +919,7 @@
 }
 
 .produkt-toggle-label input:checked + .produkt-toggle-slider {
-    background: var(--produkt-primary);
+    background: #000000;
 }
 
 .produkt-toggle-label input:checked + .produkt-toggle-slider::before {
@@ -3738,6 +3738,50 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .bulk-delete-btn svg {
     width: 16px;
     height: 16px;
+}
+
+.branding-save-btn,
+.popup-save-btn,
+.stripe-save-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: #000;
+    border-radius: 999px;
+    padding: 10px;
+}
+.branding-save-btn svg,
+.popup-save-btn svg,
+.stripe-save-btn svg {
+    width: 30px;
+    height: 30px;
+    fill: #FFFFFF;
+    stroke: #000000;
+}
+
+.key-input-wrapper {
+    position: relative;
+}
+
+.key-input-wrapper input {
+    padding-right: 40px;
+}
+
+.key-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.key-toggle svg {
+    width: 20px;
+    height: 20px;
 }
 
 /* Sidebar order details extras */
