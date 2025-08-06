@@ -165,30 +165,31 @@ $last_order_nr = get_option('produkt_last_order_number', '');
     </form>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.produkt-media-button').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.getElementById(this.dataset.target);
-            const preview = document.getElementById(this.dataset.target + '_preview');
-            const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
-            frame.on('select', function() {
-                const attachment = frame.state().get('selection').first().toJSON();
-                target.value = attachment.url;
-                if (preview) {
-                    preview.innerHTML = '<img src="' + attachment.url + '" alt="">';
-                }
-            });
-            frame.open();
+jQuery(function($){
+    $('.produkt-media-button').on('click', function(e){
+        e.preventDefault();
+        const target  = $('#' + $(this).data('target'));
+        const preview = $('#' + $(this).data('target') + '_preview');
+        const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+        frame.on('select', function(){
+            const attachment = frame.state().get('selection').first().toJSON();
+            target.val(attachment.url);
+            preview.html('<img src="' + attachment.url + '" alt="">');
         });
+        frame.open();
     });
-    document.querySelectorAll('.produkt-remove-image').forEach(function(btn){
-        btn.addEventListener('click', function(){
-            const target = document.getElementById(this.dataset.target);
-            const preview = document.getElementById(this.dataset.target + '_preview');
-            if(target){ target.value = ''; }
-            if(preview){ preview.innerHTML = '<span>Noch kein Bild vorhanden</span>'; }
-        });
+
+    $('.produkt-remove-image').on('click', function(){
+        const target  = $('#' + $(this).data('target'));
+        const preview = $('#' + $(this).data('target') + '_preview');
+        target.val('');
+        preview.html('<span>Noch kein Bild vorhanden</span>');
+    });
+
+    $('.image-preview').each(function(){
+        if (!$(this).text().trim() && $(this).find('img').length === 0) {
+            $(this).html('<span>Noch kein Bild vorhanden</span>');
+        }
     });
 });
 </script>

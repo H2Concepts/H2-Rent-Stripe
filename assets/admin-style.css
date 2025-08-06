@@ -648,11 +648,23 @@
     gap: 20px;
 }
 
-.image-preview img {
-    max-width: 120px;
-    height: auto;
-    border-radius: 4px;
+.image-preview {
+    width: 120px;
+    height: 120px;
     border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9f9f9;
+    overflow: hidden;
+}
+
+.image-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0;
+    border: none;
 }
 
 .image-preview span {
