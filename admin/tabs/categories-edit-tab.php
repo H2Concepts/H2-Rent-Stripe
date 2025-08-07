@@ -1,5 +1,11 @@
 <?php
 // Categories Edit Tab Content
+
+function produkt_category_icon($slug)
+{
+    $svg = file_get_contents(PRODUKT_PLUGIN_PATH . 'assets/settings-icons/' . $slug . '.svg');
+    return str_replace('<svg', '<svg class="' . $slug . '-icon"', $svg);
+}
 ?>
 
 <div class="produkt-edit-category">
@@ -40,15 +46,28 @@
         $modus = get_option('produkt_betriebsmodus', 'miete');
         ?>
 
-        <div class="produkt-subtab-nav">
-            <a href="#" class="produkt-subtab active" data-tab="general">Allgemein</a>
-            <a href="#" class="produkt-subtab" data-tab="product">Produktseite</a>
-            <a href="#" class="produkt-subtab" data-tab="features">Features</a>
-            <a href="#" class="produkt-subtab" data-tab="filters">Filter</a>
-            <a href="#" class="produkt-subtab" data-tab="inventory">Lagerverwaltung</a>
-            <a href="#" class="produkt-subtab" data-tab="sorting">Sortierung</a>
-        </div>
-
+        <div class="settings-layout">
+            <nav class="settings-menu">
+                <a href="#" class="produkt-subtab active" data-tab="general" aria-label="Allgemein" title="Allgemein">
+                    <?php echo produkt_category_icon('general'); ?>
+                </a>
+                <a href="#" class="produkt-subtab" data-tab="product" aria-label="Produktseite" title="Produktseite">
+                    <?php echo produkt_category_icon('product'); ?>
+                </a>
+                <a href="#" class="produkt-subtab" data-tab="features" aria-label="Features" title="Features">
+                    <?php echo produkt_category_icon('features'); ?>
+                </a>
+                <a href="#" class="produkt-subtab" data-tab="filters" aria-label="Filter" title="Filter">
+                    <?php echo produkt_category_icon('filters'); ?>
+                </a>
+                <a href="#" class="produkt-subtab" data-tab="inventory" aria-label="Lagerverwaltung" title="Lagerverwaltung">
+                    <?php echo produkt_category_icon('inventory'); ?>
+                </a>
+                <a href="#" class="produkt-subtab" data-tab="sorting" aria-label="Sortierung" title="Sortierung">
+                    <?php echo produkt_category_icon('sorting'); ?>
+                </a>
+            </nav>
+            <div class="settings-content">
         <div id="tab-general" class="produkt-subtab-content active">
         <div class="produkt-form-sections">
 
@@ -612,6 +631,8 @@
         </div>
         </div>
         </div><!-- end tab-sorting -->
+            </div>
+        </div>
 
         <!-- Actions -->
         <div class="produkt-form-actions">
@@ -625,27 +646,6 @@
 </div>
 
 <style>
-.produkt-subtab-nav {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    gap: 10px;
-}
-.produkt-subtab {
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-bottom: none;
-    color: #666;
-    border-radius: 6px 6px 0 0;
-    text-decoration: none;
-    cursor: pointer;
-}
-.produkt-subtab.active {
-    background: var(--produkt-primary);
-    color: var(--produkt-text);
-    font-weight: 600;
-}
 .produkt-subtab-content {
     display: none;
 }

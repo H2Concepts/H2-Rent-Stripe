@@ -2026,6 +2026,7 @@ body.shipping-modal-open {
 
 .settings-menu a.active {
     background: #1d2327;
+    color: #fff;
 }
 
 .settings-menu a svg {
