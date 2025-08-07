@@ -3,11 +3,6 @@
 ?>
 
 <div class="produkt-edit-category">
-    <div class="produkt-form-header">
-        <h3>✏️ Produkt bearbeiten</h3>
-        <p>Bearbeiten Sie das Produkt "<?php echo esc_html($edit_item->name); ?>" mit allen Einstellungen und Inhalten.</p>
-    </div>
-    
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
@@ -48,11 +43,13 @@
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
-        
+        <div class="produkt-form-sections">
+
         <!-- Grunddaten -->
-        <div class="produkt-form-section">
-            <h4>📝 Grunddaten</h4>
-            <div class="produkt-form-row">
+        <div class="dashboard-card">
+            <h2>Grunddaten</h2>
+            <p class="card-subline">Name und Shortcode</p>
+            <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>Produkt-Name *</label>
                     <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
@@ -66,9 +63,10 @@
         </div>
         
         <!-- SEO-Einstellungen -->
-        <div class="produkt-form-section">
-            <h4>🔍 SEO-Einstellungen</h4>
-            <div class="produkt-form-row">
+        <div class="dashboard-card">
+            <h2>SEO-Einstellungen</h2>
+            <p class="card-subline">Meta-Angaben</p>
+            <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>SEO-Titel</label>
                     <input type="text" name="meta_title" value="<?php echo esc_attr($edit_item->meta_title ?? ''); ?>" maxlength="60">
@@ -84,41 +82,45 @@
                 </div>
             </div>
             
-            <div class="produkt-form-group">
+            <div class="produkt-form-group full-width">
                 <label>SEO-Beschreibung</label>
                 <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
                 <div id="meta_description_counter" class="produkt-char-counter"></div>
             </div>
         </div>
 
-        <div class="produkt-form-section">
-            <h4>⚙️ Einstellungen</h4>
-            <div class="produkt-form-row">
+        <div class="dashboard-card">
+            <h2>Sortierung</h2>
+            <p class="card-subline">Reihenfolge und Kategorien</p>
+            <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>Sortierung</label>
                     <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
                 </div>
-            </div>
-            <div class="produkt-form-group">
-                <label>Kategorien</label>
-                <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
-                    <?php foreach ($all_product_cats as $cat): ?>
-                        <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
-                            <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
+                <div class="produkt-form-group">
+                    <label>Kategorien</label>
+                    <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
+                        <?php foreach ($all_product_cats as $cat): ?>
+                            <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
+                                <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
+                </div>
             </div>
         </div>
+
+        </div><!-- end produkt-form-sections -->
 
         </div><!-- end tab-general -->
 
         <div id="tab-product" class="produkt-subtab-content">
 
         <!-- Seiteninhalte -->
-        <div class="produkt-form-section">
-            <h4>📄 Seiteninhalte</h4>
+        <div class="dashboard-card">
+            <h2>Seiteninhalte</h2>
+            <p class="card-subline">Texte für die Produktseite</p>
             
             <div class="produkt-form-group">
                 <label>Kurzbeschreibung <small>für Produktübersichtsseite</small></label>
@@ -142,23 +144,34 @@
         </div>
 
         <!-- Bilder -->
-        <div class="produkt-form-section">
-            <h4>📸 Standard-Produktbild</h4>
-            <div class="produkt-form-group">
-                <label>Standard-Produktbild</label>
-                <div class="produkt-upload-area">
-                    <input type="url" name="default_image" id="default_image" value="<?php echo esc_attr($edit_item->default_image); ?>">
-                    <button type="button" class="button produkt-media-button" data-target="default_image">📁 Aus Mediathek wählen</button>
+        <div class="dashboard-card">
+            <h2>Standard-Produktbild</h2>
+            <p class="card-subline">Fallback-Bild</p>
+            <div class="form-grid">
+                <div class="produkt-form-group full-width">
+                    <label>Standard-Produktbild</label>
+                    <div class="image-field-row">
+                        <div id="default_image_preview" class="image-preview">
+                            <?php if (!empty($edit_item->default_image)): ?>
+                                <img src="<?php echo esc_url($edit_item->default_image); ?>" alt="">
+                            <?php else: ?>
+                                <span>Noch kein Bild vorhanden</span>
+                            <?php endif; ?>
+                        </div>
+                        <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="default_image" aria-label="Bild auswählen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                        </button>
+                        <button type="button" class="icon-btn produkt-remove-image" data-target="default_image" aria-label="Bild entfernen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                        </button>
+                    </div>
+                    <input type="hidden" name="default_image" id="default_image" value="<?php echo esc_attr($edit_item->default_image); ?>">
+                    <small>Fallback-Bild wenn für Ausführungen kein spezifisches Bild hinterlegt ist</small>
                 </div>
-                <small>Fallback-Bild wenn für Ausführungen kein spezifisches Bild hinterlegt ist</small>
-                
-                <?php if (!empty($edit_item->default_image)): ?>
-                <div class="produkt-image-preview">
-                    <img src="<?php echo esc_url($edit_item->default_image); ?>" alt="Standard-Produktbild">
-                </div>
-                <?php endif; ?>
             </div>
         </div>
+
+        
 
         <!-- Content Blöcke -->
         <div class="produkt-form-section">
@@ -570,33 +583,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // WordPress Media Library Integration
-    document.querySelectorAll('.produkt-media-button').forEach(function(button) {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('data-target');
-            const targetInput = document.getElementById(targetId);
-            
-            if (!targetInput) return;
-            
-            const mediaUploader = wp.media({
-                title: 'Bild auswählen',
-                button: {
-                    text: 'Bild verwenden'
-                },
-                multiple: false
-            });
-            
-            mediaUploader.on('select', function() {
-                const attachment = mediaUploader.state().get('selection').first().toJSON();
-                targetInput.value = attachment.url;
-            });
-            
-            mediaUploader.open();
-        });
-    });
-
     // Auto-generate shortcode from name
     const nameInput = document.querySelector('input[name="name"]');
     const shortcodeInput = document.querySelector('input[name="shortcode"]');
@@ -818,15 +804,26 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const targetId = this.getAttribute('data-target');
             const field = document.getElementById(targetId);
+            const preview = document.getElementById(targetId + '_preview');
             const frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
             frame.on('select', function() {
                 const att = frame.state().get('selection').first().toJSON();
-                field.value = att.url;
+                if (field) field.value = att.url;
+                if (preview) preview.innerHTML = '<img src="'+att.url+'" alt="">';
             });
             frame.open();
         });
     }
     document.querySelectorAll('.produkt-media-button').forEach(attachMediaButton);
+
+    document.querySelectorAll('.produkt-remove-image').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            const target = document.getElementById(this.dataset.target);
+            const preview = document.getElementById(this.dataset.target + '_preview');
+            if (target) target.value = '';
+            if (preview) preview.innerHTML = '<span>Noch kein Bild vorhanden</span>';
+        });
+    });
 
     // Accordion fields are handled in admin-script.js
 });
