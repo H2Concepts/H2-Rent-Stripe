@@ -81,6 +81,7 @@ foreach ($filter_groups as $g) {
         </div><!-- end tab-general -->
 
         <div id="tab-product" class="produkt-subtab-content">
+        <div class="produkt-form-sections">
             <div class="dashboard-card">
                 <h2>Seiteninhalte</h2>
                 <p class="card-subline">Texte für die Produktseite</p>
@@ -259,6 +260,7 @@ foreach ($filter_groups as $g) {
                     </div>
                 </div>
             </div>
+        </div>
         </div><!-- end tab-product -->
 
         <div id="tab-features" class="produkt-subtab-content">

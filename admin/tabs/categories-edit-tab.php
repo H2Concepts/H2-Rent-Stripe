@@ -101,6 +101,7 @@
         </div><!-- end tab-general -->
 
         <div id="tab-product" class="produkt-subtab-content">
+        <div class="produkt-form-sections">
 
         <!-- Seiteninhalte -->
         <div class="dashboard-card">
@@ -329,6 +330,7 @@
                     <input type="url" name="rating_link" value="<?php echo esc_attr($edit_item->rating_link); ?>">
                 </div>
             </div>
+        </div>
         </div>
         </div><!-- end tab-product -->
 
