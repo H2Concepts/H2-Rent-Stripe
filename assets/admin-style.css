@@ -2989,7 +2989,8 @@ body.day-modal-open{overflow:hidden;}
     font-size: 0.9rem;
     color: #333d48;
     margin-bottom: 1rem !important;
-	font-family: 'Manrope', sans-serif;
+    margin-top: 0rem !important;
+    font-family: 'Manrope', sans-serif;
 }
 
 .income-amount {
