@@ -427,19 +427,22 @@ foreach ($filter_groups as $g) {
             <div class="dashboard-card">
                 <h2>Kategorien</h2>
                 <p class="card-subline">Bitte Kategorie auswählen</p>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label>Kategorien</label>
-                        <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
-                            <?php foreach ($all_product_cats as $cat): ?>
-                                <option value="<?php echo $cat->id; ?>">
-                                    <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
+                <div class="category-accordion produkt-accordions">
+                    <?php $first_cat = true; foreach ($all_product_cats as $cat): if (!empty($cat->parent_id)) continue; ?>
+                    <div class="produkt-accordion-item<?php echo $first_cat ? ' active' : ''; ?>">
+                        <button type="button" class="produkt-accordion-header"><?php echo esc_html($cat->name); ?></button>
+                        <div class="produkt-accordion-content">
+                            <div class="category-tiles">
+                                <?php foreach ($cat->children as $child): ?>
+                                <div class="category-tile" data-id="<?php echo $child->id; ?>" data-parent="<?php echo $cat->id; ?>"><?php echo esc_html($child->name); ?></div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
                     </div>
+                    <?php $first_cat = false; endforeach; ?>
                 </div>
+                <div id="selected-categories"></div>
+                <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
             </div>
         </div>
         </div><!-- end tab-sorting -->

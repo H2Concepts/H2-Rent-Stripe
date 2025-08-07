@@ -408,6 +408,42 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// Category accordion selection
+document.addEventListener('DOMContentLoaded', function() {
+    const tiles = document.querySelectorAll('.category-accordion .category-tile');
+    const selectedContainer = document.getElementById('selected-categories');
+    if (!tiles.length || !selectedContainer) return;
+    tiles.forEach(tile => {
+        tile.addEventListener('click', function() {
+            const id = this.dataset.id;
+            const parent = this.dataset.parent;
+            this.classList.toggle('selected');
+            if (this.classList.contains('selected')) {
+                addInput(id);
+                addInput(parent);
+            } else {
+                removeInput(id);
+                if (!document.querySelector('.category-tile.selected[data-parent="' + parent + '"]')) {
+                    removeInput(parent);
+                }
+            }
+        });
+    });
+    function addInput(id) {
+        if (!selectedContainer.querySelector('input[value="' + id + '"]')) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'product_categories[]';
+            input.value = id;
+            selectedContainer.appendChild(input);
+        }
+    }
+    function removeInput(id) {
+        const input = selectedContainer.querySelector('input[value="' + id + '"]');
+        if (input) input.remove();
+    }
+});
+
 // Order note functionality
 document.addEventListener('click', function(e) {
     if (e.target.closest('.note-icon')) {
