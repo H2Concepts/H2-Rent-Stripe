@@ -2028,6 +2028,7 @@ body.shipping-modal-open {
     border-radius: 999px;
     padding: 10px;
     gap: 10px;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 }
 
 .settings-menu a {
@@ -2956,6 +2957,7 @@ body.day-modal-open{overflow:hidden;}
     border-radius: 20px;
     padding: 1.5rem;
     margin-right: 20px;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 }
 
 .h2-rental-card {
@@ -2964,6 +2966,7 @@ body.day-modal-open{overflow:hidden;}
     padding: 1.5rem;
     margin-right: 20px;
     margin-bottom: 2rem;
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 }
 .h2-rental-card h2 {
     margin: 0 0 0.5rem 0;

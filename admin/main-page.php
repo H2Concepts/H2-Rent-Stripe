@@ -49,10 +49,6 @@ $branding_result = $wpdb->get_row("SELECT setting_value FROM {$wpdb->prefix}prod
 $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H2 Concepts Rental Pro';
 ?>
 
-<script>
-document.getElementById('wpwrap').classList.add('dashboard-main');
-</script>
-
 <div class="produkt-admin dashboard-wrapper">
 
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>

@@ -613,3 +613,10 @@ document.addEventListener('click', function(e) {
             });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    var wpwrap = document.getElementById('wpwrap');
+    if (wpwrap) {
+        wpwrap.classList.add('dashboard-main');
+    }
+});
