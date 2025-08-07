@@ -727,11 +727,6 @@
     height: 32px;
     width: 32px;
 }
-.produkt-accordion-group .produkt-remove-accordion {
-    margin-top: 50px;
-    height: 32px;
-    width: 32px;
-}
 
 .produkt-feature-group h5 {
     margin: 0 0 10px 0;
@@ -3822,11 +3817,10 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     position: absolute;
     top: 8px;
     right: 8px;
-    color: #ff0000;
 }
 
 .icon-btn-remove svg {
-    fill: currentColor;
+    fill: #d61515;
     stroke: none;
 }
 .bulk-delete-btn {

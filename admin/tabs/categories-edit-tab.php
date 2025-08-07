@@ -192,7 +192,7 @@ function produkt_category_icon($slug)
                 <?php foreach ($page_blocks as $idx => $block): ?>
                 <div class="dashboard-card produkt-page-block removable-block">
                     <button type="button" class="icon-btn icon-btn-remove produkt-remove-page-block" aria-label="Block entfernen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
                     </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
@@ -248,7 +248,7 @@ function produkt_category_icon($slug)
                 <?php foreach ($detail_blocks as $idx => $block): ?>
                 <div class="dashboard-card produkt-page-block removable-block">
                     <button type="button" class="icon-btn icon-btn-remove produkt-remove-detail-block" aria-label="Block entfernen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
                     </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
@@ -281,7 +281,7 @@ function produkt_category_icon($slug)
                 <?php foreach ($tech_blocks as $idx => $block): ?>
                 <div class="dashboard-card produkt-page-block removable-block">
                     <button type="button" class="icon-btn icon-btn-remove produkt-remove-tech-block" aria-label="Block entfernen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
                     </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
@@ -314,7 +314,7 @@ function produkt_category_icon($slug)
                 <?php foreach ($scope_blocks as $idx => $block): ?>
                 <div class="dashboard-card produkt-page-block removable-block">
                     <button type="button" class="icon-btn icon-btn-remove produkt-remove-scope-block" aria-label="Block entfernen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
                     </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
@@ -338,9 +338,11 @@ function produkt_category_icon($slug)
 
         <!-- Produktbewertung -->
         <div class="dashboard-card">
-            <h2>Produktbewertung</h2>
-            <p class="card-subline">Optionale Bewertung</p>
-            <div class="produkt-form-group">
+            <div class="card-header-flex">
+                <div>
+                    <h2>Produktbewertung</h2>
+                    <p class="card-subline">Optionale Bewertung</p>
+                </div>
                 <label class="produkt-toggle-label">
                     <input type="checkbox" name="show_rating" value="1" <?php checked($edit_item->show_rating ?? 0, 1); ?>>
                     <span class="produkt-toggle-slider"></span>
@@ -365,9 +367,11 @@ function produkt_category_icon($slug)
         <div id="tab-features" class="produkt-subtab-content">
         <div class="produkt-form-sections">
             <div class="dashboard-card">
-                <h2>Features-Sektion</h2>
-                <p class="card-subline">Bis zu vier Vorteile</p>
-                <div class="produkt-form-group">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Features-Sektion</h2>
+                        <p class="card-subline">Bis zu vier Vorteile</p>
+                    </div>
                     <label class="produkt-toggle-label">
                         <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
@@ -426,21 +430,25 @@ function produkt_category_icon($slug)
                         $accordion_data = [['title' => '', 'content' => '']];
                     }
                     foreach ($accordion_data as $idx => $acc): ?>
-                    <div class="produkt-accordion-group">
+                    <div class="produkt-accordion-group removable-block">
+                        <button type="button" class="icon-btn icon-btn-remove produkt-remove-accordion" aria-label="Accordion entfernen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                        </button>
                         <div class="produkt-form-row">
                             <div class="produkt-form-group" style="flex:1;">
                                 <label>Titel</label>
                                 <input type="text" name="accordion_titles[]" value="<?php echo esc_attr($acc['title']); ?>">
                             </div>
-                            <button type="button" class="button produkt-remove-accordion">-</button>
                         </div>
                         <div class="produkt-form-group">
                             <?php wp_editor($acc['content'], 'accordion_content_' . $idx . '_edit', ['textarea_name' => 'accordion_contents[]', 'textarea_rows' => 3, 'media_buttons' => false]); ?>
                         </div>
                     </div>
-                    <?php endforeach; ?>
-                </div>
-                <button type="button" id="add-accordion" class="button">+ Accordion hinzufügen</button>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" id="add-accordion" class="icon-btn add-category-btn" aria-label="Accordion hinzufügen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3"><path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/><path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/></svg>
+            </button>
             </div>
         </div>
 
@@ -746,7 +754,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const id = 'page_block_image_' + pageBlockIndex;
         const div = document.createElement('div');
         div.className = 'dashboard-card produkt-page-block removable-block';
-        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-page-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-page-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
             + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -784,7 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const div = document.createElement('div');
         div.className = 'dashboard-card produkt-page-block removable-block';
-        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-detail-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-detail-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
             + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -809,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const div = document.createElement('div');
         div.className = 'dashboard-card produkt-page-block removable-block';
-        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-tech-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-tech-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
             + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -834,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const div = document.createElement('div');
         div.className = 'dashboard-card produkt-page-block removable-block';
-        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-scope-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-scope-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
             + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'

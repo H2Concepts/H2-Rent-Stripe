@@ -149,13 +149,13 @@ jQuery(document).ready(function($) {
     $('#add-accordion').on('click', function(e) {
         e.preventDefault();
         var id = 'accordion_content_' + accordionIndex;
-        var html = '<div class="produkt-accordion-group">' +
+        var html = '<div class="produkt-accordion-group removable-block">' +
+            '<button type="button" class="icon-btn icon-btn-remove produkt-remove-accordion" aria-label="Accordion entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>' +
             '<div class="produkt-form-row">' +
             '<div class="produkt-form-group" style="flex:1;">' +
             '<label>Titel</label>' +
             '<input type="text" name="accordion_titles[]" />' +
             '</div>' +
-            '<button type="button" class="button produkt-remove-accordion">-</button>' +
             '</div>' +
             '<div class="produkt-form-group">' +
             '<textarea id="' + id + '" name="accordion_contents[]" rows="3"></textarea>' +
