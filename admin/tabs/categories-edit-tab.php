@@ -336,70 +336,85 @@
 
 
         <div id="tab-features" class="produkt-subtab-content">
-        <!-- Features -->
-        <div class="produkt-form-section">
-            <h4>🌟 Features-Sektion</h4>
-            <div class="produkt-form-group">
-                <label><input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>> Features-Sektion anzeigen</label>
-            </div>
-            <div class="produkt-form-group">
-                <label>Features-Überschrift</label>
-                <input type="text" name="features_title" value="<?php echo esc_attr($edit_item->features_title); ?>">
+        <div class="produkt-form-sections">
+            <div class="dashboard-card">
+                <h2>Features-Sektion</h2>
+                <p class="card-subline">Bis zu vier Vorteile</p>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Features-Sektion anzeigen</span>
+                    </label>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Features-Überschrift</label>
+                    <input type="text" name="features_title" value="<?php echo esc_attr($edit_item->features_title); ?>" placeholder="z.B. Warum unser Produkt?">
+                </div>
             </div>
 
-            <?php for ($i = 1; $i <= 4; $i++): ?>
-            <div class="produkt-feature-group">
-                <h5>Feature <?php echo $i; ?></h5>
-                <div class="produkt-form-row">
+            <div class="features-grid">
+                <?php for ($i = 1; $i <= 4; $i++): ?>
+                <div class="dashboard-card">
+                    <h3>Feature <?php echo $i; ?></h3>
+                    <p class="card-subline">Titel, Icon &amp; Beschreibung</p>
                     <div class="produkt-form-group">
                         <label>Titel</label>
                         <input type="text" name="feature_<?php echo $i; ?>_title" value="<?php echo esc_attr($edit_item->{'feature_' . $i . '_title'}); ?>">
                     </div>
                     <div class="produkt-form-group">
                         <label>Icon-Bild</label>
-                        <div class="produkt-upload-area">
-                            <input type="url" name="feature_<?php echo $i; ?>_icon" id="feature_<?php echo $i; ?>_icon" value="<?php echo esc_attr($edit_item->{'feature_' . $i . '_icon'}); ?>">
-                            <button type="button" class="button produkt-media-button" data-target="feature_<?php echo $i; ?>_icon">📁</button>
+                        <div class="image-field-row">
+                            <div id="feature_<?php echo $i; ?>_icon_preview" class="image-preview">
+                                <?php if (!empty($edit_item->{'feature_' . $i . '_icon'})): ?>
+                                    <img src="<?php echo esc_url($edit_item->{'feature_' . $i . '_icon'}); ?>" alt="Feature <?php echo $i; ?> Icon">
+                                <?php else: ?>
+                                    <span>Noch kein Bild vorhanden</span>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="feature_<?php echo $i; ?>_icon" aria-label="Bild auswählen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                            </button>
+                            <button type="button" class="icon-btn produkt-remove-image" data-target="feature_<?php echo $i; ?>_icon" aria-label="Bild entfernen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                            </button>
                         </div>
-                        <?php if (!empty($edit_item->{'feature_' . $i . '_icon'})): ?>
-                        <div class="produkt-icon-preview">
-                            <img src="<?php echo esc_url($edit_item->{'feature_' . $i . '_icon'}); ?>" alt="Feature <?php echo $i; ?> Icon">
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <div class="produkt-form-group">
-                    <label>Beschreibung</label>
-                    <textarea name="feature_<?php echo $i; ?>_description" rows="2"><?php echo esc_textarea($edit_item->{'feature_' . $i . '_description'}); ?></textarea>
-                </div>
-            </div>
-            <?php endfor; ?>
-        </div>
-
-        <div class="produkt-form-section">
-            <h4>📑 Accordion</h4>
-            <div id="accordion-container">
-                <?php
-                $accordion_data = !empty($edit_item->accordion_data) ? json_decode($edit_item->accordion_data, true) : [];
-                if (!is_array($accordion_data) || empty($accordion_data)) {
-                    $accordion_data = [['title' => '', 'content' => '']];
-                }
-                foreach ($accordion_data as $idx => $acc): ?>
-                <div class="produkt-accordion-group">
-                    <div class="produkt-form-row">
-                        <div class="produkt-form-group" style="flex:1;">
-                            <label>Titel</label>
-                            <input type="text" name="accordion_titles[]" value="<?php echo esc_attr($acc['title']); ?>">
-                        </div>
-                        <button type="button" class="button produkt-remove-accordion">-</button>
+                        <input type="hidden" name="feature_<?php echo $i; ?>_icon" id="feature_<?php echo $i; ?>_icon" value="<?php echo esc_attr($edit_item->{'feature_' . $i . '_icon'}); ?>">
                     </div>
                     <div class="produkt-form-group">
-                        <?php wp_editor($acc['content'], 'accordion_content_' . $idx . '_edit', ['textarea_name' => 'accordion_contents[]', 'textarea_rows' => 3, 'media_buttons' => false]); ?>
+                        <label>Beschreibung</label>
+                        <textarea name="feature_<?php echo $i; ?>_description" rows="2"><?php echo esc_textarea($edit_item->{'feature_' . $i . '_description'}); ?></textarea>
                     </div>
                 </div>
-                <?php endforeach; ?>
+                <?php endfor; ?>
             </div>
-            <button type="button" id="add-accordion" class="button">+ Accordion hinzufügen</button>
+
+            <div class="dashboard-card">
+                <h2>Accordion</h2>
+                <p class="card-subline">Klappbare Informationen</p>
+                <div id="accordion-container">
+                    <?php
+                    $accordion_data = !empty($edit_item->accordion_data) ? json_decode($edit_item->accordion_data, true) : [];
+                    if (!is_array($accordion_data) || empty($accordion_data)) {
+                        $accordion_data = [['title' => '', 'content' => '']];
+                    }
+                    foreach ($accordion_data as $idx => $acc): ?>
+                    <div class="produkt-accordion-group">
+                        <div class="produkt-form-row">
+                            <div class="produkt-form-group" style="flex:1;">
+                                <label>Titel</label>
+                                <input type="text" name="accordion_titles[]" value="<?php echo esc_attr($acc['title']); ?>">
+                            </div>
+                            <button type="button" class="button produkt-remove-accordion">-</button>
+                        </div>
+                        <div class="produkt-form-group">
+                            <?php wp_editor($acc['content'], 'accordion_content_' . $idx . '_edit', ['textarea_name' => 'accordion_contents[]', 'textarea_rows' => 3, 'media_buttons' => false]); ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <button type="button" id="add-accordion" class="button">+ Accordion hinzufügen</button>
+            </div>
         </div>
 
         </div><!-- end tab-features -->
