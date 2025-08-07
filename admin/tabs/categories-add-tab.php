@@ -6,6 +6,12 @@ global $wpdb;
 <div class="produkt-add-category">
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+        <button type="submit" name="submit_category" class="icon-btn categories-save-btn" aria-label="Speichern">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+            </svg>
+        </button>
         <div class="produkt-form-sections">
         <?php
         $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
@@ -274,7 +280,11 @@ global $wpdb;
         <h2>Produktbewertung</h2>
         <p class="card-subline">Optionale Bewertung</p>
         <div class="produkt-form-group">
-            <label><input type="checkbox" name="show_rating" value="1"> Produktbewertung anzeigen</label>
+            <label class="produkt-toggle-label">
+                <input type="checkbox" name="show_rating" value="1">
+                <span class="produkt-toggle-slider"></span>
+                <span>Produktbewertung anzeigen</span>
+            </label>
         </div>
         <div class="form-grid">
             <div class="produkt-form-group">
@@ -288,7 +298,23 @@ global $wpdb;
         </div>
     </div>
         
-        <!-- Einstellungen -->
+        <div class="dashboard-card">
+            <h2>Filter</h2>
+            <p class="card-subline">Zuordnungen</p>
+            <input type="text" id="filter-search" placeholder="Filter suchen..." style="max-width:300px;width:100%;">
+            <div id="filter-list" class="produkt-filter-list" style="margin-top:10px;">
+                <?php foreach ($filter_groups as $group): ?>
+                    <strong><?php echo esc_html($group->name); ?></strong><br>
+                    <?php foreach ($filters_by_group[$group->id] as $f): ?>
+                    <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
+                        <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
+                    </label>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- Sortierung -->
         <div class="dashboard-card">
             <h2>Sortierung</h2>
             <p class="card-subline">Reihenfolge und Kategorien</p>
@@ -311,33 +337,7 @@ global $wpdb;
             </div>
         </div>
 
-        <div class="dashboard-card">
-            <h2>Filter</h2>
-            <p class="card-subline">Zuordnungen</p>
-            <input type="text" id="filter-search" placeholder="Filter suchen..." style="max-width:300px;width:100%;">
-            <div id="filter-list" class="produkt-filter-list" style="margin-top:10px;">
-                <?php foreach ($filter_groups as $group): ?>
-                    <strong><?php echo esc_html($group->name); ?></strong><br>
-                    <?php foreach ($filters_by_group[$group->id] as $f): ?>
-                    <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
-                        <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
-                    </label>
-                    <?php endforeach; ?>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
         </div> <!-- end produkt-form-sections -->
-        
-        <!-- Actions -->
-        <div class="produkt-form-actions">
-            <button type="submit" name="submit_category" class="button button-primary button-large">
-                ✅ Produkt erstellen
-            </button>
-            <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=list'); ?>" class="button button-large">
-                ❌ Abbrechen
-            </a>
-        </div>
     </form>
 </div>
 

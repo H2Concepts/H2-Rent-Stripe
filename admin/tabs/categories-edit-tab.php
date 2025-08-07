@@ -6,6 +6,12 @@
     <form method="post" action="" class="produkt-compact-form">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
         <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
+        <button type="submit" name="submit_category" class="icon-btn categories-save-btn" aria-label="Speichern">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+            </svg>
+        </button>
         <?php
         global $wpdb;
         $all_product_cats = \ProduktVerleih\Database::get_product_categories_tree();
@@ -40,6 +46,7 @@
             <a href="#" class="produkt-subtab" data-tab="features">Features</a>
             <a href="#" class="produkt-subtab" data-tab="filters">Filter</a>
             <a href="#" class="produkt-subtab" data-tab="inventory">Lagerverwaltung</a>
+            <a href="#" class="produkt-subtab" data-tab="sorting">Sortierung</a>
         </div>
 
         <div id="tab-general" class="produkt-subtab-content active">
@@ -86,28 +93,6 @@
                 <label>SEO-Beschreibung</label>
                 <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
                 <div id="meta_description_counter" class="produkt-char-counter"></div>
-            </div>
-        </div>
-
-        <div class="dashboard-card">
-            <h2>Sortierung</h2>
-            <p class="card-subline">Reihenfolge und Kategorien</p>
-            <div class="form-grid">
-                <div class="produkt-form-group">
-                    <label>Sortierung</label>
-                    <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
-                </div>
-                <div class="produkt-form-group">
-                    <label>Kategorien</label>
-                    <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
-                        <?php foreach ($all_product_cats as $cat): ?>
-                            <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
-                                <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
-                </div>
             </div>
         </div>
 
@@ -303,7 +288,11 @@
         <div class="produkt-form-section">
             <h4>⭐ Produktbewertung</h4>
             <div class="produkt-form-group">
-                <label><input type="checkbox" name="show_rating" value="1" <?php checked($edit_item->show_rating ?? 0, 1); ?>> Produktbewertung anzeigen</label>
+                <label class="produkt-toggle-label">
+                    <input type="checkbox" name="show_rating" value="1" <?php checked($edit_item->show_rating ?? 0, 1); ?>>
+                    <span class="produkt-toggle-slider"></span>
+                    <span>Produktbewertung anzeigen</span>
+                </label>
             </div>
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
@@ -531,17 +520,34 @@
         </div>
         </div><!-- end tab-inventory -->
 
-
-
+        <div id="tab-sorting" class="produkt-subtab-content">
+        <div class="produkt-form-sections">
+        <div class="dashboard-card">
+            <h2>Sortierung</h2>
+            <p class="card-subline">Reihenfolge und Kategorien</p>
+            <div class="form-grid">
+                <div class="produkt-form-group">
+                    <label>Sortierung</label>
+                    <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Kategorien</label>
+                    <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
+                        <?php foreach ($all_product_cats as $cat): ?>
+                            <option value="<?php echo $cat->id; ?>" <?php echo in_array($cat->id, $selected_product_cats) ? 'selected' : ''; ?>>
+                                <?php echo str_repeat('--', $cat->depth) . ' ' . esc_html($cat->name); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <p class="description">Wählen Sie eine oder mehrere Kategorien für dieses Produkt.</p>
+                </div>
+            </div>
+        </div>
+        </div>
+        </div><!-- end tab-sorting -->
 
         <!-- Actions -->
         <div class="produkt-form-actions">
-            <button type="submit" name="submit_category" class="button button-primary button-large">
-                ✅ Änderungen speichern
-            </button>
-            <a href="<?php echo admin_url('admin.php?page=produkt-categories&tab=list'); ?>" class="button button-large">
-                ❌ Abbrechen
-           </a>
             <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
                class="button button-large produkt-delete-button"
                onclick="return confirm('Sind Sie sicher, dass Sie dieses Produkt löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')">

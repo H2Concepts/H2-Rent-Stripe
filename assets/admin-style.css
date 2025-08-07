@@ -3817,7 +3817,8 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .buttons-save-btn,
 .email-save-btn,
 .extras-save-btn,
-.variants-save-btn {
+.variants-save-btn,
+.categories-save-btn {
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -3832,7 +3833,8 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .buttons-save-btn svg,
 .email-save-btn svg,
 .extras-save-btn svg,
-.variants-save-btn svg {
+.variants-save-btn svg,
+.categories-save-btn svg {
     width: 30px;
     height: 30px;
     fill: #FFFFFF;
