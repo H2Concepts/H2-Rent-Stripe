@@ -159,17 +159,18 @@
         
 
         <!-- Content Blöcke -->
-        <div class="produkt-form-section">
-            <h4>Content Blöcke</h4>
+        <div class="dashboard-card">
+            <h2>Content Blöcke</h2>
+            <p class="card-subline">Abschnitte mit Text und Bild</p>
             <?php
                 $page_blocks = !empty($edit_item->page_blocks) ? json_decode($edit_item->page_blocks, true) : [];
                 if (!is_array($page_blocks) || empty($page_blocks)) {
                     $page_blocks = [['title' => '', 'text' => '', 'image' => '', 'alt' => '']];
                 }
             ?>
-            <div id="page-blocks-container">
+            <div id="page-blocks-container" class="produkt-form-sections">
                 <?php foreach ($page_blocks as $idx => $block): ?>
-                <div class="produkt-page-block">
+                <div class="dashboard-card produkt-page-block">
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
@@ -183,10 +184,22 @@
                     </div>
                     <div class="produkt-form-group">
                         <label>Bild</label>
-                        <div class="produkt-upload-area">
-                            <input type="url" name="page_block_images[]" id="page_block_image_<?php echo $idx; ?>" value="<?php echo esc_attr($block['image']); ?>">
-                            <button type="button" class="button produkt-media-button" data-target="page_block_image_<?php echo $idx; ?>">📁</button>
+                        <div class="image-field-row">
+                            <div id="page_block_image_<?php echo $idx; ?>_preview" class="image-preview">
+                                <?php if (!empty($block['image'])): ?>
+                                    <img src="<?php echo esc_url($block['image']); ?>" alt="">
+                                <?php else: ?>
+                                    <span>Noch kein Bild vorhanden</span>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="page_block_image_<?php echo $idx; ?>" aria-label="Bild auswählen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                            </button>
+                            <button type="button" class="icon-btn produkt-remove-image" data-target="page_block_image_<?php echo $idx; ?>" aria-label="Bild entfernen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                            </button>
                         </div>
+                        <input type="hidden" name="page_block_images[]" id="page_block_image_<?php echo $idx; ?>" value="<?php echo esc_attr($block['image']); ?>">
                     </div>
                     <div class="produkt-form-group">
                         <label>Alt-Text</label>
@@ -195,20 +208,23 @@
                 </div>
                 <?php endforeach; ?>
             </div>
-        <button type="button" id="add-page-block" class="button">+ Block hinzufügen</button>
-    </div>
+            <button type="button" id="add-page-block" class="icon-btn add-category-btn" aria-label="Block hinzufügen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3"><path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/><path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/></svg>
+            </button>
+        </div>
 
-        <div class="produkt-form-section">
-            <h4>Details</h4>
+        <div class="dashboard-card">
+            <h2>Details</h2>
+            <p class="card-subline">Allgemeine Details</p>
             <?php
                 $detail_blocks = !empty($edit_item->detail_blocks) ? json_decode($edit_item->detail_blocks, true) : [];
                 if (!is_array($detail_blocks) || empty($detail_blocks)) {
                     $detail_blocks = [['title' => '', 'text' => '']];
                 }
             ?>
-            <div id="details-blocks-container">
+            <div id="details-blocks-container" class="produkt-form-sections">
                 <?php foreach ($detail_blocks as $idx => $block): ?>
-                <div class="produkt-page-block">
+                <div class="dashboard-card produkt-page-block">
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
@@ -223,20 +239,23 @@
                 </div>
                 <?php endforeach; ?>
             </div>
-            <button type="button" id="add-detail-block" class="button">+ Block hinzufügen</button>
+            <button type="button" id="add-detail-block" class="icon-btn add-category-btn" aria-label="Block hinzufügen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3"><path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/><path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/></svg>
+            </button>
         </div>
 
-        <div class="produkt-form-section">
-            <h4>Technische Daten</h4>
+        <div class="dashboard-card">
+            <h2>Technische Daten</h2>
+            <p class="card-subline">Technische Informationen</p>
             <?php
                 $tech_blocks = !empty($edit_item->tech_blocks) ? json_decode($edit_item->tech_blocks, true) : [];
                 if (!is_array($tech_blocks) || empty($tech_blocks)) {
                     $tech_blocks = [['title' => '', 'text' => '']];
                 }
             ?>
-            <div id="tech-blocks-container">
+            <div id="tech-blocks-container" class="produkt-form-sections">
                 <?php foreach ($tech_blocks as $idx => $block): ?>
-                <div class="produkt-page-block">
+                <div class="dashboard-card produkt-page-block">
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
@@ -251,20 +270,23 @@
                 </div>
                 <?php endforeach; ?>
             </div>
-            <button type="button" id="add-tech-block" class="button">+ Block hinzufügen</button>
+            <button type="button" id="add-tech-block" class="icon-btn add-category-btn" aria-label="Block hinzufügen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3"><path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/><path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/></svg>
+            </button>
         </div>
 
-        <div class="produkt-form-section">
-            <h4>Lieferumfang</h4>
+        <div class="dashboard-card">
+            <h2>Lieferumfang</h2>
+            <p class="card-subline">Im Paket enthalten</p>
             <?php
                 $scope_blocks = !empty($edit_item->scope_blocks) ? json_decode($edit_item->scope_blocks, true) : [];
                 if (!is_array($scope_blocks) || empty($scope_blocks)) {
                     $scope_blocks = [['title' => '', 'text' => '']];
                 }
             ?>
-            <div id="scope-blocks-container">
+            <div id="scope-blocks-container" class="produkt-form-sections">
                 <?php foreach ($scope_blocks as $idx => $block): ?>
-                <div class="produkt-page-block">
+                <div class="dashboard-card produkt-page-block">
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
@@ -279,14 +301,17 @@
                 </div>
                 <?php endforeach; ?>
             </div>
-            <button type="button" id="add-scope-block" class="button">+ Block hinzufügen</button>
+            <button type="button" id="add-scope-block" class="icon-btn add-category-btn" aria-label="Block hinzufügen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3"><path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/><path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/></svg>
+            </button>
         </div>
         
 
 
         <!-- Produktbewertung -->
-        <div class="produkt-form-section">
-            <h4>⭐ Produktbewertung</h4>
+        <div class="dashboard-card">
+            <h2>Produktbewertung</h2>
+            <p class="card-subline">Optionale Bewertung</p>
             <div class="produkt-form-group">
                 <label class="produkt-toggle-label">
                     <input type="checkbox" name="show_rating" value="1" <?php checked($edit_item->show_rating ?? 0, 1); ?>>
@@ -294,7 +319,7 @@
                     <span>Produktbewertung anzeigen</span>
                 </label>
             </div>
-            <div class="produkt-form-row">
+            <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>Sterne-Bewertung (1-5)</label>
                     <input type="number" name="rating_value" value="<?php echo esc_attr($edit_item->rating_value); ?>" step="0.1" min="1" max="5">
@@ -660,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const id = 'page_block_image_' + pageBlockIndex;
         const div = document.createElement('div');
-        div.className = 'produkt-page-block';
+        div.className = 'dashboard-card produkt-page-block';
         div.innerHTML = '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -671,14 +696,18 @@ document.addEventListener('DOMContentLoaded', function() {
             + '<div class="produkt-form-group"><label>Text</label>'
             + '<textarea name="page_block_texts[]" rows="3"></textarea></div>'
             + '<div class="produkt-form-group"><label>Bild</label>'
-            + '<div class="produkt-upload-area">'
-            + '<input type="url" name="page_block_images[]" id="' + id + '">' 
-            + '<button type="button" class="button produkt-media-button" data-target="' + id + '">📁</button>'
-            + '</div></div>'
+            + '<div class="image-field-row">'
+            + '<div id="' + id + '_preview" class="image-preview"><span>Noch kein Bild vorhanden</span></div>'
+            + '<button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="' + id + '" aria-label="Bild auswählen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg></button>'
+            + '<button type="button" class="icon-btn produkt-remove-image" data-target="' + id + '" aria-label="Bild entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>'
+            + '</div>'
+            + '<input type="hidden" name="page_block_images[]" id="' + id + '" value="">'
+            + '</div>'
             + '<div class="produkt-form-group"><label>Alt-Text</label>'
             + '<input type="text" name="page_block_alts[]"></div>';
         document.getElementById('page-blocks-container').appendChild(div);
         attachMediaButton(div.querySelector('.produkt-media-button'));
+        attachRemoveImage(div.querySelector('.produkt-remove-image'));
         pageBlockIndex++;
     });
 
@@ -693,7 +722,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-detail-block').addEventListener('click', function(e) {
         e.preventDefault();
         const div = document.createElement('div');
-        div.className = 'produkt-page-block';
+        div.className = 'dashboard-card produkt-page-block';
         div.innerHTML = '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -717,7 +746,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-tech-block').addEventListener('click', function(e) {
         e.preventDefault();
         const div = document.createElement('div');
-        div.className = 'produkt-page-block';
+        div.className = 'dashboard-card produkt-page-block';
         div.innerHTML = '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -741,7 +770,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-scope-block').addEventListener('click', function(e) {
         e.preventDefault();
         const div = document.createElement('div');
-        div.className = 'produkt-page-block';
+        div.className = 'dashboard-card produkt-page-block';
         div.innerHTML = '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
@@ -820,16 +849,17 @@ document.addEventListener('DOMContentLoaded', function() {
             frame.open();
         });
     }
-    document.querySelectorAll('.produkt-media-button').forEach(attachMediaButton);
-
-    document.querySelectorAll('.produkt-remove-image').forEach(function(btn){
+    function attachRemoveImage(btn){
+        if (!btn) return;
         btn.addEventListener('click', function(){
             const target = document.getElementById(this.dataset.target);
             const preview = document.getElementById(this.dataset.target + '_preview');
             if (target) target.value = '';
             if (preview) preview.innerHTML = '<span>Noch kein Bild vorhanden</span>';
         });
-    });
+    }
+    document.querySelectorAll('.produkt-media-button').forEach(attachMediaButton);
+    document.querySelectorAll('.produkt-remove-image').forEach(attachRemoveImage);
 
     // Accordion fields are handled in admin-script.js
 });
