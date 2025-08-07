@@ -8,7 +8,7 @@
         color: #141e26;
 }
 
-.dashboard-wrapper.dashboard-main {
+#wpwrap.dashboard-main {
     background-image: url('main-page-bg.svg');
     background-position: center;
     background-repeat: no-repeat;
@@ -3284,6 +3284,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     background: transparent;
     flex: 1;
     padding: 0 0.5rem;
+    box-shadow: none;
 }
 .product-search-bar select {
     border: none;
