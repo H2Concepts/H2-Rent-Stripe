@@ -420,10 +420,23 @@
         </div><!-- end tab-features -->
 
         <div id="tab-filters" class="produkt-subtab-content">
-        <div class="produkt-form-section">
-            <h4>🔎 Filter</h4>
-            <input type="text" id="filter-search" placeholder="Filter suchen..." style="max-width:300px;width:100%;">
-            <div id="filter-list" class="produkt-filter-list" style="margin-top:10px;">
+        <div class="produkt-form-sections">
+        <div class="dashboard-card">
+            <div class="card-header-flex">
+                <div>
+                    <h2>Filter</h2>
+                    <p class="card-subline">Filter für diese Kategorie</p>
+                </div>
+                <form class="produkt-filter-form product-search-bar">
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                            <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+                        </svg>
+                        <input type="text" id="filter-search" placeholder="Filter suchen...">
+                    </div>
+                </form>
+            </div>
+            <div id="filter-list" class="produkt-filter-list">
                 <?php foreach ($filter_groups as $group): ?>
                     <strong><?php echo esc_html($group->name); ?></strong><br>
                     <?php foreach ($filters_by_group[$group->id] as $f): ?>
@@ -433,6 +446,7 @@
                     <?php endforeach; ?>
                 <?php endforeach; ?>
             </div>
+        </div>
         </div>
         </div><!-- end tab-filters -->
 
