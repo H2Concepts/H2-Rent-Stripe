@@ -387,16 +387,19 @@ foreach ($filter_groups as $g) {
                         </div>
                     </div>
                 </div>
-                <div id="filter-list" class="produkt-filter-list">
-                    <?php foreach ($filter_groups as $group): ?>
-                        <strong><?php echo esc_html($group->name); ?></strong><br>
-                        <?php foreach ($filters_by_group[$group->id] as $f): ?>
-                        <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
-                            <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
-                        </label>
-                        <?php endforeach; ?>
+            </div>
+
+            <div id="filter-grid" class="filter-grid">
+                <?php foreach ($filter_groups as $group): ?>
+                <div class="dashboard-card">
+                    <h3><?php echo esc_html($group->name); ?></h3>
+                    <?php foreach ($filters_by_group[$group->id] as $f): ?>
+                    <label class="produkt-filter-item">
+                        <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>"> <?php echo esc_html($f->name); ?>
+                    </label>
                     <?php endforeach; ?>
                 </div>
+                <?php endforeach; ?>
             </div>
         </div>
         </div><!-- end tab-filters -->
@@ -526,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (filterSearch) {
         filterSearch.addEventListener('input', function() {
             const term = this.value.toLowerCase();
-            document.querySelectorAll('#filter-list .produkt-filter-item').forEach(function(el) {
+            document.querySelectorAll('#filter-grid .produkt-filter-item').forEach(function(el) {
                 el.style.display = el.textContent.toLowerCase().indexOf(term) !== -1 ? 'block' : 'none';
             });
         });

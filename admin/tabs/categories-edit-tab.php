@@ -456,32 +456,35 @@ function produkt_category_icon($slug)
 
         <div id="tab-filters" class="produkt-subtab-content">
         <div class="produkt-form-sections">
-        <div class="dashboard-card">
-            <div class="card-header-flex">
-                <div>
-                    <h2>Filter</h2>
-                    <p class="card-subline">Filter für diese Kategorie</p>
-                </div>
-                <div class="produkt-filter-form product-search-bar">
-                    <div class="search-input-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
-                            <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
-                        </svg>
-                        <input type="text" id="filter-search" placeholder="Filter suchen...">
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Filter</h2>
+                        <p class="card-subline">Filter für diese Kategorie</p>
+                    </div>
+                    <div class="produkt-filter-form product-search-bar">
+                        <div class="search-input-wrapper">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                                <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
+                            </svg>
+                            <input type="text" id="filter-search" placeholder="Filter suchen...">
+                        </div>
                     </div>
                 </div>
             </div>
-            <div id="filter-list" class="produkt-filter-list">
+
+            <div id="filter-grid" class="filter-grid">
                 <?php foreach ($filter_groups as $group): ?>
-                    <strong><?php echo esc_html($group->name); ?></strong><br>
+                <div class="dashboard-card">
+                    <h3><?php echo esc_html($group->name); ?></h3>
                     <?php foreach ($filters_by_group[$group->id] as $f): ?>
-                    <label class="produkt-filter-item" style="display:block;margin-bottom:4px;">
+                    <label class="produkt-filter-item">
                         <input type="checkbox" name="filters[]" value="<?php echo $f->id; ?>" <?php checked(in_array($f->id, $selected_filters)); ?>> <?php echo esc_html($f->name); ?>
                     </label>
                     <?php endforeach; ?>
+                </div>
                 <?php endforeach; ?>
             </div>
-        </div>
         </div>
         </div><!-- end tab-filters -->
 
@@ -742,7 +745,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (filterSearch) {
         filterSearch.addEventListener('input', function() {
             const term = this.value.toLowerCase();
-            document.querySelectorAll('#filter-list .produkt-filter-item').forEach(function(el) {
+            document.querySelectorAll('#filter-grid .produkt-filter-item').forEach(function(el) {
                 el.style.display = el.textContent.toLowerCase().indexOf(term) !== -1 ? 'block' : 'none';
             });
         });

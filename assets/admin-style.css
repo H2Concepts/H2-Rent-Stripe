@@ -711,6 +711,12 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 15px;
 }
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 15px;
+}
 #page-blocks-container,
 #details-blocks-container,
 #tech-blocks-container,
@@ -733,6 +739,11 @@
     margin-top: 50px;
     height: 32px;
     width: 32px;
+}
+
+.produkt-filter-item {
+    display: block;
+    margin-bottom: 4px;
 }
 
 .produkt-feature-group h5 {
