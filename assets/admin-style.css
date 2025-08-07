@@ -2033,6 +2033,7 @@ body.shipping-modal-open {
     width: 24px;
     height: 24px;
     color: inherit;
+    stroke: #000000;
 }
 
 .settings-menu svg.activ {

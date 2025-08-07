@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<g stroke="CurrentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5">
+<g stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5">
 <path d="m2 17.5h5"/>
 <path d="m22 6.5h-5"/>
 <path d="m13 17.5h9"/>
