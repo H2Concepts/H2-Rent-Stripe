@@ -5,7 +5,14 @@
 .dashboard-wrapper,
 .dashboard-wrapper * {
     font-family: 'Montserrat', sans-serif;
-	color: #141e26;
+        color: #141e26;
+}
+
+.dashboard-wrapper.dashboard-main {
+    background-image: url('main-page-bg.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 :root {
