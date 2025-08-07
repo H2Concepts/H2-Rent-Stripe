@@ -378,12 +378,18 @@ foreach ($filter_groups as $g) {
         <div class="produkt-form-sections">
             <div class="dashboard-card">
                 <h2>Sortierung</h2>
-                <p class="card-subline">Reihenfolge und Kategorien</p>
+                <p class="card-subline">Reihenfolge festlegen</p>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Sortierung</label>
                         <input type="number" name="sort_order" min="0">
                     </div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <h2>Kategorien</h2>
+                <p class="card-subline">Bitte Kategorie auswählen</p>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Kategorien</label>
                         <select name="product_categories[]" multiple style="width:100%; height:auto; min-height:100px;">
