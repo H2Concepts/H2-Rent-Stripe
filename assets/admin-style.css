@@ -3886,6 +3886,28 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
     stroke: #000000;
 }
 
+.extras-delete-btn,
+.variants-delete-btn,
+.categories-delete-btn,
+.durations-delete-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    z-index: 1000;
+    background: #d61515;
+    border-radius: 999px;
+    padding: 10px;
+}
+.extras-delete-btn svg,
+.variants-delete-btn svg,
+.categories-delete-btn svg,
+.durations-delete-btn svg {
+    width: 30px;
+    height: 30px;
+    fill: #FFFFFF;
+    stroke: #d61515;
+}
+
 .key-input-wrapper {
     display: flex;
     align-items: center;
@@ -3967,6 +3989,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .category-accordion .produkt-accordion-content{overflow:hidden;max-height:0;transition:max-height 0.3s ease;padding:0;}
 .category-accordion .produkt-accordion-item.active .produkt-accordion-content{padding:0.5rem 0 0;}
 .category-accordion .category-tiles{display:flex;flex-wrap:wrap;gap:1rem;}
-.category-accordion .category-tile{flex:0 0 calc(25% - 1rem);height:100px;border:1px solid #d1d5db;border-radius:6px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;user-select:none;transition:background 0.2s,color 0.2s;}
+.category-accordion .category-tile{flex:0 0 calc(25% - 1rem);height:100px;border:1px solid #d1d5db;border-radius:15px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;user-select:none;transition:background 0.2s,color 0.2s;font-size:15px;font-weight:700;}
 .category-accordion .category-tile:hover{background:#f0f0f0;}
-.category-accordion .category-tile.selected{background:#1d2327;color:#fff;}
+.category-accordion .category-tile.selected{background:#000;color:#fff;}
+.form-wrap p,p.description{margin:15px 0 5px;color:#646970;}
