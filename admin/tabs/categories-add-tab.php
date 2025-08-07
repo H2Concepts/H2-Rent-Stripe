@@ -343,14 +343,14 @@ foreach ($filter_groups as $g) {
                         <h2>Filter</h2>
                         <p class="card-subline">Filter für diese Kategorie</p>
                     </div>
-                    <form class="produkt-filter-form product-search-bar">
+                    <div class="produkt-filter-form product-search-bar">
                         <div class="search-input-wrapper">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
                                 <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
                             </svg>
                             <input type="text" id="filter-search" placeholder="Filter suchen...">
                         </div>
-                    </form>
+                    </div>
                 </div>
                 <div id="filter-list" class="produkt-filter-list">
                     <?php foreach ($filter_groups as $group): ?>
