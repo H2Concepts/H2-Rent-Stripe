@@ -742,7 +742,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var svgActive = this.querySelector('svg');
             if (svgActive) svgActive.classList.add('activ');
             var content = document.getElementById('tab-' + target);
-            if (content) content.classList.add('active');
+            if (content) {
+                content.classList.add('active');
+                if (target === 'sorting') {
+                    content.querySelectorAll('.produkt-accordion-item.active .produkt-accordion-content').forEach(function(c) {
+                        c.style.maxHeight = c.scrollHeight + 'px';
+                    });
+                }
+            }
         });
     });
 
