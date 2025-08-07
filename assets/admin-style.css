@@ -2093,7 +2093,6 @@ body.shipping-modal-open {
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    padding-right: 20px;
     box-sizing: border-box;
 }
 
@@ -2920,7 +2919,6 @@ body.day-modal-open{overflow:hidden;}
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    padding-right: 20px;
     box-sizing: border-box;
 }
 
