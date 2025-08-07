@@ -704,12 +704,22 @@ document.addEventListener('DOMContentLoaded', function() {
         tab.addEventListener('click', function(e) {
             e.preventDefault();
             var target = this.getAttribute('data-tab');
-            document.querySelectorAll('.produkt-subtab').forEach(function(t) { t.classList.remove('active'); });
+            document.querySelectorAll('.produkt-subtab').forEach(function(t) {
+                t.classList.remove('active');
+                var svg = t.querySelector('svg');
+                if (svg) svg.classList.remove('activ');
+            });
             document.querySelectorAll('.produkt-subtab-content').forEach(function(c) { c.classList.remove('active'); });
             this.classList.add('active');
+            var svgActive = this.querySelector('svg');
+            if (svgActive) svgActive.classList.add('activ');
             var content = document.getElementById('tab-' + target);
             if (content) content.classList.add('active');
         });
+    });
+
+    document.querySelectorAll('.produkt-subtab.active svg').forEach(function(svg) {
+        svg.classList.add('activ');
     });
 
     const filterSearch = document.getElementById('filter-search');
