@@ -3813,6 +3813,22 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .icon-btn + .icon-btn {
     margin-left: 8px;
 }
+
+.removable-block {
+    position: relative;
+}
+
+.icon-btn-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: #ff0000;
+}
+
+.icon-btn-remove svg {
+    fill: currentColor;
+    stroke: none;
+}
 .bulk-delete-btn {
     margin-left: 4px;
 }

@@ -190,13 +190,15 @@ function produkt_category_icon($slug)
             ?>
             <div id="page-blocks-container" class="produkt-form-sections">
                 <?php foreach ($page_blocks as $idx => $block): ?>
-                <div class="dashboard-card produkt-page-block">
+                <div class="dashboard-card produkt-page-block removable-block">
+                    <button type="button" class="icon-btn icon-btn-remove produkt-remove-page-block" aria-label="Block entfernen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                    </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
                             <input type="text" name="page_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
                         </div>
-                        <button type="button" class="button produkt-remove-page-block">-</button>
                     </div>
                     <div class="produkt-form-group">
                         <label>Text</label>
@@ -244,13 +246,15 @@ function produkt_category_icon($slug)
             ?>
             <div id="details-blocks-container" class="produkt-form-sections">
                 <?php foreach ($detail_blocks as $idx => $block): ?>
-                <div class="dashboard-card produkt-page-block">
+                <div class="dashboard-card produkt-page-block removable-block">
+                    <button type="button" class="icon-btn icon-btn-remove produkt-remove-detail-block" aria-label="Block entfernen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                    </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
                             <input type="text" name="detail_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
                         </div>
-                        <button type="button" class="button produkt-remove-detail-block">-</button>
                     </div>
                     <div class="produkt-form-group">
                         <label>Text</label>
@@ -275,13 +279,15 @@ function produkt_category_icon($slug)
             ?>
             <div id="tech-blocks-container" class="produkt-form-sections">
                 <?php foreach ($tech_blocks as $idx => $block): ?>
-                <div class="dashboard-card produkt-page-block">
+                <div class="dashboard-card produkt-page-block removable-block">
+                    <button type="button" class="icon-btn icon-btn-remove produkt-remove-tech-block" aria-label="Block entfernen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                    </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
                             <input type="text" name="tech_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
                         </div>
-                        <button type="button" class="button produkt-remove-tech-block">-</button>
                     </div>
                     <div class="produkt-form-group">
                         <label>Text</label>
@@ -306,13 +312,15 @@ function produkt_category_icon($slug)
             ?>
             <div id="scope-blocks-container" class="produkt-form-sections">
                 <?php foreach ($scope_blocks as $idx => $block): ?>
-                <div class="dashboard-card produkt-page-block">
+                <div class="dashboard-card produkt-page-block removable-block">
+                    <button type="button" class="icon-btn icon-btn-remove produkt-remove-scope-block" aria-label="Block entfernen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg>
+                    </button>
                     <div class="produkt-form-row">
                         <div class="produkt-form-group" style="flex:1;">
                             <label>Titel</label>
                             <input type="text" name="scope_block_titles[]" value="<?php echo esc_attr($block['title']); ?>">
                         </div>
-                        <button type="button" class="button produkt-remove-scope-block">-</button>
                     </div>
                     <div class="produkt-form-group">
                         <label>Text</label>
@@ -737,13 +745,13 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const id = 'page_block_image_' + pageBlockIndex;
         const div = document.createElement('div');
-        div.className = 'dashboard-card produkt-page-block';
-        div.innerHTML = '<div class="produkt-form-row">'
+        div.className = 'dashboard-card produkt-page-block removable-block';
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-page-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+            + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
             + '<input type="text" name="page_block_titles[]" />'
             + '</div>'
-            + '<button type="button" class="button produkt-remove-page-block">-</button>'
             + '</div>'
             + '<div class="produkt-form-group"><label>Text</label>'
             + '<textarea name="page_block_texts[]" rows="3"></textarea></div>'
@@ -764,9 +772,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.getElementById('page-blocks-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('produkt-remove-page-block')) {
+        const btn = e.target.closest('.produkt-remove-page-block');
+        if (btn) {
             e.preventDefault();
-            e.target.closest('.produkt-page-block').remove();
+            btn.closest('.produkt-page-block').remove();
         }
     });
 
@@ -774,13 +783,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-detail-block').addEventListener('click', function(e) {
         e.preventDefault();
         const div = document.createElement('div');
-        div.className = 'dashboard-card produkt-page-block';
-        div.innerHTML = '<div class="produkt-form-row">'
+        div.className = 'dashboard-card produkt-page-block removable-block';
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-detail-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+            + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
             + '<input type="text" name="detail_block_titles[]" />'
             + '</div>'
-            + '<button type="button" class="button produkt-remove-detail-block">-</button>'
             + '</div>'
             + '<div class="produkt-form-group"><label>Text</label>'
             + '<textarea name="detail_block_texts[]" rows="3"></textarea></div>';
@@ -788,9 +797,10 @@ document.addEventListener('DOMContentLoaded', function() {
         detailBlockIndex++;
     });
     document.getElementById('details-blocks-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('produkt-remove-detail-block')) {
+        const btn = e.target.closest('.produkt-remove-detail-block');
+        if (btn) {
             e.preventDefault();
-            e.target.closest('.produkt-page-block').remove();
+            btn.closest('.produkt-page-block').remove();
         }
     });
 
@@ -798,13 +808,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-tech-block').addEventListener('click', function(e) {
         e.preventDefault();
         const div = document.createElement('div');
-        div.className = 'dashboard-card produkt-page-block';
-        div.innerHTML = '<div class="produkt-form-row">'
+        div.className = 'dashboard-card produkt-page-block removable-block';
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-tech-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+            + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
             + '<input type="text" name="tech_block_titles[]" />'
             + '</div>'
-            + '<button type="button" class="button produkt-remove-tech-block">-</button>'
             + '</div>'
             + '<div class="produkt-form-group"><label>Text</label>'
             + '<textarea name="tech_block_texts[]" rows="3"></textarea></div>';
@@ -812,9 +822,10 @@ document.addEventListener('DOMContentLoaded', function() {
         techBlockIndex++;
     });
     document.getElementById('tech-blocks-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('produkt-remove-tech-block')) {
+        const btn = e.target.closest('.produkt-remove-tech-block');
+        if (btn) {
             e.preventDefault();
-            e.target.closest('.produkt-page-block').remove();
+            btn.closest('.produkt-page-block').remove();
         }
     });
 
@@ -822,13 +833,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add-scope-block').addEventListener('click', function(e) {
         e.preventDefault();
         const div = document.createElement('div');
-        div.className = 'dashboard-card produkt-page-block';
-        div.innerHTML = '<div class="produkt-form-row">'
+        div.className = 'dashboard-card produkt-page-block removable-block';
+        div.innerHTML = '<button type="button" class="icon-btn icon-btn-remove produkt-remove-scope-block" aria-label="Block entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32.2"><path fill="currentColor" fill-rule="evenodd" d="M16,0C7.2,0,0,7.2,0,16s7.2,16,16,16,16-7.2,16-16S24.8,0,16,0ZM16,30c-7.7,0-14-6.3-14-14S8.3,2,16,2s14,6.3,14,14-6.3,14-14,14ZM22,15h-12c-.6,0-1,.4-1,1s.4,1,1,1h12c.6,0,1-.4,1-1s-.4-1-1-1Z"/></svg></button>'
+            + '<div class="produkt-form-row">'
             + '<div class="produkt-form-group" style="flex:1;">'
             + '<label>Titel</label>'
             + '<input type="text" name="scope_block_titles[]" />'
             + '</div>'
-            + '<button type="button" class="button produkt-remove-scope-block">-</button>'
             + '</div>'
             + '<div class="produkt-form-group"><label>Text</label>'
             + '<textarea name="scope_block_texts[]" rows="3"></textarea></div>';
@@ -836,9 +847,10 @@ document.addEventListener('DOMContentLoaded', function() {
         scopeBlockIndex++;
     });
     document.getElementById('scope-blocks-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('produkt-remove-scope-block')) {
+        const btn = e.target.closest('.produkt-remove-scope-block');
+        if (btn) {
             e.preventDefault();
-            e.target.closest('.produkt-page-block').remove();
+            btn.closest('.produkt-page-block').remove();
         }
     });
 
