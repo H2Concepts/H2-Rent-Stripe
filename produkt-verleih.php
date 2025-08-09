@@ -249,7 +249,7 @@ function produkt_simple_checkout_button($atts = []) {
 require_once plugin_dir_path(__FILE__) . 'includes/seo-module.php';
 \ProduktVerleih\SeoModule::init();
 
-// Hide users without a role from the admin users list and adjust the count.
+// Admin-Benutzerliste: Nur Nutzer mit registrierten WP-Rollen anzeigen
 add_action('pre_user_query', function ($user_query) {
     if (!is_admin()) {
         return;
@@ -260,6 +260,8 @@ add_action('pre_user_query', function ($user_query) {
     if (!isset($GLOBALS['pagenow']) || $GLOBALS['pagenow'] !== 'users.php') {
         return;
     }
+
+    // Debug-Bypass
     if (isset($_GET['show_no_role']) && $_GET['show_no_role'] == '1') {
         return;
     }
@@ -269,47 +271,76 @@ add_action('pre_user_query', function ($user_query) {
         return;
     }
 
-    global $wpdb;
-    $cap_key = $wpdb->get_blog_prefix() . 'capabilities';
-
-    $join = " LEFT JOIN {$wpdb->usermeta} umr
-               ON (umr.user_id = {$wpdb->users}.ID AND umr.meta_key = %s) ";
-
-    if (strpos($user_query->query_from, $wpdb->usermeta . ' umr') === false) {
-        $user_query->query_from .= $wpdb->prepare($join, $cap_key);
+    global $wpdb, $wp_roles;
+    if (!isset($wp_roles)) {
+        $wp_roles = wp_roles();
+    }
+    $registered_roles = array_keys((array) $wp_roles->role_names);
+    if (empty($registered_roles)) {
+        return;
     }
 
-    $user_query->query_where .= " AND umr.umeta_id IS NOT NULL
-                                  AND umr.meta_value <> 'a:0:{}'
-                                  AND umr.meta_value <> ''
-                                  AND umr.meta_value LIKE '%\";b:1%'";
-});
+    $cap_key = $wpdb->get_blog_prefix() . 'capabilities';
 
+    $alias = 'capmeta';
+    if (strpos($user_query->query_from, "{$wpdb->usermeta} {$alias}") === false) {
+        $user_query->query_from .= $wpdb->prepare(
+            " LEFT JOIN {$wpdb->usermeta} {$alias} ON ({$alias}.user_id = {$wpdb->users}.ID AND {$alias}.meta_key = %s) ",
+            $cap_key
+        );
+    }
+
+    $where  = " AND {$alias}.umeta_id IS NOT NULL"
+            . " AND {$alias}.meta_value <> 'a:0:{}'"
+            . " AND {$alias}.meta_value <> ''";
+
+    $like_parts = [];
+    foreach ($registered_roles as $role) {
+        $like_parts[] = $wpdb->prepare("{$alias}.meta_value LIKE %s", '%"' . $wpdb->esc_like($role) . '";b:1%');
+    }
+    $where .= ' AND ( ' . implode(' OR ', $like_parts) . ' )';
+
+    $user_query->query_where .= $where;
+}, 20);
+
+// Zähler „Alle (N)“ an die gefilterte Liste anpassen
 add_filter('views_users', function (array $views) {
     if (isset($_GET['show_no_role']) && $_GET['show_no_role'] == '1') {
         return $views;
     }
 
-    global $wpdb;
+    global $wpdb, $wp_roles;
+    if (!isset($wp_roles)) {
+        $wp_roles = wp_roles();
+    }
+    $registered_roles = array_keys((array) $wp_roles->role_names);
+
     $cap_key = $wpdb->get_blog_prefix() . 'capabilities';
 
-    $no_role_count = (int) $wpdb->get_var($wpdb->prepare(
-        "
-        SELECT COUNT(u.ID)
+    $not_valid = "(m.umeta_id IS NULL OR m.meta_value = 'a:0:{}' OR m.meta_value = '')";
+    if ($registered_roles) {
+        $not_like = [];
+        foreach ($registered_roles as $role) {
+            $not_like[] = $wpdb->prepare("m.meta_value NOT LIKE %s", '%"' . $wpdb->esc_like($role) . '";b:1%');
+        }
+        $not_valid = "( {$not_valid} OR (m.umeta_id IS NOT NULL AND " . implode(' AND ', $not_like) . ") )";
+    }
+
+    $no_valid_role_count = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(u.ID)
         FROM {$wpdb->users} u
         LEFT JOIN {$wpdb->usermeta} m
             ON m.user_id = u.ID AND m.meta_key = %s
-        WHERE (m.umeta_id IS NULL OR m.meta_value = 'a:0:{}' OR m.meta_value = '')
-        ",
+        WHERE {$not_valid}",
         $cap_key
     ));
 
     $totals = count_users();
-    $all = isset($totals['total_users']) ? (int) $totals['total_users'] : 0;
-    $adjusted_all = max(0, $all - $no_role_count);
+    $all    = isset($totals['total_users']) ? (int) $totals['total_users'] : 0;
+    $adjust = max(0, $all - $no_valid_role_count);
 
     if (isset($views['all'])) {
-        $views['all'] = preg_replace('/\(\d+\)/', '(' . $adjusted_all . ')', $views['all']);
+        $views['all'] = preg_replace('/\(\d+\)/', '(' . $adjust . ')', $views['all']);
     }
     return $views;
 }, 20);
