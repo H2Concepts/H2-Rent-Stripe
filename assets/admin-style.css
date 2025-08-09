@@ -9,10 +9,11 @@
 }
 
 #wpwrap.dashboard-main {
-    background-image: url('main-page-bg.svg');
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
+    /* background-image: url('main-page-bg.svg'); */
+    /* background-position: center; */
+    /* background-repeat: no-repeat; */
+    /* background-size: cover; */
+    background-color: #F2F7F8;
 }
 
 #wpwrap.calendar-page {
@@ -2918,7 +2919,7 @@ body.day-modal-open{overflow:hidden;}
 
 .dashboard-grid {
     display: flex;
-    gap: 2rem;
+    gap: 0rem;
     align-items: flex-start;
     flex-wrap: nowrap;
 }
@@ -2936,13 +2937,13 @@ body.day-modal-open{overflow:hidden;}
     flex: 1 1 68%;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
     box-sizing: border-box;
 }
 
 .dashboard-row {
     display: flex;
-    gap: 2rem;
+    gap: 0rem;
 }
 .dashboard-row > .dashboard-card {
     flex: 1;
@@ -2996,7 +2997,7 @@ body.day-modal-open{overflow:hidden;}
 .income-amount {
     font-size: 2.5rem;
     font-weight: bold;
-    color: #2d6a4f;
+    color: #265b6e;
     margin-bottom: 0.5rem;
 }
 
@@ -3416,7 +3417,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 
 .quicknav-card {
   position: relative;
-  background-color: #2d6a4f;
+  background-color: #244945;
   border-radius: 10px;
   padding: 5px;
   overflow: hidden;
