@@ -13,7 +13,7 @@
     /* background-position: center; */
     /* background-repeat: no-repeat; */
     /* background-size: cover; */
-    background-color: #F2F7F8;
+    background-color: #D2E5F2;
 }
 
 #wpwrap.calendar-page {
@@ -2958,7 +2958,6 @@ body.day-modal-open{overflow:hidden;}
     border-radius: 20px;
     padding: 1.5rem;
     margin-right: 20px;
-    box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 }
 
 .h2-rental-card {
