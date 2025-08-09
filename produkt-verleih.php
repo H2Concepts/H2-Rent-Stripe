@@ -248,3 +248,81 @@ function produkt_simple_checkout_button($atts = []) {
 
 require_once plugin_dir_path(__FILE__) . 'includes/seo-module.php';
 \ProduktVerleih\SeoModule::init();
+
+// Hide users without a role from the admin users list and adjust the count.
+add_action('pre_get_users', function (WP_User_Query $query) {
+    // Only run in the admin users list.
+    if (!is_admin()) {
+        return;
+    }
+    if (!isset($GLOBALS['pagenow']) || $GLOBALS['pagenow'] !== 'users.php') {
+        return;
+    }
+
+    // Respect existing role filters.
+    if (!empty($query->query_vars['role'])
+        || !empty($query->query_vars['role__in'])
+        || !empty($query->query_vars['role__not_in'])) {
+        return;
+    }
+
+    // Optional debug bypass via /wp-admin/users.php?show_no_role=1
+    if (isset($_GET['show_no_role']) && $_GET['show_no_role'] == '1') {
+        return;
+    }
+
+    global $wpdb;
+
+    // Capabilities key is site-specific (e.g. wp_capabilities, wp_3_capabilities).
+    $cap_key = $wpdb->get_blog_prefix() . 'capabilities';
+
+    $meta_query = (array) $query->get('meta_query');
+    // Ensure the user has a capabilities entry and that it is not empty (a:0:{}).
+    $meta_query[] = [
+        'key'     => $cap_key,
+        'compare' => 'EXISTS',
+    ];
+    $meta_query[] = [
+        'key'     => $cap_key,
+        'value'   => 'a:0:{}',
+        'compare' => '!=',
+    ];
+
+    $query->set('meta_query', [
+        'relation' => 'AND',
+        ...$meta_query,
+    ]);
+}, 20);
+
+add_filter('views_users', function (array $views) {
+    global $wpdb;
+
+    // Capabilities key for the current site.
+    $cap_key = $wpdb->get_blog_prefix() . 'capabilities';
+
+    // Count users without any role (missing or empty capabilities entry).
+    $no_role_count = (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "
+            SELECT COUNT(u.ID)
+            FROM {$wpdb->users} u
+            LEFT JOIN {$wpdb->usermeta} m
+                ON m.user_id = u.ID AND m.meta_key = %s
+            WHERE (m.umeta_id IS NULL OR m.meta_value = 'a:0:{}')
+            ",
+            $cap_key
+        )
+    );
+
+    // Total users according to WordPress.
+    $totals = count_users();
+    $all = isset($totals['total_users']) ? (int) $totals['total_users'] : 0;
+    $adjusted_all = max(0, $all - $no_role_count);
+
+    // Replace the count in the "All" view link.
+    if (isset($views['all'])) {
+        $views['all'] = preg_replace('/\(\d+\)/', '(' . $adjusted_all . ')', $views['all']);
+    }
+
+    return $views;
+}, 20);
