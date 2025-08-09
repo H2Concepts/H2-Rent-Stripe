@@ -192,6 +192,38 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                                 </div>
                             </a>
                         </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-categories">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🏷️</div>
+                                    <div class="quicknav-label">Kategorien</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-extras">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">✨</div>
+                                    <div class="quicknav-label">Extras</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-variants">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🧩</div>
+                                    <div class="quicknav-label">Ausführungen</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-calendar">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">📅</div>
+                                    <div class="quicknav-label">Kalender</div>
+                                </div>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
