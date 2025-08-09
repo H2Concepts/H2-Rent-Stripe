@@ -170,7 +170,7 @@
 .produkt-nav-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    gap: 0rem;
 }
 
 .produkt-nav-item {
@@ -377,7 +377,7 @@
 .produkt-compact-form {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 1rem;
 }
 
 /* Section description */
@@ -714,7 +714,7 @@
 .features-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
+    gap: 0rem;
 }
 .filter-grid {
     display: grid;
@@ -2118,7 +2118,7 @@ body.shipping-modal-open {
 .produkt-form-sections {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 1rem;
 }
 
 .produkt-form-section {
@@ -2966,7 +2966,6 @@ body.day-modal-open{overflow:hidden;}
     padding: 1.5rem;
     margin-right: 20px;
     margin-bottom: 2rem;
-    box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 }
 .h2-rental-card h2 {
     margin: 0 0 0.5rem 0;
@@ -3179,7 +3178,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .status-storniert { background: #e74c3c; }
 	
 .card-company {
-    background: linear-gradient(210deg, #315143, #062216);
+    background: linear-gradient(210deg, #244945, #265b6e);
     color: #ffffff !important;
     border-radius: 20px;
     padding: 1.5rem;
@@ -3187,7 +3186,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 }
 
 .card-new-product {
-    background: linear-gradient(210deg, #315143, #062216);
+    background: linear-gradient(210deg, #244945, #265b6e);
     color: #ffffff !important;
     border-radius: 20px;
     padding: 1.5rem;
@@ -3278,7 +3277,7 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 
 /* Search/filter bar within product list */
 .product-search-bar {
-    background: #fdfaf1;
+    background: #EFD3F2;
     border-radius: 999px;
     padding: 0.3rem 2.5rem;
     display: flex;
