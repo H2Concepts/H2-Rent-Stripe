@@ -214,5 +214,6 @@ foreach ($orders as $o) {
     </div>
 </div>
 <script>
+document.getElementById('wpwrap').classList.add('calendar-page');
 var produkt_calendar_nonce = '<?php echo wp_create_nonce('produkt_nonce'); ?>';
 </script>

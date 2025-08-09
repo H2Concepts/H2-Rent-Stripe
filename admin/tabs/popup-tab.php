@@ -39,8 +39,17 @@ $popup_options = $popup_settings['options'] ?? '';
             </svg>
         </button>
         <div class="dashboard-card">
-            <h2>Popup Inhalt</h2>
-            <p class="card-subline">Einstellungen für das Hinweis-Popup</p>
+            <div class="card-header-flex">
+                <div>
+                    <h2>Popup Inhalt</h2>
+                    <p class="card-subline">Einstellungen für das Hinweis-Popup</p>
+                </div>
+                <label class="produkt-toggle-label">
+                    <input type="checkbox" name="popup_enabled" value="1" <?php checked($popup_enabled, 1); ?>>
+                    <span class="produkt-toggle-slider"></span>
+                    <span>Popup aktivieren</span>
+                </label>
+            </div>
             <div class="form-grid">
                 <div class="produkt-form-group full-width">
                     <label>Titel</label>
@@ -53,13 +62,6 @@ $popup_options = $popup_settings['options'] ?? '';
                 <div class="produkt-form-group">
                     <label>Auswahloptionen (optional, eine pro Zeile)</label>
                     <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
-                </div>
-                <div class="produkt-form-group">
-                    <label>Popup aktivieren</label>
-                    <label class="produkt-toggle-label">
-                        <input type="checkbox" name="popup_enabled" value="1" <?php checked($popup_enabled, 1); ?>>
-                        <span class="produkt-toggle-slider"></span>
-                    </label>
                 </div>
                 <div class="produkt-form-group">
                     <label>Nicht erneut anzeigen (Tage)</label>
