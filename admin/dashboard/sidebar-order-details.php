@@ -129,6 +129,9 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->extra_names)) : ?>
                         <div>Extras: <?php echo esc_html($p->extra_names); ?></div>
                     <?php endif; ?>
+                    <?php if (!empty($p->weekend_tariff)) : ?>
+                        <div>Hinweis: Wochenendtarif</div>
+                    <?php endif; ?>
                     <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
                 </div>
 

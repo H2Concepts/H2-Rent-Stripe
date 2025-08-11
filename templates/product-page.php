@@ -131,7 +131,7 @@ $show_features = isset($category) ? ($category->show_features ?? 1) : 1;
 $default_feature_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81.5 81.9"><path d="M56.5,26.8l-21.7,21.7-9.7-9.7c-1.2-1.2-3.3-1.2-4.5,0s-1.2,3.3,0,4.5l12,12c.6.6,1.5.9,2.3.9s1.6-.3,2.3-.9l24-23.9c1.2-1.2,1.2-3.3,0-4.5-1.3-1.3-3.3-1.3-4.5,0Z"/><path d="M40.8,1C18.7,1,.8,18.9.8,41s17.9,40,40,40,40-17.9,40-40S62.8,1,40.8,1ZM40.8,74.6c-18.5,0-33.6-15.1-33.6-33.6S22.3,7.4,40.8,7.4s33.6,15.1,33.6,33.6-15.1,33.6-33.6,33.6Z"/></svg>';
 // Button
 $ui = get_option('produkt_ui_settings', []);
-$custom_label = $ui['button_text'] ?? '';
+$custom_label = !empty($category->button_text) ? $category->button_text : ($ui['button_text'] ?? '');
 $button_text = $custom_label; // default, final label determined later
 $button_icon = $ui['button_icon'] ?? '';
 $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];
@@ -160,7 +160,7 @@ $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
 $modus = get_option('produkt_betriebsmodus', 'miete');
-$button_text = $button_text !== '' ? $button_text : ($modus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+$button_text = !empty($button_text) ? $button_text : ($modus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
 $price_label = $ui['price_label'] ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
 $shipping_label = $ui['shipping_label'] ?? 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';
@@ -268,6 +268,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <?php endif; ?>
                         </div>
                         <p class="produkt-savings" id="produkt-savings" style="display: none;"></p>
+                        <p class="produkt-weekend-note" id="produkt-weekend-note" style="display:none;"></p>
                         <p class="produkt-vat-note"><?php echo $vat_included ? 'inkl. MwSt.' : 'Kein Ausweis der Umsatzsteuer gemäß § 19 UStG.'; ?></p>
                     </div>
                 </div>
@@ -343,6 +344,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                              data-delivery="<?php echo esc_attr($variant->delivery_time ?? ''); ?>"
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
+                             data-weekend-price="<?php echo esc_attr($variant->weekend_price ?? 0); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -367,6 +369,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                     }
                                 ?>
                                 <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'kauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
+                                <?php if ($modus === 'kauf' && floatval($variant->weekend_price) > 0): ?>
+                                    <div class="produkt-weekend-info">Wochenendpreis: <?php echo number_format((float)$variant->weekend_price, 2, ',', '.'); ?>€</div>
+                                <?php endif; ?>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
                                         <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>

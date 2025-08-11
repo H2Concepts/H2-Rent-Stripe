@@ -7,6 +7,7 @@ use ProduktVerleih\StripeService;
 
 global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_variants';
+$mode = get_option('produkt_betriebsmodus', 'miete');
 
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
@@ -77,7 +78,7 @@ if (isset($_POST['submit'])) {
     $stripe_price_id   = '';
     if (!empty($_POST['id'])) {
         $existing_variant = $wpdb->get_row($wpdb->prepare(
-            "SELECT name, mietpreis_monatlich, verkaufspreis_einmalig, stripe_product_id, stripe_price_id FROM $table_name WHERE id = %d",
+            "SELECT name, mietpreis_monatlich, verkaufspreis_einmalig, weekend_price, stripe_product_id, stripe_price_id, stripe_weekend_price_id FROM $table_name WHERE id = %d",
             intval($_POST['id'])
         ));
         if ($existing_variant) {
@@ -95,7 +96,13 @@ if (isset($_POST['submit'])) {
     }
     $description = sanitize_textarea_field($_POST['description']);
     $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
-    $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+    if ($mode === 'kauf') {
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? intval($_POST['verkaufspreis_einmalig']) / 100 : 0;
+        $weekend_price = isset($_POST['weekend_price']) ? intval($_POST['weekend_price']) / 100 : 0;
+    } else {
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $weekend_price = isset($_POST['weekend_price']) ? floatval($_POST['weekend_price']) : 0;
+    }
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
     $delivery_time    = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
@@ -120,6 +127,7 @@ if (isset($_POST['submit'])) {
             'description'            => $description,
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'weekend_price'         => $weekend_price,
             'base_price'             => $mietpreis_monatlich,
             'available'              => $available,
             'availability_note'      => $availability_note,
@@ -135,7 +143,7 @@ if (isset($_POST['submit'])) {
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d','%s','%s','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
+                array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
@@ -197,6 +205,7 @@ if (isset($_POST['submit'])) {
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
             produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $product_id, $mode);
+            produkt_sync_weekend_price($variant_id, $weekend_price, $product_id);
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
@@ -210,6 +219,7 @@ if (isset($_POST['submit'])) {
             'description'            => $description,
             'mietpreis_monatlich'    => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
+            'weekend_price'         => $weekend_price,
             'base_price'             => $mietpreis_monatlich,
             'available'              => $available,
             'availability_note'      => $availability_note,
@@ -224,7 +234,7 @@ if (isset($_POST['submit'])) {
             $table_name,
             $insert_data,
             array_merge(
-                array('%d','%s','%s','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
+                array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
                 array_fill(0, 5, '%s')
             )
         );
@@ -253,6 +263,7 @@ if (isset($_POST['submit'])) {
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
             produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $product_id, $mode);
+            produkt_sync_weekend_price($variant_id, $weekend_price, $product_id);
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {

@@ -9,7 +9,7 @@
 }
 
 #wpwrap {
-    background-image: url('main-page-bg.svg');
+    background-image: url('bg.jpg');
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover;
@@ -185,6 +185,97 @@
     color: #3c434a;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
+/* Price cards */
+.price-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+.price-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.price-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 12px;
+}
+.price-title { font-weight: 600; font-size: 14px; }
+.price-sub { font-weight: 400; color: #64748b; font-size: 12px; }
+.price-badge {
+    font-size: 10px;
+    font-weight: 700;
+    background: #eef2ff;
+    color: #1d4ed8;
+    border: 1px solid #dbe4ff;
+    padding: 3px 6px;
+    border-radius: 999px;
+}
+.price-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    font-weight: 800;
+    margin: 20px 0;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 10px;
+    width: 100%;
+}
+.price-display:focus-within { border-color: #1d4ed8; }
+.price-input {
+    border: none;
+    outline: none;
+    text-align: center;
+    width: auto;
+    background: transparent;
+    font-size: inherit;
+    font-weight: inherit;
+}
+.price-suffix {
+    margin-left: 4px;
+    font-weight: 600;
+    color: #64748b;
+}
+.price-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.price-btn {
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.price-btn:hover { background: #f1f5f9; }
+.price-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.price-chip {
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.price-chip:hover { background: #f7f8fa; }
 
 .produkt-nav-item:hover {
     transform: translateY(-2px);

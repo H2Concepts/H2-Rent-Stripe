@@ -37,6 +37,8 @@ class Database {
             'stripe_product_id'      => 'VARCHAR(255) DEFAULT NULL',
             'mietpreis_monatlich'    => 'DECIMAL(10,2) DEFAULT 0',
             'verkaufspreis_einmalig' => 'DECIMAL(10,2) DEFAULT 0',
+            'weekend_price'         => 'DECIMAL(10,2) DEFAULT 0',
+            'stripe_weekend_price_id'=> 'VARCHAR(255) DEFAULT NULL',
             'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
             'mode'                   => "VARCHAR(10) DEFAULT 'miete'",
             'image_url_1' => 'TEXT',
@@ -69,6 +71,10 @@ class Database {
                     $after = 'stripe_product_id';
                 } elseif ($column === 'verkaufspreis_einmalig') {
                     $after = 'mietpreis_monatlich';
+                } elseif ($column === 'weekend_price') {
+                    $after = 'verkaufspreis_einmalig';
+                } elseif ($column === 'stripe_weekend_price_id') {
+                    $after = 'weekend_price';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
                 } elseif ($column === 'sku') {
@@ -566,6 +572,7 @@ class Database {
                 start_date date DEFAULT NULL,
                 end_date date DEFAULT NULL,
                 inventory_reverted tinyint(1) DEFAULT 0,
+                weekend_tariff tinyint(1) DEFAULT 0,
                 stripe_session_id varchar(255) DEFAULT '',
                 stripe_subscription_id varchar(255) DEFAULT '',
                 amount_total int DEFAULT 0,
@@ -614,6 +621,7 @@ class Database {
                 'start_date'        => 'date DEFAULT NULL',
                 'end_date'          => 'date DEFAULT NULL',
                 'inventory_reverted'=> 'tinyint(1) DEFAULT 0',
+                'weekend_tariff'    => 'tinyint(1) DEFAULT 0',
                 'status'            => "varchar(20) DEFAULT 'offen'",
                 'invoice_url'       => "varchar(255) DEFAULT ''"
             );
@@ -1036,6 +1044,8 @@ class Database {
             stripe_archived tinyint(1) DEFAULT 0,
             mietpreis_monatlich decimal(10,2) DEFAULT 0,
             verkaufspreis_einmalig decimal(10,2) DEFAULT 0,
+            weekend_price decimal(10,2) DEFAULT 0,
+            stripe_weekend_price_id varchar(255) DEFAULT NULL,
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             mode varchar(10) DEFAULT 'miete',
