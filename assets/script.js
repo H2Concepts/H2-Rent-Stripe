@@ -1031,7 +1031,7 @@ jQuery(document).ready(function($) {
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
 
-                        const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+                        const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
                         if (produkt_ajax.betriebsmodus === 'kauf') {
                             $('.produkt-price-period').hide();
                             $('.produkt-mobile-price-period').hide();
@@ -1064,7 +1064,7 @@ jQuery(document).ready(function($) {
             // Hide mobile sticky price
             hideMobileStickyPrice();
 
-            const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+            const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
             if (produkt_ajax.betriebsmodus === 'kauf') {
                 $('.produkt-price-period').hide();
                 $('.produkt-mobile-price-period').hide();
@@ -1081,7 +1081,7 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainButton = $('#produkt-rent-button');
-            let mainLabel = produkt_ajax.button_text || mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+            let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten'));
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar

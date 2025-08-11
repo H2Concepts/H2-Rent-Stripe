@@ -1162,6 +1162,7 @@ function produkt_create_subscription() {
 }
 
 function produkt_create_checkout_session() {
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
     try {
         $init = StripeService::init();
         if (is_wp_error($init)) {
@@ -1399,7 +1400,7 @@ function produkt_create_checkout_session() {
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
         // Assign custom order number if numbering is enabled
-        $order_number = pv_generate_order_number();
+        $order_number = \pv_generate_order_number();
         $insert_data = [
             'category_id'       => $category_id,
             'variant_id'        => $variant_id,
