@@ -189,7 +189,7 @@
 /* Price cards */
 .price-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 20px;
 }
 .price-card {
@@ -224,7 +224,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 4rem;
+    gap: 4px;
+    flex-wrap: nowrap;
+    font-size: clamp(2rem, 8vw, 4rem);
     font-weight: 800;
     margin: 20px 0;
     border-bottom: 2px solid #e5e7eb;
@@ -233,10 +235,12 @@
 }
 .price-display:focus-within { border-color: #1d4ed8; }
 .price-input {
-    border: none;
+    border: none !important;
+    box-shadow: none !important;
     outline: none;
     text-align: center;
-    width: auto;
+    width: 8ch;
+    max-width: 100%;
     background: transparent;
     font-size: inherit;
     font-weight: inherit;
@@ -245,6 +249,7 @@
     margin-left: 4px;
     font-weight: 600;
     color: #64748b;
+    flex-shrink: 0;
 }
 .price-buttons {
     display: flex;
