@@ -268,6 +268,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             <?php endif; ?>
                         </div>
                         <p class="produkt-savings" id="produkt-savings" style="display: none;"></p>
+                        <p class="produkt-weekend-note" id="produkt-weekend-note" style="display:none;"></p>
                         <p class="produkt-vat-note"><?php echo $vat_included ? 'inkl. MwSt.' : 'Kein Ausweis der Umsatzsteuer gemäß § 19 UStG.'; ?></p>
                     </div>
                 </div>
@@ -343,6 +344,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                              data-delivery="<?php echo esc_attr($variant->delivery_time ?? ''); ?>"
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
+                             data-weekend-price="<?php echo esc_attr($variant->weekend_price ?? 0); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -367,6 +369,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                     }
                                 ?>
                                 <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'kauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
+                                <?php if ($modus === 'kauf' && floatval($variant->weekend_price) > 0): ?>
+                                    <div class="produkt-weekend-info">Wochenendpreis: <?php echo number_format((float)$variant->weekend_price, 2, ',', '.'); ?>€</div>
+                                <?php endif; ?>
                                 <?php if (!($variant->available ?? 1)): ?>
                                     <div class="produkt-availability-notice">
                                         <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>

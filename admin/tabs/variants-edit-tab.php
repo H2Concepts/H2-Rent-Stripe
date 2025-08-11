@@ -4,6 +4,8 @@ $verkaufspreis_einmalig = floatval($edit_item->verkaufspreis_einmalig);
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $mietpreis_monatlich = number_format((float)$edit_item->mietpreis_monatlich, 2, '.', '');
 $verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.', '');
+$weekend_price = floatval($edit_item->weekend_price);
+$weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
 ?>
 
 <div class="produkt-edit-variant">
@@ -47,6 +49,12 @@ $verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.',
                         <label><?php echo ($modus === 'kauf') ? 'Preis / Tag (EUR) *' : 'Einmaliger Verkaufspreis'; ?></label>
                         <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($verkaufspreis_formatted); ?>">
                     </div>
+                    <?php if ($modus === 'kauf'): ?>
+                    <div class="produkt-form-group">
+                        <label>Preis / Tag / Wochenende (EUR)</label>
+                        <input type="number" step="0.01" name="weekend_price" value="<?php echo esc_attr($weekend_price_formatted); ?>">
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>Beschreibung</label>
@@ -55,16 +63,18 @@ $verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.',
             </div>
 
             <div class="dashboard-card">
-                <h2>Verfügbarkeit</h2>
-                <p class="card-subline">Buchbarkeit</p>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label class="produkt-toggle-label">
-                            <input type="checkbox" name="available" value="1" <?php echo ($edit_item->available ?? 1) ? 'checked' : ''; ?>>
-                            <span class="produkt-toggle-slider"></span>
-                            <span>Verfügbar</span>
-                        </label>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Verfügbarkeit</h2>
+                        <p class="card-subline">Buchbarkeit</p>
                     </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="available" value="1" <?php echo ($edit_item->available ?? 1) ? 'checked' : ''; ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Verfügbar</span>
+                    </label>
+                </div>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Text wenn nicht verfügbar</label>
                         <input type="text" name="availability_note" value="<?php echo esc_attr($edit_item->availability_note ?? ''); ?>">

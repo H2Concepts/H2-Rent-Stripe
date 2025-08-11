@@ -35,6 +35,12 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                         <label><?php echo ($modus === 'kauf') ? 'Preis / Tag (EUR) *' : 'Einmaliger Verkaufspreis'; ?></label>
                         <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="0.00">
                     </div>
+                    <?php if ($modus === 'kauf'): ?>
+                    <div class="produkt-form-group">
+                        <label>Preis / Tag / Wochenende (EUR)</label>
+                        <input type="number" step="0.01" name="weekend_price" placeholder="0.00">
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>Beschreibung</label>
@@ -43,16 +49,18 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
             </div>
 
             <div class="dashboard-card">
-                <h2>Verfügbarkeit</h2>
-                <p class="card-subline">Buchbarkeit</p>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label class="produkt-toggle-label">
-                            <input type="checkbox" name="available" value="1" checked>
-                            <span class="produkt-toggle-slider"></span>
-                            <span>Verfügbar</span>
-                        </label>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Verfügbarkeit</h2>
+                        <p class="card-subline">Buchbarkeit</p>
                     </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="available" value="1" checked>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Verfügbar</span>
+                    </label>
+                </div>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Text wenn nicht verfügbar</label>
                         <input type="text" name="availability_note" placeholder="z.B. Wieder verfügbar ab 15.03.2024">
