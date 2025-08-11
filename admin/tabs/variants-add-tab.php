@@ -43,16 +43,18 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
             </div>
 
             <div class="dashboard-card">
-                <h2>Verfügbarkeit</h2>
-                <p class="card-subline">Buchbarkeit</p>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label class="produkt-toggle-label">
-                            <input type="checkbox" name="available" value="1" checked>
-                            <span class="produkt-toggle-slider"></span>
-                            <span>Verfügbar</span>
-                        </label>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Verfügbarkeit</h2>
+                        <p class="card-subline">Buchbarkeit</p>
                     </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="available" value="1" checked>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Verfügbar</span>
+                    </label>
+                </div>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Text wenn nicht verfügbar</label>
                         <input type="text" name="availability_note" placeholder="z.B. Wieder verfügbar ab 15.03.2024">

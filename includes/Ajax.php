@@ -1369,43 +1369,49 @@ function produkt_create_checkout_session() {
         // store preliminary order with status "offen"
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
+        // Assign custom order number if numbering is enabled
+        $order_number = pv_generate_order_number();
+        $insert_data = [
+            'category_id'       => $category_id,
+            'variant_id'        => $variant_id,
+            'extra_id'          => $extra_id,
+            'extra_ids'         => $extra_ids_raw,
+            'duration_id'       => $duration_id,
+            'condition_id'      => $condition_id ?: null,
+            'product_color_id'  => $product_color_id ?: null,
+            'frame_color_id'    => $frame_color_id ?: null,
+            'final_price'       => $final_price,
+            'shipping_cost'     => $shipping_cost,
+            'shipping_price_id' => $shipping_price_id,
+            'mode'              => $modus,
+            'start_date'        => $start_date ?: null,
+            'end_date'          => $end_date ?: null,
+            'inventory_reverted'=> 0,
+            'stripe_session_id' => $session->id,
+            'amount_total'      => 0,
+            'produkt_name'      => $metadata['produkt'],
+            'zustand_text'      => $metadata['zustand'],
+            'produktfarbe_text' => $metadata['produktfarbe'],
+            'gestellfarbe_text' => $metadata['gestellfarbe'],
+            'extra_text'        => $metadata['extra'],
+            'dauer_text'        => $modus === 'kauf' && empty($metadata['dauer_name'])
+                ? ($days . ' Tag' . ($days > 1 ? 'e' : '')
+                    . ($start_date && $end_date ? ' (' . $start_date . ' - ' . $end_date . ')' : ''))
+                : $metadata['dauer_name'],
+            'customer_name'     => '',
+            'customer_email'    => $customer_email,
+            'user_ip'           => $_SERVER['REMOTE_ADDR'] ?? '',
+            'user_agent'        => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+            'discount_amount'   => 0,
+            'status'            => 'offen',
+            'created_at'        => current_time('mysql', 1),
+        ];
+        if ($order_number !== '') {
+            $insert_data['order_number'] = $order_number;
+        }
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
-            [
-                'category_id'      => $category_id,
-                'variant_id'       => $variant_id,
-                'extra_id'         => $extra_id,
-                'extra_ids'        => $extra_ids_raw,
-                'duration_id'      => $duration_id,
-                'condition_id'     => $condition_id ?: null,
-                'product_color_id' => $product_color_id ?: null,
-                'frame_color_id'   => $frame_color_id ?: null,
-                'final_price'      => $final_price,
-                'shipping_cost'    => $shipping_cost,
-                'shipping_price_id'=> $shipping_price_id,
-                'mode'             => $modus,
-                'start_date'       => $start_date ?: null,
-                'end_date'         => $end_date ?: null,
-                'inventory_reverted' => 0,
-                'stripe_session_id'=> $session->id,
-                'amount_total'     => 0,
-                'produkt_name'     => $metadata['produkt'],
-                'zustand_text'     => $metadata['zustand'],
-                'produktfarbe_text'=> $metadata['produktfarbe'],
-                'gestellfarbe_text'=> $metadata['gestellfarbe'],
-                'extra_text'       => $metadata['extra'],
-                'dauer_text'       => $modus === 'kauf' && empty($metadata['dauer_name'])
-                    ? ($days . ' Tag' . ($days > 1 ? 'e' : '')
-                        . ($start_date && $end_date ? ' (' . $start_date . ' - ' . $end_date . ')' : ''))
-                    : $metadata['dauer_name'],
-                'customer_name'    => '',
-                'customer_email'   => $customer_email,
-                'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
-                'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
-                'discount_amount'  => 0,
-                'status'           => 'offen',
-                'created_at'       => current_time('mysql', 1)
-            ]
+            $insert_data
         );
 
         wp_send_json(['url' => $session->url]);

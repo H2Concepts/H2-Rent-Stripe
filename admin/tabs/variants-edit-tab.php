@@ -55,16 +55,18 @@ $verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.',
             </div>
 
             <div class="dashboard-card">
-                <h2>Verfügbarkeit</h2>
-                <p class="card-subline">Buchbarkeit</p>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label class="produkt-toggle-label">
-                            <input type="checkbox" name="available" value="1" <?php echo ($edit_item->available ?? 1) ? 'checked' : ''; ?>>
-                            <span class="produkt-toggle-slider"></span>
-                            <span>Verfügbar</span>
-                        </label>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Verfügbarkeit</h2>
+                        <p class="card-subline">Buchbarkeit</p>
                     </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="available" value="1" <?php echo ($edit_item->available ?? 1) ? 'checked' : ''; ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Verfügbar</span>
+                    </label>
+                </div>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Text wenn nicht verfügbar</label>
                         <input type="text" name="availability_note" value="<?php echo esc_attr($edit_item->availability_note ?? ''); ?>">
