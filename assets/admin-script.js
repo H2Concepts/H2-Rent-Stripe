@@ -614,3 +614,55 @@ document.addEventListener('click', function(e) {
     }
 });
 
+// Price card interactions
+document.addEventListener('DOMContentLoaded', function() {
+    const locale = 'de-DE';
+    function centsToDisplay(cents) {
+        if (isNaN(cents)) return '';
+        return (cents / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function displayToCents(str) {
+        if (!str) return null;
+        const cleaned = String(str).replace(/[^\d,.-]/g, '').trim().replace(/\./g, '').replace(',', '.');
+        const value = parseFloat(cleaned);
+        if (isNaN(value)) return null;
+        return Math.round(value * 100);
+    }
+    document.querySelectorAll('.price-card').forEach(card => {
+        const input = card.querySelector('.price-input');
+        const hidden = card.querySelector('.price-hidden');
+        const steps = card.querySelectorAll('.price-btn');
+        const chips = card.querySelectorAll('.price-chip');
+        if (hidden.value) {
+            const init = parseInt(hidden.value, 10);
+            if (!isNaN(init)) input.value = centsToDisplay(init);
+        }
+        input.addEventListener('blur', () => {
+            const cents = displayToCents(input.value);
+            if (cents === null) { input.value = ''; hidden.value = ''; return; }
+            input.value = centsToDisplay(cents);
+            hidden.value = String(cents);
+        });
+        input.addEventListener('input', () => {
+            const cents = displayToCents(input.value);
+            hidden.value = cents === null ? '' : String(cents);
+        });
+        steps.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const step = parseInt(btn.dataset.step, 10) || 0;
+                const currentCents = displayToCents(input.value) ?? 0;
+                const newCents = Math.max(0, currentCents + (step * 100));
+                input.value = centsToDisplay(newCents);
+                hidden.value = String(newCents);
+            });
+        });
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const cents = parseInt(chip.dataset.value, 10);
+                input.value = centsToDisplay(cents);
+                hidden.value = String(cents);
+            });
+        });
+    });
+});
+

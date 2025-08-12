@@ -23,6 +23,7 @@ jQuery(document).ready(function($) {
     let selectedDays = 0;
     let variantWeekendOnly = false;
     let variantMinDays = 0;
+    let weekendTariff = false;
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
@@ -96,6 +97,9 @@ jQuery(document).ready(function($) {
             }
             if (period) {
                 details.append($('<div>', {class: 'cart-item-period'}).text(period));
+            }
+            if (item.weekend_tarif) {
+                details.append($('<div>', {class: 'cart-item-weekend'}).text('Wochenendtarif'));
             }
             const price = $('<div>', {class: 'cart-item-price'}).text(formatPrice(item.final_price) + '€');
             const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
@@ -367,6 +371,7 @@ jQuery(document).ready(function($) {
                 product_color_id: selectedProductColor,
                 frame_color_id: selectedFrameColor,
                 final_price: currentPrice,
+                weekend_tarif: weekendTariff ? 1 : 0,
                 image: (function(){
                     let img = '';
                     const variantOption = $('.produkt-option[data-type="variant"].selected');
@@ -419,6 +424,7 @@ jQuery(document).ready(function($) {
             if (selectedCondition) params.set('condition_id', selectedCondition);
             if (selectedProductColor) params.set('product_color_id', selectedProductColor);
             if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
+            if (weekendTariff) params.set('weekend_tarif', 1);
             if (currentPrice) params.set('final_price', currentPrice);
 
             const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
@@ -955,6 +961,8 @@ jQuery(document).ready(function($) {
                     product_color_id: selectedProductColor,
                     frame_color_id: selectedFrameColor,
                     days: selectedDays,
+                    start_date: startDate,
+                    end_date: endDate,
                     nonce: produkt_ajax.nonce
                 },
                 success: function(response) {
@@ -972,6 +980,13 @@ jQuery(document).ready(function($) {
                             $('#produkt-original-price').hide();
                         }
                         $('#produkt-savings').hide();
+                        if (data.weekend_applied) {
+                            weekendTariff = true;
+                            $('#produkt-weekend-note').text('Wochenendtarif').show();
+                        } else {
+                            weekendTariff = false;
+                            $('#produkt-weekend-note').hide();
+                        }
 
                         // Update button based on availability
                         currentPriceId = data.price_id || '';
@@ -1016,7 +1031,7 @@ jQuery(document).ready(function($) {
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
 
-                        const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+                        const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
                         if (produkt_ajax.betriebsmodus === 'kauf') {
                             $('.produkt-price-period').hide();
                             $('.produkt-mobile-price-period').hide();
@@ -1049,7 +1064,7 @@ jQuery(document).ready(function($) {
             // Hide mobile sticky price
             hideMobileStickyPrice();
 
-            const label = produkt_ajax.button_text || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+            const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
             if (produkt_ajax.betriebsmodus === 'kauf') {
                 $('.produkt-price-period').hide();
                 $('.produkt-mobile-price-period').hide();
@@ -1066,7 +1081,7 @@ jQuery(document).ready(function($) {
         if (window.innerWidth <= 768) {
             // Determine button label and icon from main button
             const mainButton = $('#produkt-rent-button');
-            let mainLabel = produkt_ajax.button_text || mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+            let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten'));
             const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
 
             // Create mobile sticky price bar

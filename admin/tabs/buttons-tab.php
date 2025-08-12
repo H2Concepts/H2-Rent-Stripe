@@ -52,7 +52,7 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                 <p class="card-subline">Beschriftung und Preisinformationen</p>
                 <div class="form-grid">
                     <div class="produkt-form-group">
-                        <label>Button-Text</label>
+                        <label>Jetzt mieten Text</label>
                         <input type="text" name="button_text" value="<?php echo esc_attr($ui['button_text']); ?>">
                     </div>
                     <div class="produkt-form-group">
@@ -86,11 +86,11 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                         <label>Preiszeitraum</label>
                         <select name="price_period">
                             <option value="month" <?php selected($ui['price_period'], 'month'); ?>>pro Monat</option>
-                            <option value="one-time" <?php selected($ui['price_period'], 'one-time'); ?>>einmalig</option>
+                            <option value="one-time" <?php selected($ui['price_period'], 'one-time'); ?>>pro Tag</option>
                         </select>
                     </div>
                     <div class="produkt-form-group">
-                        <label>Mit MwSt.</label>
+                        <label>MwSt label anzeigen?</label>
                         <label class="produkt-toggle-label">
                             <input type="checkbox" name="vat_included" value="1" <?php checked($ui['vat_included'], 1); ?>>
                             <span class="produkt-toggle-slider"></span>
@@ -128,8 +128,17 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                 </div>
             </div>
             <div class="dashboard-card">
-                <h2>Tooltips</h2>
-                <p class="card-subline">Hilfetexte auf der Produktseite</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Tooltips</h2>
+                        <p class="card-subline">Hilfetexte auf der Produktseite</p>
+                    </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="show_tooltips" value="1" <?php checked($ui['show_tooltips'], 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Tooltips auf Produktseite anzeigen</span>
+                    </label>
+                </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Mietdauer-Tooltip</label>
@@ -138,13 +147,6 @@ $last_order_nr = get_option('produkt_last_order_number', '');
                     <div class="produkt-form-group">
                         <label>Zustand-Tooltip</label>
                         <textarea name="condition_tooltip" rows="4"><?php echo esc_textarea($ui['condition_tooltip']); ?></textarea>
-                    </div>
-                    <div class="produkt-form-group full-width">
-                        <label>Tooltips auf Produktseite anzeigen</label>
-                        <label class="produkt-toggle-label">
-                            <input type="checkbox" name="show_tooltips" value="1" <?php checked($ui['show_tooltips'], 1); ?>>
-                            <span class="produkt-toggle-slider"></span>
-                        </label>
                     </div>
                 </div>
             </div>

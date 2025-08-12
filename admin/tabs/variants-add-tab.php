@@ -17,7 +17,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
         <div class="produkt-form-sections">
             <div class="dashboard-card">
                 <h2>Grunddaten</h2>
-                <p class="card-subline">Name und Preis</p>
+                <p class="card-subline">Name und Beschreibung</p>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Name *</label>
@@ -28,13 +28,13 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                         <label>Monatlicher Mietpreis *</label>
                         <input type="number" step="0.01" name="mietpreis_monatlich" required placeholder="0.00">
                     </div>
+                    <div class="produkt-form-group">
+                        <label>Einmaliger Verkaufspreis</label>
+                        <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="0.00">
+                    </div>
                     <?php else: ?>
                         <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php endif; ?>
-                    <div class="produkt-form-group">
-                        <label><?php echo ($modus === 'kauf') ? 'Preis / Tag (EUR) *' : 'Einmaliger Verkaufspreis'; ?></label>
-                        <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="0.00">
-                    </div>
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>Beschreibung</label>
@@ -42,17 +42,75 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                 </div>
             </div>
 
+            <?php if ($modus === 'kauf'): ?>
             <div class="dashboard-card">
-                <h2>Verfügbarkeit</h2>
-                <p class="card-subline">Buchbarkeit</p>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label class="produkt-toggle-label">
-                            <input type="checkbox" name="available" value="1" checked>
-                            <span class="produkt-toggle-slider"></span>
-                            <span>Verfügbar</span>
-                        </label>
+                <h2>Preise</h2>
+                <p class="card-subline">Tarife</p>
+                <div class="price-cards">
+                  <div class="price-card" data-field="verkaufspreis_einmalig">
+                    <div class="price-card-head">
+                      <div class="price-title">Standardpreis</div>
+                      <span class="price-badge">EUR</span>
                     </div>
+                    <div class="price-display">
+                      <input type="text" class="price-input" placeholder="0,00" aria-label="Standardpreis in Euro" />
+                      <span class="price-suffix">€</span>
+                      <input type="hidden" name="verkaufspreis_einmalig" class="price-hidden" value="">
+                    </div>
+                    <div class="price-buttons">
+                      <button type="button" class="price-btn" data-step="-5">−5</button>
+                      <button type="button" class="price-btn" data-step="-1">−1</button>
+                      <button type="button" class="price-btn" data-step="1">+1</button>
+                      <button type="button" class="price-btn" data-step="5">+5</button>
+                    </div>
+                    <div class="price-chips">
+                      <button type="button" class="price-chip" data-value="1990">19,90 €</button>
+                      <button type="button" class="price-chip" data-value="2990">29,90 €</button>
+                      <button type="button" class="price-chip" data-value="4990">49,90 €</button>
+                      <button type="button" class="price-chip" data-value="6990">69,90 €</button>
+                    </div>
+                  </div>
+
+                  <div class="price-card" data-field="weekend_price">
+                    <div class="price-card-head">
+                      <div class="price-title">Wochenendpreis <span class="price-sub">(Fr–So)</span></div>
+                      <span class="price-badge">EUR</span>
+                    </div>
+                    <div class="price-display">
+                      <input type="text" class="price-input" placeholder="0,00" aria-label="Wochenendpreis in Euro" />
+                      <span class="price-suffix">€</span>
+                      <input type="hidden" name="weekend_price" class="price-hidden" value="">
+                    </div>
+                    <div class="price-buttons">
+                      <button type="button" class="price-btn" data-step="-5">−5</button>
+                      <button type="button" class="price-btn" data-step="-1">−1</button>
+                      <button type="button" class="price-btn" data-step="1">+1</button>
+                      <button type="button" class="price-btn" data-step="5">+5</button>
+                    </div>
+                    <div class="price-chips">
+                      <button type="button" class="price-chip" data-value="1490">14,90 €</button>
+                      <button type="button" class="price-chip" data-value="1990">19,90 €</button>
+                      <button type="button" class="price-chip" data-value="2990">29,90 €</button>
+                      <button type="button" class="price-chip" data-value="3990">39,90 €</button>
+                    </div>
+                  </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Verfügbarkeit</h2>
+                        <p class="card-subline">Buchbarkeit</p>
+                    </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="available" value="1" checked>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Verfügbar</span>
+                    </label>
+                </div>
+                <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Text wenn nicht verfügbar</label>
                         <input type="text" name="availability_note" placeholder="z.B. Wieder verfügbar ab 15.03.2024">
