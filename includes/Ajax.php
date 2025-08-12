@@ -2006,7 +2006,7 @@ function pv_load_customer_logs() {
     $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
     $params = $order_ids;
     $params[] = $offset;
-    $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5 OFFSET %d";
+    $sql = "SELECT id, order_id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5 OFFSET %d";
     $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
 
     ob_start();
@@ -2033,7 +2033,8 @@ function pv_load_customer_logs() {
             default:
                 $text = $log->message ?: $log->event;
         }
-        echo '<div class="order-log-entry"><div class="log-avatar">' . esc_html($avatar) . '</div><div class="log-body"><div class="log-date">' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at))) . '</div><div class="log-message">' . esc_html($text) . '</div></div></div>';
+        $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $log->order_id;
+        echo '<div class="order-log-entry"><div class="log-avatar">' . esc_html($avatar) . '</div><div class="log-body"><div class="log-date">' . esc_html($date_id) . '</div><div class="log-message">' . esc_html($text) . '</div></div></div>';
     }
     $html = ob_get_clean();
 

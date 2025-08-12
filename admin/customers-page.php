@@ -257,7 +257,7 @@ if (!$customer_id) {
     $order_ids = wp_list_pluck($all_orders, 'id');
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
+        $sql = "SELECT id, order_id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
         $customer_logs = $wpdb->get_results($wpdb->prepare($sql, $order_ids));
         $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
         $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
@@ -392,7 +392,7 @@ if (!$customer_id) {
                                 <div class="order-log-entry">
                                     <div class="log-avatar"><?php echo esc_html($avatar); ?></div>
                                     <div class="log-body">
-                                        <div class="log-date"><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at))); ?></div>
+                                        <div class="log-date"><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $log->order_id); ?></div>
                                         <div class="log-message"><?php echo esc_html($text); ?></div>
                                     </div>
                                 </div>
