@@ -76,15 +76,15 @@ if (isset($_GET['edit'])) {
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
             <div class="form-grid">
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="name">Name</label>
-                    <input name="name" type="text" required value="<?php echo esc_attr($edit_category->name ?? ''); ?>" class="regular-text">
+                    <input name="name" type="text" required value="<?php echo esc_attr($edit_category->name ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="slug">Slug</label>
-                    <input name="slug" type="text" required value="<?php echo esc_attr($edit_category->slug ?? ''); ?>" class="regular-text">
+                    <input name="slug" type="text" required value="<?php echo esc_attr($edit_category->slug ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="parent_id">Übergeordnete Kategorie</label>
                     <select name="parent_id">
                         <option value="0">Keine</option>
@@ -97,9 +97,9 @@ if (isset($_GET['edit'])) {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="form-field full">
+                <div class="produkt-form-group full-width">
                     <label for="description">Beschreibung</label>
-                    <textarea name="description" class="large-text"><?php echo esc_textarea($edit_category->description ?? ''); ?></textarea>
+                    <textarea name="description" rows="3"><?php echo esc_textarea($edit_category->description ?? ''); ?></textarea>
                 </div>
             </div>
             <p>

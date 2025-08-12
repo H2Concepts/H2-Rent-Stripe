@@ -129,15 +129,15 @@ $providers = [
             <?php wp_nonce_field('save_shipping_action', 'save_shipping_nonce'); ?>
             <input type="hidden" name="shipping_id" value="<?php echo esc_attr($edit_shipping->id ?? ''); ?>">
             <div class="form-grid">
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="shipping_name">Name</label>
                     <input type="text" id="shipping_name" name="shipping_name" required value="<?php echo esc_attr($edit_shipping->name ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="shipping_price">Versandkosten (€)</label>
                     <input type="number" id="shipping_price" name="shipping_price" step="0.01" required value="<?php echo esc_attr($edit_shipping->price ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="shipping_provider">Dienstleister</label>
                     <select id="shipping_provider" name="shipping_provider" required>
                         <?php foreach ($providers as $val => $label): ?>
@@ -145,9 +145,9 @@ $providers = [
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="form-field full">
+                <div class="produkt-form-group full-width">
                     <label for="shipping_description">Beschreibung</label>
-                    <textarea id="shipping_description" name="shipping_description"><?php echo esc_textarea($edit_shipping->description ?? ''); ?></textarea>
+                    <textarea id="shipping_description" name="shipping_description" rows="3"><?php echo esc_textarea($edit_shipping->description ?? ''); ?></textarea>
                 </div>
             </div>
             <p>
