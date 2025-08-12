@@ -1178,6 +1178,7 @@ function produkt_create_checkout_session() {
         if (!$price_id) {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
         }
+        $client_info = !empty($body['client_info']) ? wp_json_encode($body['client_info']) : '';
 
         global $wpdb;
         $shipping_price_id = $wpdb->get_var("SELECT stripe_price_id FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
@@ -1432,6 +1433,7 @@ function produkt_create_checkout_session() {
             'customer_email'    => $customer_email,
             'user_ip'           => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent'        => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+            'client_info'       => $client_info,
             'discount_amount'   => 0,
             'weekend_tariff'    => $weekend_tarif,
             'status'            => 'offen',
@@ -1452,6 +1454,7 @@ function produkt_create_checkout_session() {
 }
 
 function produkt_create_embedded_checkout_session() {
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
     try {
         $init = StripeService::init();
         if (is_wp_error($init)) {
@@ -1459,6 +1462,7 @@ function produkt_create_embedded_checkout_session() {
         }
 
         $body = json_decode(file_get_contents('php://input'), true);
+        $client_info = !empty($body['client_info']) ? wp_json_encode($body['client_info']) : '';
         $modus      = get_option('produkt_betriebsmodus', 'miete');
         $cart_items = [];
         if (!empty($body['cart_items']) && is_array($body['cart_items'])) {
@@ -1665,6 +1669,7 @@ function produkt_create_embedded_checkout_session() {
 
         global $wpdb;
         foreach ($orders as $o) {
+            $order_number = pv_generate_order_number();
             $wpdb->insert(
                 $wpdb->prefix . 'produkt_orders',
                 [
@@ -1699,8 +1704,10 @@ function produkt_create_embedded_checkout_session() {
                     'customer_email'   => $customer_email,
                     'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
                     'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+                    'client_info'      => $client_info,
                     'discount_amount'  => 0,
                     'status'           => 'offen',
+                    'order_number'     => $order_number,
                     'created_at'       => current_time('mysql', 1)
                 ]
             );
@@ -1990,6 +1997,7 @@ function pv_load_customer_logs() {
 
     $order_ids = isset($_POST['order_ids']) ? array_map('intval', (array)$_POST['order_ids']) : [];
     $offset = intval($_POST['offset'] ?? 0);
+    $initials = sanitize_text_field($_POST['initials'] ?? '');
     if (!$order_ids) {
         wp_send_json_error('missing');
     }
@@ -2002,8 +2010,30 @@ function pv_load_customer_logs() {
     $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
 
     ob_start();
+    $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
     foreach ($logs as $log) {
-        echo '<li>' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')) . '</li>';
+        $is_customer = !in_array($log->event, $system_events, true);
+        $avatar = $is_customer ? $initials : 'H2';
+        switch ($log->event) {
+            case 'inventory_returned_not_accepted':
+                $text = 'Miete zuende aber noch nicht akzeptiert.';
+                break;
+            case 'inventory_returned_accepted':
+                $text = 'Rückgabe wurde akzeptiert.';
+                break;
+            case 'welcome_email_sent':
+                $text = 'Bestellbestätigung an Kunden gesendet.';
+                break;
+            case 'status_updated':
+                $text = ($log->message ? $log->message . ': ' : '') . 'Kauf abgeschlossen.';
+                break;
+            case 'checkout_completed':
+                $text = 'Checkout abgeschlossen.';
+                break;
+            default:
+                $text = $log->message ?: $log->event;
+        }
+        echo '<div class="order-log-entry"><div class="log-avatar">' . esc_html($avatar) . '</div><div class="log-body"><div class="log-date">' . esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at))) . '</div><div class="log-message">' . esc_html($text) . '</div></div></div>';
     }
     $html = ob_get_clean();
 

@@ -588,6 +588,7 @@ class Database {
                 order_number varchar(50) DEFAULT '',
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
+                client_info text DEFAULT NULL,
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY category_id (category_id),
@@ -623,7 +624,8 @@ class Database {
                 'inventory_reverted'=> 'tinyint(1) DEFAULT 0',
                 'weekend_tariff'    => 'tinyint(1) DEFAULT 0',
                 'status'            => "varchar(20) DEFAULT 'offen'",
-                'invoice_url'       => "varchar(255) DEFAULT ''"
+                'invoice_url'       => "varchar(255) DEFAULT ''",
+                'client_info'       => 'text'
             );
 
             foreach ($new_order_columns as $column => $type) {

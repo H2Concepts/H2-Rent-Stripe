@@ -192,6 +192,35 @@ function produkt_simple_checkout_button($atts = []) {
         const publishableKey = <?php echo json_encode(\ProduktVerleih\StripeService::get_publishable_key()); ?>;
         if (!publishableKey) return;
         const stripe = Stripe(publishableKey);
+        async function collectClientInfo() {
+            const info = {
+                language: navigator.language || '',
+                languages: (navigator.languages || []).join(','),
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+                screen: (window.screen.width || 0) + 'x' + (window.screen.height || 0),
+                colorDepth: window.screen.colorDepth || '',
+                viewport: window.innerWidth + 'x' + window.innerHeight,
+                hardwareConcurrency: navigator.hardwareConcurrency || '',
+                deviceMemory: navigator.deviceMemory || '',
+                touch: ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 1 : 0,
+                connection: navigator.connection ? navigator.connection.effectiveType : ''
+            };
+            if (navigator.userAgentData) {
+                info.browser = navigator.userAgentData.brands.map(b => b.brand + ' ' + b.version).join(', ');
+                info.os = navigator.userAgentData.platform;
+            } else {
+                info.browser = navigator.userAgent;
+            }
+            if (navigator.getBattery) {
+                try {
+                    const b = await navigator.getBattery();
+                    info.battery = Math.round(b.level * 100) + '%';
+                    info.charging = b.charging ? 1 : 0;
+                } catch(e){}
+            }
+            return info;
+        }
+        const clientInfo = await collectClientInfo();
         const fetchClientSecret = async () => {
 <?php if ($cart_mode): ?>
             const items = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
@@ -200,7 +229,8 @@ function produkt_simple_checkout_button($atts = []) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     cart_items: items,
-                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>
+                    shipping_price_id: <?php echo json_encode($shipping_price_id); ?>,
+                    client_info: clientInfo
                 })
             });
 <?php else: ?>
@@ -228,7 +258,8 @@ function produkt_simple_checkout_button($atts = []) {
                     gestellfarbe: <?php echo json_encode($metadata['gestellfarbe']); ?>,
                     start_date: <?php echo json_encode($metadata['start_date']); ?>,
                     end_date: <?php echo json_encode($metadata['end_date']); ?>,
-                    days: <?php echo json_encode($metadata['days']); ?>
+                    days: <?php echo json_encode($metadata['days']); ?>,
+                    client_info: clientInfo
                 })
             });
 <?php endif; ?>

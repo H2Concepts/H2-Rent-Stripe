@@ -589,10 +589,12 @@ document.addEventListener('click', function(e) {
         var offset = parseInt(btn.getAttribute('data-offset')) || 0;
         var total = parseInt(btn.getAttribute('data-total')) || 0;
         var orderIds = btn.getAttribute('data-order-ids').split(',');
+        var initials = btn.getAttribute('data-initials') || '';
         var data = new URLSearchParams();
         data.append('action', 'pv_load_customer_logs');
         data.append('nonce', produkt_admin.nonce);
         data.append('offset', offset);
+        data.append('initials', initials);
         orderIds.forEach(function(id){ data.append('order_ids[]', id); });
         fetch(produkt_admin.ajax_url, {method:'POST', body:data})
             .then(r => r.json())
