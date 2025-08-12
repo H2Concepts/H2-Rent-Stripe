@@ -946,7 +946,8 @@ class Admin {
         }
         if ($search_term !== '') {
             $like = '%' . $wpdb->esc_like(ltrim($search_term, '#')) . '%';
-            $where_conditions[] = "(o.order_number LIKE %s OR CAST(o.id AS CHAR) LIKE %s)";
+            $where_conditions[] = "(o.order_number LIKE %s OR CAST(o.id AS CHAR) LIKE %s OR o.customer_name LIKE %s)";
+            $where_values[] = $like;
             $where_values[] = $like;
             $where_values[] = $like;
         }

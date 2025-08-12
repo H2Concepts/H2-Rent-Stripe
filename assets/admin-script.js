@@ -683,5 +683,45 @@ document.addEventListener('DOMContentLoaded', function() {
             setActive(hidden.value || 'default');
         }
     });
+
+    // Load orders incrementally
+    const orderRows = document.querySelectorAll('.activity-table tbody tr');
+    const loadMoreBtn = document.getElementById('orders-load-more');
+    if (orderRows.length > 10 && loadMoreBtn) {
+        let visible = 10;
+        loadMoreBtn.style.display = '';
+        const updateOrders = () => {
+            orderRows.forEach((row, idx) => {
+                row.style.display = idx < visible ? '' : 'none';
+            });
+            if (visible >= orderRows.length) {
+                loadMoreBtn.style.display = 'none';
+            }
+        };
+        loadMoreBtn.addEventListener('click', () => {
+            visible += 10;
+            updateOrders();
+        });
+        updateOrders();
+    }
+
+    // Auto-generate slug from category name
+    const catForm = document.getElementById('produkt-category-form');
+    if (catForm) {
+        const nameInput = catForm.querySelector('input[name="name"]');
+        const slugInput = catForm.querySelector('input[name="slug"]');
+        if (nameInput && slugInput) {
+            let slugEdited = false;
+            slugInput.addEventListener('input', () => { slugEdited = true; });
+            nameInput.addEventListener('input', () => {
+                if (slugEdited) return;
+                slugInput.value = nameInput.value
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+            });
+        }
+    }
 });
 

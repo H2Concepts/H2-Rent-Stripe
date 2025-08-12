@@ -315,7 +315,7 @@
 }
 .availability-image {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     margin-bottom: 10px;
 }
 .availability-image img {
@@ -3160,7 +3160,7 @@ body.day-modal-open{overflow:hidden;}
 .dashboard-card {
     background: #fff;
     border-radius: 20px;
-    padding: 1.5rem;
+    padding: 2rem;
     margin-right: 20px;
 }
 
@@ -3191,7 +3191,7 @@ body.day-modal-open{overflow:hidden;}
 .card-subline {
     font-size: 0.9rem;
     color: #333d48;
-    margin-bottom: 1rem !important;
+    margin-bottom: 3rem !important;
     margin-top: 0rem !important;
     font-family: 'Manrope', sans-serif;
 }
