@@ -3110,7 +3110,7 @@ body.day-modal-open{overflow:hidden;}
 .customer-detail-grid{display:flex;gap:0rem;align-items:flex-start;margin-top:2rem;}
 .customer-left{flex:1;display:flex;flex-direction:column;gap:1rem;}
 .customer-right{flex:1;display:flex;flex-direction:column;gap:2rem;box-sizing:border-box;}
-.customer-row{display:flex;gap:2rem;align-items:flex-start;}
+.customer-row{display:flex;gap:0rem;align-items:flex-start;}
 .customer-row > .dashboard-card{flex:1;}
 .produkt-customer-details p{margin:6px 0;}
 .produkt-customer-orders{background:#f8f9fb;padding:20px;border-radius:12px;border:1px solid #e1e1e1;}
