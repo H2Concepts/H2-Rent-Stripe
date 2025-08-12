@@ -3107,8 +3107,8 @@ body.day-modal-open{overflow:hidden;}
 #produkt-admin-customers .customer-actions .icon-btn svg{width:20px;height:20px;}
 
 /* Customer detail layout */
-.customer-detail-grid{display:flex;gap:2rem;align-items:flex-start;margin-top:2rem;}
-.customer-left{flex:1;display:flex;flex-direction:column;gap:2rem;}
+.customer-detail-grid{display:flex;gap:0rem;align-items:flex-start;margin-top:2rem;}
+.customer-left{flex:1;display:flex;flex-direction:column;gap:1rem;}
 .customer-right{flex:1;display:flex;flex-direction:column;gap:2rem;padding-right:20px;box-sizing:border-box;}
 .customer-row{display:flex;gap:2rem;align-items:flex-start;}
 .customer-row > .dashboard-card{flex:1;}
