@@ -193,7 +193,8 @@ $produkte = $order->produkte ?? [$order]; // fallback
                                 default:
                                     $text = $log->message ?: $log->event;
                             }
-                            $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $log->order_id;
+                            $order_no = !empty($order->order_number) ? $order->order_number : $order->id;
+                            $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no;
                             ?>
                             <div class="order-log-entry">
                                 <div class="log-avatar"><?php echo esc_html($avatar); ?></div>
