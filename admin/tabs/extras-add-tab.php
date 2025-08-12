@@ -1,5 +1,6 @@
 <?php
 // Extras Add Tab Content
+$modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 
 <div class="produkt-add-extra">
@@ -16,24 +17,42 @@
         <div class="produkt-form-sections">
             <div class="dashboard-card">
                 <h2>Grunddaten</h2>
-                <p class="card-subline">Name und Preis</p>
-                <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
+                <p class="card-subline">Name</p>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Name *</label>
                         <input type="text" name="name" required placeholder="z.B. Himmel, Zubehör-Set">
                     </div>
-                    <?php if ($modus === 'kauf'): ?>
-                    <div class="produkt-form-group">
-                        <label>Preis / Tag (EUR) *</label>
-                        <input type="number" step="0.01" name="sale_price" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Preis</h2>
+                <p class="card-subline">Tarif</p>
+                <div class="price-cards">
+                  <div class="price-card" data-field="<?php echo $modus === 'kauf' ? 'sale_price' : 'price'; ?>">
+                    <div class="price-card-head">
+                      <div class="price-title">Standardpreis</div>
+                      <span class="price-badge">EUR</span>
                     </div>
-                    <?php else: ?>
-                    <div class="produkt-form-group">
-                        <label>Preis (EUR) *</label>
-                        <input type="number" step="0.01" name="price" placeholder="0.00" required>
+                    <div class="price-display">
+                      <input type="text" class="price-input" placeholder="0,00" aria-label="Preis in Euro" />
+                      <span class="price-suffix">€</span>
+                      <input type="hidden" name="<?php echo $modus === 'kauf' ? 'sale_price' : 'price'; ?>" class="price-hidden" value="">
                     </div>
-                    <?php endif; ?>
+                    <div class="price-buttons">
+                      <button type="button" class="price-btn" data-step="-5">−5</button>
+                      <button type="button" class="price-btn" data-step="-1">−1</button>
+                      <button type="button" class="price-btn" data-step="1">+1</button>
+                      <button type="button" class="price-btn" data-step="5">+5</button>
+                    </div>
+                    <div class="price-chips">
+                      <button type="button" class="price-chip" data-value="1990">19,90 €</button>
+                      <button type="button" class="price-chip" data-value="2990">29,90 €</button>
+                      <button type="button" class="price-chip" data-value="4990">49,90 €</button>
+                      <button type="button" class="price-chip" data-value="6990">69,90 €</button>
+                    </div>
+                  </div>
                 </div>
             </div>
 
@@ -64,13 +83,32 @@
             <div class="dashboard-card">
                 <h2>Verfügbarkeit je Ausführung</h2>
                 <p class="card-subline">Extras pro Variante aktivieren</p>
-                <div class="produkt-form-row" style="flex-wrap:wrap;gap:15px;">
+                <div class="variant-availability-grid">
                     <?php foreach ($variants as $v): ?>
-                    <label class="produkt-toggle-label" style="min-width:160px;">
-                        <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" checked>
-                        <span class="produkt-toggle-slider"></span>
-                        <span><?php echo esc_html($v->name); ?></span>
-                    </label>
+                    <div class="variant-availability-card">
+                        <div class="availability-card-head">
+                            <div class="availability-card-title"><?php echo esc_html($v->name); ?></div>
+                            <label class="produkt-toggle-label">
+                                <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" checked>
+                                <span class="produkt-toggle-slider"></span>
+                            </label>
+                        </div>
+                        <?php if (!empty($v->image_url_1)): ?>
+                        <div class="availability-image"><img src="<?php echo esc_url($v->image_url_1); ?>" alt=""></div>
+                        <?php endif; ?>
+                        <?php if (!empty($v->description)): ?>
+                        <div class="availability-desc"><?php echo esc_html($v->description); ?></div>
+                        <?php endif; ?>
+                        <div class="availability-prices">
+                            <?php $std_price = ($modus === 'kauf') ? $v->verkaufspreis_einmalig : $v->mietpreis_monatlich; ?>
+                            <?php if ($std_price > 0): ?>
+                            <div>Standardpreis: <?php echo number_format($std_price, 2, ',', '.'); ?>€</div>
+                            <?php endif; ?>
+                            <?php if ($modus === 'kauf' && !empty($v->weekend_price)): ?>
+                            <div>Wochenendpreis: <?php echo number_format($v->weekend_price, 2, ',', '.'); ?>€</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                     <?php endforeach; ?>
                 </div>
             </div>

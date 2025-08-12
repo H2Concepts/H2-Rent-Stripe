@@ -286,6 +286,48 @@
 }
 .price-chip:hover { background: #f7f8fa; }
 
+/* Variant availability cards */
+.variant-availability-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+.variant-availability-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+}
+.availability-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.availability-card-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+.availability-image img {
+    width: 100%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.availability-desc {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+.availability-prices {
+    font-size: 13px;
+}
+.availability-prices div {
+    margin-top: 4px;
+}
+
 /* Layout option cards */
 .layout-option-grid {
     display: grid;

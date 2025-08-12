@@ -18,7 +18,7 @@ $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
 // Get variants for toggles
 $variants = $wpdb->get_results($wpdb->prepare(
-    "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
+    "SELECT id, name, description, image_url_1, verkaufspreis_einmalig, weekend_price, mietpreis_monatlich FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
     $selected_category
 ));
 
@@ -62,10 +62,15 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name        = sanitize_text_field($_POST['name']);
     $modus       = get_option('produkt_betriebsmodus', 'miete');
-    $sale_price  = isset($_POST['sale_price']) ? floatval($_POST['sale_price']) : 0;
-    $price       = isset($_POST['price']) ? floatval($_POST['price']) : 0;
-    $price_input = $modus === 'kauf' ? ($_POST['sale_price'] ?? '') : ($_POST['price'] ?? '');
-    $stripe_price = floatval($price_input);
+    if ($modus === 'kauf') {
+        $sale_price  = isset($_POST['sale_price']) ? intval($_POST['sale_price']) / 100 : 0;
+        $price       = 0;
+        $stripe_price = $sale_price;
+    } else {
+        $price       = isset($_POST['price']) ? intval($_POST['price']) / 100 : 0;
+        $sale_price  = 0;
+        $stripe_price = $price;
+    }
     $image_url = esc_url_raw($_POST['image_url']);
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
