@@ -286,6 +286,37 @@
 }
 .price-chip:hover { background: #f7f8fa; }
 
+/* Layout option cards */
+.layout-option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+.layout-option-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+}
+.layout-option-card.active {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 4px rgba(29,78,216,0.1);
+}
+.layout-option-name {
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.layout-option-preview svg {
+    width: 100%;
+    height: auto;
+}
+
 .produkt-nav-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);

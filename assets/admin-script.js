@@ -664,5 +664,24 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
+
+    document.querySelectorAll('.layout-option-grid').forEach(grid => {
+        const hidden = grid.closest('.dashboard-card').querySelector('input[name="layout_style"]');
+        function setActive(val) {
+            grid.querySelectorAll('.layout-option-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.value === val);
+            });
+        }
+        grid.querySelectorAll('.layout-option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const val = card.dataset.value;
+                if (hidden) hidden.value = val;
+                setActive(val);
+            });
+        });
+        if (hidden) {
+            setActive(hidden.value || 'default');
+        }
+    });
 });
 

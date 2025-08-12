@@ -100,26 +100,55 @@ function produkt_category_icon($slug)
         <div class="dashboard-card">
             <h2>SEO-Einstellungen</h2>
             <p class="card-subline">Meta-Angaben</p>
-            <div class="form-grid">
-                <div class="produkt-form-group">
-                    <label>SEO-Titel</label>
-                    <input type="text" name="meta_title" value="<?php echo esc_attr($edit_item->meta_title ?? ''); ?>" maxlength="60">
-                    <small>Max. 60 Zeichen für Google <span id="meta_title_counter" class="produkt-char-counter"></span></small>
-                </div>
-                <div class="produkt-form-group">
-                    <label>Layout-Stil</label>
-                    <select name="layout_style">
-                        <option value="default" <?php selected($edit_item->layout_style ?? 'default', 'default'); ?>>Standard (Horizontal)</option>
-                        <option value="grid" <?php selected($edit_item->layout_style ?? 'default', 'grid'); ?>>Grid (Karten-Layout)</option>
-                        <option value="list" <?php selected($edit_item->layout_style ?? 'default', 'list'); ?>>Liste (Vertikal)</option>
-                    </select>
-                </div>
+            <div class="produkt-form-group">
+                <label>SEO-Titel</label>
+                <input type="text" name="meta_title" value="<?php echo esc_attr($edit_item->meta_title ?? ''); ?>" maxlength="60">
+                <small>Max. 60 Zeichen für Google <span id="meta_title_counter" class="produkt-char-counter"></span></small>
             </div>
-            
+
             <div class="produkt-form-group full-width">
                 <label>SEO-Beschreibung</label>
                 <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
                 <div id="meta_description_counter" class="produkt-char-counter"></div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2>Layout</h2>
+            <p class="card-subline">Darstellung im Frontend</p>
+            <input type="hidden" name="layout_style" value="<?php echo esc_attr($edit_item->layout_style ?? 'default'); ?>">
+            <div class="layout-option-grid">
+                <div class="layout-option-card" data-value="default">
+                    <div class="layout-option-name">Standard (Horizontal)</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="5" width="27" height="50" fill="#e5e7eb"/>
+                            <rect x="36" y="5" width="27" height="50" fill="#e5e7eb"/>
+                            <rect x="67" y="5" width="27" height="50" fill="#e5e7eb"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="layout-option-card" data-value="grid">
+                    <div class="layout-option-name">Grid (Karten-Layout)</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="5" width="40" height="25" fill="#e5e7eb"/>
+                            <rect x="55" y="5" width="40" height="25" fill="#e5e7eb"/>
+                            <rect x="5" y="30" width="40" height="25" fill="#e5e7eb"/>
+                            <rect x="55" y="30" width="40" height="25" fill="#e5e7eb"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="layout-option-card" data-value="list">
+                    <div class="layout-option-name">Liste (Vertikal)</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="5" width="90" height="15" fill="#e5e7eb"/>
+                            <rect x="5" y="25" width="90" height="15" fill="#e5e7eb"/>
+                            <rect x="5" y="45" width="90" height="15" fill="#e5e7eb"/>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
 
