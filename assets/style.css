@@ -2382,4 +2382,14 @@ body.shop-filter-open {
     height: 100%;
 }
 
+@media (max-width: 768px) {
+    .produkt-category-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .produkt-category-layout.layout-1 .layout-card.span-2 {
+        grid-column: span 1;
+    }
+}
+
 
