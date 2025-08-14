@@ -67,6 +67,7 @@ if (isset($_POST['save_layout'])) {
     $name = sanitize_text_field($_POST['layout_name'] ?? '');
     $layout_type = intval($_POST['layout_type'] ?? 1);
     $border_radius = isset($_POST['border_radius']) ? 1 : 0;
+    $heading_tag = in_array($_POST['heading_tag'] ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $_POST['heading_tag'] : 'h3';
     $cats = $_POST['layout_categories'] ?? [];
     $colors = $_POST['cat_color'] ?? [];
     $images = $_POST['cat_image'] ?? [];
@@ -93,6 +94,7 @@ if (isset($_POST['save_layout'])) {
             'layout_type' => $layout_type,
             'categories' => $cat_json,
             'border_radius' => $border_radius,
+            'heading_tag' => $heading_tag,
         ], ['id' => $layout_id]);
     } else {
         $base = $shortcode;
@@ -106,6 +108,7 @@ if (isset($_POST['save_layout'])) {
             'layout_type' => $layout_type,
             'categories' => $cat_json,
             'border_radius' => $border_radius,
+            'heading_tag' => $heading_tag,
             'shortcode' => $shortcode,
         ]);
     }
@@ -247,6 +250,18 @@ if (isset($_GET['edit'])) {
                         <span class="produkt-toggle-slider"></span>
                         <span>20px</span>
                     </label>
+                </div>
+                <div class="produkt-form-group">
+                    <label>Überschrift</label>
+                    <?php $current_heading = $edit_layout->heading_tag ?? 'h3'; ?>
+                    <div class="heading-radio-group">
+                        <?php foreach (['h1','h2','h3','h4','h5','h6'] as $tag): ?>
+                            <label>
+                                <input type="radio" name="heading_tag" value="<?php echo $tag; ?>" <?php checked($current_heading, $tag); ?>>
+                                <?php echo strtoupper($tag); ?>
+                            </label>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
             <p>

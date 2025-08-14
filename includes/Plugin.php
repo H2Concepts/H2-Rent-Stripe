@@ -337,10 +337,11 @@ class Plugin {
                 $style = 'background-color:' . esc_attr($item['color'] ?? '#fff') . ';' . $border_style;
                 $img = !empty($item['image']) ? '<img src="' . esc_url($item['image']) . '" class="layout-cat-img" alt="" />' : '';
                 $classes = 'layout-card';
+                $tag = in_array($layout->heading_tag ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $layout->heading_tag : 'span';
                 if (intval($layout->layout_type) === 1 && $count === 4) {
                     $classes .= ' span-2';
                 }
-                echo '<a href="' . $url . '" class="' . $classes . '" style="' . $style . '"><span class="layout-cat-name">' . esc_html($cat->name) . '</span>' . $img . '</a>';
+                echo '<a href="' . $url . '" class="' . $classes . '" style="' . $style . '"><' . $tag . ' class="layout-cat-name">' . esc_html($cat->name) . '</' . $tag . '>' . $img . '</a>';
                 $count++;
                 if (intval($layout->layout_type) === 1 && $count >= 5) {
                     break;

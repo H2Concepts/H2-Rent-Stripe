@@ -1269,6 +1269,7 @@ class Database {
             layout_type TINYINT NOT NULL DEFAULT 1,
             categories TEXT NOT NULL,
             border_radius TINYINT(1) NOT NULL DEFAULT 0,
+            heading_tag VARCHAR(3) NOT NULL DEFAULT 'h3',
             shortcode VARCHAR(100) NOT NULL UNIQUE,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id)
