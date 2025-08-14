@@ -2389,6 +2389,8 @@ body.shop-filter-open {
 
     .produkt-category-layout.layout-1 .layout-card.span-2 {
         grid-column: span 1;
+        height: auto;
+        aspect-ratio: 3 / 3;
     }
 }
 
