@@ -125,7 +125,10 @@ class Plugin {
 
     public function check_for_updates() {
         $current_version = get_option('produkt_version', '1.0.0');
-        $needs_schema = !$this->db->categories_table_has_parent_column() || !$this->db->customer_notes_table_exists();
+        $needs_schema =
+            !$this->db->categories_table_has_parent_column() ||
+            !$this->db->customer_notes_table_exists() ||
+            !$this->db->category_layouts_table_exists();
         if (version_compare($current_version, PRODUKT_VERSION, '<') || $needs_schema) {
             $this->db->update_database();
             update_option('produkt_version', PRODUKT_VERSION);
@@ -337,7 +340,7 @@ class Plugin {
                 $style = 'background-color:' . esc_attr($item['color'] ?? '#fff') . ';' . $border_style;
                 $img = !empty($item['image']) ? '<img src="' . esc_url($item['image']) . '" class="layout-cat-img" alt="" />' : '';
                 $classes = 'layout-card';
-                $tag = in_array($layout->heading_tag ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $layout->heading_tag : 'span';
+                $tag = in_array($layout->heading_tag ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $layout->heading_tag : 'h3';
                 if (intval($layout->layout_type) === 1 && $count === 4) {
                     $classes .= ' span-2';
                 }

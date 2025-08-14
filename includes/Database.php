@@ -2033,6 +2033,21 @@ class Database {
         $table = $wpdb->prefix . 'produkt_customer_notes';
         return (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
     }
+
+    /**
+     * Check if the category layouts table exists with required columns.
+     *
+     * @return bool
+     */
+    public function category_layouts_table_exists() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_category_layouts';
+        $exists = (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
+        if (!$exists) {
+            return false;
+        }
+        return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'heading_tag'");
+    }
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *
