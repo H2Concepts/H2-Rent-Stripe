@@ -112,8 +112,6 @@ if (isset($_POST['save_layout'])) {
             'shortcode' => $shortcode,
         ]);
     }
-    wp_redirect(admin_url('admin.php?page=produkt-kategorien'));
-    exit;
 }
 
 if (isset($_GET['delete_layout'])) {

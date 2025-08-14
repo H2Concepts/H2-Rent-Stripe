@@ -2356,7 +2356,7 @@ body.shop-filter-open {
     align-items: flex-start;
     justify-content: flex-start;
     overflow: hidden;
-    text-decoration: none;
+    text-decoration: none !important;
     color: inherit;
 }
 .produkt-category-layout .layout-card .layout-cat-img {
@@ -2369,11 +2369,12 @@ body.shop-filter-open {
 }
 .produkt-category-layout .layout-card:hover,
 .produkt-category-layout .layout-card:focus {
-    text-decoration: none;
+    text-decoration: none !important;
 }
 .produkt-category-layout .layout-card .layout-cat-name {
     margin: 0;
-    text-decoration: none;
+    text-decoration: none !important;
+    border-bottom: none !important;
 }
 .produkt-category-layout.layout-1 .layout-card.span-2 {
     grid-column: span 2;
