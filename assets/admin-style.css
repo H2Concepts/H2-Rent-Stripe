@@ -367,6 +367,30 @@
     height: auto;
 }
 
+/* Layout modal category rows */
+.layout-cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.layout-cat-row .image-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.layout-cat-row .image-preview {
+    width: 120px;
+    height: 120px;
+    background-color: #f0f0f0;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
 .produkt-nav-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);

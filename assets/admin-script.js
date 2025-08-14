@@ -234,15 +234,60 @@ jQuery(document).ready(function($) {
             url.searchParams.delete('edit_layout');
             history.replaceState(null, '', url);
         }
+
+        // layout type selection
+        var typeGrid = layoutModal.find('.layout-option-grid');
+        if (typeGrid.length) {
+            var typeInput = layoutModal.find('input[name="layout_type"]');
+            function setLayoutActive(val) {
+                typeGrid.find('.layout-option-card').each(function(){
+                    $(this).toggleClass('active', $(this).data('value') == val);
+                });
+            }
+            typeGrid.on('click', '.layout-option-card', function(){
+                var val = $(this).data('value');
+                typeInput.val(val);
+                setLayoutActive(val);
+            });
+            setLayoutActive(typeInput.val());
+        }
+
+        // image selector
+        layoutModal.on('click', '.image-select', function(e){
+            e.preventDefault();
+            var row = $(this).closest('.layout-cat-row');
+            var preview = row.find('.image-preview');
+            var input = row.find('input[name="cat_image[]"]');
+            var frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function(){
+                var att = frame.state().get('selection').first().toJSON();
+                preview.css('background-image', 'url(' + att.url + ')');
+                input.val(att.url);
+            });
+            frame.open();
+        });
+        layoutModal.on('click', '.image-remove', function(e){
+            e.preventDefault();
+            var row = $(this).closest('.layout-cat-row');
+            row.find('.image-preview').css('background-image', '');
+            row.find('input[name="cat_image[]"]').val('');
+        });
+
         $('#add-layout-btn').on('click', function(e){
             e.preventDefault();
             layoutModal.find('input[name="layout_id"]').val('');
             layoutModal.find('input[name="layout_shortcode"]').val('');
-            layoutModal.find('input[type="text"]').val('');
-            layoutModal.find('input[type="color"]').val('#ffffff');
+            layoutModal.find('input[name="layout_name"]').val('');
             layoutModal.find('select').val('');
-            layoutModal.find('input[type="checkbox"]').prop('checked', false);
-            layoutModal.find('input[value="1"][name="layout_type"]').prop('checked', true);
+            layoutModal.find('input[name="layout_type"]').val('1');
+            typeGrid.find('.layout-option-card').removeClass('active');
+            typeGrid.find('.layout-option-card[data-value="1"]').addClass('active');
+            layoutModal.find('.produkt-color-value').val('#ffffff');
+            layoutModal.find('.produkt-color-input').val('#ffffff');
+            layoutModal.find('.produkt-color-preview-circle').css('background-color','#ffffff');
+            layoutModal.find('input[name="cat_image[]"]').val('');
+            layoutModal.find('.image-preview').css('background-image','');
+            layoutModal.find('input[name="border_radius"]').prop('checked', false);
             openLayoutModal();
         });
         layoutModal.on('click', function(e){

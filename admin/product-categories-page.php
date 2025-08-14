@@ -194,7 +194,7 @@ if (isset($_GET['edit'])) {
                     <label>Kategorien</label>
                     <?php $existing_items = $edit_layout ? json_decode($edit_layout->categories, true) : []; ?>
                     <?php for ($i = 0; $i < 6; $i++): ?>
-                        <?php $ex = $existing_items[$i] ?? []; ?>
+                        <?php $ex = $existing_items[$i] ?? []; $color = esc_attr($ex['color'] ?? '#ffffff'); $img = esc_url($ex['image'] ?? ''); ?>
                         <div class="layout-cat-row">
                             <select name="layout_categories[]">
                                 <option value="">-- Kategorie wählen --</option>
@@ -202,23 +202,49 @@ if (isset($_GET['edit'])) {
                                     <option value="<?php echo $cat_option->id; ?>" <?php selected($ex['id'] ?? '', $cat_option->id); ?>><?php echo esc_html($cat_option->name); ?></option>
                                 <?php endforeach; ?>
                             </select>
-                            <input type="color" name="cat_color[]" value="<?php echo esc_attr($ex['color'] ?? '#ffffff'); ?>">
-                            <input type="text" name="cat_image[]" value="<?php echo esc_attr($ex['image'] ?? ''); ?>" placeholder="Bild URL">
+                            <div class="produkt-color-picker">
+                                <div class="produkt-color-preview-circle" style="background-color: <?php echo $color; ?>;"></div>
+                                <input type="text" name="cat_color[]" value="<?php echo $color; ?>" class="produkt-color-value">
+                                <input type="color" value="<?php echo $color; ?>" class="produkt-color-input">
+                            </div>
+                            <div class="image-field">
+                                <div class="image-preview" style="<?php echo $img ? 'background-image:url(' . $img . ');' : ''; ?>"></div>
+                                <input type="hidden" name="cat_image[]" value="<?php echo $img; ?>">
+                                <button type="button" class="icon-btn image-select" aria-label="Bild auswählen">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M65 20h-8.8l-2.9-5.8c-.6-1.3-1.9-2.1-3.3-2.1h-20c-1.4 0-2.7.8-3.3 2.1L24 20h-9c-4.4 0-8 3.6-8 8v32c0 4.4 3.6 8 8 8h50c4.4 0 8-3.6 8-8V28c0-4.4-3.6-8-8-8Zm0 40H15V28h12.1l2.9-5.8h20l2.9 5.8H65v32ZM40 30c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16Zm0 26c-5.5 0-10-4.5-10-10s4.5-10 10-10 10 4.5 10 10-4.5 10-10 10Z"/></svg>
+                                </button>
+                                <button type="button" class="icon-btn image-remove" aria-label="Bild entfernen">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18 .4.3 18.1.3 40s17.7 39.6 39.6 39.6 39.6-17.7 39.6-39.6S61.7.4 39.8.4ZM39.8 71.3c-17.1 0-31.2-14-31.2-31.2s14.2-31.2 31.2-31.2 31.2 14 31.2 31.2-14.2 31.2-31.2 31.2Z"/><path d="M53 26.9c-1.7-1.7-4.2-1.7-5.8 0l-7.3 7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8 0-1.7 1.7-1.7 4.2 0 5.8l7.3 7.3-7.3 7.3c-1.7 1.7-1.7 4.2 0 5.8.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2l7.3-7.3 7.3 7.3c.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.7-1.7 1.7-4.2 0-5.8l-7.3-7.3 7.3-7.3c1.7-1.7 1.7-4.4 0-5.8Z"/></svg>
+                                </button>
+                            </div>
                         </div>
                     <?php endfor; ?>
                 </div>
-                <div class="produkt-form-group">
+                <div class="produkt-form-group full-width">
                     <label>Layout</label>
-                    <div>
-                        <label><input type="radio" name="layout_type" value="1" <?php echo (!isset($edit_layout->layout_type) || $edit_layout->layout_type == 1) ? 'checked' : ''; ?>> Layout 1</label>
-                        <label><input type="radio" name="layout_type" value="2" <?php echo (isset($edit_layout->layout_type) && $edit_layout->layout_type == 2) ? 'checked' : ''; ?>> Layout 2</label>
+                    <input type="hidden" name="layout_type" value="<?php echo esc_attr($edit_layout->layout_type ?? 1); ?>">
+                    <div class="layout-option-grid">
+                        <div class="layout-option-card" data-value="1">
+                            <div class="layout-option-preview">
+                                <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="84" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="0" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="30" width="78" height="24" rx="4" ry="4" fill="#e5e7eb"/></svg>
+                            </div>
+                            <div class="layout-option-name">Layout 1</div>
+                        </div>
+                        <div class="layout-option-card" data-value="2">
+                            <div class="layout-option-preview">
+                                <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="84" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="0" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="84" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/></svg>
+                            </div>
+                            <div class="layout-option-name">Layout 2</div>
+                        </div>
                     </div>
                 </div>
                 <div class="produkt-form-group">
                     <label>Border Radius</label>
-                    <div>
-                        <label><input type="checkbox" name="border_radius" value="1" <?php echo (!empty($edit_layout->border_radius)) ? 'checked' : ''; ?>> 20px</label>
-                    </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="border_radius" value="1" <?php echo (!empty($edit_layout->border_radius)) ? 'checked' : ''; ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>20px</span>
+                    </label>
                 </div>
             </div>
             <p>
