@@ -221,6 +221,41 @@ jQuery(document).ready(function($) {
         }
     }
 
+    var layoutModal = $('#layout-modal');
+    if (layoutModal.length) {
+        function openLayoutModal() {
+            layoutModal.show();
+            $('body').addClass('layout-modal-open');
+        }
+        function closeLayoutModal() {
+            layoutModal.hide();
+            $('body').removeClass('layout-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit_layout');
+            history.replaceState(null, '', url);
+        }
+        $('#add-layout-btn').on('click', function(e){
+            e.preventDefault();
+            layoutModal.find('input[name="layout_id"]').val('');
+            layoutModal.find('input[name="layout_shortcode"]').val('');
+            layoutModal.find('input[type="text"]').val('');
+            layoutModal.find('input[type="color"]').val('#ffffff');
+            layoutModal.find('select').val('');
+            layoutModal.find('input[type="checkbox"]').prop('checked', false);
+            layoutModal.find('input[value="1"][name="layout_type"]').prop('checked', true);
+            openLayoutModal();
+        });
+        layoutModal.on('click', function(e){
+            if (e.target === this) {
+                closeLayoutModal();
+            }
+        });
+        layoutModal.find('.modal-close').on('click', closeLayoutModal);
+        if (layoutModal.data('open') == 1) {
+            openLayoutModal();
+        }
+    }
+
     var blockModal = $('#block-modal');
     if (blockModal.length) {
         function openBlockModal() {

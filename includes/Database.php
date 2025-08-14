@@ -1260,6 +1260,19 @@ class Database {
             KEY category_id (category_id),
             KEY created_at (created_at)
         ) $charset_collate;";
+
+        // Category layouts table
+        $table_cat_layouts = $wpdb->prefix . 'produkt_category_layouts';
+        $sql_cat_layouts = "CREATE TABLE $table_cat_layouts (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            name VARCHAR(255) NOT NULL,
+            layout_type TINYINT NOT NULL DEFAULT 1,
+            categories TEXT NOT NULL,
+            border_radius TINYINT(1) NOT NULL DEFAULT 0,
+            shortcode VARCHAR(100) NOT NULL UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_prod_categories);
@@ -1276,6 +1289,7 @@ class Database {
         dbDelta($sql_variant_options);
         dbDelta($sql_variant_durations);
         dbDelta($sql_duration_prices);
+        dbDelta($sql_cat_layouts);
         // Content blocks table
         $table_content_blocks = $wpdb->prefix . 'produkt_content_blocks';
         $sql_content_blocks = "CREATE TABLE $table_content_blocks (

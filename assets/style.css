@@ -2343,4 +2343,32 @@ body.shop-filter-open {
     font-size: 0.85rem !important;
 }
 
+.produkt-category-layout {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+.produkt-category-layout .layout-card {
+    position: relative;
+    padding: 20px;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+}
+.produkt-category-layout .layout-card .layout-cat-img {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 50%;
+    height: auto;
+    object-fit: cover;
+}
+.produkt-category-layout.layout-1 .layout-card.span-2 {
+    grid-column: span 2;
+}
+
 
