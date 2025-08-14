@@ -109,6 +109,8 @@ if (isset($_POST['save_layout'])) {
             'shortcode' => $shortcode,
         ]);
     }
+    wp_redirect(admin_url('admin.php?page=produkt-kategorien'));
+    exit;
 }
 
 if (isset($_GET['delete_layout'])) {
@@ -208,7 +210,7 @@ if (isset($_GET['edit'])) {
                                 <input type="color" value="<?php echo $color; ?>" class="produkt-color-input">
                             </div>
                             <div class="image-field">
-                                <div class="image-preview" style="<?php echo $img ? 'background-image:url(' . $img . ');' : ''; ?>"></div>
+                            <div class="image-preview layout-thumb-preview" style="<?php echo $img ? 'background-image:url(' . $img . ');' : ''; ?>"></div>
                                 <input type="hidden" name="cat_image[]" value="<?php echo $img; ?>">
                                 <button type="button" class="icon-btn image-select" aria-label="Bild auswählen">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><path d="M65 20h-8.8l-2.9-5.8c-.6-1.3-1.9-2.1-3.3-2.1h-20c-1.4 0-2.7.8-3.3 2.1L24 20h-9c-4.4 0-8 3.6-8 8v32c0 4.4 3.6 8 8 8h50c4.4 0 8-3.6 8-8V28c0-4.4-3.6-8-8-8Zm0 40H15V28h12.1l2.9-5.8h20l2.9 5.8H65v32ZM40 30c-8.8 0-16 7.2-16 16s7.2 16 16 16 16-7.2 16-16-7.2-16-16-16Zm0 26c-5.5 0-10-4.5-10-10s4.5-10 10-10 10 4.5 10 10-4.5 10-10 10Z"/></svg>
