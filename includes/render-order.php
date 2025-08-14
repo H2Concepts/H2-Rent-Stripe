@@ -41,6 +41,9 @@ if (!defined('ABSPATH')) { exit; }
             <p><strong>Miettage:</strong> <?php echo esc_html($order->dauer_text); ?></p>
         <?php endif; ?>
         <p><strong>Preis:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
+        <?php if (!empty($order->weekend_tariff)) : ?>
+            <p><strong>Hinweis:</strong> Wochenendtarif</p>
+        <?php endif; ?>
         <?php if ($order->shipping_cost > 0 || !empty($order->shipping_name)) : ?>
             <p><strong>Versand:</strong> <?php echo esc_html($order->shipping_name ?: 'Versand'); ?> <?php if ($order->shipping_cost > 0) : ?>- <?php echo esc_html(number_format((float) $order->shipping_cost, 2, ',', '.')); ?>€<?php endif; ?></p>
         <?php endif; ?>

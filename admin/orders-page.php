@@ -225,6 +225,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                 </tbody>
             </table>
         </form>
+        <button type="button" id="orders-load-more" class="button" style="display:none;margin-top:1rem;">Mehr anzeigen</button>
 
         <?php endif; ?>
     </div>

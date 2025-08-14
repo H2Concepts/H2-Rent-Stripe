@@ -129,6 +129,9 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->extra_names)) : ?>
                         <div>Extras: <?php echo esc_html($p->extra_names); ?></div>
                     <?php endif; ?>
+                    <?php if (!empty($p->weekend_tariff)) : ?>
+                        <div>Hinweis: Wochenendtarif</div>
+                    <?php endif; ?>
                     <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
                 </div>
 
@@ -165,11 +168,43 @@ $produkte = $order->produkte ?? [$order]; // fallback
             <button type="button" class="produkt-accordion-header">Verlauf</button>
             <div class="produkt-accordion-content">
                 <?php if (!empty($order_logs)) : ?>
-                    <ul class="order-log-list">
-                        <?php foreach ($order_logs as $log) : ?>
-                            <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
+                    <div class="order-log-list">
+                        <?php
+                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+                        foreach ($order_logs as $log) :
+                            $is_customer = !in_array($log->event, $system_events, true);
+                            $avatar = $is_customer ? $initials : 'H2';
+                            switch ($log->event) {
+                                case 'inventory_returned_not_accepted':
+                                    $text = 'Miete zuende aber noch nicht akzeptiert.';
+                                    break;
+                                case 'inventory_returned_accepted':
+                                    $text = 'Rückgabe wurde akzeptiert.';
+                                    break;
+                                case 'welcome_email_sent':
+                                    $text = 'Bestellbestätigung an Kunden gesendet.';
+                                    break;
+                                case 'status_updated':
+                                    $text = ($log->message ? $log->message . ': ' : '') . 'Kauf abgeschlossen.';
+                                    break;
+                                case 'checkout_completed':
+                                    $text = 'Checkout abgeschlossen.';
+                                    break;
+                                default:
+                                    $text = $log->message ?: $log->event;
+                            }
+                            $order_no = !empty($order->order_number) ? $order->order_number : $order->id;
+                            $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no;
+                            ?>
+                            <div class="order-log-entry">
+                                <div class="log-avatar"><?php echo esc_html($avatar); ?></div>
+                                <div class="log-body">
+                                    <div class="log-date"><?php echo esc_html($date_id); ?></div>
+                                    <div class="log-message"><?php echo esc_html($text); ?></div>
+                                </div>
+                            </div>
                         <?php endforeach; ?>
-                    </ul>
+                    </div>
                 <?php else : ?>
                     <p>Keine Einträge</p>
                 <?php endif; ?>

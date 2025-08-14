@@ -2335,4 +2335,12 @@ body.shop-filter-open {
     color: #dc3232;
 }
 
+.produkt-weekend-info {
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    color: var(--produkt-text-color) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+}
+
 

@@ -337,7 +337,7 @@ class Admin {
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
-                'button_text' => $category->button_text ?? ($ui['button_text'] ?? ''),
+                'button_text' => !empty($category->button_text) ? $category->button_text : ($ui['button_text'] ?? ''),
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
                 'popup_settings' => [
@@ -946,7 +946,8 @@ class Admin {
         }
         if ($search_term !== '') {
             $like = '%' . $wpdb->esc_like(ltrim($search_term, '#')) . '%';
-            $where_conditions[] = "(o.order_number LIKE %s OR CAST(o.id AS CHAR) LIKE %s)";
+            $where_conditions[] = "(o.order_number LIKE %s OR CAST(o.id AS CHAR) LIKE %s OR o.customer_name LIKE %s)";
+            $where_values[] = $like;
             $where_values[] = $like;
             $where_values[] = $like;
         }

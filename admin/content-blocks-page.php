@@ -78,7 +78,7 @@ $sql_blocks .= ' ORDER BY position';
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <input type="hidden" name="id" value="<?php echo esc_attr($block->id ?? ''); ?>">
             <div class="form-grid">
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="category_id">Kategorie *</label>
                     <select name="category_id" id="category_id" required>
                         <?php foreach ($categories as $cat): ?>
@@ -86,30 +86,30 @@ $sql_blocks .= ' ORDER BY position';
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="style">Layout</label>
                     <select name="style" id="style">
                         <option value="compact" <?php selected($block->style ?? 'wide', 'compact'); ?>>Kompakt</option>
                         <option value="wide" <?php selected($block->style ?? 'wide', 'wide'); ?>>Weit</option>
                     </select>
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="position">Position Desktop *</label>
                     <input type="number" name="position" id="position" required value="<?php echo esc_attr($block->position ?? 9); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="position_mobile">Position Mobil *</label>
                     <input type="number" name="position_mobile" id="position_mobile" required value="<?php echo esc_attr($block->position_mobile ?? 6); ?>">
                 </div>
-                <div class="form-field full">
+                <div class="produkt-form-group full-width">
                     <label for="title">Überschrift *</label>
                     <input type="text" name="title" id="title" required value="<?php echo esc_attr($block->title ?? ''); ?>">
                 </div>
-                <div class="form-field full">
+                <div class="produkt-form-group full-width">
                     <label for="content">Text *</label>
                     <textarea name="content" id="content" rows="4" required><?php echo esc_textarea($block->content ?? ''); ?></textarea>
                 </div>
-                <div class="form-field full">
+                <div class="produkt-form-group full-width">
                     <label>Bild</label>
                     <div class="image-field-row">
                         <div id="image_url_preview" class="image-preview">
@@ -133,15 +133,15 @@ $sql_blocks .= ' ORDER BY position';
                     </div>
                     <input type="hidden" name="image_url" id="image_url" value="<?php echo esc_attr($block->image_url ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="button_text">Button-Text</label>
                     <input type="text" name="button_text" id="button_text" value="<?php echo esc_attr($block->button_text ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="button_url">Button-Link</label>
                     <input type="url" name="button_url" id="button_url" value="<?php echo esc_attr($block->button_url ?? ''); ?>">
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="background_color">Hintergrundfarbe</label>
                     <div class="produkt-color-picker">
                         <?php $background_color = esc_attr($block->background_color ?? '#ffffff'); ?>
@@ -150,7 +150,7 @@ $sql_blocks .= ' ORDER BY position';
                         <input type="color" value="<?php echo $background_color; ?>" class="produkt-color-input">
                     </div>
                 </div>
-                <div class="form-field">
+                <div class="produkt-form-group">
                     <label for="badge_text">Badge-Text</label>
                     <input type="text" name="badge_text" id="badge_text" value="<?php echo esc_attr($block->badge_text ?? ''); ?>">
                 </div>

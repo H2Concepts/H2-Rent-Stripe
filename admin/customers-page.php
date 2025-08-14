@@ -257,8 +257,8 @@ if (!$customer_id) {
     $order_ids = wp_list_pluck($all_orders, 'id');
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $sql = "SELECT id, event, message, created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders) ORDER BY created_at DESC LIMIT 5";
-        $customer_logs = $wpdb->get_results($wpdb->prepare($sql, $order_ids));
+        $logs_sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5";
+        $customer_logs = $wpdb->get_results($wpdb->prepare($logs_sql, $order_ids));
         $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
         $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
     } else {
@@ -289,6 +289,13 @@ if (!$customer_id) {
     $registered_date     = date_i18n('d.m.Y', strtotime($user->user_registered));
     $last_activity_date  = $customer_logs ? date_i18n('d.m.Y', strtotime($customer_logs[0]->created_at)) : '–';
     $last_order_date_card = $last_order ? date_i18n('d.m.Y', strtotime($last_order->created_at)) : '–';
+    $client_info = [];
+    if ($last_order && !empty($last_order->client_info)) {
+        $decoded = json_decode($last_order->client_info, true);
+        if (is_array($decoded)) {
+            $client_info = $decoded;
+        }
+    }
 ?>
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kundendetails</p>
@@ -336,18 +343,64 @@ if (!$customer_id) {
                     <p class="card-subline">Technische Informationen zum Nutzer</p>
                     <p><strong>User Agent:</strong> <?php echo esc_html($last_order->user_agent ?? '–'); ?></p>
                     <p><strong>IP-Adresse:</strong> <?php echo esc_html($last_order->user_ip ?? '–'); ?></p>
+                    <?php if ($client_info) : ?>
+                        <?php if (!empty($client_info['language'])) : ?><p><strong>Sprache:</strong> <?php echo esc_html($client_info['language']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['languages'])) : ?><p><strong>Weitere Sprachen:</strong> <?php echo esc_html($client_info['languages']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['timezone'])) : ?><p><strong>Zeitzone:</strong> <?php echo esc_html($client_info['timezone']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['screen'])) : ?><p><strong>Bildschirm:</strong> <?php echo esc_html($client_info['screen']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['viewport'])) : ?><p><strong>Viewport:</strong> <?php echo esc_html($client_info['viewport']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['colorDepth'])) : ?><p><strong>Farbtiefe:</strong> <?php echo esc_html($client_info['colorDepth']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['browser'])) : ?><p><strong>Browser:</strong> <?php echo esc_html($client_info['browser']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['os'])) : ?><p><strong>Betriebssystem:</strong> <?php echo esc_html($client_info['os']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['hardwareConcurrency'])) : ?><p><strong>CPU-Kerne:</strong> <?php echo esc_html($client_info['hardwareConcurrency']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['deviceMemory'])) : ?><p><strong>RAM:</strong> <?php echo esc_html($client_info['deviceMemory']); ?> GB</p><?php endif; ?>
+                        <?php if (isset($client_info['touch'])) : ?><p><strong>Touchscreen:</strong> <?php echo $client_info['touch'] ? 'ja' : 'nein'; ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['connection'])) : ?><p><strong>Netzwerk:</strong> <?php echo esc_html($client_info['connection']); ?></p><?php endif; ?>
+                        <?php if (!empty($client_info['battery'])) : ?><p><strong>Batterie:</strong> <?php echo esc_html($client_info['battery']); ?></p><?php endif; ?>
+                    <?php endif; ?>
                 </div>
                 <div class="dashboard-card">
                     <h2>Verlauf</h2>
                     <p class="card-subline">Benutzerverlauf im Detail</p>
                     <?php if ($customer_logs) : ?>
-                        <ul class="order-log-list">
-                            <?php foreach ($customer_logs as $log) : ?>
-                                <li><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ': ' . $log->id . ' / ' . $log->event . ($log->message ? ': ' . $log->message : '')); ?></li>
+                        <div class="order-log-list">
+                            <?php
+                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+                            foreach ($customer_logs as $log) :
+                                $is_customer = !in_array($log->event, $system_events, true);
+                                $avatar = $is_customer ? $initials : 'H2';
+                                switch ($log->event) {
+                                    case 'inventory_returned_not_accepted':
+                                        $text = 'Miete zuende aber noch nicht akzeptiert.';
+                                        break;
+                                    case 'inventory_returned_accepted':
+                                        $text = 'Rückgabe wurde akzeptiert.';
+                                        break;
+                                    case 'welcome_email_sent':
+                                        $text = 'Bestellbestätigung an Kunden gesendet.';
+                                        break;
+                                    case 'status_updated':
+                                        $text = ($log->message ? $log->message . ': ' : '') . 'Kauf abgeschlossen.';
+                                        break;
+                                    case 'checkout_completed':
+                                        $text = 'Checkout abgeschlossen.';
+                                        break;
+                                    default:
+                                        $text = $log->message ?: $log->event;
+                                }
+                                ?>
+                                <div class="order-log-entry">
+                                    <div class="log-avatar"><?php echo esc_html($avatar); ?></div>
+                                    <div class="log-body">
+                                        <?php $order_no = !empty($log->order_number) ? $log->order_number : $log->order_id; ?>
+                                        <div class="log-date"><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no); ?></div>
+                                        <div class="log-message"><?php echo esc_html($text); ?></div>
+                                    </div>
+                                </div>
                             <?php endforeach; ?>
-                        </ul>
+                        </div>
                         <?php if ($total_logs > 5) : ?>
-                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>">
+                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>" data-initials="<?php echo esc_attr($initials); ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-.6 0-1 .4-1 1v5H6c-.6 0-1 .4-1 1s.4 1 1 1h5v5c0 .6.4 1 1 1s1-.4 1-1v-5h5c.6 0 1-.4 1-1s-.4-1-1-1h-5V6c0-.6-.4-1-1-1z"/></svg>
                             </button>
                         <?php endif; ?>

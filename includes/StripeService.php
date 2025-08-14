@@ -902,6 +902,7 @@ class StripeService {
             $start_date    = $start_date_raw !== '' ? $start_date_raw : null;
             $end_date      = $end_date_raw !== '' ? $end_date_raw : null;
             $days          = intval($metadata['days'] ?? 0);
+            $weekend_tarif  = intval($metadata['weekend_tarif'] ?? ($existing_orders[0]->weekend_tariff ?? 0));
             $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
             $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
 
@@ -1008,6 +1009,7 @@ class StripeService {
                 'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
                 'start_date'        => $start_date,
                 'end_date'          => $end_date,
+                'weekend_tariff'    => $weekend_tarif,
                 'inventory_reverted'=> 0,
                 'user_ip'           => $user_ip,
                 'user_agent'        => $user_agent,

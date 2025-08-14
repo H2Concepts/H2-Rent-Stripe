@@ -128,6 +128,29 @@ function produkt_sync_sale_price($variant_id, $verkaufspreis_einmalig, $stripe_p
     }
 }
 
+function produkt_sync_weekend_price($variant_id, $weekend_price, $stripe_product_id) {
+    if ($weekend_price > 0 && $stripe_product_id) {
+        try {
+            $stripe_price = \Stripe\Price::create([
+                'unit_amount' => intval($weekend_price * 100),
+                'currency'    => 'eur',
+                'product'     => $stripe_product_id,
+                'nickname'    => 'Wochenendtarif',
+                'metadata'    => ['type' => 'weekend']
+            ]);
+
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->prefix . 'produkt_variants',
+                ['stripe_weekend_price_id' => $stripe_price->id],
+                ['id' => $variant_id]
+            );
+        } catch (\Exception $e) {
+            // ignore Stripe weekend price error
+        }
+    }
+}
+
 function produkt_hard_delete($produkt_id) {
     if (!$produkt_id) {
         return;

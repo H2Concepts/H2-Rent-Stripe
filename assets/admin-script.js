@@ -589,10 +589,12 @@ document.addEventListener('click', function(e) {
         var offset = parseInt(btn.getAttribute('data-offset')) || 0;
         var total = parseInt(btn.getAttribute('data-total')) || 0;
         var orderIds = btn.getAttribute('data-order-ids').split(',');
+        var initials = btn.getAttribute('data-initials') || '';
         var data = new URLSearchParams();
         data.append('action', 'pv_load_customer_logs');
         data.append('nonce', produkt_admin.nonce);
         data.append('offset', offset);
+        data.append('initials', initials);
         orderIds.forEach(function(id){ data.append('order_ids[]', id); });
         fetch(produkt_admin.ajax_url, {method:'POST', body:data})
             .then(r => r.json())
@@ -611,6 +613,117 @@ document.addEventListener('click', function(e) {
                     }
                 }
             });
+    }
+});
+
+// Price card interactions
+document.addEventListener('DOMContentLoaded', function() {
+    const locale = 'de-DE';
+    function centsToDisplay(cents) {
+        if (isNaN(cents)) return '';
+        return (cents / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function displayToCents(str) {
+        if (!str) return null;
+        const cleaned = String(str).replace(/[^\d,.-]/g, '').trim().replace(/\./g, '').replace(',', '.');
+        const value = parseFloat(cleaned);
+        if (isNaN(value)) return null;
+        return Math.round(value * 100);
+    }
+    document.querySelectorAll('.price-card').forEach(card => {
+        const input = card.querySelector('.price-input');
+        const hidden = card.querySelector('.price-hidden');
+        const steps = card.querySelectorAll('.price-btn');
+        const chips = card.querySelectorAll('.price-chip');
+        if (hidden.value) {
+            const init = parseInt(hidden.value, 10);
+            if (!isNaN(init)) input.value = centsToDisplay(init);
+        }
+        input.addEventListener('blur', () => {
+            const cents = displayToCents(input.value);
+            if (cents === null) { input.value = ''; hidden.value = ''; return; }
+            input.value = centsToDisplay(cents);
+            hidden.value = String(cents);
+        });
+        input.addEventListener('input', () => {
+            const cents = displayToCents(input.value);
+            hidden.value = cents === null ? '' : String(cents);
+        });
+        steps.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const step = parseInt(btn.dataset.step, 10) || 0;
+                const currentCents = displayToCents(input.value) ?? 0;
+                const newCents = Math.max(0, currentCents + (step * 100));
+                input.value = centsToDisplay(newCents);
+                hidden.value = String(newCents);
+            });
+        });
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const cents = parseInt(chip.dataset.value, 10);
+                input.value = centsToDisplay(cents);
+                hidden.value = String(cents);
+            });
+        });
+    });
+
+    document.querySelectorAll('.layout-option-grid').forEach(grid => {
+        const hidden = grid.closest('.dashboard-card').querySelector('input[name="layout_style"]');
+        function setActive(val) {
+            grid.querySelectorAll('.layout-option-card').forEach(card => {
+                card.classList.toggle('active', card.dataset.value === val);
+            });
+        }
+        grid.querySelectorAll('.layout-option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const val = card.dataset.value;
+                if (hidden) hidden.value = val;
+                setActive(val);
+            });
+        });
+        if (hidden) {
+            setActive(hidden.value || 'default');
+        }
+    });
+
+    // Load orders incrementally
+    const orderRows = document.querySelectorAll('.activity-table tbody tr');
+    const loadMoreBtn = document.getElementById('orders-load-more');
+    if (orderRows.length > 10 && loadMoreBtn) {
+        let visible = 10;
+        loadMoreBtn.style.display = '';
+        const updateOrders = () => {
+            orderRows.forEach((row, idx) => {
+                row.style.display = idx < visible ? '' : 'none';
+            });
+            if (visible >= orderRows.length) {
+                loadMoreBtn.style.display = 'none';
+            }
+        };
+        loadMoreBtn.addEventListener('click', () => {
+            visible += 10;
+            updateOrders();
+        });
+        updateOrders();
+    }
+
+    // Auto-generate slug from category name
+    const catForm = document.getElementById('produkt-category-form');
+    if (catForm) {
+        const nameInput = catForm.querySelector('input[name="name"]');
+        const slugInput = catForm.querySelector('input[name="slug"]');
+        if (nameInput && slugInput) {
+            let slugEdited = false;
+            slugInput.addEventListener('input', () => { slugEdited = true; });
+            nameInput.addEventListener('input', () => {
+                if (slugEdited) return;
+                slugInput.value = nameInput.value
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+            });
+        }
     }
 });
 
