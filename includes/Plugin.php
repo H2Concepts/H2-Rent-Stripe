@@ -338,7 +338,11 @@ class Plugin {
                 }
                 $url = esc_url(site_url('/shop/' . $cat->slug));
                 $style = 'background-color:' . esc_attr($item['color'] ?? '#fff') . ';' . $border_style;
-                $img = !empty($item['image']) ? '<img src="' . esc_url($item['image']) . '" class="layout-cat-img" alt="" />' : '';
+                $img_class = 'layout-cat-img';
+                if (intval($layout->layout_type) === 1 && $count === 4) {
+                    $img_class .= ' layout-cat-img-last';
+                }
+                $img = !empty($item['image']) ? '<img src="' . esc_url($item['image']) . '" class="' . $img_class . '" alt="" />' : '';
                 $classes = 'layout-card';
                 $tag = in_array($layout->heading_tag ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $layout->heading_tag : 'h3';
                 if (intval($layout->layout_type) === 1 && $count === 4) {

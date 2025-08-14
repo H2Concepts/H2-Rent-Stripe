@@ -2367,6 +2367,14 @@ body.shop-filter-open {
     height: auto;
     object-fit: cover;
 }
+.produkt-category-layout.layout-1 .layout-card .layout-cat-img-last {
+    position: absolute;
+    bottom: -25px;
+    right: -50px;
+    width: 45%;
+    height: auto;
+    object-fit: cover;
+}
 .produkt-category-layout .layout-card:hover,
 .produkt-category-layout .layout-card:focus {
     text-decoration: none !important;
@@ -2391,6 +2399,9 @@ body.shop-filter-open {
         grid-column: span 1;
         height: auto;
         aspect-ratio: 3 / 3;
+    }
+    .produkt-category-layout.layout-1 .layout-card .layout-cat-img-last {
+        width: 60%;
     }
 }
 
