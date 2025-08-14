@@ -2350,7 +2350,7 @@ body.shop-filter-open {
 }
 .produkt-category-layout .layout-card {
     position: relative;
-    padding: 20px;
+    padding: 40px;
     aspect-ratio: 3 / 3;
     display: flex;
     align-items: flex-start;
@@ -2361,8 +2361,8 @@ body.shop-filter-open {
 }
 .produkt-category-layout .layout-card .layout-cat-img {
     position: absolute;
-    bottom: -25px;
-    right: -50px;
+    bottom: -15px;
+    right: -40px;
     width: 60%;
     height: auto;
     object-fit: cover;
