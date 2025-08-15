@@ -282,7 +282,7 @@ class Admin {
         wp_add_inline_style('produkt-style', $inline_css);
 
         if ($is_account_page && !is_user_logged_in()) {
-            $hide_header_css = 'body.page-kundenkonto header, body.page-kundenkonto .site-header, body.page-kundenkonto #site-header {display:none !important;}';
+            $hide_header_css = 'body.page-kundenkonto header, body.page-kundenkonto .site-header, body.page-kundenkonto #site-header, body.page-kundenkonto footer, body.page-kundenkonto .site-footer, body.page-kundenkonto #site-footer {display:none !important;}';
             wp_add_inline_style('produkt-style', $hide_header_css);
         }
 
