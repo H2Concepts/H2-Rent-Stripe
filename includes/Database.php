@@ -675,37 +675,6 @@ class Database {
             dbDelta($sql);
         }
 
-        // Create metadata table if it doesn't exist
-        $table_metadata = $wpdb->prefix . 'produkt_stripe_metadata';
-        $metadata_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_metadata'");
-        if (!$metadata_exists) {
-            $charset_collate = $wpdb->get_charset_collate();
-            $sql = "CREATE TABLE $table_metadata (
-                id mediumint(9) NOT NULL AUTO_INCREMENT,
-                session_id varchar(255) NOT NULL,
-                email varchar(255) DEFAULT '',
-                produkt_name varchar(255) DEFAULT '',
-                zustand varchar(255) DEFAULT '',
-                produktfarbe varchar(255) DEFAULT '',
-                gestellfarbe varchar(255) DEFAULT '',
-                created_at datetime DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (id)
-            ) $charset_collate;";
-
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-        } else {
-            $meta_columns = [
-                'produkt_name' => "varchar(255) DEFAULT ''",
-            ];
-            foreach ($meta_columns as $column => $type) {
-                $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_metadata LIKE '$column'");
-                if (empty($exists)) {
-                    $wpdb->query("ALTER TABLE $table_metadata ADD COLUMN $column $type");
-                }
-            }
-        }
-
         // Create notifications table if it doesn't exist
         $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $notifications_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_notifications'");
@@ -789,22 +758,6 @@ class Database {
                 KEY customer_id (customer_id)
             ) $charset_collate;";
 
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-        }
-
-        // Create webhook logs table if it doesn't exist
-        $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
-        $webhook_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_webhooks'");
-        if (!$webhook_exists) {
-            $charset_collate = $wpdb->get_charset_collate();
-            $sql = "CREATE TABLE $table_webhooks (
-                id INT NOT NULL AUTO_INCREMENT,
-                event_type VARCHAR(255),
-                payload LONGTEXT,
-                created_at DATETIME,
-                PRIMARY KEY (id)
-            ) $charset_collate;";
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
@@ -1260,6 +1213,20 @@ class Database {
             KEY category_id (category_id),
             KEY created_at (created_at)
         ) $charset_collate;";
+
+        // Category layouts table
+        $table_cat_layouts = $wpdb->prefix . 'produkt_category_layouts';
+        $sql_cat_layouts = "CREATE TABLE $table_cat_layouts (
+            id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            name VARCHAR(255) NOT NULL,
+            layout_type TINYINT NOT NULL DEFAULT 1,
+            categories TEXT NOT NULL,
+            border_radius TINYINT(1) NOT NULL DEFAULT 0,
+            heading_tag VARCHAR(3) NOT NULL DEFAULT 'h3',
+            shortcode VARCHAR(100) NOT NULL UNIQUE,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) $charset_collate;";
         
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql_prod_categories);
@@ -1276,6 +1243,7 @@ class Database {
         dbDelta($sql_variant_options);
         dbDelta($sql_variant_durations);
         dbDelta($sql_duration_prices);
+        dbDelta($sql_cat_layouts);
         // Content blocks table
         $table_content_blocks = $wpdb->prefix . 'produkt_content_blocks';
         $sql_content_blocks = "CREATE TABLE $table_content_blocks (
@@ -1372,22 +1340,6 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_cat_filters);
 
-        // Metadata table for storing Stripe session details
-        $table_meta = $wpdb->prefix . 'produkt_stripe_metadata';
-        $sql_meta = "CREATE TABLE $table_meta (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            session_id varchar(255) NOT NULL,
-            email varchar(255) DEFAULT '',
-            produkt_name varchar(255) DEFAULT '',
-            zustand varchar(255) DEFAULT '',
-            produktfarbe varchar(255) DEFAULT '',
-            gestellfarbe varchar(255) DEFAULT '',
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
-        ) $charset_collate;";
-
-        dbDelta($sql_meta);
-
         // Notifications table
         $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $sql_notifications = "CREATE TABLE $table_notifications (
@@ -1423,17 +1375,6 @@ class Database {
 
         dbDelta($sql_logs);
 
-        // Webhook logs table
-        $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
-        $sql_webhooks = "CREATE TABLE $table_webhooks (
-            id INT NOT NULL AUTO_INCREMENT,
-            event_type VARCHAR(255),
-            payload LONGTEXT,
-            created_at DATETIME,
-            PRIMARY KEY (id)
-        ) $charset_collate;";
-
-        dbDelta($sql_webhooks);
     }
     
     public function insert_default_data() {
@@ -1636,8 +1577,9 @@ class Database {
             'produkt_filter_groups',
             'produkt_filters',
             'produkt_category_filters',
-            'produkt_stripe_metadata',
-            'produkt_webhook_logs'
+            'produkt_customers',
+            'produkt_customer_notes',
+            'produkt_category_layouts'
         );
 
         foreach ($tables as $table) {
@@ -2018,6 +1960,21 @@ class Database {
         $table = $wpdb->prefix . 'produkt_customer_notes';
         return (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
     }
+
+    /**
+     * Check if the category layouts table exists with required columns.
+     *
+     * @return bool
+     */
+    public function category_layouts_table_exists() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_category_layouts';
+        $exists = (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
+        if (!$exists) {
+            return false;
+        }
+        return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'heading_tag'");
+    }
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *
@@ -2112,37 +2069,15 @@ class Database {
         return true;
     }
 
+    /**
+     * Daily cron hook to flag orders whose rental period has ended.
+     *
+     * Inventory is not adjusted automatically; administrators must confirm
+     * returns manually, at which point stock levels are updated.
+     */
     public static function process_inventory_returns() {
-        global $wpdb;
-        $today = current_time('Y-m-d');
-        $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND end_date IS NOT NULL AND end_date < %s AND inventory_reverted = 0",
-            $today
-        ));
-        foreach ($orders as $o) {
-            if ($o->variant_id) {
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
-                    $o->variant_id
-                ));
-            }
-            if (!empty($o->extra_ids)) {
-                $ids = array_filter(array_map('intval', explode(',', $o->extra_ids)));
-                foreach ($ids as $eid) {
-                    $wpdb->query($wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
-                        $eid
-                    ));
-                }
-            }
-            $wpdb->update(
-                $wpdb->prefix . 'produkt_orders',
-                ['inventory_reverted' => 1],
-                ['id' => $o->id],
-                ['%d'],
-                ['%d']
-            );
-            produkt_add_order_log((int)$o->id, 'inventory_returned_accepted');
-        }
+        // Ensure pending return logs exist for overdue orders so they appear
+        // in the admin dashboard for manual processing.
+        self::get_due_returns();
     }
 }
