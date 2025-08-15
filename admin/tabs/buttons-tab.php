@@ -16,7 +16,7 @@ if (isset($_POST['submit_buttons'])) {
         'show_tooltips'     => isset($_POST['show_tooltips']) ? 1 : 0,
     ];
     update_option('produkt_ui_settings', $settings);
-    $menus = isset($_POST['menu_locations']) ? array_map('sanitize_text_field', (array) $_POST['menu_locations']) : [];
+    $menus = isset($_POST['menu_locations']) ? array_map('intval', (array) $_POST['menu_locations']) : [];
     update_option('produkt_menu_locations', $menus);
     if (isset($_POST['order_number_start'])) {
         update_option('produkt_next_order_number', sanitize_text_field($_POST['order_number_start']));
@@ -39,7 +39,7 @@ $ui = get_option('produkt_ui_settings', [
 $next_order_nr = get_option('produkt_next_order_number', '');
 $last_order_nr = get_option('produkt_last_order_number', '');
 $menu_locations = get_option('produkt_menu_locations', []);
-$registered_menus = get_registered_nav_menus();
+$all_menus      = wp_get_nav_menus();
 ?>
 <div class="settings-tab">
     <form method="post" action="">
@@ -108,10 +108,10 @@ $registered_menus = get_registered_nav_menus();
                 <div class="form-grid">
                     <div class="produkt-form-group full-width">
                         <label>Menüs</label>
-                        <?php if (!empty($registered_menus)): ?>
-                        <select name="menu_locations[]" multiple size="<?php echo count($registered_menus); ?>">
-                            <?php foreach ($registered_menus as $slug => $label): ?>
-                                <option value="<?php echo esc_attr($slug); ?>" <?php echo in_array($slug, (array) $menu_locations, true) ? 'selected' : ''; ?>><?php echo esc_html($label . ' (' . $slug . ')'); ?></option>
+                        <?php if (!empty($all_menus)): ?>
+                        <select name="menu_locations[]" multiple size="<?php echo count($all_menus); ?>">
+                            <?php foreach ($all_menus as $menu): ?>
+                                <option value="<?php echo esc_attr($menu->term_id); ?>" <?php echo in_array((int) $menu->term_id, (array) $menu_locations, true) ? 'selected' : ''; ?>><?php echo esc_html($menu->name . ' (' . $menu->slug . ')'); ?></option>
                             <?php endforeach; ?>
                         </select>
                         <p class="description">In den ausgewählten Menüs wird der Warenkorb-Button angezeigt.</p>
