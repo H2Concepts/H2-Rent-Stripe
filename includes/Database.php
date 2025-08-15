@@ -675,37 +675,6 @@ class Database {
             dbDelta($sql);
         }
 
-        // Create metadata table if it doesn't exist
-        $table_metadata = $wpdb->prefix . 'produkt_stripe_metadata';
-        $metadata_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_metadata'");
-        if (!$metadata_exists) {
-            $charset_collate = $wpdb->get_charset_collate();
-            $sql = "CREATE TABLE $table_metadata (
-                id mediumint(9) NOT NULL AUTO_INCREMENT,
-                session_id varchar(255) NOT NULL,
-                email varchar(255) DEFAULT '',
-                produkt_name varchar(255) DEFAULT '',
-                zustand varchar(255) DEFAULT '',
-                produktfarbe varchar(255) DEFAULT '',
-                gestellfarbe varchar(255) DEFAULT '',
-                created_at datetime DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (id)
-            ) $charset_collate;";
-
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-        } else {
-            $meta_columns = [
-                'produkt_name' => "varchar(255) DEFAULT ''",
-            ];
-            foreach ($meta_columns as $column => $type) {
-                $exists = $wpdb->get_results("SHOW COLUMNS FROM $table_metadata LIKE '$column'");
-                if (empty($exists)) {
-                    $wpdb->query("ALTER TABLE $table_metadata ADD COLUMN $column $type");
-                }
-            }
-        }
-
         // Create notifications table if it doesn't exist
         $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $notifications_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_notifications'");
@@ -789,22 +758,6 @@ class Database {
                 KEY customer_id (customer_id)
             ) $charset_collate;";
 
-            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-            dbDelta($sql);
-        }
-
-        // Create webhook logs table if it doesn't exist
-        $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
-        $webhook_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_webhooks'");
-        if (!$webhook_exists) {
-            $charset_collate = $wpdb->get_charset_collate();
-            $sql = "CREATE TABLE $table_webhooks (
-                id INT NOT NULL AUTO_INCREMENT,
-                event_type VARCHAR(255),
-                payload LONGTEXT,
-                created_at DATETIME,
-                PRIMARY KEY (id)
-            ) $charset_collate;";
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
@@ -1387,22 +1340,6 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_cat_filters);
 
-        // Metadata table for storing Stripe session details
-        $table_meta = $wpdb->prefix . 'produkt_stripe_metadata';
-        $sql_meta = "CREATE TABLE $table_meta (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            session_id varchar(255) NOT NULL,
-            email varchar(255) DEFAULT '',
-            produkt_name varchar(255) DEFAULT '',
-            zustand varchar(255) DEFAULT '',
-            produktfarbe varchar(255) DEFAULT '',
-            gestellfarbe varchar(255) DEFAULT '',
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
-        ) $charset_collate;";
-
-        dbDelta($sql_meta);
-
         // Notifications table
         $table_notifications = $wpdb->prefix . 'produkt_notifications';
         $sql_notifications = "CREATE TABLE $table_notifications (
@@ -1438,17 +1375,6 @@ class Database {
 
         dbDelta($sql_logs);
 
-        // Webhook logs table
-        $table_webhooks = $wpdb->prefix . 'produkt_webhook_logs';
-        $sql_webhooks = "CREATE TABLE $table_webhooks (
-            id INT NOT NULL AUTO_INCREMENT,
-            event_type VARCHAR(255),
-            payload LONGTEXT,
-            created_at DATETIME,
-            PRIMARY KEY (id)
-        ) $charset_collate;";
-
-        dbDelta($sql_webhooks);
     }
     
     public function insert_default_data() {
@@ -1651,8 +1577,6 @@ class Database {
             'produkt_filter_groups',
             'produkt_filters',
             'produkt_category_filters',
-            'produkt_stripe_metadata',
-            'produkt_webhook_logs',
             'produkt_customers',
             'produkt_customer_notes',
             'produkt_category_layouts'
