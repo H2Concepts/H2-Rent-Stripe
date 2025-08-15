@@ -5,7 +5,6 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-get_header();
 
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
@@ -256,5 +255,3 @@ foreach ($content_blocks as $b) {
 </div>
 
 </div> <!-- .produkt-shop-archive -->
-
-<?php get_footer(); ?>

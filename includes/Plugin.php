@@ -44,7 +44,7 @@ class Plugin {
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
         add_filter('query_vars', function ($vars) {
             $vars[] = 'produkt_slug';
             $vars[] = 'produkt_category_slug';
@@ -147,7 +147,7 @@ class Plugin {
         }
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
         $this->create_customer_page();
         $this->create_checkout_page();
@@ -270,6 +270,10 @@ class Plugin {
     }
 
     public function render_product_grid() {
+        if (get_query_var('produkt_category_slug')) {
+            return '';
+        }
+
         global $wpdb;
 
         $slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
@@ -919,10 +923,6 @@ add_filter('template_include', function ($template) {
         return PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
     }
 
-    if (get_query_var('produkt_category_slug')) {
-        return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
-    }
-
     $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
     if ($checkout_page_id && is_page($checkout_page_id)) {
         return PRODUKT_PLUGIN_PATH . 'templates/checkout-page.php';
@@ -934,6 +934,15 @@ add_filter('template_include', function ($template) {
     }
 
     return $template;
+});
+
+add_filter('the_content', function ($content) {
+    if (get_query_var('produkt_category_slug')) {
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+        return ob_get_clean();
+    }
+    return $content;
 });
 
 add_action('produkt_async_handle_checkout_completed', function ($json) {
