@@ -836,9 +836,7 @@ class Plugin {
      * Append a cart icon to the main navigation menu.
      */
     public function add_cart_icon_to_menu($items, $args) {
-        $inject_locations = get_option('produkt_menu_locations', [
-            'primary', 'menu-1', 'header', 'top', 'nexter-primary', 'nexter-header'
-        ]);
+        $inject_locations = get_option('produkt_menu_locations', []);
 
         if (!empty($args->theme_location) && in_array($args->theme_location, $inject_locations, true)) {
             $items .= '<li class="menu-item plugin-cart-icon">'
@@ -856,7 +854,7 @@ class Plugin {
         if (($block['blockName'] ?? '') !== 'core/navigation') {
             return $content;
         }
-        if (strpos($content, 'plugin-cart-icon') !== false) {
+        if (empty(get_option('produkt_menu_locations', [])) || strpos($content, 'plugin-cart-icon') !== false) {
             return $content;
         }
 
