@@ -207,6 +207,7 @@ foreach ($content_blocks as $b) {
         </div>
     </div>
 </div> <!-- .shop-overview-layout -->
+</div> <!-- .produkt-shop-archive -->
 
 <button id="shop-filter-toggle" class="shop-filter-button" aria-label="Filter">
     <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 67.5 52.7">
@@ -254,6 +255,5 @@ foreach ($content_blocks as $b) {
         <?php endif; ?>
     </div>
 </div>
-</div> <!-- .entry-content -->
-</article></main></div> <!-- .content-area und .ast-container -->
+
 <?php get_footer(); ?>
