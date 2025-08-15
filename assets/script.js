@@ -29,9 +29,16 @@ jQuery(document).ready(function($) {
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
 
     function updateCartBadge() {
-        $('#cart-count-badge').text(cart.length);
+        $('.h2-cart-badge').text(cart.length);
     }
     updateCartBadge();
+
+    window.addEventListener('storage', function(e){
+        if (e.key === 'produkt_cart') {
+            try { cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]'); } catch(e){ cart = []; }
+            updateCartBadge();
+        }
+    });
 
     // Tooltip modal setup
     const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(

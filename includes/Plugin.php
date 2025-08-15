@@ -80,6 +80,7 @@ class Plugin {
 
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
         add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
+        add_filter('render_block', [$this, 'maybe_inject_cart_icon_block'], 10, 2);
         add_action('wp_footer', [$this, 'render_cart_sidebar']);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
@@ -835,13 +836,36 @@ class Plugin {
      * Append a cart icon to the main navigation menu.
      */
     public function add_cart_icon_to_menu($items, $args) {
-        if ($args->theme_location === 'primary') {
+        $inject_locations = get_option('produkt_menu_locations', [
+            'primary', 'menu-1', 'header', 'top', 'nexter-primary', 'nexter-header'
+        ]);
+
+        if (!empty($args->theme_location) && in_array($args->theme_location, $inject_locations, true)) {
             $items .= '<li class="menu-item plugin-cart-icon">'
-                . '<a href="#" onclick="openCartSidebar(); return false;">'
-                . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg></span><span id="cart-count-badge">0</span>'
+                . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+                . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg></span><span class="h2-cart-badge" data-h2-cart-count="0">0</span>'
                 . '</a></li>';
         }
         return $items;
+    }
+
+    /**
+     * Inject cart icon into block-based navigation menus.
+     */
+    public function maybe_inject_cart_icon_block($content, $block) {
+        if (($block['blockName'] ?? '') !== 'core/navigation') {
+            return $content;
+        }
+        if (strpos($content, 'plugin-cart-icon') !== false) {
+            return $content;
+        }
+
+        $icon = '<li class="wp-block-navigation-item plugin-cart-icon">'
+            . '<a class="wp-block-navigation-item__content h2-cart-link" href="#" onclick="openCartSidebar();return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+            . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg></span><span class="h2-cart-badge" data-h2-cart-count="0">0</span>'
+            . '</a></li>';
+
+        return preg_replace('#</ul>\s*</nav>#', $icon . '</ul></nav>', $content, 1) ?: $content;
     }
 
     /**

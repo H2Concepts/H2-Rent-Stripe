@@ -1506,7 +1506,7 @@ img.wp-smiley, img.emoji {
     height: 1.25rem;
     display: block;
 }
-#cart-count-badge {
+.h2-cart-badge {
     background: var(--produkt-text-color);
     color: white;
     font-size: 0.75rem;
