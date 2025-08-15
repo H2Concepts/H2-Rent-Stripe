@@ -2142,37 +2142,15 @@ class Database {
         return true;
     }
 
+    /**
+     * Daily cron hook to flag orders whose rental period has ended.
+     *
+     * Inventory is not adjusted automatically; administrators must confirm
+     * returns manually, at which point stock levels are updated.
+     */
     public static function process_inventory_returns() {
-        global $wpdb;
-        $today = current_time('Y-m-d');
-        $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT id, variant_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND end_date IS NOT NULL AND end_date < %s AND inventory_reverted = 0",
-            $today
-        ));
-        foreach ($orders as $o) {
-            if ($o->variant_id) {
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
-                    $o->variant_id
-                ));
-            }
-            if (!empty($o->extra_ids)) {
-                $ids = array_filter(array_map('intval', explode(',', $o->extra_ids)));
-                foreach ($ids as $eid) {
-                    $wpdb->query($wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
-                        $eid
-                    ));
-                }
-            }
-            $wpdb->update(
-                $wpdb->prefix . 'produkt_orders',
-                ['inventory_reverted' => 1],
-                ['id' => $o->id],
-                ['%d'],
-                ['%d']
-            );
-            produkt_add_order_log((int)$o->id, 'inventory_returned_accepted');
-        }
+        // Ensure pending return logs exist for overdue orders so they appear
+        // in the admin dashboard for manual processing.
+        self::get_due_returns();
     }
 }
