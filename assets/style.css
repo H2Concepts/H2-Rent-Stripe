@@ -1473,8 +1473,15 @@ img.wp-smiley, img.emoji {
     white-space: nowrap;
 }
 .produkt-cart-panel .cart-close {
-    padding: 6px 10px;
-    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    line-height: 1;
 }
 .produkt-cart-panel #produkt-cart-checkout {
     margin: 1rem;
@@ -1510,18 +1517,16 @@ img.wp-smiley, img.emoji {
     background: var(--produkt-text-color);
     color: white;
     font-size: 0.75rem;
-    border-radius: 50%;
-    padding: 0px 5px;
+    border-radius: 999px;
+    padding: 0;
     position: absolute;
-    top: 40%;
-    right: -15px;
+    top: 0;
+    right: 0px;
     transform: translateY(-50%);
     display: inline-block;
-    min-width: 1rem;
-    height: 1rem;
-    line-height: 1rem;
-    text-align: center;
-    box-sizing: border-box;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    line-height: 1.1rem;
 }
 
 /* Tooltip Modal */

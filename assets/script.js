@@ -29,7 +29,7 @@ jQuery(document).ready(function($) {
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
 
     function updateCartBadge() {
-        $('.h2-cart-badge').text(cart.length);
+        $('.h2-cart-badge').text(cart.length); // alle Instanzen (Desktop/Mobil/Sticky)
     }
     updateCartBadge();
 

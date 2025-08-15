@@ -18,6 +18,7 @@ if (isset($_POST['submit_buttons'])) {
     update_option('produkt_ui_settings', $settings);
     $menus = isset($_POST['menu_locations']) ? array_map('intval', (array) $_POST['menu_locations']) : [];
     update_option('produkt_menu_locations', $menus);
+    update_option('produkt_inject_block_nav_all', isset($_POST['inject_block_nav_all']) ? 1 : 0);
     if (isset($_POST['order_number_start'])) {
         update_option('produkt_next_order_number', sanitize_text_field($_POST['order_number_start']));
     }
@@ -40,6 +41,7 @@ $next_order_nr = get_option('produkt_next_order_number', '');
 $last_order_nr = get_option('produkt_last_order_number', '');
 $menu_locations = get_option('produkt_menu_locations', []);
 $all_menus      = wp_get_nav_menus();
+$inject_block_nav_all = (int) get_option('produkt_inject_block_nav_all', 0);
 ?>
 <div class="settings-tab">
     <form method="post" action="">
@@ -118,6 +120,13 @@ $all_menus      = wp_get_nav_menus();
                         <?php else: ?>
                         <p>Keine Menüs gefunden.</p>
                         <?php endif; ?>
+                    </div>
+                    <div class="produkt-form-group full-width">
+                        <label class="produkt-toggle-label">
+                            <input type="checkbox" name="inject_block_nav_all" value="1" <?php checked($inject_block_nav_all, 1); ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>In alle Navigations-Blöcke einfügen</span>
+                        </label>
                     </div>
                 </div>
             </div>

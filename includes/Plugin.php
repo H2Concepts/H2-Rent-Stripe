@@ -875,8 +875,13 @@ class Plugin {
         }
         $inject_menus = (array) get_option('produkt_menu_locations', []);
         $menu_id      = isset($block['attrs']['ref']) ? (int) $block['attrs']['ref'] : 0;
+        $inject_all   = (bool) get_option('produkt_inject_block_nav_all', false);
 
-        if (!$menu_id || !in_array($menu_id, $inject_menus, true) || strpos($content, 'plugin-cart-icon') !== false) {
+        if ((!$menu_id && !$inject_all) || strpos($content, 'plugin-cart-icon') !== false) {
+            return $content;
+        }
+
+        if ($menu_id && !in_array($menu_id, $inject_menus, true)) {
             return $content;
         }
 
