@@ -937,7 +937,7 @@ add_filter('template_include', function ($template) {
 });
 
 add_filter('the_content', function ($content) {
-    if (get_query_var('produkt_category_slug')) {
+    if (get_query_var('produkt_category_slug') && is_main_query() && in_the_loop()) {
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
         return ob_get_clean();
