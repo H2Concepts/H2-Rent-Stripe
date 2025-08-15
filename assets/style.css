@@ -1416,16 +1416,19 @@ img.wp-smiley, img.emoji {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
+    padding: 2rem;
     border-bottom: 1px solid #ddd;
 }
-.produkt-cart-panel .cart-header h3 {
+.produkt-cart-panel .cart-header .cart-title {
     margin: 0;
+    font-size: 24px;
+    line-height: 1;
+    font-weight: 700;
 }
 .produkt-cart-panel .cart-items {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 2rem;
 }
 .produkt-cart-panel .cart-item {
     display: flex;
@@ -1478,12 +1481,11 @@ img.wp-smiley, img.emoji {
     padding: 0;
     border-radius: 50%;
     font-size: 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    line-height: 32px;
+    text-align: center;
 }
 .produkt-cart-panel #produkt-cart-checkout {
-    margin: 1rem;
+    margin: 1rem 2rem 2rem;
     padding: 20px;
     background: var(--produkt-button-bg);
     color: var(--produkt-button-text);
@@ -1496,7 +1498,7 @@ img.wp-smiley, img.emoji {
 .produkt-cart-panel .cart-summary {
     display: flex;
     justify-content: space-between;
-    padding: 1rem 1rem 1rem;
+    padding: 2rem 2rem 1rem;
     font-weight: 700;
     border-top: 1px solid #ddd;
 }
