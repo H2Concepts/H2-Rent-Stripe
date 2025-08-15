@@ -38,6 +38,7 @@ class Plugin {
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_shortcode('produkt_confirmation', [$this, 'render_order_confirmation']);
+        add_shortcode('produkt_category_layout', [$this, 'render_category_layout']);
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
@@ -124,7 +125,10 @@ class Plugin {
 
     public function check_for_updates() {
         $current_version = get_option('produkt_version', '1.0.0');
-        $needs_schema = !$this->db->categories_table_has_parent_column() || !$this->db->customer_notes_table_exists();
+        $needs_schema =
+            !$this->db->categories_table_has_parent_column() ||
+            !$this->db->customer_notes_table_exists() ||
+            !$this->db->category_layouts_table_exists();
         if (version_compare($current_version, PRODUKT_VERSION, '<') || $needs_schema) {
             $this->db->update_database();
             update_option('produkt_version', PRODUKT_VERSION);
@@ -295,6 +299,67 @@ class Plugin {
 
         ob_start();
         include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+        return ob_get_clean();
+    }
+
+    public function render_category_layout($atts) {
+        global $wpdb;
+
+        $atts = shortcode_atts([
+            'id' => '',
+        ], $atts);
+
+        if (empty($atts['id'])) {
+            return '';
+        }
+
+        $table = $wpdb->prefix . 'produkt_category_layouts';
+        $layout = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE shortcode = %s", $atts['id']));
+        if (!$layout) {
+            return '';
+        }
+
+        $items = json_decode($layout->categories, true);
+        if (empty($items)) {
+            return '';
+        }
+
+        $border_style = $layout->border_radius ? 'border-radius:20px;' : '';
+
+        ob_start();
+        ?>
+        <div class="produkt-category-layout layout-<?php echo intval($layout->layout_type); ?>">
+            <?php
+            $count = 0;
+            foreach ($items as $item) {
+                $cat = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_product_categories WHERE id = %d", intval($item['id'])));
+                if (!$cat) {
+                    continue;
+                }
+                $url = esc_url(site_url('/shop/' . $cat->slug));
+                $style = 'background-color:' . esc_attr($item['color'] ?? '#fff') . ';' . $border_style;
+                $img_class = 'layout-cat-img';
+                if (intval($layout->layout_type) === 1 && $count === 4) {
+                    $img_class .= ' layout-cat-img-last';
+                }
+                $img = !empty($item['image']) ? '<img src="' . esc_url($item['image']) . '" class="' . $img_class . '" alt="" />' : '';
+                $classes = 'layout-card';
+                $tag = in_array($layout->heading_tag ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $layout->heading_tag : 'h3';
+                if (intval($layout->layout_type) === 1 && $count === 4) {
+                    $classes .= ' span-2';
+                }
+                echo '<a href="' . $url . '" class="' . $classes . '" style="' . $style . '"><' . $tag . ' class="layout-cat-name">' . esc_html($cat->name) . '</' . $tag . '>' . $img . '</a>';
+                $count++;
+                if (intval($layout->layout_type) === 1 && $count >= 5) {
+                    break;
+                }
+                if (intval($layout->layout_type) === 2 && $count >= 6) {
+                    break;
+                }
+            }
+            ?>
+        </div>
+        <?php
         return ob_get_clean();
     }
 
