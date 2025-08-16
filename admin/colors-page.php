@@ -105,7 +105,7 @@ if (isset($_POST['submit'])) {
 }
 
 // Handle delete
-if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
+if (isset($_GET['delete']) && isset($_GET['produkt_admin_nonce']) && wp_verify_nonce($_GET['produkt_admin_nonce'], 'produkt_admin_action')) {
     $wpdb->delete($table_name, ['id' => intval($_GET['delete'])], ['%d']);
     $wpdb->delete($wpdb->prefix . 'produkt_variant_options', ['option_id' => intval($_GET['delete'])], ['%d']);
 }
@@ -246,7 +246,7 @@ $total_variants = count($variants);
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&produkt_admin_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                             </td>
                         </tr>
                     <?php endforeach; endif; ?>
@@ -286,7 +286,7 @@ $total_variants = count($variants);
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&produkt_admin_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
                             </td>
                         </tr>
                     <?php endforeach; endif; ?>
@@ -303,7 +303,7 @@ $total_variants = count($variants);
             <button type="button" class="modal-close">&times;</button>
             <h2><?php echo $active_tab === 'edit' ? 'Farbe bearbeiten' : 'Neue Farbe'; ?></h2>
             <form method="post" class="produkt-compact-form">
-                <?php wp_nonce_field('produkt_admin_action', 'fw_nonce'); ?>
+                <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                 <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
                 <?php if ($active_tab === 'edit' && $edit_item): ?>
                     <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
