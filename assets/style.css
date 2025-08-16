@@ -2101,7 +2101,7 @@ input[type="checkbox"] {
 }
 
 .shop-filter-checkboxes li {
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.2rem !important;
 }
 
 .shop-filter-checkboxes label {
