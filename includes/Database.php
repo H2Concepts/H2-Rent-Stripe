@@ -474,6 +474,10 @@ class Database {
                 variant_id mediumint(9) NOT NULL,
                 option_type varchar(50) NOT NULL,
                 option_id mediumint(9) NOT NULL,
+                available tinyint(1) DEFAULT 1,
+                stock_available int DEFAULT 0,
+                stock_rented int DEFAULT 0,
+                sku varchar(255) DEFAULT NULL,
                 PRIMARY KEY (id),
                 UNIQUE KEY variant_option (variant_id, option_type, option_id)
             ) $charset_collate;";
@@ -723,6 +727,21 @@ class Database {
         $availability_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'available'");
         if (empty($availability_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN available TINYINT(1) DEFAULT 1 AFTER option_id");
+        }
+
+        $stock_avail_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'stock_available'");
+        if (empty($stock_avail_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN stock_available INT DEFAULT 0 AFTER available");
+        }
+
+        $stock_rented_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'stock_rented'");
+        if (empty($stock_rented_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN stock_rented INT DEFAULT 0 AFTER stock_available");
+        }
+
+        $sku_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sku'");
+        if (empty($sku_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sku VARCHAR(255) DEFAULT NULL AFTER stock_rented");
         }
 
         // Create order logs table if it doesn't exist
@@ -2032,7 +2051,7 @@ class Database {
         global $wpdb;
         $order = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT variant_id, extra_ids, inventory_reverted FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+                "SELECT variant_id, extra_ids, product_color_id, inventory_reverted FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
                 $order_id
             )
         );
@@ -2046,6 +2065,15 @@ class Database {
                     $order->variant_id
                 )
             );
+            if ($order->product_color_id) {
+                $wpdb->query(
+                    $wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                        $order->variant_id,
+                        $order->product_color_id
+                    )
+                );
+            }
         }
         if (!empty($order->extra_ids)) {
             $ids = array_filter(array_map('intval', explode(',', $order->extra_ids)));

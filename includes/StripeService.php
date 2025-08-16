@@ -934,7 +934,7 @@ class StripeService {
 
             global $wpdb;
             $existing_orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
                 $session->id
             ));
 
@@ -1068,6 +1068,13 @@ class StripeService {
                                 "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                 $ord->variant_id
                             ));
+                            if ($ord->product_color_id) {
+                                $wpdb->query($wpdb->prepare(
+                                    "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                    $ord->variant_id,
+                                    $ord->product_color_id
+                                ));
+                            }
                         }
                         if (!empty($ord->extra_ids)) {
                             $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));

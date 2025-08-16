@@ -688,6 +688,32 @@ class Admin {
                             );
                         }
                     }
+                    if (!empty($_POST['color_stock_available']) && is_array($_POST['color_stock_available'])) {
+                        foreach ($_POST['color_stock_available'] as $vid => $colors) {
+                            foreach ($colors as $cid => $qty) {
+                                $vid = intval($vid);
+                                $cid = intval($cid);
+                                $available = intval($qty);
+                                $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
+                                $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
+                                $wpdb->update(
+                                    $wpdb->prefix . 'produkt_variant_options',
+                                    [
+                                        'stock_available' => $available,
+                                        'stock_rented'    => $rented,
+                                        'sku'             => $sku
+                                    ],
+                                    [
+                                        'variant_id'  => $vid,
+                                        'option_type' => 'product_color',
+                                        'option_id'   => $cid,
+                                    ],
+                                    ['%d','%d','%s'],
+                                    ['%d','%s','%d']
+                                );
+                            }
+                        }
+                    }
 
                     if (!empty($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
                         foreach ($_POST['extra_stock_available'] as $eid => $qty) {
