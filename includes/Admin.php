@@ -88,15 +88,17 @@ class Admin {
         }
         
         // New submenu items
-        add_submenu_page(
-            'produkt-verleih',
-            'Zustand',
-            'Zustand',
-            'manage_options',
-            'produkt-conditions',
-            array($this, 'conditions_page')
-        );
-        
+        if (!$is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Zustand',
+                'Zustand',
+                'manage_options',
+                'produkt-conditions',
+                array($this, 'conditions_page')
+            );
+        }
+
         add_submenu_page(
             'produkt-verleih',
             'Farben',

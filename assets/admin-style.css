@@ -1351,6 +1351,10 @@ body.shipping-modal-open {
     overflow: hidden;
 }
 
+body.color-modal-open {
+    overflow: hidden;
+}
+
 /* Responsive tables */
 .table-responsive {
     overflow-x: auto;

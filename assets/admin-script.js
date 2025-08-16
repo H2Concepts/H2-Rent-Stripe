@@ -391,8 +391,57 @@ jQuery(document).ready(function($) {
             }
         });
         shipModal.find('.modal-close').on('click', closeShipModal);
-        if (shipModal.data('open') == 1) {
-            openShipModal();
+    if (shipModal.data('open') == 1) {
+        openShipModal();
+    }
+}
+
+    var colorModal = $('#color-modal');
+    if (colorModal.length) {
+        function openColorModal() {
+            colorModal.show();
+            $('body').addClass('color-modal-open');
+        }
+        function closeColorModal() {
+            colorModal.hide();
+            $('body').removeClass('color-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('edit');
+            url.searchParams.delete('tab');
+            history.replaceState(null, '', url);
+        }
+        $('#add-color-btn').on('click', function(e){
+            e.preventDefault();
+            colorModal.find('input[name="id"]').val('');
+            colorModal.find('input[type="text"], input[type="color"], input[type="hidden"]').not('[name="category_id"]').val('');
+            colorModal.find('.image-preview').css('background-image','');
+            colorModal.find('.variant-availability-grid input[type="checkbox"]').prop('checked', false);
+            colorModal.find('.produkt-color-preview-circle').css('background-color','#ffffff');
+            colorModal.find('.produkt-color-input').val('#ffffff');
+            colorModal.find('.produkt-color-value').val('#ffffff');
+            openColorModal();
+        });
+        colorModal.on('click', function(e){ if (e.target === this) { closeColorModal(); } });
+        colorModal.find('.modal-close').on('click', closeColorModal);
+        colorModal.on('click', '.image-select', function(e){
+            e.preventDefault();
+            var preview = colorModal.find('.image-preview');
+            var input = colorModal.find('input[name="image_url"]');
+            var frame = wp.media({ title: 'Bild auswählen', button: { text: 'Bild verwenden' }, multiple: false });
+            frame.on('select', function(){
+                var att = frame.state().get('selection').first().toJSON();
+                preview.css('background-image','url('+att.url+')');
+                input.val(att.url);
+            });
+            frame.open();
+        });
+        colorModal.on('click', '.image-remove', function(e){
+            e.preventDefault();
+            colorModal.find('.image-preview').css('background-image','');
+            colorModal.find('input[name="image_url"]').val('');
+        });
+        if (colorModal.data('open') == 1) {
+            openColorModal();
         }
     }
 

@@ -1,10 +1,13 @@
 <?php
-if (!defined('ABSPATH')) {
-    exit;
-}
+if (!defined('ABSPATH')) { exit; }
+
+use ProduktVerleih\Admin;
 
 global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_colors';
+
+$mode = get_option('produkt_betriebsmodus', 'miete');
+$is_sale = ($mode === 'kauf');
 
 // Ensure image_url column exists
 $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'image_url'");
@@ -12,39 +15,36 @@ if (empty($column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN image_url TEXT AFTER color_type");
 }
 
-// Get all categories for dropdown
+// Get all categories
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
-// Get selected category from URL parameter
-$selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
+// Selected category
+$selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 0);
 
-// Get variants for the selected category
+// Variants for selected category
 $variants = $wpdb->get_results($wpdb->prepare(
     "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
     $selected_category
 ));
-$variant_images_db = array();
-$variant_availability = array();
 
-// Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';
 
 // Handle form submissions
 if (isset($_POST['submit'])) {
-    \ProduktVerleih\Admin::verify_admin_action();
+    Admin::verify_admin_action();
+
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $color_code = sanitize_hex_color($_POST['color_code']);
-    $color_type = sanitize_text_field($_POST['color_type']);
-    $active = isset($_POST['active']) ? 1 : 0;
-    $sort_order = intval($_POST['sort_order']);
+    $color_type = $is_sale ? 'product' : sanitize_text_field($_POST['color_type']);
     $image_url = esc_url_raw($_POST['image_url'] ?? '');
+    $active = isset($_POST['active']) ? 1 : 0;
+    $sort_order = intval($_POST['sort_order'] ?? 0);
 
-    if (isset($_POST['id']) && $_POST['id']) {
-        // Update
-        $result = $wpdb->update(
+    if (!empty($_POST['id'])) {
+        $wpdb->update(
             $table_name,
-            array(
+            [
                 'category_id' => $category_id,
                 'name' => $name,
                 'color_code' => $color_code,
@@ -52,24 +52,16 @@ if (isset($_POST['submit'])) {
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
-            ),
-            array('id' => intval($_POST['id'])),
-             array('%d', '%s', '%s', '%s', '%s', '%d', '%d'),
-            array('%d')
+            ],
+            ['id' => intval($_POST['id'])],
+            ['%d','%s','%s','%s','%s','%d','%d'],
+            ['%d']
         );
-
-        if ($result !== false) {
-            $color_id = intval($_POST['id']);
-            echo '<div class="notice notice-success"><p>✅ Farbe erfolgreich aktualisiert!</p></div>';
-        } else {
-            $color_id = intval($_POST['id']);
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
-        }
+        $color_id = intval($_POST['id']);
     } else {
-        // Insert
-        $result = $wpdb->insert(
+        $wpdb->insert(
             $table_name,
-            array(
+            [
                 'category_id' => $category_id,
                 'name' => $name,
                 'color_code' => $color_code,
@@ -77,77 +69,47 @@ if (isset($_POST['submit'])) {
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
-            ),
-            array('%d', '%s', '%s', '%s', '%s', '%d', '%d')
+            ],
+            ['%d','%s','%s','%s','%s','%d','%d']
         );
-        
-        if ($result !== false) {
-            $color_id = $wpdb->insert_id;
-            echo '<div class="notice notice-success"><p>✅ Farbe erfolgreich hinzugefügt!</p></div>';
-        } else {
-            $color_id = $wpdb->insert_id;
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
-        }
+        $color_id = $wpdb->insert_id;
     }
 
-    if (isset($color_id)) {
-        $variant_images = $_POST['variant_images'] ?? array();
-        $table_variant_img = $wpdb->prefix . 'produkt_color_variant_images';
-        foreach ($variant_images as $variant_id => $img) {
-            $variant_id = intval($variant_id);
-            $img = esc_url_raw($img);
-            $exists = $wpdb->get_var($wpdb->prepare("SELECT id FROM $table_variant_img WHERE color_id = %d AND variant_id = %d", $color_id, $variant_id));
-            if ($img === '') {
-                if ($exists) {
-                    $wpdb->delete($table_variant_img, array('id' => $exists));
-                }
-            } else if ($exists) {
-                $wpdb->update($table_variant_img, array('image_url' => $img), array('id' => $exists));
-            } else {
-                $wpdb->insert($table_variant_img, array('color_id' => $color_id, 'variant_id' => $variant_id, 'image_url' => $img));
-            }
-        }
-
-        $variant_inputs = $_POST['variant_available'] ?? array();
-        $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
-        $option_type = $color_type === 'frame' ? 'frame_color' : 'product_color';
-        $all_variants = $wpdb->get_results($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
-            $category_id
+    // Handle availability per variant
+    $variant_inputs = $_POST['variant_available'] ?? [];
+    $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
+    $option_type = ($color_type === 'frame') ? 'frame_color' : 'product_color';
+    $all_variants = $wpdb->get_results($wpdb->prepare(
+        "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+        $category_id
+    ));
+    foreach ($all_variants as $v) {
+        $available = isset($variant_inputs[$v->id]) ? 1 : 0;
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
+            $v->id, $option_type, $color_id
         ));
-        foreach ($all_variants as $v) {
-            $available = isset($variant_inputs[$v->id]) ? 1 : 0;
-            $exists = $wpdb->get_var($wpdb->prepare(
-                "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
-                $v->id,
-                $option_type,
-                $color_id
-            ));
-            if ($exists) {
-                $wpdb->update($table_variant_options, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
-            } else {
-                $wpdb->insert($table_variant_options, [
-                    'variant_id' => $v->id,
-                    'option_type' => $option_type,
-                    'option_id' => $color_id,
-                    'available' => $available
-                ], ['%d','%s','%d','%d']);
-            }
+        if ($exists) {
+            $wpdb->update($table_variant_options, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
+        } else {
+            $wpdb->insert($table_variant_options, [
+                'variant_id' => $v->id,
+                'option_type' => $option_type,
+                'option_id' => $color_id,
+                'available' => $available
+            ], ['%d','%s','%d','%d']);
         }
     }
+
+    $active_tab = 'list';
 }
 
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
-    $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
-    if ($result !== false) {
-        echo '<div class="notice notice-success"><p>✅ Farbe gelöscht!</p></div>';
-    } else {
-        echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
-    }
+    $wpdb->delete($table_name, ['id' => intval($_GET['delete'])], ['%d']);
+    $wpdb->delete($wpdb->prefix . 'produkt_variant_options', ['option_id' => intval($_GET['delete'])], ['%d']);
 }
 
-// Get item for editing
 $edit_item = null;
 if (isset($_GET['edit'])) {
     $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['edit'])));
@@ -157,386 +119,245 @@ if (isset($_GET['edit'])) {
             "SELECT id, name FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order, name",
             $selected_category
         ));
-        $variant_images_db = $wpdb->get_results($wpdb->prepare(
-            "SELECT variant_id, image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d",
-            $edit_item->id
-        ), OBJECT_K);
-        $option_type = $edit_item->color_type === 'frame' ? 'frame_color' : 'product_color';
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT variant_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = %s AND option_id = %d",
-            $option_type,
-            $edit_item->id
-        ));
-        foreach ($rows as $row) {
-            $variant_availability[$row->variant_id] = intval($row->available);
-        }
     }
 }
 
-// Get current category info
-$current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
-
-// Get all colors for selected category, separated by type
-$product_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order, name", $selected_category));
-$frame_colors = $wpdb->get_results($wpdb->prepare("SELECT * FROM $table_name WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order, name", $selected_category));
+$product_colors = $wpdb->get_results($wpdb->prepare(
+    "SELECT * FROM $table_name WHERE category_id = %d AND color_type = 'product' ORDER BY sort_order, name",
+    $selected_category
+));
+$frame_colors = [];
+if (!$is_sale) {
+    $frame_colors = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order, name",
+        $selected_category
+    ));
+}
+$total_variants = count($variants);
 ?>
-
-<div class="wrap">
-    <div class="produkt-admin-card">
-        <!-- Kompakter Header -->
-        <div class="produkt-admin-header-compact">
-        <div class="produkt-admin-logo-compact">🎨</div>
-        <div class="produkt-admin-title-compact">
-            <h1>Farben verwalten</h1>
-            <p>Produkt- & Gestellfarben</p>
+<div class="produkt-admin dashboard-wrapper">
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline">Farben verwalten</p>
+<?php if ($active_tab === 'list'): ?>
+    <div class="dashboard-grid">
+        <div class="dashboard-left">
+            <div class="dashboard-card card-product-selector">
+                <h2>Produkt auswählen</h2>
+                <p class="card-subline">Für welches Produkt möchten Sie Farben bearbeiten?</p>
+                <form method="get" action="" class="produkt-category-selector" style="background:none;border:none;padding:0;">
+                    <input type="hidden" name="page" value="produkt-colors">
+                    <select name="category" onchange="this.form.submit()">
+                        <?php foreach ($categories as $category): ?>
+                            <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>><?php echo esc_html($category->name); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <noscript><input type="submit" value="Wechseln" class="button"></noscript>
+                </form>
+                <?php $current_category = null; foreach ($categories as $cat) { if ($cat->id == $selected_category) { $current_category = $cat; break; } } ?>
+                <?php if ($current_category): ?>
+                <div class="selected-product-preview">
+                    <?php if (!empty($current_category->default_image)): ?>
+                        <img src="<?php echo esc_url($current_category->default_image); ?>" alt="<?php echo esc_attr($current_category->name); ?>">
+                    <?php else: ?>
+                        <div class="placeholder-icon">🏷️</div>
+                    <?php endif; ?>
+                    <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="dashboard-right">
+            <div class="dashboard-row">
+                <div class="dashboard-card card-new-product">
+                    <h2>Neue Farbe</h2>
+                    <p class="card-subline">Farbe hinzufügen</p>
+                    <a href="#" id="add-color-btn" class="icon-btn add-product-btn" aria-label="Hinzufügen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3"><path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/><path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/></svg>
+                    </a>
+                </div>
+                <div class="dashboard-card card-quicknav">
+                    <h2>Schnellnavigation</h2>
+                    <p class="card-subline">Direkt zu wichtigen Listen</p>
+                    <div class="quicknav-grid">
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-verleih">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🏠</div>
+                                    <div class="quicknav-label">Dashboard</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-categories">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🧩</div>
+                                    <div class="quicknav-label">Kategorien</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-variants">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🧩</div>
+                                    <div class="quicknav-label">Ausführungen</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-extras">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">✨</div>
+                                    <div class="quicknav-label">Extras</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Produktfarben</h2>
+                        <p class="card-subline">Vorhandene Farben des Produkts</p>
+                    </div>
+                </div>
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Farbname</th>
+                            <th>Farbcode</th>
+                            <th>Verfügbarkeit je Ausführung</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($product_colors)): ?>
+                        <tr><td colspan="4">Keine Farben vorhanden.</td></tr>
+                    <?php else: foreach ($product_colors as $color):
+                        $available_count = $wpdb->get_var($wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'product_color' AND option_id = %d AND available = 1",
+                            $color->id
+                        ));
+                        $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
+                    ?>
+                        <tr>
+                            <td><?php echo esc_html($color->name); ?></td>
+                            <td><span class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><?php echo esc_html($availability); ?></td>
+                            <td>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php if (!$is_sale): ?>
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Gestellfarben</h2>
+                        <p class="card-subline">Vorhandene Gestellfarben</p>
+                    </div>
+                </div>
+                <table class="activity-table">
+                    <thead>
+                        <tr>
+                            <th>Farbname</th>
+                            <th>Farbcode</th>
+                            <th>Verfügbarkeit je Ausführung</th>
+                            <th>Aktionen</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php if (empty($frame_colors)): ?>
+                        <tr><td colspan="4">Keine Gestellfarben vorhanden.</td></tr>
+                    <?php else: foreach ($frame_colors as $color):
+                        $available_count = $wpdb->get_var($wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'frame_color' AND option_id = %d AND available = 1",
+                            $color->id
+                        ));
+                        $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
+                    ?>
+                        <tr>
+                            <td><?php echo esc_html($color->name); ?></td>
+                            <td><span class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><?php echo esc_html($availability); ?></td>
+                            <td>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
-    
-    <!-- Breadcrumb Navigation -->
-    <div class="produkt-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
-        <span>→</span> 
-        <strong>Farben</strong>
-    </div>
-    
-    <!-- Category Selection -->
-    <div class="produkt-category-selector">
-        <form method="get" action="">
-            <input type="hidden" name="page" value="produkt-colors">
-            <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-            <label for="category-select"><strong>🏷️ Produkt:</strong></label>
-            <select name="category" id="category-select" onchange="this.form.submit()">
-                <?php foreach ($categories as $category): ?>
-                <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
-                    <?php echo esc_html($category->name); ?>
-                </option>
-                <?php endforeach; ?>
-            </select>
-            <noscript><input type="submit" value="Wechseln" class="button"></noscript>
-        </form>
-        
-        <?php if ($current_category): ?>
-        <div class="produkt-category-info">
-            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
+<?php endif; ?>
+
+    <div id="color-modal" class="modal-overlay" data-open="<?php echo ($active_tab !== 'list') ? '1' : '0'; ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2><?php echo $active_tab === 'edit' ? 'Farbe bearbeiten' : 'Neue Farbe'; ?></h2>
+            <form method="post" class="produkt-form">
+                <?php wp_nonce_field('produkt_admin_action', 'fw_nonce'); ?>
+                <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
+                <?php if ($active_tab === 'edit' && $edit_item): ?>
+                    <input type="hidden" name="id" value="<?php echo esc_attr($edit_item->id); ?>">
+                <?php endif; ?>
+                <div class="produkt-form-group">
+                    <label for="color-name">Farbname</label>
+                    <input type="text" id="color-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required>
+                </div>
+                <div class="produkt-form-group produkt-color-picker">
+                    <label for="color-code">Farbcode</label>
+                    <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>"></div>
+                    <input type="color" class="produkt-color-input" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
+                    <input type="text" class="produkt-color-value" name="color_code" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
+                </div>
+                <?php if (!$is_sale): ?>
+                <div class="produkt-form-group">
+                    <label for="color-type">Typ</label>
+                    <select name="color_type" id="color-type">
+                        <option value="product" <?php selected($edit_item->color_type ?? '', 'product'); ?>>Produktfarbe</option>
+                        <option value="frame" <?php selected($edit_item->color_type ?? '', 'frame'); ?>>Gestellfarbe</option>
+                    </select>
+                </div>
+                <?php else: ?>
+                <input type="hidden" name="color_type" value="product">
+                <?php endif; ?>
+                <div class="produkt-form-group">
+                    <label>Bild</label>
+                    <div class="image-preview" style="<?php echo !empty($edit_item->image_url) ? 'background-image:url(' . esc_url($edit_item->image_url) . ');' : ''; ?>"></div>
+                    <input type="hidden" name="image_url" value="<?php echo esc_url($edit_item->image_url ?? ''); ?>">
+                    <button type="button" class="icon-btn image-select" aria-label="Bild auswählen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
+                    </button>
+                    <button type="button" class="icon-btn image-remove" aria-label="Bild entfernen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18 .4.3 18.1.3 40s17.7 39.6 39.6 39.6 39.6-17.7 39.6-39.6S61.7.4 39.8.4ZM39.8 71.3c-17.1 0-31.2-14-31.2-31.2s14.2-31.2 31.2-31.2 31.2 14 31.2 31.2-14.2 31.2-31.2 31.2Z"/><path d="M53 26.9c-1.7-1.7-4.2-1.7-5.8 0l-7.3 7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8 0-1.7 1.7-1.7 4.2 0 5.8l7.3 7.3-7.3 7.3c-1.7 1.7-1.7 4.2 0 5.8.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2l7.3-7.3 7.3 7.3c.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.7-1.7 1.7-4.2 0-5.8l-7.3-7.3 7.3-7.3c1.7-1.7 1.7-4.4 0-5.8Z"/></svg>
+                    </button>
+                </div>
+                <div class="produkt-form-group full-width">
+                    <label>Verfügbarkeit je Ausführung</label>
+                    <div class="variant-availability-grid">
+                        <?php foreach ($variants as $v):
+                            $opt_type = (!$is_sale && $edit_item && $edit_item->color_type === 'frame') ? 'frame_color' : 'product_color';
+                            $available = $wpdb->get_var($wpdb->prepare(
+                                "SELECT available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
+                                $v->id, $opt_type, $edit_item->id ?? 0
+                            )); ?>
+                        <label><input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" <?php checked($available,1); ?>> <?php echo esc_html($v->name); ?></label>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <input type="submit" name="submit" class="button button-primary" value="Speichern">
+                    <button type="button" class="button modal-close">Abbrechen</button>
+                </div>
+            </form>
         </div>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Tab Navigation -->
-    <div class="produkt-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list'); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
-            📋 Übersicht
-        </a>
-        <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=add'); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
-            ➕ Neue Farbe
-        </a>
-        <?php if ($edit_item): ?>
-        <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
-            ✏️ Bearbeiten
-        </a>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Tab Content -->
-    <div class="produkt-tab-content">
-        <?php
-        switch ($active_tab) {
-            case 'add':
-                ?>
-                <div class="produkt-tab-section">
-                    <h3>🎨 Neue Farbe hinzufügen</h3>
-                    <p>Erstellen Sie eine neue Produkt- oder Gestellfarbe.</p>
-                    
-                    <div class="produkt-form-card">
-                        <form method="post" action="">
-                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-                            <div class="produkt-form-grid">
-                                <div class="produkt-form-group">
-                                    <label>Farbtyp *</label>
-                                    <select name="color_type" required>
-                                        <option value="product">🎨 Produktfarbe</option>
-                                        <option value="frame">🖼️ Gestellfarbe</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="produkt-form-group">
-                                    <label>Farbname *</label>
-                                    <input type="text" name="name" required>
-                                </div>
-                                
-                                <div class="produkt-form-group">
-                                    <label>Farbcode *</label>
-                                    <div class="produkt-color-input">
-                                        <input type="color" name="color_code" value="#FFFFFF" required>
-                                        <span class="produkt-color-swatch" style="background-color:#FFFFFF;"></span>
-                                    </div>
-                                </div>
-
-                                <div class="produkt-form-group">
-                                    <label>Farb-Bild</label>
-                                    <div class="produkt-upload-area">
-                                        <input type="url" name="image_url" id="image_url" placeholder="https://example.com/farbe.jpg">
-                                        <button type="button" class="button produkt-media-button" data-target="image_url">📁 Aus Mediathek wählen</button>
-                                    </div>
-                                </div>
-                                
-                                <div class="produkt-form-group">
-                                    <label>Sortierung</label>
-                                    <input type="number" name="sort_order" value="0" min="0">
-                                </div>
-
-                                <?php foreach ($variants as $variant): ?>
-                                <div class="produkt-form-group">
-                                    <label>Bild für <?php echo esc_html($variant->name); ?></label>
-                                    <div class="produkt-upload-area">
-                                        <input type="url" name="variant_images[<?php echo $variant->id; ?>]" id="variant_image_<?php echo $variant->id; ?>" value="">
-                                        <button type="button" class="button produkt-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
-                                    </div>
-                                </div>
-                                <?php endforeach; ?>
-
-                                <?php if (!empty($variants)): ?>
-                                <div class="produkt-form-group" style="flex-wrap:wrap;gap:15px;">
-                                    <label style="width:100%;font-weight:600;">Verfügbarkeit je Ausführung</label>
-                                    <?php foreach ($variants as $v): ?>
-                                    <label class="produkt-toggle-label" style="min-width:160px;">
-                                        <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" checked>
-                                        <span class="produkt-toggle-slider"></span>
-                                        <span><?php echo esc_html($v->name); ?></span>
-                                    </label>
-                                    <?php endforeach; ?>
-                                </div>
-                                <?php endif; ?>
-
-                            </div>
-                            
-                            <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
-                            
-                            <div class="produkt-form-actions">
-                                <?php submit_button('Hinzufügen', 'primary', 'submit', false); ?>
-                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <?php
-                break;
-                
-            case 'edit':
-                if ($edit_item):
-                ?>
-                <div class="produkt-tab-section">
-                    <h3>🎨 Farbe bearbeiten</h3>
-                    <p>Bearbeiten Sie die Eigenschaften der Farbe.</p>
-                    
-                    <div class="produkt-form-card">
-                        <form method="post" action="">
-                            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-                            <input type="hidden" name="id" value="<?php echo $edit_item->id; ?>">
-                            
-                            <div class="produkt-form-grid">
-                                <div class="produkt-form-group">
-                                    <label>Farbtyp *</label>
-                                    <select name="color_type" required>
-                                        <option value="product" <?php selected($edit_item->color_type, 'product'); ?>>🎨 Produktfarbe</option>
-                                        <option value="frame" <?php selected($edit_item->color_type, 'frame'); ?>>🖼️ Gestellfarbe</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="produkt-form-group">
-                                    <label>Farbname *</label>
-                                    <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
-                                </div>
-                                
-                                <div class="produkt-form-group">
-                                    <label>Farbcode *</label>
-                                    <div class="produkt-color-input">
-                                        <input type="color" name="color_code" value="<?php echo esc_attr($edit_item->color_code); ?>" required>
-                                        <span class="produkt-color-swatch" style="background-color: <?php echo esc_attr($edit_item->color_code); ?>;"></span>
-                                    </div>
-                                </div>
-
-                                <div class="produkt-form-group">
-                                    <label>Farb-Bild</label>
-                                    <div class="produkt-upload-area">
-                                        <input type="url" name="image_url" id="image_url" value="<?php echo esc_attr($edit_item->image_url ?? ''); ?>">
-                                        <button type="button" class="button produkt-media-button" data-target="image_url">📁 Aus Mediathek wählen</button>
-                                    </div>
-                                    <?php if (!empty($edit_item->image_url)): ?>
-                                    <div class="produkt-image-preview" style="margin-top:10px;">
-                                        <img src="<?php echo esc_url($edit_item->image_url); ?>" alt="Farb-Bild" style="max-width:150px; height:auto;">
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <div class="produkt-form-group">
-                                    <label>Sortierung</label>
-                                    <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
-                                </div>
-
-                                <?php foreach ($variants as $variant): ?>
-                                <div class="produkt-form-group">
-                                    <label>Bild für <?php echo esc_html($variant->name); ?></label>
-                                    <div class="produkt-upload-area">
-                                        <?php $img_val = isset($variant_images_db[$variant->id]) ? $variant_images_db[$variant->id]->image_url : ''; ?>
-                                        <input type="url" name="variant_images[<?php echo $variant->id; ?>]" id="variant_image_<?php echo $variant->id; ?>" value="<?php echo esc_attr($img_val); ?>">
-                                        <button type="button" class="button produkt-media-button" data-target="variant_image_<?php echo $variant->id; ?>">📁 Aus Mediathek wählen</button>
-                                    </div>
-                                    <?php if (!empty($img_val)): ?>
-                                    <div class="produkt-image-preview" style="margin-top:10px;">
-                                        <img src="<?php echo esc_url($img_val); ?>" alt="Variant Image" style="max-width:150px;height:auto;">
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                                <?php endforeach; ?>
-
-                                <?php if (!empty($variants)): ?>
-                                <div class="produkt-form-group" style="flex-wrap:wrap;gap:15px;">
-                                    <label style="width:100%;font-weight:600;">Verfügbarkeit je Ausführung</label>
-                                    <?php foreach ($variants as $v): ?>
-                                    <?php $checked = isset($variant_availability[$v->id]) ? $variant_availability[$v->id] : 1; ?>
-                                    <label class="produkt-toggle-label" style="min-width:160px;">
-                                        <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" value="1" <?php echo $checked ? 'checked' : ''; ?>>
-                                        <span class="produkt-toggle-slider"></span>
-                                        <span><?php echo esc_html($v->name); ?></span>
-                                    </label>
-                                    <?php endforeach; ?>
-                                </div>
-                                <?php endif; ?>
-
-                            </div>
-                            
-                            <input type="hidden" name="category_id" value="<?php echo $selected_category; ?>">
-                            
-                            <div class="produkt-form-actions">
-                                <?php submit_button('Aktualisieren', 'primary', 'submit', false); ?>
-                                <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list'); ?>" class="button">Abbrechen</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                <?php
-                else:
-                    echo '<div class="produkt-tab-section"><p>Farbe nicht gefunden.</p></div>';
-                endif;
-                break;
-                
-            case 'list':
-            default:
-                ?>
-                <div class="produkt-tab-section">
-                    <h3>🎨 Farben</h3>
-                    <p>Verwalten Sie Produkt- und Gestellfarben für Ihre Produkt.</p>
-                    
-                    <!-- Product Colors -->
-                    <div class="produkt-list-card" style="margin-bottom: 30px;">
-                        <h4>🎨 Produktfarben</h4>
-                        
-                        <?php if (empty($product_colors)): ?>
-                        <div class="produkt-empty-state">
-                            <p>Noch keine Produktfarben vorhanden.</p>
-                        </div>
-                        <?php else: ?>
-                        
-                        <div class="produkt-items-grid">
-                            <?php foreach ($product_colors as $color): ?>
-                            <div class="produkt-item-card">
-                                <div class="produkt-item-content">
-                                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                                        <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd; background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
-                                        <div>
-                                            <h5 style="margin: 0;"><?php echo esc_html($color->name); ?></h5>
-                                            <code style="font-size: 12px;"><?php echo esc_html($color->color_code); ?></code>
-                                        </div>
-                                        <?php if (!empty($color->image_url)): ?>
-                                            <img src="<?php echo esc_url($color->image_url); ?>" alt="<?php echo esc_attr($color->name); ?>" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="produkt-item-meta">
-                                    </div>
-                                </div>
-                                
-                                <div class="produkt-item-actions">
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Frame Colors -->
-                    <div class="produkt-list-card">
-                        <h4>🖼️ Gestellfarben</h4>
-                        
-                        <?php if (empty($frame_colors)): ?>
-                        <div class="produkt-empty-state">
-                            <p>Noch keine Gestellfarben vorhanden.</p>
-                        </div>
-                        <?php else: ?>
-                        
-                        <div class="produkt-items-grid">
-                            <?php foreach ($frame_colors as $color): ?>
-                            <div class="produkt-item-card">
-                                <div class="produkt-item-content">
-                                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                                        <div style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid #ddd; background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
-                                        <div>
-                                            <h5 style="margin: 0;"><?php echo esc_html($color->name); ?></h5>
-                                            <code style="font-size: 12px;"><?php echo esc_html($color->color_code); ?></code>
-                                        </div>
-                                        <?php if (!empty($color->image_url)): ?>
-                                            <img src="<?php echo esc_url($color->image_url); ?>" alt="<?php echo esc_attr($color->name); ?>" style="width:40px;height:40px;border-radius:4px;object-fit:cover;">
-                                        <?php endif; ?>
-                                    </div>
-                                    <div class="produkt-item-meta"></div>
-                                </div>
-                                
-                                <div class="produkt-item-actions">
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>" class="button button-small">Bearbeiten</a>
-                                    <a href="<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>" class="button button-small" onclick="return confirm('Sind Sie sicher?')">Löschen</a>
-                                </div>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                        
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php
-        }
-        ?>
-    </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.produkt-media-button').forEach(function(button) {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('data-target');
-            const targetInput = document.getElementById(targetId);
-            if (!targetInput) return;
-
-            const mediaUploader = wp.media({
-                title: 'Bild auswählen',
-                button: { text: 'Bild verwenden' },
-                multiple: false
-            });
-
-            mediaUploader.on('select', function() {
-                const attachment = mediaUploader.state().get('selection').first().toJSON();
-                targetInput.value = attachment.url;
-            });
-
-            mediaUploader.open();
-        });
-    });
-});
-</script>
