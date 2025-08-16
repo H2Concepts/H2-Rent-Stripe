@@ -490,6 +490,7 @@ class StripeService {
                     'unit_amount' => $amount,
                     'currency'    => 'eur',
                     'product'     => $stripe_product->id,
+                    'nickname'    => ($product_data['mode'] === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
                 ];
 
                 if ($product_data['mode'] === 'miete') {
@@ -556,6 +557,7 @@ class StripeService {
                 'unit_amount' => intval(round($price * 100)),
                 'currency'    => 'eur',
                 'product'     => $product->id,
+                'nickname'    => ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
             ];
 
             if ($mode === 'miete') {

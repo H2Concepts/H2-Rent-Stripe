@@ -129,7 +129,8 @@ if (isset($_POST['submit'])) {
                         \ProduktVerleih\StripeService::update_product_name($existing->stripe_product_id, $stripe_product_name);
                     }
                     if ($needs_price_update) {
-                        $new_price = \ProduktVerleih\StripeService::create_price($existing->stripe_product_id, round($stripe_price * 100), $modus);
+                        $nickname = ($modus === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat';
+                        $new_price = \ProduktVerleih\StripeService::create_price($existing->stripe_product_id, round($stripe_price * 100), $modus, $nickname);
                         if (!is_wp_error($new_price)) {
                             $update = [
                                 'stripe_price_id' => $new_price->id,
