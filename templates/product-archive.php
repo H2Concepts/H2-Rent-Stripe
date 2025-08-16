@@ -20,8 +20,13 @@ if (!is_array($categories)) {
 
 // Selected filters from query string
 $selected_filters = [];
-if (!empty($_GET['filter'])) {
-    $selected_filters = array_map('intval', array_filter(explode(',', $_GET['filter'])));
+if (isset($_GET['filter'])) {
+    $raw = $_GET['filter'];
+    if (is_array($raw)) {
+        $selected_filters = array_map('intval', $raw);
+    } else {
+        $selected_filters = array_map('intval', array_filter(explode(',', $raw)));
+    }
 }
 
 // Determine requested category slug

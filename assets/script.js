@@ -1659,12 +1659,13 @@ jQuery(function($) {
     });
 
     function updateFilterQuery() {
-        const ids = $('.shop-filter-checkbox:checked').map(function(){ return this.value; }).get();
+        const ids = Array.from(new Set(
+            $('.shop-filter-checkbox:checked').map(function(){ return this.value; }).get()
+        ));
         const params = new URLSearchParams(window.location.search);
+        params.delete('filter');
         if (ids.length) {
-            params.set('filter', ids.join(','));
-        } else {
-            params.delete('filter');
+            ids.forEach(id => params.append('filter[]', id));
         }
         const qs = params.toString();
         window.location.href = window.location.pathname + (qs ? '?' + qs : '');
