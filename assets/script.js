@@ -96,6 +96,12 @@ jQuery(document).ready(function($) {
                 });
                 details.append(extrasContainer);
             }
+            if (item.produktfarbe) {
+                details.append($('<div>', {class: 'cart-item-color'}).text('Farbe: ' + item.produktfarbe));
+            }
+            if (item.gestellfarbe) {
+                details.append($('<div>', {class: 'cart-item-color'}).text('Gestellfarbe: ' + item.gestellfarbe));
+            }
             let period = '';
             if (item.start_date && item.end_date) {
                 period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';

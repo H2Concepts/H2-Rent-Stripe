@@ -138,7 +138,7 @@ $sql_blocks .= ' ORDER BY position';
                 </div>
                 <div class="produkt-form-group">
                     <label for="button_url">Button-Link</label>
-                    <input type="url" name="button_url" id="button_url" value="<?php echo esc_attr($block->button_url ?? ''); ?>">
+                    <input type="text" name="button_url" id="button_url" value="<?php echo esc_attr($block->button_url ?? ''); ?>">
                 </div>
                 <div class="produkt-form-group">
                     <label for="background_color">Hintergrundfarbe</label>
