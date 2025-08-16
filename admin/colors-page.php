@@ -138,7 +138,6 @@ $total_variants = count($variants);
 <div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Farben verwalten</p>
-<?php if ($active_tab === 'list'): ?>
     <div class="dashboard-grid">
         <div class="dashboard-left">
             <div class="dashboard-card card-product-selector">
@@ -304,7 +303,6 @@ $total_variants = count($variants);
             <?php endif; ?>
         </div>
     </div>
-<?php endif; ?>
 
     <div id="color-modal" class="modal-overlay" data-open="<?php echo ($active_tab !== 'list') ? '1' : '0'; ?>">
         <div class="modal-content">
