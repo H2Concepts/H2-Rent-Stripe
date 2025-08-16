@@ -2000,7 +2000,11 @@ body.produkt-popup-open {
 }
 
 .shop-category-list a.active {
-    font-weight: bold;
+    font-weight: 400;
+}
+
+input[type="checkbox"] {
+    margin-right: 5px;
 }
 
 .shop-overview-container h1 {

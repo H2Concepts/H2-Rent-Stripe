@@ -1666,7 +1666,8 @@ jQuery(function($) {
         } else {
             params.delete('filter');
         }
-        window.location.search = params.toString();
+        const qs = params.toString();
+        window.location.href = window.location.pathname + (qs ? '?' + qs : '');
     }
 
     $(document).on('change', '.shop-filter-checkbox', function(){

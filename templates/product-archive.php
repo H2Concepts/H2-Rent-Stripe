@@ -10,10 +10,7 @@ use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
 require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
-$categories = Database::get_all_categories(true);
-if (!is_array($categories)) {
-    $categories = [];
-}
+global $wpdb;
 
 // Selected filters from query string
 $selected_filters = [];
@@ -21,51 +18,47 @@ if (!empty($_GET['filter'])) {
     $selected_filters = array_map('intval', array_filter(explode(',', $_GET['filter'])));
 }
 
-// retrieve the requested category and sanitize the slug immediately
+// Determine requested category slug
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 if (empty($category_slug)) {
     $category_slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
 }
-$filtered_product_ids = [];
-$filtered_filter_ids = [];
+
+$joins   = [];
+$where   = ['c.active = 1'];
+$params  = [];
+$group   = '';
 $category = null;
 
 if (!empty($category_slug)) {
-    global $wpdb;
-
     $category = $wpdb->get_row($wpdb->prepare(
         "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
         $category_slug
     ));
 
-    if (!empty($category)) {
-        // Gefundene Kategorie → filtern inkl. Unterkategorien
-        $cat_ids = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
+    if ($category) {
+        $cat_ids     = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
         $placeholders = implode(',', array_fill(0, count($cat_ids), '%d'));
-        $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
-            "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id IN ($placeholders)",
-            $cat_ids
-        ));
-        $categories = array_filter($categories ?? [], function ($product) use ($filtered_product_ids) {
-            return in_array($product->id, $filtered_product_ids);
-        });
-    } elseif (!empty($category_slug)) {
-        // Slug war angegeben, aber ungültig
+        $joins[]     = "INNER JOIN {$wpdb->prefix}produkt_product_to_category ptc ON c.id = ptc.produkt_id";
+        $where[]     = "ptc.category_id IN ($placeholders)";
+        $params      = array_merge($params, $cat_ids);
+    } else {
         $categories = [];
     }
 }
 
 if (!empty($selected_filters)) {
-    global $wpdb;
     $placeholders = implode(',', array_fill(0, count($selected_filters), '%d'));
-    $query = $wpdb->prepare(
-        "SELECT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders) GROUP BY category_id HAVING COUNT(DISTINCT filter_id) = %d",
-        array_merge($selected_filters, [count($selected_filters)])
-    );
-    $filtered_filter_ids = $wpdb->get_col($query);
-    $categories = array_filter($categories ?? [], function ($product) use ($filtered_filter_ids) {
-        return in_array($product->id, $filtered_filter_ids);
-    });
+    $joins[]     = "INNER JOIN {$wpdb->prefix}produkt_category_filters cf ON c.id = cf.category_id";
+    $where[]     = "cf.filter_id IN ($placeholders)";
+    $group       = " GROUP BY c.id HAVING COUNT(DISTINCT cf.filter_id) = %d";
+    $params      = array_merge($params, $selected_filters, [count($selected_filters)]);
+}
+
+if (!isset($categories)) {
+    $sql = "SELECT c.* FROM {$wpdb->prefix}produkt_categories c " . implode(' ', $joins);
+    $sql .= " WHERE " . implode(' AND ', $where) . $group . " ORDER BY c.sort_order";
+    $categories = $wpdb->get_results($wpdb->prepare($sql, $params));
 }
 
 $content_category_id = $category->id ?? 0;
