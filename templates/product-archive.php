@@ -27,7 +27,6 @@ if (empty($category_slug)) {
 $joins   = [];
 $where   = ['c.active = 1'];
 $params  = [];
-$group   = '';
 $category = null;
 
 if (!empty($category_slug)) {
@@ -48,16 +47,16 @@ if (!empty($category_slug)) {
 }
 
 if (!empty($selected_filters)) {
-    $placeholders = implode(',', array_fill(0, count($selected_filters), '%d'));
-    $joins[]     = "INNER JOIN {$wpdb->prefix}produkt_category_filters cf ON c.id = cf.category_id";
-    $where[]     = "cf.filter_id IN ($placeholders)";
-    $group       = " GROUP BY c.id HAVING COUNT(DISTINCT cf.filter_id) = %d";
-    $params      = array_merge($params, $selected_filters, [count($selected_filters)]);
+    foreach ($selected_filters as $idx => $fid) {
+        $alias   = 'cf' . $idx;
+        $joins[] = "INNER JOIN {$wpdb->prefix}produkt_category_filters {$alias} ON {$alias}.category_id = c.id AND {$alias}.filter_id = %d";
+        $params[] = $fid;
+    }
 }
 
 if (!isset($categories)) {
     $sql = "SELECT c.* FROM {$wpdb->prefix}produkt_categories c " . implode(' ', $joins);
-    $sql .= " WHERE " . implode(' AND ', $where) . $group . " ORDER BY c.sort_order";
+    $sql .= " WHERE " . implode(' AND ', $where) . " ORDER BY c.sort_order";
     $categories = $wpdb->get_results($wpdb->prepare($sql, $params));
 }
 
