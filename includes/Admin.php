@@ -660,9 +660,9 @@ class Admin {
                         }
                     }
 
-                    if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+                    $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+                    if (!empty($_POST['filters']) && is_array($_POST['filters'])) {
                         $filter_ids = array_map('intval', $_POST['filters']);
-                        $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
                         foreach ($filter_ids as $fid) {
                             $wpdb->insert($wpdb->prefix . 'produkt_category_filters', [
                                 'category_id' => $produkt_id,
@@ -813,9 +813,9 @@ class Admin {
                         }
                     }
 
-                    if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+                    $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+                    if (!empty($_POST['filters']) && is_array($_POST['filters'])) {
                         $filter_ids = array_map('intval', $_POST['filters']);
-                        $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
                         foreach ($filter_ids as $fid) {
                             $wpdb->insert($wpdb->prefix . 'produkt_category_filters', [
                                 'category_id' => $produkt_id,
