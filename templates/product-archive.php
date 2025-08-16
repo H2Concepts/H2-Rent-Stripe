@@ -12,6 +12,12 @@ require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
 global $wpdb;
 
+// Fetch all categories (products) and default to an empty array on failure
+$categories = Database::get_all_categories(true);
+if (!is_array($categories)) {
+    $categories = [];
+}
+
 // Selected filters from query string
 $selected_filters = [];
 if (!empty($_GET['filter'])) {
@@ -24,10 +30,9 @@ if (empty($category_slug)) {
     $category_slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
 }
 
-$joins   = [];
-$where   = ['c.active = 1'];
-$params  = [];
-$category = null;
+$filtered_product_ids = [];
+$filtered_filter_ids  = [];
+$category             = null;
 
 if (!empty($category_slug)) {
     $category = $wpdb->get_row($wpdb->prepare(
@@ -35,29 +40,33 @@ if (!empty($category_slug)) {
         $category_slug
     ));
 
-    if ($category) {
-        $cat_ids     = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
+    if (!empty($category)) {
+        // Include products from this category and its descendants
+        $cat_ids      = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
         $placeholders = implode(',', array_fill(0, count($cat_ids), '%d'));
-        $joins[]     = "INNER JOIN {$wpdb->prefix}produkt_product_to_category ptc ON c.id = ptc.produkt_id";
-        $where[]     = "ptc.category_id IN ($placeholders)";
-        $params      = array_merge($params, $cat_ids);
-    } else {
+        $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id IN ($placeholders)",
+            $cat_ids
+        ));
+        $categories = array_filter($categories, function ($product) use ($filtered_product_ids) {
+            return in_array($product->id, $filtered_product_ids, true);
+        });
+    } elseif (!empty($category_slug)) {
+        // Slug provided but invalid
         $categories = [];
     }
 }
 
 if (!empty($selected_filters)) {
-    foreach ($selected_filters as $idx => $fid) {
-        $alias   = 'cf' . $idx;
-        $joins[] = "INNER JOIN {$wpdb->prefix}produkt_category_filters {$alias} ON {$alias}.category_id = c.id AND {$alias}.filter_id = %d";
-        $params[] = $fid;
-    }
-}
-
-if (!isset($categories)) {
-    $sql = "SELECT c.* FROM {$wpdb->prefix}produkt_categories c " . implode(' ', $joins);
-    $sql .= " WHERE " . implode(' AND ', $where) . " ORDER BY c.sort_order";
-    $categories = $wpdb->get_results($wpdb->prepare($sql, $params));
+    $placeholders = implode(',', array_fill(0, count($selected_filters), '%d'));
+    $query        = $wpdb->prepare(
+        "SELECT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders) GROUP BY category_id HAVING COUNT(DISTINCT filter_id) = %d",
+        array_merge($selected_filters, [count($selected_filters)])
+    );
+    $filtered_filter_ids = $wpdb->get_col($query);
+    $categories = array_filter($categories, function ($product) use ($filtered_filter_ids) {
+        return in_array($product->id, $filtered_filter_ids, true);
+    });
 }
 
 $content_category_id = $category->id ?? 0;
