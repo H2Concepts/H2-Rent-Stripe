@@ -43,7 +43,9 @@ jQuery(document).ready(function($) {
     // Tooltip modal setup
     const tooltipModal = $('<div>', {id: 'produkt-tooltip-modal', class: 'produkt-tooltip-modal'}).append(
         $('<div>', {class: 'modal-content'}).append(
-            $('<button>', {class: 'modal-close', 'aria-label': 'Schließen'}).text('×'),
+            $('<div>', {class: 'modal-header'}).append(
+                $('<button>', {class: 'modal-close', 'aria-label': 'Schließen'}).text('×')
+            ),
             $('<div>', {class: 'modal-text'})
         )
     );
