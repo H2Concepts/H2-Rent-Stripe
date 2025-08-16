@@ -6,6 +6,8 @@
     --produkt-border-color: #a4b8a4;
     --produkt-button-text: #ffffff;
     --produkt-filter-button-bg: #5f7f5f;
+    --produkt-cart-badge-bg: #000000;
+    --produkt-cart-badge-color: #ffffff;
 }
 img.wp-smiley, img.emoji {
     height: 1em;
@@ -1479,13 +1481,15 @@ img.wp-smiley, img.emoji {
     white-space: nowrap;
 }
 .produkt-cart-panel .cart-close {
-    width: 32px;
-    height: 32px;
+    width: 23px;
+    height: 23px;
     padding: 0;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: transparent;
+    border-color: transparent;
 }
 
 .produkt-cart-panel .cart-close svg {
@@ -1527,8 +1531,8 @@ img.wp-smiley, img.emoji {
     display: block;
 }
 .h2-cart-badge {
-    background: var(--produkt-text-color);
-    color: white;
+    background: var(--produkt-cart-badge-bg);
+    color: var(--produkt-cart-badge-color);
     font-size: 0.75rem;
     border-radius: 999px;
     padding: 0;
@@ -2155,7 +2159,7 @@ body.shop-filter-open {
     margin-top: 0px;
 }
 .content-block-image {
-    flex: 0 0 30%;
+    flex: 0 0 28%;
     background-size: cover;
     background-position: center;
     border-radius: 0 .5rem .5rem 0;

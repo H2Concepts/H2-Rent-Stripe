@@ -272,9 +272,11 @@ class Admin {
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';
         $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
         $filter_button_color = $branding['filter_button_color'] ?? '#5f7f5f';
+        $cart_badge_bg = $branding['cart_badge_bg'] ?? '#000000';
+        $cart_badge_text = $branding['cart_badge_text'] ?? '#ffffff';
         $custom_css = $branding['custom_css'] ?? '';
         $product_padding = $branding['product_padding'] ?? '1';
-        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};}";
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
         if ($product_padding !== '1') {
         $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }
