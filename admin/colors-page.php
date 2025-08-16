@@ -302,7 +302,7 @@ $total_variants = count($variants);
         <div class="modal-content">
             <button type="button" class="modal-close">&times;</button>
             <h2><?php echo $active_tab === 'edit' ? 'Farbe bearbeiten' : 'Neue Farbe'; ?></h2>
-            <form method="post" class="produkt-form">
+            <form method="post" class="produkt-compact-form">
                 <?php wp_nonce_field('produkt_admin_action', 'fw_nonce'); ?>
                 <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
                 <?php if ($active_tab === 'edit' && $edit_item): ?>
@@ -312,11 +312,13 @@ $total_variants = count($variants);
                     <label for="color-name">Farbname</label>
                     <input type="text" id="color-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required>
                 </div>
-                <div class="produkt-form-group produkt-color-picker">
+                <div class="produkt-form-group">
                     <label for="color-code">Farbcode</label>
-                    <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>"></div>
-                    <input type="color" class="produkt-color-input" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
-                    <input type="text" class="produkt-color-value" name="color_code" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
+                    <div class="produkt-color-picker">
+                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>"></div>
+                        <input type="text" class="produkt-color-value" name="color_code" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
+                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
+                    </div>
                 </div>
                 <?php if (!$is_sale): ?>
                 <div class="produkt-form-group">
@@ -331,14 +333,16 @@ $total_variants = count($variants);
                 <?php endif; ?>
                 <div class="produkt-form-group">
                     <label>Bild</label>
-                    <div class="image-preview" style="<?php echo !empty($edit_item->image_url) ? 'background-image:url(' . esc_url($edit_item->image_url) . ');' : ''; ?>"></div>
-                    <input type="hidden" name="image_url" value="<?php echo esc_url($edit_item->image_url ?? ''); ?>">
-                    <button type="button" class="icon-btn image-select" aria-label="Bild auswählen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
-                    </button>
-                    <button type="button" class="icon-btn image-remove" aria-label="Bild entfernen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18 .4.3 18.1.3 40s17.7 39.6 39.6 39.6 39.6-17.7 39.6-39.6S61.7.4 39.8.4ZM39.8 71.3c-17.1 0-31.2-14-31.2-31.2s14.2-31.2 31.2-31.2 31.2 14 31.2 31.2-14.2 31.2-31.2 31.2Z"/><path d="M53 26.9c-1.7-1.7-4.2-1.7-5.8 0l-7.3 7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8 0-1.7 1.7-1.7 4.2 0 5.8l7.3 7.3-7.3 7.3c-1.7 1.7-1.7 4.2 0 5.8.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2l7.3-7.3 7.3 7.3c.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.7-1.7 1.7-4.2 0-5.8l-7.3-7.3 7.3-7.3c1.7-1.7 1.7-4.4 0-5.8Z"/></svg>
-                    </button>
+                    <div class="image-field-row">
+                        <div class="image-preview" style="<?php echo !empty($edit_item->image_url) ? 'background-image:url(' . esc_url($edit_item->image_url) . ');' : ''; ?>"></div>
+                        <input type="hidden" name="image_url" value="<?php echo esc_url($edit_item->image_url ?? ''); ?>">
+                        <button type="button" class="icon-btn image-select" aria-label="Bild auswählen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
+                        </button>
+                        <button type="button" class="icon-btn image-remove" aria-label="Bild entfernen">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18 .4.3 18.1.3 40s17.7 39.6 39.6 39.6 39.6-17.7 39.6-39.6S61.7.4 39.8.4ZM39.8 71.3c-17.1 0-31.2-14-31.2-31.2s14.2-31.2 31.2-31.2 31.2 14 31.2 31.2-14.2 31.2-31.2 31.2Z"/><path d="M53 26.9c-1.7-1.7-4.2-1.7-5.8 0l-7.3 7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8 0-1.7 1.7-1.7 4.2 0 5.8l7.3 7.3-7.3 7.3c-1.7 1.7-1.7 4.2 0 5.8.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2l7.3-7.3 7.3 7.3c.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.7-1.7 1.7-4.2 0-5.8l-7.3-7.3 7.3-7.3c1.7-1.7 1.7-4.4 0-5.8Z"/></svg>
+                        </button>
+                    </div>
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>Verfügbarkeit je Ausführung</label>
@@ -349,14 +353,19 @@ $total_variants = count($variants);
                                 "SELECT available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
                                 $v->id, $opt_type, $edit_item->id ?? 0
                             )); ?>
-                        <label><input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" <?php checked($available,1); ?>> <?php echo esc_html($v->name); ?></label>
+                        <label class="produkt-toggle-label" style="min-width:160px;">
+                            <input type="checkbox" name="variant_available[<?php echo $v->id; ?>]" <?php checked($available,1); ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span><?php echo esc_html($v->name); ?></span>
+                        </label>
                         <?php endforeach; ?>
                     </div>
                 </div>
-                <div class="modal-actions">
-                    <input type="submit" name="submit" class="button button-primary" value="Speichern">
-                    <button type="button" class="button modal-close">Abbrechen</button>
-                </div>
+                <p>
+                    <button type="submit" name="submit" class="icon-btn" aria-label="Speichern">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/><path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/></svg>
+                    </button>
+                </p>
             </form>
         </div>
     </div>
