@@ -413,7 +413,7 @@ jQuery(document).ready(function($) {
         $(document).on('click', '#add-color-btn', function(e){
             e.preventDefault();
             colorModal.find('input[name="id"]').val('');
-            colorModal.find('input[type="text"], input[type="color"], input[type="hidden"]').not('[name="category_id"]').val('');
+            colorModal.find('input[type="text"], input[type="color"], input[type="hidden"]').not('[name="category_id"], [name="produkt_admin_nonce"]').val('');
             colorModal.find('.image-preview').css('background-image','');
             colorModal.find('.variant-availability-grid input[type="checkbox"]').prop('checked', false);
             colorModal.find('.produkt-color-preview-circle').css('background-color','#ffffff');
