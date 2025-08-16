@@ -192,7 +192,28 @@ jQuery(document).ready(function($) {
 
     var catModal = $('#category-modal');
     if (catModal.length) {
+        var nameInput = catModal.find('input[name="name"]');
+        var slugInput = catModal.find('input[name="slug"]');
+        var slugTouched = false;
+
+        function produktSlugify(str){
+            return str.toString().toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                .replace(/[^a-z0-9]+/g,'-')
+                .replace(/^-+|-+$/g,'');
+        }
+
+        nameInput.on('input', function(){
+            if(!slugTouched){
+                slugInput.val(produktSlugify($(this).val()));
+            }
+        });
+        slugInput.on('input', function(){
+            slugTouched = true;
+        });
+
         function openCatModal() {
+            slugTouched = false;
             catModal.show();
             $('body').addClass('category-modal-open');
         }
