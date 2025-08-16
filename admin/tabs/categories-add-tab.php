@@ -310,11 +310,11 @@ foreach ($filter_groups as $g) {
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Sterne-Bewertung (1-5)</label>
-                        <input type="number" name="rating_value" step="0.1" min="1" max="5">
+                        <input type="number" name="rating_value" step="0.1" min="1" max="5" disabled>
                     </div>
                     <div class="produkt-form-group">
                         <label>Bewertungs-Link</label>
-                        <input type="url" name="rating_link" placeholder="https://example.com/bewertungen">
+                        <input type="url" name="rating_link" placeholder="https://example.com/bewertungen" disabled>
                     </div>
                 </div>
             </div>

@@ -147,7 +147,10 @@ jQuery(document).ready(function($) {
 
     function toggleRatingFields() {
         var checked = $('input[name="show_rating"]').is(':checked');
-        $('input[name="rating_value"], input[name="rating_link"]').prop('required', checked);
+        $('input[name="rating_value"], input[name="rating_link"]').prop('required', checked).prop('disabled', !checked);
+        if (!checked) {
+            $('input[name="rating_value"], input[name="rating_link"]').val('');
+        }
     }
     $('input[name="show_rating"]').on('change', toggleRatingFields);
     toggleRatingFields();
