@@ -28,6 +28,8 @@ class Plugin {
     }
 
     public function init() {
+        $this->ensure_required_pages();
+
         // Replace deprecated emoji and admin bar functions with enqueue versions.
         $this->replace_deprecated_wp_functions();
 
@@ -759,6 +761,28 @@ class Plugin {
         }
 
         update_option(PRODUKT_CONFIRM_PAGE_OPTION, $page_id);
+    }
+
+    private function ensure_required_pages() {
+        $shop_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
+        if (!$shop_id || get_post_status($shop_id) === false) {
+            $this->create_shop_page();
+        }
+
+        $cust_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if (!$cust_id || get_post_status($cust_id) === false) {
+            $this->create_customer_page();
+        }
+
+        $checkout_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+        if (!$checkout_id || get_post_status($checkout_id) === false) {
+            $this->create_checkout_page();
+        }
+
+        $confirm_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if (!$confirm_id || get_post_status($confirm_id) === false) {
+            $this->create_confirmation_page();
+        }
     }
 
     public function mark_shop_page($states, $post) {
