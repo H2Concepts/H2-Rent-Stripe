@@ -554,7 +554,7 @@ function produkt_category_icon($slug)
                             <?php foreach ($variants as $v): ?>
                                 <?php
                                     $colors = $wpdb->get_results($wpdb->prepare(
-                                        "SELECT vo.option_id AS color_id, vo.stock_available, vo.stock_rented, vo.sku, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' ORDER BY c.sort_order, c.name",
+                                        "SELECT vo.option_id AS color_id, vo.stock_available, vo.stock_rented, vo.sku, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
                                         $v->id
                                     ));
                                 ?>
