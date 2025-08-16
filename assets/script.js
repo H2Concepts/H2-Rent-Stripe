@@ -1663,10 +1663,15 @@ jQuery(function($) {
             $('.shop-filter-checkbox:checked').map(function(){ return this.value; }).get()
         ));
         const params = new URLSearchParams(window.location.search);
-        params.delete('filter');
-        if (ids.length) {
-            ids.forEach(id => params.append('filter[]', id));
-        }
+
+        // Remove existing filter and filter[] parameters
+        [...params.keys()]
+            .filter(k => k === 'filter' || k === 'filter[]')
+            .forEach(k => params.delete(k));
+
+        // Append current selections
+        ids.forEach(id => params.append('filter[]', id));
+
         const qs = params.toString();
         window.location.href = window.location.pathname + (qs ? '?' + qs : '');
     }

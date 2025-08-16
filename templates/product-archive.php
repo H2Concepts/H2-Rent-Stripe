@@ -19,15 +19,11 @@ if (!is_array($categories)) {
 }
 
 // Selected filters from query string
-$selected_filters = [];
-if (isset($_GET['filter'])) {
-    $raw = $_GET['filter'];
-    if (is_array($raw)) {
-        $selected_filters = array_map('intval', $raw);
-    } else {
-        $selected_filters = array_map('intval', array_filter(explode(',', $raw)));
-    }
+$raw = $_GET['filter'] ?? [];
+if (!is_array($raw)) {
+    $raw = explode(',', (string) $raw);
 }
+$selected_filters = array_values(array_unique(array_map('intval', array_filter($raw))));
 
 // Determine requested category slug
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
@@ -64,9 +60,9 @@ if (!empty($category_slug)) {
 
 if (!empty($selected_filters)) {
     $placeholders = implode(',', array_fill(0, count($selected_filters), '%d'));
-    $query        = $wpdb->prepare(
-        "SELECT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders) GROUP BY category_id HAVING COUNT(DISTINCT filter_id) = %d",
-        array_merge($selected_filters, [count($selected_filters)])
+    $query = $wpdb->prepare(
+        "SELECT DISTINCT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders)",
+        $selected_filters
     );
     $filtered_filter_ids = $wpdb->get_col($query);
     $categories = array_filter($categories, function ($product) use ($filtered_filter_ids) {
