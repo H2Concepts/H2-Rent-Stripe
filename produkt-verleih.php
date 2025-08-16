@@ -1,9 +1,9 @@
 <?php
  /**
- * Plugin Name: H2 Concepts Rental Pro
+ * Plugin Name: H2 Rental Pro
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
- * Version: 1.0.0
+ * Version: 1.0.1
   * Author: H2 Concepts
   * License: GPL v2 or later
   * Text Domain: h2-concepts
@@ -22,7 +22,7 @@ if (!defined('H2_RENT_PLUGIN_URL')) {
 }
 
 // Plugin constants
-const PRODUKT_PLUGIN_VERSION = '1.0.0';
+const PRODUKT_PLUGIN_VERSION = '1.0.1';
 const PRODUKT_PLUGIN_DIR = __DIR__ . '/';
 define('PRODUKT_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('PRODUKT_PLUGIN_PATH', PRODUKT_PLUGIN_DIR);

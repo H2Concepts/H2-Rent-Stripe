@@ -274,6 +274,12 @@ function pv_generate_invoice_pdf($order_id) {
     if (!$product) {
         $product = $order['variant_name'] ?? '';
     }
+    if (!empty($order['product_color_name'])) {
+        $product .= ' – ' . $order['product_color_name'];
+    }
+    if (!empty($order['frame_color_name'])) {
+        $product .= ' – ' . $order['frame_color_name'];
+    }
 
     $customer_name = trim($order['customer_name']);
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);

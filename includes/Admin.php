@@ -14,7 +14,7 @@ class Admin {
         $is_sale  = ($modus === 'kauf');
 
         add_menu_page(
-            $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
+            $branding['plugin_name'] ?? 'H2 Rental Pro',
             $menu_title,
             'manage_options',
             'produkt-verleih',
@@ -88,15 +88,17 @@ class Admin {
         }
         
         // New submenu items
-        add_submenu_page(
-            'produkt-verleih',
-            'Zustand',
-            'Zustand',
-            'manage_options',
-            'produkt-conditions',
-            array($this, 'conditions_page')
-        );
-        
+        if (!$is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Zustand',
+                'Zustand',
+                'manage_options',
+                'produkt-conditions',
+                array($this, 'conditions_page')
+            );
+        }
+
         add_submenu_page(
             'produkt-verleih',
             'Farben',
@@ -270,9 +272,11 @@ class Admin {
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';
         $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
         $filter_button_color = $branding['filter_button_color'] ?? '#5f7f5f';
+        $cart_badge_bg = $branding['cart_badge_bg'] ?? '#000000';
+        $cart_badge_text = $branding['cart_badge_text'] ?? '#ffffff';
         $custom_css = $branding['custom_css'] ?? '';
         $product_padding = $branding['product_padding'] ?? '1';
-        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};}";
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
         if ($product_padding !== '1') {
         $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }
@@ -280,6 +284,11 @@ class Admin {
             $inline_css .= "\n" . $custom_css;
         }
         wp_add_inline_style('produkt-style', $inline_css);
+
+        if ($is_account_page && !is_user_logged_in()) {
+            $hide_header_css = 'body.page-kundenkonto header, body.page-kundenkonto .site-header, body.page-kundenkonto #site-header, body.page-kundenkonto footer, body.page-kundenkonto .site-footer, body.page-kundenkonto #site-footer {display:none !important;}';
+            wp_add_inline_style('produkt-style', $hide_header_css);
+        }
 
         $ui = get_option('produkt_ui_settings', []);
 
@@ -509,6 +518,10 @@ class Admin {
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
             $rating_value = $rating_value_input !== '' ? min(5, max(0, floatval($rating_value_input))) : 0;
             $rating_link = esc_url_raw($_POST['rating_link']);
+            if (!$show_rating) {
+                $rating_value = 0;
+                $rating_link = '';
+            }
             $sort_order = intval($_POST['sort_order']);
 
             $accordion_titles = isset($_POST['accordion_titles']) ? array_map('sanitize_text_field', (array) $_POST['accordion_titles']) : array();
@@ -647,9 +660,9 @@ class Admin {
                         }
                     }
 
-                    if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+                    $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+                    if (!empty($_POST['filters']) && is_array($_POST['filters'])) {
                         $filter_ids = array_map('intval', $_POST['filters']);
-                        $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
                         foreach ($filter_ids as $fid) {
                             $wpdb->insert($wpdb->prefix . 'produkt_category_filters', [
                                 'category_id' => $produkt_id,
@@ -675,6 +688,32 @@ class Admin {
                                 ['%d','%d','%s'],
                                 ['%d']
                             );
+                        }
+                    }
+                    if (!empty($_POST['color_stock_available']) && is_array($_POST['color_stock_available'])) {
+                        foreach ($_POST['color_stock_available'] as $vid => $colors) {
+                            foreach ($colors as $cid => $qty) {
+                                $vid = intval($vid);
+                                $cid = intval($cid);
+                                $available = intval($qty);
+                                $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
+                                $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
+                                $wpdb->update(
+                                    $wpdb->prefix . 'produkt_variant_options',
+                                    [
+                                        'stock_available' => $available,
+                                        'stock_rented'    => $rented,
+                                        'sku'             => $sku
+                                    ],
+                                    [
+                                        'variant_id'  => $vid,
+                                        'option_type' => 'product_color',
+                                        'option_id'   => $cid,
+                                    ],
+                                    ['%d','%d','%s'],
+                                    ['%d','%s','%d']
+                                );
+                            }
                         }
                     }
 
@@ -774,9 +813,9 @@ class Admin {
                         }
                     }
 
-                    if (isset($_POST['filters']) && is_array($_POST['filters'])) {
+                    $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+                    if (!empty($_POST['filters']) && is_array($_POST['filters'])) {
                         $filter_ids = array_map('intval', $_POST['filters']);
-                        $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
                         foreach ($filter_ids as $fid) {
                             $wpdb->insert($wpdb->prefix . 'produkt_category_filters', [
                                 'category_id' => $produkt_id,

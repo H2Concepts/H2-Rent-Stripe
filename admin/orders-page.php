@@ -111,9 +111,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                         <th class="col-id">ID</th>
                         <th class="col-date">Datum</th>
                         <th>Kunde</th>
-                        <th>Telefon</th>
                         <th>Versandadresse</th>
-                        <th>Rechnungsadresse</th>
                         <th class="col-type">Produkttyp</th>
                         <th class="col-price">Preis</th>
                         <th class="col-discount">Rabatt</th>
@@ -143,17 +141,6 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                                 <a href="mailto:<?php echo esc_attr($order->customer_email); ?>"><?php echo esc_html($order->customer_email); ?></a><br>
                             <?php endif; ?>
                             <small class="text-gray">IP: <?php echo esc_html($order->user_ip); ?></small>
-                        </td>
-                        <td>
-                            <?php echo esc_html($order->customer_phone); ?>
-                        </td>
-                        <td>
-                            <?php
-                                $addr = trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city);
-                                if ($addr || $order->customer_country) {
-                                    echo esc_html(trim($addr . ', ' . $order->customer_country));
-                                }
-                            ?>
                         </td>
                         <td>
                             <?php
@@ -197,6 +184,9 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                                 <span class="badge badge-danger">Gekündigt</span>
                             <?php else: ?>
                                 <span class="badge badge-success">Bezahlt</span>
+                            <?php endif; ?>
+                            <?php if ($due): ?>
+                                <span class="badge badge-danger">Rückgabe</span>
                             <?php endif; ?>
                         </td>
                         <td>

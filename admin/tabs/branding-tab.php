@@ -17,6 +17,8 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
+    $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
     $custom_css = sanitize_textarea_field($_POST['custom_css']);
@@ -37,6 +39,8 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'cart_badge_bg' => $cart_badge_bg,
+        'cart_badge_text' => $cart_badge_text,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'footer_text' => $footer_text,
@@ -93,7 +97,7 @@ if (isset($_POST['submit_branding'])) {
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Plugin-Name *</label>
-                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" required>
+                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Rental Pro'); ?>" required>
                         <small>Name des Plugins im Admin-Menü</small>
                     </div>
                     
@@ -217,6 +221,28 @@ if (isset($_POST['submit_branding'])) {
                     </div>
 
                     <div class="produkt-form-group">
+                        <label>Warenkorb-Badge Hintergrund</label>
+                        <div class="produkt-color-picker">
+                            <?php $cart_badge_bg = esc_attr($branding['cart_badge_bg'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $cart_badge_bg; ?>;"></div>
+                            <input type="text" name="cart_badge_bg" value="<?php echo $cart_badge_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $cart_badge_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hintergrundfarbe der Warenkorb-Badge</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Warenkorb-Badge Textfarbe</label>
+                        <div class="produkt-color-picker">
+                            <?php $cart_badge_text = esc_attr($branding['cart_badge_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $cart_badge_text; ?>;"></div>
+                            <input type="text" name="cart_badge_text" value="<?php echo $cart_badge_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $cart_badge_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe der Warenkorb-Badge</small>
+                    </div>
+
+                    <div class="produkt-form-group">
                         <label class="produkt-toggle-label">
                             <input type="checkbox" name="product_padding" value="1" <?php echo !isset($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
                             <span class="produkt-toggle-slider"></span>
@@ -236,7 +262,7 @@ if (isset($_POST['submit_branding'])) {
                                 <?php endif; ?>
                             </div>
                             <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="login_bg_image" aria-label="Bild auswählen">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                                <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
                             </button>
                             <button type="button" class="icon-btn produkt-remove-image" data-target="login_bg_image" aria-label="Bild entfernen">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>

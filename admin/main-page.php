@@ -46,7 +46,7 @@ $return_orders = \ProduktVerleih\Database::get_due_returns();
 
 // Branding holen
 $branding_result = $wpdb->get_row("SELECT setting_value FROM {$wpdb->prefix}produkt_branding WHERE setting_key = 'plugin_name'");
-$plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H2 Concepts Rental Pro';
+$plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H2 Rental Pro';
 ?>
 
 <div class="produkt-admin dashboard-wrapper">

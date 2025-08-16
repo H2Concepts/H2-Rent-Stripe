@@ -108,8 +108,8 @@ function produkt_category_icon($slug)
 
             <div class="produkt-form-group full-width">
                 <label>SEO-Beschreibung</label>
-                <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
-                <div id="meta_description_counter" class="produkt-char-counter"></div>
+                <textarea name="meta_description" rows="3" maxlength="150"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
+                <div class="produkt-char-counter">Max. 150 Zeichen für Google <span id="meta_description_counter"></span></div>
             </div>
         </div>
 
@@ -201,7 +201,7 @@ function produkt_category_icon($slug)
                             <?php endif; ?>
                         </div>
                         <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="default_image" aria-label="Bild auswählen">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                            <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
                         </button>
                         <button type="button" class="icon-btn produkt-remove-image" data-target="default_image" aria-label="Bild entfernen">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
@@ -252,7 +252,7 @@ function produkt_category_icon($slug)
                                 <?php endif; ?>
                             </div>
                             <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="page_block_image_<?php echo $idx; ?>" aria-label="Bild auswählen">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                                <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
                             </button>
                             <button type="button" class="icon-btn produkt-remove-image" data-target="page_block_image_<?php echo $idx; ?>" aria-label="Bild entfernen">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
@@ -389,11 +389,11 @@ function produkt_category_icon($slug)
             <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>Sterne-Bewertung (1-5)</label>
-                    <input type="number" name="rating_value" value="<?php echo esc_attr($edit_item->rating_value); ?>" step="0.1" min="1" max="5">
+                    <input type="number" name="rating_value" value="<?php echo ($edit_item->rating_value > 0) ? esc_attr($edit_item->rating_value) : ''; ?>" step="0.1" min="1" max="5" <?php echo $edit_item->show_rating ? '' : 'disabled'; ?>>
                 </div>
                 <div class="produkt-form-group">
                     <label>Bewertungs-Link</label>
-                    <input type="url" name="rating_link" value="<?php echo esc_attr($edit_item->rating_link); ?>">
+                    <input type="url" name="rating_link" value="<?php echo esc_attr($edit_item->rating_link); ?>" <?php echo $edit_item->show_rating ? '' : 'disabled'; ?>>
                 </div>
             </div>
         </div>
@@ -410,7 +410,7 @@ function produkt_category_icon($slug)
                         <p class="card-subline">Bis zu vier Vorteile</p>
                     </div>
                     <label class="produkt-toggle-label">
-                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>>
+                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 0, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
                         <span>Features-Sektion anzeigen</span>
                     </label>
@@ -441,7 +441,7 @@ function produkt_category_icon($slug)
                                 <?php endif; ?>
                             </div>
                             <button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="feature_<?php echo $i; ?>_icon" aria-label="Bild auswählen">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg>
+                                <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
                             </button>
                             <button type="button" class="icon-btn produkt-remove-image" data-target="feature_<?php echo $i; ?>_icon" aria-label="Bild entfernen">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
@@ -552,35 +552,76 @@ function produkt_category_icon($slug)
                         </thead>
                         <tbody>
                             <?php foreach ($variants as $v): ?>
-                            <tr>
-                                <td><?php echo esc_html($v->name); ?></td>
                                 <?php
-                                    $price_val = ($modus === 'kauf')
-                                        ? $v->verkaufspreis_einmalig
-                                        : $v->base_price;
+                                    $colors = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT vo.option_id AS color_id, vo.stock_available, vo.stock_rented, vo.sku, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
+                                        $v->id
+                                    ));
                                 ?>
-                                <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
-                                <td class="inventory-cell">
-                                    <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
-                                        <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
-                                    </div>
-                                    <div class="inventory-popup" id="inv-popup-<?php echo $v->id; ?>">
-                                        <label>Verfügbar</label>
-                                        <div class="quantity-control">
-                                            <button type="button" class="inv-minus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">-</button>
-                                            <input type="number" id="avail-<?php echo $v->id; ?>" name="stock_available[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_available); ?>" min="0">
-                                            <button type="button" class="inv-plus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">+</button>
-                                        </div>
-                                        <label>In Vermietung</label>
-                                        <div class="quantity-control">
-                                            <button type="button" class="inv-minus" data-target="rent-<?php echo $v->id; ?>">-</button>
-                                            <input type="number" id="rent-<?php echo $v->id; ?>" name="stock_rented[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_rented); ?>" min="0">
-                                            <button type="button" class="inv-plus" data-target="rent-<?php echo $v->id; ?>">+</button>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
-                            </tr>
+                                <?php if (!empty($colors)): ?>
+                                    <?php foreach ($colors as $c): ?>
+                                        <?php $key = $v->id . '_' . $c->color_id; ?>
+                                        <tr>
+                                            <td><?php echo esc_html($v->name . ' - ' . $c->name); ?></td>
+                                            <?php
+                                                $price_val = ($modus === 'kauf')
+                                                    ? $v->verkaufspreis_einmalig
+                                                    : $v->base_price;
+                                            ?>
+                                            <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                            <td class="inventory-cell">
+                                                <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
+                                                    <span class="inventory-available-count"><?php echo intval($c->stock_available); ?></span>
+                                                </div>
+                                                <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
+                                                    <label>Verfügbar</label>
+                                                    <div class="quantity-control">
+                                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
+                                                        <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo intval($c->stock_available); ?>" min="0">
+                                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                                    </div>
+                                                    <label>In Vermietung</label>
+                                                    <div class="quantity-control">
+                                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
+                                                        <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo intval($c->stock_rented); ?>" min="0">
+                                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo esc_attr($c->sku); ?>"></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td><?php echo esc_html($v->name); ?></td>
+                                        <?php
+                                            $price_val = ($modus === 'kauf')
+                                                ? $v->verkaufspreis_einmalig
+                                                : $v->base_price;
+                                        ?>
+                                        <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                        <td class="inventory-cell">
+                                            <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
+                                                <span class="inventory-available-count"><?php echo intval($v->stock_available); ?></span>
+                                            </div>
+                                            <div class="inventory-popup" id="inv-popup-<?php echo $v->id; ?>">
+                                                <label>Verfügbar</label>
+                                                <div class="quantity-control">
+                                                    <button type="button" class="inv-minus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">-</button>
+                                                    <input type="number" id="avail-<?php echo $v->id; ?>" name="stock_available[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_available); ?>" min="0">
+                                                    <button type="button" class="inv-plus" data-target="avail-<?php echo $v->id; ?>" data-variant="<?php echo $v->id; ?>">+</button>
+                                                </div>
+                                                <label>In Vermietung</label>
+                                                <div class="quantity-control">
+                                                    <button type="button" class="inv-minus" data-target="rent-<?php echo $v->id; ?>">-</button>
+                                                    <input type="number" id="rent-<?php echo $v->id; ?>" name="stock_rented[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_rented); ?>" min="0">
+                                                    <button type="button" class="inv-plus" data-target="rent-<?php echo $v->id; ?>">+</button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
+                                    </tr>
+                                <?php endif; ?>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
@@ -679,9 +720,11 @@ function produkt_category_icon($slug)
                     <button type="button" class="produkt-accordion-header"><?php echo esc_html($cat->name); ?></button>
                     <div class="produkt-accordion-content">
                         <div class="category-tiles">
-                            <?php foreach ($cat->children as $child): ?>
+                            <?php if (!empty($cat->children)): foreach ($cat->children as $child): ?>
                             <div class="category-tile<?php echo in_array($child->id,$selected_product_cats) ? ' selected' : ''; ?>" data-id="<?php echo $child->id; ?>" data-parent="<?php echo $cat->id; ?>"><?php echo esc_html($child->name); ?></div>
-                            <?php endforeach; ?>
+                            <?php endforeach; else: ?>
+                            <div class="category-tile<?php echo in_array($cat->id,$selected_product_cats) ? ' selected' : ''; ?>" data-id="<?php echo $cat->id; ?>" data-parent="0"><?php echo esc_html($cat->name); ?></div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -753,8 +796,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const mdInput = document.querySelector('textarea[name="meta_description"]');
     const mdCounter = document.getElementById('meta_description_counter');
     if (mdInput && mdCounter) {
-        updateCharCounter(mdInput, mdCounter, 150, 160);
-        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
+        updateCharCounter(mdInput, mdCounter, 140, 150);
+        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 140, 150));
     }
 
     // Subtab switching
@@ -815,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
             + '<div class="produkt-form-group"><label>Bild</label>'
             + '<div class="image-field-row">'
             + '<div id="' + id + '_preview" class="image-preview"><span>Noch kein Bild vorhanden</span></div>'
-            + '<button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="' + id + '" aria-label="Bild auswählen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 26.2"><path d="M16,7c-3.9,0-7,3.1-7,7s3.1,7,7,7,7-3.1,7-7-3.1-7-7-7ZM16,19c-2.8,0-5-2.2-5-5s2.2-5,5-5,5,2.2,5,5-2.2,5-5,5ZM29,4h-4c-1,0-3-4-4-4h-10c-1.1,0-3.1,4-4,4H3c-1.7,0-3,1.3-3,3v16c0,1.7,1.3,3,3,3h26c1.7,0,3-1.3,3-3V7c0-1.7-1.3-3-3-3ZM30,22c0,1.1-.9,2-2,2H4c-1.1,0-2-.9-2-2v-14c0-1.1.9-2,2-2h4c.9,0,2.9-4,4-4h8c1,0,3,4,3.9,4h4.1c1.1,0,2,.9,2,2v14Z"/></svg></button>'
+            + '<button type="button" class="icon-btn icon-btn-media produkt-media-button" data-target="' + id + '" aria-label="Bild auswählen"><svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg></button>'
             + '<button type="button" class="icon-btn produkt-remove-image" data-target="' + id + '" aria-label="Bild entfernen"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg></button>'
             + '</div>'
             + '<input type="hidden" name="page_block_images[]" id="' + id + '" value="">'

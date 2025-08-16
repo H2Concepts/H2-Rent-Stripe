@@ -395,25 +395,56 @@ class StripeService {
             $mode = get_option('produkt_betriebsmodus', 'miete');
         }
 
-        $params = [
-            'unit_amount' => (int) $amount_cents,
-            'currency'    => 'eur',
-            'product'     => $product_id,
-        ];
-
-        if ($nickname !== null) {
-            $params['nickname'] = $nickname;
-        }
-
-        if (!empty($metadata)) {
-            $params['metadata'] = $metadata;
-        }
-
-        if ($mode === 'miete') {
-            $params['recurring'] = ['interval' => 'month'];
-        }
+        $amount_cents = (int) $amount_cents;
 
         try {
+            $prices = \Stripe\Price::all(['product' => $product_id, 'limit' => 100]);
+            foreach ($prices->data as $p) {
+                $match = $p->unit_amount == $amount_cents && $p->currency === 'eur';
+                if ($mode === 'miete') {
+                    $match = $match && isset($p->recurring) && $p->recurring->interval === 'month';
+                } else {
+                    $match = $match && !isset($p->recurring);
+                }
+
+                if ($match && !empty($metadata)) {
+                    foreach ($metadata as $mk => $mv) {
+                        if (!isset($p->metadata[$mk]) || (string) $p->metadata[$mk] !== (string) $mv) {
+                            $match = false;
+                            break;
+                        }
+                    }
+                }
+
+                if ($match) {
+                    if ($nickname !== null && $p->nickname !== $nickname) {
+                        \Stripe\Price::update($p->id, ['nickname' => $nickname]);
+                    }
+                    if (!empty($metadata)) {
+                        \Stripe\Price::update($p->id, ['metadata' => $metadata]);
+                    }
+                    return $p;
+                }
+            }
+
+            $params = [
+                'unit_amount' => $amount_cents,
+                'currency'    => 'eur',
+                'product'     => $product_id,
+            ];
+
+            if ($nickname !== null) {
+                $params['nickname'] = $nickname;
+            }
+
+            if (!empty($metadata)) {
+                $params['metadata'] = $metadata;
+            }
+
+            if ($mode === 'miete') {
+                $params['recurring'] = ['interval' => 'month'];
+            }
+
             return \Stripe\Price::create($params);
         } catch (\Exception $e) {
             return new \WP_Error('stripe_price_create', $e->getMessage());
@@ -490,6 +521,7 @@ class StripeService {
                     'unit_amount' => $amount,
                     'currency'    => 'eur',
                     'product'     => $stripe_product->id,
+                    'nickname'    => ($product_data['mode'] === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
                 ];
 
                 if ($product_data['mode'] === 'miete') {
@@ -552,17 +584,39 @@ class StripeService {
                 \Stripe\Product::update($product->id, ['active' => true]);
             }
 
-            $price_params = [
-                'unit_amount' => intval(round($price * 100)),
-                'currency'    => 'eur',
-                'product'     => $product->id,
-            ];
-
-            if ($mode === 'miete') {
-                $price_params['recurring'] = ['interval' => 'month'];
+            $amount_cents = intval(round($price * 100));
+            $prices       = \Stripe\Price::all(['product' => $product->id, 'limit' => 100]);
+            $price_obj    = null;
+            foreach ($prices->data as $p) {
+                $match = $p->unit_amount == $amount_cents && $p->currency === 'eur';
+                if ($mode === 'miete') {
+                    $match = $match && isset($p->recurring) && $p->recurring->interval === 'month';
+                } else {
+                    $match = $match && !isset($p->recurring);
+                }
+                if ($match) {
+                    $price_obj = $p;
+                    if ($p->nickname !== (($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat')) {
+                        \Stripe\Price::update($p->id, ['nickname' => ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat']);
+                    }
+                    break;
+                }
             }
 
-            $price_obj = \Stripe\Price::create($price_params);
+            if (!$price_obj) {
+                $price_params = [
+                    'unit_amount' => $amount_cents,
+                    'currency'    => 'eur',
+                    'product'     => $product->id,
+                    'nickname'    => ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
+                ];
+
+                if ($mode === 'miete') {
+                    $price_params['recurring'] = ['interval' => 'month'];
+                }
+
+                $price_obj = \Stripe\Price::create($price_params);
+            }
 
             return [
                 'product_id' => $product->id,
@@ -932,7 +986,7 @@ class StripeService {
 
             global $wpdb;
             $existing_orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
                 $session->id
             ));
 
@@ -1066,6 +1120,13 @@ class StripeService {
                                 "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                 $ord->variant_id
                             ));
+                            if ($ord->product_color_id) {
+                                $wpdb->query($wpdb->prepare(
+                                    "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                    $ord->variant_id,
+                                    $ord->product_color_id
+                                ));
+                            }
                         }
                         if (!empty($ord->extra_ids)) {
                             $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
