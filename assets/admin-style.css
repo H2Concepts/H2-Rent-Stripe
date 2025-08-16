@@ -1381,7 +1381,7 @@ body.color-modal-open {
     }
 }
 
-.produkt-char-counter{font-size:0.85rem;text-align:right;margin-top:4px;} .produkt-char-counter.ok{color:#46b450;} .produkt-char-counter.warning{color:#ffb900;} .produkt-char-counter.error{color:#dc3232;}
+.produkt-char-counter{font-size:0.85rem;text-align:left;margin-top:4px;} .produkt-char-counter.ok{color:#46b450;} .produkt-char-counter.warning{color:#ffb900;} .produkt-char-counter.error{color:#dc3232;}
 
 /* Utility classes */
 .pv-mt-10 {

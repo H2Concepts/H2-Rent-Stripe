@@ -347,7 +347,7 @@ class Database {
             
             // Insert default branding settings
             $default_branding = array(
-                'plugin_name' => 'H2 Concepts Rental Pro',
+                'plugin_name' => 'H2 Rental Pro',
                 'plugin_description' => 'Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration',
                 'company_name' => 'H2 Concepts',
                 'company_url' => 'https://h2concepts.de',

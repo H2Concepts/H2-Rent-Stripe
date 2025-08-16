@@ -93,7 +93,7 @@ if (isset($_POST['submit_branding'])) {
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Plugin-Name *</label>
-                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" required>
+                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Rental Pro'); ?>" required>
                         <small>Name des Plugins im Admin-Menü</small>
                     </div>
                     

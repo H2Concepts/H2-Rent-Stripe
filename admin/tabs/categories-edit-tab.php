@@ -108,8 +108,8 @@ function produkt_category_icon($slug)
 
             <div class="produkt-form-group full-width">
                 <label>SEO-Beschreibung</label>
-                <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
-                <div id="meta_description_counter" class="produkt-char-counter"></div>
+                <textarea name="meta_description" rows="3" maxlength="150"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
+                <div class="produkt-char-counter">Max. 150 Zeichen für Google <span id="meta_description_counter"></span></div>
             </div>
         </div>
 
@@ -755,8 +755,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const mdInput = document.querySelector('textarea[name="meta_description"]');
     const mdCounter = document.getElementById('meta_description_counter');
     if (mdInput && mdCounter) {
-        updateCharCounter(mdInput, mdCounter, 150, 160);
-        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
+        updateCharCounter(mdInput, mdCounter, 140, 150);
+        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 140, 150));
     }
 
     // Subtab switching

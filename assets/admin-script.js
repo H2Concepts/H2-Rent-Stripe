@@ -410,7 +410,7 @@ jQuery(document).ready(function($) {
             url.searchParams.delete('tab');
             history.replaceState(null, '', url);
         }
-        $('#add-color-btn').on('click', function(e){
+        $(document).on('click', '#add-color-btn', function(e){
             e.preventDefault();
             colorModal.find('input[name="id"]').val('');
             colorModal.find('input[type="text"], input[type="color"], input[type="hidden"]').not('[name="category_id"]').val('');

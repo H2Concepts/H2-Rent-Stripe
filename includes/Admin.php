@@ -14,7 +14,7 @@ class Admin {
         $is_sale  = ($modus === 'kauf');
 
         add_menu_page(
-            $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
+            $branding['plugin_name'] ?? 'H2 Rental Pro',
             $menu_title,
             'manage_options',
             'produkt-verleih',
