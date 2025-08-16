@@ -1669,5 +1669,9 @@ jQuery(function($) {
         window.location.search = params.toString();
     }
 
-    $(document).on('change', '.shop-filter-checkbox', updateFilterQuery);
+    $(document).on('change', '.shop-filter-checkbox', function(){
+        const val = this.value;
+        $('.shop-filter-checkbox').filter(`[value="${val}"]`).prop('checked', this.checked);
+        updateFilterQuery();
+    });
 });
