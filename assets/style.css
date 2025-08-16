@@ -2100,6 +2100,10 @@ input[type="checkbox"] {
     padding: 0;
 }
 
+.shop-filter-checkboxes li {
+    margin-bottom: 0.4rem;
+}
+
 .shop-filter-checkboxes label {
     display: block;
     font-size: 0.9rem;
