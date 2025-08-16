@@ -410,7 +410,7 @@ function produkt_category_icon($slug)
                         <p class="card-subline">Bis zu vier Vorteile</p>
                     </div>
                     <label class="produkt-toggle-label">
-                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>>
+                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 0, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
                         <span>Features-Sektion anzeigen</span>
                     </label>
@@ -679,9 +679,11 @@ function produkt_category_icon($slug)
                     <button type="button" class="produkt-accordion-header"><?php echo esc_html($cat->name); ?></button>
                     <div class="produkt-accordion-content">
                         <div class="category-tiles">
-                            <?php foreach ($cat->children as $child): ?>
+                            <?php if (!empty($cat->children)): foreach ($cat->children as $child): ?>
                             <div class="category-tile<?php echo in_array($child->id,$selected_product_cats) ? ' selected' : ''; ?>" data-id="<?php echo $child->id; ?>" data-parent="<?php echo $cat->id; ?>"><?php echo esc_html($child->name); ?></div>
-                            <?php endforeach; ?>
+                            <?php endforeach; else: ?>
+                            <div class="category-tile<?php echo in_array($cat->id,$selected_product_cats) ? ' selected' : ''; ?>" data-id="<?php echo $cat->id; ?>" data-parent="0"><?php echo esc_html($cat->name); ?></div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

@@ -145,6 +145,13 @@ jQuery(document).ready(function($) {
         });
     });
 
+    function toggleRatingFields() {
+        var checked = $('input[name="show_rating"]').is(':checked');
+        $('input[name="rating_value"], input[name="rating_link"]').prop('required', checked);
+    }
+    $('input[name="show_rating"]').on('change', toggleRatingFields);
+    toggleRatingFields();
+
     var accordionIndex = $('#accordion-container .produkt-accordion-group').length;
     $('#add-accordion').on('click', function(e) {
         e.preventDefault();
@@ -521,10 +528,12 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.toggle('selected');
             if (this.classList.contains('selected')) {
                 addInput(id);
-                addInput(parent);
+                if (parent && parent !== '0') {
+                    addInput(parent);
+                }
             } else {
                 removeInput(id);
-                if (!document.querySelector('.category-tile.selected[data-parent="' + parent + '"]')) {
+                if (parent && parent !== '0' && !document.querySelector('.category-tile.selected[data-parent="' + parent + '"]')) {
                     removeInput(parent);
                 }
             }

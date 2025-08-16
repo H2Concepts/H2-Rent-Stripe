@@ -330,7 +330,7 @@ foreach ($filter_groups as $g) {
                         <p class="card-subline">Bis zu vier Vorteile</p>
                     </div>
                     <label class="produkt-toggle-label">
-                        <input type="checkbox" name="show_features" value="1" checked>
+                        <input type="checkbox" name="show_features" value="1">
                         <span class="produkt-toggle-slider"></span>
                         <span>Features-Sektion anzeigen</span>
                     </label>
@@ -462,9 +462,11 @@ foreach ($filter_groups as $g) {
                         <button type="button" class="produkt-accordion-header"><?php echo esc_html($cat->name); ?></button>
                         <div class="produkt-accordion-content">
                             <div class="category-tiles">
-                                <?php foreach ($cat->children as $child): ?>
+                                <?php if (!empty($cat->children)): foreach ($cat->children as $child): ?>
                                 <div class="category-tile" data-id="<?php echo $child->id; ?>" data-parent="<?php echo $cat->id; ?>"><?php echo esc_html($child->name); ?></div>
-                                <?php endforeach; ?>
+                                <?php endforeach; else: ?>
+                                <div class="category-tile" data-id="<?php echo $cat->id; ?>" data-parent="0"><?php echo esc_html($cat->name); ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
