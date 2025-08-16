@@ -70,11 +70,12 @@ if ($clauses) {
 $sql_blocks .= ' ORDER BY position';
  $blocks = !empty($params) ? $wpdb->get_results($wpdb->prepare($sql_blocks, ...$params)) : $wpdb->get_results($sql_blocks);
 ?>
-<div id="block-modal" class="modal-overlay" data-open="<?php echo $block ? '1' : '0'; ?>">
-    <div class="modal-content">
-        <button type="button" class="modal-close">&times;</button>
-        <h2><?php echo $block ? 'Block bearbeiten' : 'Neuen Block hinzufügen'; ?></h2>
-        <form method="post" id="content-block-form" class="produkt-compact-form">
+<div class="produkt-admin dashboard-wrapper">
+    <div id="block-modal" class="modal-overlay" data-open="<?php echo $block ? '1' : '0'; ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2><?php echo $block ? 'Block bearbeiten' : 'Neuen Block hinzufügen'; ?></h2>
+            <form method="post" id="content-block-form" class="produkt-compact-form">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <input type="hidden" name="id" value="<?php echo esc_attr($block->id ?? ''); ?>">
             <div class="form-grid">
@@ -165,7 +166,6 @@ $sql_blocks .= ' ORDER BY position';
     </div>
 </div>
 
-<div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Content-Blöcke verwalten</p>
 
