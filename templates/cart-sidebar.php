@@ -1,7 +1,7 @@
 <div id="produkt-cart-panel" class="produkt-cart-panel">
     <div class="cart-header">
-        <h3>Warenkorb</h3>
-        <button type="button" class="cart-close">&times;</button>
+        <span class="cart-title">Warenkorb</span>
+        <button type="button" class="cart-close" aria-label="Warenkorb schließen">&times;</button>
     </div>
     <div class="cart-items"></div>
     <div class="cart-summary"><span>Summe</span><span class="cart-total-amount">0€</span></div>

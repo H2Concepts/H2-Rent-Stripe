@@ -225,7 +225,7 @@ body.produkt-login-page header,
 body.produkt-login-page footer,
 body.produkt-login-page #masthead,
 body.produkt-login-page #colophon {
-    display: none;
+    display: none !important;
 }
 
 .produkt-login-wrapper {

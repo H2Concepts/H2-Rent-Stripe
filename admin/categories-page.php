@@ -19,6 +19,8 @@ $selected_prodcat  = $selected_prodcat ?? 0;
 $search_term       = $search_term ?? '';
 $active_tab        = $active_tab ?? 'list';
 $edit_item         = $edit_item ?? null;
+$mode              = get_option('produkt_betriebsmodus', 'miete');
+$is_sale           = ($mode === 'kauf');
 
 $subline_text = 'Produkte verwalten';
 if ($active_tab === 'add') {
@@ -91,6 +93,7 @@ if ($active_tab === 'add') {
                                 </div>
                             </a>
                         </div>
+                        <?php if (!$is_sale): ?>
                         <div class="quicknav-card">
                             <a href="admin.php?page=produkt-conditions">
                                 <div class="quicknav-inner">
@@ -99,6 +102,7 @@ if ($active_tab === 'add') {
                                 </div>
                             </a>
                         </div>
+                        <?php endif; ?>
                         <div class="quicknav-card">
                             <a href="admin.php?page=produkt-colors">
                                 <div class="quicknav-inner">

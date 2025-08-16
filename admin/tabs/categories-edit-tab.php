@@ -108,8 +108,8 @@ function produkt_category_icon($slug)
 
             <div class="produkt-form-group full-width">
                 <label>SEO-Beschreibung</label>
-                <textarea name="meta_description" rows="3" maxlength="160"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
-                <div id="meta_description_counter" class="produkt-char-counter"></div>
+                <textarea name="meta_description" rows="3" maxlength="150"><?php echo esc_textarea($edit_item->meta_description ?? ''); ?></textarea>
+                <div class="produkt-char-counter">Max. 150 Zeichen für Google <span id="meta_description_counter"></span></div>
             </div>
         </div>
 
@@ -389,11 +389,11 @@ function produkt_category_icon($slug)
             <div class="form-grid">
                 <div class="produkt-form-group">
                     <label>Sterne-Bewertung (1-5)</label>
-                    <input type="number" name="rating_value" value="<?php echo esc_attr($edit_item->rating_value); ?>" step="0.1" min="1" max="5">
+                    <input type="number" name="rating_value" value="<?php echo ($edit_item->rating_value > 0) ? esc_attr($edit_item->rating_value) : ''; ?>" step="0.1" min="1" max="5" <?php echo $edit_item->show_rating ? '' : 'disabled'; ?>>
                 </div>
                 <div class="produkt-form-group">
                     <label>Bewertungs-Link</label>
-                    <input type="url" name="rating_link" value="<?php echo esc_attr($edit_item->rating_link); ?>">
+                    <input type="url" name="rating_link" value="<?php echo esc_attr($edit_item->rating_link); ?>" <?php echo $edit_item->show_rating ? '' : 'disabled'; ?>>
                 </div>
             </div>
         </div>
@@ -410,7 +410,7 @@ function produkt_category_icon($slug)
                         <p class="card-subline">Bis zu vier Vorteile</p>
                     </div>
                     <label class="produkt-toggle-label">
-                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 1, 1); ?>>
+                        <input type="checkbox" name="show_features" value="1" <?php checked($edit_item->show_features ?? 0, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
                         <span>Features-Sektion anzeigen</span>
                     </label>
@@ -679,9 +679,11 @@ function produkt_category_icon($slug)
                     <button type="button" class="produkt-accordion-header"><?php echo esc_html($cat->name); ?></button>
                     <div class="produkt-accordion-content">
                         <div class="category-tiles">
-                            <?php foreach ($cat->children as $child): ?>
+                            <?php if (!empty($cat->children)): foreach ($cat->children as $child): ?>
                             <div class="category-tile<?php echo in_array($child->id,$selected_product_cats) ? ' selected' : ''; ?>" data-id="<?php echo $child->id; ?>" data-parent="<?php echo $cat->id; ?>"><?php echo esc_html($child->name); ?></div>
-                            <?php endforeach; ?>
+                            <?php endforeach; else: ?>
+                            <div class="category-tile<?php echo in_array($cat->id,$selected_product_cats) ? ' selected' : ''; ?>" data-id="<?php echo $cat->id; ?>" data-parent="0"><?php echo esc_html($cat->name); ?></div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -753,8 +755,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const mdInput = document.querySelector('textarea[name="meta_description"]');
     const mdCounter = document.getElementById('meta_description_counter');
     if (mdInput && mdCounter) {
-        updateCharCounter(mdInput, mdCounter, 150, 160);
-        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
+        updateCharCounter(mdInput, mdCounter, 140, 150);
+        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 140, 150));
     }
 
     // Subtab switching

@@ -14,7 +14,7 @@ class Admin {
         $is_sale  = ($modus === 'kauf');
 
         add_menu_page(
-            $branding['plugin_name'] ?? 'H2 Concepts Rental Pro',
+            $branding['plugin_name'] ?? 'H2 Rental Pro',
             $menu_title,
             'manage_options',
             'produkt-verleih',
@@ -88,15 +88,17 @@ class Admin {
         }
         
         // New submenu items
-        add_submenu_page(
-            'produkt-verleih',
-            'Zustand',
-            'Zustand',
-            'manage_options',
-            'produkt-conditions',
-            array($this, 'conditions_page')
-        );
-        
+        if (!$is_sale) {
+            add_submenu_page(
+                'produkt-verleih',
+                'Zustand',
+                'Zustand',
+                'manage_options',
+                'produkt-conditions',
+                array($this, 'conditions_page')
+            );
+        }
+
         add_submenu_page(
             'produkt-verleih',
             'Farben',
@@ -280,6 +282,11 @@ class Admin {
             $inline_css .= "\n" . $custom_css;
         }
         wp_add_inline_style('produkt-style', $inline_css);
+
+        if ($is_account_page && !is_user_logged_in()) {
+            $hide_header_css = 'body.page-kundenkonto header, body.page-kundenkonto .site-header, body.page-kundenkonto #site-header, body.page-kundenkonto footer, body.page-kundenkonto .site-footer, body.page-kundenkonto #site-footer {display:none !important;}';
+            wp_add_inline_style('produkt-style', $hide_header_css);
+        }
 
         $ui = get_option('produkt_ui_settings', []);
 
@@ -509,6 +516,10 @@ class Admin {
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
             $rating_value = $rating_value_input !== '' ? min(5, max(0, floatval($rating_value_input))) : 0;
             $rating_link = esc_url_raw($_POST['rating_link']);
+            if (!$show_rating) {
+                $rating_value = 0;
+                $rating_link = '';
+            }
             $sort_order = intval($_POST['sort_order']);
 
             $accordion_titles = isset($_POST['accordion_titles']) ? array_map('sanitize_text_field', (array) $_POST['accordion_titles']) : array();

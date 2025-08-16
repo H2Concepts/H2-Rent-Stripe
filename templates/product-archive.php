@@ -5,7 +5,6 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-get_header();
 
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
@@ -254,6 +253,5 @@ foreach ($content_blocks as $b) {
         <?php endif; ?>
     </div>
 </div>
-</div> <!-- .entry-content -->
-</article></main></div> <!-- .content-area und .ast-container -->
-<?php get_footer(); ?>
+
+</div> <!-- .produkt-shop-archive -->

@@ -82,8 +82,8 @@ foreach ($filter_groups as $g) {
 
                 <div class="produkt-form-group full-width">
                     <label>SEO-Beschreibung</label>
-                    <textarea name="meta_description" rows="3" maxlength="160" placeholder="Beschreibung für Suchmaschinen (max. 160 Zeichen)"></textarea>
-                    <div id="meta_description_counter" class="produkt-char-counter"></div>
+                    <textarea name="meta_description" rows="3" maxlength="150" placeholder="Beschreibung für Suchmaschinen (max. 150 Zeichen)"></textarea>
+                    <div class="produkt-char-counter">Max. 150 Zeichen für Google <span id="meta_description_counter"></span></div>
                 </div>
             </div>
 
@@ -310,11 +310,11 @@ foreach ($filter_groups as $g) {
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Sterne-Bewertung (1-5)</label>
-                        <input type="number" name="rating_value" step="0.1" min="1" max="5">
+                        <input type="number" name="rating_value" step="0.1" min="1" max="5" disabled>
                     </div>
                     <div class="produkt-form-group">
                         <label>Bewertungs-Link</label>
-                        <input type="url" name="rating_link" placeholder="https://example.com/bewertungen">
+                        <input type="url" name="rating_link" placeholder="https://example.com/bewertungen" disabled>
                     </div>
                 </div>
             </div>
@@ -330,7 +330,7 @@ foreach ($filter_groups as $g) {
                         <p class="card-subline">Bis zu vier Vorteile</p>
                     </div>
                     <label class="produkt-toggle-label">
-                        <input type="checkbox" name="show_features" value="1" checked>
+                        <input type="checkbox" name="show_features" value="1">
                         <span class="produkt-toggle-slider"></span>
                         <span>Features-Sektion anzeigen</span>
                     </label>
@@ -462,9 +462,11 @@ foreach ($filter_groups as $g) {
                         <button type="button" class="produkt-accordion-header"><?php echo esc_html($cat->name); ?></button>
                         <div class="produkt-accordion-content">
                             <div class="category-tiles">
-                                <?php foreach ($cat->children as $child): ?>
+                                <?php if (!empty($cat->children)): foreach ($cat->children as $child): ?>
                                 <div class="category-tile" data-id="<?php echo $child->id; ?>" data-parent="<?php echo $cat->id; ?>"><?php echo esc_html($child->name); ?></div>
-                                <?php endforeach; ?>
+                                <?php endforeach; else: ?>
+                                <div class="category-tile" data-id="<?php echo $cat->id; ?>" data-parent="0"><?php echo esc_html($cat->name); ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -530,8 +532,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const mdInput = document.querySelector('textarea[name="meta_description"]');
     const mdCounter = document.getElementById('meta_description_counter');
     if (mdInput && mdCounter) {
-        updateCharCounter(mdInput, mdCounter, 150, 160);
-        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 150, 160));
+        updateCharCounter(mdInput, mdCounter, 140, 150);
+        mdInput.addEventListener('input', () => updateCharCounter(mdInput, mdCounter, 140, 150));
     }
 
     // Subtab switching
