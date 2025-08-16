@@ -1966,8 +1966,12 @@ body.produkt-popup-open {
     margin-bottom: 0.5rem;
 }
 
+.shop-category-list li:first-child {
+    margin-bottom: 2rem;
+}
+
 .shop-category-list li.main-category {
-    margin: 3rem 0 0.5rem 0;
+    margin: 0.5rem 0;
 }
 .shop-category-list li.main-category > a {
     font-size: 1.4rem;
