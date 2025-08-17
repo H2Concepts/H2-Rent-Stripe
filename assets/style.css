@@ -1537,6 +1537,12 @@ img.wp-smiley, img.emoji {
     display: inline-block;
     margin-left: 20px;
 }
+
+@media (max-width: 768px) {
+    .plugin-cart-icon {
+        margin-left: 0;
+    }
+}
 .plugin-cart-icon .cart-icon {
     position: relative;
     display: inline-block;
