@@ -228,7 +228,7 @@ img.wp-smiley, img.emoji {
     background: linear-gradient(135deg, #e3e8e3 0%, #f6f7f6 100%);
     border: 2px solid var(--produkt-border-color);
     border-radius: 0.75rem;
-    padding: 1.5rem;
+    padding: 0.5rem 1.5rem 1.5rem;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1582,16 +1582,18 @@ img.wp-smiley, img.emoji {
 .produkt-tooltip-modal .modal-content {
     position: relative;
     background: #fff;
-    padding: 20px;
+    padding: 0;
     border-radius: 8px;
     max-width: 400px;
     width: 90%;
     text-align: left;
 }
 
+
 .produkt-tooltip-modal .modal-header {
     display: flex;
     justify-content: flex-end;
+    padding: 0.25rem;
 }
 
 .produkt-tooltip-modal .modal-close {
@@ -1602,10 +1604,12 @@ img.wp-smiley, img.emoji {
     color: #000000;
     box-shadow: none;
     line-height: 1;
+    padding: 0.25rem;
 }
 
 .produkt-tooltip-modal .modal-text {
     word-break: break-word;
+    padding: 20px;
 }
 
 .produkt-exit-popup-close {
