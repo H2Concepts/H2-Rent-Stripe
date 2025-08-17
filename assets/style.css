@@ -1408,7 +1408,6 @@ img.wp-smiley, img.emoji {
     max-width: 90%;
     height: 100%;
     background: #fff;
-    box-shadow: rgba(0, 0, 0, 0.46) 0px 22px 70px 4px;
     transform: translateX(100%);
     transition: transform 0.3s ease;
     z-index: 10000;
@@ -1417,6 +1416,7 @@ img.wp-smiley, img.emoji {
 }
 .produkt-cart-panel.open {
     transform: translateX(0);
+    box-shadow: rgba(0, 0, 0, 0.46) 0px 22px 70px 4px;
 }
 .produkt-cart-panel .cart-header {
     display: flex;
