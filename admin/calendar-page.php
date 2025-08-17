@@ -31,7 +31,7 @@ $start_index   = (int)date('N', $first_day_ts) - 1;
 $open_by_day = [];
 $return_by_day = [];
 $orders_detail = [];
-$where = ["o.mode = 'kauf'"];
+$where = ["o.mode = 'kauf'", "o.status = 'abgeschlossen'"];
 
 $sql = "SELECT o.*, c.name as category_name,
                COALESCE(v.name, o.produkt_name) as variant_name,

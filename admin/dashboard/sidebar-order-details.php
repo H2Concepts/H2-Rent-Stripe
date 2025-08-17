@@ -15,9 +15,9 @@ if (!empty($order->customer_name)) {
     $initials = strtoupper(substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : ''));
 }
 
-// Prozent Mietdauer berechnen
+// Prozent Mietdauer nur berechnen, wenn Auftrag nicht offen ist
 $percent = 0;
-if (!empty($sd) && !empty($ed)) {
+if ($order->status !== 'offen' && !empty($sd) && !empty($ed)) {
     $start = strtotime($sd);
     $end = strtotime($ed);
     $today = time();
@@ -28,10 +28,17 @@ if (!empty($sd) && !empty($ed)) {
 
 // Status-Text für den Badge ermitteln
 $badge_status = 'In Vermietung';
-if ($percent >= 100) {
+if ($order->status === 'offen') {
+    $badge_status = 'Offen';
+} elseif ($percent >= 100) {
     $badge_status = 'Abgeschlossen';
 } elseif ($percent <= 0) {
     $badge_status = 'Ausstehend';
+}
+
+// Miettage nicht anzeigen, wenn Auftrag offen ist
+if ($order->status === 'offen') {
+    $days = null;
 }
 
 // Produkte ermitteln
@@ -97,12 +104,14 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <div class="rental-period-box">
         <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
         <h3>Mietzeitraum</h3>
-        <div class="rental-progress-number"><?php echo $percent; ?>%</div>
-        <div class="rental-progress">
-            <div class="bar">
-                <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
+        <?php if ($order->status !== 'offen') : ?>
+            <div class="rental-progress-number"><?php echo $percent; ?>%</div>
+            <div class="rental-progress">
+                <div class="bar">
+                    <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
         <div class="rental-dates">
             <span>Abgeholt: <?php echo date_i18n('d. M', strtotime($sd)); ?></span>
             <span>Rückgabe: <?php echo date_i18n('d. M', strtotime($ed)); ?></span>
@@ -169,6 +178,12 @@ $produkte = $order->produkte ?? [$order]; // fallback
             </p>
         <?php endif; ?>
     </div>
+
+    <?php if ($order->status === 'offen') : ?>
+        <div class="delete-order-section">
+            <button type="button" class="button delete-order-btn">Auftrag löschen</button>
+        </div>
+    <?php endif; ?>
 
     <div class="orders-accordion">
         <div class="produkt-accordion-item">

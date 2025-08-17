@@ -106,7 +106,9 @@ jQuery(document).ready(function($) {
             }
             let period = '';
             if (item.start_date && item.end_date) {
-                period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';
+                const startFmt = formatDate(item.start_date);
+                const endFmt = formatDate(item.end_date);
+                period = startFmt + ' - ' + endFmt + ' (' + item.days + ' Tage)';
             } else if (item.dauer_name) {
                 period = item.dauer_name;
             }
@@ -1417,6 +1419,11 @@ function updateSelectedDays() {
 
     function formatPrice(price) {
         return parseFloat(price).toFixed(2).replace('.', ',');
+    }
+
+    function formatDate(dateStr) {
+        const parts = dateStr.split('-');
+        return parts[2] + '.' + parts[1] + '.' + parts[0];
     }
 
     function scrollToNotify() {

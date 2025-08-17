@@ -2064,6 +2064,34 @@ function pv_load_customer_logs() {
     wp_send_json_success(['html' => $html, 'count' => count($logs)]);
 }
 
+add_action('wp_ajax_pv_delete_order', __NAMESPACE__ . '\\pv_delete_order');
+function pv_delete_order() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_id = intval($_POST['order_id'] ?? 0);
+    if (!$order_id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_orders';
+    $status = $wpdb->get_var($wpdb->prepare("SELECT status FROM $table WHERE id = %d", $order_id));
+    if ($status !== 'offen') {
+        wp_send_json_error('not_allowed');
+    }
+
+    $deleted = $wpdb->delete($table, ['id' => $order_id], ['%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('db');
+    }
+}
+
 add_action('wp_ajax_pv_set_default_shipping', __NAMESPACE__ . '\\pv_set_default_shipping');
 function pv_set_default_shipping() {
     check_ajax_referer('produkt_admin_action', 'nonce');

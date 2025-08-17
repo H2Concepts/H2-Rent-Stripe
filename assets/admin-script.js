@@ -38,6 +38,27 @@ jQuery(document).ready(function($) {
         $('#order-details-overlay').removeClass('visible');
     });
 
+    // Auftrag löschen
+    $(document).on('click', '.delete-order-btn', function(e) {
+        e.preventDefault();
+        if (!confirm('Auftrag wirklich löschen?')) {
+            return;
+        }
+        var wrapper = $(this).closest('.sidebar-wrapper');
+        var orderId = wrapper.data('order-id');
+        $.post(ajaxurl, {
+            action: 'pv_delete_order',
+            nonce: produkt_admin.nonce,
+            order_id: orderId
+        }, function(res) {
+            if (res.success) {
+                location.reload();
+            } else {
+                alert('Fehler beim Löschen');
+            }
+        });
+    });
+
     // Confirm delete actions
     $('.wp-list-table a[href*="delete"]').on('click', function(e) {
         if (!confirm('Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?')) {
