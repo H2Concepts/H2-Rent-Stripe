@@ -985,10 +985,10 @@ class StripeService {
             );
 
             global $wpdb;
-            $existing_orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
-                $session->id
-            ));
+        $existing_orders = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number, client_info FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+            $session->id
+        ));
 
             $shipping_price_id = $metadata['shipping_price_id'] ?? '';
             if (!$shipping_price_id && !empty($existing_orders)) {
@@ -1085,6 +1085,7 @@ class StripeService {
                     $send_welcome = ($ord->status !== 'abgeschlossen');
                     $update_data = $data;
                     $update_data['created_at'] = $ord->created_at;
+                    $update_data['client_info'] = $ord->client_info;
                     if (empty($ord->order_number)) {
                         $gen_num = pv_generate_order_number();
                         if ($gen_num !== '') {
@@ -1107,6 +1108,15 @@ class StripeService {
                     if ($send_welcome) {
                         produkt_add_order_log($ord->id, 'status_updated', 'offen -> abgeschlossen');
                     }
+
+                    $cart_items = [];
+                    if (!empty($ord->client_info)) {
+                        $ci = json_decode($ord->client_info, true);
+                        if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                            $cart_items = $ci['cart_items'];
+                        }
+                    }
+
                     if ($send_welcome && !$welcome_sent) {
                         produkt_add_order_log($ord->id, 'checkout_completed');
                         send_produkt_welcome_email($update_data, $ord->id);
@@ -1114,27 +1124,58 @@ class StripeService {
                         produkt_add_order_log($ord->id, 'welcome_email_sent');
                         $welcome_sent = true;
                     }
+
                     if ($ord->status === 'offen') {
-                        if ($ord->variant_id) {
-                            $wpdb->query($wpdb->prepare(
-                                "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                                $ord->variant_id
-                            ));
-                            if ($ord->product_color_id) {
-                                $wpdb->query($wpdb->prepare(
-                                    "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
-                                    $ord->variant_id,
-                                    $ord->product_color_id
-                                ));
+                        if (!empty($cart_items)) {
+                            foreach ($cart_items as $item) {
+                                $v_id = intval($item['variant_id'] ?? 0);
+                                if ($v_id) {
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                        $v_id
+                                    ));
+                                    $color_id = intval($item['product_color_id'] ?? 0);
+                                    if ($color_id) {
+                                        $wpdb->query($wpdb->prepare(
+                                            "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                            $v_id,
+                                            $color_id
+                                        ));
+                                    }
+                                }
+                                $extra_ids = [];
+                                if (!empty($item['extra_ids'])) {
+                                    $extra_ids = array_filter(array_map('intval', explode(',', $item['extra_ids'])));
+                                }
+                                foreach ($extra_ids as $eid) {
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                        $eid
+                                    ));
+                                }
                             }
-                        }
-                        if (!empty($ord->extra_ids)) {
-                            $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
-                            foreach ($ids as $eid) {
+                        } else {
+                            if ($ord->variant_id) {
                                 $wpdb->query($wpdb->prepare(
-                                    "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                                    $eid
+                                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                    $ord->variant_id
                                 ));
+                                if ($ord->product_color_id) {
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                        $ord->variant_id,
+                                        $ord->product_color_id
+                                    ));
+                                }
+                            }
+                            if (!empty($ord->extra_ids)) {
+                                $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
+                                foreach ($ids as $eid) {
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                        $eid
+                                    ));
+                                }
                             }
                         }
                     }

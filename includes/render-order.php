@@ -10,39 +10,68 @@ if (!defined('ABSPATH')) { exit; }
         <?php endif; ?>
         <p><strong>Datum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?></p>
         <?php
-            $prod = $order->category_name ?: $order->produkt_name;
-            if (!$prod && !empty($order->variant_name)) {
-                $prod = $order->variant_name;
+            $items = [];
+            if (!empty($order->client_info)) {
+                $ci = json_decode($order->client_info, true);
+                if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                    $items = $ci['cart_items'];
+                }
             }
         ?>
-        <p><strong>Produkt:</strong> <?php echo esc_html($prod); ?></p>
-        <?php
-            $extras = $order->extra_names ?: $order->extra_text;
-            if (!empty($extras)) : ?>
-            <p><strong>Extras:</strong> <?php echo esc_html($extras); ?></p>
-        <?php endif; ?>
-        <?php if (!empty($order->produktfarbe_text)) : ?>
-            <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
-        <?php endif; ?>
-        <?php if (!empty($order->gestellfarbe_text)) : ?>
-            <p><strong>Gestellfarbe:</strong> <?php echo esc_html($order->gestellfarbe_text); ?></p>
-        <?php endif; ?>
-        <?php if (!empty($order->zustand_text)) : ?>
-            <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
-        <?php endif; ?>
-        <?php list($sd,$ed) = pv_get_order_period($order); ?>
-        <?php if ($sd && $ed) : ?>
-            <p><strong>Zeitraum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($sd))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($ed))); ?></p>
-        <?php endif; ?>
-        <?php $days = pv_get_order_rental_days($order); ?>
-        <?php if ($days !== null) : ?>
-            <p><strong>Miettage:</strong> <?php echo esc_html($days); ?></p>
-        <?php elseif (!empty($order->dauer_text)) : ?>
-            <p><strong>Miettage:</strong> <?php echo esc_html($order->dauer_text); ?></p>
-        <?php endif; ?>
-        <p><strong>Preis:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
-        <?php if (!empty($order->weekend_tariff)) : ?>
-            <p><strong>Hinweis:</strong> Wochenendtarif</p>
+        <?php if ($items) : ?>
+            <h4>Produkte</h4>
+            <?php foreach ($items as $it) : $m = $it['metadata'] ?? []; ?>
+                <div class="order-item">
+                    <p><strong><?php echo esc_html($m['produkt'] ?? 'Produkt'); ?></strong></p>
+                    <?php if (!empty($m['zustand'])) : ?><p>Ausführung: <?php echo esc_html($m['zustand']); ?></p><?php endif; ?>
+                    <?php if (!empty($m['extra'])) : ?><p>Extras: <?php echo esc_html($m['extra']); ?></p><?php endif; ?>
+                    <?php if (!empty($m['produktfarbe'])) : ?><p>Farbe: <?php echo esc_html($m['produktfarbe']); ?></p><?php endif; ?>
+                    <?php if (!empty($m['gestellfarbe'])) : ?><p>Gestellfarbe: <?php echo esc_html($m['gestellfarbe']); ?></p><?php endif; ?>
+                    <?php if (!empty($it['start_date']) && !empty($it['end_date'])) : ?>
+                        <p>Zeitraum: <?php echo esc_html(date_i18n('d.m.Y', strtotime($it['start_date']))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($it['end_date']))); ?></p>
+                    <?php elseif (!empty($m['dauer_name'])) : ?>
+                        <p>Mietdauer: <?php echo esc_html($m['dauer_name']); ?></p>
+                    <?php endif; ?>
+                    <p>Preis: <?php echo esc_html(number_format((float) ($it['final_price'] ?? 0), 2, ',', '.')); ?>€</p>
+                </div>
+            <?php endforeach; ?>
+            <p><strong>Gesamtpreis:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
+        <?php else : ?>
+            <?php
+                $prod = $order->category_name ?: $order->produkt_name;
+                if (!$prod && !empty($order->variant_name)) {
+                    $prod = $order->variant_name;
+                }
+            ?>
+            <p><strong>Produkt:</strong> <?php echo esc_html($prod); ?></p>
+            <?php
+                $extras = $order->extra_names ?: $order->extra_text;
+                if (!empty($extras)) : ?>
+                <p><strong>Extras:</strong> <?php echo esc_html($extras); ?></p>
+            <?php endif; ?>
+            <?php if (!empty($order->produktfarbe_text)) : ?>
+                <p><strong>Farbe:</strong> <?php echo esc_html($order->produktfarbe_text); ?></p>
+            <?php endif; ?>
+            <?php if (!empty($order->gestellfarbe_text)) : ?>
+                <p><strong>Gestellfarbe:</strong> <?php echo esc_html($order->gestellfarbe_text); ?></p>
+            <?php endif; ?>
+            <?php if (!empty($order->zustand_text)) : ?>
+                <p><strong>Zustand:</strong> <?php echo esc_html($order->zustand_text); ?></p>
+            <?php endif; ?>
+            <?php list($sd,$ed) = pv_get_order_period($order); ?>
+            <?php if ($sd && $ed) : ?>
+                <p><strong>Zeitraum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($sd))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($ed))); ?></p>
+            <?php endif; ?>
+            <?php $days = pv_get_order_rental_days($order); ?>
+            <?php if ($days !== null) : ?>
+                <p><strong>Miettage:</strong> <?php echo esc_html($days); ?></p>
+            <?php elseif (!empty($order->dauer_text)) : ?>
+                <p><strong>Miettage:</strong> <?php echo esc_html($order->dauer_text); ?></p>
+            <?php endif; ?>
+            <p><strong>Preis:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
+            <?php if (!empty($order->weekend_tariff)) : ?>
+                <p><strong>Hinweis:</strong> Wochenendtarif</p>
+            <?php endif; ?>
         <?php endif; ?>
         <?php if ($order->shipping_cost > 0 || !empty($order->shipping_name)) : ?>
             <p><strong>Versand:</strong> <?php echo esc_html($order->shipping_name ?: 'Versand'); ?> <?php if ($order->shipping_cost > 0) : ?>- <?php echo esc_html(number_format((float) $order->shipping_cost, 2, ',', '.')); ?>€<?php endif; ?></p>
