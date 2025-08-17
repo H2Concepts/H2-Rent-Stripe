@@ -925,27 +925,28 @@ img.wp-smiley, img.emoji {
 
 .produkt-features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 2rem;
 }
 
 .produkt-feature-item {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.4rem;
     background: #e5e7eb;
     border-radius: 0.5rem;
     padding: 1rem;
 }
 
 .produkt-feature-icon-large {
-    width: 14rem;
-    height: 2.6rem;
+    width: 80px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     overflow: hidden;
+    margin: 0 10px;
 }
 
 .produkt-feature-icon-large img.wp-smiley,
