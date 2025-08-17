@@ -5,67 +5,68 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-get_header();
 
 use ProduktVerleih\Database;
 use ProduktVerleih\StripeService;
 require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
+global $wpdb;
+
+// Fetch all categories (products) and default to an empty array on failure
 $categories = Database::get_all_categories(true);
 if (!is_array($categories)) {
     $categories = [];
 }
 
 // Selected filters from query string
-$selected_filters = [];
-if (!empty($_GET['filter'])) {
-    $selected_filters = array_map('intval', array_filter(explode(',', $_GET['filter'])));
+$raw = $_GET['filter'] ?? [];
+if (!is_array($raw)) {
+    $raw = explode(',', (string) $raw);
 }
+$selected_filters = array_values(array_unique(array_map('intval', array_filter($raw))));
 
-// retrieve the requested category and sanitize the slug immediately
+// Determine requested category slug
 $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
 if (empty($category_slug)) {
     $category_slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
 }
+
 $filtered_product_ids = [];
-$filtered_filter_ids = [];
-$category = null;
+$filtered_filter_ids  = [];
+$category             = null;
 
 if (!empty($category_slug)) {
-    global $wpdb;
-
     $category = $wpdb->get_row($wpdb->prepare(
         "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
         $category_slug
     ));
 
     if (!empty($category)) {
-        // Gefundene Kategorie → filtern inkl. Unterkategorien
-        $cat_ids = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
+        // Include products from this category and its descendants
+        $cat_ids      = array_merge([$category->id], Database::get_descendant_category_ids($category->id));
         $placeholders = implode(',', array_fill(0, count($cat_ids), '%d'));
         $filtered_product_ids = $wpdb->get_col($wpdb->prepare(
             "SELECT produkt_id FROM {$wpdb->prefix}produkt_product_to_category WHERE category_id IN ($placeholders)",
             $cat_ids
         ));
-        $categories = array_filter($categories ?? [], function ($product) use ($filtered_product_ids) {
-            return in_array($product->id, $filtered_product_ids);
+        $categories = array_filter($categories, function ($product) use ($filtered_product_ids) {
+            return in_array($product->id, $filtered_product_ids, true);
         });
     } elseif (!empty($category_slug)) {
-        // Slug war angegeben, aber ungültig
+        // Slug provided but invalid
         $categories = [];
     }
 }
 
 if (!empty($selected_filters)) {
-    global $wpdb;
     $placeholders = implode(',', array_fill(0, count($selected_filters), '%d'));
     $query = $wpdb->prepare(
-        "SELECT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders) GROUP BY category_id HAVING COUNT(DISTINCT filter_id) = %d",
-        array_merge($selected_filters, [count($selected_filters)])
+        "SELECT DISTINCT category_id FROM {$wpdb->prefix}produkt_category_filters WHERE filter_id IN ($placeholders)",
+        $selected_filters
     );
     $filtered_filter_ids = $wpdb->get_col($query);
-    $categories = array_filter($categories ?? [], function ($product) use ($filtered_filter_ids) {
-        return in_array($product->id, $filtered_filter_ids);
+    $categories = array_filter($categories, function ($product) use ($filtered_filter_ids) {
+        return in_array($product->id, $filtered_filter_ids, true);
     });
 }
 
@@ -254,6 +255,5 @@ foreach ($content_blocks as $b) {
         <?php endif; ?>
     </div>
 </div>
-</div> <!-- .entry-content -->
-</article></main></div> <!-- .content-area und .ast-container -->
-<?php get_footer(); ?>
+
+</div> <!-- .produkt-shop-archive -->

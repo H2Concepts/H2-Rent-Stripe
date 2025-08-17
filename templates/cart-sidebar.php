@@ -1,7 +1,13 @@
+<div id="produkt-cart-overlay" class="produkt-cart-overlay"></div>
 <div id="produkt-cart-panel" class="produkt-cart-panel">
     <div class="cart-header">
-        <h3>Warenkorb</h3>
-        <button type="button" class="cart-close">&times;</button>
+        <span class="cart-title">Warenkorb</span>
+        <button type="button" class="cart-close" aria-label="Warenkorb schließen">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="12" fill="#000"/>
+                <path d="M6 6l12 12M18 6l-12 12" stroke="#fff" stroke-width="2"/>
+            </svg>
+        </button>
     </div>
     <div class="cart-items"></div>
     <div class="cart-summary"><span>Summe</span><span class="cart-total-amount">0€</span></div>

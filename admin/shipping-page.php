@@ -121,11 +121,12 @@ $providers = [
     'dpd'    => 'DPD'
 ];
 ?>
-<div id="shipping-modal" class="modal-overlay" data-open="<?php echo $edit_shipping ? '1' : '0'; ?>">
-    <div class="modal-content">
-        <button type="button" class="modal-close">&times;</button>
-        <h2><?php echo $edit_shipping ? 'Versandart bearbeiten' : 'Neue Versandart hinzufügen'; ?></h2>
-        <form method="post" class="produkt-compact-form">
+<div class="produkt-admin dashboard-wrapper">
+    <div id="shipping-modal" class="modal-overlay" data-open="<?php echo $edit_shipping ? '1' : '0'; ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2><?php echo $edit_shipping ? 'Versandart bearbeiten' : 'Neue Versandart hinzufügen'; ?></h2>
+            <form method="post" class="produkt-compact-form">
             <?php wp_nonce_field('save_shipping_action', 'save_shipping_nonce'); ?>
             <input type="hidden" name="shipping_id" value="<?php echo esc_attr($edit_shipping->id ?? ''); ?>">
             <div class="form-grid">
@@ -162,7 +163,6 @@ $providers = [
     </div>
 </div>
 
-<div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Versandarten verwalten</p>
 

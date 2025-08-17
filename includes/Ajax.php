@@ -258,7 +258,7 @@ class Ajax {
         
         // Get variant-specific options
         $variant_options = $wpdb->get_results($wpdb->prepare(
-            "SELECT option_type, option_id, available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d",
+            "SELECT option_type, option_id, available, stock_available, stock_rented, sku FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d",
             $variant_id
         ));
         
@@ -289,6 +289,9 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
+                            $color->stock_available = intval($option->stock_available);
+                            $color->stock_rented = intval($option->stock_rented);
+                            $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
                                 $color->id,
@@ -307,6 +310,9 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
+                            $color->stock_available = intval($option->stock_available);
+                            $color->stock_rented = intval($option->stock_rented);
+                            $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
                                 $color->id,

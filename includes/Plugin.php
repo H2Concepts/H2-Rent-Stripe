@@ -28,6 +28,8 @@ class Plugin {
     }
 
     public function init() {
+        $this->ensure_required_pages();
+
         // Replace deprecated emoji and admin bar functions with enqueue versions.
         $this->replace_deprecated_wp_functions();
 
@@ -44,7 +46,7 @@ class Plugin {
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
 
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
         add_filter('query_vars', function ($vars) {
             $vars[] = 'produkt_slug';
             $vars[] = 'produkt_category_slug';
@@ -80,6 +82,7 @@ class Plugin {
 
         add_filter('show_admin_bar', [$this, 'hide_admin_bar_for_customers']);
         add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
+        add_filter('render_block', [$this, 'maybe_inject_cart_icon_block'], 10, 2);
         add_action('wp_footer', [$this, 'render_cart_sidebar']);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
@@ -146,7 +149,7 @@ class Plugin {
         }
         update_option('produkt_version', PRODUKT_VERSION);
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
-        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?produkt_category_slug=$matches[1]', 'top');
+        add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
         $this->create_customer_page();
         $this->create_checkout_page();
@@ -269,6 +272,10 @@ class Plugin {
     }
 
     public function render_product_grid() {
+        if (get_query_var('produkt_category_slug')) {
+            return '';
+        }
+
         global $wpdb;
 
         $slug = isset($_GET['kategorie']) ? sanitize_title($_GET['kategorie']) : '';
@@ -756,6 +763,28 @@ class Plugin {
         update_option(PRODUKT_CONFIRM_PAGE_OPTION, $page_id);
     }
 
+    private function ensure_required_pages() {
+        $shop_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
+        if (!$shop_id || get_post_status($shop_id) === false) {
+            $this->create_shop_page();
+        }
+
+        $cust_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        if (!$cust_id || get_post_status($cust_id) === false) {
+            $this->create_customer_page();
+        }
+
+        $checkout_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+        if (!$checkout_id || get_post_status($checkout_id) === false) {
+            $this->create_checkout_page();
+        }
+
+        $confirm_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if (!$confirm_id || get_post_status($confirm_id) === false) {
+            $this->create_confirmation_page();
+        }
+    }
+
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
@@ -835,13 +864,61 @@ class Plugin {
      * Append a cart icon to the main navigation menu.
      */
     public function add_cart_icon_to_menu($items, $args) {
-        if ($args->theme_location === 'primary') {
+        $inject_menus = (array) get_option('produkt_menu_locations', []);
+
+        $current_menu_id = 0;
+        if (!empty($args->menu)) {
+            if (is_object($args->menu)) {
+                $current_menu_id = (int) $args->menu->term_id;
+            } elseif (is_numeric($args->menu)) {
+                $current_menu_id = (int) $args->menu;
+            } else {
+                $menu_obj = wp_get_nav_menu_object($args->menu);
+                if ($menu_obj) {
+                    $current_menu_id = (int) $menu_obj->term_id;
+                }
+            }
+        } elseif (!empty($args->theme_location)) {
+            $locations = get_nav_menu_locations();
+            if (isset($locations[$args->theme_location])) {
+                $current_menu_id = (int) $locations[$args->theme_location];
+            }
+        }
+
+        if ($current_menu_id && in_array($current_menu_id, $inject_menus, true)) {
             $items .= '<li class="menu-item plugin-cart-icon">'
-                . '<a href="#" onclick="openCartSidebar(); return false;">'
-                . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg></span><span id="cart-count-badge">0</span>'
+                . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+                . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg><span class="h2-cart-badge" data-h2-cart-count="0">0</span></span>'
                 . '</a></li>';
         }
         return $items;
+    }
+
+    /**
+     * Inject cart icon into block-based navigation menus.
+     */
+    public function maybe_inject_cart_icon_block($content, $block) {
+        if (($block['blockName'] ?? '') !== 'core/navigation') {
+            return $content;
+        }
+        $inject_menus = (array) get_option('produkt_menu_locations', []);
+        $menu_id      = isset($block['attrs']['ref']) ? (int) $block['attrs']['ref'] : 0;
+        $inject_all   = (bool) get_option('produkt_inject_block_nav_all', false);
+
+        if ((!$menu_id && !$inject_all) || strpos($content, 'plugin-cart-icon') !== false) {
+            return $content;
+        }
+
+        if ($menu_id && !in_array($menu_id, $inject_menus, true)) {
+            return $content;
+        }
+
+        $icon = '<li class="wp-block-navigation-item plugin-cart-icon">'
+            . '<a class="wp-block-navigation-item__content h2-cart-link" href="#" onclick="openCartSidebar();return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+            . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg><span class="h2-cart-badge" data-h2-cart-count="0">0</span></span>'
+            . '</a></li>';
+
+        return preg_replace('#</ul>\s*</nav>#', $icon . '</ul></nav>', $content, 1) ?: $content;
     }
 
     /**
@@ -870,10 +947,6 @@ add_filter('template_include', function ($template) {
         return PRODUKT_PLUGIN_PATH . 'templates/product-page.php';
     }
 
-    if (get_query_var('produkt_category_slug')) {
-        return PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
-    }
-
     $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
     if ($checkout_page_id && is_page($checkout_page_id)) {
         return PRODUKT_PLUGIN_PATH . 'templates/checkout-page.php';
@@ -885,6 +958,15 @@ add_filter('template_include', function ($template) {
     }
 
     return $template;
+});
+
+add_filter('the_content', function ($content) {
+    if (get_query_var('produkt_category_slug') && is_main_query() && in_the_loop()) {
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/product-archive.php';
+        return ob_get_clean();
+    }
+    return $content;
 });
 
 add_action('produkt_async_handle_checkout_completed', function ($json) {

@@ -129,6 +129,12 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->extra_names)) : ?>
                         <div>Extras: <?php echo esc_html($p->extra_names); ?></div>
                     <?php endif; ?>
+                    <?php if (!empty($p->product_color_name)) : ?>
+                        <div>Farbe: <?php echo esc_html($p->product_color_name); ?></div>
+                    <?php endif; ?>
+                    <?php if (!empty($p->frame_color_name)) : ?>
+                        <div>Gestellfarbe: <?php echo esc_html($p->frame_color_name); ?></div>
+                    <?php endif; ?>
                     <?php if (!empty($p->weekend_tariff)) : ?>
                         <div>Hinweis: Wochenendtarif</div>
                     <?php endif; ?>

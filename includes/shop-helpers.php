@@ -106,7 +106,7 @@ function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
                         <?php if (!empty($block->badge_text)): ?>
                             <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
                         <?php endif; ?>
-                        <h3><?php echo esc_html($block->title); ?></h3>
+                        <h3 class="content-block-title"><?php echo esc_html($block->title); ?></h3>
                         <div class="content-block-description">
                             <?php echo wpautop($block->content); ?>
                         </div>
@@ -153,7 +153,7 @@ function pv_render_content_blocks($index, &$desktop_blocks, &$mobile_blocks) {
                         <?php if (!empty($block->badge_text)): ?>
                             <span class="content-block-badge"><?php echo esc_html($block->badge_text); ?></span>
                         <?php endif; ?>
-                        <h3><?php echo esc_html($block->title); ?></h3>
+                        <h3 class="content-block-title"><?php echo esc_html($block->title); ?></h3>
                         <div class="content-block-description">
                             <?php echo wpautop($block->content); ?>
                         </div>

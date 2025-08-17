@@ -133,12 +133,13 @@ if (isset($_GET['edit'])) {
     $edit_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_product_categories WHERE id = %d", $edit_id));
 }
 ?>
+<div class="produkt-admin dashboard-wrapper">
 
-<div id="category-modal" class="modal-overlay" data-open="<?php echo $edit_category ? '1' : '0'; ?>">
-    <div class="modal-content">
-        <button type="button" class="modal-close">&times;</button>
-        <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
-        <form method="post" id="produkt-category-form" class="produkt-compact-form">
+    <div id="category-modal" class="modal-overlay" data-open="<?php echo $edit_category ? '1' : '0'; ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
+            <form method="post" id="produkt-category-form" class="produkt-compact-form">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
             <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
             <div class="form-grid">
@@ -180,15 +181,15 @@ if (isset($_GET['edit'])) {
         </div>
 </div>
 
-<div id="layout-modal" class="modal-overlay" data-open="<?php echo $edit_layout ? '1' : '0'; ?>">
-    <div class="modal-content">
-        <button type="button" class="modal-close">&times;</button>
-        <h2><?php echo $edit_layout ? 'Layout bearbeiten' : 'Neues Layout'; ?></h2>
-        <form method="post" class="produkt-compact-form">
-            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-            <input type="hidden" name="layout_id" value="<?php echo esc_attr($edit_layout->id ?? ''); ?>">
-            <input type="hidden" name="layout_shortcode" value="<?php echo esc_attr($edit_layout->shortcode ?? ''); ?>">
-            <div class="form-grid">
+    <div id="layout-modal" class="modal-overlay" data-open="<?php echo $edit_layout ? '1' : '0'; ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2><?php echo $edit_layout ? 'Layout bearbeiten' : 'Neues Layout'; ?></h2>
+            <form method="post" class="produkt-compact-form">
+                <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+                <input type="hidden" name="layout_id" value="<?php echo esc_attr($edit_layout->id ?? ''); ?>">
+                <input type="hidden" name="layout_shortcode" value="<?php echo esc_attr($edit_layout->shortcode ?? ''); ?>">
+                <div class="form-grid">
                 <div class="produkt-form-group">
                     <label for="layout_name">Name</label>
                     <input name="layout_name" type="text" required value="<?php echo esc_attr($edit_layout->name ?? ''); ?>">
@@ -274,7 +275,6 @@ if (isset($_GET['edit'])) {
     </div>
 </div>
 
-<div class="produkt-admin dashboard-wrapper">
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline">Kategorien verwalten</p>
 

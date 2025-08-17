@@ -17,6 +17,8 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
+    $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
     $custom_css = sanitize_textarea_field($_POST['custom_css']);
@@ -37,6 +39,8 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'cart_badge_bg' => $cart_badge_bg,
+        'cart_badge_text' => $cart_badge_text,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'footer_text' => $footer_text,
@@ -93,7 +97,7 @@ if (isset($_POST['submit_branding'])) {
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Plugin-Name *</label>
-                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Concepts Rental Pro'); ?>" required>
+                        <input type="text" name="plugin_name" value="<?php echo esc_attr($branding['plugin_name'] ?? 'H2 Rental Pro'); ?>" required>
                         <small>Name des Plugins im Admin-Menü</small>
                     </div>
                     
@@ -214,6 +218,28 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $front_button_text_color; ?>" class="produkt-color-input">
                         </div>
                         <small>Textfarbe der Buttons im Frontend</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Warenkorb-Badge Hintergrund</label>
+                        <div class="produkt-color-picker">
+                            <?php $cart_badge_bg = esc_attr($branding['cart_badge_bg'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $cart_badge_bg; ?>;"></div>
+                            <input type="text" name="cart_badge_bg" value="<?php echo $cart_badge_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $cart_badge_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hintergrundfarbe der Warenkorb-Badge</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Warenkorb-Badge Textfarbe</label>
+                        <div class="produkt-color-picker">
+                            <?php $cart_badge_text = esc_attr($branding['cart_badge_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $cart_badge_text; ?>;"></div>
+                            <input type="text" name="cart_badge_text" value="<?php echo $cart_badge_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $cart_badge_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe der Warenkorb-Badge</small>
                     </div>
 
                     <div class="produkt-form-group">
