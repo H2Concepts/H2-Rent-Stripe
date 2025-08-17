@@ -109,12 +109,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                 <?php foreach ($return_orders as $return): ?>
                     <li class="return-item">
                         <div>
-                            <?php
-                                $ret_num = !empty($return->order_number)
-                                    ? $return->order_number
-                                    : (($return->status === 'offen') ? 'offen-' . $return->id : $return->id);
-                            ?>
-                            <strong>#<?php echo esc_html($ret_num); ?></strong><br>
+                            <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
                             <?php echo esc_html($return->customer_name); ?><br>
                             <?php echo esc_html($return->category_name); ?><br>
                             Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
@@ -251,12 +246,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <tbody>
             <?php foreach ($orders as $order): ?>
                 <tr>
-                    <?php
-                        $ord_num = !empty($order->order_number)
-                            ? $order->order_number
-                            : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
-                    ?>
-                    <td><?php echo esc_html($ord_num); ?></td>
+                    <td><?php echo esc_html($order->order_number ?: $order->id); ?></td>
                     <td><?php echo esc_html($order->customer_name); ?></td>
                     <td><?php echo esc_html($order->produkt_name); ?></td>
                     <td><?php echo date_i18n('d.m.Y', strtotime($order->created_at)); ?></td>

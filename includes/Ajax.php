@@ -1407,6 +1407,7 @@ function produkt_create_checkout_session() {
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
         // Assign custom order number if numbering is enabled
+        $order_number = \pv_generate_order_number();
         $insert_data = [
             'category_id'       => $category_id,
             'variant_id'        => $variant_id,
@@ -1444,11 +1445,13 @@ function produkt_create_checkout_session() {
             'status'            => 'offen',
             'created_at'        => current_time('mysql', 1),
         ];
+        if ($order_number !== '') {
+            $insert_data['order_number'] = $order_number;
+        }
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             $insert_data
         );
-        $new_id = $wpdb->insert_id;
 
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
@@ -1692,6 +1695,7 @@ function produkt_create_embedded_checkout_session() {
         $first = $orders[0] ?? [];
 
         global $wpdb;
+        $order_number = pv_generate_order_number();
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             [
@@ -1726,10 +1730,10 @@ function produkt_create_embedded_checkout_session() {
                 'client_info'      => $client_info_json,
                 'discount_amount'  => 0,
                 'status'           => 'offen',
+                'order_number'     => $order_number,
                 'created_at'       => current_time('mysql', 1)
             ]
         );
-        $new_id = $wpdb->insert_id;
 
         wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {
@@ -2024,7 +2028,7 @@ function pv_load_customer_logs() {
     $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
     $params = $order_ids;
     $params[] = $offset;
-    $sql = "SELECT l.id, l.order_id, o.order_number, o.status, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5 OFFSET %d";
+    $sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5 OFFSET %d";
     $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
 
     ob_start();
@@ -2051,35 +2055,13 @@ function pv_load_customer_logs() {
             default:
                 $text = $log->message ?: $log->event;
         }
-        $order_no = !empty($log->order_number)
-            ? $log->order_number
-            : (($log->status === 'offen') ? 'offen-' . $log->order_id : $log->order_id);
+        $order_no = !empty($log->order_number) ? $log->order_number : $log->order_id;
         $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no;
         echo '<div class="order-log-entry"><div class="log-avatar">' . esc_html($avatar) . '</div><div class="log-body"><div class="log-date">' . esc_html($date_id) . '</div><div class="log-message">' . esc_html($text) . '</div></div></div>';
     }
     $html = ob_get_clean();
 
     wp_send_json_success(['html' => $html, 'count' => count($logs)]);
-}
-
-add_action('wp_ajax_pv_delete_order', __NAMESPACE__ . '\\pv_delete_order');
-function pv_delete_order() {
-    if (!current_user_can('manage_options')) {
-        wp_send_json_error('forbidden', 403);
-    }
-    $id = intval($_POST['order_id'] ?? 0);
-    if (!$id) {
-        wp_send_json_error('missing');
-    }
-    global $wpdb;
-    $table = $wpdb->prefix . 'produkt_orders';
-    $status = $wpdb->get_var($wpdb->prepare("SELECT status FROM $table WHERE id = %d", $id));
-    if ($status !== 'offen') {
-        wp_send_json_error('not_allowed');
-    }
-    $wpdb->delete($table, ['id' => $id], ['%d']);
-    $wpdb->delete($wpdb->prefix . 'produkt_order_logs', ['order_id' => $id], ['%d']);
-    wp_send_json_success();
 }
 
 add_action('wp_ajax_pv_set_default_shipping', __NAMESPACE__ . '\\pv_set_default_shipping');

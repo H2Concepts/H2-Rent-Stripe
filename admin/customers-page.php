@@ -257,7 +257,7 @@ if (!$customer_id) {
     $order_ids = wp_list_pluck($all_orders, 'id');
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $logs_sql = "SELECT l.id, l.order_id, o.order_number, o.status, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5";
+        $logs_sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5";
         $customer_logs = $wpdb->get_results($wpdb->prepare($logs_sql, $order_ids));
         $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
         $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
@@ -392,11 +392,7 @@ if (!$customer_id) {
                                 <div class="order-log-entry">
                                     <div class="log-avatar"><?php echo esc_html($avatar); ?></div>
                                     <div class="log-body">
-                                        <?php
-                                            $order_no = !empty($log->order_number)
-                                                ? $log->order_number
-                                                : (($log->status === 'offen') ? 'offen-' . $log->order_id : $log->order_id);
-                                        ?>
+                                        <?php $order_no = !empty($log->order_number) ? $log->order_number : $log->order_id; ?>
                                         <div class="log-date"><?php echo esc_html(date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no); ?></div>
                                         <div class="log-message"><?php echo esc_html($text); ?></div>
                                     </div>
@@ -443,12 +439,7 @@ if (!$customer_id) {
                     <tbody>
                         <?php foreach ($invoices as $inv) : ?>
                             <tr>
-                                <?php
-                                    $inv_num = !empty($inv->order_number)
-                                        ? $inv->order_number
-                                        : (($inv->status === 'offen') ? 'offen-' . $inv->id : $inv->id);
-                                ?>
-                                <td>#<?php echo esc_html($inv_num); ?></td>
+                                <td>#<?php echo esc_html($inv->order_number ?: $inv->id); ?></td>
                                 <td class="details-cell">
                                     <a href="<?php echo esc_url($inv->invoice_url); ?>" class="icon-btn icon-btn-no-stroke" target="_blank" download aria-label="Download">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18v10l4-4 1.41 1.41L12 16.83 6.59 11.41 8 10l4 4V2h-2z"/></svg>
@@ -528,12 +519,7 @@ if (!$customer_id) {
                     <tbody>
                         <?php foreach ($orders as $o) : ?>
                             <tr>
-                                <?php
-                                    $ord_num = !empty($o->order_number)
-                                        ? $o->order_number
-                                        : (($o->status === 'offen') ? 'offen-' . $o->id : $o->id);
-                                ?>
-                                <td>#<?php echo esc_html($ord_num); ?></td>
+                                <td>#<?php echo esc_html($o->order_number ?: $o->id); ?></td>
                                 <td><?php echo esc_html($o->category_name); ?></td>
                                 <td><?php echo esc_html($o->variant_name ?: '–'); ?></td>
                                 <td><?php echo esc_html($o->extra_names ?: '–'); ?></td>

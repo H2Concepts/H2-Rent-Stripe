@@ -15,6 +15,25 @@ if (!empty($order->customer_name)) {
     $initials = strtoupper(substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : ''));
 }
 
+// Prozent Mietdauer berechnen
+$percent = 0;
+if (!empty($sd) && !empty($ed)) {
+    $start = strtotime($sd);
+    $end = strtotime($ed);
+    $today = time();
+    $total = max(1, $end - $start);
+    $elapsed = min(max(0, $today - $start), $total);
+    $percent = floor(($elapsed / $total) * 100);
+}
+
+// Status-Text für den Badge ermitteln
+$badge_status = 'In Vermietung';
+if ($percent >= 100) {
+    $badge_status = 'Abgeschlossen';
+} elseif ($percent <= 0) {
+    $badge_status = 'Ausstehend';
+}
+
 // Produkte ermitteln
 $produkte = $order->produkte ?? [$order]; // fallback
 ?>
@@ -24,17 +43,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <!-- Header -->
     <div class="sidebar-header">
         <h2>Bestellübersicht</h2>
-        <?php
-            $order_id_display = !empty($order->order_number)
-                ? $order->order_number
-                : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
-        ?>
-        <span class="order-id">#<?php echo esc_html($order_id_display); ?></span>
-        <?php if ($order->status === 'offen') : ?>
-            <button type="button" class="icon-btn delete-order-btn" data-order-id="<?php echo esc_attr($order->id); ?>" title="Auftrag löschen">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
-            </button>
-        <?php endif; ?>
+        <span class="order-id">#<?php echo esc_html(!empty($order->order_number) ? $order->order_number : $order->id); ?></span>
     </div>
 
     <!-- Kundeninfo -->
@@ -85,23 +94,20 @@ $produkte = $order->produkte ?? [$order]; // fallback
     </div>
 
     <!-- Mietzeitraum -->
-    <?php foreach ($rental_periods as $rp) : ?>
-        <div class="rental-period-box">
-            <div class="badge-status"><?php echo esc_html($rp['badge']); ?></div>
-            <h3>Mietzeitraum</h3>
-            <?php if (!empty($rp['produkt'])) : ?><div class="rental-product-name"><?php echo esc_html($rp['produkt']); ?></div><?php endif; ?>
-            <div class="rental-progress-number"><?php echo $rp['percent']; ?>%</div>
-            <div class="rental-progress">
-                <div class="bar">
-                    <div class="fill" style="width: <?php echo $rp['percent']; ?>%;"></div>
-                </div>
-            </div>
-            <div class="rental-dates">
-                <span>Abgeholt: <?php echo $rp['start'] ? date_i18n('d. M', strtotime($rp['start'])) : '–'; ?></span>
-                <span>Rückgabe: <?php echo $rp['end'] ? date_i18n('d. M', strtotime($rp['end'])) : '–'; ?></span>
+    <div class="rental-period-box">
+        <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
+        <h3>Mietzeitraum</h3>
+        <div class="rental-progress-number"><?php echo $percent; ?>%</div>
+        <div class="rental-progress">
+            <div class="bar">
+                <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
             </div>
         </div>
-    <?php endforeach; ?>
+        <div class="rental-dates">
+            <span>Abgeholt: <?php echo date_i18n('d. M', strtotime($sd)); ?></span>
+            <span>Rückgabe: <?php echo date_i18n('d. M', strtotime($ed)); ?></span>
+        </div>
+    </div>
 
     <!-- Produktliste -->
     <div class="product-list">
@@ -132,7 +138,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->weekend_tariff)) : ?>
                         <div>Hinweis: Wochenendtarif</div>
                     <?php endif; ?>
-                    <div>Miettage: <?php echo esc_html(isset($p->days) ? $p->days : ($p->dauer_text ?? '–')); ?></div>
+                    <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
                 </div>
 
                 <?php
@@ -201,9 +207,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                                 default:
                                     $text = $log->message ?: $log->event;
                             }
-                            $order_no = !empty($order->order_number)
-                                ? $order->order_number
-                                : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
+                            $order_no = !empty($order->order_number) ? $order->order_number : $order->id;
                             $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no;
                             ?>
                             <div class="order-log-entry">

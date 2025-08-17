@@ -76,11 +76,7 @@
                                 $active     = $idx === 0 ? ' active' : '';
                             ?>
                             <div class="produkt-accordion-item<?php echo $active; ?>">
-                                <?php
-                                    $num = !empty($order->order_number)
-                                        ? $order->order_number
-                                        : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
-                                ?>
+                                <?php $num = !empty($order->order_number) ? $order->order_number : $order->id; ?>
                                 <button type="button" class="produkt-accordion-header">
                                     Bestellung #<?php echo esc_html($num); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
                                 </button>

@@ -304,13 +304,9 @@ function pv_generate_invoice_pdf($order_id) {
     $customer_name = trim($order['customer_name']);
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
-    $order_display_num = !empty($order['order_number'])
-        ? $order['order_number']
-        : (($order['status'] ?? '') === 'offen' ? 'offen-' . $order_id : $order_id);
-
     $post_data = [
-        'bestellnummer'    => $order_display_num,
-        'rechnungsnummer'  => 'RE-' . $order_id,
+        'bestellnummer'    => '#' . (!empty($order['order_number']) ? $order['order_number'] : $order_id),
+        'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
         'rechnungsdatum'   => date('Y-m-d'),
         'kunde_name'       => $customer_name ?: 'Kunde',
         'kunde_adresse'    => $customer_addr,

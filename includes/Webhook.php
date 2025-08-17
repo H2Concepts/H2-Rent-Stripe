@@ -114,9 +114,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     $message .= '<h3>Ihre Bestellübersicht</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $bestellnr = !empty($order['order_number'])
-        ? $order['order_number']
-        : (($order['status'] ?? '') === 'offen' ? 'offen-' . $order_id : $order_id);
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestelldatum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     $message .= '</table>';
@@ -168,7 +166,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
                 $unit = round(floatval($ci_item['final_price']) / $tage, 2);
             }
             $unit_fmt = number_format($unit, 2, ',', '.') . '€';
-            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;color:#888;">Preis / Tag ' . esc_html($unit_fmt) . '</td></tr>';
+            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">' . esc_html($unit_fmt) . '</td></tr>';
         }
         if ($order['shipping_cost'] > 0) {
             $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
@@ -245,10 +243,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 }
 
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {
-    $order_num  = !empty($order['order_number'])
-        ? $order['order_number']
-        : (($order['status'] ?? '') === 'offen' ? 'offen-' . $order_id : $order_id);
-    $subject    = 'Neue Bestellung #' . $order_num;
+    $subject    = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
     $order_date = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
     $price       = number_format((float) $order['final_price'], 2, ',', '.') . '€';
@@ -307,9 +302,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
 
     $message .= '<h3>Bestelldetails</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $bestellnr = !empty($order['order_number'])
-        ? $order['order_number']
-        : (($order['status'] ?? '') === 'offen' ? 'offen-' . $order_id : $order_id);
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
     $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Bezahlt</td></tr>';
@@ -362,7 +355,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
                 $unit = round(floatval($ci_item['final_price']) / $tage, 2);
             }
             $unit_fmt = number_format($unit, 2, ',', '.') . '€';
-            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;color:#888;">Preis / Tag ' . esc_html($unit_fmt) . '</td></tr>';
+            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">' . esc_html($unit_fmt) . '</td></tr>';
         }
         if ($order['shipping_cost'] > 0) {
             $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';

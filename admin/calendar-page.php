@@ -31,7 +31,7 @@ $start_index   = (int)date('N', $first_day_ts) - 1;
 $open_by_day = [];
 $return_by_day = [];
 $orders_detail = [];
-$where = ["o.mode = 'kauf'", "o.status = 'abgeschlossen'"];
+$where = ["o.mode = 'kauf'"];
 
 $sql = "SELECT o.*, c.name as category_name,
                COALESCE(v.name, o.produkt_name) as variant_name,
@@ -61,7 +61,7 @@ foreach ($orders as $o) {
         $open_by_day[$date][] = $o;
         $orders_detail[$date][] = [
             'id'      => (int)$o->id,
-            'num'     => !empty($o->order_number) ? $o->order_number : (($o->status === 'offen') ? 'offen-' . $o->id : $o->id),
+            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
             'name'    => $o->customer_name,
             'product' => $o->category_name ?: $o->produkt_name,
             'variant' => $o->variant_name,
@@ -74,7 +74,7 @@ foreach ($orders as $o) {
         $return_by_day[$date][] = $o;
         $orders_detail[$date][] = [
             'id'      => (int)$o->id,
-            'num'     => !empty($o->order_number) ? $o->order_number : (($o->status === 'offen') ? 'offen-' . $o->id : $o->id),
+            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
             'name'    => $o->customer_name,
             'product' => $o->category_name ?: $o->produkt_name,
             'variant' => $o->variant_name,
