@@ -93,6 +93,13 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
     $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $cart_items = [];
+    if (!empty($order['client_info'])) {
+        $ci = json_decode($order['client_info'], true);
+        if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+            $cart_items = $ci['cart_items'];
+        }
+    }
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
@@ -124,48 +131,72 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     }
     $message .= '</table>';
 
-    $message .= '<h3>Ihre Produktdaten</h3>';
-    $message .= '<div style="line-height:1.5;">';
-    $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
-    if (!empty($order['zustand_text'])) {
-        $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
-    }
-    if (!empty($order['extra_text'])) {
-        $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
-    }
-    if (!empty($order['produktfarbe_text'])) {
-        $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
-    }
-    if (!empty($order['gestellfarbe_text'])) {
-        $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
-    }
-    $order_obj = (object) $order;
-    list($sd, $ed) = pv_get_order_period($order_obj);
-    if ($sd && $ed) {
-        $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
-    }
-    $days = pv_get_order_rental_days($order_obj);
-    if ($days !== null) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
-    } elseif (!empty($order['dauer_text'])) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
-    }
-    $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
-    $shipping_name = '';
-    if (!empty($order['shipping_price_id'])) {
-        global $wpdb;
-        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
-    }
-    if ($order['shipping_cost'] > 0 || $shipping_name) {
-        $ship_text = $shipping_name ?: 'Versand';
-        $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
-        if ($order['shipping_cost'] > 0) {
-            $message .= ' - ' . esc_html($shipping);
+    if ($cart_items) {
+        $message .= '<h3>Ihre Produkte</h3>';
+        $message .= '<table style="width:100%;border-collapse:collapse;">';
+        foreach ($cart_items as $ci_item) {
+            $meta = $ci_item['metadata'] ?? [];
+            $parts = array_filter([
+                $meta['produkt'] ?? '',
+                $meta['extra'] ?? '',
+                $meta['produktfarbe'] ?? '',
+                $meta['gestellfarbe'] ?? '',
+                $meta['zustand'] ?? '',
+            ]);
+            $name = implode(' – ', $parts);
+            $price_item = number_format((float) ($ci_item['final_price'] ?? 0), 2, ',', '.') . '€';
+            $message .= '<tr><td>' . esc_html($name) . '</td><td style="text-align:right;">' . esc_html($price_item) . '</td></tr>';
         }
-        $message .= '</p>';
+        $message .= '<tr><td><strong>Gesamt</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
+        if ($order['shipping_cost'] > 0) {
+            $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
+        }
+        $message .= '<tr><td><strong>Gesamtsumme</strong></td><td style="text-align:right;">' . esc_html($total_first) . '</td></tr>';
+        $message .= '</table>';
+    } else {
+        $message .= '<h3>Ihre Produktdaten</h3>';
+        $message .= '<div style="line-height:1.5;">';
+        $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
+        if (!empty($order['zustand_text'])) {
+            $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
+        }
+        if (!empty($order['extra_text'])) {
+            $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
+        }
+        if (!empty($order['produktfarbe_text'])) {
+            $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
+        }
+        if (!empty($order['gestellfarbe_text'])) {
+            $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
+        }
+        $order_obj = (object) $order;
+        list($sd, $ed) = pv_get_order_period($order_obj);
+        if ($sd && $ed) {
+            $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
+        }
+        $days = pv_get_order_rental_days($order_obj);
+        if ($days !== null) {
+            $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
+        } elseif (!empty($order['dauer_text'])) {
+            $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
+        }
+        $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
+        $shipping_name = '';
+        if (!empty($order['shipping_price_id'])) {
+            global $wpdb;
+            $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
+        }
+        if ($order['shipping_cost'] > 0 || $shipping_name) {
+            $ship_text = $shipping_name ?: 'Versand';
+            $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
+            if ($order['shipping_cost'] > 0) {
+                $message .= ' - ' . esc_html($shipping);
+            }
+            $message .= '</p>';
+        }
+        $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
+        $message .= '</div>';
     }
-    $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
-    $message .= '</div>';
 
     $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
     $message .= '</div>';
@@ -198,6 +229,13 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $price       = number_format((float) $order['final_price'], 2, ',', '.') . '€';
     $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $cart_items = [];
+    if (!empty($order['client_info'])) {
+        $ci = json_decode($order['client_info'], true);
+        if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+            $cart_items = $ci['cart_items'];
+        }
+    }
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
 
@@ -262,48 +300,72 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     }
     $message .= '</table>';
 
-    $message .= '<h3>Produktdaten</h3>';
-    $message .= '<div style="line-height:1.5;">';
-    $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
-    if (!empty($order['zustand_text'])) {
-        $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
-    }
-    if (!empty($order['extra_text'])) {
-        $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
-    }
-    if (!empty($order['produktfarbe_text'])) {
-        $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
-    }
-    if (!empty($order['gestellfarbe_text'])) {
-        $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
-    }
-    $order_obj = (object) $order;
-    list($sd,$ed) = pv_get_order_period($order_obj);
-    if ($sd && $ed) {
-        $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
-    }
-    $days = pv_get_order_rental_days($order_obj);
-    if ($days !== null) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
-    } elseif (!empty($order['dauer_text'])) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
-    }
-    $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
-    $shipping_name = '';
-    if (!empty($order['shipping_price_id'])) {
-        global $wpdb;
-        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
-    }
-    if ($order['shipping_cost'] > 0 || $shipping_name) {
-        $ship_text = $shipping_name ?: 'Versand';
-        $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
-        if ($order['shipping_cost'] > 0) {
-            $message .= ' - ' . esc_html($shipping);
+    if ($cart_items) {
+        $message .= '<h3>Produktdaten</h3>';
+        $message .= '<table style="width:100%;border-collapse:collapse;">';
+        foreach ($cart_items as $ci_item) {
+            $meta = $ci_item['metadata'] ?? [];
+            $parts = array_filter([
+                $meta['produkt'] ?? '',
+                $meta['extra'] ?? '',
+                $meta['produktfarbe'] ?? '',
+                $meta['gestellfarbe'] ?? '',
+                $meta['zustand'] ?? '',
+            ]);
+            $name = implode(' – ', $parts);
+            $price_item = number_format((float) ($ci_item['final_price'] ?? 0), 2, ',', '.') . '€';
+            $message .= '<tr><td>' . esc_html($name) . '</td><td style="text-align:right;">' . esc_html($price_item) . '</td></tr>';
         }
-        $message .= '</p>';
+        $message .= '<tr><td><strong>Gesamt</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
+        if ($order['shipping_cost'] > 0) {
+            $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
+        }
+        $message .= '<tr><td><strong>Gesamtsumme</strong></td><td style="text-align:right;">' . esc_html($total_first) . '</td></tr>';
+        $message .= '</table>';
+    } else {
+        $message .= '<h3>Produktdaten</h3>';
+        $message .= '<div style="line-height:1.5;">';
+        $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
+        if (!empty($order['zustand_text'])) {
+            $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
+        }
+        if (!empty($order['extra_text'])) {
+            $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
+        }
+        if (!empty($order['produktfarbe_text'])) {
+            $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
+        }
+        if (!empty($order['gestellfarbe_text'])) {
+            $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
+        }
+        $order_obj = (object) $order;
+        list($sd,$ed) = pv_get_order_period($order_obj);
+        if ($sd && $ed) {
+            $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
+        }
+        $days = pv_get_order_rental_days($order_obj);
+        if ($days !== null) {
+            $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
+        } elseif (!empty($order['dauer_text'])) {
+            $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
+        }
+        $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
+        $shipping_name = '';
+        if (!empty($order['shipping_price_id'])) {
+            global $wpdb;
+            $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
+        }
+        if ($order['shipping_cost'] > 0 || $shipping_name) {
+            $ship_text = $shipping_name ?: 'Versand';
+            $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
+            if ($order['shipping_cost'] > 0) {
+                $message .= ' - ' . esc_html($shipping);
+            }
+            $message .= '</p>';
+        }
+        $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
+        $message .= '</div>';
     }
-    $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
-    $message .= '</div>';
 
     $message .= '<p>Session-ID: ' . esc_html($session_id) . '</p>';
     $message .= '</div>';

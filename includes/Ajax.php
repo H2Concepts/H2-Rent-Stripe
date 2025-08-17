@@ -1673,51 +1673,66 @@ function produkt_create_embedded_checkout_session() {
 
         $session = \Stripe\Checkout\Session::create($session_params);
 
-        global $wpdb;
-        foreach ($orders as $o) {
-            $order_number = pv_generate_order_number();
-            $wpdb->insert(
-                $wpdb->prefix . 'produkt_orders',
-                [
-                    'category_id'      => $o['category_id'],
-                    'variant_id'       => $o['variant_id'],
-                    'extra_id'         => $o['extra_id'],
-                    'extra_ids'        => $o['extra_ids'],
-                    'duration_id'      => $o['duration_id'],
-                    'condition_id'     => $o['condition_id'],
-                    'product_color_id' => $o['product_color_id'],
-                    'frame_color_id'   => $o['frame_color_id'],
-                    'final_price'      => $o['final_price'],
-                    'shipping_cost'    => $shipping_cost,
-                    'shipping_price_id'=> $shipping_price_id,
-                    'mode'             => $modus,
-                    'start_date'       => $o['start_date'],
-                    'end_date'         => $o['end_date'],
-                    'inventory_reverted' => 0,
-                    'weekend_tariff'   => $o['weekend_tariff'],
-                    'stripe_session_id'=> $session->id,
-                    'amount_total'     => 0,
-                    'produkt_name'     => $o['metadata']['produkt'],
-                    'zustand_text'     => $o['metadata']['zustand'],
-                    'produktfarbe_text'=> $o['metadata']['produktfarbe'],
-                    'gestellfarbe_text'=> $o['metadata']['gestellfarbe'],
-                    'extra_text'       => $o['metadata']['extra'],
-                    'dauer_text'       => $modus === 'kauf' && empty($o['metadata']['dauer_name'])
-                        ? ($o['days'] . ' Tag' . ($o['days'] > 1 ? 'e' : '')
-                            . ($o['start_date'] && $o['end_date'] ? ' (' . $o['start_date'] . ' - ' . $o['end_date'] . ')' : ''))
-                        : $o['metadata']['dauer_name'],
-                    'customer_name'    => '',
-                    'customer_email'   => $customer_email,
-                    'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
-                    'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
-                    'client_info'      => $client_info,
-                    'discount_amount'  => 0,
-                    'status'           => 'offen',
-                    'order_number'     => $order_number,
-                    'created_at'       => current_time('mysql', 1)
-                ]
-            );
+        // Store cart items in client_info so we can reference them later
+        $client_info_data = [];
+        if ($client_info) {
+            $decoded = json_decode($client_info, true);
+            if (is_array($decoded)) {
+                $client_info_data = $decoded;
+            }
         }
+        $client_info_data['cart_items'] = $orders;
+        $client_info_json = wp_json_encode($client_info_data);
+
+        // Calculate total price of all items
+        $total_price = 0;
+        foreach ($orders as $o) {
+            $total_price += floatval($o['final_price']);
+        }
+
+        // Use the first item for legacy single-product fields
+        $first = $orders[0] ?? [];
+
+        global $wpdb;
+        $order_number = pv_generate_order_number();
+        $wpdb->insert(
+            $wpdb->prefix . 'produkt_orders',
+            [
+                'category_id'      => $first['category_id'] ?? 0,
+                'variant_id'       => $first['variant_id'] ?? 0,
+                'extra_id'         => $first['extra_id'] ?? 0,
+                'extra_ids'        => $first['extra_ids'] ?? '',
+                'duration_id'      => $first['duration_id'] ?? 0,
+                'condition_id'     => $first['condition_id'] ?? null,
+                'product_color_id' => $first['product_color_id'] ?? null,
+                'frame_color_id'   => $first['frame_color_id'] ?? null,
+                'final_price'      => $total_price,
+                'shipping_cost'    => $shipping_cost,
+                'shipping_price_id'=> $shipping_price_id,
+                'mode'             => $modus,
+                'start_date'       => $first['start_date'] ?? null,
+                'end_date'         => $first['end_date'] ?? null,
+                'inventory_reverted' => 0,
+                'weekend_tariff'   => $first['weekend_tariff'] ?? 0,
+                'stripe_session_id'=> $session->id,
+                'amount_total'     => 0,
+                'produkt_name'     => '',
+                'zustand_text'     => '',
+                'produktfarbe_text'=> '',
+                'gestellfarbe_text'=> '',
+                'extra_text'       => '',
+                'dauer_text'       => '',
+                'customer_name'    => '',
+                'customer_email'   => $customer_email,
+                'user_ip'          => $_SERVER['REMOTE_ADDR'] ?? '',
+                'user_agent'       => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
+                'client_info'      => $client_info_json,
+                'discount_amount'  => 0,
+                'status'           => 'offen',
+                'order_number'     => $order_number,
+                'created_at'       => current_time('mysql', 1)
+            ]
+        );
 
         wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {
