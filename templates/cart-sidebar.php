@@ -1,3 +1,4 @@
+<div id="produkt-cart-overlay" class="produkt-cart-overlay"></div>
 <div id="produkt-cart-panel" class="produkt-cart-panel">
     <div class="cart-header">
         <span class="cart-title">Warenkorb</span>

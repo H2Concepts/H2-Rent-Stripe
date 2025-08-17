@@ -1398,7 +1398,7 @@ img.wp-smiley, img.emoji {
 }
 
 /* Cart Panel */
-.produkt-cart-panel {
+.produkt-cart-panel { 
     position: fixed;
     top: 0;
     right: 0;
@@ -1490,6 +1490,21 @@ img.wp-smiley, img.emoji {
     justify-content: center;
     background-color: transparent;
     border-color: transparent;
+}
+
+.produkt-cart-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+.produkt-cart-overlay.open {
+    display: block;
 }
 
 .produkt-cart-panel .cart-close svg {

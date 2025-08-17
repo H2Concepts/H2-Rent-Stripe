@@ -128,15 +128,18 @@ jQuery(document).ready(function($) {
     function openCart() {
         renderCart();
         $('#produkt-cart-panel').addClass('open');
+        $('#produkt-cart-overlay').addClass('open');
         $('body').addClass('produkt-popup-open');
     }
 
     function closeCart() {
         $('#produkt-cart-panel').removeClass('open');
+        $('#produkt-cart-overlay').removeClass('open');
         $('body').removeClass('produkt-popup-open');
     }
 
     $(document).on('click', '.cart-close', closeCart);
+    $(document).on('click', '#produkt-cart-overlay', closeCart);
     $(document).on('click', '.cart-item-remove', function(){
         const idx = parseInt($(this).data('index'));
         if (!isNaN(idx)) {
