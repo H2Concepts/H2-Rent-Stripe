@@ -1407,7 +1407,6 @@ function produkt_create_checkout_session() {
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
         // Assign custom order number if numbering is enabled
-        $order_number = \pv_generate_order_number();
         $insert_data = [
             'category_id'       => $category_id,
             'variant_id'        => $variant_id,
@@ -1445,12 +1444,15 @@ function produkt_create_checkout_session() {
             'status'            => 'offen',
             'created_at'        => current_time('mysql', 1),
         ];
-        if ($order_number !== '') {
-            $insert_data['order_number'] = $order_number;
-        }
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             $insert_data
+        );
+        $new_id = $wpdb->insert_id;
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['order_number' => 'offen-' . $new_id],
+            ['id' => $new_id]
         );
 
         wp_send_json(['url' => $session->url]);
@@ -1695,7 +1697,6 @@ function produkt_create_embedded_checkout_session() {
         $first = $orders[0] ?? [];
 
         global $wpdb;
-        $order_number = pv_generate_order_number();
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             [
@@ -1730,9 +1731,14 @@ function produkt_create_embedded_checkout_session() {
                 'client_info'      => $client_info_json,
                 'discount_amount'  => 0,
                 'status'           => 'offen',
-                'order_number'     => $order_number,
                 'created_at'       => current_time('mysql', 1)
             ]
+        );
+        $new_id = $wpdb->insert_id;
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['order_number' => 'offen-' . $new_id],
+            ['id' => $new_id]
         );
 
         wp_send_json(['client_secret' => $session->client_secret]);
@@ -2062,6 +2068,26 @@ function pv_load_customer_logs() {
     $html = ob_get_clean();
 
     wp_send_json_success(['html' => $html, 'count' => count($logs)]);
+}
+
+add_action('wp_ajax_pv_delete_order', __NAMESPACE__ . '\\pv_delete_order');
+function pv_delete_order() {
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+    $id = intval($_POST['order_id'] ?? 0);
+    if (!$id) {
+        wp_send_json_error('missing');
+    }
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_orders';
+    $status = $wpdb->get_var($wpdb->prepare("SELECT status FROM $table WHERE id = %d", $id));
+    if ($status !== 'offen') {
+        wp_send_json_error('not_allowed');
+    }
+    $wpdb->delete($table, ['id' => $id], ['%d']);
+    $wpdb->delete($wpdb->prefix . 'produkt_order_logs', ['order_id' => $id], ['%d']);
+    wp_send_json_success();
 }
 
 add_action('wp_ajax_pv_set_default_shipping', __NAMESPACE__ . '\\pv_set_default_shipping');

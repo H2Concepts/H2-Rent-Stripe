@@ -305,7 +305,7 @@ function pv_generate_invoice_pdf($order_id) {
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $post_data = [
-        'bestellnummer'    => '#' . (!empty($order['order_number']) ? $order['order_number'] : $order_id),
+        'bestellnummer'    => (!empty($order['order_number']) ? $order['order_number'] : $order_id),
         'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
         'rechnungsdatum'   => date('Y-m-d'),
         'kunde_name'       => $customer_name ?: 'Kunde',
