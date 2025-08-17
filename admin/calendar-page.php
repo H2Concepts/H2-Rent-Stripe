@@ -61,7 +61,7 @@ foreach ($orders as $o) {
         $open_by_day[$date][] = $o;
         $orders_detail[$date][] = [
             'id'      => (int)$o->id,
-            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
+            'num'     => !empty($o->order_number) ? $o->order_number : (($o->status === 'offen') ? 'offen-' . $o->id : $o->id),
             'name'    => $o->customer_name,
             'product' => $o->category_name ?: $o->produkt_name,
             'variant' => $o->variant_name,
@@ -74,7 +74,7 @@ foreach ($orders as $o) {
         $return_by_day[$date][] = $o;
         $orders_detail[$date][] = [
             'id'      => (int)$o->id,
-            'num'     => !empty($o->order_number) ? $o->order_number : $o->id,
+            'num'     => !empty($o->order_number) ? $o->order_number : (($o->status === 'offen') ? 'offen-' . $o->id : $o->id),
             'name'    => $o->customer_name,
             'product' => $o->category_name ?: $o->produkt_name,
             'variant' => $o->variant_name,

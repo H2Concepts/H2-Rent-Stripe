@@ -128,7 +128,12 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                     ?>
                     <tr<?php echo $due ? ' class="pending-return"' : ''; ?>>
                         <td><input type="checkbox" class="order-checkbox" name="delete_orders[]" value="<?php echo $order->id; ?>"></td>
-                        <td><strong>#<?php echo !empty($order->order_number) ? $order->order_number : $order->id; ?></strong></td>
+                        <?php
+                            $order_num = !empty($order->order_number)
+                                ? $order->order_number
+                                : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
+                        ?>
+                        <td><strong>#<?php echo esc_html($order_num); ?></strong></td>
                         <td>
                             <?php echo date('d.m.Y', strtotime($order->created_at)); ?><br>
                             <small class="text-gray"><?php echo date('H:i', strtotime($order->created_at)); ?> Uhr</small>

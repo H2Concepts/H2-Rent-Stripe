@@ -36,10 +36,12 @@ function render_order_details($order_id) {
         ];
     } else {
         $produkte = $order->produkte ?? [$order];
+        $groups = [];
         foreach ($produkte as $p) {
             if (empty($p->start_date) || empty($p->end_date)) {
                 continue;
             }
+            $key      = $p->start_date . '|' . $p->end_date;
             $start_ts = strtotime($p->start_date);
             $end_ts   = strtotime($p->end_date);
             $today    = time();
@@ -52,12 +54,26 @@ function render_order_details($order_id) {
             } elseif ($percent <= 0) {
                 $badge = 'Ausstehend';
             }
+            if (!isset($groups[$key])) {
+                $groups[$key] = [
+                    'start'    => $p->start_date,
+                    'end'      => $p->end_date,
+                    'percent'  => $percent,
+                    'badge'    => $badge,
+                    'products' => [$p->produkt_name ?? ''],
+                ];
+            } else {
+                $groups[$key]['products'][] = $p->produkt_name ?? '';
+            }
+        }
+        foreach ($groups as $g) {
+            $name = implode(', ', array_filter($g['products']));
             $rental_periods[] = [
-                'produkt' => $p->produkt_name ?? '',
-                'start'   => $p->start_date,
-                'end'     => $p->end_date,
-                'percent' => $percent,
-                'badge'   => $badge,
+                'produkt' => $name,
+                'start'   => $g['start'],
+                'end'     => $g['end'],
+                'percent' => $g['percent'],
+                'badge'   => $g['badge'],
             ];
         }
     }

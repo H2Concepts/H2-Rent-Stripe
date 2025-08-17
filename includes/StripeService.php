@@ -1086,7 +1086,7 @@ class StripeService {
                     $update_data = $data;
                     $update_data['created_at'] = $ord->created_at;
                     $update_data['client_info'] = $ord->client_info;
-                    if (empty($ord->order_number) || strpos($ord->order_number, 'offen-') === 0) {
+                    if (empty($ord->order_number)) {
                         $gen_num = pv_generate_order_number();
                         if ($gen_num !== '') {
                             $update_data['order_number'] = $gen_num;

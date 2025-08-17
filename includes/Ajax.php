@@ -1449,11 +1449,6 @@ function produkt_create_checkout_session() {
             $insert_data
         );
         $new_id = $wpdb->insert_id;
-        $wpdb->update(
-            $wpdb->prefix . 'produkt_orders',
-            ['order_number' => 'offen-' . $new_id],
-            ['id' => $new_id]
-        );
 
         wp_send_json(['url' => $session->url]);
     } catch (\Exception $e) {
@@ -1735,11 +1730,6 @@ function produkt_create_embedded_checkout_session() {
             ]
         );
         $new_id = $wpdb->insert_id;
-        $wpdb->update(
-            $wpdb->prefix . 'produkt_orders',
-            ['order_number' => 'offen-' . $new_id],
-            ['id' => $new_id]
-        );
 
         wp_send_json(['client_secret' => $session->client_secret]);
     } catch (\Exception $e) {
@@ -2034,7 +2024,7 @@ function pv_load_customer_logs() {
     $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
     $params = $order_ids;
     $params[] = $offset;
-    $sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5 OFFSET %d";
+    $sql = "SELECT l.id, l.order_id, o.order_number, o.status, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5 OFFSET %d";
     $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
 
     ob_start();
@@ -2061,7 +2051,9 @@ function pv_load_customer_logs() {
             default:
                 $text = $log->message ?: $log->event;
         }
-        $order_no = !empty($log->order_number) ? $log->order_number : $log->order_id;
+        $order_no = !empty($log->order_number)
+            ? $log->order_number
+            : (($log->status === 'offen') ? 'offen-' . $log->order_id : $log->order_id);
         $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no;
         echo '<div class="order-log-entry"><div class="log-avatar">' . esc_html($avatar) . '</div><div class="log-body"><div class="log-date">' . esc_html($date_id) . '</div><div class="log-message">' . esc_html($text) . '</div></div></div>';
     }

@@ -24,7 +24,12 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <!-- Header -->
     <div class="sidebar-header">
         <h2>Bestellübersicht</h2>
-        <span class="order-id">#<?php echo esc_html(!empty($order->order_number) ? $order->order_number : $order->id); ?></span>
+        <?php
+            $order_id_display = !empty($order->order_number)
+                ? $order->order_number
+                : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
+        ?>
+        <span class="order-id">#<?php echo esc_html($order_id_display); ?></span>
         <?php if ($order->status === 'offen') : ?>
             <button type="button" class="icon-btn delete-order-btn" data-order-id="<?php echo esc_attr($order->id); ?>" title="Auftrag löschen">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
@@ -196,7 +201,9 @@ $produkte = $order->produkte ?? [$order]; // fallback
                                 default:
                                     $text = $log->message ?: $log->event;
                             }
-                            $order_no = !empty($order->order_number) ? $order->order_number : $order->id;
+                            $order_no = !empty($order->order_number)
+                                ? $order->order_number
+                                : (($order->status === 'offen') ? 'offen-' . $order->id : $order->id);
                             $date_id = date_i18n('d.m.Y H:i', strtotime($log->created_at)) . ' / #' . $order_no;
                             ?>
                             <div class="order-log-entry">

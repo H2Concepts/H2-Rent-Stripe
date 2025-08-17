@@ -3,7 +3,11 @@ if (!defined('ABSPATH')) { exit; }
 ?>
 <div class="abo-row">
     <div class="order-box">
-        <?php $nr = !empty($order->order_number) ? $order->order_number : $order->id; ?>
+        <?php
+            $nr = !empty($order->order_number)
+                ? $order->order_number
+                : ((isset($order->status) && $order->status === 'offen') ? 'offen-' . $order->id : $order->id);
+        ?>
         <h3>Bestellung #<?php echo esc_html($nr); ?></h3>
         <?php if (!empty($image_url)) : ?>
             <img class="order-product-image" src="<?php echo esc_url($image_url); ?>" alt="">
