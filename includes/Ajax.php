@@ -1552,6 +1552,7 @@ function produkt_create_embedded_checkout_session() {
                 'condition_id'     => intval($it['condition_id'] ?? 0) ?: null,
                 'product_color_id' => intval($it['product_color_id'] ?? 0) ?: null,
                 'frame_color_id'   => intval($it['frame_color_id'] ?? 0) ?: null,
+                'price_id'         => $pid,
                 'final_price'      => floatval($it['final_price'] ?? 0),
                 'start_date'       => $it_start ?: null,
                 'end_date'         => $it_end ?: null,

@@ -266,6 +266,7 @@ function pv_get_order_by_id($order_id) {
                     'start_date'        => $item['start_date'] ?? null,
                     'end_date'          => $item['end_date'] ?? null,
                     'days'              => $item['days'] ?? 0,
+                    'price_id'          => $item['price_id'] ?? '',
                 ];
             }
             if (empty($row['produkt_name']) && !empty($row['produkte'][0]->produkt_name)) {
@@ -299,17 +300,12 @@ function pv_generate_invoice_pdf($order_id) {
     if (!$product) {
         $product = $order['variant_name'] ?? '';
     }
-    if (!empty($order['product_color_name'])) {
-        $product .= ' – ' . $order['product_color_name'];
-    }
-    if (!empty($order['frame_color_name'])) {
-        $product .= ' – ' . $order['frame_color_name'];
-    }
 
     $customer_name = trim($order['customer_name']);
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $post_data = [
+        'bestellnummer'    => '#' . (!empty($order['order_number']) ? $order['order_number'] : $order_id),
         'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
         'rechnungsdatum'   => date('Y-m-d'),
         'kunde_name'       => $customer_name ?: 'Kunde',
@@ -345,18 +341,62 @@ function pv_generate_invoice_pdf($order_id) {
     if ($cart_items) {
         foreach ($cart_items as $item) {
             $meta = $item['metadata'] ?? [];
-            $name_parts = array_filter([
-                $meta['produkt'] ?? '',
-                $meta['zustand'] ?? '',
-                $meta['produktfarbe'] ?? '',
-                $meta['gestellfarbe'] ?? '',
-                $meta['extra'] ?? '',
-                $meta['dauer_name'] ?? ''
-            ]);
-            $post_data["artikel_{$i}_name"]  = implode(' – ', $name_parts);
-            $post_data["artikel_{$i}_menge"] = 1;
-            $post_data["artikel_{$i}_preis"] = floatval($item['final_price'] ?? 0);
+            $tage = max(1, intval($item['days'] ?? 1));
+            $start = !empty($item['start_date']) ? date_i18n('d.m.Y', strtotime($item['start_date'])) : '';
+            $end   = !empty($item['end_date']) ? date_i18n('d.m.Y', strtotime($item['end_date'])) : '';
+            $details = [];
+            if ($start && $end) {
+                $details[] = $start . ' - ' . $end . " ({$tage} Tage)";
+            } elseif (!empty($meta['dauer_name'])) {
+                $details[] = $meta['dauer_name'] . " ({$tage} Tage)";
+            }
+            if (!empty($meta['produktfarbe'])) {
+                $details[] = 'Farbe: ' . $meta['produktfarbe'];
+            }
+            if (!empty($meta['gestellfarbe'])) {
+                $details[] = 'Gestellfarbe: ' . $meta['gestellfarbe'];
+            }
+            if (!empty($meta['extra'])) {
+                $details[] = 'Extras: ' . $meta['extra'];
+            }
+            $name = $meta['produkt'] ?? 'Produkt';
+            if ($details) {
+                $name .= "\n" . implode("\n", $details);
+            }
+
+            $unit_price = 0.0;
+            if (!empty($item['price_id'])) {
+                $amt = \ProduktVerleih\StripeService::get_price_amount($item['price_id']);
+                $unit_price = is_wp_error($amt) ? 0.0 : floatval($amt);
+            } elseif (!empty($item['final_price'])) {
+                $unit_price = round(floatval($item['final_price']) / $tage, 2);
+            }
+
+            $post_data["artikel_{$i}_name"]  = $name;
+            $post_data["artikel_{$i}_menge"] = $tage;
+            $post_data["artikel_{$i}_preis"] = $unit_price;
             $i++;
+
+            if (!empty($item['extra_ids'])) {
+                global $wpdb;
+                $eids = array_filter(array_map('intval', explode(',', $item['extra_ids'])));
+                if ($eids) {
+                    $placeholders = implode(',', array_fill(0, count($eids), '%d'));
+                    $rows = $wpdb->get_results(
+                        $wpdb->prepare(
+                            "SELECT name, price_rent, price_sale, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                            ...$eids
+                        )
+                    );
+                    foreach ($rows as $ex) {
+                        $price_val = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+                        $post_data["artikel_{$i}_name"]  = $ex->name;
+                        $post_data["artikel_{$i}_menge"] = $tage;
+                        $post_data["artikel_{$i}_preis"] = floatval($price_val);
+                        $i++;
+                    }
+                }
+            }
         }
     } else {
         $extras_total = 0.0;
@@ -384,7 +424,23 @@ function pv_generate_invoice_pdf($order_id) {
         if ($main_total < 0) { $main_total = 0; }
 
         $unit_price = $tage ? round($main_total / $tage, 2) : 0;
-        $post_data["artikel_{$i}_name"]  = $product;
+        $detail_lines = [];
+        if (!empty($order['start_date']) && !empty($order['end_date'])) {
+            $detail_lines[] = date_i18n('d.m.Y', strtotime($order['start_date'])) . ' - ' . date_i18n('d.m.Y', strtotime($order['end_date'])) . " ({$tage} Tage)";
+        } elseif (!empty($order['duration_name'])) {
+            $detail_lines[] = $order['duration_name'] . " ({$tage} Tage)";
+        }
+        if (!empty($order['product_color_name'])) {
+            $detail_lines[] = 'Farbe: ' . $order['product_color_name'];
+        }
+        if (!empty($order['frame_color_name'])) {
+            $detail_lines[] = 'Gestellfarbe: ' . $order['frame_color_name'];
+        }
+        $name = $product;
+        if ($detail_lines) {
+            $name .= "\n" . implode("\n", $detail_lines);
+        }
+        $post_data["artikel_{$i}_name"]  = $name;
         $post_data["artikel_{$i}_menge"] = $tage;
         $post_data["artikel_{$i}_preis"] = $unit_price;
         $i++;

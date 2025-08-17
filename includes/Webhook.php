@@ -136,18 +136,38 @@ function send_produkt_welcome_email(array $order, int $order_id) {
         $message .= '<table style="width:100%;border-collapse:collapse;">';
         foreach ($cart_items as $ci_item) {
             $meta = $ci_item['metadata'] ?? [];
-            $parts = array_filter([
-                $meta['produkt'] ?? '',
-                $meta['extra'] ?? '',
-                $meta['produktfarbe'] ?? '',
-                $meta['gestellfarbe'] ?? '',
-                $meta['zustand'] ?? '',
-            ]);
-            $name = implode(' – ', $parts);
-            $price_item = number_format((float) ($ci_item['final_price'] ?? 0), 2, ',', '.') . '€';
-            $message .= '<tr><td>' . esc_html($name) . '</td><td style="text-align:right;">' . esc_html($price_item) . '</td></tr>';
+            $tage = max(1, intval($ci_item['days'] ?? 1));
+            $start = !empty($ci_item['start_date']) ? date_i18n('d.m.Y', strtotime($ci_item['start_date'])) : '';
+            $end   = !empty($ci_item['end_date']) ? date_i18n('d.m.Y', strtotime($ci_item['end_date'])) : '';
+            $details = [];
+            if ($start && $end) {
+                $details[] = $start . ' - ' . $end . " ({$tage} Tage)";
+            } elseif (!empty($meta['dauer_name'])) {
+                $details[] = $meta['dauer_name'] . " ({$tage} Tage)";
+            }
+            if (!empty($meta['produktfarbe'])) {
+                $details[] = 'Farbe: ' . $meta['produktfarbe'];
+            }
+            if (!empty($meta['gestellfarbe'])) {
+                $details[] = 'Gestellfarbe: ' . $meta['gestellfarbe'];
+            }
+            if (!empty($meta['extra'])) {
+                $details[] = 'Extras: ' . $meta['extra'];
+            }
+            $name = '<strong>' . esc_html($meta['produkt'] ?? 'Produkt') . '</strong>';
+            if ($details) {
+                $name .= '<br>' . implode('<br>', array_map('esc_html', $details));
+            }
+            $unit = 0.0;
+            if (!empty($ci_item['price_id'])) {
+                $amt = StripeService::get_price_amount($ci_item['price_id']);
+                $unit = is_wp_error($amt) ? 0.0 : floatval($amt);
+            } elseif (!empty($ci_item['final_price'])) {
+                $unit = round(floatval($ci_item['final_price']) / $tage, 2);
+            }
+            $unit_fmt = number_format($unit, 2, ',', '.') . '€';
+            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">' . esc_html($unit_fmt) . '</td></tr>';
         }
-        $message .= '<tr><td><strong>Gesamt</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
         if ($order['shipping_cost'] > 0) {
             $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
         }
@@ -305,18 +325,38 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         $message .= '<table style="width:100%;border-collapse:collapse;">';
         foreach ($cart_items as $ci_item) {
             $meta = $ci_item['metadata'] ?? [];
-            $parts = array_filter([
-                $meta['produkt'] ?? '',
-                $meta['extra'] ?? '',
-                $meta['produktfarbe'] ?? '',
-                $meta['gestellfarbe'] ?? '',
-                $meta['zustand'] ?? '',
-            ]);
-            $name = implode(' – ', $parts);
-            $price_item = number_format((float) ($ci_item['final_price'] ?? 0), 2, ',', '.') . '€';
-            $message .= '<tr><td>' . esc_html($name) . '</td><td style="text-align:right;">' . esc_html($price_item) . '</td></tr>';
+            $tage = max(1, intval($ci_item['days'] ?? 1));
+            $start = !empty($ci_item['start_date']) ? date_i18n('d.m.Y', strtotime($ci_item['start_date'])) : '';
+            $end   = !empty($ci_item['end_date']) ? date_i18n('d.m.Y', strtotime($ci_item['end_date'])) : '';
+            $details = [];
+            if ($start && $end) {
+                $details[] = $start . ' - ' . $end . " ({$tage} Tage)";
+            } elseif (!empty($meta['dauer_name'])) {
+                $details[] = $meta['dauer_name'] . " ({$tage} Tage)";
+            }
+            if (!empty($meta['produktfarbe'])) {
+                $details[] = 'Farbe: ' . $meta['produktfarbe'];
+            }
+            if (!empty($meta['gestellfarbe'])) {
+                $details[] = 'Gestellfarbe: ' . $meta['gestellfarbe'];
+            }
+            if (!empty($meta['extra'])) {
+                $details[] = 'Extras: ' . $meta['extra'];
+            }
+            $name = '<strong>' . esc_html($meta['produkt'] ?? 'Produkt') . '</strong>';
+            if ($details) {
+                $name .= '<br>' . implode('<br>', array_map('esc_html', $details));
+            }
+            $unit = 0.0;
+            if (!empty($ci_item['price_id'])) {
+                $amt = StripeService::get_price_amount($ci_item['price_id']);
+                $unit = is_wp_error($amt) ? 0.0 : floatval($amt);
+            } elseif (!empty($ci_item['final_price'])) {
+                $unit = round(floatval($ci_item['final_price']) / $tage, 2);
+            }
+            $unit_fmt = number_format($unit, 2, ',', '.') . '€';
+            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">' . esc_html($unit_fmt) . '</td></tr>';
         }
-        $message .= '<tr><td><strong>Gesamt</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
         if ($order['shipping_cost'] > 0) {
             $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
         }

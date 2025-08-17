@@ -141,6 +141,14 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
                 </div>
 
+                <?php
+                    $unit = (!empty($p->days) && $p->days > 0)
+                        ? ((float)$p->final_price / (float)$p->days)
+                        : (float)$p->final_price;
+                ?>
+                <div class="product-unit-price" style="color:#888;">
+                    Preis/Tag: <?php echo number_format($unit, 2, ',', '.'); ?> €
+                </div>
                 <div class="product-price">
                     <?php echo number_format((float)$p->final_price, 2, ',', '.'); ?> €
                 </div>
