@@ -250,11 +250,17 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                 if (!empty($order->client_info)) {
                     $ci = json_decode($order->client_info, true);
                     if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
-                        $more = count($ci['cart_items']) - 1;
-                        $first = $ci['cart_items'][0]['metadata']['produkt'] ?? '';
-                        if ($first) {
-                            $product_display = $first;
+                        $product_items = [];
+                        foreach ($ci['cart_items'] as $ci_item) {
+                            $meta = $ci_item['metadata'] ?? [];
+                            if (!empty($meta['produkt'])) {
+                                $product_items[] = $meta['produkt'];
+                            }
                         }
+                        if (!empty($product_items)) {
+                            $product_display = $product_items[0];
+                        }
+                        $more = count($product_items) - 1;
                     }
                 }
                 if ($more > 0) {

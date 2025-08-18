@@ -36,6 +36,8 @@ jQuery(document).ready(function($) {
         $('.h2-cart-badge').text(cart.length); // alle Instanzen (Desktop/Mobil/Sticky)
     }
     updateCartBadge();
+    updateSelectedDays();
+    updatePriceAndButton();
 
     window.addEventListener('storage', function(e){
         if (e.key === 'produkt_cart') {
@@ -179,9 +181,7 @@ jQuery(document).ready(function($) {
         $('#produkt-field-shipping').val(shippingPriceId);
     }
 
-    if (produkt_ajax.betriebsmodus === 'kauf') {
-        renderCalendar(calendarMonth);
-    }
+    renderCalendar(calendarMonth);
     if (!Array.isArray(produkt_ajax.variant_blocked_days)) {
         produkt_ajax.variant_blocked_days = [];
     }

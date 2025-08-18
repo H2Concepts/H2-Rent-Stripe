@@ -520,25 +520,44 @@ if (!$customer_id) {
                         <?php foreach ($orders as $o) :
                             $product_display = $o->category_name;
                             $variant_display = $o->variant_name ?: '–';
-                            $extras_display  = $o->extra_names ?: '–';
-                            $more = 0;
+                            $extras_display  = '–';
+                            $product_count   = 0;
+                            $extra_count     = 0;
+
                             if (!empty($o->client_info)) {
                                 $ci = json_decode($o->client_info, true);
                                 if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
-                                    $more = count($ci['cart_items']) - 1;
-                                    $first = $ci['cart_items'][0]['metadata'] ?? [];
-                                    if (!empty($first['produkt'])) {
-                                        $product_display = $first['produkt'];
-                                    }
-                                    if (!empty($first['extra'])) {
-                                        $extras_display = $first['extra'];
+                                    foreach ($ci['cart_items'] as $ci_item) {
+                                        $meta = $ci_item['metadata'] ?? [];
+                                        if (!empty($meta['produkt'])) {
+                                            $product_count++;
+                                            if ($product_count === 1) {
+                                                $product_display = $meta['produkt'];
+                                            }
+                                            if (!empty($meta['extra'])) {
+                                                $extra_count++;
+                                                if ($extra_count === 1) {
+                                                    $extras_display = $meta['extra'];
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
-                            if ($more > 0) {
-                                $product_display .= ' (' . $more . ' weitere)';
-                                $variant_display .= ' (' . $more . ' weitere)';
-                                $extras_display  .= ' (' . $more . ' weitere)';
+
+                            if ($extra_count === 0 && !empty($o->extra_names)) {
+                                $extras_display = $o->extra_names;
+                            }
+
+                            if ($product_count > 1) {
+                                $product_display .= ' (' . ($product_count - 1) . ' weitere)';
+                                if ($variant_display !== '–') {
+                                    $variant_display .= ' (' . ($product_count - 1) . ' weitere)';
+                                }
+                            }
+
+                            if ($extra_count > 1) {
+                                $extras_display .= ' (' . ($extra_count - 1) . ' weitere)';
                             }
                         ?>
                             <tr>
