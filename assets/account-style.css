@@ -347,6 +347,14 @@ img.wp-smiley, img.emoji {
     .customer-order-item {
         flex-direction: column;
     }
+    .kundendaten-heading {
+        margin-top: 0;
+        font-size: 22px;
+    }
+    .address-heading {
+        margin: 0;
+        font-size: 22px;
+    }
 }
 
 /* Login page styling */
