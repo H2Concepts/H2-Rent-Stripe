@@ -2,7 +2,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
-require_once PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php';
+// The account page uses its own order-detail partial for customer-facing views.
 $modus = get_option('produkt_betriebsmodus', 'miete');
 ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
@@ -104,7 +104,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                                         Bestellung #<?php echo esc_html($num); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
                                     </button>
                                     <div class="produkt-accordion-content">
-                                        <?php render_order_details($order->id); ?>
+                                        <?php include PRODUKT_PLUGIN_PATH . 'views/account/order-details.php'; ?>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
