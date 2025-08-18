@@ -287,16 +287,19 @@ jQuery(document).ready(function($) {
             produkt_ajax.variant_weekend_only = variantWeekendOnly;
             produkt_ajax.variant_min_days = variantMinDays;
 
-            // Reset selections when switching variants so the rent button
-            // becomes inactive immediately
+            // Reset other selections when switching variants so the rent button
+            // becomes inactive immediately. Preserve rental dates if a period
+            // is already locked by existing cart items.
             selectedCondition = null;
             selectedProductColor = null;
             selectedFrameColor = null;
             selectedExtras = [];
             selectedDuration = null;
-            startDate = null;
-            endDate = null;
-            selectedDays = 0;
+            if (cart.length === 0) {
+                startDate = null;
+                endDate = null;
+                selectedDays = 0;
+            }
             renderCalendar(calendarMonth);
             updateSelectedDays();
 
