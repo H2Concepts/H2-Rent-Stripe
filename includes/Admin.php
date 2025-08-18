@@ -188,8 +188,10 @@ class Admin {
 
         $customer_page_id  = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
         $confirm_page_id   = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        $login_page_id     = get_option(PRODUKT_LOGIN_PAGE_OPTION);
         $is_account_page   = false;
         $is_confirm_page   = false;
+        $is_login_page     = false;
 
         if ($customer_page_id) {
             $is_account_page = is_page($customer_page_id);
@@ -205,6 +207,13 @@ class Admin {
             $is_confirm_page = has_shortcode($content, 'produkt_confirmation');
         }
 
+        if ($login_page_id) {
+            $is_login_page = is_page($login_page_id);
+        }
+        if (!$is_login_page) {
+            $is_login_page = has_shortcode($content, 'produkt_login');
+        }
+
         // Always load basic assets so the cart icon and sidebar work site-wide
 
         wp_enqueue_emoji_styles();
@@ -217,7 +226,7 @@ class Admin {
 
         $branding = $this->get_branding_settings();
 
-        if ($is_account_page || $is_confirm_page) {
+        if ($is_account_page || $is_confirm_page || $is_login_page) {
             wp_enqueue_style(
                 'produkt-account-style',
                 PRODUKT_PLUGIN_URL . 'assets/account-style.css',
@@ -225,7 +234,7 @@ class Admin {
                 PRODUKT_VERSION
             );
 
-            if ($is_account_page) {
+            if ($is_login_page) {
                 $login_bg = $branding['login_bg_image'] ?? '';
                 if ($login_bg) {
                     $login_css = 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
@@ -285,8 +294,8 @@ class Admin {
         }
         wp_add_inline_style('produkt-style', $inline_css);
 
-        if ($is_account_page && !is_user_logged_in()) {
-            $hide_header_css = 'body.page-kundenkonto header, body.page-kundenkonto .site-header, body.page-kundenkonto #site-header, body.page-kundenkonto footer, body.page-kundenkonto .site-footer, body.page-kundenkonto #site-footer {display:none !important;}';
+        if ($is_login_page) {
+            $hide_header_css = 'body.page-kunden-login header, body.page-kunden-login .site-header, body.page-kunden-login #site-header, body.page-kunden-login footer, body.page-kunden-login .site-footer, body.page-kunden-login #site-footer {display:none !important;}';
             wp_add_inline_style('produkt-style', $hide_header_css);
         }
 

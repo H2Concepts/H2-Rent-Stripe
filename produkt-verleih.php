@@ -30,6 +30,7 @@ define('PRODUKT_VERSION', PRODUKT_PLUGIN_VERSION);
 define('PRODUKT_PLUGIN_FILE', __FILE__);
 define('PRODUKT_SHOP_PAGE_OPTION', 'produkt_shop_page_id');
 define('PRODUKT_CUSTOMER_PAGE_OPTION', 'produkt_customer_page_id');
+define('PRODUKT_LOGIN_PAGE_OPTION', 'produkt_login_page_id');
 define('PRODUKT_CHECKOUT_PAGE_OPTION', 'produkt_checkout_page_id');
 define('PRODUKT_CONFIRM_PAGE_OPTION', 'produkt_confirm_page_id');
 
