@@ -1006,11 +1006,6 @@ add_filter('template_include', function ($template) {
         return PRODUKT_PLUGIN_PATH . 'templates/checkout-page.php';
     }
 
-    $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-    if ($customer_page_id && is_page($customer_page_id)) {
-        return PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
-    }
-
     $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
     if ($confirm_page_id && is_page($confirm_page_id)) {
         return PRODUKT_PLUGIN_PATH . 'templates/confirmation-page.php';
