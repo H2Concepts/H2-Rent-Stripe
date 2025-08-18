@@ -432,10 +432,14 @@ class Plugin {
                 if (!empty($o->subscription_id)) {
                     $order_map[$o->subscription_id] = $o;
                 }
-                if ($o->mode === 'kauf') {
-                    $sale_orders[] = $o;
-                } else {
+                $is_rental = ($o->mode !== 'kauf');
+                if ($o->mode === 'kauf' && (!empty($o->start_date) || !empty($o->end_date))) {
+                    $is_rental = true;
+                }
+                if ($is_rental) {
                     $rental_orders[] = $o;
+                } else {
+                    $sale_orders[] = $o;
                 }
             }
 
