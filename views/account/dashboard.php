@@ -82,7 +82,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                             $billing_addr = $shipping_addr;
                         ?>
                         <div class="order-box customer-box">
-                            <h3>Kundendaten</h3>
+                            <h2 class="kundendaten-heading">Kundendaten</h2>
                             <div class="customer-header">
                                 <div class="customer-avatar"><?php echo esc_html($initials); ?></div>
                                 <div class="customer-ident">
