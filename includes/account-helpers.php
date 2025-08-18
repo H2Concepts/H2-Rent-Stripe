@@ -253,7 +253,11 @@ function pv_get_order_by_id($order_id) {
         if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
             $row['produkte'] = [];
             foreach ($ci['cart_items'] as $item) {
-                $meta = $item['metadata'] ?? [];
+                $meta        = $item['metadata'] ?? [];
+                $variant_id  = intval($item['variant_id'] ?? 0);
+                $category_id = intval($item['category_id'] ?? 0);
+                $img         = $item['image_url'] ?? pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+
                 $row['produkte'][] = (object) [
                     'produkt_name'      => $meta['produkt'] ?? '',
                     'extra_names'       => $meta['extra'] ?? '',
@@ -267,6 +271,9 @@ function pv_get_order_by_id($order_id) {
                     'end_date'          => $item['end_date'] ?? null,
                     'days'              => $item['days'] ?? 0,
                     'price_id'          => $item['price_id'] ?? '',
+                    'variant_id'        => $variant_id,
+                    'category_id'       => $category_id,
+                    'image_url'         => $img,
                 ];
             }
             if (empty($row['produkt_name']) && !empty($row['produkte'][0]->produkt_name)) {

@@ -579,7 +579,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         Bitte treffen Sie alle Auswahlen um fortzufahren
                     </p>
                     <p class="produkt-unavailable-help" id="produkt-unavailable-help" style="display: none;">
-                        Das gewählte Produkt ist aktuell nicht verfügbar
+                        Produkt im Mietzeitraum nicht verfügbar
                     </p>
                     <div class="produkt-notify" id="produkt-notify" style="display: none;">
                         <p>Benachrichtigen Sie mich sobald das Produkt wieder erhältlich ist.</p>

@@ -39,6 +39,7 @@ class Plugin {
         add_shortcode('produkt_product', [$this, 'product_shortcode']);
         add_shortcode('produkt_shop_grid', [$this, 'render_product_grid']);
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
+        add_shortcode('produkt_login', [$this, 'render_login_page']);
         add_shortcode('produkt_confirmation', [$this, 'render_order_confirmation']);
         add_shortcode('produkt_category_layout', [$this, 'render_category_layout']);
         add_action('init', [$this, 'register_customer_role']);
@@ -101,7 +102,15 @@ class Plugin {
             }
 
             $cust_page = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-            if ($cust_page && is_page($cust_page) && !is_user_logged_in()) {
+            if ($cust_page && is_page($cust_page)) {
+                $classes[] = 'page';
+                $classes[] = 'type-page';
+                $classes[] = 'ast-page-builder-template';
+                $classes[] = 'ast-no-sidebar';
+            }
+
+            $login_page = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+            if ($login_page && is_page($login_page)) {
                 $classes[] = 'produkt-login-page';
                 $classes[] = 'page';
                 $classes[] = 'type-page';
@@ -152,6 +161,7 @@ class Plugin {
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
         $this->create_shop_page();
         $this->create_customer_page();
+        $this->create_login_page();
         $this->create_checkout_page();
         $this->create_confirmation_page();
         flush_rewrite_rules();
@@ -371,7 +381,102 @@ class Plugin {
     }
 
     public function render_customer_account() {
+        if (!is_user_logged_in()) {
+            $login_id = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+            $login_url = $login_id ? get_permalink($login_id) : home_url('/kunden-login');
+            wp_safe_redirect($login_url);
+            exit;
+        }
+
         require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        $message = '';
+
+        if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
+            if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
+                $sub_id = sanitize_text_field($_POST['subscription_id']);
+                $res    = \ProduktVerleih\StripeService::cancel_subscription_at_period_end($sub_id);
+                if (is_wp_error($res)) {
+                    $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
+                } else {
+                    $message = '<p>' . esc_html__('Kündigung vorgemerkt.', 'h2-concepts') . '</p>';
+                }
+            }
+        }
+
+        $orders        = [];
+        $sale_orders   = [];
+        $rental_orders = [];
+        $order_map     = [];
+        $subscriptions = [];
+        $full_name     = '';
+        $customer_addr = '';
+
+        $user_id = get_current_user_id();
+        if ($user_id) {
+            $orders = Database::get_orders_for_user($user_id);
+
+            $current_user = wp_get_current_user();
+            global $wpdb;
+            $addr_row = $wpdb->get_row($wpdb->prepare(
+                "SELECT street, postal_code, city, country FROM {$wpdb->prefix}produkt_customers WHERE email = %s",
+                $current_user->user_email
+            ));
+            if ($addr_row) {
+                $customer_addr = trim($addr_row->street . ', ' . $addr_row->postal_code . ' ' . $addr_row->city);
+                if ($addr_row->country) {
+                    $customer_addr .= ', ' . $addr_row->country;
+                }
+            }
+
+            foreach ($orders as $o) {
+                if (!empty($o->subscription_id)) {
+                    $order_map[$o->subscription_id] = $o;
+                }
+                $is_rental = ($o->mode !== 'kauf');
+                if ($o->mode === 'kauf' && (!empty($o->start_date) || !empty($o->end_date))) {
+                    $is_rental = true;
+                }
+                if ($is_rental) {
+                    $rental_orders[] = $o;
+                } else {
+                    $sale_orders[] = $o;
+                }
+            }
+
+            $customer_id = Database::get_stripe_customer_id_for_user($user_id);
+            if ($customer_id) {
+                $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
+                if (!is_wp_error($subs)) {
+                    $subscriptions = $subs;
+                } else {
+                    $message = '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+                }
+            }
+
+            foreach ($orders as $o) {
+                if (!empty($o->customer_name)) {
+                    $full_name = $o->customer_name;
+                    break;
+                }
+            }
+            if (!$full_name) {
+                $full_name = wp_get_current_user()->display_name;
+            }
+        }
+
+        ob_start();
+        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
+        return ob_get_clean();
+    }
+
+    public function render_login_page() {
+        if (is_user_logged_in()) {
+            $cust_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+            $url = $cust_id ? get_permalink($cust_id) : home_url('/kundenkonto');
+            wp_safe_redirect($url);
+            exit;
+        }
+
         $message        = $this->login_error;
         $show_code_form = isset($_POST['verify_login_code']);
         $email_value    = '';
@@ -380,31 +485,14 @@ class Plugin {
         if (
             isset($_POST['verify_login_code_nonce'], $_POST['verify_login_code']) &&
             wp_verify_nonce($_POST['verify_login_code_nonce'], 'verify_login_code_action') &&
-            !empty($_POST['email']) &&
-            !empty($_POST['code'])
+            !empty($_POST['email'])
         ) {
             $email       = sanitize_email($_POST['email']);
-            $input_code  = trim($_POST['code']);
             $email_value = $email;
-            $user        = get_user_by('email', $email);
-
-            if ($user) {
-                $data = get_user_meta($user->ID, 'produkt_login_code', true);
-                if (
-                    !(
-                        isset($data['code'], $data['expires']) &&
-                        $data['code'] == $input_code &&
-                        time() <= $data['expires']
-                    )
-                ) {
-                    $message        = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
-                    $show_code_form = true;
-                }
-            } else {
-                $message        = '<p style="color:red;">Benutzer wurde nicht gefunden.</p>';
-                $show_code_form = true;
+            $show_code_form = true;
+            if (!$message) {
+                $message = '<p style="color:red;">Der Code ist ungültig oder abgelaufen.</p>';
             }
-
         } elseif (
             isset($_POST['request_login_code_nonce'], $_POST['request_login_code']) &&
             wp_verify_nonce($_POST['request_login_code_nonce'], 'request_login_code_action') &&
@@ -440,69 +528,10 @@ class Plugin {
                 $message        = '<p style="color:red;">Email nicht gefunden.</p>';
                 $show_code_form = false;
             }
-
         }
 
         ob_start();
-        $subscriptions  = [];
-        $current_user_id = get_current_user_id();
-        if ($current_user_id) {
-            $customer_id = Database::get_stripe_customer_id_for_user($current_user_id);
-
-            if ($customer_id && isset($_POST['cancel_subscription'])) {
-                $sub_id = sanitize_text_field($_POST['cancel_subscription']);
-                $subs   = StripeService::get_active_subscriptions_for_customer($customer_id);
-                $orders = Database::get_orders_for_user($current_user_id);
-
-                if (!is_wp_error($subs)) {
-                    foreach ($subs as $sub) {
-                        if ($sub['subscription_id'] === $sub_id) {
-                            $matching_order = null;
-
-                            // passende Bestellung zur Subscription suchen
-                            foreach ($orders as $order) {
-                                if ($order->subscription_id === $sub_id) {
-                                    $matching_order = $order;
-                                    break;
-                                }
-                            }
-
-                            $laufzeit_in_monaten = pv_get_minimum_duration_months($matching_order);
-
-                            $start_ts      = strtotime($sub['start_date']);
-                            $cancelable_ts = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
-                            $cancelable    = time() > $cancelable_ts;
-                            $period_end_ts = strtotime($sub['current_period_end']);
-                            $period_end_date = date_i18n('d.m.Y', $period_end_ts);
-
-                            if ($cancelable && empty($sub['cancel_at_period_end'])) {
-                                $res = StripeService::cancel_subscription_at_period_end($sub_id);
-                                if (is_wp_error($res)) {
-                                    $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
-                                } else {
-                                    $message = '<p>' . esc_html__('Kündigung vorgemerkt. Laufzeit endet am ', 'h2-concepts') . esc_html($period_end_date) . '</p>';
-                                }
-                            } else {
-                                $message = '<p style="color:red;">' . esc_html__('Dieses Abo kann noch nicht gekündigt werden.', 'h2-concepts') . '</p>';
-                            }
-
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if ($customer_id) {
-                $subs = StripeService::get_active_subscriptions_for_customer($customer_id);
-                if (!is_wp_error($subs)) {
-                    $subscriptions = $subs;
-                } else {
-                    $message = '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
-                }
-            }
-        }
-
-        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
+        include PRODUKT_PLUGIN_PATH . 'templates/login-page.php';
         return ob_get_clean();
     }
 
@@ -603,10 +632,15 @@ class Plugin {
                 wp_set_auth_cookie($user->ID, true);
                 $redirect = isset($_POST['redirect_to']) ? esc_url_raw($_POST['redirect_to']) : '';
                 if (empty($redirect)) {
-                    $page_id  = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-                    $redirect = get_permalink($page_id);
+                    $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                    if ($page_id) {
+                        $redirect = get_permalink($page_id);
+                    }
                 }
-                wp_safe_redirect($redirect);
+                if (empty($redirect)) {
+                    $redirect = home_url('/');
+                }
+                wp_redirect($redirect);
                 exit;
             }
         }
@@ -727,6 +761,24 @@ class Plugin {
         update_option(PRODUKT_CUSTOMER_PAGE_OPTION, $page_id);
     }
 
+    private function create_login_page() {
+        $page = get_page_by_path('kunden-login');
+        if (!$page) {
+            $page_data = [
+                'post_title'   => 'Kunden Login',
+                'post_name'    => 'kunden-login',
+                'post_content' => '[produkt_login]',
+                'post_status'  => 'publish',
+                'post_type'    => 'page'
+            ];
+            $page_id = wp_insert_post($page_data);
+        } else {
+            $page_id = $page->ID;
+        }
+
+        update_option(PRODUKT_LOGIN_PAGE_OPTION, $page_id);
+    }
+
     private function create_checkout_page() {
         $page = get_page_by_path('checkout');
         if (!$page) {
@@ -774,6 +826,11 @@ class Plugin {
             $this->create_customer_page();
         }
 
+        $login_id = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+        if (!$login_id || get_post_status($login_id) === false) {
+            $this->create_login_page();
+        }
+
         $checkout_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if (!$checkout_id || get_post_status($checkout_id) === false) {
             $this->create_checkout_page();
@@ -793,6 +850,10 @@ class Plugin {
         $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
         if ($post->ID == $customer_page_id) {
             $states[] = __('Kundenkonto-Seite', 'h2-concepts');
+        }
+        $login_page_id = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+        if ($post->ID == $login_page_id) {
+            $states[] = __('Login-Seite', 'h2-concepts');
         }
         $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if ($post->ID == $checkout_page_id) {

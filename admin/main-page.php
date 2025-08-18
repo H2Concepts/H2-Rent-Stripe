@@ -244,11 +244,33 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($orders as $order): ?>
+            <?php foreach ($orders as $order):
+                $product_display = $order->produkt_name;
+                $more = 0;
+                if (!empty($order->client_info)) {
+                    $ci = json_decode($order->client_info, true);
+                    if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                        $product_items = [];
+                        foreach ($ci['cart_items'] as $ci_item) {
+                            $meta = $ci_item['metadata'] ?? [];
+                            if (!empty($meta['produkt'])) {
+                                $product_items[] = $meta['produkt'];
+                            }
+                        }
+                        if (!empty($product_items)) {
+                            $product_display = $product_items[0];
+                        }
+                        $more = count($product_items) - 1;
+                    }
+                }
+                if ($more > 0) {
+                    $product_display .= ' (' . $more . ' weitere)';
+                }
+            ?>
                 <tr>
                     <td><?php echo esc_html($order->order_number ?: $order->id); ?></td>
                     <td><?php echo esc_html($order->customer_name); ?></td>
-                    <td><?php echo esc_html($order->produkt_name); ?></td>
+                    <td><?php echo esc_html($product_display); ?></td>
                     <td><?php echo date_i18n('d.m.Y', strtotime($order->created_at)); ?></td>
                     <td><span class="badge status-<?php echo esc_attr($order->status); ?>"><?php echo ucfirst($order->status); ?></span></td>
                     <td><a href="#" class="view-details-link" data-order-id="<?php echo esc_attr($order->id); ?>">Details ansehen</a></td>
