@@ -15,9 +15,9 @@ if (!empty($order->customer_name)) {
     $initials = strtoupper(substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : ''));
 }
 
-// Prozent Mietdauer berechnen
+// Prozent Mietdauer nur berechnen, wenn Auftrag nicht offen ist
 $percent = 0;
-if (!empty($sd) && !empty($ed)) {
+if ($order->status !== 'offen' && !empty($sd) && !empty($ed)) {
     $start = strtotime($sd);
     $end = strtotime($ed);
     $today = time();
@@ -28,10 +28,17 @@ if (!empty($sd) && !empty($ed)) {
 
 // Status-Text für den Badge ermitteln
 $badge_status = 'In Vermietung';
-if ($percent >= 100) {
+if ($order->status === 'offen') {
+    $badge_status = 'Offen';
+} elseif ($percent >= 100) {
     $badge_status = 'Abgeschlossen';
 } elseif ($percent <= 0) {
     $badge_status = 'Ausstehend';
+}
+
+// Miettage nicht anzeigen, wenn Auftrag offen ist
+if ($order->status === 'offen') {
+    $days = null;
 }
 
 // Produkte ermitteln
@@ -64,6 +71,11 @@ $produkte = $order->produkte ?? [$order]; // fallback
             <button type="button" class="icon-btn icon-btn-no-stroke note-icon" title="Notiz hinzufügen">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81.2 80.7"><path d="M80.5,19.1c0-2.2-.9-4.2-2.4-5.8l-10.3-10.3c-1.5-1.5-3.6-2.4-5.8-2.4s-4.2.8-5.8,2.4l-3.9,3.9c-1.2-.6-2.6-.9-4-.9-2.5,0-4.9,1-6.7,2.8-2.9,2.9-3.5,7.1-1.9,10.6L7.4,51.9s0,0-.1.1c0,0-.1.1-.1.2,0,0,0,.1-.1.2,0,0,0,.1-.1.2,0,0,0,.2,0,.2,0,0,0,.1,0,.2L1,77.4c-.2.8,0,1.6.6,2.2.4.4,1,.7,1.7.7s.4,0,.5,0l24.3-5.8c0,0,.1,0,.2,0,0,0,.2,0,.2,0,0,0,.1,0,.2-.1,0,0,.1,0,.2-.1,0,0,.1-.1.2-.2,0,0,0,0,.1-.1l32.5-32.5c1.2.6,2.6.9,4,.9,2.5,0,4.9-1,6.7-2.8,2.9-2.9,3.5-7.1,1.9-10.6l3.9-3.9c1.5-1.5,2.4-3.6,2.4-5.8h0ZM25.5,66.7l-11.2-11.2c.1,0,.2,0,.4-.1l17.4-6.4-6.7,17.7ZM34.8,43l-18.8,6.9,26.8-26.8,5.9,5.9-13.9,13.9ZM10.4,58.2l12.6,12.6-16.6,4,4-16.6ZM31,65.4l7.2-19.1,13.9-13.9,5.9,5.9-27.1,27.1ZM69.1,36.1s0,0,0,0c-.9.9-2.1,1.4-3.3,1.4s-2.5-.5-3.3-1.4l-17.3-17.3c-1.8-1.8-1.8-4.8,0-6.7.9-.9,2.1-1.4,3.3-1.4s2.5.5,3.3,1.4l17.3,17.3c1.9,1.8,1.9,4.8,0,6.7h0ZM74.9,21.5l-3.5,3.5-15.2-15.2,3.5-3.5c.7-.7,1.5-1,2.5-1s1.8.4,2.5,1l10.3,10.3c.6.6,1,1.5,1,2.5s-.4,1.8-1,2.5h0Z"/></svg>
             </button>
+            <?php if ($order->status === 'offen') : ?>
+            <button type="button" class="icon-btn icon-btn-no-stroke delete-order-btn" title="Auftrag löschen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg>
+            </button>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -97,12 +109,14 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <div class="rental-period-box">
         <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
         <h3>Mietzeitraum</h3>
-        <div class="rental-progress-number"><?php echo $percent; ?>%</div>
-        <div class="rental-progress">
-            <div class="bar">
-                <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
+        <?php if ($order->status !== 'offen') : ?>
+            <div class="rental-progress-number"><?php echo $percent; ?>%</div>
+            <div class="rental-progress">
+                <div class="bar">
+                    <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
         <div class="rental-dates">
             <span>Abgeholt: <?php echo date_i18n('d. M', strtotime($sd)); ?></span>
             <span>Rückgabe: <?php echo date_i18n('d. M', strtotime($ed)); ?></span>

@@ -159,6 +159,14 @@ img.wp-smiley, img.emoji {
     background-color: #c82333;
 }
 
+.dashboard-section {
+    display: none;
+}
+
+.dashboard-section.active {
+    display: block;
+}
+
 
 
 
