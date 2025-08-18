@@ -1,7 +1,7 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$order = $order_data ?? null;
+$order = $order ?? (isset($order_data) ? (is_object($order_data) ? $order_data : (object) $order_data) : null);
 
 if (empty($order) || !is_object($order)) {
     echo '<p>Fehler: Keine gültigen Auftragsdaten übergeben.</p>';
