@@ -603,10 +603,15 @@ class Plugin {
                 wp_set_auth_cookie($user->ID, true);
                 $redirect = isset($_POST['redirect_to']) ? esc_url_raw($_POST['redirect_to']) : '';
                 if (empty($redirect)) {
-                    $page_id  = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
-                    $redirect = get_permalink($page_id);
+                    $page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                    if ($page_id) {
+                        $redirect = get_permalink($page_id);
+                    }
                 }
-                wp_safe_redirect($redirect);
+                if (empty($redirect)) {
+                    $redirect = home_url('/');
+                }
+                wp_redirect($redirect);
                 exit;
             }
         }
