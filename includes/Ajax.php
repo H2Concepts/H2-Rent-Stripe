@@ -173,7 +173,55 @@ class Ajax {
                     $shipping_cost = floatval($shipping->price);
                 }
             }
-            
+
+            $available = $variant->available ? true : false;
+            if ($available && $modus === 'kauf') {
+                if ((int)$variant->stock_available <= 0) {
+                    if ($start_date && $end_date) {
+                        $like = '%' . $wpdb->esc_like('"variant_id":' . $variant_id) . '%';
+                        $query = $wpdb->prepare(
+                            "SELECT variant_id, start_date, end_date, client_info FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND status IN ('offen','abgeschlossen') AND (variant_id = %d OR (client_info IS NOT NULL AND client_info LIKE %s))",
+                            $variant_id,
+                            $like
+                        );
+                        $rows = $wpdb->get_results($query);
+                        $start_ts = strtotime($start_date);
+                        $end_ts   = strtotime($end_date);
+                        $overlap = false;
+                        foreach ($rows as $row) {
+                            if (intval($row->variant_id) === $variant_id) {
+                                if ($row->start_date && $row->end_date) {
+                                    $s = strtotime($row->start_date);
+                                    $e = strtotime($row->end_date);
+                                    if ($s <= $end_ts && $e >= $start_ts) {
+                                        $overlap = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!$overlap && !empty($row->client_info)) {
+                                $ci = json_decode($row->client_info, true);
+                                if (json_last_error() === JSON_ERROR_NONE && !empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                                    foreach ($ci['cart_items'] as $item) {
+                                        if (intval($item['variant_id'] ?? 0) === $variant_id) {
+                                            $is = strtotime($item['start_date'] ?? '');
+                                            $ie = strtotime($item['end_date'] ?? '');
+                                            if ($is && $ie && $is <= $end_ts && $ie >= $start_ts) {
+                                                $overlap = true;
+                                                break 2;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        $available = !$overlap;
+                    } else {
+                        $available = false;
+                    }
+                }
+            }
+
             wp_send_json_success(array(
                 'base_price'    => $base_price,
                 'final_price'   => $final_price,
@@ -181,7 +229,7 @@ class Ajax {
                 'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
                 'price_id'      => $used_price_id,
-                'available'     => $variant->available ? true : false,
+                'available'     => $available,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: '',
                 'weekend_applied' => $weekend_applied,
@@ -506,18 +554,38 @@ class Ajax {
             wp_send_json_success(['days' => []]);
         }
 
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE variant_id = %d AND mode = 'kauf' AND status IN ('offen','abgeschlossen')",
-            $variant_id
-        ));
+        $like = '%' . $wpdb->esc_like('"variant_id":' . $variant_id) . '%';
+        $query = $wpdb->prepare(
+            "SELECT variant_id, start_date, end_date, client_info FROM {$wpdb->prefix}produkt_orders WHERE mode = 'kauf' AND status IN ('offen','abgeschlossen') AND (variant_id = %d OR (client_info IS NOT NULL AND client_info LIKE %s))",
+        $variant_id,
+        $like
+        );
+        $rows = $wpdb->get_results($query);
         $days = [];
         foreach ($rows as $r) {
-            if ($r->start_date && $r->end_date) {
+            if (intval($r->variant_id) === $variant_id && $r->start_date && $r->end_date) {
                 $s = strtotime($r->start_date);
                 $e = strtotime($r->end_date);
                 while ($s <= $e) {
                     $days[] = date('Y-m-d', $s);
                     $s = strtotime('+1 day', $s);
+                }
+            }
+            if (!empty($r->client_info)) {
+                $ci = json_decode($r->client_info, true);
+                if (json_last_error() === JSON_ERROR_NONE && !empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                    foreach ($ci['cart_items'] as $item) {
+                        if (intval($item['variant_id'] ?? 0) === $variant_id) {
+                            $is = strtotime($item['start_date'] ?? '');
+                            $ie = strtotime($item['end_date'] ?? '');
+                            if ($is && $ie) {
+                                while ($is <= $ie) {
+                                    $days[] = date('Y-m-d', $is);
+                                    $is = strtotime('+1 day', $is);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1406,8 +1474,6 @@ function produkt_create_checkout_session() {
         // store preliminary order with status "offen"
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
-        // Assign custom order number if numbering is enabled
-        $order_number = \pv_generate_order_number();
         $insert_data = [
             'category_id'       => $category_id,
             'variant_id'        => $variant_id,
@@ -1445,9 +1511,6 @@ function produkt_create_checkout_session() {
             'status'            => 'offen',
             'created_at'        => current_time('mysql', 1),
         ];
-        if ($order_number !== '') {
-            $insert_data['order_number'] = $order_number;
-        }
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             $insert_data
@@ -1554,6 +1617,7 @@ function produkt_create_embedded_checkout_session() {
                 'frame_color_id'   => intval($it['frame_color_id'] ?? 0) ?: null,
                 'price_id'         => $pid,
                 'final_price'      => floatval($it['final_price'] ?? 0),
+                'image_url'        => esc_url_raw($it['image'] ?? ''),
                 'start_date'       => $it_start ?: null,
                 'end_date'         => $it_end ?: null,
                 'days'             => $it_days,
@@ -1695,7 +1759,6 @@ function produkt_create_embedded_checkout_session() {
         $first = $orders[0] ?? [];
 
         global $wpdb;
-        $order_number = pv_generate_order_number();
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             [
@@ -1730,7 +1793,6 @@ function produkt_create_embedded_checkout_session() {
                 'client_info'      => $client_info_json,
                 'discount_amount'  => 0,
                 'status'           => 'offen',
-                'order_number'     => $order_number,
                 'created_at'       => current_time('mysql', 1)
             ]
         );
@@ -2062,6 +2124,34 @@ function pv_load_customer_logs() {
     $html = ob_get_clean();
 
     wp_send_json_success(['html' => $html, 'count' => count($logs)]);
+}
+
+add_action('wp_ajax_pv_delete_order', __NAMESPACE__ . '\\pv_delete_order');
+function pv_delete_order() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_id = intval($_POST['order_id'] ?? 0);
+    if (!$order_id) {
+        wp_send_json_error('missing');
+    }
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_orders';
+    $status = $wpdb->get_var($wpdb->prepare("SELECT status FROM $table WHERE id = %d", $order_id));
+    if ($status !== 'offen') {
+        wp_send_json_error('not_allowed');
+    }
+
+    $deleted = $wpdb->delete($table, ['id' => $order_id], ['%d']);
+
+    if ($deleted !== false) {
+        wp_send_json_success();
+    } else {
+        wp_send_json_error('db');
+    }
 }
 
 add_action('wp_ajax_pv_set_default_shipping', __NAMESPACE__ . '\\pv_set_default_shipping');

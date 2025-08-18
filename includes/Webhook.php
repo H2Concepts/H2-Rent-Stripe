@@ -166,7 +166,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
                 $unit = round(floatval($ci_item['final_price']) / $tage, 2);
             }
             $unit_fmt = number_format($unit, 2, ',', '.') . '€';
-            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">' . esc_html($unit_fmt) . '</td></tr>';
+            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">Preis/Tag ' . esc_html($unit_fmt) . '</td></tr>';
         }
         if ($order['shipping_cost'] > 0) {
             $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
@@ -355,7 +355,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
                 $unit = round(floatval($ci_item['final_price']) / $tage, 2);
             }
             $unit_fmt = number_format($unit, 2, ',', '.') . '€';
-            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">' . esc_html($unit_fmt) . '</td></tr>';
+            $message .= '<tr><td>' . $name . '</td><td style="text-align:right;">Preis/Tag ' . esc_html($unit_fmt) . '</td></tr>';
         }
         if ($order['shipping_cost'] > 0) {
             $message .= '<tr><td><strong>Versand</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
