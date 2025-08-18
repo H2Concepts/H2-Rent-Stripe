@@ -27,11 +27,17 @@ jQuery(document).ready(function($) {
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
+    if (cart.length > 0) {
+        startDate = cart[0].start_date || null;
+        endDate = cart[0].end_date || null;
+    }
 
     function updateCartBadge() {
         $('.h2-cart-badge').text(cart.length); // alle Instanzen (Desktop/Mobil/Sticky)
     }
     updateCartBadge();
+    updateSelectedDays();
+    updatePriceAndButton();
 
     window.addEventListener('storage', function(e){
         if (e.key === 'produkt_cart') {
@@ -106,7 +112,9 @@ jQuery(document).ready(function($) {
             }
             let period = '';
             if (item.start_date && item.end_date) {
-                period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';
+                const startFmt = formatDate(item.start_date);
+                const endFmt = formatDate(item.end_date);
+                period = startFmt + ' - ' + endFmt + ' (' + item.days + ' Tage)';
             } else if (item.dauer_name) {
                 period = item.dauer_name;
             }
@@ -173,9 +181,7 @@ jQuery(document).ready(function($) {
         $('#produkt-field-shipping').val(shippingPriceId);
     }
 
-    if (produkt_ajax.betriebsmodus === 'kauf') {
-        renderCalendar(calendarMonth);
-    }
+    renderCalendar(calendarMonth);
     if (!Array.isArray(produkt_ajax.variant_blocked_days)) {
         produkt_ajax.variant_blocked_days = [];
     }
@@ -243,7 +249,7 @@ jQuery(document).ready(function($) {
             $('#produkt-rent-button').prop('disabled', true);
             $('.produkt-mobile-button').prop('disabled', true);
             $('#produkt-button-help').hide();
-            $('#produkt-unavailable-help').show();
+            $('#produkt-unavailable-help').text('Produkt im Mietzeitraum nicht verfügbar').show();
             $('#produkt-notify').show();
             $('.produkt-notify-form').show();
             $('#produkt-notify-success').hide();
@@ -281,16 +287,19 @@ jQuery(document).ready(function($) {
             produkt_ajax.variant_weekend_only = variantWeekendOnly;
             produkt_ajax.variant_min_days = variantMinDays;
 
-            // Reset selections when switching variants so the rent button
-            // becomes inactive immediately
+            // Reset other selections when switching variants so the rent button
+            // becomes inactive immediately. Preserve rental dates if a period
+            // is already locked by existing cart items.
             selectedCondition = null;
             selectedProductColor = null;
             selectedFrameColor = null;
             selectedExtras = [];
             selectedDuration = null;
-            startDate = null;
-            endDate = null;
-            selectedDays = 0;
+            if (cart.length === 0) {
+                startDate = null;
+                endDate = null;
+                selectedDays = 0;
+            }
             renderCalendar(calendarMonth);
             updateSelectedDays();
 
@@ -759,6 +768,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     produkt_ajax.variant_blocked_days = response.data.days || [];
                     renderCalendar(calendarMonth);
+                    updatePriceAndButton();
                 }
             }
         });
@@ -884,7 +894,7 @@ jQuery(document).ready(function($) {
                 $('#produkt-rent-button').prop('disabled', true);
                 $('.produkt-mobile-button').prop('disabled', true);
                 $('#produkt-button-help').hide();
-                $('#produkt-unavailable-help').show();
+                $('#produkt-unavailable-help').text('Produkt im Mietzeitraum nicht verfügbar').show();
                 $('#produkt-notify').show();
                 $('.produkt-notify-form').show();
                 $('#produkt-notify-success').hide();
@@ -960,8 +970,9 @@ jQuery(document).ready(function($) {
         
         const allSelected = requiredSelections.every(selection => selection !== null && selection !== false);
         const minOk = !(variantMinDays > 0 && selectedDays > 0 && selectedDays < variantMinDays);
+        const rangeOk = isSelectedRangeAvailable();
 
-        if (allSelected && minOk) {
+        if (allSelected && minOk && rangeOk) {
             // Show loading state
             $('#produkt-price-display').show();
             $('#produkt-final-price').text('Lädt...');
@@ -1036,13 +1047,10 @@ jQuery(document).ready(function($) {
                             $('#produkt-notify-success').hide();
                         } else {
                             $('#produkt-button-help').hide();
-                            $('#produkt-unavailable-help').show();
+                            $('#produkt-unavailable-help').text(data.availability_note || 'Produkt im Mietzeitraum nicht verfügbar').show();
                             $('#produkt-notify').show();
                             $('.produkt-notify-form').show();
                             $('#produkt-notify-success').hide();
-                            if (data.availability_note) {
-                                $('#produkt-unavailable-help').text(data.availability_note);
-                            }
                             scrollToNotify();
                         }
                         
@@ -1070,15 +1078,8 @@ jQuery(document).ready(function($) {
             $('#produkt-price-display').hide();
             $('#produkt-rent-button').prop('disabled', true);
             $('.produkt-mobile-button').prop('disabled', true);
-            $('#produkt-button-help').show();
-            $('#produkt-unavailable-help').hide();
-            $('#produkt-notify').hide();
-            $('#produkt-notify-success').hide();
-            $('.produkt-notify-form').show();
             currentPrice = 0;
 
-            $('#produkt-availability-wrapper').hide();
-            
             // Hide mobile sticky price
             hideMobileStickyPrice();
 
@@ -1092,6 +1093,25 @@ jQuery(document).ready(function($) {
             }
             $('#produkt-rent-button span').text(label);
             $('.produkt-mobile-button span').text(label);
+
+            if (allSelected && minOk && !rangeOk) {
+                $('#produkt-button-help').hide();
+                $('#produkt-unavailable-help').text('Produkt im Mietzeitraum nicht verfügbar').show();
+                $('#produkt-notify').show();
+                $('.produkt-notify-form').show();
+                $('#produkt-notify-success').hide();
+                $('#produkt-availability-wrapper').show();
+                $('#produkt-availability-status').addClass('unavailable').removeClass('available');
+                $('#produkt-availability-status .status-text').text('Nicht auf Lager');
+                $('#produkt-delivery-box').hide();
+            } else {
+                $('#produkt-button-help').show();
+                $('#produkt-unavailable-help').hide();
+                $('#produkt-notify').hide();
+                $('#produkt-notify-success').hide();
+                $('.produkt-notify-form').show();
+                $('#produkt-availability-wrapper').hide();
+            }
         }
     }
 
@@ -1241,6 +1261,9 @@ jQuery(document).ready(function($) {
     });
     $(document).on('click', '#booking-calendar .calendar-day:not(.disabled)', function(){
         const dateStr = $(this).data('date');
+        if (cart.length > 0 && cart[0].start_date && cart[0].end_date) {
+            return;
+        }
 
         if (!startDate || (startDate && endDate)) {
             startDate = dateStr;
@@ -1324,6 +1347,21 @@ function updateSelectedDays() {
         return ids;
     }
 
+    function isSelectedRangeAvailable() {
+        if (!startDate || !endDate) return true;
+        let blocked = [];
+        if (Array.isArray(produkt_ajax.blocked_days)) blocked = blocked.concat(produkt_ajax.blocked_days);
+        if (Array.isArray(produkt_ajax.variant_blocked_days)) blocked = blocked.concat(produkt_ajax.variant_blocked_days);
+        if (Array.isArray(produkt_ajax.extra_blocked_days)) blocked = blocked.concat(produkt_ajax.extra_blocked_days);
+        const s = new Date(startDate);
+        const e = new Date(endDate);
+        for (let d = new Date(s.getTime()); d <= e; d.setDate(d.getDate() + 1)) {
+            const ds = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            if (blocked.includes(ds)) return false;
+        }
+        return true;
+    }
+
     function checkExtraAvailability() {
         const ids = getZeroStockExtraIds();
         if (!ids.length || !startDate || !endDate || !currentCategoryId) {
@@ -1369,6 +1407,14 @@ function updateSelectedDays() {
                 updatePriceAndButton();
             }
         });
+    }
+
+    if (startDate && endDate) {
+        updateSelectedDays();
+        updateExtraBookings(getZeroStockExtraIds());
+        checkExtraAvailability();
+        renderCalendar(calendarMonth);
+        updatePriceAndButton();
     }
 
     function showGalleryNotification() {
@@ -1417,6 +1463,11 @@ function updateSelectedDays() {
 
     function formatPrice(price) {
         return parseFloat(price).toFixed(2).replace('.', ',');
+    }
+
+    function formatDate(dateStr) {
+        const parts = dateStr.split('-');
+        return parts[2] + '.' + parts[1] + '.' + parts[0];
     }
 
     function scrollToNotify() {
