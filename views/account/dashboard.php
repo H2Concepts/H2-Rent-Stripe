@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) {
     exit;
 }
+require_once PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php';
 ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>
@@ -97,7 +98,7 @@ if (!defined('ABSPATH')) {
                                     Bestellung #<?php echo esc_html($num); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
                                 </button>
                                 <div class="produkt-accordion-content">
-                                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
+                                    <?php render_order_details($order->id); ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
