@@ -517,12 +517,35 @@ if (!$customer_id) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($orders as $o) : ?>
+                        <?php foreach ($orders as $o) :
+                            $product_display = $o->category_name;
+                            $variant_display = $o->variant_name ?: '–';
+                            $extras_display  = $o->extra_names ?: '–';
+                            $more = 0;
+                            if (!empty($o->client_info)) {
+                                $ci = json_decode($o->client_info, true);
+                                if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                                    $more = count($ci['cart_items']) - 1;
+                                    $first = $ci['cart_items'][0]['metadata'] ?? [];
+                                    if (!empty($first['produkt'])) {
+                                        $product_display = $first['produkt'];
+                                    }
+                                    if (!empty($first['extra'])) {
+                                        $extras_display = $first['extra'];
+                                    }
+                                }
+                            }
+                            if ($more > 0) {
+                                $product_display .= ' (' . $more . ' weitere)';
+                                $variant_display .= ' (' . $more . ' weitere)';
+                                $extras_display  .= ' (' . $more . ' weitere)';
+                            }
+                        ?>
                             <tr>
                                 <td>#<?php echo esc_html($o->order_number ?: $o->id); ?></td>
-                                <td><?php echo esc_html($o->category_name); ?></td>
-                                <td><?php echo esc_html($o->variant_name ?: '–'); ?></td>
-                                <td><?php echo esc_html($o->extra_names ?: '–'); ?></td>
+                                <td><?php echo esc_html($product_display); ?></td>
+                                <td><?php echo esc_html($variant_display); ?></td>
+                                <td><?php echo esc_html($extras_display); ?></td>
                                 <?php
                                 $start = $o->start_date ? date_i18n('d.m.Y', strtotime($o->start_date)) : '–';
                                 $end   = $o->end_date ? date_i18n('d.m.Y', strtotime($o->end_date)) : '–';
