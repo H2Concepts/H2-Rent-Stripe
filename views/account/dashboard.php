@@ -66,30 +66,47 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                 <?php if (!empty($rental_orders)) : ?>
                     <?php $first = $rental_orders[0]; ?>
                     <div class="abo-row">
-                        <div class="order-box">
-                            <h3>Kundendaten</h3>
-                            <?php if (!empty($first->customer_name)) : ?>
-                                <p><strong>Name:</strong> <?php echo esc_html($first->customer_name); ?></p>
-                            <?php endif; ?>
-                            <?php if (!empty($first->customer_email)) : ?>
-                                <p><strong>E-Mail:</strong> <?php echo esc_html($first->customer_email); ?></p>
-                            <?php endif; ?>
-                            <?php if (!empty($first->customer_phone)) : ?>
-                                <p><strong>Telefon:</strong> <?php echo esc_html($first->customer_phone); ?></p>
-                            <?php endif; ?>
-                            <?php
-                                $addr = $customer_addr;
-                                if (!$addr) {
-                                    $addr = trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city);
-                                    if ($first->customer_country) {
-                                        $addr .= ', ' . $first->customer_country;
-                                    }
+                        <?php
+                            $initials = '';
+                            if (!empty($first->customer_name)) {
+                                $parts = preg_split('/\s+/', trim($first->customer_name));
+                                $initials = strtoupper(mb_substr($parts[0], 0, 1) . (isset($parts[1]) ? mb_substr($parts[1], 0, 1) : ''));
+                            }
+                            $shipping_addr = $customer_addr;
+                            if (!$shipping_addr) {
+                                $shipping_addr = trim($first->customer_street . ', ' . $first->customer_postal . ' ' . $first->customer_city);
+                                if ($first->customer_country) {
+                                    $shipping_addr .= ', ' . $first->customer_country;
                                 }
-                            ?>
-                            <h4>Versandadresse</h4>
-                            <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
-                            <h4>Rechnungsadresse</h4>
-                            <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
+                            }
+                            $billing_addr = $shipping_addr;
+                        ?>
+                        <div class="order-box customer-box">
+                            <h3>Kundendaten</h3>
+                            <div class="customer-header">
+                                <div class="customer-avatar"><?php echo esc_html($initials); ?></div>
+                                <div class="customer-ident">
+                                    <?php if (!empty($first->customer_name)) : ?>
+                                        <h3 class="customer-name"><?php echo esc_html($first->customer_name); ?></h3>
+                                    <?php endif; ?>
+                                    <?php if (!empty($first->customer_email)) : ?>
+                                        <p class="customer-email"><?php echo esc_html($first->customer_email); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php if (!empty($first->customer_phone)) : ?>
+                                <p class="customer-phone">Telefon: <?php echo esc_html($first->customer_phone); ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="address-row">
+                            <div class="order-box">
+                                <h3>Versandadresse</h3>
+                                <p><?php echo esc_html($shipping_addr ?: 'Nicht angegeben'); ?></p>
+                            </div>
+                            <div class="order-box">
+                                <h3>Rechnungsadresse</h3>
+                                <p><?php echo esc_html($billing_addr ?: 'Nicht angegeben'); ?></p>
+                            </div>
                         </div>
                         <div class="orders-column produkt-accordions orders-accordion">
                             <?php foreach ($rental_orders as $idx => $order) : ?>
@@ -99,9 +116,8 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                                     $active     = $idx === 0 ? ' active' : '';
                                 ?>
                                 <div class="produkt-accordion-item<?php echo $active; ?>">
-                                    <?php $num = !empty($order->order_number) ? $order->order_number : $order->id; ?>
                                     <button type="button" class="produkt-accordion-header">
-                                        Bestellung #<?php echo esc_html($num); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
+                                        Bestellung vom <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
                                     </button>
                                     <div class="produkt-accordion-content">
                                         <?php include PRODUKT_PLUGIN_PATH . 'views/account/order-details.php'; ?>

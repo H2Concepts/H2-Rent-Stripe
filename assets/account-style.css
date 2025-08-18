@@ -54,9 +54,9 @@ img.wp-smiley, img.emoji {
 /* Grid with three cards per subscription */
 .abo-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 24px;
-    margin: 40px 0;
+    margin: 0 0 40px 0;
     align-items: start;
 }
 
@@ -79,6 +79,60 @@ img.wp-smiley, img.emoji {
     border-radius: 6px;
     object-fit: cover;
     margin-bottom: 12px;
+}
+
+.orders-accordion .produkt-accordion-header {
+    padding: 0.5rem 0;
+    font-size: 18px;
+}
+
+.customer-box {
+    background: none;
+    padding: 0;
+}
+
+.customer-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.customer-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #1d2327;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    text-transform: uppercase;
+}
+
+.customer-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.customer-email {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: #444;
+}
+
+.customer-phone {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.address-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
 }
 
 .order-box {
