@@ -173,7 +173,24 @@ class Ajax {
                     $shipping_cost = floatval($shipping->price);
                 }
             }
-            
+
+            $available = $variant->available ? true : false;
+            if ($available && $modus === 'kauf') {
+                if ((int)$variant->stock_available <= 0) {
+                    if ($start_date && $end_date) {
+                        $overlap = (int) $wpdb->get_var($wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE variant_id = %d AND mode = 'kauf' AND status IN ('offen','abgeschlossen') AND start_date <= %s AND end_date >= %s",
+                            $variant_id,
+                            $end_date,
+                            $start_date
+                        ));
+                        $available = ($overlap === 0);
+                    } else {
+                        $available = false;
+                    }
+                }
+            }
+
             wp_send_json_success(array(
                 'base_price'    => $base_price,
                 'final_price'   => $final_price,
@@ -181,7 +198,7 @@ class Ajax {
                 'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
                 'price_id'      => $used_price_id,
-                'available'     => $variant->available ? true : false,
+                'available'     => $available,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: '',
                 'weekend_applied' => $weekend_applied,
