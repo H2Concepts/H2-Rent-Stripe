@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
 function render_order_details($order_id) {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
-    $order_data = pv_get_order_by_id($order_id);
+    $order_data = \pv_get_order_by_id($order_id);
     $order = $order_data ? (object) $order_data : null;
 
     if (!$order) {
@@ -23,9 +23,9 @@ function render_order_details($order_id) {
     }
 
     // Daten vorbereiten
-    $image_url = pv_get_order_image($order);
-    list($sd, $ed) = pv_get_order_period($order);
-    $days = pv_get_order_rental_days($order);
+    $image_url = \pv_get_order_image($order);
+    list($sd, $ed) = \pv_get_order_period($order);
+    $days = \pv_get_order_rental_days($order);
 
     // Template einbinden: /admin/dashboard/sidebar-order-details.php
     $template_path = plugin_dir_path(__FILE__) . '../admin/dashboard/sidebar-order-details.php';

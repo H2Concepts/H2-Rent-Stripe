@@ -389,6 +389,8 @@ class Plugin {
         }
 
         require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
+        require_once PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php';
         $message = '';
 
         if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {

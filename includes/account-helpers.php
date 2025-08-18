@@ -80,6 +80,34 @@ function pv_get_image_url_by_variant_or_category($variant_id, $category_id) {
 }
 
 /**
+ * Determine the best image URL for a given order.
+ *
+ * Prefers an explicit image on the order or first cart item and falls
+ * back to variant or category defaults when absent.
+ *
+ * @param object|array $order Order data object or array.
+ * @return string Image URL or empty string when none found.
+ */
+function pv_get_order_image($order) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    if (!empty($order->image_url)) {
+        return $order->image_url;
+    }
+
+    if (!empty($order->produkte[0]->image_url)) {
+        return $order->produkte[0]->image_url;
+    }
+
+    $variant_id  = $order->variant_id ?? ($order->produkte[0]->variant_id ?? 0);
+    $category_id = $order->category_id ?? ($order->produkte[0]->category_id ?? 0);
+
+    return pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+}
+
+/**
  * Determine the start and end dates for an order.
  * Falls back to parsing the dauer_text when the explicit
  * date columns are empty.
