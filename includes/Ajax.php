@@ -506,15 +506,35 @@ class Ajax {
             wp_send_json_success(['days' => []]);
         }
 
+        $like = '%"variant_id":' . $variant_id . '%';
         $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT start_date, end_date FROM {$wpdb->prefix}produkt_orders WHERE variant_id = %d AND mode = 'kauf' AND status IN ('offen','abgeschlossen')",
-            $variant_id
+            "SELECT start_date, end_date, client_info, variant_id FROM {$wpdb->prefix}produkt_orders WHERE (variant_id = %d OR client_info LIKE %s) AND mode = 'kauf' AND status IN ('offen','abgeschlossen')",
+            $variant_id,
+            $like
         ));
         $days = [];
         foreach ($rows as $r) {
-            if ($r->start_date && $r->end_date) {
-                $s = strtotime($r->start_date);
-                $e = strtotime($r->end_date);
+            $periods = [];
+            if ((int)$r->variant_id === $variant_id && $r->start_date && $r->end_date) {
+                $periods[] = ['start' => $r->start_date, 'end' => $r->end_date];
+            }
+            if (!empty($r->client_info)) {
+                $ci = json_decode($r->client_info, true);
+                if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                    foreach ($ci['cart_items'] as $it) {
+                        if (isset($it['variant_id']) && intval($it['variant_id']) === $variant_id) {
+                            $it_start = $it['start_date'] ?? '';
+                            $it_end   = $it['end_date'] ?? '';
+                            if ($it_start && $it_end) {
+                                $periods[] = ['start' => $it_start, 'end' => $it_end];
+                            }
+                        }
+                    }
+                }
+            }
+            foreach ($periods as $p) {
+                $s = strtotime($p['start']);
+                $e = strtotime($p['end']);
                 while ($s <= $e) {
                     $days[] = date('Y-m-d', $s);
                     $s = strtotime('+1 day', $s);
@@ -523,6 +543,47 @@ class Ajax {
         }
         $days = array_values(array_unique($days));
         wp_send_json_success(['days' => $days]);
+    }
+
+    public function ajax_check_variant_availability() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+
+        $variant_id = intval($_POST['variant_id'] ?? 0);
+        $start_date = sanitize_text_field($_POST['start_date'] ?? '');
+        $end_date   = sanitize_text_field($_POST['end_date'] ?? '');
+        if (!$variant_id || !$start_date || !$end_date) {
+            wp_send_json_success(['available' => true]);
+        }
+
+        global $wpdb;
+        $like = '%"variant_id":' . $variant_id . '%';
+        $rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT variant_id, client_info FROM {$wpdb->prefix}produkt_orders WHERE (variant_id = %d OR client_info LIKE %s) AND mode = 'kauf' AND status IN ('offen','abgeschlossen') AND start_date <= %s AND end_date >= %s",
+            $variant_id,
+            $like,
+            $end_date,
+            $start_date
+        ));
+        $count = 0;
+        foreach ($rows as $r) {
+            $match = ((int)$r->variant_id === $variant_id);
+            if (!$match && !empty($r->client_info)) {
+                $ci = json_decode($r->client_info, true);
+                if (!empty($ci['cart_items']) && is_array($ci['cart_items'])) {
+                    foreach ($ci['cart_items'] as $it) {
+                        if (intval($it['variant_id'] ?? 0) === $variant_id) {
+                            $match = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if ($match) {
+                $count++;
+            }
+        }
+        $available = ($count === 0);
+        wp_send_json_success(['available' => $available]);
     }
 
     public function ajax_get_extra_booked_days() {
