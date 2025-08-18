@@ -13,16 +13,13 @@ if (!empty($order->client_info)) {
 }
 ?>
 <div class="order-box customer-order-box">
+    <span class="customer-order-number">Nr.: #<?php echo esc_html($nr); ?></span>
     <div class="customer-order-meta">
-        <p><strong>Bestellnummer:</strong> #<?php echo esc_html($nr); ?></p>
         <?php if (!empty($order->customer_phone)) : ?>
             <p><strong>Telefon:</strong> <?php echo esc_html($order->customer_phone); ?></p>
         <?php endif; ?>
         <?php if (!empty($order->invoice_url)) : ?>
             <p><strong>Rechnung:</strong> <a href="<?php echo esc_url($order->invoice_url); ?>" target="_blank" rel="noopener">Download</a></p>
-        <?php endif; ?>
-        <?php if (!empty($order->shipping_name)) : ?>
-            <p><strong>Versand:</strong> <?php echo esc_html($order->shipping_name); ?><?php if ($order->shipping_cost > 0) : ?> – <?php echo esc_html(number_format((float)$order->shipping_cost, 2, ',', '.')); ?>€<?php endif; ?></p>
         <?php endif; ?>
     </div>
     <div class="customer-order-items">
@@ -37,11 +34,12 @@ if (!empty($order->client_info)) {
                         <?php if (!empty($meta['produktfarbe'])) : ?><p>Farbe: <?php echo esc_html($meta['produktfarbe']); ?></p><?php endif; ?>
                         <?php if (!empty($meta['gestellfarbe'])) : ?><p>Gestellfarbe: <?php echo esc_html($meta['gestellfarbe']); ?></p><?php endif; ?>
                         <?php if (!empty($it['start_date']) && !empty($it['end_date'])) : ?>
-                            <p>Mietzeitraum: <?php echo esc_html(date_i18n('d.m.Y', strtotime($it['start_date']))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($it['end_date']))); ?></p>
+                            <p class="customer-order-period">Mietzeitraum: <?php echo esc_html(date_i18n('d.m.Y', strtotime($it['start_date']))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($it['end_date']))); ?></p>
                         <?php elseif (!empty($meta['dauer_name'])) : ?>
-                            <p>Mietdauer: <?php echo esc_html($meta['dauer_name']); ?></p>
+                            <p class="customer-order-period">Mietdauer: <?php echo esc_html($meta['dauer_name']); ?></p>
                         <?php endif; ?>
-                        <p class="customer-order-price"><?php echo esc_html(number_format((float)($it['final_price'] ?? 0), 2, ',', '.')); ?>€</p>
+                        <?php $tage = intval($it['days'] ?? 0); $preis_tag = ($tage > 0 && !empty($it['final_price'])) ? number_format(floatval($it['final_price']) / $tage, 2, ',', '.') . '€' : ''; ?>
+                        <p class="customer-order-price"><?php echo esc_html(number_format((float)($it['final_price'] ?? 0), 2, ',', '.')); ?>€<?php if ($preis_tag) : ?> <span class="customer-order-price-per-day">Preis / Tag <?php echo esc_html($preis_tag); ?></span><?php endif; ?></p>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -56,17 +54,18 @@ if (!empty($order->client_info)) {
                     <?php if (!empty($order->gestellfarbe_text)) : ?><p>Gestellfarbe: <?php echo esc_html($order->gestellfarbe_text); ?></p><?php endif; ?>
                     <?php if (!empty($order->zustand_text)) : ?><p>Ausführung: <?php echo esc_html($order->zustand_text); ?></p><?php endif; ?>
                     <?php list($sd,$ed) = pv_get_order_period($order); if ($sd && $ed) : ?>
-                        <p>Mietzeitraum: <?php echo esc_html(date_i18n('d.m.Y', strtotime($sd))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($ed))); ?></p>
+                        <p class="customer-order-period">Mietzeitraum: <?php echo esc_html(date_i18n('d.m.Y', strtotime($sd))); ?> - <?php echo esc_html(date_i18n('d.m.Y', strtotime($ed))); ?></p>
                     <?php endif; ?>
-                    <p class="customer-order-price"><?php echo esc_html(number_format((float)$order->final_price, 2, ',', '.')); ?>€</p>
+                    <?php $tage = pv_get_order_rental_days($order); $preis_tag = ($tage > 0 && !empty($order->final_price)) ? number_format(floatval($order->final_price) / $tage, 2, ',', '.') . '€' : ''; ?>
+                    <p class="customer-order-price"><?php echo esc_html(number_format((float)$order->final_price, 2, ',', '.')); ?>€<?php if ($preis_tag) : ?> <span class="customer-order-price-per-day">Preis / Tag <?php echo esc_html($preis_tag); ?></span><?php endif; ?></p>
                 </div>
             </div>
         <?php endif; ?>
     </div>
     <div class="customer-order-total">
-        <p><strong>Gesamtpreis:</strong> <?php echo esc_html(number_format((float)$order->final_price, 2, ',', '.')); ?>€</p>
-        <?php if ($order->shipping_cost > 0) : ?>
-            <p><strong>Versand:</strong> <?php echo esc_html(number_format((float)$order->shipping_cost, 2, ',', '.')); ?>€</p>
+        <?php if (!empty($order->shipping_name) || $order->shipping_cost > 0) : ?>
+            <p><strong>Versand:</strong> <?php echo esc_html($order->shipping_name); ?><?php if ($order->shipping_cost > 0) : ?> – <?php echo esc_html(number_format((float)$order->shipping_cost, 2, ',', '.')); ?>€<?php endif; ?></p>
         <?php endif; ?>
+        <p><strong>Gesamtpreis:</strong> <?php echo esc_html(number_format((float)$order->final_price, 2, ',', '.')); ?>€</p>
     </div>
 </div>
