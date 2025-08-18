@@ -1702,6 +1702,16 @@ window.addEventListener("load", () => {
 });
 
 jQuery(function($) {
+    const acctLinks = $('.account-sidebar a[data-section]');
+    acctLinks.on('click', function(e) {
+        e.preventDefault();
+        const target = $(this).data('section');
+        acctLinks.removeClass('active');
+        $(this).addClass('active');
+        $('.dashboard-section').removeClass('active');
+        $('#dashboard-' + target).addClass('active');
+    });
+
     $('#shop-filter-toggle').on('click', function() {
         $('#shop-filter-overlay').addClass('open');
         $('body').addClass('shop-filter-open');

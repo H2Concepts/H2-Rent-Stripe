@@ -405,6 +405,7 @@ class Plugin {
 
         $orders        = [];
         $sale_orders   = [];
+        $rental_orders = [];
         $order_map     = [];
         $subscriptions = [];
         $full_name     = '';
@@ -433,6 +434,8 @@ class Plugin {
                 }
                 if ($o->mode === 'kauf') {
                     $sale_orders[] = $o;
+                } else {
+                    $rental_orders[] = $o;
                 }
             }
 
