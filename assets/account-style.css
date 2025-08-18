@@ -84,11 +84,16 @@ img.wp-smiley, img.emoji {
 
 .orders-accordion .produkt-accordion-header {
     padding: 0.5rem 0;
-    font-size: 18px;
+    font-size: 16px;
+    font-weight: 400;
 }
 
 .kundendaten-heading {
     margin-top: 0;
+}
+
+.address-heading {
+    margin: 0;
 }
 
 .customer-box {

@@ -82,7 +82,7 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                             $billing_addr = $shipping_addr;
                         ?>
                         <div class="order-box customer-box">
-                            <h2 class="kundendaten-heading">Kundendaten</h2>
+                            <h3 class="kundendaten-heading">Kundendaten</h3>
                             <div class="customer-header">
                                 <div class="customer-avatar"><?php echo esc_html($initials); ?></div>
                                 <div class="customer-ident">
@@ -100,11 +100,11 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                         </div>
                         <div class="address-row">
                             <div class="order-box">
-                                <h3>Versandadresse</h3>
+                                <h3 class="address-heading">Versandadresse</h3>
                                 <p><?php echo esc_html($shipping_addr ?: 'Nicht angegeben'); ?></p>
                             </div>
                             <div class="order-box">
-                                <h3>Rechnungsadresse</h3>
+                                <h3 class="address-heading">Rechnungsadresse</h3>
                                 <p><?php echo esc_html($billing_addr ?: 'Nicht angegeben'); ?></p>
                             </div>
                         </div>
