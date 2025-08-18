@@ -1,14 +1,25 @@
 <?php
+/* Template Name: Kundenkonto */
 use ProduktVerleih\Database;
-
-require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
 if (!defined('ABSPATH')) {
     exit;
 }
 
-$modus    = get_option('produkt_betriebsmodus', 'miete');
-$is_sale  = ($modus === 'kauf');
+if (!is_user_logged_in()) {
+    $login_id  = get_option(PRODUKT_LOGIN_PAGE_OPTION);
+    $login_url = $login_id ? get_permalink($login_id) : home_url('/kunden-login');
+    wp_safe_redirect($login_url);
+    exit;
+}
+
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+get_header();
+
+$modus   = get_option('produkt_betriebsmodus', 'miete');
+$is_sale = ($modus === 'kauf');
+$message = '';
 
 if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
@@ -22,7 +33,6 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     }
 }
 
-
 $orders        = [];
 $sale_orders   = [];
 $order_map     = [];
@@ -30,9 +40,9 @@ $subscriptions = [];
 $full_name     = '';
 $customer_addr = '';
 
-if (is_user_logged_in()) {
-    $user_id = get_current_user_id();
-    $orders  = Database::get_orders_for_user($user_id);
+$user_id = get_current_user_id();
+if ($user_id) {
+    $orders = Database::get_orders_for_user($user_id);
 
     $current_user = wp_get_current_user();
     global $wpdb;
@@ -61,8 +71,9 @@ if (is_user_logged_in()) {
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
         if (!is_wp_error($subs)) {
             $subscriptions = $subs;
+        } else {
+            $message = '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
         }
-
     }
 
     foreach ($orders as $o) {
@@ -71,10 +82,11 @@ if (is_user_logged_in()) {
             break;
         }
     }
-
     if (!$full_name) {
         $full_name = wp_get_current_user()->display_name;
     }
 }
 
 include PRODUKT_PLUGIN_PATH . 'views/account/dashboard.php';
+
+get_footer();
