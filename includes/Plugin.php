@@ -465,7 +465,7 @@ class Plugin {
         }
 
         ob_start();
-        include PRODUKT_PLUGIN_PATH . 'templates/account-page.php';
+        include PRODUKT_PLUGIN_PATH . 'views/account/dashboard.php';
         return ob_get_clean();
     }
 
