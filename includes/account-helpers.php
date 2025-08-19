@@ -391,9 +391,6 @@ function pv_generate_invoice_pdf($order_id) {
             if (!empty($meta['gestellfarbe'])) {
                 $details[] = 'Gestellfarbe: ' . $meta['gestellfarbe'];
             }
-            if (!empty($meta['extra'])) {
-                $details[] = 'Extras: ' . $meta['extra'];
-            }
             $name = $meta['produkt'] ?? 'Produkt';
             if ($details) {
                 $name .= "\n" . implode("\n", $details);
@@ -425,7 +422,7 @@ function pv_generate_invoice_pdf($order_id) {
                     );
                     foreach ($rows as $ex) {
                         $price_val = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
-                        $post_data["artikel_{$i}_name"]  = $ex->name;
+                        $post_data["artikel_{$i}_name"]  = 'Extra: ' . $ex->name;
                         $post_data["artikel_{$i}_menge"] = $tage;
                         $post_data["artikel_{$i}_preis"] = floatval($price_val);
                         $i++;
@@ -483,14 +480,14 @@ function pv_generate_invoice_pdf($order_id) {
         if ($extras) {
             foreach ($extras as $ex) {
                 $price_val = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
-                $post_data["artikel_{$i}_name"]  = $ex->name;
+                $post_data["artikel_{$i}_name"]  = 'Extra: ' . $ex->name;
                 $post_data["artikel_{$i}_menge"] = $tage;
                 $post_data["artikel_{$i}_preis"] = floatval($price_val);
                 $i++;
             }
         } elseif (!empty($order['extra_names'])) {
             foreach (explode(', ', $order['extra_names']) as $extra_name) {
-                $post_data["artikel_{$i}_name"]  = $extra_name;
+                $post_data["artikel_{$i}_name"]  = 'Extra: ' . $extra_name;
                 $post_data["artikel_{$i}_menge"] = $tage;
                 $post_data["artikel_{$i}_preis"] = 0;
                 $i++;

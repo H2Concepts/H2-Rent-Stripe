@@ -151,7 +151,27 @@ function send_produkt_welcome_email(array $order, int $order_id) {
             if (!empty($meta['gestellfarbe'])) {
                 $details[] = 'Gestellfarbe: ' . $meta['gestellfarbe'];
             }
-            if (!empty($meta['extra'])) {
+            if (!empty($ci_item['extra_ids'])) {
+                global $wpdb;
+                $eids = array_filter(array_map('intval', explode(',', $ci_item['extra_ids'])));
+                if ($eids) {
+                    $placeholders = implode(',', array_fill(0, count($eids), '%d'));
+                    $rows = $wpdb->get_results(
+                        $wpdb->prepare(
+                            "SELECT name, price_rent, price_sale, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                            ...$eids
+                        )
+                    );
+                    $extra_parts = [];
+                    foreach ($rows as $ex) {
+                        $p = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+                        $extra_parts[] = esc_html($ex->name) . ' (Preis/Tag ' . number_format((float)$p, 2, ',', '.') . '€)';
+                    }
+                    if ($extra_parts) {
+                        $details[] = 'Extras: ' . implode(', ', $extra_parts);
+                    }
+                }
+            } elseif (!empty($meta['extra'])) {
                 $details[] = 'Extras: ' . $meta['extra'];
             }
             $name = '<strong>' . esc_html($meta['produkt'] ?? 'Produkt') . '</strong>';
@@ -180,7 +200,27 @@ function send_produkt_welcome_email(array $order, int $order_id) {
         if (!empty($order['zustand_text'])) {
             $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
         }
-        if (!empty($order['extra_text'])) {
+        if (!empty($order['extra_ids'])) {
+            global $wpdb;
+            $eids = array_filter(array_map('intval', explode(',', $order['extra_ids'])));
+            if ($eids) {
+                $placeholders = implode(',', array_fill(0, count($eids), '%d'));
+                $rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT name, price_rent, price_sale, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$eids
+                    )
+                );
+                $extra_parts = [];
+                foreach ($rows as $ex) {
+                    $p = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+                    $extra_parts[] = esc_html($ex->name) . ' (Preis/Tag ' . number_format((float)$p, 2, ',', '.') . '€)';
+                }
+                if ($extra_parts) {
+                    $message .= '<p><strong>Extras:</strong> ' . implode(', ', $extra_parts) . '</p>';
+                }
+            }
+        } elseif (!empty($order['extra_text'])) {
             $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
         }
         if (!empty($order['produktfarbe_text'])) {
@@ -340,7 +380,27 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
             if (!empty($meta['gestellfarbe'])) {
                 $details[] = 'Gestellfarbe: ' . $meta['gestellfarbe'];
             }
-            if (!empty($meta['extra'])) {
+            if (!empty($ci_item['extra_ids'])) {
+                global $wpdb;
+                $eids = array_filter(array_map('intval', explode(',', $ci_item['extra_ids'])));
+                if ($eids) {
+                    $placeholders = implode(',', array_fill(0, count($eids), '%d'));
+                    $rows = $wpdb->get_results(
+                        $wpdb->prepare(
+                            "SELECT name, price_rent, price_sale, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                            ...$eids
+                        )
+                    );
+                    $extra_parts = [];
+                    foreach ($rows as $ex) {
+                        $p = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+                        $extra_parts[] = esc_html($ex->name) . ' (Preis/Tag ' . number_format((float)$p, 2, ',', '.') . '€)';
+                    }
+                    if ($extra_parts) {
+                        $details[] = 'Extras: ' . implode(', ', $extra_parts);
+                    }
+                }
+            } elseif (!empty($meta['extra'])) {
                 $details[] = 'Extras: ' . $meta['extra'];
             }
             $name = '<strong>' . esc_html($meta['produkt'] ?? 'Produkt') . '</strong>';
@@ -369,7 +429,27 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         if (!empty($order['zustand_text'])) {
             $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
         }
-        if (!empty($order['extra_text'])) {
+        if (!empty($order['extra_ids'])) {
+            global $wpdb;
+            $eids = array_filter(array_map('intval', explode(',', $order['extra_ids'])));
+            if ($eids) {
+                $placeholders = implode(',', array_fill(0, count($eids), '%d'));
+                $rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT name, price_rent, price_sale, price FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                        ...$eids
+                    )
+                );
+                $extra_parts = [];
+                foreach ($rows as $ex) {
+                    $p = ($order['mode'] === 'kauf') ? ($ex->price_sale ?? $ex->price) : ($ex->price_rent ?? $ex->price);
+                    $extra_parts[] = esc_html($ex->name) . ' (Preis/Tag ' . number_format((float)$p, 2, ',', '.') . '€)';
+                }
+                if ($extra_parts) {
+                    $message .= '<p><strong>Extras:</strong> ' . implode(', ', $extra_parts) . '</p>';
+                }
+            }
+        } elseif (!empty($order['extra_text'])) {
             $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
         }
         if (!empty($order['produktfarbe_text'])) {
