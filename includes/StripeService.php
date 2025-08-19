@@ -1041,6 +1041,11 @@ class StripeService {
                 }
             }
 
+            $order_mode = ($mode === 'payment' ? 'kauf' : 'miete');
+            if (!empty($existing_orders)) {
+                $order_mode = $existing_orders[0]->mode ?: $order_mode;
+            }
+
             $data = [
                 'customer_email'    => $email,
                 'customer_name'     => sanitize_text_field($session->customer_details->name ?? ''),
@@ -1060,7 +1065,7 @@ class StripeService {
                 'gestellfarbe_text' => $gestellfarbe,
                 'extra_text'        => $extra,
                 'dauer_text'        => $dauer,
-                'mode'              => ($mode === 'payment' ? 'kauf' : 'miete'),
+                'mode'              => $order_mode,
                 'start_date'        => $start_date,
                 'end_date'          => $end_date,
                 'weekend_tariff'    => $weekend_tarif,

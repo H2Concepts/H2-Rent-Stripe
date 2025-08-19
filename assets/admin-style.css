@@ -3098,13 +3098,13 @@ body.color-modal-open {
 .col-type{width:80px;}
 .col-price{width:100px;}
 .col-discount{width:80px;}
-.col-status{width:100px;}
+.col-status{width:200px;}
 .col-actions{width:120px;}
 
 
 /* Order accordion styles */
 .orders-accordion .produkt-accordion-item{border-bottom:1px solid #e5e7eb;}
-.orders-accordion .produkt-accordion-header{width:100%;background:transparent;border:none;padding:0.5rem 0;font-size:16px;font-weight:600;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.orders-accordion .produkt-accordion-header{width:100%;background:transparent;border:none;padding:0.5rem 0;font-size:16px;font-weight:400;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
 .orders-accordion .produkt-accordion-header::after{content:"+";margin-left:auto;}
 .orders-accordion .produkt-accordion-item.active .produkt-accordion-header::after{content:"-";}
 .orders-accordion .produkt-accordion-content{overflow:hidden;max-height:0;transition:max-height 0.3s ease;padding:0;}

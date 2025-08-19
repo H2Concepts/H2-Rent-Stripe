@@ -2040,6 +2040,11 @@ input[type="checkbox"] {
 }
 
 @media (max-width: 768px) {
+    .shop-overview-container h1 {
+        margin-bottom: 30px;
+        font-size: 2.5rem;
+    }
+
     .shop-overview-layout {
         grid-template-columns: 1fr;
     }

@@ -54,9 +54,9 @@ img.wp-smiley, img.emoji {
 /* Grid with three cards per subscription */
 .abo-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: 24px;
-    margin: 40px 0;
+    margin: 0 0 40px 0;
     align-items: start;
 }
 
@@ -64,6 +64,7 @@ img.wp-smiley, img.emoji {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    width: 100%;
 }
 
 .abo-box,
@@ -81,10 +82,135 @@ img.wp-smiley, img.emoji {
     margin-bottom: 12px;
 }
 
+.orders-accordion .produkt-accordion-header {
+    padding: 0.5rem 0;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.kundendaten-heading {
+    margin-top: 0;
+}
+
+.address-heading {
+    margin: 0;
+}
+
+.customer-box {
+    background: none;
+    padding: 0;
+}
+
+.customer-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.customer-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #1d2327;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    text-transform: uppercase;
+}
+
+.customer-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.customer-email {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: #444;
+}
+
+.customer-phone {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.address-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
 .order-box {
     display: flex;
     flex-direction: column;
     position: relative;
+}
+
+/* Customer order detail blocks */
+.customer-order-box {
+    gap: 12px;
+}
+
+.customer-order-meta p {
+    margin: 0 0 4px;
+}
+
+.customer-order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.customer-order-item {
+    display: flex;
+    gap: 16px;
+}
+
+.customer-order-thumb {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.customer-order-info p {
+    margin: 4px 0;
+}
+
+.customer-order-name {
+    font-weight: 700;
+}
+
+.customer-order-period {
+    font-size: 13px;
+}
+
+.customer-order-price {
+    font-weight: 700;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.customer-order-price-per-day {
+    font-weight: 400;
+    font-size: 12px;
+}
+
+.customer-order-number {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-weight: 700;
+}
+
+.customer-order-total {
+    margin-top: 8px;
 }
 
 
@@ -159,6 +285,14 @@ img.wp-smiley, img.emoji {
     background-color: #c82333;
 }
 
+.dashboard-section {
+    display: none;
+}
+
+.dashboard-section.active {
+    display: block;
+}
+
 
 
 
@@ -206,6 +340,20 @@ img.wp-smiley, img.emoji {
     .abo-row {
         grid-template-columns: 1fr;
         align-items: start;
+    }
+    .address-row {
+        grid-template-columns: 1fr;
+    }
+    .customer-order-item {
+        flex-direction: column;
+    }
+    .kundendaten-heading {
+        margin-top: 0;
+        font-size: 22px;
+    }
+    .address-heading {
+        margin: 0;
+        font-size: 22px;
     }
 }
 
