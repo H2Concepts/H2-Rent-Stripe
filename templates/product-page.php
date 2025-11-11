@@ -60,6 +60,7 @@ $durations = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
+$duration_count = count($durations);
 
 // Get blocked days for booking calendar
 $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
@@ -236,6 +237,8 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             $pd = $price_data;
                             if (is_array($pd)) {
                                 $pd['count'] = $price_count;
+                                $pd['duration_count'] = $duration_count;
+                                $pd['mode'] = $modus;
                             }
                             echo esc_html(pv_format_price_label($pd));
                         ?>
@@ -368,7 +371,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                         }
                                     }
                                 ?>
-                                <p class="produkt-option-price"><?php echo number_format($display_price, 2, ',', '.'); ?>€<?php echo $modus === 'kauf' ? '' : ($price_period === 'month' ? '/Monat' : ''); ?></p>
+                                <?php
+                                    $price_prefix = ($modus === 'miete' && $duration_count >= 2 && $display_price > 0) ? 'ab ' : '';
+                                    $formatted_price = number_format($display_price, 2, ',', '.') . '€';
+                                    if ($modus !== 'kauf' && $price_period === 'month') {
+                                        $formatted_price .= '/Monat';
+                                    }
+                                ?>
+                                <p class="produkt-option-price"><?php echo esc_html($price_prefix . $formatted_price); ?></p>
                                 <?php if ($modus === 'kauf' && floatval($variant->weekend_price) > 0): ?>
                                     <div class="produkt-weekend-info">Wochenendpreis: <?php echo number_format((float)$variant->weekend_price, 2, ',', '.'); ?>€</div>
                                 <?php endif; ?>
