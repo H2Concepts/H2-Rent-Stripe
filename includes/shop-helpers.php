@@ -28,6 +28,7 @@ function pv_get_lowest_stripe_price_by_category($category_id) {
 
     $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
 
+    $duration_count = count($duration_ids);
     $price_count = 0;
     if (!empty($variant_ids) && !empty($duration_ids)) {
         $placeholders_variant  = implode(',', array_fill(0, count($variant_ids), '%d'));
@@ -42,9 +43,11 @@ function pv_get_lowest_stripe_price_by_category($category_id) {
     }
 
     return [
-        'amount'   => $price_data['amount'] ?? null,
-        'price_id' => $price_data['price_id'] ?? null,
-        'count'    => $price_count,
+        'amount'         => $price_data['amount'] ?? null,
+        'price_id'       => $price_data['price_id'] ?? null,
+        'count'          => $price_count,
+        'duration_count' => $duration_count,
+        'mode'           => get_option('produkt_betriebsmodus', 'miete'),
     ];
 }
 
@@ -59,7 +62,14 @@ function pv_format_price_label($price_data) {
         return 'Preis auf Anfrage';
     }
 
+    $mode = $price_data['mode'] ?? get_option('produkt_betriebsmodus', 'miete');
+    $duration_count = (int) ($price_data['duration_count'] ?? 0);
     $formatted = number_format((float) $price_data['amount'], 2, ',', '.');
+
+    if ($mode === 'miete' && $duration_count >= 2 && $price_data['amount'] > 0) {
+        return 'ab ' . $formatted . '€';
+    }
+
     if (($price_data['count'] ?? 0) > 1) {
         return 'ab ' . $formatted . '€';
     }
