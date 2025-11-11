@@ -132,7 +132,10 @@ $show_features = isset($category) ? ($category->show_features ?? 0) : 0;
 $default_feature_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81.5 81.9"><path d="M56.5,26.8l-21.7,21.7-9.7-9.7c-1.2-1.2-3.3-1.2-4.5,0s-1.2,3.3,0,4.5l12,12c.6.6,1.5.9,2.3.9s1.6-.3,2.3-.9l24-23.9c1.2-1.2,1.2-3.3,0-4.5-1.3-1.3-3.3-1.3-4.5,0Z"/><path d="M40.8,1C18.7,1,.8,18.9.8,41s17.9,40,40,40,40-17.9,40-40S62.8,1,40.8,1ZM40.8,74.6c-18.5,0-33.6-15.1-33.6-33.6S22.3,7.4,40.8,7.4s33.6,15.1,33.6,33.6-15.1,33.6-33.6,33.6Z"/></svg>';
 // Button
 $ui = get_option('produkt_ui_settings', []);
-$custom_label = !empty($category->button_text) ? $category->button_text : ($ui['button_text'] ?? '');
+$category_button = isset($category) && property_exists($category, 'button_text') ? trim((string) $category->button_text) : '';
+$global_button = isset($ui['button_text']) ? trim((string) $ui['button_text']) : '';
+$legacy_button_defaults = ['In den Warenkorb', 'Jetzt kaufen', 'Jetzt mieten'];
+$custom_label = ($category_button !== '' && !in_array($category_button, $legacy_button_defaults, true)) ? $category_button : $global_button;
 $button_text = $custom_label; // default, final label determined later
 $button_icon = $ui['button_icon'] ?? '';
 $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];

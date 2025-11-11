@@ -3,6 +3,8 @@
 
 if (isset($_POST['submit_buttons'])) {
     \ProduktVerleih\Admin::verify_admin_action();
+    global $wpdb;
+    $previous_ui = get_option('produkt_ui_settings', []);
     $settings = [
         'button_text'       => sanitize_text_field($_POST['button_text'] ?? ''),
         'button_icon'       => esc_url_raw($_POST['button_icon'] ?? ''),
@@ -16,6 +18,21 @@ if (isset($_POST['submit_buttons'])) {
         'show_tooltips'     => isset($_POST['show_tooltips']) ? 1 : 0,
     ];
     update_option('produkt_ui_settings', $settings);
+
+    $old_label = isset($previous_ui['button_text']) ? trim((string) $previous_ui['button_text']) : '';
+    $new_label = trim((string) $settings['button_text']);
+    $legacy_defaults = ['In den Warenkorb', 'Jetzt kaufen', 'Jetzt mieten'];
+    $labels_to_replace = array_filter(array_unique(array_merge(
+        $old_label !== '' ? [$old_label] : [],
+        $legacy_defaults
+    )), static fn($value) => $value !== $new_label);
+
+    if (!empty($labels_to_replace)) {
+        $placeholders = implode(',', array_fill(0, count($labels_to_replace), '%s'));
+        $query = "UPDATE {$wpdb->prefix}produkt_categories SET button_text = %s WHERE button_text IN ($placeholders)";
+        $wpdb->query($wpdb->prepare($query, array_merge([$new_label], $labels_to_replace)));
+    }
+
     $menus = isset($_POST['menu_locations']) ? array_map('intval', (array) $_POST['menu_locations']) : [];
     update_option('produkt_menu_locations', $menus);
     update_option('produkt_inject_block_nav_all', isset($_POST['inject_block_nav_all']) ? 1 : 0);
