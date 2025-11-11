@@ -2,6 +2,7 @@
 namespace ProduktVerleih;
 
 require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
 class Admin {
     public function __construct() {
@@ -334,6 +335,8 @@ class Admin {
         if ($load_script) {
             $modus = get_option('produkt_betriebsmodus', 'miete');
             $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
+            $button_label = \pv_get_primary_button_label($category);
+
             wp_localize_script('produkt-script', 'produkt_ajax', [
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('produkt_nonce'),
@@ -346,7 +349,7 @@ class Admin {
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
-                'button_text' => !empty($category->button_text) ? $category->button_text : ($ui['button_text'] ?? ''),
+                'button_text' => $button_label,
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
                 'popup_settings' => [

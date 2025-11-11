@@ -4,6 +4,33 @@ if (!defined('ABSPATH')) { exit; }
 use ProduktVerleih\StripeService;
 
 /**
+ * Determine the main call-to-action button label for the storefront.
+ *
+ * @param object|null $category Optional category object containing overrides.
+ */
+function pv_get_primary_button_label($category = null) {
+    $label = '';
+
+    if ($category && !empty($category->button_text)) {
+        $label = trim($category->button_text);
+    }
+
+    if ($label === '') {
+        $ui = get_option('produkt_ui_settings', []);
+        if (!empty($ui['button_text'])) {
+            $label = trim($ui['button_text']);
+        }
+    }
+
+    if ($label === '') {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        $label = ($mode === 'kauf') ? 'Jetzt kaufen' : 'Jetzt mieten';
+    }
+
+    return $label;
+}
+
+/**
  * Get the lowest Stripe price for all variants and durations in a category.
  *
  * @param int $category_id Category ID.

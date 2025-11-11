@@ -88,10 +88,6 @@ class Plugin {
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
 
-        // Ensure WooCommerce buttons use the configured label
-        add_filter('woocommerce_product_single_add_to_cart_text', [$this, 'override_add_to_cart_text'], 10, 2);
-        add_filter('woocommerce_product_add_to_cart_text', [$this, 'override_add_to_cart_text'], 10, 2);
-
         // Process login code submissions as early as possible to avoid header issues
         add_action('template_redirect', [$this, 'maybe_handle_login_code'], 1);
 
@@ -128,34 +124,6 @@ class Plugin {
             return $layout;
         });
 
-    }
-
-    /**
-     * Return the primary button label respecting the configured UI settings
-     * and the current operating mode.
-     */
-    private function get_primary_button_label() {
-        $ui   = get_option('produkt_ui_settings', []);
-        $text = isset($ui['button_text']) ? trim($ui['button_text']) : '';
-
-        if ($text !== '') {
-            return $text;
-        }
-
-        $mode = get_option('produkt_betriebsmodus', 'miete');
-
-        return $mode === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten';
-    }
-
-    /**
-     * Override WooCommerce add-to-cart button text so it honours the plugin settings.
-     *
-     * @param string          $text    Default button text provided by WooCommerce.
-     * @param \WC_Product|null $product Current product instance (unused).
-     * @return string
-     */
-    public function override_add_to_cart_text($text, $product = null) {
-        return $this->get_primary_button_label();
     }
 
     public function check_for_updates() {
