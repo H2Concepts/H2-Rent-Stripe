@@ -2110,15 +2110,16 @@ function pv_set_default_shipping() {
         wp_send_json_error('forbidden', 403);
     }
 
-    $id = intval($_POST['id'] ?? 0);
-    if (!$id) {
-        wp_send_json_error('missing');
-    }
-
     global $wpdb;
     $table = $wpdb->prefix . 'produkt_shipping_methods';
     $wpdb->query("UPDATE $table SET is_default = 0");
-    $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+    $id = intval($_POST['id'] ?? 0);
+    if ($id > 0) {
+        $updated = $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+        if ($updated === false) {
+            wp_send_json_error('db_error');
+        }
+    }
 
     wp_send_json_success();
 }
