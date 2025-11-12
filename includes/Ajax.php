@@ -623,10 +623,15 @@ class Ajax {
         }
 
         global $wpdb;
-        $available = (int) $wpdb->get_var($wpdb->prepare(
+        $available_raw = $wpdb->get_var($wpdb->prepare(
             "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
+        if ($available_raw === null) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $available = (int) $available_raw;
         if ($available > 0) {
             wp_send_json_success(['days' => []]);
         }
@@ -660,10 +665,16 @@ class Ajax {
 
         global $wpdb;
         $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
-        $min_available = (int) $wpdb->get_var($wpdb->prepare(
+        $min_available_raw = $wpdb->get_var($wpdb->prepare(
             "SELECT MIN(stock_available) FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
             ...$extra_ids
         ));
+
+        if ($min_available_raw === null) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $min_available = (int) $min_available_raw;
         if ($min_available > 0) {
             wp_send_json_success(['days' => []]);
         }
