@@ -25,6 +25,25 @@ class Ajax {
             "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
+
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
+        $base_duration_id = null;
+        $base_duration_price = null;
+        if ($variant && $modus !== 'kauf') {
+            $base_duration = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY months_minimum ASC, sort_order ASC, id ASC LIMIT 1",
+                $variant->category_id
+            ));
+            if ($base_duration) {
+                $base_duration_id = (int) $base_duration->id;
+                $base_duration_price = $wpdb->get_var($wpdb->prepare(
+                    "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $base_duration_id,
+                    $variant_id
+                ));
+            }
+        }
         
         $extras = [];
         if (!empty($extra_ids)) {
@@ -35,8 +54,52 @@ class Ajax {
             );
             $extras = $wpdb->get_results($query);
         }
-        
-        $modus = get_option('produkt_betriebsmodus', 'miete');
+
+        $variant_available_flag = true;
+        if ($variant) {
+            $variant_available_flag = isset($variant->available) ? ((int)$variant->available !== 0) : true;
+            if ($variant->stock_available !== null) {
+                $stock_available = (int)$variant->stock_available;
+                if ($stock_available <= 0) {
+                    $variant_available_flag = false;
+                }
+            }
+        }
+
+        if ($variant_available_flag && $product_color_id) {
+            $color_stock = $wpdb->get_row($wpdb->prepare(
+                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                $variant_id,
+                $product_color_id
+            ));
+            if ($color_stock && $color_stock->stock_available !== null) {
+                if ((int)$color_stock->stock_available <= 0) {
+                    $variant_available_flag = false;
+                }
+            }
+        }
+
+        if ($variant_available_flag && $frame_color_id) {
+            $frame_stock = $wpdb->get_row($wpdb->prepare(
+                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'frame_color' AND option_id = %d",
+                $variant_id,
+                $frame_color_id
+            ));
+            if ($frame_stock && $frame_stock->stock_available !== null) {
+                if ((int)$frame_stock->stock_available <= 0) {
+                    $variant_available_flag = false;
+                }
+            }
+        }
+
+        if ($variant_available_flag && !empty($extras)) {
+            foreach ($extras as $extra_row) {
+                if ($extra_row->stock_available !== null && (int)$extra_row->stock_available <= 0) {
+                    $variant_available_flag = false;
+                    break;
+                }
+            }
+        }
 
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
@@ -137,6 +200,12 @@ class Ajax {
 
             // Base price for the variant
             $base_price = $variant_price;
+            if ($modus !== 'kauf') {
+                $candidate_base = ($base_duration_price !== null) ? floatval($base_duration_price) : 0.0;
+                if ($candidate_base > 0) {
+                    $base_price = $candidate_base;
+                }
+            }
 
             if ($modus === 'kauf') {
                 $final_price = ($base_price + $extras_price) * $days;
@@ -153,7 +222,7 @@ class Ajax {
 
                 $original_price = null;
                 $discount = 0;
-                if ($duration->show_badge && $duration_price < $base_price) {
+                if ($duration->show_badge && $base_price > 0 && $duration_price > 0 && $duration_price < $base_price) {
                     $original_price = $base_price;
                     $discount = 1 - ($duration_price / $base_price);
                 }
@@ -181,7 +250,7 @@ class Ajax {
                 'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
                 'price_id'      => $used_price_id,
-                'available'     => $variant->available ? true : false,
+                'available'     => $variant_available_flag,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: '',
                 'weekend_applied' => $weekend_applied,
@@ -289,8 +358,13 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
-                            $color->stock_available = intval($option->stock_available);
-                            $color->stock_rented = intval($option->stock_rented);
+                            $stock_available = ($option->stock_available === null) ? null : (int)$option->stock_available;
+                            $stock_rented = ($option->stock_rented === null) ? null : (int)$option->stock_rented;
+                            if ($stock_available !== null && $stock_available <= 0) {
+                                $color->available = 0;
+                            }
+                            $color->stock_available = $stock_available;
+                            $color->stock_rented = $stock_rented;
                             $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
@@ -310,8 +384,13 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
-                            $color->stock_available = intval($option->stock_available);
-                            $color->stock_rented = intval($option->stock_rented);
+                            $stock_available = ($option->stock_available === null) ? null : (int)$option->stock_available;
+                            $stock_rented = ($option->stock_rented === null) ? null : (int)$option->stock_rented;
+                            if ($stock_available !== null && $stock_available <= 0) {
+                                $color->available = 0;
+                            }
+                            $color->stock_available = $stock_available;
+                            $color->stock_rented = $stock_rented;
                             $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
@@ -334,14 +413,21 @@ class Ajax {
                                 ? ($extra->stripe_price_id_sale ?: $extra->stripe_price_id)
                                 : ($extra->stripe_price_id_rent ?: $extra->stripe_price_id);
                             if (!empty($pid)) {
+                                $extra_stock_available = ($extra->stock_available === null) ? null : (int)$extra->stock_available;
+                                $extra_stock_rented = ($extra->stock_rented === null) ? null : (int)$extra->stock_rented;
+                                $extra_available = intval($option->available);
+                                if ($extra_stock_available !== null && $extra_stock_available <= 0) {
+                                    $extra_available = 0;
+                                }
                                 $extra_data = [
                                     'id'             => (int) $extra->id,
                                     'name'           => $extra->name,
                                     'price'          => ($modus === 'kauf') ? ($extra->price_sale ?? $extra->price) : ($extra->price_rent ?? $extra->price),
                                     'stripe_price_id'=> $pid,
                                     'image_url'      => $extra->image_url ?? '',
-                                    'available'      => intval($option->available),
-                                    'stock_available' => isset($extra->stock_available) ? (int) $extra->stock_available : 0,
+                                    'available'      => $extra_available,
+                                    'stock_available' => $extra_stock_available,
+                                    'stock_rented'    => $extra_stock_rented,
                                 ];
                                 $amount = StripeService::get_price_amount($pid);
                                 if (!is_wp_error($amount)) {
@@ -411,14 +497,21 @@ class Ajax {
                     if (empty($pid)) {
                         continue;
                     }
+                    $extra_stock_available = ($e->stock_available === null) ? null : (int)$e->stock_available;
+                    $extra_stock_rented = ($e->stock_rented === null) ? null : (int)$e->stock_rented;
+                    $extra_available = intval($e->available) ? 1 : 0;
+                    if ($extra_stock_available !== null && $extra_stock_available <= 0) {
+                        $extra_available = 0;
+                    }
                     $extra_data = [
                         'id'             => (int) $e->id,
                         'name'           => $e->name,
                         'price'          => $e->price,
                         'stripe_price_id'=> $pid,
                         'image_url'      => $e->image_url ?? '',
-                        'available'      => intval($e->available) ? 1 : 0,
-                        'stock_available'=> intval($e->stock_available),
+                        'available'      => $extra_available,
+                        'stock_available'=> $extra_stock_available,
+                        'stock_rented'   => $extra_stock_rented,
                     ];
                     $amount = StripeService::get_price_amount($pid);
                     if (!is_wp_error($amount)) {
@@ -437,8 +530,55 @@ class Ajax {
             )
         );
         if ($variant_data) {
-            $base_price = 0;
-            if (!empty($variant_data->stripe_price_id)) {
+            $base_price = 0.0;
+            $base_duration_id = null;
+            $base_duration_months = PHP_INT_MAX;
+            $base_duration_sort = PHP_INT_MAX;
+
+            $duration_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, show_badge, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+                    $variant_data->category_id
+                )
+            );
+            $price_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
+                    $variant_id
+                )
+            );
+            $price_map = [];
+            foreach ($price_rows as $row) {
+                $duration_id = (int) $row->duration_id;
+                $price = ($row->custom_price !== null) ? floatval($row->custom_price) : null;
+                if ($price !== null && $price <= 0) {
+                    $price = null;
+                }
+                $price_map[$duration_id] = $price;
+            }
+
+            foreach ($duration_rows as $d) {
+                $months = isset($d->months_minimum) ? (int) $d->months_minimum : PHP_INT_MAX;
+                $sort = isset($d->sort_order) ? (int) $d->sort_order : PHP_INT_MAX;
+                if (
+                    $base_duration_id === null ||
+                    $months < $base_duration_months ||
+                    ($months === $base_duration_months && (
+                        $sort < $base_duration_sort ||
+                        ($sort === $base_duration_sort && (int) $d->id < $base_duration_id)
+                    ))
+                ) {
+                    $base_duration_id = (int) $d->id;
+                    $base_duration_months = $months;
+                    $base_duration_sort = $sort;
+                }
+            }
+
+            if ($base_duration_id !== null && isset($price_map[$base_duration_id]) && $price_map[$base_duration_id] !== null) {
+                $base_price = $price_map[$base_duration_id];
+            }
+
+            if ($base_price <= 0 && !empty($variant_data->stripe_price_id)) {
                 $amount = StripeService::get_price_amount($variant_data->stripe_price_id);
                 if (!is_wp_error($amount)) {
                     $base_price = floatval($amount);
@@ -451,30 +591,15 @@ class Ajax {
                 }
             }
 
-            $duration_rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, show_badge FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
-                    $variant_data->category_id
-                )
-            );
-            $price_rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
-                    $variant_id
-                )
-            );
-            $price_map = [];
-            foreach ($price_rows as $row) {
-                $price_map[(int) $row->duration_id] = $row->custom_price !== null ? floatval($row->custom_price) : null;
-            }
-
             foreach ($duration_rows as $d) {
                 $price = $base_price;
                 if (isset($price_map[$d->id]) && $price_map[$d->id] !== null) {
                     $price = $price_map[$d->id];
+                } elseif ($d->id === $base_duration_id && $base_price > 0) {
+                    $price = $base_price;
                 }
                 $discount = 0;
-                if ($d->show_badge && $price < $base_price && $base_price > 0) {
+                if ($d->show_badge && $base_price > 0 && $price > 0 && $price < $base_price) {
                     $discount = 1 - ($price / $base_price);
                 }
                 $duration_discounts[$d->id] = $discount;
@@ -498,10 +623,15 @@ class Ajax {
         }
 
         global $wpdb;
-        $available = (int) $wpdb->get_var($wpdb->prepare(
+        $available_raw = $wpdb->get_var($wpdb->prepare(
             "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
+        if ($available_raw === null) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $available = (int) $available_raw;
         if ($available > 0) {
             wp_send_json_success(['days' => []]);
         }
@@ -535,10 +665,16 @@ class Ajax {
 
         global $wpdb;
         $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
-        $min_available = (int) $wpdb->get_var($wpdb->prepare(
+        $min_available_raw = $wpdb->get_var($wpdb->prepare(
             "SELECT MIN(stock_available) FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
             ...$extra_ids
         ));
+
+        if ($min_available_raw === null) {
+            wp_send_json_success(['days' => []]);
+        }
+
+        $min_available = (int) $min_available_raw;
         if ($min_available > 0) {
             wp_send_json_success(['days' => []]);
         }
@@ -2055,15 +2191,16 @@ function pv_set_default_shipping() {
         wp_send_json_error('forbidden', 403);
     }
 
-    $id = intval($_POST['id'] ?? 0);
-    if (!$id) {
-        wp_send_json_error('missing');
-    }
-
     global $wpdb;
     $table = $wpdb->prefix . 'produkt_shipping_methods';
     $wpdb->query("UPDATE $table SET is_default = 0");
-    $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+    $id = intval($_POST['id'] ?? 0);
+    if ($id > 0) {
+        $updated = $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+        if ($updated === false) {
+            wp_send_json_error('db_error');
+        }
+    }
 
     wp_send_json_success();
 }

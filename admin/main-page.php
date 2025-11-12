@@ -107,12 +107,26 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <?php if (!empty($return_orders)): ?>
             <ul class="return-list">
                 <?php foreach ($return_orders as $return): ?>
+                    <?php
+                        $display_date = '';
+                        if ($return->mode === 'kauf' && !empty($return->end_date)) {
+                            $display_date = 'Rückgabe am: ' . date_i18n('d.m.Y', strtotime($return->end_date));
+                        } else {
+                            $reference = !empty($return->start_date) ? $return->start_date : $return->created_at;
+                            if (!empty($reference)) {
+                                $display_date = 'In Vermietung seit: ' . date_i18n('d.m.Y', strtotime($reference));
+                            }
+                        }
+                    ?>
                     <li class="return-item">
                         <div>
                             <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
                             <?php echo esc_html($return->customer_name); ?><br>
                             <?php echo esc_html($return->category_name); ?><br>
-                            Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
+                            <?php if (!empty($return->variant_name) && $return->variant_name !== $return->category_name): ?>
+                                <?php echo esc_html($return->variant_name); ?><br>
+                            <?php endif; ?>
+                            <?php echo esc_html($display_date); ?>
                         </div>
                         <form method="post" class="return-confirm-form" style="margin-left:auto;">
                             <input type="hidden" name="confirm_return_id" value="<?php echo (int)$return->id; ?>">

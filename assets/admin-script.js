@@ -448,16 +448,22 @@ jQuery(document).ready(function($) {
 
     $('.default-shipping-checkbox').on('change', function(){
         var $this = $(this);
-        if ($this.is(':checked')) {
+        var isChecked = $this.is(':checked');
+        if (isChecked) {
             $('.default-shipping-checkbox').not($this).prop('checked', false);
-            $.post(produkt_admin.ajax_url, {
-                action: 'pv_set_default_shipping',
-                nonce: produkt_admin.nonce,
-                id: $this.data('id')
-            });
-        } else {
-            $this.prop('checked', true);
         }
+
+        $.post(produkt_admin.ajax_url, {
+            action: 'pv_set_default_shipping',
+            nonce: produkt_admin.nonce,
+            id: isChecked ? $this.data('id') : 0
+        }).fail(function(){
+            if (isChecked) {
+                $this.prop('checked', false);
+            } else {
+                $this.prop('checked', true);
+            }
+        });
     });
 
     var dayCard = $('#day-orders-card');

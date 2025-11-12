@@ -121,7 +121,10 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                 </thead>
                 <tbody>
                     <?php foreach ($orders as $order):
-                        $due = ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'));
+                        $due = (
+                            ($order->mode === 'kauf' && $order->end_date && $order->inventory_reverted == 0 && $order->end_date <= current_time('Y-m-d'))
+                            || ($order->mode === 'miete' && $order->inventory_reverted == 0)
+                        );
                         if ($due) {
                             \ProduktVerleih\Database::ensure_return_pending_log((int) $order->id);
                         }
