@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 $order = $order_data ?? null;
+$modus = get_option('produkt_betriebsmodus', 'miete');
 
 if (empty($order) || !is_object($order)) {
     echo '<p>Fehler: Keine gültigen Auftragsdaten übergeben.</p>';
@@ -28,11 +29,31 @@ if (!empty($sd) && !empty($ed)) {
 
 // Status-Text für den Badge ermitteln
 $badge_status = 'In Vermietung';
-if ($percent >= 100) {
-    $badge_status = 'Abgeschlossen';
-} elseif ($percent <= 0) {
-    $badge_status = 'Ausstehend';
+if ($modus !== 'miete') {
+    if ($percent >= 100) {
+        $badge_status = 'Abgeschlossen';
+    } elseif ($percent <= 0) {
+        $badge_status = 'Ausstehend';
+    }
 }
+
+// Laufende Miettage für Vermietungsmodus ermitteln
+$rental_elapsed_days = null;
+if ($modus === 'miete' && !empty($sd)) {
+    $start_timestamp = strtotime($sd);
+    if ($start_timestamp) {
+        $now = function_exists('current_time') ? current_time('timestamp') : time();
+        $day_in_seconds = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
+        $diff_days = floor(($now - $start_timestamp) / $day_in_seconds);
+        $rental_elapsed_days = max(0, $diff_days) + 1;
+    }
+}
+
+$start_label = $sd ? date_i18n('d. M', strtotime($sd)) : '–';
+$end_label = $ed ? date_i18n('d. M', strtotime($ed)) : '–';
+$day_counter_label = $rental_elapsed_days !== null
+    ? $rental_elapsed_days . ' Tag' . ($rental_elapsed_days === 1 ? '' : 'e')
+    : '–';
 
 // Produkte ermitteln
 $produkte = $order->produkte ?? [$order]; // fallback
@@ -97,16 +118,26 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <div class="rental-period-box">
         <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
         <h3>Mietzeitraum</h3>
-        <div class="rental-progress-number"><?php echo $percent; ?>%</div>
-        <div class="rental-progress">
-            <div class="bar">
-                <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
+        <?php if ($modus === 'miete') : ?>
+            <div class="rental-progress-number"><?php echo esc_html($day_counter_label); ?></div>
+            <div class="rental-progress rental-progress-days">
+                <div class="day-counter-text">Tage seit Buchung</div>
             </div>
-        </div>
-        <div class="rental-dates">
-            <span>Abgeholt: <?php echo date_i18n('d. M', strtotime($sd)); ?></span>
-            <span>Rückgabe: <?php echo date_i18n('d. M', strtotime($ed)); ?></span>
-        </div>
+            <div class="rental-dates">
+                <span>Start: <?php echo esc_html($start_label); ?></span>
+            </div>
+        <?php else : ?>
+            <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
+            <div class="rental-progress">
+                <div class="bar">
+                    <div class="fill" style="width: <?php echo intval($percent); ?>%;"></div>
+                </div>
+            </div>
+            <div class="rental-dates">
+                <span>Abgeholt: <?php echo esc_html($start_label); ?></span>
+                <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Produktliste -->
