@@ -58,7 +58,7 @@ class Ajax {
         $variant_available_flag = true;
         if ($variant) {
             $variant_available_flag = isset($variant->available) ? ((int)$variant->available !== 0) : true;
-            if ($variant->stock_available !== null) {
+            if ($variant->stock_available !== null && $variant->stock_available !== '') {
                 $stock_available = (int)$variant->stock_available;
                 if ($stock_available <= 0) {
                     $variant_available_flag = false;
@@ -72,7 +72,7 @@ class Ajax {
                 $variant_id,
                 $product_color_id
             ));
-            if ($color_stock && $color_stock->stock_available !== null) {
+            if ($color_stock && $color_stock->stock_available !== null && $color_stock->stock_available !== '') {
                 if ((int)$color_stock->stock_available <= 0) {
                     $variant_available_flag = false;
                 }
@@ -85,7 +85,7 @@ class Ajax {
                 $variant_id,
                 $frame_color_id
             ));
-            if ($frame_stock && $frame_stock->stock_available !== null) {
+            if ($frame_stock && $frame_stock->stock_available !== null && $frame_stock->stock_available !== '') {
                 if ((int)$frame_stock->stock_available <= 0) {
                     $variant_available_flag = false;
                 }
@@ -94,7 +94,7 @@ class Ajax {
 
         if ($variant_available_flag && !empty($extras)) {
             foreach ($extras as $extra_row) {
-                if ($extra_row->stock_available !== null && (int)$extra_row->stock_available <= 0) {
+                if ($extra_row->stock_available !== null && $extra_row->stock_available !== '' && (int)$extra_row->stock_available <= 0) {
                     $variant_available_flag = false;
                     break;
                 }
@@ -358,8 +358,8 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
-                            $stock_available = ($option->stock_available === null) ? null : (int)$option->stock_available;
-                            $stock_rented = ($option->stock_rented === null) ? null : (int)$option->stock_rented;
+                            $stock_available = ($option->stock_available === null || $option->stock_available === '') ? null : (int)$option->stock_available;
+                            $stock_rented = ($option->stock_rented === null || $option->stock_rented === '') ? null : (int)$option->stock_rented;
                             if ($stock_available !== null && $stock_available <= 0) {
                                 $color->available = 0;
                             }
@@ -384,8 +384,8 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
-                            $stock_available = ($option->stock_available === null) ? null : (int)$option->stock_available;
-                            $stock_rented = ($option->stock_rented === null) ? null : (int)$option->stock_rented;
+                            $stock_available = ($option->stock_available === null || $option->stock_available === '') ? null : (int)$option->stock_available;
+                            $stock_rented = ($option->stock_rented === null || $option->stock_rented === '') ? null : (int)$option->stock_rented;
                             if ($stock_available !== null && $stock_available <= 0) {
                                 $color->available = 0;
                             }
@@ -413,8 +413,8 @@ class Ajax {
                                 ? ($extra->stripe_price_id_sale ?: $extra->stripe_price_id)
                                 : ($extra->stripe_price_id_rent ?: $extra->stripe_price_id);
                             if (!empty($pid)) {
-                                $extra_stock_available = ($extra->stock_available === null) ? null : (int)$extra->stock_available;
-                                $extra_stock_rented = ($extra->stock_rented === null) ? null : (int)$extra->stock_rented;
+                                $extra_stock_available = ($extra->stock_available === null || $extra->stock_available === '') ? null : (int)$extra->stock_available;
+                                $extra_stock_rented = ($extra->stock_rented === null || $extra->stock_rented === '') ? null : (int)$extra->stock_rented;
                                 $extra_available = intval($option->available);
                                 if ($extra_stock_available !== null && $extra_stock_available <= 0) {
                                     $extra_available = 0;
@@ -497,8 +497,8 @@ class Ajax {
                     if (empty($pid)) {
                         continue;
                     }
-                    $extra_stock_available = ($e->stock_available === null) ? null : (int)$e->stock_available;
-                    $extra_stock_rented = ($e->stock_rented === null) ? null : (int)$e->stock_rented;
+                    $extra_stock_available = ($e->stock_available === null || $e->stock_available === '') ? null : (int)$e->stock_available;
+                    $extra_stock_rented = ($e->stock_rented === null || $e->stock_rented === '') ? null : (int)$e->stock_rented;
                     $extra_available = intval($e->available) ? 1 : 0;
                     if ($extra_stock_available !== null && $extra_stock_available <= 0) {
                         $extra_available = 0;
@@ -627,7 +627,7 @@ class Ajax {
             "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
-        if ($available_raw === null) {
+        if ($available_raw === null || $available_raw === '') {
             wp_send_json_success(['days' => []]);
         }
 
