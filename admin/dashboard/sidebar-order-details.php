@@ -169,7 +169,18 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->weekend_tariff)) : ?>
                         <div>Hinweis: Wochenendtarif</div>
                     <?php endif; ?>
-                    <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
+                    <?php
+                        $duration_label = ($modus === 'miete') ? 'Mindestlaufzeit' : 'Miettage';
+                        if ($modus === 'miete') {
+                            $duration_value = $p->duration_name ?? $p->dauer_text ?? '–';
+                        } else {
+                            $duration_value = $days !== null ? $days : ($p->dauer_text ?? '–');
+                            if ($days !== null) {
+                                $duration_value .= ' Tag' . ($days === 1 ? '' : 'e');
+                            }
+                        }
+                    ?>
+                    <div><?php echo esc_html($duration_label); ?>: <?php echo esc_html($duration_value); ?></div>
                 </div>
 
                 <div class="product-price">
