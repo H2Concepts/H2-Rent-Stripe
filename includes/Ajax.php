@@ -25,6 +25,23 @@ class Ajax {
             "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
+
+        $base_duration_id = null;
+        $base_duration_price = null;
+        if ($variant && $modus !== 'kauf') {
+            $base_duration = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY months_minimum ASC, sort_order ASC, id ASC LIMIT 1",
+                $variant->category_id
+            ));
+            if ($base_duration) {
+                $base_duration_id = (int) $base_duration->id;
+                $base_duration_price = $wpdb->get_var($wpdb->prepare(
+                    "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $base_duration_id,
+                    $variant_id
+                ));
+            }
+        }
         
         $extras = [];
         if (!empty($extra_ids)) {
@@ -137,6 +154,12 @@ class Ajax {
 
             // Base price for the variant
             $base_price = $variant_price;
+            if ($modus !== 'kauf') {
+                $candidate_base = ($base_duration_price !== null) ? floatval($base_duration_price) : 0.0;
+                if ($candidate_base > 0) {
+                    $base_price = $candidate_base;
+                }
+            }
 
             if ($modus === 'kauf') {
                 $final_price = ($base_price + $extras_price) * $days;
@@ -153,7 +176,7 @@ class Ajax {
 
                 $original_price = null;
                 $discount = 0;
-                if ($duration->show_badge && $duration_price < $base_price) {
+                if ($duration->show_badge && $base_price > 0 && $duration_price > 0 && $duration_price < $base_price) {
                     $original_price = $base_price;
                     $discount = 1 - ($duration_price / $base_price);
                 }
@@ -437,8 +460,55 @@ class Ajax {
             )
         );
         if ($variant_data) {
-            $base_price = 0;
-            if (!empty($variant_data->stripe_price_id)) {
+            $base_price = 0.0;
+            $base_duration_id = null;
+            $base_duration_months = PHP_INT_MAX;
+            $base_duration_sort = PHP_INT_MAX;
+
+            $duration_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT id, show_badge, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+                    $variant_data->category_id
+                )
+            );
+            $price_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
+                    $variant_id
+                )
+            );
+            $price_map = [];
+            foreach ($price_rows as $row) {
+                $duration_id = (int) $row->duration_id;
+                $price = ($row->custom_price !== null) ? floatval($row->custom_price) : null;
+                if ($price !== null && $price <= 0) {
+                    $price = null;
+                }
+                $price_map[$duration_id] = $price;
+            }
+
+            foreach ($duration_rows as $d) {
+                $months = isset($d->months_minimum) ? (int) $d->months_minimum : PHP_INT_MAX;
+                $sort = isset($d->sort_order) ? (int) $d->sort_order : PHP_INT_MAX;
+                if (
+                    $base_duration_id === null ||
+                    $months < $base_duration_months ||
+                    ($months === $base_duration_months && (
+                        $sort < $base_duration_sort ||
+                        ($sort === $base_duration_sort && (int) $d->id < $base_duration_id)
+                    ))
+                ) {
+                    $base_duration_id = (int) $d->id;
+                    $base_duration_months = $months;
+                    $base_duration_sort = $sort;
+                }
+            }
+
+            if ($base_duration_id !== null && isset($price_map[$base_duration_id]) && $price_map[$base_duration_id] !== null) {
+                $base_price = $price_map[$base_duration_id];
+            }
+
+            if ($base_price <= 0 && !empty($variant_data->stripe_price_id)) {
                 $amount = StripeService::get_price_amount($variant_data->stripe_price_id);
                 if (!is_wp_error($amount)) {
                     $base_price = floatval($amount);
@@ -451,30 +521,15 @@ class Ajax {
                 }
             }
 
-            $duration_rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, show_badge FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
-                    $variant_data->category_id
-                )
-            );
-            $price_rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
-                    $variant_id
-                )
-            );
-            $price_map = [];
-            foreach ($price_rows as $row) {
-                $price_map[(int) $row->duration_id] = $row->custom_price !== null ? floatval($row->custom_price) : null;
-            }
-
             foreach ($duration_rows as $d) {
                 $price = $base_price;
                 if (isset($price_map[$d->id]) && $price_map[$d->id] !== null) {
                     $price = $price_map[$d->id];
+                } elseif ($d->id === $base_duration_id && $base_price > 0) {
+                    $price = $base_price;
                 }
                 $discount = 0;
-                if ($d->show_badge && $price < $base_price && $base_price > 0) {
+                if ($d->show_badge && $base_price > 0 && $price > 0 && $price < $base_price) {
                     $discount = 1 - ($price / $base_price);
                 }
                 $duration_discounts[$d->id] = $discount;
@@ -2055,15 +2110,16 @@ function pv_set_default_shipping() {
         wp_send_json_error('forbidden', 403);
     }
 
-    $id = intval($_POST['id'] ?? 0);
-    if (!$id) {
-        wp_send_json_error('missing');
-    }
-
     global $wpdb;
     $table = $wpdb->prefix . 'produkt_shipping_methods';
     $wpdb->query("UPDATE $table SET is_default = 0");
-    $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+    $id = intval($_POST['id'] ?? 0);
+    if ($id > 0) {
+        $updated = $wpdb->update($table, ['is_default' => 1], ['id' => $id], ['%d'], ['%d']);
+        if ($updated === false) {
+            wp_send_json_error('db_error');
+        }
+    }
 
     wp_send_json_success();
 }

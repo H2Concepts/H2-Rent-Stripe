@@ -82,28 +82,68 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
     $price_count = (int) $wpdb->get_var($count_query);
 }
 
-// Preise der ersten Variante für Rabatt-Badges ermitteln
-$badge_base_price = null;
+// Preise für Rabatt-Badges ermitteln
+$badge_base_price = 0.0;
 $badge_prices = [];
-if (!empty($variants)) {
+$badge_base_duration_id = null;
+$badge_base_duration_months = PHP_INT_MAX;
+$badge_base_duration_sort = PHP_INT_MAX;
+
+if (!empty($durations)) {
+    foreach ($durations as $duration) {
+        $current_months = isset($duration->months_minimum) ? (int) $duration->months_minimum : PHP_INT_MAX;
+        $current_sort = isset($duration->sort_order) ? (int) $duration->sort_order : PHP_INT_MAX;
+
+        if ($badge_base_duration_id === null) {
+            $badge_base_duration_id = (int) $duration->id;
+            $badge_base_duration_months = $current_months;
+            $badge_base_duration_sort = $current_sort;
+        } else {
+            if (
+                $current_months < $badge_base_duration_months ||
+                (
+                    $current_months === $badge_base_duration_months &&
+                    ($current_sort < $badge_base_duration_sort ||
+                        ($current_sort === $badge_base_duration_sort && (int) $duration->id < $badge_base_duration_id))
+                )
+            ) {
+                $badge_base_duration_id = (int) $duration->id;
+                $badge_base_duration_months = $current_months;
+                $badge_base_duration_sort = $current_sort;
+            }
+        }
+    }
+}
+
+if (!empty($variant_ids) && !empty($duration_ids)) {
+    $variant_placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
+    $duration_placeholders = implode(',', array_fill(0, count($duration_ids), '%d'));
+    $query_args = array_merge($variant_ids, $duration_ids);
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($variant_placeholders) AND duration_id IN ($duration_placeholders)",
+        $query_args
+    ));
+    foreach ($rows as $row) {
+        $duration_id = (int) $row->duration_id;
+        $price = ($row->custom_price !== null) ? floatval($row->custom_price) : 0.0;
+        if ($price > 0) {
+            if (!isset($badge_prices[$duration_id]) || $price < $badge_prices[$duration_id]) {
+                $badge_prices[$duration_id] = $price;
+            }
+        }
+    }
+}
+
+if ($badge_base_duration_id !== null && isset($badge_prices[$badge_base_duration_id])) {
+    $badge_base_price = $badge_prices[$badge_base_duration_id];
+} elseif (!empty($variants)) {
     foreach ($variants as $variant) {
         $base = floatval($variant->base_price);
         if ($base <= 0) {
             $base = floatval($variant->mietpreis_monatlich);
         }
-        if ($base > 0 && ($badge_base_price === null || $base < $badge_base_price)) {
+        if ($base > 0 && ($badge_base_price <= 0 || $base < $badge_base_price)) {
             $badge_base_price = $base;
-        }
-    }
-
-    if (!empty($variant_ids) && !empty($duration_ids)) {
-        $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
-        $rows = $wpdb->get_results($wpdb->prepare(
-            "SELECT duration_id, MIN(custom_price+0) AS price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders) GROUP BY duration_id",
-            $variant_ids
-        ));
-        foreach ($rows as $r) {
-            $badge_prices[(int) $r->duration_id] = floatval($r->price);
         }
     }
 }
@@ -132,7 +172,10 @@ $show_features = isset($category) ? ($category->show_features ?? 0) : 0;
 $default_feature_svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 81.5 81.9"><path d="M56.5,26.8l-21.7,21.7-9.7-9.7c-1.2-1.2-3.3-1.2-4.5,0s-1.2,3.3,0,4.5l12,12c.6.6,1.5.9,2.3.9s1.6-.3,2.3-.9l24-23.9c1.2-1.2,1.2-3.3,0-4.5-1.3-1.3-3.3-1.3-4.5,0Z"/><path d="M40.8,1C18.7,1,.8,18.9.8,41s17.9,40,40,40,40-17.9,40-40S62.8,1,40.8,1ZM40.8,74.6c-18.5,0-33.6-15.1-33.6-33.6S22.3,7.4,40.8,7.4s33.6,15.1,33.6,33.6-15.1,33.6-33.6,33.6Z"/></svg>';
 // Button
 $ui = get_option('produkt_ui_settings', []);
-$custom_label = !empty($category->button_text) ? $category->button_text : ($ui['button_text'] ?? '');
+$category_button = isset($category) && property_exists($category, 'button_text') ? trim((string) $category->button_text) : '';
+$global_button = isset($ui['button_text']) ? trim((string) $ui['button_text']) : '';
+$legacy_button_defaults = ['In den Warenkorb', 'Jetzt kaufen', 'Jetzt mieten'];
+$custom_label = ($category_button !== '' && !in_array($category_button, $legacy_button_defaults, true)) ? $category_button : $global_button;
 $button_text = $custom_label; // default, final label determined later
 $button_icon = $ui['button_icon'] ?? '';
 $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];
