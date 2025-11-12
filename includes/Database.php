@@ -2001,21 +2001,42 @@ class Database {
      */
     public static function get_due_returns() {
         global $wpdb;
-        $today = current_time('Y-m-d');
-        $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
-                    COALESCE(c.name, o.produkt_name) AS category_name,
-                    COALESCE(v.name, o.produkt_name) AS variant_name,
-                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
-             FROM {$wpdb->prefix}produkt_orders o
-             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
-             GROUP BY o.id
-             ORDER BY o.end_date",
-            $today
-        ));
+
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+
+        if ($mode === 'kauf') {
+            $today = current_time('Y-m-d');
+            $orders = $wpdb->get_results($wpdb->prepare(
+                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                        COALESCE(c.name, o.produkt_name) AS category_name,
+                        COALESCE(v.name, o.produkt_name) AS variant_name,
+                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                 FROM {$wpdb->prefix}produkt_orders o
+                 LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+                 LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+                 WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
+                 GROUP BY o.id
+                 ORDER BY o.end_date",
+                $today
+            ));
+        } else {
+            $orders = $wpdb->get_results(
+                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at,
+                        COALESCE(c.name, o.produkt_name) AS category_name,
+                        COALESCE(v.name, o.produkt_name) AS variant_name,
+                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                 FROM {$wpdb->prefix}produkt_orders o
+                 LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+                 LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+                 WHERE o.mode <> 'kauf' AND o.status = 'abgeschlossen' AND o.inventory_reverted = 0
+                 GROUP BY o.id
+                 ORDER BY o.created_at"
+            );
+        }
+
+        $orders = $orders ?: [];
 
         foreach ($orders as $o) {
             self::ensure_return_pending_log((int) $o->id);

@@ -43,6 +43,8 @@ $orders = $wpdb->get_results("
 
 // Rückgaben abrufen (fällige Rückgaben, noch nicht bestätigt)
 $return_orders = \ProduktVerleih\Database::get_due_returns();
+$dashboard_mode = get_option('produkt_betriebsmodus', 'miete');
+$is_rental_mode = ($dashboard_mode !== 'kauf');
 
 // Branding holen
 $branding_result = $wpdb->get_row("SELECT setting_value FROM {$wpdb->prefix}produkt_branding WHERE setting_key = 'plugin_name'");
@@ -107,12 +109,29 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
         <?php if (!empty($return_orders)): ?>
             <ul class="return-list">
                 <?php foreach ($return_orders as $return): ?>
+                    <?php
+                        $start_source = $return->start_date ?? $return->created_at ?? '';
+                        $start_timestamp = $start_source ? strtotime($start_source) : false;
+                        $start_label = $start_timestamp ? date_i18n('d.m.Y', $start_timestamp) : '–';
+                        $end_timestamp = !empty($return->end_date) ? strtotime($return->end_date) : false;
+                        $end_label = $end_timestamp ? date_i18n('d.m.Y', $end_timestamp) : '–';
+                    ?>
                     <li class="return-item">
                         <div>
                             <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
                             <?php echo esc_html($return->customer_name); ?><br>
                             <?php echo esc_html($return->category_name); ?><br>
-                            Rückgabe am: <?php echo date_i18n('d.m.Y', strtotime($return->end_date)); ?>
+                            <?php if (!empty($return->variant_name) && $return->variant_name !== $return->category_name): ?>
+                                Ausführung: <?php echo esc_html($return->variant_name); ?><br>
+                            <?php endif; ?>
+                            <?php if (!empty($return->extra_names)): ?>
+                                Extras: <?php echo esc_html($return->extra_names); ?><br>
+                            <?php endif; ?>
+                            <?php if ($is_rental_mode): ?>
+                                Mietstart: <?php echo esc_html($start_label); ?>
+                            <?php else: ?>
+                                Rückgabe am: <?php echo esc_html($end_label); ?>
+                            <?php endif; ?>
                         </div>
                         <form method="post" class="return-confirm-form" style="margin-left:auto;">
                             <input type="hidden" name="confirm_return_id" value="<?php echo (int)$return->id; ?>">
