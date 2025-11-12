@@ -904,6 +904,9 @@
     justify-content: center;
     background: #f9f9f9;
     overflow: hidden;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .image-preview img {
