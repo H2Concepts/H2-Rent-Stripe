@@ -37,19 +37,29 @@ if ($modus !== 'miete') {
     }
 }
 
-// Laufende Miettage für Vermietungsmodus ermitteln
-$rental_elapsed_days = null;
-if ($modus === 'miete' && !empty($sd)) {
+// Start-Zeitpunkt bestimmen (inkl. Fallback auf Bestellzeit)
+$start_timestamp = null;
+if (!empty($sd)) {
     $start_timestamp = strtotime($sd);
-    if ($start_timestamp) {
-        $now = function_exists('current_time') ? current_time('timestamp') : time();
-        $day_in_seconds = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
-        $diff_days = floor(($now - $start_timestamp) / $day_in_seconds);
-        $rental_elapsed_days = max(0, $diff_days) + 1;
-    }
+} elseif (!empty($order->start_date)) {
+    $start_timestamp = strtotime($order->start_date);
 }
 
-$start_label = $sd ? date_i18n('d. M', strtotime($sd)) : '–';
+if (!$start_timestamp && !empty($order->created_at)) {
+    $start_timestamp = strtotime($order->created_at);
+}
+
+// Laufende Miettage für Vermietungsmodus ermitteln
+$rental_elapsed_days = null;
+if ($modus === 'miete' && $start_timestamp) {
+    $now = function_exists('current_time') ? current_time('timestamp') : time();
+    $day_in_seconds = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
+    $diff_days = max(0, floor(($now - $start_timestamp) / $day_in_seconds));
+    $rental_elapsed_days = $diff_days;
+}
+
+$start_label_format = ($modus === 'miete') ? 'd.m.Y' : 'd. M';
+$start_label = $start_timestamp ? date_i18n($start_label_format, $start_timestamp) : '–';
 $end_label = $ed ? date_i18n('d. M', strtotime($ed)) : '–';
 $day_counter_label = $rental_elapsed_days !== null
     ? $rental_elapsed_days . ' Tag' . ($rental_elapsed_days === 1 ? '' : 'e')
