@@ -23,13 +23,12 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 }
 
 
-$orders         = [];
-$sale_orders    = [];
-$rental_orders  = [];
-$order_map      = [];
-$subscriptions  = [];
-$full_name      = '';
-$customer_addr  = '';
+$orders        = [];
+$sale_orders   = [];
+$order_map     = [];
+$subscriptions = [];
+$full_name     = '';
+$customer_addr = '';
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -49,14 +48,14 @@ if (is_user_logged_in()) {
     }
 
     foreach ($orders as $o) {
+        if (($o->status ?? '') !== 'abgeschlossen') {
+            continue;
+        }
         if (!empty($o->subscription_id)) {
             $order_map[$o->subscription_id] = $o;
         }
-
         if ($o->mode === 'kauf') {
             $sale_orders[] = $o;
-        } else {
-            $rental_orders[] = $o;
         }
     }
 
@@ -67,27 +66,6 @@ if (is_user_logged_in()) {
             $subscriptions = $subs;
         }
 
-    }
-
-    $subscription_ids = array_column($subscriptions, 'subscription_id');
-    foreach ($rental_orders as $rental_order) {
-        $sub_id = $rental_order->subscription_id ?: 'order-' . $rental_order->id;
-
-        if (!in_array($sub_id, $subscription_ids, true)) {
-            $subscriptions[] = [
-                'subscription_id'      => $sub_id,
-                'start_date'           => $rental_order->start_date ?: $rental_order->created_at,
-                'cancel_at_period_end' => false,
-                'current_period_start' => $rental_order->start_date ?: $rental_order->created_at,
-                'current_period_end'   => $rental_order->end_date ?: null,
-                'status'               => 'active',
-            ];
-            $subscription_ids[] = $sub_id;
-        }
-
-        if (!isset($order_map[$sub_id])) {
-            $order_map[$sub_id] = $rental_order;
-        }
     }
 
     foreach ($orders as $o) {
