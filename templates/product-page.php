@@ -383,10 +383,22 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <h3>Wählen Sie Ihre Ausführung</h3>
                     <div class="produkt-options variants layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($variants as $variant): ?>
-                        <div class="produkt-option <?php echo !($variant->available ?? 1) ? 'unavailable' : ''; ?>"
+                        <?php
+                            $variant_stock_raw = $variant->stock_available;
+                            $variant_tracks_inventory = ($variant_stock_raw !== null && $variant_stock_raw !== '');
+                            $variant_stock_value = $variant_tracks_inventory ? (int) $variant_stock_raw : null;
+                            $variant_available_flag = ($variant->available ?? 1) ? true : false;
+                            if ($variant_tracks_inventory && $variant_stock_value !== null && $variant_stock_value <= 0) {
+                                $variant_available_flag = false;
+                            }
+                            $variant_data_available = $variant_available_flag ? 'true' : 'false';
+                            $variant_stock_attr = $variant_tracks_inventory && $variant_stock_value !== null ? $variant_stock_value : '';
+                        ?>
+                        <div class="produkt-option <?php echo !$variant_available_flag ? 'unavailable' : ''; ?>"
                              data-type="variant"
                              data-id="<?php echo esc_attr($variant->id); ?>"
-                             data-available="<?php echo esc_attr(($variant->available ?? 1) ? 'true' : 'false'); ?>"
+                             data-available="<?php echo esc_attr($variant_data_available); ?>"
+                             data-stock="<?php echo esc_attr($variant_stock_attr); ?>"
                              data-delivery="<?php echo esc_attr($variant->delivery_time ?? ''); ?>"
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
@@ -425,7 +437,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                                 <?php if ($modus === 'kauf' && floatval($variant->weekend_price) > 0): ?>
                                     <div class="produkt-weekend-info">Wochenendpreis: <?php echo number_format((float)$variant->weekend_price, 2, ',', '.'); ?>€</div>
                                 <?php endif; ?>
-                                <?php if (!($variant->available ?? 1)): ?>
+                                <?php if (!$variant_available_flag): ?>
                                     <div class="produkt-availability-notice">
                                         <span class="produkt-unavailable-badge"><span class="produkt-emoji">❌</span> Nicht verfügbar</span>
                                         <?php if (!empty($variant->availability_note)): ?>
@@ -458,12 +470,21 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             $pid = $modus === 'kauf'
                                 ? ($extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? ''))
                                 : ($extra->stripe_price_id_rent ?: ($extra->stripe_price_id ?? ''));
+                            $extra_stock_raw = $extra->stock_available;
+                            $extra_tracks_inventory = ($extra_stock_raw !== null && $extra_stock_raw !== '');
+                            $extra_stock_value = $extra_tracks_inventory ? (int) $extra_stock_raw : null;
+                            $extra_available_flag = intval($extra->available ?? 1) ? true : false;
+                            if ($extra_tracks_inventory && $extra_stock_value !== null && $extra_stock_value <= 0) {
+                                $extra_available_flag = false;
+                            }
+                            $extra_data_available = $extra_available_flag ? 'true' : 'false';
+                            $extra_stock_attr = $extra_tracks_inventory && $extra_stock_value !== null ? $extra_stock_value : '';
                         ?>
-                        <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
+                        <div class="produkt-option <?php echo !$extra_available_flag ? 'unavailable' : ''; ?>" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
-                             data-available="<?php echo intval($extra->available ?? 1) ? 'true' : 'false'; ?>"
-                             data-stock="<?php echo intval($extra->stock_available); ?>">
+                             data-available="<?php echo esc_attr($extra_data_available); ?>"
+                             data-stock="<?php echo esc_attr($extra_stock_attr); ?>">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
                                 <?php if (!empty($pid)) {

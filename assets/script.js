@@ -847,17 +847,19 @@ jQuery(document).ready(function($) {
                         </div>
                     </div>
                 `;
-            } else if (optionType === 'extra') {
+           } else if (optionType === 'extra') {
                 const priceSuffix = produkt_ajax.price_period === 'month' ? '/Monat' : '';
                 const priceHtml = option.price > 0 ? `+${parseFloat(option.price).toFixed(2).replace('.', ',')}€${priceSuffix}` : '';
+                const stockAttr = (option.stock_available === null || typeof option.stock_available === 'undefined') ? '' : option.stock_available;
+                const optionAvailable = option.available == 0 ? 'false' : 'true';
                 optionHtml = `
                     <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}"
                          data-type="extra"
                          data-id="${option.id}"
                          data-price-id="${option.stripe_price_id || ''}"
                          data-extra-image="${option.image_url || ''}"
-                         data-available="${option.available == 0 ? 'false' : 'true'}"
-                         data-stock="${option.stock_available}">
+                         data-available="${optionAvailable}"
+                         data-stock="${stockAttr}">
                         <div class="produkt-option-content">
                             <span class="produkt-extra-name">${option.name}</span>
                             ${priceHtml ? `<div class="produkt-extra-price">${priceHtml}</div>` : ''}

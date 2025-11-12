@@ -26,6 +26,8 @@ class Ajax {
             $variant_id
         ));
 
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
         $base_duration_id = null;
         $base_duration_price = null;
         if ($variant && $modus !== 'kauf') {
@@ -52,8 +54,52 @@ class Ajax {
             );
             $extras = $wpdb->get_results($query);
         }
-        
-        $modus = get_option('produkt_betriebsmodus', 'miete');
+
+        $variant_available_flag = true;
+        if ($variant) {
+            $variant_available_flag = isset($variant->available) ? ((int)$variant->available !== 0) : true;
+            if ($variant->stock_available !== null) {
+                $stock_available = (int)$variant->stock_available;
+                if ($stock_available <= 0) {
+                    $variant_available_flag = false;
+                }
+            }
+        }
+
+        if ($variant_available_flag && $product_color_id) {
+            $color_stock = $wpdb->get_row($wpdb->prepare(
+                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                $variant_id,
+                $product_color_id
+            ));
+            if ($color_stock && $color_stock->stock_available !== null) {
+                if ((int)$color_stock->stock_available <= 0) {
+                    $variant_available_flag = false;
+                }
+            }
+        }
+
+        if ($variant_available_flag && $frame_color_id) {
+            $frame_stock = $wpdb->get_row($wpdb->prepare(
+                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'frame_color' AND option_id = %d",
+                $variant_id,
+                $frame_color_id
+            ));
+            if ($frame_stock && $frame_stock->stock_available !== null) {
+                if ((int)$frame_stock->stock_available <= 0) {
+                    $variant_available_flag = false;
+                }
+            }
+        }
+
+        if ($variant_available_flag && !empty($extras)) {
+            foreach ($extras as $extra_row) {
+                if ($extra_row->stock_available !== null && (int)$extra_row->stock_available <= 0) {
+                    $variant_available_flag = false;
+                    break;
+                }
+            }
+        }
 
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
@@ -204,7 +250,7 @@ class Ajax {
                 'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
                 'price_id'      => $used_price_id,
-                'available'     => $variant->available ? true : false,
+                'available'     => $variant_available_flag,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: '',
                 'weekend_applied' => $weekend_applied,
@@ -312,8 +358,13 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
-                            $color->stock_available = intval($option->stock_available);
-                            $color->stock_rented = intval($option->stock_rented);
+                            $stock_available = ($option->stock_available === null) ? null : (int)$option->stock_available;
+                            $stock_rented = ($option->stock_rented === null) ? null : (int)$option->stock_rented;
+                            if ($stock_available !== null && $stock_available <= 0) {
+                                $color->available = 0;
+                            }
+                            $color->stock_available = $stock_available;
+                            $color->stock_rented = $stock_rented;
                             $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
@@ -333,8 +384,13 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
-                            $color->stock_available = intval($option->stock_available);
-                            $color->stock_rented = intval($option->stock_rented);
+                            $stock_available = ($option->stock_available === null) ? null : (int)$option->stock_available;
+                            $stock_rented = ($option->stock_rented === null) ? null : (int)$option->stock_rented;
+                            if ($stock_available !== null && $stock_available <= 0) {
+                                $color->available = 0;
+                            }
+                            $color->stock_available = $stock_available;
+                            $color->stock_rented = $stock_rented;
                             $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
@@ -357,14 +413,21 @@ class Ajax {
                                 ? ($extra->stripe_price_id_sale ?: $extra->stripe_price_id)
                                 : ($extra->stripe_price_id_rent ?: $extra->stripe_price_id);
                             if (!empty($pid)) {
+                                $extra_stock_available = ($extra->stock_available === null) ? null : (int)$extra->stock_available;
+                                $extra_stock_rented = ($extra->stock_rented === null) ? null : (int)$extra->stock_rented;
+                                $extra_available = intval($option->available);
+                                if ($extra_stock_available !== null && $extra_stock_available <= 0) {
+                                    $extra_available = 0;
+                                }
                                 $extra_data = [
                                     'id'             => (int) $extra->id,
                                     'name'           => $extra->name,
                                     'price'          => ($modus === 'kauf') ? ($extra->price_sale ?? $extra->price) : ($extra->price_rent ?? $extra->price),
                                     'stripe_price_id'=> $pid,
                                     'image_url'      => $extra->image_url ?? '',
-                                    'available'      => intval($option->available),
-                                    'stock_available' => isset($extra->stock_available) ? (int) $extra->stock_available : 0,
+                                    'available'      => $extra_available,
+                                    'stock_available' => $extra_stock_available,
+                                    'stock_rented'    => $extra_stock_rented,
                                 ];
                                 $amount = StripeService::get_price_amount($pid);
                                 if (!is_wp_error($amount)) {
@@ -434,14 +497,21 @@ class Ajax {
                     if (empty($pid)) {
                         continue;
                     }
+                    $extra_stock_available = ($e->stock_available === null) ? null : (int)$e->stock_available;
+                    $extra_stock_rented = ($e->stock_rented === null) ? null : (int)$e->stock_rented;
+                    $extra_available = intval($e->available) ? 1 : 0;
+                    if ($extra_stock_available !== null && $extra_stock_available <= 0) {
+                        $extra_available = 0;
+                    }
                     $extra_data = [
                         'id'             => (int) $e->id,
                         'name'           => $e->name,
                         'price'          => $e->price,
                         'stripe_price_id'=> $pid,
                         'image_url'      => $e->image_url ?? '',
-                        'available'      => intval($e->available) ? 1 : 0,
-                        'stock_available'=> intval($e->stock_available),
+                        'available'      => $extra_available,
+                        'stock_available'=> $extra_stock_available,
+                        'stock_rented'   => $extra_stock_rented,
                     ];
                     $amount = StripeService::get_price_amount($pid);
                     if (!is_wp_error($amount)) {

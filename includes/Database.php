@@ -2003,7 +2003,15 @@ class Database {
         global $wpdb;
         $today = current_time('Y-m-d');
         $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+            "SELECT o.id,
+                    o.order_number,
+                    o.customer_name,
+                    o.variant_id,
+                    o.extra_ids,
+                    o.start_date,
+                    o.end_date,
+                    o.created_at,
+                    o.mode,
                     COALESCE(c.name, o.produkt_name) AS category_name,
                     COALESCE(v.name, o.produkt_name) AS variant_name,
                     COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
@@ -2011,9 +2019,12 @@ class Database {
              LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
              LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
              LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
+             WHERE ((o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s)
+                    OR o.mode = 'miete')
+               AND o.inventory_reverted = 0
+               AND o.status = 'abgeschlossen'
              GROUP BY o.id
-             ORDER BY o.end_date",
+             ORDER BY CASE WHEN o.mode = 'kauf' AND o.end_date IS NOT NULL THEN o.end_date ELSE o.created_at END",
             $today
         ));
 
@@ -2061,14 +2072,20 @@ class Database {
         if ($order->variant_id) {
             $wpdb->query(
                 $wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                    "UPDATE {$wpdb->prefix}produkt_variants
+                        SET stock_available = CASE WHEN stock_available IS NULL THEN NULL ELSE stock_available + 1 END,
+                            stock_rented    = CASE WHEN stock_rented IS NULL THEN NULL ELSE GREATEST(stock_rented - 1, 0) END
+                     WHERE id = %d",
                     $order->variant_id
                 )
             );
             if ($order->product_color_id) {
                 $wpdb->query(
                     $wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                        "UPDATE {$wpdb->prefix}produkt_variant_options
+                            SET stock_available = CASE WHEN stock_available IS NULL THEN NULL ELSE stock_available + 1 END,
+                                stock_rented    = CASE WHEN stock_rented IS NULL THEN NULL ELSE GREATEST(stock_rented - 1, 0) END
+                         WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
                         $order->variant_id,
                         $order->product_color_id
                     )
@@ -2080,7 +2097,10 @@ class Database {
             foreach ($ids as $eid) {
                 $wpdb->query(
                     $wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = stock_available + 1, stock_rented = GREATEST(stock_rented - 1,0) WHERE id = %d",
+                        "UPDATE {$wpdb->prefix}produkt_extras
+                            SET stock_available = CASE WHEN stock_available IS NULL THEN NULL ELSE stock_available + 1 END,
+                                stock_rented    = CASE WHEN stock_rented IS NULL THEN NULL ELSE GREATEST(stock_rented - 1, 0) END
+                         WHERE id = %d",
                         $eid
                     )
                 );

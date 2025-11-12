@@ -681,69 +681,133 @@ class Admin {
                         }
                     }
 
-                    if (!empty($_POST['stock_available']) && is_array($_POST['stock_available'])) {
+                    if (isset($_POST['stock_available']) && is_array($_POST['stock_available'])) {
                         foreach ($_POST['stock_available'] as $vid => $qty) {
                             $vid = intval($vid);
-                            $available = intval($qty);
-                            $rented = intval($_POST['stock_rented'][$vid] ?? 0);
+                            $available_raw = is_string($qty) ? trim($qty) : $qty;
+                            $available = ($available_raw === '' || $available_raw === null)
+                                ? null
+                                : max(0, intval($available_raw));
+
+                            $rented_raw = $_POST['stock_rented'][$vid] ?? '';
+                            if (is_string($rented_raw)) {
+                                $rented_raw = trim($rented_raw);
+                            }
+                            $rented = ($rented_raw === '' || $rented_raw === null)
+                                ? ($available === null ? null : 0)
+                                : max(0, intval($rented_raw));
+
                             $sku = sanitize_text_field($_POST['sku'][$vid] ?? '');
-                            $wpdb->update(
-                                $wpdb->prefix . 'produkt_variants',
-                                [
-                                    'stock_available' => $available,
-                                    'stock_rented'    => $rented,
-                                    'sku'             => $sku
-                                ],
-                                ['id' => $vid],
-                                ['%d','%d','%s'],
-                                ['%d']
-                            );
+
+                            $set = [];
+                            $params = [];
+                            if ($available === null) {
+                                $set[] = 'stock_available = NULL';
+                            } else {
+                                $set[] = 'stock_available = %d';
+                                $params[] = $available;
+                            }
+                            if ($rented === null) {
+                                $set[] = 'stock_rented = NULL';
+                            } else {
+                                $set[] = 'stock_rented = %d';
+                                $params[] = $rented;
+                            }
+                            $set[] = 'sku = %s';
+                            $params[] = $sku;
+                            $params[] = $vid;
+
+                            $sql = "UPDATE {$wpdb->prefix}produkt_variants SET " . implode(', ', $set) . " WHERE id = %d";
+                            $wpdb->query($wpdb->prepare($sql, ...$params));
                         }
                     }
-                    if (!empty($_POST['color_stock_available']) && is_array($_POST['color_stock_available'])) {
+                    if (isset($_POST['color_stock_available']) && is_array($_POST['color_stock_available'])) {
                         foreach ($_POST['color_stock_available'] as $vid => $colors) {
                             foreach ($colors as $cid => $qty) {
-                                $vid = intval($vid);
-                                $cid = intval($cid);
-                                $available = intval($qty);
-                                $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
+                                $variant_id = intval($vid);
+                                $color_id = intval($cid);
+                                $available_raw = is_string($qty) ? trim($qty) : $qty;
+                                $available = ($available_raw === '' || $available_raw === null)
+                                    ? null
+                                    : max(0, intval($available_raw));
+
+                                $rented_raw = '';
+                                if (isset($_POST['color_stock_rented'][$vid][$cid])) {
+                                    $rented_raw = $_POST['color_stock_rented'][$vid][$cid];
+                                }
+                                if (is_string($rented_raw)) {
+                                    $rented_raw = trim($rented_raw);
+                                }
+                                $rented = ($rented_raw === '' || $rented_raw === null)
+                                    ? ($available === null ? null : 0)
+                                    : max(0, intval($rented_raw));
+
                                 $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
-                                $wpdb->update(
-                                    $wpdb->prefix . 'produkt_variant_options',
-                                    [
-                                        'stock_available' => $available,
-                                        'stock_rented'    => $rented,
-                                        'sku'             => $sku
-                                    ],
-                                    [
-                                        'variant_id'  => $vid,
-                                        'option_type' => 'product_color',
-                                        'option_id'   => $cid,
-                                    ],
-                                    ['%d','%d','%s'],
-                                    ['%d','%s','%d']
-                                );
+
+                                $set = [];
+                                $params = [];
+                                if ($available === null) {
+                                    $set[] = 'stock_available = NULL';
+                                } else {
+                                    $set[] = 'stock_available = %d';
+                                    $params[] = $available;
+                                }
+                                if ($rented === null) {
+                                    $set[] = 'stock_rented = NULL';
+                                } else {
+                                    $set[] = 'stock_rented = %d';
+                                    $params[] = $rented;
+                                }
+                                $set[] = 'sku = %s';
+                                $params[] = $sku;
+                                $params[] = $variant_id;
+                                $params[] = $color_id;
+
+                                $sql = "UPDATE {$wpdb->prefix}produkt_variant_options SET " . implode(', ', $set)
+                                    . " WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d";
+                                $wpdb->query($wpdb->prepare($sql, ...$params));
                             }
                         }
                     }
 
-                    if (!empty($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
+                    if (isset($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
                         foreach ($_POST['extra_stock_available'] as $eid => $qty) {
                             $eid = intval($eid);
-                            $available = intval($qty);
-                            $rented = intval($_POST['extra_stock_rented'][$eid] ?? 0);
+                            $available_raw = is_string($qty) ? trim($qty) : $qty;
+                            $available = ($available_raw === '' || $available_raw === null)
+                                ? null
+                                : max(0, intval($available_raw));
+
+                            $rented_raw = $_POST['extra_stock_rented'][$eid] ?? '';
+                            if (is_string($rented_raw)) {
+                                $rented_raw = trim($rented_raw);
+                            }
+                            $rented = ($rented_raw === '' || $rented_raw === null)
+                                ? ($available === null ? null : 0)
+                                : max(0, intval($rented_raw));
+
                             $sku = sanitize_text_field($_POST['extra_sku'][$eid] ?? '');
-                            $wpdb->update(
-                                $wpdb->prefix . 'produkt_extras',
-                                [
-                                    'stock_available' => $available,
-                                    'stock_rented'    => $rented,
-                                    'sku'             => $sku
-                                ],
-                                ['id' => $eid],
-                                ['%d','%d','%s'],
-                                ['%d']
-                            );
+
+                            $set = [];
+                            $params = [];
+                            if ($available === null) {
+                                $set[] = 'stock_available = NULL';
+                            } else {
+                                $set[] = 'stock_available = %d';
+                                $params[] = $available;
+                            }
+                            if ($rented === null) {
+                                $set[] = 'stock_rented = NULL';
+                            } else {
+                                $set[] = 'stock_rented = %d';
+                                $params[] = $rented;
+                            }
+                            $set[] = 'sku = %s';
+                            $params[] = $sku;
+                            $params[] = $eid;
+
+                            $sql = "UPDATE {$wpdb->prefix}produkt_extras SET " . implode(', ', $set) . " WHERE id = %d";
+                            $wpdb->query($wpdb->prepare($sql, ...$params));
                         }
                     }
                     echo '<div class="notice notice-success"><p>✅ Produkt erfolgreich aktualisiert!</p></div>';

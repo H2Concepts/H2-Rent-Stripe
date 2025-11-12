@@ -1117,12 +1117,18 @@ class StripeService {
                     if ($ord->status === 'offen') {
                         if ($ord->variant_id) {
                             $wpdb->query($wpdb->prepare(
-                                "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                "UPDATE {$wpdb->prefix}produkt_variants
+                                    SET stock_available = CASE WHEN stock_available IS NULL THEN NULL ELSE GREATEST(stock_available - 1, 0) END,
+                                        stock_rented    = CASE WHEN stock_rented IS NULL THEN NULL ELSE stock_rented + 1 END
+                                 WHERE id = %d",
                                 $ord->variant_id
                             ));
                             if ($ord->product_color_id) {
                                 $wpdb->query($wpdb->prepare(
-                                    "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                    "UPDATE {$wpdb->prefix}produkt_variant_options
+                                        SET stock_available = CASE WHEN stock_available IS NULL THEN NULL ELSE GREATEST(stock_available - 1, 0) END,
+                                            stock_rented    = CASE WHEN stock_rented IS NULL THEN NULL ELSE stock_rented + 1 END
+                                     WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
                                     $ord->variant_id,
                                     $ord->product_color_id
                                 ));
@@ -1132,7 +1138,10 @@ class StripeService {
                             $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
                             foreach ($ids as $eid) {
                                 $wpdb->query($wpdb->prepare(
-                                    "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                    "UPDATE {$wpdb->prefix}produkt_extras
+                                        SET stock_available = CASE WHEN stock_available IS NULL THEN NULL ELSE GREATEST(stock_available - 1, 0) END,
+                                            stock_rented    = CASE WHEN stock_rented IS NULL THEN NULL ELSE stock_rented + 1 END
+                                     WHERE id = %d",
                                     $eid
                                 ));
                             }
