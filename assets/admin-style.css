@@ -2405,11 +2405,20 @@ body.color-modal-open {
 }
 
 .produkt-color-preview-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 40px;
     height: 40px;
     border-radius: 50%;
     border: 1px solid #ddd;
     cursor: pointer;
+}
+
+.produkt-color-preview-circle--small {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
 }
 
 .produkt-color-picker input[type="text"] {

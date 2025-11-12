@@ -241,7 +241,7 @@ $total_variants = count($variants);
                     ?>
                         <tr>
                             <td><?php echo esc_html($color->name); ?></td>
-                            <td><span class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><span class="produkt-color-preview-circle produkt-color-preview-circle--small" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>'">
@@ -285,7 +285,7 @@ $total_variants = count($variants);
                     ?>
                         <tr>
                             <td><?php echo esc_html($color->name); ?></td>
-                            <td><span class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><span class="produkt-color-preview-circle produkt-color-preview-circle--small" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>'">
