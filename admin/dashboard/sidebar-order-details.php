@@ -28,12 +28,28 @@ if (!empty($sd) && !empty($ed)) {
 }
 
 // Status-Text für den Badge ermitteln
-$badge_status = 'In Vermietung';
-if ($modus !== 'miete') {
+$order_status = isset($order->status) ? strtolower($order->status) : '';
+$is_completed_order = ($order_status === 'abgeschlossen');
+$is_open_order = ($order_status === 'offen');
+
+$badge_status = '–';
+if ($modus === 'miete') {
+    if ($is_completed_order) {
+        $badge_status = 'In Vermietung';
+    } elseif ($is_open_order) {
+        $badge_status = 'Nicht abgeschlossen';
+    } elseif ($order_status === 'gekündigt') {
+        $badge_status = 'Gekündigt';
+    } else {
+        $badge_status = $order_status ? ucfirst($order_status) : 'Miete';
+    }
+} else {
     if ($percent >= 100) {
         $badge_status = 'Abgeschlossen';
     } elseif ($percent <= 0) {
         $badge_status = 'Ausstehend';
+    } else {
+        $badge_status = 'In Bearbeitung';
     }
 }
 
@@ -49,19 +65,21 @@ if (!$start_timestamp && !empty($order->created_at)) {
     $start_timestamp = strtotime($order->created_at);
 }
 
-// Laufende Miettage für Vermietungsmodus ermitteln
+// Laufende Miettage für Vermietungsmodus nur bei abgeschlossenen Aufträgen ermitteln
 $rental_elapsed_days = null;
-if ($modus === 'miete' && $start_timestamp) {
+if ($modus === 'miete' && $is_completed_order && $start_timestamp) {
     $now = function_exists('current_time') ? current_time('timestamp') : time();
     $day_in_seconds = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
     $diff_days = max(0, floor(($now - $start_timestamp) / $day_in_seconds));
     $rental_elapsed_days = $diff_days;
 }
 
-$start_label_format = ($modus === 'miete') ? 'd.m.Y' : 'd. M';
-$start_label = $start_timestamp ? date_i18n($start_label_format, $start_timestamp) : '–';
+$start_label_rental = ($modus === 'miete' && $is_completed_order && $start_timestamp)
+    ? date_i18n('d.m.Y', $start_timestamp)
+    : '–';
+$start_label_sale = $start_timestamp ? date_i18n('d. M', $start_timestamp) : '–';
 $end_label = $ed ? date_i18n('d. M', strtotime($ed)) : '–';
-$day_counter_label = $rental_elapsed_days !== null
+$day_counter_label = ($rental_elapsed_days !== null)
     ? $rental_elapsed_days . ' Tag' . ($rental_elapsed_days === 1 ? '' : 'e')
     : '–';
 
@@ -134,7 +152,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <div class="day-counter-text">Tage seit Buchung</div>
             </div>
             <div class="rental-dates">
-                <span>Start: <?php echo esc_html($start_label); ?></span>
+                <span>Start: <?php echo esc_html($start_label_rental); ?></span>
             </div>
         <?php else : ?>
             <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
@@ -144,7 +162,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 </div>
             </div>
             <div class="rental-dates">
-                <span>Abgeholt: <?php echo esc_html($start_label); ?></span>
+                <span>Abgeholt: <?php echo esc_html($start_label_sale); ?></span>
                 <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
             </div>
         <?php endif; ?>
