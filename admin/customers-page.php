@@ -270,19 +270,18 @@ if (!$customer_id) {
 
     $last_order = $all_orders[0] ?? null;
     $order_ids = wp_list_pluck($all_orders, 'id');
+    $customer_logs      = [];
+    $total_logs         = 0;
+    $initial_log_count  = 0;
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $logs_sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5";
+        $logs_sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC";
         $customer_logs = $wpdb->get_results($wpdb->prepare($logs_sql, $order_ids));
-        $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
-        $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
-    } else {
-        $customer_logs = [];
-        $total_logs = 0;
+        $total_logs = count($customer_logs);
     }
 
+    $payment_logs = [];
     if (!empty($order_payment_map)) {
-        $payment_logs = [];
         foreach ($order_payment_map as $oid => $info) {
             if (empty($info['log_entries'])) {
                 continue;
@@ -294,16 +293,22 @@ if (!$customer_id) {
                 $payment_logs[] = $entry;
             }
         }
-        if ($payment_logs) {
-            $customer_logs = array_merge($customer_logs, $payment_logs);
-            usort($customer_logs, function ($a, $b) {
-                $ta = isset($a->created_at) ? strtotime($a->created_at) : 0;
-                $tb = isset($b->created_at) ? strtotime($b->created_at) : 0;
-                return $tb <=> $ta;
-            });
-            $customer_logs = array_slice($customer_logs, 0, 5);
-        }
     }
+
+    if ($payment_logs) {
+        $customer_logs = array_merge($customer_logs, $payment_logs);
+    }
+
+    if ($customer_logs) {
+        usort($customer_logs, function ($a, $b) {
+            $ta = isset($a->created_at) ? strtotime($a->created_at) : 0;
+            $tb = isset($b->created_at) ? strtotime($b->created_at) : 0;
+            return $tb <=> $ta;
+        });
+    }
+
+    $total_logs += count($payment_logs);
+    $initial_log_count = count($customer_logs);
 
     $customer_notes = $wpdb->get_results($wpdb->prepare(
         "SELECT id, message, created_at FROM {$wpdb->prefix}produkt_customer_notes WHERE customer_id = %d ORDER BY created_at DESC",
@@ -441,8 +446,8 @@ if (!$customer_id) {
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <?php if ($total_logs > 5) : ?>
-                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>" data-initials="<?php echo esc_attr($initials); ?>">
+                        <?php if ($total_logs > $initial_log_count) : ?>
+                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="<?php echo intval($initial_log_count); ?>" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>" data-initials="<?php echo esc_attr($initials); ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-.6 0-1 .4-1 1v5H6c-.6 0-1 .4-1 1s.4 1 1 1h5v5c0 .6.4 1 1 1s1-.4 1-1v-5h5c.6 0 1-.4 1-1s-.4-1-1-1h-5V6c0-.6-.4-1-1-1z"/></svg>
                             </button>
                         <?php endif; ?>
