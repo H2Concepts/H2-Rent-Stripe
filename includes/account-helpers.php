@@ -195,6 +195,16 @@ function pv_get_email_footer_html() {
 }
 
 /**
+ * Determine whether automatic invoice emails are enabled for customers.
+ *
+ * @return bool
+ */
+function pv_is_invoice_email_enabled() {
+    $value = get_option('produkt_invoice_email_enabled', '1');
+    return in_array($value, ['1', 1, true, 'true', 'on'], true);
+}
+
+/**
  * Retrieve invoice sender data.
  *
  * @return array
