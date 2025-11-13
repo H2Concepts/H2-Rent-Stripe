@@ -224,17 +224,28 @@ function pv_get_order_return_timestamp($order, $logs = null) {
  *
  * @param object|array $order Order data including pricing
  * @param array|null   $logs  Optional order logs
- * @return array{payments: array<int, array{date:string,amount:float,type:string,note:string}>, total: float, log_entries: array}
+ * @return array{
+ *     payments: array<int, array{date:string,amount:float,type:string,note:string,shipping:float}>,
+ *     total: float,
+ *     log_entries: array,
+ *     monthly_amount: float,
+ *     shipping_once: float
+ * }
  */
 function pv_calculate_rental_payments($order, $logs = null) {
     if (is_array($order)) {
         $order = (object) $order;
     }
 
+    $monthly_amount = isset($order->final_price) ? max(0.0, (float) $order->final_price) : 0.0;
+    $shipping_cost  = isset($order->shipping_cost) ? max(0.0, (float) $order->shipping_cost) : 0.0;
+
     $result = [
-        'payments'    => [],
-        'total'       => 0.0,
-        'log_entries' => [],
+        'payments'      => [],
+        'total'         => 0.0,
+        'log_entries'   => [],
+        'monthly_amount'=> $monthly_amount,
+        'shipping_once' => $shipping_cost,
     ];
 
     if (empty($order) || empty($order->mode) || empty($order->status)) {
@@ -269,8 +280,8 @@ function pv_calculate_rental_payments($order, $logs = null) {
         return $result;
     }
 
-    $monthly_amount = isset($order->final_price) ? (float) $order->final_price : 0.0;
-    $shipping_cost  = isset($order->shipping_cost) ? (float) $order->shipping_cost : 0.0;
+    $monthly_amount = $result['monthly_amount'];
+    $shipping_cost  = $result['shipping_once'];
     $iteration      = 0;
 
     while ($current <= $cutoff) {
@@ -282,10 +293,12 @@ function pv_calculate_rental_payments($order, $logs = null) {
         $amount = $monthly_amount;
         $note   = '';
         $label  = 'Monatszahlung verbucht';
+        $shipping_portion = 0.0;
         if ($iteration === 1) {
             $amount += $shipping_cost;
             if ($shipping_cost > 0) {
-                $note = 'inkl. Versand';
+                $note = 'inkl. Versand (einmalig)';
+                $shipping_portion = $shipping_cost;
             }
             $label = 'Erste Monatszahlung verbucht';
         }
@@ -296,6 +309,7 @@ function pv_calculate_rental_payments($order, $logs = null) {
                 'amount'=> $amount,
                 'type'  => $iteration === 1 ? 'initial' : 'recurring',
                 'note'  => $note,
+                'shipping' => $shipping_portion,
             ];
             $result['total'] += $amount;
 
