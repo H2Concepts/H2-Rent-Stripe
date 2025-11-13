@@ -85,6 +85,7 @@ $day_counter_label = ($rental_elapsed_days !== null)
 
 // Produkte ermitteln
 $produkte = $order->produkte ?? [$order]; // fallback
+$rental_payments = $rental_payments ?? [];
 ?>
 
 <div class="sidebar-wrapper" data-order-id="<?php echo esc_attr($order->id); ?>">
@@ -246,7 +247,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <?php if (!empty($order_logs)) : ?>
                     <div class="order-log-list">
                         <?php
-                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
                         foreach ($order_logs as $log) :
                             $is_customer = !in_array($log->event, $system_events, true);
                             $avatar = $is_customer ? $initials : 'H2';
@@ -265,6 +266,9 @@ $produkte = $order->produkte ?? [$order]; // fallback
                                     break;
                                 case 'checkout_completed':
                                     $text = 'Checkout abgeschlossen.';
+                                    break;
+                                case 'auto_rental_payment':
+                                    $text = $log->message ?: 'Monatszahlung verbucht.';
                                     break;
                                 default:
                                     $text = $log->message ?: $log->event;
@@ -286,6 +290,40 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <?php endif; ?>
             </div>
         </div>
+        <?php if ($modus === 'miete') : ?>
+            <div class="produkt-accordion-item">
+                <button type="button" class="produkt-accordion-header">Zahlungen</button>
+                <div class="produkt-accordion-content">
+                    <?php if (!empty($rental_payments)) : ?>
+                        <?php
+                        $payment_total = array_reduce($rental_payments, function ($carry, $item) {
+                            return $carry + (float) ($item['amount'] ?? 0);
+                        }, 0.0);
+                        ?>
+                        <div class="payment-total"><strong>Gesamter Umsatz:</strong> <?php echo number_format($payment_total, 2, ',', '.'); ?> €</div>
+                        <div class="payment-list">
+                            <?php foreach ($rental_payments as $payment) :
+                                $date_label = !empty($payment['date']) ? date_i18n('d.m.Y', strtotime($payment['date'])) : '–';
+                                $type_label = ($payment['type'] ?? '') === 'initial' ? 'Erste Zahlung' : 'Monatszahlung';
+                                $amount     = number_format((float) ($payment['amount'] ?? 0), 2, ',', '.');
+                                $note       = $payment['note'] ?? '';
+                            ?>
+                                <div class="payment-row">
+                                    <div class="payment-date"><?php echo esc_html($date_label); ?></div>
+                                    <div class="payment-type"><?php echo esc_html($type_label); ?></div>
+                                    <div class="payment-amount"><?php echo esc_html($amount); ?> €</div>
+                                </div>
+                                <?php if ($note) : ?>
+                                    <div class="payment-note">Hinweis: <?php echo esc_html($note); ?></div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
+                        <p>Keine Zahlungen verbucht.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
     <div class="order-notes-section">
         <h3>Notizen</h3>

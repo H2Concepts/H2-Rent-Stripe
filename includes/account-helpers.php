@@ -142,6 +142,188 @@ function pv_get_order_rental_days($order) {
 }
 
 /**
+ * Determine the normalized rental start date for an order.
+ *
+ * @param object|array $order Order data
+ * @return string Empty string when unavailable otherwise Y-m-d formatted date
+ */
+function pv_get_order_start_date($order) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    if (empty($order)) {
+        return '';
+    }
+
+    if (!empty($order->start_date)) {
+        return substr($order->start_date, 0, 10);
+    }
+
+    list($start,) = pv_get_order_period($order);
+    if (!empty($start)) {
+        return substr($start, 0, 10);
+    }
+
+    if (!empty($order->created_at)) {
+        return substr($order->created_at, 0, 10);
+    }
+
+    return '';
+}
+
+/**
+ * Resolve the timestamp when a rental was marked as returned.
+ *
+ * @param object|array $order Order data
+ * @param array|null   $logs  Optional pre-fetched order logs
+ * @return int|null Unix timestamp or null when still active
+ */
+function pv_get_order_return_timestamp($order, $logs = null) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    if (empty($order) || empty($order->id)) {
+        return null;
+    }
+
+    $logs = is_array($logs) ? $logs : [];
+
+    foreach ($logs as $log) {
+        if (!isset($log->event) || $log->event !== 'inventory_returned_accepted') {
+            continue;
+        }
+        if (!empty($log->created_at)) {
+            $ts = strtotime($log->created_at);
+            if ($ts) {
+                return $ts;
+            }
+        }
+    }
+
+    if (!empty($order->inventory_reverted)) {
+        global $wpdb;
+        $created = $wpdb->get_var($wpdb->prepare(
+            "SELECT created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d AND event = 'inventory_returned_accepted' ORDER BY created_at DESC LIMIT 1",
+            $order->id
+        ));
+        if ($created) {
+            $ts = strtotime($created);
+            if ($ts) {
+                return $ts;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Build a synthetic payment history for rental orders.
+ *
+ * @param object|array $order Order data including pricing
+ * @param array|null   $logs  Optional order logs
+ * @return array{payments: array<int, array{date:string,amount:float,type:string,note:string}>, total: float, log_entries: array}
+ */
+function pv_calculate_rental_payments($order, $logs = null) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    $result = [
+        'payments'    => [],
+        'total'       => 0.0,
+        'log_entries' => [],
+    ];
+
+    if (empty($order) || empty($order->mode) || empty($order->status)) {
+        return $result;
+    }
+
+    $mode    = strtolower($order->mode);
+    $status  = strtolower($order->status);
+    $allowed = ['abgeschlossen', 'gekündigt'];
+    if ($mode === 'kauf' || !in_array($status, $allowed, true)) {
+        return $result;
+    }
+
+    $start_date = pv_get_order_start_date($order);
+    if (!$start_date) {
+        return $result;
+    }
+
+    $timezone = function_exists('wp_timezone') ? wp_timezone() : new \DateTimeZone(date_default_timezone_get());
+    $current  = \DateTimeImmutable::createFromFormat('Y-m-d', $start_date, $timezone);
+    if (!$current) {
+        return $result;
+    }
+    $current = $current->setTime(0, 0, 0);
+
+    $now_ts = function_exists('current_time') ? current_time('timestamp') : time();
+    $return_ts = pv_get_order_return_timestamp($order, $logs);
+    $cutoff_ts = $return_ts ?: $now_ts;
+    $cutoff    = (new \DateTimeImmutable('@' . $cutoff_ts))->setTimezone($timezone)->setTime(23, 59, 59);
+
+    if ($current > $cutoff) {
+        return $result;
+    }
+
+    $monthly_amount = isset($order->final_price) ? (float) $order->final_price : 0.0;
+    $shipping_cost  = isset($order->shipping_cost) ? (float) $order->shipping_cost : 0.0;
+    $iteration      = 0;
+
+    while ($current <= $cutoff) {
+        $iteration++;
+        if ($iteration > 240) {
+            break; // safety guard (~20 years)
+        }
+
+        $amount = $monthly_amount;
+        $note   = '';
+        $label  = 'Monatszahlung verbucht';
+        if ($iteration === 1) {
+            $amount += $shipping_cost;
+            if ($shipping_cost > 0) {
+                $note = 'inkl. Versand';
+            }
+            $label = 'Erste Monatszahlung verbucht';
+        }
+
+        if ($amount > 0) {
+            $result['payments'][] = [
+                'date'  => $current->format('Y-m-d'),
+                'amount'=> $amount,
+                'type'  => $iteration === 1 ? 'initial' : 'recurring',
+                'note'  => $note,
+            ];
+            $result['total'] += $amount;
+
+            $message = $label . ': ' . number_format($amount, 2, ',', '.') . ' €';
+            if ($note) {
+                $message .= ' (' . $note . ')';
+            }
+
+            $result['log_entries'][] = (object) [
+                'id'           => 'auto_' . ($order->id ?? 0) . '_' . $iteration,
+                'order_id'     => $order->id ?? 0,
+                'order_number' => $order->order_number ?? '',
+                'event'        => 'auto_rental_payment',
+                'message'      => $message,
+                'created_at'   => $current->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        $current = $current->add(new \DateInterval('P1M'))->setTime(0, 0, 0);
+        if ($current > $cutoff) {
+            break;
+        }
+    }
+
+    return $result;
+}
+
+/**
  * Generate and increment the next order number.
  *
  * @return string Order number or empty string when numbering disabled

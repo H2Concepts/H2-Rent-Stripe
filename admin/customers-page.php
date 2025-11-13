@@ -156,18 +156,9 @@ if (!$customer_id) {
         }
     }
 
-    $total_spent = (float) $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(final_price) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen'",
-        $user->user_email
-    ));
-    $completed_orders = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen'",
-        $user->user_email
-    ));
-    $canceled_orders = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'gekündigt'",
-        $user->user_email
-    ));
+    $total_spent = 0.0;
+    $completed_orders = 0;
+    $canceled_orders = 0;
     $year_start = date('Y-01-01 00:00:00');
     $year_end   = date('Y-12-31 23:59:59');
     $year_orders = (int) $wpdb->get_var($wpdb->prepare(
@@ -235,6 +226,30 @@ if (!$customer_id) {
     }
     unset($o);
 
+    $order_payment_map = [];
+    $order_lookup      = [];
+    foreach ($all_orders as $order_row) {
+        $order_lookup[$order_row->id] = $order_row;
+        $status = strtolower($order_row->status ?? '');
+        if ($status === 'abgeschlossen') {
+            $completed_orders++;
+        } elseif ($status === 'gekündigt') {
+            $canceled_orders++;
+        }
+
+        if ($order_row->mode !== 'kauf') {
+            $order_payment_map[$order_row->id] = pv_calculate_rental_payments($order_row);
+        }
+
+        if (in_array($status, ['abgeschlossen', 'gekündigt'], true)) {
+            if ($order_row->mode === 'kauf') {
+                $total_spent += (float) $order_row->final_price + (float) $order_row->shipping_cost;
+            } elseif (!empty($order_payment_map[$order_row->id]['total'])) {
+                $total_spent += (float) $order_payment_map[$order_row->id]['total'];
+            }
+        }
+    }
+
     $orders = $all_orders;
     if ($order_search) {
         $os = ltrim($order_search, '#');
@@ -264,6 +279,30 @@ if (!$customer_id) {
     } else {
         $customer_logs = [];
         $total_logs = 0;
+    }
+
+    if (!empty($order_payment_map)) {
+        $payment_logs = [];
+        foreach ($order_payment_map as $oid => $info) {
+            if (empty($info['log_entries'])) {
+                continue;
+            }
+            foreach ($info['log_entries'] as $entry) {
+                if (empty($entry->order_number) && !empty($order_lookup[$oid]->order_number)) {
+                    $entry->order_number = $order_lookup[$oid]->order_number;
+                }
+                $payment_logs[] = $entry;
+            }
+        }
+        if ($payment_logs) {
+            $customer_logs = array_merge($customer_logs, $payment_logs);
+            usort($customer_logs, function ($a, $b) {
+                $ta = isset($a->created_at) ? strtotime($a->created_at) : 0;
+                $tb = isset($b->created_at) ? strtotime($b->created_at) : 0;
+                return $tb <=> $ta;
+            });
+            $customer_logs = array_slice($customer_logs, 0, 5);
+        }
     }
 
     $customer_notes = $wpdb->get_results($wpdb->prepare(
@@ -365,7 +404,7 @@ if (!$customer_id) {
                     <?php if ($customer_logs) : ?>
                         <div class="order-log-list">
                             <?php
-                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
                             foreach ($customer_logs as $log) :
                                 $is_customer = !in_array($log->event, $system_events, true);
                                 $avatar = $is_customer ? $initials : 'H2';
@@ -384,6 +423,9 @@ if (!$customer_id) {
                                         break;
                                     case 'checkout_completed':
                                         $text = 'Checkout abgeschlossen.';
+                                        break;
+                                    case 'auto_rental_payment':
+                                        $text = $log->message ?: 'Monatszahlung verbucht.';
                                         break;
                                     default:
                                         $text = $log->message ?: $log->event;
