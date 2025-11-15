@@ -619,8 +619,12 @@ img.wp-smiley, img.emoji {
     right: -0.6rem;
     padding: 0.2rem 0.75rem;
     border-radius: 9999px;
-    background: linear-gradient(135deg, #f7a45a 0%, #cf6d30 45%, #b85629 100%);
-    color: #ffffff;
+    background: linear-gradient(
+        135deg,
+        var(--popular-gradient-start, #ff8a3d) 0%,
+        var(--popular-gradient-end, #ff5b0f) 100%
+    );
+    color: var(--popular-text-color, #ffffff);
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.05em;

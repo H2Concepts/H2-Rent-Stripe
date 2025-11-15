@@ -19,7 +19,17 @@
     <?php else: ?>
     
     <div class="produkt-durations-grid">
-        <?php foreach ($durations as $duration): ?>
+        <?php foreach ($durations as $duration):
+            $popular_gradient_start = sanitize_hex_color($duration->popular_gradient_start ?? '') ?: '#ff8a3d';
+            $popular_gradient_end   = sanitize_hex_color($duration->popular_gradient_end ?? '') ?: '#ff5b0f';
+            $popular_text_color     = sanitize_hex_color($duration->popular_text_color ?? '') ?: '#ffffff';
+            $popular_style = sprintf(
+                '--popular-gradient-start:%1$s; --popular-gradient-end:%2$s; --popular-text-color:%3$s;',
+                $popular_gradient_start,
+                $popular_gradient_end,
+                $popular_text_color
+            );
+        ?>
         <div class="produkt-duration-card">
             <div class="produkt-duration-header">
                 <h4><?php echo esc_html($duration->name); ?></h4>
@@ -40,7 +50,7 @@
                     <span class="produkt-discount-badge">Badge</span>
                 <?php endif; ?>
                 <?php if (!empty($duration->show_popular)): ?>
-                    <span class="badge badge-popular">Beliebt</span>
+                    <span class="badge badge-popular" style="<?php echo esc_attr($popular_style); ?>">Beliebt</span>
                 <?php endif; ?>
             </div>
             

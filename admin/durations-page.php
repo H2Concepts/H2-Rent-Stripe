@@ -40,6 +40,12 @@ if (isset($_POST['submit'])) {
     $show_badge = isset($_POST['show_badge']) ? 1 : 0;
     $show_popular = isset($_POST['show_popular']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
+    $popular_gradient_start = isset($_POST['popular_gradient_start']) ? sanitize_hex_color($_POST['popular_gradient_start']) : '';
+    $popular_gradient_end = isset($_POST['popular_gradient_end']) ? sanitize_hex_color($_POST['popular_gradient_end']) : '';
+    $popular_text_color = isset($_POST['popular_text_color']) ? sanitize_hex_color($_POST['popular_text_color']) : '';
+    $popular_gradient_start = $popular_gradient_start ?: '';
+    $popular_gradient_end = $popular_gradient_end ?: '';
+    $popular_text_color = $popular_text_color ?: '';
     $sort_order = intval($_POST['sort_order']);
 
     if (isset($_POST['id']) && $_POST['id']) {
@@ -53,11 +59,14 @@ if (isset($_POST['submit'])) {
                 'discount' => 0,
                 'show_badge' => $show_badge,
                 'show_popular' => $show_popular,
+                'popular_gradient_start' => $popular_gradient_start,
+                'popular_gradient_end' => $popular_gradient_end,
+                'popular_text_color' => $popular_text_color,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%d', '%d', '%d', '%d', '%d', '%d'),
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d'),
             array('%d')
         );
         
@@ -79,10 +88,13 @@ if (isset($_POST['submit'])) {
                 'discount' => 0,
                 'show_badge' => $show_badge,
                 'show_popular' => $show_popular,
+                'popular_gradient_start' => $popular_gradient_start,
+                'popular_gradient_end' => $popular_gradient_end,
+                'popular_text_color' => $popular_text_color,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%d', '%d', '%d', '%d', '%d', '%d')
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d')
         );
         
         $duration_id = $wpdb->insert_id;

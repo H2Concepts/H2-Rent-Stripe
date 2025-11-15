@@ -13,6 +13,10 @@
             ];
         }
     }
+
+    $popular_gradient_start = sanitize_hex_color($edit_item->popular_gradient_start ?? '') ?: '#ff8a3d';
+    $popular_gradient_end   = sanitize_hex_color($edit_item->popular_gradient_end ?? '') ?: '#ff5b0f';
+    $popular_text_color     = sanitize_hex_color($edit_item->popular_text_color ?? '') ?: '#ffffff';
 ?>
 
 <div class="produkt-edit-duration">
@@ -65,6 +69,21 @@
                         <span class="produkt-toggle-slider"></span>
                         <span>Beliebter Artikel</span>
                     </label>
+                </div>
+            </div>
+
+            <div class="produkt-form-row">
+                <div class="produkt-form-group">
+                    <label>Gradient Startfarbe</label>
+                    <input type="color" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Gradient Endfarbe</label>
+                    <input type="color" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Textfarbe</label>
+                    <input type="color" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>">
                 </div>
             </div>
 

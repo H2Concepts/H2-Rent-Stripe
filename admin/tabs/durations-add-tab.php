@@ -45,6 +45,21 @@
 
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
+                    <label>Gradient Startfarbe</label>
+                    <input type="color" name="popular_gradient_start" value="#ff8a3d">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Gradient Endfarbe</label>
+                    <input type="color" name="popular_gradient_end" value="#ff5b0f">
+                </div>
+                <div class="produkt-form-group">
+                    <label>Textfarbe</label>
+                    <input type="color" name="popular_text_color" value="#ffffff">
+                </div>
+            </div>
+
+            <div class="produkt-form-row">
+                <div class="produkt-form-group">
                     <label>Sortierung</label>
                     <input type="number" name="sort_order" value="0" min="0">
                 </div>

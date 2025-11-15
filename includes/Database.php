@@ -180,6 +180,21 @@ class Database {
         if (empty($popular_exists)) {
             $wpdb->query("ALTER TABLE $table_durations ADD COLUMN show_popular TINYINT(1) DEFAULT 0 AFTER show_badge");
         }
+
+        $popular_gradient_start_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'popular_gradient_start'");
+        if (empty($popular_gradient_start_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_gradient_start VARCHAR(30) DEFAULT '' AFTER show_popular");
+        }
+
+        $popular_gradient_end_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'popular_gradient_end'");
+        if (empty($popular_gradient_end_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_gradient_end VARCHAR(30) DEFAULT '' AFTER popular_gradient_start");
+        }
+
+        $popular_text_color_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'popular_text_color'");
+        if (empty($popular_text_color_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_text_color VARCHAR(30) DEFAULT '' AFTER popular_gradient_end");
+        }
         
         // Create categories table if it doesn't exist
         $table_categories = $wpdb->prefix . 'produkt_categories';
@@ -1079,6 +1094,9 @@ class Database {
             discount decimal(5,4) DEFAULT 0,
             show_badge tinyint(1) DEFAULT 0,
             show_popular tinyint(1) DEFAULT 0,
+            popular_gradient_start varchar(30) DEFAULT '',
+            popular_gradient_end varchar(30) DEFAULT '',
+            popular_text_color varchar(30) DEFAULT '',
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1567,6 +1585,9 @@ class Database {
                         'discount' => $duration[2],
                         'show_badge' => 0,
                         'show_popular' => 0,
+                        'popular_gradient_start' => '',
+                        'popular_gradient_end' => '',
+                        'popular_text_color' => '',
                         'sort_order' => $index
                     )
                 );

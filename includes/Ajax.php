@@ -467,7 +467,7 @@ class Ajax {
 
             $duration_rows = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT id, show_badge, show_popular, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+                    "SELECT id, show_badge, show_popular, popular_gradient_start, popular_gradient_end, popular_text_color, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
                     $variant_data->category_id
                 )
             );

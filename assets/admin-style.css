@@ -1287,12 +1287,15 @@
 .badge-danger { background: var(--pv-red); color: white; }
 .badge-gray { background: #dee2e6; color: #212529; }
 .badge-popular {
-    background: linear-gradient(135deg, #ff8a3d 0%, #ff5b0f 100%);
-    color: #fff;
+    background: linear-gradient(
+        135deg,
+        var(--popular-gradient-start, #ff8a3d) 0%,
+        var(--popular-gradient-end, #ff5b0f) 100%
+    );
+    color: var(--popular-text-color, #fff);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    box-shadow: 0 6px 18px rgba(255, 125, 32, 0.35);
 }
 
 /* Buttons */
