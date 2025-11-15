@@ -4,9 +4,6 @@ $variant_total = isset($variants) ? count($variants) : 0;
 ?>
 
 <div class="produkt-conditions-list">
-    <div class="produkt-list-header">
-        <h3>🔄 Zustände für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h3>
-    </div>
 
     <?php if (empty($conditions)): ?>
         <div class="produkt-empty-state">

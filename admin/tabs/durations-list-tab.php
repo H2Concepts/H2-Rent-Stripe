@@ -3,9 +3,6 @@
 ?>
 
 <div class="produkt-durations-list">
-    <div class="produkt-list-header">
-        <h3>⏰ Mietdauern für: <?php echo $current_category ? esc_html($current_category->name) : 'Unbekanntes Produkt'; ?></h3>
-    </div>
 
     <?php if (empty($durations)): ?>
         <div class="produkt-empty-state">

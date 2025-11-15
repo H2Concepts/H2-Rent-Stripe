@@ -460,13 +460,6 @@
     min-width: 200px;
 }
 
-.produkt-category-info code {
-    background: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 13px;
-}
-
 /* Tab Navigation */
 .produkt-tab-nav {
     background: white;
@@ -1485,15 +1478,6 @@ body.color-modal-open {
     padding: 0;
 }
 
-.produkt-list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e9ecef;
-}
-
 .produkt-filter-form {
     display: flex;
     gap: 10px;
@@ -1504,11 +1488,6 @@ body.color-modal-open {
 .produkt-filter-form input[type="text"] {
     padding: 6px 8px;
     min-width: 200px;
-}
-
-.produkt-list-header h3 {
-    margin: 0;
-    color: #3c434a;
 }
 
 .produkt-categories-grid {
@@ -1636,17 +1615,6 @@ body.color-modal-open {
     border-top: 1px solid #f8f9fa;
 }
 
-.produkt-category-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.produkt-category-info small {
-    color: #6c757d;
-    font-size: 0.8rem;
-}
-
 .produkt-category-shipping {
     text-align: right;
     display: flex;
@@ -1680,22 +1648,6 @@ body.color-modal-open {
     text-align: center;
     font-size: 0.85rem;
     padding: 6px 12px;
-}
-
-@media (max-width: 768px) {
-    .produkt-list-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-
-    .produkt-categories-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .produkt-category-actions {
-        flex-direction: column;
-    }
 }
 
 /* Durations List */
@@ -2290,12 +2242,6 @@ body.color-modal-open {
 }
 
 @media (max-width: 768px) {
-    .produkt-list-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-
     .produkt-variants-grid {
         grid-template-columns: 1fr;
     }

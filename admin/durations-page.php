@@ -256,9 +256,6 @@ if ($active_tab === 'add') {
                     <?php endif; ?>
                     <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
                 </div>
-                <div class="produkt-category-info">
-                    <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
-                </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -354,9 +351,6 @@ if ($active_tab === 'add') {
                             <div class="placeholder-icon">⏰</div>
                         <?php endif; ?>
                         <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
-                    </div>
-                    <div class="produkt-category-info">
-                        <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
                     </div>
                     <?php endif; ?>
                 </div>
