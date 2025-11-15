@@ -49,11 +49,13 @@ $variant_total = isset($variants) ? count($variants) : 0;
                         <?php endif; ?>
                     </td>
                     <td>
-                        <?php if ($variant_total > 0): ?>
-                            <span class="badge badge-gray"><?php echo esc_html($available); ?> von <?php echo esc_html($variant_total); ?></span>
-                        <?php else: ?>
-                            <span class="badge">–</span>
-                        <?php endif; ?>
+                        <?php
+                            if ($variant_total > 0) {
+                                echo esc_html(sprintf('%d / %d', $available, $variant_total));
+                            } else {
+                                echo '0';
+                            }
+                        ?>
                     </td>
                     <td><?php echo esc_html(intval($condition->sort_order)); ?></td>
                     <td>
