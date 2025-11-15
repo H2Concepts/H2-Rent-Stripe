@@ -496,7 +496,7 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php foreach ($durations as $duration): ?>
                         <div class="produkt-option" data-type="duration" data-id="<?php echo esc_attr($duration->id); ?>">
                             <?php if (!empty($duration->show_popular)): ?>
-                            <span class="produkt-popular-badge">Beliebt</span>
+                            <span class="produkt-popular-badge">beliebt</span>
                             <?php endif; ?>
                             <div class="produkt-option-content">
                                 <div class="produkt-duration-header">
