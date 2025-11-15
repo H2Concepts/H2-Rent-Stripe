@@ -405,7 +405,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <div class="produkt-form-group">
                     <label>Gradient Startfarbe</label>
                     <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
+                        <div class="produkt-color-preview-circle" data-popular-start-circle style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
                         <input type="text" class="produkt-color-value" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-picker>
                     </div>
@@ -414,7 +414,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <div class="produkt-form-group">
                     <label>Gradient Endfarbe</label>
                     <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
+                        <div class="produkt-color-preview-circle" data-popular-end-circle style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
                         <input type="text" class="produkt-color-value" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-picker>
                     </div>
@@ -423,7 +423,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <div class="produkt-form-group">
                     <label>Textfarbe</label>
                     <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
+                        <div class="produkt-color-preview-circle" data-popular-text-circle style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
                         <input type="text" class="produkt-color-value" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-picker>
                     </div>
@@ -481,6 +481,24 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const HEX_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+    const normalizeHex = function (value) {
+        const trimmed = (value || '').trim();
+        if (!HEX_PATTERN.test(trimmed)) {
+            return null;
+        }
+        if (trimmed.length === 4) {
+            return (
+                '#' +
+                trimmed[1] + trimmed[1] +
+                trimmed[2] + trimmed[2] +
+                trimmed[3] + trimmed[3]
+            ).toLowerCase();
+        }
+        return trimmed.toLowerCase();
+    };
+
     const previewGroups = document.querySelectorAll('[data-popular-preview-root]');
     previewGroups.forEach(function (group) {
         const form = group.closest('form');
@@ -490,42 +508,103 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const startInput = form.querySelector('[data-popular-start]');
         const startPicker = form.querySelector('[data-popular-start-picker]');
+        const startCircle = form.querySelector('[data-popular-start-circle]');
         const endInput = form.querySelector('[data-popular-end]');
         const endPicker = form.querySelector('[data-popular-end-picker]');
+        const endCircle = form.querySelector('[data-popular-end-circle]');
         const textInput = form.querySelector('[data-popular-text]');
         const textPicker = form.querySelector('[data-popular-text-picker]');
+        const textCircle = form.querySelector('[data-popular-text-circle]');
         const preview = group.querySelector('[data-popular-preview]');
 
         if (!startInput || !endInput || !textInput || !preview) {
             return;
         }
 
+        const defaultStart = form.dataset.defaultGradientStart || '#ff8a3d';
+        const defaultEnd = form.dataset.defaultGradientEnd || '#ff5b0f';
+        const defaultText = form.dataset.defaultTextColor || '#ffffff';
+
         const updatePreview = function () {
-            const startColor = startInput.value || startInput.defaultValue || '#ff8a3d';
-            const endColor = endInput.value || endInput.defaultValue || '#ff5b0f';
-            const textColor = textInput.value || textInput.defaultValue || '#ffffff';
+            const startColor = normalizeHex(startInput.value) || defaultStart;
+            const endColor = normalizeHex(endInput.value) || defaultEnd;
+            const textColor = normalizeHex(textInput.value) || defaultText;
 
             preview.style.setProperty('--popular-gradient-start', startColor);
             preview.style.setProperty('--popular-gradient-end', endColor);
             preview.style.setProperty('--popular-text-color', textColor);
+
+            if (startCircle) {
+                startCircle.style.backgroundColor = startColor;
+            }
+            if (endCircle) {
+                endCircle.style.backgroundColor = endColor;
+            }
+            if (textCircle) {
+                textCircle.style.backgroundColor = textColor;
+            }
+            if (startPicker && startPicker.value !== startColor) {
+                startPicker.value = startColor;
+            }
+            if (endPicker && endPicker.value !== endColor) {
+                endPicker.value = endColor;
+            }
+            if (textPicker && textPicker.value !== textColor) {
+                textPicker.value = textColor;
+            }
         };
 
-        ['input', 'change'].forEach(function (eventName) {
-            startInput.addEventListener(eventName, updatePreview);
-            endInput.addEventListener(eventName, updatePreview);
-            textInput.addEventListener(eventName, updatePreview);
-            if (startPicker) {
-                startPicker.addEventListener(eventName, updatePreview);
-            }
-            if (endPicker) {
-                endPicker.addEventListener(eventName, updatePreview);
-            }
-            if (textPicker) {
-                textPicker.addEventListener(eventName, updatePreview);
-            }
+        const handlePickerChange = function (picker, input, fallback) {
+            const normalized = normalizeHex(picker.value) || fallback;
+            input.value = normalized;
+            updatePreview();
+        };
+
+        const handleTextChange = function (input, fallback) {
+            const normalized = normalizeHex(input.value) || fallback;
+            input.value = normalized;
+            updatePreview();
+        };
+
+        startInput.addEventListener('input', updatePreview);
+        endInput.addEventListener('input', updatePreview);
+        textInput.addEventListener('input', updatePreview);
+
+        startInput.addEventListener('change', function () {
+            handleTextChange(startInput, defaultStart);
+        });
+        endInput.addEventListener('change', function () {
+            handleTextChange(endInput, defaultEnd);
+        });
+        textInput.addEventListener('change', function () {
+            handleTextChange(textInput, defaultText);
         });
 
-        updatePreview();
+        if (startPicker) {
+            ['input', 'change'].forEach(function (eventName) {
+                startPicker.addEventListener(eventName, function () {
+                    handlePickerChange(startPicker, startInput, defaultStart);
+                });
+            });
+        }
+        if (endPicker) {
+            ['input', 'change'].forEach(function (eventName) {
+                endPicker.addEventListener(eventName, function () {
+                    handlePickerChange(endPicker, endInput, defaultEnd);
+                });
+            });
+        }
+        if (textPicker) {
+            ['input', 'change'].forEach(function (eventName) {
+                textPicker.addEventListener(eventName, function () {
+                    handlePickerChange(textPicker, textInput, defaultText);
+                });
+            });
+        }
+
+        handleTextChange(startInput, defaultStart);
+        handleTextChange(endInput, defaultEnd);
+        handleTextChange(textInput, defaultText);
     });
 });
 </script>
