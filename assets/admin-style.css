@@ -619,6 +619,41 @@
     font-size: 0.9rem;
 }
 
+.popup-trigger-group {
+    margin-top: 10px;
+}
+
+.popup-trigger-grid {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .popup-trigger-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.popup-trigger-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.popup-trigger-heading {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pv-muted);
+}
+
+.popup-trigger-column .produkt-toggle-label {
+    min-width: 0;
+}
+
 /* Image grid for variant forms */
 .produkt-images-grid {
     display: grid;

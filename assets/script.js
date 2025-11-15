@@ -1460,6 +1460,21 @@ function updateSelectedDays() {
     let exitShown = false;
     const popupData = produkt_ajax.popup_settings || {};
     const popup = $('#produkt-exit-popup');
+    const triggerConfig = popupData.triggers || {};
+
+    function isTriggerEnabled(value, fallback = true) {
+        if (typeof value === 'undefined' || value === null) {
+            return fallback;
+        }
+        if (typeof value === 'string') {
+            return value !== '0';
+        }
+        return Boolean(value);
+    }
+
+    const desktopExitEnabled = isTriggerEnabled(triggerConfig.desktop_exit);
+    const mobileScrollEnabled = isTriggerEnabled(triggerConfig.mobile_scroll);
+    const mobileInactivityEnabled = isTriggerEnabled(triggerConfig.mobile_inactivity);
     if (popup.length) {
         popup.appendTo('body');
     }
@@ -1512,19 +1527,22 @@ function updateSelectedDays() {
             $('#produkt-exit-send').show();
         }
 
-        $(document).on('mouseleave', function(e){
-            if (!exitShown && e.clientY <= 0) {
-                showPopup();
-            }
-        });
+        if (desktopExitEnabled) {
+            $(document).on('mouseleave', function(e){
+                if (!exitShown && e.clientY <= 0) {
+                    showPopup();
+                }
+            });
+        }
 
-        if (window.matchMedia('(max-width: 768px)').matches) {
+        if (window.matchMedia('(max-width: 768px)').matches && (mobileScrollEnabled || mobileInactivityEnabled)) {
             let lastScroll = window.scrollY;
             let downEnough = lastScroll > 300;
             let inactivityTimer;
             const limit = 60000;
 
             function resetInactivity() {
+                if (!mobileInactivityEnabled) return;
                 clearTimeout(inactivityTimer);
                 inactivityTimer = setTimeout(function(){
                     if (!exitShown) {
@@ -1533,19 +1551,27 @@ function updateSelectedDays() {
                 }, limit);
             }
 
-            $(window).on('scroll', function(){
-                const current = window.scrollY;
-                if (current > lastScroll && current > 300) {
-                    downEnough = true;
-                } else if (!exitShown && downEnough && lastScroll - current > 50 && current < 150) {
-                    showPopup();
-                }
-                lastScroll = current;
-                resetInactivity();
-            });
+            if (mobileScrollEnabled || mobileInactivityEnabled) {
+                $(window).on('scroll', function(){
+                    const current = window.scrollY;
+                    if (mobileScrollEnabled) {
+                        if (current > lastScroll && current > 300) {
+                            downEnough = true;
+                        } else if (!exitShown && downEnough && lastScroll - current > 50 && current < 150) {
+                            showPopup();
+                        }
+                    }
+                    lastScroll = current;
+                    if (mobileInactivityEnabled) {
+                        resetInactivity();
+                    }
+                });
+            }
 
-            $(document).on('touchstart keydown click', resetInactivity);
-            resetInactivity();
+            if (mobileInactivityEnabled) {
+                $(document).on('touchstart keydown click', resetInactivity);
+                resetInactivity();
+            }
         }
 
         $('.produkt-exit-popup-close').on('click', hidePopup);

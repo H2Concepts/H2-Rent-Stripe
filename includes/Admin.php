@@ -330,6 +330,17 @@ class Admin {
         $popup_enabled = isset($popup_settings['enabled']) ? intval($popup_settings['enabled']) : 0;
         $popup_days    = isset($popup_settings['days']) ? intval($popup_settings['days']) : 7;
         $popup_email   = isset($popup_settings['email_enabled']) ? intval($popup_settings['email_enabled']) : 0;
+        $trigger_defaults = [
+            'desktop_exit'      => 1,
+            'mobile_scroll'     => 1,
+            'mobile_inactivity' => 1,
+        ];
+        $popup_triggers = $popup_settings['triggers'] ?? [];
+        if (!is_array($popup_triggers)) {
+            $popup_triggers = [];
+        }
+        $popup_triggers = array_merge($trigger_defaults, array_intersect_key($popup_triggers, $trigger_defaults));
+        $popup_triggers = array_map('intval', $popup_triggers);
 
         if ($load_script) {
             $modus = get_option('produkt_betriebsmodus', 'miete');
@@ -356,12 +367,13 @@ class Admin {
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
                 'popup_settings' => [
-                    'enabled' => $popup_enabled,
-                    'days'    => $popup_days,
-                    'email'   => $popup_email,
-                    'title'   => $popup_settings['title'] ?? '',
-                    'content' => wpautop($popup_settings['content'] ?? ''),
-                    'options' => $options,
+                    'enabled'  => $popup_enabled,
+                    'days'     => $popup_days,
+                    'email'    => $popup_email,
+                    'title'    => $popup_settings['title'] ?? '',
+                    'content'  => wpautop($popup_settings['content'] ?? ''),
+                    'options'  => $options,
+                    'triggers' => $popup_triggers,
                 ],
             ]);
         }
