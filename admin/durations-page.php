@@ -7,6 +7,10 @@ global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_durations';
 $table_prices = $wpdb->prefix . 'produkt_duration_prices';
 
+if (!function_exists('pv_normalize_hex_color_value')) {
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+}
+
 // Ensure stripe_archived column exists in price table
 $archived_col = $wpdb->get_results("SHOW COLUMNS FROM $table_prices LIKE 'stripe_archived'");
 if (empty($archived_col)) {
@@ -40,12 +44,15 @@ if (isset($_POST['submit'])) {
     $show_badge = isset($_POST['show_badge']) ? 1 : 0;
     $show_popular = isset($_POST['show_popular']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
-    $popular_gradient_start = isset($_POST['popular_gradient_start']) ? sanitize_hex_color($_POST['popular_gradient_start']) : '';
-    $popular_gradient_end = isset($_POST['popular_gradient_end']) ? sanitize_hex_color($_POST['popular_gradient_end']) : '';
-    $popular_text_color = isset($_POST['popular_text_color']) ? sanitize_hex_color($_POST['popular_text_color']) : '';
-    $popular_gradient_start = $popular_gradient_start ?: '';
-    $popular_gradient_end = $popular_gradient_end ?: '';
-    $popular_text_color = $popular_text_color ?: '';
+    $popular_gradient_start = isset($_POST['popular_gradient_start'])
+        ? pv_normalize_hex_color_value($_POST['popular_gradient_start'])
+        : '';
+    $popular_gradient_end = isset($_POST['popular_gradient_end'])
+        ? pv_normalize_hex_color_value($_POST['popular_gradient_end'])
+        : '';
+    $popular_text_color = isset($_POST['popular_text_color'])
+        ? pv_normalize_hex_color_value($_POST['popular_text_color'])
+        : '';
     $sort_order = intval($_POST['sort_order']);
 
     if (isset($_POST['id']) && $_POST['id']) {
@@ -249,9 +256,9 @@ $popular_gradient_start = $popular_default_start;
 $popular_gradient_end   = $popular_default_end;
 $popular_text_color     = $popular_default_text;
 if ($edit_item) {
-    $popular_gradient_start = sanitize_hex_color($edit_item->popular_gradient_start ?? '') ?: $popular_gradient_start;
-    $popular_gradient_end   = sanitize_hex_color($edit_item->popular_gradient_end ?? '') ?: $popular_gradient_end;
-    $popular_text_color     = sanitize_hex_color($edit_item->popular_text_color ?? '') ?: $popular_text_color;
+    $popular_gradient_start = pv_normalize_hex_color_value($edit_item->popular_gradient_start ?? '', $popular_gradient_start);
+    $popular_gradient_end   = pv_normalize_hex_color_value($edit_item->popular_gradient_end ?? '', $popular_gradient_end);
+    $popular_text_color     = pv_normalize_hex_color_value($edit_item->popular_text_color ?? '', $popular_text_color);
 }
 
 $modal_mode  = ($active_tab === 'edit' && $edit_item) ? 'edit' : (($active_tab === 'add') ? 'add' : 'list');

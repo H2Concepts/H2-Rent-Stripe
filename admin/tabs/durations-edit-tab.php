@@ -14,9 +14,15 @@
         }
     }
 
-    $popular_gradient_start = sanitize_hex_color($edit_item->popular_gradient_start ?? '') ?: '#ff8a3d';
-    $popular_gradient_end   = sanitize_hex_color($edit_item->popular_gradient_end ?? '') ?: '#ff5b0f';
-    $popular_text_color     = sanitize_hex_color($edit_item->popular_text_color ?? '') ?: '#ffffff';
+    $popular_gradient_start = function_exists('pv_normalize_hex_color_value')
+        ? pv_normalize_hex_color_value($edit_item->popular_gradient_start ?? '', '#ff8a3d')
+        : (sanitize_hex_color($edit_item->popular_gradient_start ?? '') ?: '#ff8a3d');
+    $popular_gradient_end = function_exists('pv_normalize_hex_color_value')
+        ? pv_normalize_hex_color_value($edit_item->popular_gradient_end ?? '', '#ff5b0f')
+        : (sanitize_hex_color($edit_item->popular_gradient_end ?? '') ?: '#ff5b0f');
+    $popular_text_color = function_exists('pv_normalize_hex_color_value')
+        ? pv_normalize_hex_color_value($edit_item->popular_text_color ?? '', '#ffffff')
+        : (sanitize_hex_color($edit_item->popular_text_color ?? '') ?: '#ffffff');
     $popular_preview_style  = sprintf(
         '--popular-gradient-start:%1$s; --popular-gradient-end:%2$s; --popular-text-color:%3$s;',
         $popular_gradient_start,

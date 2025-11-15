@@ -31,6 +31,47 @@ function pv_get_subscription_status_badge($status) {
     return '<span class="status-badge ' . esc_attr($class) . '">' . esc_html($label) . '</span>';
 }
 
+if (!function_exists('pv_normalize_hex_color_value')) {
+    /**
+     * Normalize stored hex color strings to a consistent "#rrggbb" format.
+     *
+     * Accepts values with or without a leading hash and expands shorthand
+     * values while falling back to a provided default when sanitization fails.
+     *
+     * @param string $value   Raw color value from storage/user input.
+     * @param string $default Default hex value to use when normalization fails.
+     *
+     * @return string Normalized hex color including leading hash.
+     */
+    function pv_normalize_hex_color_value($value, $default = '') {
+        if (!is_string($value)) {
+            $value = '';
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return $default;
+        }
+
+        $value = '#' . ltrim($value, '#');
+        $sanitized = sanitize_hex_color($value);
+        if (!$sanitized) {
+            return $default;
+        }
+
+        if (strlen($sanitized) === 4) {
+            $sanitized = sprintf(
+                '#%1$s%1$s%2$s%2$s%3$s%3$s',
+                substr($sanitized, 1, 1),
+                substr($sanitized, 2, 1),
+                substr($sanitized, 3, 1)
+            );
+        }
+
+        return strtolower($sanitized);
+    }
+}
+
 function pv_get_minimum_duration_months($order) {
     global $wpdb;
     if ($order && !empty($order->duration_id)) {
