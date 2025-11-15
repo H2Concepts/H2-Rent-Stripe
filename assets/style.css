@@ -615,8 +615,8 @@ img.wp-smiley, img.emoji {
 
 .produkt-popular-badge {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
+    top: -0.6rem;
+    right: -0.6rem;
     padding: 0.2rem 0.75rem;
     border-radius: 9999px;
     background: linear-gradient(135deg, #f7a45a 0%, #cf6d30 45%, #b85629 100%);
@@ -625,14 +625,8 @@ img.wp-smiley, img.emoji {
     font-weight: 600;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    box-shadow: 0 8px 20px rgba(207, 109, 48, 0.25);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
     z-index: 2;
     pointer-events: none;
-}
-
-.produkt-option.selected .produkt-popular-badge {
-    box-shadow: 0 10px 24px rgba(207, 109, 48, 0.3);
 }
 
 .produkt-duration-info {
