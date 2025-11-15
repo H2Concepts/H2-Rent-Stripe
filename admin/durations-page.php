@@ -11,6 +11,10 @@ if (!function_exists('pv_normalize_hex_color_value')) {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 }
 
+$popular_default_start = '#ff8a3d';
+$popular_default_end   = '#ff5b0f';
+$popular_default_text  = '#ffffff';
+
 // Ensure stripe_archived column exists in price table
 $archived_col = $wpdb->get_results("SHOW COLUMNS FROM $table_prices LIKE 'stripe_archived'");
 if (empty($archived_col)) {
@@ -44,15 +48,47 @@ if (isset($_POST['submit'])) {
     $show_badge = isset($_POST['show_badge']) ? 1 : 0;
     $show_popular = isset($_POST['show_popular']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
-    $popular_gradient_start = isset($_POST['popular_gradient_start'])
-        ? pv_normalize_hex_color_value($_POST['popular_gradient_start'])
+    $existing_colors = [
+        'start' => '',
+        'end'   => '',
+        'text'  => '',
+    ];
+    if (!empty($_POST['id'])) {
+        $existing_row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT popular_gradient_start, popular_gradient_end, popular_text_color FROM $table_name WHERE id = %d",
+                intval($_POST['id'])
+            )
+        );
+        if ($existing_row) {
+            $existing_colors['start'] = $existing_row->popular_gradient_start ?? '';
+            $existing_colors['end']   = $existing_row->popular_gradient_end ?? '';
+            $existing_colors['text']  = $existing_row->popular_text_color ?? '';
+        }
+    }
+
+    $popular_gradient_start_input = isset($_POST['popular_gradient_start'])
+        ? wp_unslash($_POST['popular_gradient_start'])
         : '';
-    $popular_gradient_end = isset($_POST['popular_gradient_end'])
-        ? pv_normalize_hex_color_value($_POST['popular_gradient_end'])
+    $popular_gradient_end_input = isset($_POST['popular_gradient_end'])
+        ? wp_unslash($_POST['popular_gradient_end'])
         : '';
-    $popular_text_color = isset($_POST['popular_text_color'])
-        ? pv_normalize_hex_color_value($_POST['popular_text_color'])
+    $popular_text_color_input = isset($_POST['popular_text_color'])
+        ? wp_unslash($_POST['popular_text_color'])
         : '';
+
+    $popular_gradient_start = pv_normalize_hex_color_value(
+        $popular_gradient_start_input,
+        $existing_colors['start'] !== '' ? $existing_colors['start'] : $popular_default_start
+    );
+    $popular_gradient_end = pv_normalize_hex_color_value(
+        $popular_gradient_end_input,
+        $existing_colors['end'] !== '' ? $existing_colors['end'] : $popular_default_end
+    );
+    $popular_text_color = pv_normalize_hex_color_value(
+        $popular_text_color_input,
+        $existing_colors['text'] !== '' ? $existing_colors['text'] : $popular_default_text
+    );
     $sort_order = intval($_POST['sort_order']);
 
     if (isset($_POST['id']) && $_POST['id']) {
@@ -249,9 +285,6 @@ if ($edit_item) {
     }
 }
 
-$popular_default_start = '#ff8a3d';
-$popular_default_end   = '#ff5b0f';
-$popular_default_text  = '#ffffff';
 $popular_gradient_start = $popular_default_start;
 $popular_gradient_end   = $popular_default_end;
 $popular_text_color     = $popular_default_text;
@@ -413,8 +446,9 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                     <label>Gradient Startfarbe</label>
                     <div class="produkt-color-picker">
                         <div class="produkt-color-preview-circle" data-popular-start-circle style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
-                        <input type="text" class="produkt-color-value" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
+                        <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-picker>
+                        <input type="hidden" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-hidden>
                     </div>
                 </div>
 
@@ -422,8 +456,9 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                     <label>Gradient Endfarbe</label>
                     <div class="produkt-color-picker">
                         <div class="produkt-color-preview-circle" data-popular-end-circle style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
-                        <input type="text" class="produkt-color-value" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
+                        <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-picker>
+                        <input type="hidden" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-hidden>
                     </div>
                 </div>
 
@@ -431,8 +466,9 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                     <label>Textfarbe</label>
                     <div class="produkt-color-picker">
                         <div class="produkt-color-preview-circle" data-popular-text-circle style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
-                        <input type="text" class="produkt-color-value" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
+                        <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-picker>
+                        <input type="hidden" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-hidden>
                     </div>
                 </div>
 
@@ -516,12 +552,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const startInput = form.querySelector('[data-popular-start]');
         const startPicker = form.querySelector('[data-popular-start-picker]');
         const startCircle = form.querySelector('[data-popular-start-circle]');
+        const startHidden = form.querySelector('[data-popular-start-hidden]');
         const endInput = form.querySelector('[data-popular-end]');
         const endPicker = form.querySelector('[data-popular-end-picker]');
         const endCircle = form.querySelector('[data-popular-end-circle]');
+        const endHidden = form.querySelector('[data-popular-end-hidden]');
         const textInput = form.querySelector('[data-popular-text]');
         const textPicker = form.querySelector('[data-popular-text-picker]');
         const textCircle = form.querySelector('[data-popular-text-circle]');
+        const textHidden = form.querySelector('[data-popular-text-hidden]');
         const preview = group.querySelector('[data-popular-preview]');
 
         if (!startInput || !endInput || !textInput || !preview) {
@@ -549,6 +588,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (textCircle) {
                 textCircle.style.backgroundColor = textColor;
+            }
+            if (startHidden) {
+                startHidden.value = startColor;
+            }
+            if (endHidden) {
+                endHidden.value = endColor;
+            }
+            if (textHidden) {
+                textHidden.value = textColor;
             }
             if (startPicker && startPicker.value !== startColor) {
                 startPicker.value = startColor;
