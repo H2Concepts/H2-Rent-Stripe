@@ -46,6 +46,8 @@ function send_produkt_welcome_email(array $order, int $order_id) {
         return;
     }
 
+    $invoice_emails_enabled = pv_is_invoice_email_enabled();
+
     $full_name = trim($order['customer_name']);
     if (strpos($full_name, ' ') !== false) {
         [$first, $last] = explode(' ', $full_name, 2);
@@ -182,8 +184,13 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
 
     // Rechnung erzeugen und Anhang vorbereiten
+    $pdf_path = pv_generate_invoice_pdf($order_id);
+
+    if (!$invoice_emails_enabled) {
+        return;
+    }
+
     $attachments = [];
-    $pdf_path    = pv_generate_invoice_pdf($order_id);
     if ($pdf_path && file_exists($pdf_path)) {
         $attachments[] = $pdf_path;
     }

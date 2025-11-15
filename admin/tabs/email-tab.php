@@ -21,6 +21,9 @@ if (isset($_POST['submit_email_settings'])) {
     ];
     update_option('produkt_invoice_sender', $invoice);
 
+    $email_toggle = !empty($_POST['invoice_email_enabled']) ? '1' : '0';
+    update_option('produkt_invoice_email_enabled', $email_toggle);
+
     // Logo für Rechnungen separat speichern
     if (!empty($_POST['firma_logo_url'])) {
         update_option('plugin_firma_logo_url', esc_url_raw($_POST['firma_logo_url']));
@@ -47,6 +50,7 @@ $invoice = get_option('produkt_invoice_sender', [
     'firma_telefon' => '',
 ]);
 $logo_url = get_option('plugin_firma_logo_url', '');
+$invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
 ?>
 <div class="settings-tab">
     <form method="post" action="">
@@ -59,8 +63,17 @@ $logo_url = get_option('plugin_firma_logo_url', '');
         </button>
         <div class="produkt-form-sections">
             <div class="dashboard-card">
-                <h2>Email Footer</h2>
-                <p class="card-subline">Absenderinformationen</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Email Footer</h2>
+                        <p class="card-subline">Absenderinformationen</p>
+                    </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="invoice_email_enabled" value="1" <?php checked($invoice_email_enabled, '1'); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Rechnungsversand aktivieren</span>
+                    </label>
+                </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Firmenname</label>

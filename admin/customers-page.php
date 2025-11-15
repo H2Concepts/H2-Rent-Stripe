@@ -156,18 +156,9 @@ if (!$customer_id) {
         }
     }
 
-    $total_spent = (float) $wpdb->get_var($wpdb->prepare(
-        "SELECT SUM(final_price) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen'",
-        $user->user_email
-    ));
-    $completed_orders = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'abgeschlossen'",
-        $user->user_email
-    ));
-    $canceled_orders = (int) $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_orders WHERE customer_email = %s AND status = 'gekündigt'",
-        $user->user_email
-    ));
+    $total_spent = 0.0;
+    $completed_orders = 0;
+    $canceled_orders = 0;
     $year_start = date('Y-01-01 00:00:00');
     $year_end   = date('Y-12-31 23:59:59');
     $year_orders = (int) $wpdb->get_var($wpdb->prepare(
@@ -235,6 +226,30 @@ if (!$customer_id) {
     }
     unset($o);
 
+    $order_payment_map = [];
+    $order_lookup      = [];
+    foreach ($all_orders as $order_row) {
+        $order_lookup[$order_row->id] = $order_row;
+        $status = strtolower($order_row->status ?? '');
+        if ($status === 'abgeschlossen') {
+            $completed_orders++;
+        } elseif ($status === 'gekündigt') {
+            $canceled_orders++;
+        }
+
+        if ($order_row->mode !== 'kauf') {
+            $order_payment_map[$order_row->id] = pv_calculate_rental_payments($order_row);
+        }
+
+        if (in_array($status, ['abgeschlossen', 'gekündigt'], true)) {
+            if ($order_row->mode === 'kauf') {
+                $total_spent += (float) $order_row->final_price + (float) $order_row->shipping_cost;
+            } elseif (!empty($order_payment_map[$order_row->id]['total'])) {
+                $total_spent += (float) $order_payment_map[$order_row->id]['total'];
+            }
+        }
+    }
+
     $orders = $all_orders;
     if ($order_search) {
         $os = ltrim($order_search, '#');
@@ -255,16 +270,45 @@ if (!$customer_id) {
 
     $last_order = $all_orders[0] ?? null;
     $order_ids = wp_list_pluck($all_orders, 'id');
+    $customer_logs      = [];
+    $total_logs         = 0;
+    $initial_log_count  = 0;
     if ($order_ids) {
         $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $logs_sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5";
+        $logs_sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC";
         $customer_logs = $wpdb->get_results($wpdb->prepare($logs_sql, $order_ids));
-        $count_sql = "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_order_logs WHERE order_id IN ($placeholders)";
-        $total_logs = (int) $wpdb->get_var($wpdb->prepare($count_sql, $order_ids));
-    } else {
-        $customer_logs = [];
-        $total_logs = 0;
+        $total_logs = count($customer_logs);
     }
+
+    $payment_logs = [];
+    if (!empty($order_payment_map)) {
+        foreach ($order_payment_map as $oid => $info) {
+            if (empty($info['log_entries'])) {
+                continue;
+            }
+            foreach ($info['log_entries'] as $entry) {
+                if (empty($entry->order_number) && !empty($order_lookup[$oid]->order_number)) {
+                    $entry->order_number = $order_lookup[$oid]->order_number;
+                }
+                $payment_logs[] = $entry;
+            }
+        }
+    }
+
+    if ($payment_logs) {
+        $customer_logs = array_merge($customer_logs, $payment_logs);
+    }
+
+    if ($customer_logs) {
+        usort($customer_logs, function ($a, $b) {
+            $ta = isset($a->created_at) ? strtotime($a->created_at) : 0;
+            $tb = isset($b->created_at) ? strtotime($b->created_at) : 0;
+            return $tb <=> $ta;
+        });
+    }
+
+    $total_logs += count($payment_logs);
+    $initial_log_count = count($customer_logs);
 
     $customer_notes = $wpdb->get_results($wpdb->prepare(
         "SELECT id, message, created_at FROM {$wpdb->prefix}produkt_customer_notes WHERE customer_id = %d ORDER BY created_at DESC",
@@ -365,7 +409,7 @@ if (!$customer_id) {
                     <?php if ($customer_logs) : ?>
                         <div class="order-log-list">
                             <?php
-                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
                             foreach ($customer_logs as $log) :
                                 $is_customer = !in_array($log->event, $system_events, true);
                                 $avatar = $is_customer ? $initials : 'H2';
@@ -385,6 +429,9 @@ if (!$customer_id) {
                                     case 'checkout_completed':
                                         $text = 'Checkout abgeschlossen.';
                                         break;
+                                    case 'auto_rental_payment':
+                                        $text = $log->message ?: 'Monatszahlung verbucht.';
+                                        break;
                                     default:
                                         $text = $log->message ?: $log->event;
                                 }
@@ -399,8 +446,8 @@ if (!$customer_id) {
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <?php if ($total_logs > 5) : ?>
-                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="5" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>" data-initials="<?php echo esc_attr($initials); ?>">
+                        <?php if ($total_logs > $initial_log_count) : ?>
+                            <button type="button" class="icon-btn icon-btn-no-stroke customer-log-load-more" title="Mehr anzeigen" data-offset="<?php echo intval($initial_log_count); ?>" data-total="<?php echo intval($total_logs); ?>" data-order-ids="<?php echo esc_attr(implode(',', $order_ids)); ?>" data-initials="<?php echo esc_attr($initials); ?>">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-.6 0-1 .4-1 1v5H6c-.6 0-1 .4-1 1s.4 1 1 1h5v5c0 .6.4 1 1 1s1-.4 1-1v-5h5c.6 0 1-.4 1-1s-.4-1-1-1h-5V6c0-.6-.4-1-1-1z"/></svg>
                             </button>
                         <?php endif; ?>

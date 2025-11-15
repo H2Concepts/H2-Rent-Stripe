@@ -493,8 +493,27 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php endif; ?>
                     </h3>
                     <div class="produkt-options durations layout-<?php echo esc_attr($layout_style); ?>">
-                        <?php foreach ($durations as $duration): ?>
+                        <?php foreach ($durations as $duration):
+                            $popular_gradient_start = function_exists('pv_normalize_hex_color_value')
+                                ? pv_normalize_hex_color_value($duration->popular_gradient_start ?? '', '#ff8a3d')
+                                : (sanitize_hex_color($duration->popular_gradient_start ?? '') ?: '#ff8a3d');
+                            $popular_gradient_end = function_exists('pv_normalize_hex_color_value')
+                                ? pv_normalize_hex_color_value($duration->popular_gradient_end ?? '', '#ff5b0f')
+                                : (sanitize_hex_color($duration->popular_gradient_end ?? '') ?: '#ff5b0f');
+                            $popular_text_color = function_exists('pv_normalize_hex_color_value')
+                                ? pv_normalize_hex_color_value($duration->popular_text_color ?? '', '#ffffff')
+                                : (sanitize_hex_color($duration->popular_text_color ?? '') ?: '#ffffff');
+                            $popular_style = sprintf(
+                                '--popular-gradient-start:%1$s; --popular-gradient-end:%2$s; --popular-text-color:%3$s;',
+                                $popular_gradient_start,
+                                $popular_gradient_end,
+                                $popular_text_color
+                            );
+                        ?>
                         <div class="produkt-option" data-type="duration" data-id="<?php echo esc_attr($duration->id); ?>">
+                            <?php if (!empty($duration->show_popular)): ?>
+                            <span class="produkt-popular-badge" style="<?php echo esc_attr($popular_style); ?>">beliebt</span>
+                            <?php endif; ?>
                             <div class="produkt-option-content">
                                 <div class="produkt-duration-header">
                                     <span class="produkt-duration-name"><?php echo esc_html($duration->name); ?></span>

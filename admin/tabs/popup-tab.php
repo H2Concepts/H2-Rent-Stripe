@@ -9,7 +9,12 @@ if (isset($_POST['submit_popup'])) {
         'email_enabled' => isset($_POST['popup_email_enabled']) ? 1 : 0,
         'title'         => sanitize_text_field($_POST['popup_title'] ?? ''),
         'content'       => wp_kses_post($_POST['popup_content'] ?? ''),
-        'options'       => sanitize_textarea_field($_POST['popup_options'] ?? '')
+        'options'       => sanitize_textarea_field($_POST['popup_options'] ?? ''),
+        'triggers'      => [
+            'desktop_exit'      => isset($_POST['popup_trigger_desktop_exit']) ? 1 : 0,
+            'mobile_scroll'     => isset($_POST['popup_trigger_mobile_scroll']) ? 1 : 0,
+            'mobile_inactivity' => isset($_POST['popup_trigger_mobile_inactivity']) ? 1 : 0,
+        ],
     ];
     update_option('produkt_popup_settings', $settings);
 
@@ -27,6 +32,17 @@ $popup_email_enabled = isset($popup_settings['email_enabled']) ? intval($popup_s
 $popup_title   = $popup_settings['title'] ?? '';
 $popup_content = $popup_settings['content'] ?? '';
 $popup_options = $popup_settings['options'] ?? '';
+$trigger_defaults = [
+    'desktop_exit'      => 1,
+    'mobile_scroll'     => 1,
+    'mobile_inactivity' => 1,
+];
+$popup_triggers = $popup_settings['triggers'] ?? [];
+if (!is_array($popup_triggers)) {
+    $popup_triggers = [];
+}
+$popup_triggers = array_merge($trigger_defaults, array_intersect_key($popup_triggers, $trigger_defaults));
+$popup_triggers = array_map('intval', $popup_triggers);
 ?>
 
 <div class="settings-tab">
@@ -73,6 +89,32 @@ $popup_options = $popup_settings['options'] ?? '';
                         <input type="checkbox" name="popup_email_enabled" value="1" <?php checked($popup_email_enabled, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
                     </label>
+                </div>
+                <div class="produkt-form-group full-width popup-trigger-group">
+                    <label>Trigger</label>
+                    <div class="popup-trigger-grid">
+                        <div class="popup-trigger-column">
+                            <span class="popup-trigger-heading">Desktop</span>
+                            <label class="produkt-toggle-label">
+                                <input type="checkbox" name="popup_trigger_desktop_exit" value="1" <?php checked($popup_triggers['desktop_exit'] ?? 1, 1); ?>>
+                                <span class="produkt-toggle-slider"></span>
+                                <span>Exit-Intent (Maus verlässt Seite)</span>
+                            </label>
+                        </div>
+                        <div class="popup-trigger-column">
+                            <span class="popup-trigger-heading">Mobile</span>
+                            <label class="produkt-toggle-label">
+                                <input type="checkbox" name="popup_trigger_mobile_scroll" value="1" <?php checked($popup_triggers['mobile_scroll'] ?? 1, 1); ?>>
+                                <span class="produkt-toggle-slider"></span>
+                                <span>Scroll-Trigger (nach oben)</span>
+                            </label>
+                            <label class="produkt-toggle-label">
+                                <input type="checkbox" name="popup_trigger_mobile_inactivity" value="1" <?php checked($popup_triggers['mobile_inactivity'] ?? 1, 1); ?>>
+                                <span class="produkt-toggle-slider"></span>
+                                <span>Inaktivität (60 Sekunden)</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
