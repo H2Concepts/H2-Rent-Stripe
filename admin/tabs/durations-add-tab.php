@@ -46,15 +46,27 @@
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Gradient Startfarbe</label>
-                    <input type="color" name="popular_gradient_start" value="#ff8a3d">
+                    <input type="color" name="popular_gradient_start" id="popular_gradient_start" value="#ff8a3d" data-popular-start>
                 </div>
                 <div class="produkt-form-group">
                     <label>Gradient Endfarbe</label>
-                    <input type="color" name="popular_gradient_end" value="#ff5b0f">
+                    <input type="color" name="popular_gradient_end" id="popular_gradient_end" value="#ff5b0f" data-popular-end>
                 </div>
                 <div class="produkt-form-group">
                     <label>Textfarbe</label>
-                    <input type="color" name="popular_text_color" value="#ffffff">
+                    <input type="color" name="popular_text_color" id="popular_text_color" value="#ffffff" data-popular-text>
+                </div>
+            </div>
+
+            <?php
+            $popular_preview_style = '--popular-gradient-start:#ff8a3d; --popular-gradient-end:#ff5b0f; --popular-text-color:#ffffff;';
+            ?>
+            <div class="produkt-form-row">
+                <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
+                    <label>Badge-Vorschau</label>
+                    <div class="produkt-popular-preview">
+                        <span class="produkt-popular-preview-badge" data-popular-preview style="<?php echo esc_attr($popular_preview_style); ?>">Beliebt</span>
+                    </div>
                 </div>
             </div>
 

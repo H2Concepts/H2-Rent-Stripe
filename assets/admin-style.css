@@ -1298,6 +1298,28 @@
     letter-spacing: 0.05em;
 }
 
+.produkt-popular-preview {
+    margin-top: 8px;
+}
+
+.produkt-popular-preview-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    background: linear-gradient(
+        135deg,
+        var(--popular-gradient-start, #ff8a3d) 0%,
+        var(--popular-gradient-end, #ff5b0f) 100%
+    );
+    color: var(--popular-text-color, #fff);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
 /* Buttons */
 .button-primary {
     background: var(--pv-blue);

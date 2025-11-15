@@ -297,3 +297,42 @@ $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id 
         ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const previewGroups = document.querySelectorAll('[data-popular-preview-root]');
+    previewGroups.forEach(function (group) {
+        const form = group.closest('form');
+        if (!form) {
+            return;
+        }
+
+        const startInput = form.querySelector('[data-popular-start]');
+        const endInput = form.querySelector('[data-popular-end]');
+        const textInput = form.querySelector('[data-popular-text]');
+        const preview = group.querySelector('[data-popular-preview]');
+
+        if (!startInput || !endInput || !textInput || !preview) {
+            return;
+        }
+
+        const updatePreview = function () {
+            const startColor = startInput.value || startInput.getAttribute('value') || '#ff8a3d';
+            const endColor = endInput.value || endInput.getAttribute('value') || '#ff5b0f';
+            const textColor = textInput.value || textInput.getAttribute('value') || '#ffffff';
+
+            preview.style.setProperty('--popular-gradient-start', startColor);
+            preview.style.setProperty('--popular-gradient-end', endColor);
+            preview.style.setProperty('--popular-text-color', textColor);
+        };
+
+        ['input', 'change'].forEach(function (eventName) {
+            startInput.addEventListener(eventName, updatePreview);
+            endInput.addEventListener(eventName, updatePreview);
+            textInput.addEventListener(eventName, updatePreview);
+        });
+
+        updatePreview();
+    });
+});
+</script>

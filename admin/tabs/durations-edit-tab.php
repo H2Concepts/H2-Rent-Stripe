@@ -17,6 +17,12 @@
     $popular_gradient_start = sanitize_hex_color($edit_item->popular_gradient_start ?? '') ?: '#ff8a3d';
     $popular_gradient_end   = sanitize_hex_color($edit_item->popular_gradient_end ?? '') ?: '#ff5b0f';
     $popular_text_color     = sanitize_hex_color($edit_item->popular_text_color ?? '') ?: '#ffffff';
+    $popular_preview_style  = sprintf(
+        '--popular-gradient-start:%1$s; --popular-gradient-end:%2$s; --popular-text-color:%3$s;',
+        $popular_gradient_start,
+        $popular_gradient_end,
+        $popular_text_color
+    );
 ?>
 
 <div class="produkt-edit-duration">
@@ -75,15 +81,24 @@
             <div class="produkt-form-row">
                 <div class="produkt-form-group">
                     <label>Gradient Startfarbe</label>
-                    <input type="color" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>">
+                    <input type="color" name="popular_gradient_start" id="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start>
                 </div>
                 <div class="produkt-form-group">
                     <label>Gradient Endfarbe</label>
-                    <input type="color" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>">
+                    <input type="color" name="popular_gradient_end" id="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end>
                 </div>
                 <div class="produkt-form-group">
                     <label>Textfarbe</label>
-                    <input type="color" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>">
+                    <input type="color" name="popular_text_color" id="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text>
+                </div>
+            </div>
+
+            <div class="produkt-form-row">
+                <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
+                    <label>Badge-Vorschau</label>
+                    <div class="produkt-popular-preview">
+                        <span class="produkt-popular-preview-badge" data-popular-preview style="<?php echo esc_attr($popular_preview_style); ?>">Beliebt</span>
+                    </div>
                 </div>
             </div>
 
