@@ -405,6 +405,7 @@ jQuery(document).ready(function($) {
         var defaultStart = durationForm.data('default-gradient-start') || '#ff8a3d';
         var defaultEnd = durationForm.data('default-gradient-end') || '#ff5b0f';
         var defaultText = durationForm.data('default-text-color') || '#ffffff';
+        var popularToggle = durationForm.find('#show_popular');
 
         function updateDurationModalState() {
             var hasId = $.trim(durationForm.find('input[name="id"]').val()).length > 0;
@@ -440,6 +441,9 @@ jQuery(document).ready(function($) {
             durationForm.find('#show_badge, #show_popular').prop('checked', false);
             durationForm.find('input[name="sort_order"]').val(0);
             durationForm.find('input[name^="variant_custom_price"]').val('');
+            if (popularToggle.length) {
+                popularToggle.trigger('change');
+            }
 
             var startInput = durationForm.find('[data-popular-start]');
             var endInput = durationForm.find('[data-popular-end]');

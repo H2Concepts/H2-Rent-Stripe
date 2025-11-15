@@ -416,66 +416,74 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
                 <input type="hidden" name="id" value="<?php echo $edit_item ? esc_attr($edit_item->id) : ''; ?>">
 
-                <div class="produkt-form-group">
-                    <label for="duration-name">Name *</label>
-                    <input type="text" id="duration-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
-                </div>
+                <div class="produkt-form-grid">
+                    <div class="produkt-form-group">
+                        <label for="duration-name">Name *</label>
+                        <input type="text" id="duration-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
+                    </div>
 
-                <div class="produkt-form-group">
-                    <label for="duration-months">Mindestmonate *</label>
-                    <input type="number" id="duration-months" name="months_minimum" value="<?php echo $edit_item ? intval($edit_item->months_minimum) : ''; ?>" min="1" required placeholder="1">
-                </div>
-
-                <div class="produkt-form-group">
-                    <label class="produkt-toggle-label" for="show_badge">
-                        <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
-                        <span class="produkt-toggle-slider"></span>
-                        <span>Rabatt-Badge anzeigen</span>
-                    </label>
-                </div>
-
-                <div class="produkt-form-group">
-                    <label class="produkt-toggle-label" for="show_popular">
-                        <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
-                        <span class="produkt-toggle-slider"></span>
-                        <span>Beliebter Artikel</span>
-                    </label>
-                </div>
-
-                <div class="produkt-form-group">
-                    <label>Gradient Startfarbe</label>
-                    <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" data-popular-start-circle style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
-                        <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
-                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-picker>
-                        <input type="hidden" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-hidden>
+                    <div class="produkt-form-group">
+                        <label for="duration-months">Mindestmonate *</label>
+                        <input type="number" id="duration-months" name="months_minimum" value="<?php echo $edit_item ? intval($edit_item->months_minimum) : ''; ?>" min="1" required placeholder="1">
                     </div>
                 </div>
 
-                <div class="produkt-form-group">
-                    <label>Gradient Endfarbe</label>
-                    <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" data-popular-end-circle style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
-                        <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
-                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-picker>
-                        <input type="hidden" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-hidden>
+                <div class="produkt-form-grid produkt-form-grid--toggles">
+                    <div class="produkt-form-group">
+                        <label class="produkt-toggle-label" for="show_badge">
+                            <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>Rabatt-Badge anzeigen</span>
+                        </label>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label class="produkt-toggle-label" for="show_popular">
+                            <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>Beliebter Artikel</span>
+                        </label>
                     </div>
                 </div>
 
-                <div class="produkt-form-group">
-                    <label>Textfarbe</label>
-                    <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" data-popular-text-circle style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
-                        <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
-                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-picker>
-                        <input type="hidden" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-hidden>
-                    </div>
-                </div>
+                <div class="produkt-popular-settings <?php echo !empty($edit_item->show_popular) ? 'is-visible' : ''; ?>" data-popular-settings>
+                    <div class="produkt-form-grid">
+                        <div class="produkt-form-group">
+                            <label>Gradient Startfarbe</label>
+                            <div class="produkt-color-picker">
+                                <div class="produkt-color-preview-circle" data-popular-start-circle style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
+                                <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
+                                <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-picker>
+                                <input type="hidden" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-hidden>
+                            </div>
+                        </div>
 
-                <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
-                    <label>Badge-Vorschau</label>
-                    <div class="produkt-popular-preview">
-                        <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;">Beliebt</span>
+                        <div class="produkt-form-group">
+                            <label>Gradient Endfarbe</label>
+                            <div class="produkt-color-picker">
+                                <div class="produkt-color-preview-circle" data-popular-end-circle style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
+                                <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
+                                <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-picker>
+                                <input type="hidden" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-hidden>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Textfarbe</label>
+                        <div class="produkt-color-picker">
+                            <div class="produkt-color-preview-circle" data-popular-text-circle style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
+                            <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
+                            <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-picker>
+                            <input type="hidden" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-hidden>
+                        </div>
+                    </div>
+
+                    <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
+                        <label>Badge-Vorschau</label>
+                        <div class="produkt-popular-preview">
+                            <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;">Beliebt</span>
+                        </div>
                     </div>
                 </div>
 
@@ -525,6 +533,25 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const HEX_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+    const popularToggle = document.getElementById('show_popular');
+    const popularSettings = document.querySelector('[data-popular-settings]');
+
+    const handlePopularToggle = function () {
+        if (!popularSettings) {
+            return;
+        }
+        if (popularToggle && popularToggle.checked) {
+            popularSettings.classList.add('is-visible');
+        } else {
+            popularSettings.classList.remove('is-visible');
+        }
+    };
+
+    if (popularToggle) {
+        popularToggle.addEventListener('change', handlePopularToggle);
+        handlePopularToggle();
+    }
 
     const normalizeHex = function (value) {
         const trimmed = (value || '').trim();
