@@ -376,105 +376,104 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
                 <input type="hidden" name="id" value="<?php echo $edit_item ? esc_attr($edit_item->id) : ''; ?>">
 
-                <div class="produkt-form-section">
-                    <h4>📝 Grunddaten</h4>
-                    <div class="produkt-form-row">
-                        <div class="produkt-form-group">
-                            <label>Name *</label>
-                            <input type="text" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
-                        </div>
-                        <div class="produkt-form-group">
-                            <label>Mindestmonate *</label>
-                            <input type="number" name="months_minimum" value="<?php echo $edit_item ? intval($edit_item->months_minimum) : ''; ?>" min="1" required placeholder="1">
-                        </div>
-                    </div>
+                <div class="produkt-form-group">
+                    <label for="duration-name">Name *</label>
+                    <input type="text" id="duration-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
+                </div>
 
-                    <div class="produkt-form-row">
-                        <div class="produkt-form-group">
-                            <label class="produkt-toggle-label" for="show_badge" style="min-width:160px;">
-                                <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
-                                <span class="produkt-toggle-slider"></span>
-                                <span>Rabatt-Badge anzeigen</span>
-                            </label>
-                        </div>
-                        <div class="produkt-form-group">
-                            <label class="produkt-toggle-label" for="show_popular" style="min-width:160px;">
-                                <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
-                                <span class="produkt-toggle-slider"></span>
-                                <span>Beliebter Artikel</span>
-                            </label>
-                        </div>
-                    </div>
+                <div class="produkt-form-group">
+                    <label for="duration-months">Mindestmonate *</label>
+                    <input type="number" id="duration-months" name="months_minimum" value="<?php echo $edit_item ? intval($edit_item->months_minimum) : ''; ?>" min="1" required placeholder="1">
+                </div>
 
-                    <div class="produkt-form-row">
-                        <div class="produkt-form-group">
-                            <label>Gradient Startfarbe</label>
-                            <input type="color" name="popular_gradient_start" id="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start>
-                        </div>
-                        <div class="produkt-form-group">
-                            <label>Gradient Endfarbe</label>
-                            <input type="color" name="popular_gradient_end" id="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end>
-                        </div>
-                        <div class="produkt-form-group">
-                            <label>Textfarbe</label>
-                            <input type="color" name="popular_text_color" id="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text>
-                        </div>
-                    </div>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="show_badge">
+                        <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Rabatt-Badge anzeigen</span>
+                    </label>
+                </div>
 
-                    <div class="produkt-form-row">
-                        <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
-                            <label>Badge-Vorschau</label>
-                            <div class="produkt-popular-preview">
-                                <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;">Beliebt</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="show_popular">
+                        <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Beliebter Artikel</span>
+                    </label>
+                </div>
 
-                    <div class="produkt-form-row">
-                        <div class="produkt-form-group">
-                            <label>Sortierung</label>
-                            <input type="number" name="sort_order" value="<?php echo $edit_item ? intval($edit_item->sort_order) : 0; ?>" min="0">
-                        </div>
+                <div class="produkt-form-group">
+                    <label>Gradient Startfarbe</label>
+                    <div class="produkt-color-picker">
+                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
+                        <input type="text" class="produkt-color-value" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
+                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-picker>
                     </div>
                 </div>
 
-                <div class="produkt-form-section">
-                    <h4>💶 Monatlicher Preis pro Ausführung</h4>
-                    <?php foreach ($variants as $variant):
-                        $variant_price = $duration_prices[$variant->id] ?? null;
-                        $custom_price  = $variant_price['custom_price'] ?? '';
-                        $archived      = false;
-                        $price_id      = $variant_price['stripe_price_id'] ?? '';
-                        if ($price_id) {
-                            $archived = \ProduktVerleih\StripeService::is_price_archived_cached($price_id);
-                        } elseif (!empty($variant_price['stripe_archived'])) {
-                            $archived = true;
-                        }
-                        $product_archived = false;
-                        if (!empty($variant->stripe_product_id)) {
-                            $product_archived = \ProduktVerleih\StripeService::is_product_archived_cached($variant->stripe_product_id);
-                        }
-                    ?>
-                    <div class="produkt-form-group">
-                        <label><?php echo esc_html($variant->name); ?></label>
-                        <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($custom_price); ?>" placeholder="0.00">
-                        <small>Preis (monatlich in €)</small>
-                        <?php if ($archived): ?>
-                            <span class="badge badge-gray">Archivierter Stripe-Preis</span>
-                        <?php endif; ?>
-                        <?php if ($product_archived): ?>
-                            <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
-                        <?php endif; ?>
+                <div class="produkt-form-group">
+                    <label>Gradient Endfarbe</label>
+                    <div class="produkt-color-picker">
+                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
+                        <input type="text" class="produkt-color-value" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
+                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-picker>
                     </div>
-                    <?php endforeach; ?>
                 </div>
 
-                <div class="produkt-form-actions">
-                    <button type="submit" name="submit" class="button button-primary button-large">✅ Mietdauer speichern</button>
+                <div class="produkt-form-group">
+                    <label>Textfarbe</label>
+                    <div class="produkt-color-picker">
+                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
+                        <input type="text" class="produkt-color-value" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
+                        <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-picker>
+                    </div>
                 </div>
-                <div class="produkt-form-actions produkt-form-actions--secondary" data-delete-wrapper style="<?php echo $delete_url ? '' : 'display:none;'; ?>">
-                    <a href="<?php echo $delete_url ? esc_url($delete_url) : '#'; ?>" class="button button-secondary button-large" data-delete-link <?php if ($delete_url && $delete_message): ?>onclick="return confirm('<?php echo esc_js($delete_message); ?>')"<?php endif; ?>>🗑️ Mietdauer löschen</a>
+
+                <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
+                    <label>Badge-Vorschau</label>
+                    <div class="produkt-popular-preview">
+                        <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;">Beliebt</span>
+                    </div>
                 </div>
+
+                <div class="produkt-form-group">
+                    <label for="duration-sort">Sortierung</label>
+                    <input type="number" id="duration-sort" name="sort_order" value="<?php echo $edit_item ? intval($edit_item->sort_order) : 0; ?>" min="0">
+                </div>
+
+                <?php foreach ($variants as $variant):
+                    $variant_price = $duration_prices[$variant->id] ?? null;
+                    $custom_price  = $variant_price['custom_price'] ?? '';
+                    $archived      = false;
+                    $price_id      = $variant_price['stripe_price_id'] ?? '';
+                    if ($price_id) {
+                        $archived = \ProduktVerleih\StripeService::is_price_archived_cached($price_id);
+                    } elseif (!empty($variant_price['stripe_archived'])) {
+                        $archived = true;
+                    }
+                    $product_archived = false;
+                    if (!empty($variant->stripe_product_id)) {
+                        $product_archived = \ProduktVerleih\StripeService::is_product_archived_cached($variant->stripe_product_id);
+                    }
+                ?>
+                <div class="produkt-form-group full-width">
+                    <label><?php echo esc_html($variant->name); ?></label>
+                    <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($custom_price); ?>" placeholder="0.00">
+                    <small>Preis (monatlich in €)</small>
+                    <?php if ($archived): ?>
+                        <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                    <?php endif; ?>
+                    <?php if ($product_archived): ?>
+                        <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+
+                <p>
+                    <button type="submit" name="submit" class="icon-btn" aria-label="Speichern">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"></path><path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"></path></svg>
+                    </button>
+                </p>
             </form>
         </div>
     </div>
@@ -490,8 +489,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const startInput = form.querySelector('[data-popular-start]');
+        const startPicker = form.querySelector('[data-popular-start-picker]');
         const endInput = form.querySelector('[data-popular-end]');
+        const endPicker = form.querySelector('[data-popular-end-picker]');
         const textInput = form.querySelector('[data-popular-text]');
+        const textPicker = form.querySelector('[data-popular-text-picker]');
         const preview = group.querySelector('[data-popular-preview]');
 
         if (!startInput || !endInput || !textInput || !preview) {
@@ -499,9 +501,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const updatePreview = function () {
-            const startColor = startInput.value || startInput.getAttribute('value') || '#ff8a3d';
-            const endColor = endInput.value || endInput.getAttribute('value') || '#ff5b0f';
-            const textColor = textInput.value || textInput.getAttribute('value') || '#ffffff';
+            const startColor = startInput.value || startInput.defaultValue || '#ff8a3d';
+            const endColor = endInput.value || endInput.defaultValue || '#ff5b0f';
+            const textColor = textInput.value || textInput.defaultValue || '#ffffff';
 
             preview.style.setProperty('--popular-gradient-start', startColor);
             preview.style.setProperty('--popular-gradient-end', endColor);
@@ -512,6 +514,15 @@ document.addEventListener('DOMContentLoaded', function () {
             startInput.addEventListener(eventName, updatePreview);
             endInput.addEventListener(eventName, updatePreview);
             textInput.addEventListener(eventName, updatePreview);
+            if (startPicker) {
+                startPicker.addEventListener(eventName, updatePreview);
+            }
+            if (endPicker) {
+                endPicker.addEventListener(eventName, updatePreview);
+            }
+            if (textPicker) {
+                textPicker.addEventListener(eventName, updatePreview);
+            }
         });
 
         updatePreview();
