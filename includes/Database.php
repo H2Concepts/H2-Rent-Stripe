@@ -175,6 +175,11 @@ class Database {
         if (empty($badge_exists)) {
             $wpdb->query("ALTER TABLE $table_durations ADD COLUMN show_badge TINYINT(1) DEFAULT 0 AFTER discount");
         }
+
+        $popular_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'show_popular'");
+        if (empty($popular_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN show_popular TINYINT(1) DEFAULT 0 AFTER show_badge");
+        }
         
         // Create categories table if it doesn't exist
         $table_categories = $wpdb->prefix . 'produkt_categories';
@@ -1073,6 +1078,7 @@ class Database {
             months_minimum int(11) NOT NULL,
             discount decimal(5,4) DEFAULT 0,
             show_badge tinyint(1) DEFAULT 0,
+            show_popular tinyint(1) DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1560,6 +1566,7 @@ class Database {
                         'months_minimum' => $duration[1],
                         'discount' => $duration[2],
                         'show_badge' => 0,
+                        'show_popular' => 0,
                         'sort_order' => $index
                     )
                 );

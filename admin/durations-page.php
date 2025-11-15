@@ -38,6 +38,7 @@ if (isset($_POST['submit'])) {
     $name = sanitize_text_field($_POST['name']);
     $months_minimum = intval($_POST['months_minimum']);
     $show_badge = isset($_POST['show_badge']) ? 1 : 0;
+    $show_popular = isset($_POST['show_popular']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order']);
 
@@ -51,11 +52,12 @@ if (isset($_POST['submit'])) {
                 'months_minimum' => $months_minimum,
                 'discount' => 0,
                 'show_badge' => $show_badge,
+                'show_popular' => $show_popular,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%d', '%d', '%d', '%d', '%d'),
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%d', '%d'),
             array('%d')
         );
         
@@ -76,10 +78,11 @@ if (isset($_POST['submit'])) {
                 'months_minimum' => $months_minimum,
                 'discount' => 0,
                 'show_badge' => $show_badge,
+                'show_popular' => $show_popular,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%d', '%d', '%d', '%d', '%d')
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%d', '%d')
         );
         
         $duration_id = $wpdb->insert_id;

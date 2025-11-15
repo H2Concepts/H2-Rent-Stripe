@@ -35,6 +35,16 @@
                     </label>
                 </div>
                 <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="show_popular" style="min-width:160px;">
+                        <input type="checkbox" name="show_popular" id="show_popular" value="1">
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Beliebter Artikel</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="produkt-form-row">
+                <div class="produkt-form-group">
                     <label>Sortierung</label>
                     <input type="number" name="sort_order" value="0" min="0">
                 </div>

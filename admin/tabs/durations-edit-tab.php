@@ -51,20 +51,30 @@
                 </div>
             </div>
             
-        <div class="produkt-form-row">
-            <div class="produkt-form-group">
-                <label class="produkt-toggle-label" for="show_badge" style="min-width:160px;">
-                    <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
-                    <span class="produkt-toggle-slider"></span>
-                    <span>Rabatt-Badge anzeigen</span>
-                </label>
+            <div class="produkt-form-row">
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="show_badge" style="min-width:160px;">
+                        <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Rabatt-Badge anzeigen</span>
+                    </label>
+                </div>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="show_popular" style="min-width:160px;">
+                        <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Beliebter Artikel</span>
+                    </label>
+                </div>
             </div>
-            <div class="produkt-form-group">
-                <label>Sortierung</label>
-                <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
+
+            <div class="produkt-form-row">
+                <div class="produkt-form-group">
+                    <label>Sortierung</label>
+                    <input type="number" name="sort_order" value="<?php echo $edit_item->sort_order; ?>" min="0">
+                </div>
             </div>
         </div>
-    </div>
 
         <!-- Preise pro Variant -->
         <div class="produkt-form-section">

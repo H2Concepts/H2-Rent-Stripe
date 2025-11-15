@@ -613,6 +613,26 @@ img.wp-smiley, img.emoji {
     font-weight: 500;
 }
 
+.produkt-popular-badge {
+    position: absolute;
+    top: -0.75rem;
+    right: -0.75rem;
+    background: #ff7a18;
+    color: #ffffff;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 0 10px 25px rgba(255, 122, 24, 0.35);
+    z-index: 2;
+}
+
+.produkt-option.selected .produkt-popular-badge {
+    box-shadow: 0 12px 30px rgba(255, 122, 24, 0.45);
+}
+
 .produkt-duration-info {
     font-size: 0.8rem;
     color: #6b7280;

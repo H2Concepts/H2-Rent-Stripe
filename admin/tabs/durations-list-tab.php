@@ -39,6 +39,9 @@
                 <?php if ($duration->show_badge): ?>
                     <span class="produkt-discount-badge">Badge</span>
                 <?php endif; ?>
+                <?php if (!empty($duration->show_popular)): ?>
+                    <span class="badge badge-popular">Beliebt</span>
+                <?php endif; ?>
             </div>
             
             <div class="produkt-duration-content">
@@ -48,9 +51,14 @@
                         <small>Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?> Mindestlaufzeit</small>
                     </div>
                     
-                    <?php if ($duration->show_badge): ?>
+                    <?php if ($duration->show_badge || !empty($duration->show_popular)): ?>
                     <div class="produkt-duration-savings">
-                        <span class="produkt-savings-text">Badge aktiv</span>
+                        <?php if ($duration->show_badge): ?>
+                            <span class="produkt-savings-text">Badge aktiv</span>
+                        <?php endif; ?>
+                        <?php if (!empty($duration->show_popular)): ?>
+                            <span class="produkt-savings-text">Beliebt-Störer aktiv</span>
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </div>
