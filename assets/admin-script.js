@@ -397,6 +397,74 @@ jQuery(document).ready(function($) {
     }
 }
 
+    var durationModal = $('#duration-modal');
+    if (durationModal.length) {
+        var durationForm = durationModal.find('form');
+        var durationTitle = durationModal.find('[data-duration-modal-title]');
+        var deleteWrapper = durationModal.find('[data-delete-wrapper]');
+        var defaultStart = durationForm.data('default-gradient-start') || '#ff8a3d';
+        var defaultEnd = durationForm.data('default-gradient-end') || '#ff5b0f';
+        var defaultText = durationForm.data('default-text-color') || '#ffffff';
+
+        function updateDurationModalState() {
+            var hasId = $.trim(durationForm.find('input[name="id"]').val()).length > 0;
+            var titleText = hasId ? durationTitle.data('title-edit') : durationTitle.data('title-add');
+            if (titleText) {
+                durationTitle.text(titleText);
+            }
+            if (deleteWrapper.length) {
+                deleteWrapper.toggle(hasId);
+            }
+        }
+
+        function openDurationModal() {
+            durationModal.show();
+            $('body').addClass('duration-modal-open');
+            updateDurationModalState();
+        }
+
+        function closeDurationModal() {
+            durationModal.hide();
+            $('body').removeClass('duration-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('tab');
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+
+        $(document).on('click', '.js-open-duration-modal', function(e){
+            e.preventDefault();
+            durationForm.find('input[name="id"]').val('');
+            durationForm.find('input[name="name"]').val('');
+            durationForm.find('input[name="months_minimum"]').val('');
+            durationForm.find('#show_badge, #show_popular').prop('checked', false);
+            durationForm.find('input[name="sort_order"]').val(0);
+            durationForm.find('input[name^="variant_custom_price"]').val('');
+
+            var startInput = durationForm.find('[data-popular-start]');
+            var endInput = durationForm.find('[data-popular-end]');
+            var textInput = durationForm.find('[data-popular-text]');
+
+            startInput.val(defaultStart).trigger('input');
+            endInput.val(defaultEnd).trigger('input');
+            textInput.val(defaultText).trigger('input');
+
+            updateDurationModalState();
+            openDurationModal();
+        });
+
+        durationModal.on('click', function(e){
+            if (e.target === this) {
+                closeDurationModal();
+            }
+        });
+        durationModal.find('.modal-close').on('click', closeDurationModal);
+
+        if (durationModal.data('open') == 1) {
+            openDurationModal();
+        }
+    }
+
     var colorModal = $('#color-modal');
     if (colorModal.length) {
         function openColorModal() {

@@ -1384,6 +1384,10 @@ body.color-modal-open {
     overflow: hidden;
 }
 
+body.duration-modal-open {
+    overflow: hidden;
+}
+
 /* Responsive tables */
 .table-responsive {
     overflow-x: auto;

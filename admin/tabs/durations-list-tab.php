@@ -9,9 +9,9 @@
             <div class="produkt-empty-icon">⏰</div>
             <h4>Noch keine Mietdauern vorhanden</h4>
             <p>Erstellen Sie Ihre erste Mietdauer für dieses Produkt.</p>
-            <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&tab=add'); ?>" class="button button-primary">
+            <button type="button" class="button button-primary js-open-duration-modal">
                 ➕ Erste Mietdauer erstellen
-            </a>
+            </button>
         </div>
     <?php else: ?>
         <table class="activity-table">
