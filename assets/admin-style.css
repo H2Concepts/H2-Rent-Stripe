@@ -1327,16 +1327,31 @@
 .badge-warning { background: #ffc107; color: #212529; }
 .badge-danger { background: var(--pv-red); color: white; }
 .badge-gray { background: #dee2e6; color: #212529; }
+.produkt-duration-badges {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
 .badge-popular {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 12px;
+    border-radius: 9999px;
     background: linear-gradient(
         135deg,
         var(--popular-gradient-start, #ff8a3d) 0%,
         var(--popular-gradient-end, #ff5b0f) 100%
     );
     color: var(--popular-text-color, #fff);
+    font-size: 0.75rem;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .produkt-popular-preview {

@@ -62,13 +62,16 @@
                         <?php echo intval($duration->months_minimum); ?> Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?>
                     </td>
                     <td>
-                        <?php if ($duration->show_badge): ?>
-                            <span class="produkt-discount-badge">Rabatt-Badge</span>
-                        <?php endif; ?>
-                        <?php if (!empty($duration->show_popular)): ?>
-                            <span class="badge badge-popular" style="<?php echo esc_attr($popular_style); ?>">Beliebt</span>
-                        <?php endif; ?>
-                        <?php if (!$duration->show_badge && empty($duration->show_popular)): ?>
+                        <?php if ($duration->show_badge || !empty($duration->show_popular)): ?>
+                            <div class="produkt-duration-badges">
+                                <?php if ($duration->show_badge): ?>
+                                    <span class="produkt-discount-badge">Rabatt-Badge</span>
+                                <?php endif; ?>
+                                <?php if (!empty($duration->show_popular)): ?>
+                                    <span class="badge badge-popular" style="<?php echo esc_attr($popular_style); ?>">beliebt</span>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
                             –
                         <?php endif; ?>
                     </td>
