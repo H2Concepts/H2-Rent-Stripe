@@ -1388,6 +1388,10 @@ body.duration-modal-open {
     overflow: hidden;
 }
 
+body.conditions-modal-open {
+    overflow: hidden;
+}
+
 /* Responsive tables */
 .table-responsive {
     overflow-x: auto;

@@ -10,9 +10,9 @@ $variant_total = isset($variants) ? count($variants) : 0;
             <div class="produkt-empty-icon">🔄</div>
             <h4>Noch keine Zustände vorhanden</h4>
             <p>Legen Sie Ihren ersten Zustand für dieses Produkt an.</p>
-            <a href="<?php echo admin_url('admin.php?page=produkt-conditions&category=' . $selected_category . '&tab=add'); ?>" class="button button-primary">
+            <button type="button" class="button button-primary js-open-condition-modal">
                 ➕ Zustand erstellen
-            </a>
+            </button>
         </div>
     <?php else: ?>
         <table class="activity-table">

@@ -465,6 +465,58 @@ jQuery(document).ready(function($) {
         }
     }
 
+    var conditionModal = $('#condition-modal');
+    if (conditionModal.length) {
+        var conditionForm = conditionModal.find('form');
+        var conditionTitle = conditionModal.find('[data-condition-modal-title]');
+
+        function updateConditionModalState() {
+            var hasId = $.trim(conditionForm.find('input[name="id"]').val()).length > 0;
+            var titleText = hasId ? conditionTitle.data('title-edit') : conditionTitle.data('title-add');
+            if (titleText) {
+                conditionTitle.text(titleText);
+            }
+        }
+
+        function openConditionModal() {
+            conditionModal.show();
+            $('body').addClass('conditions-modal-open');
+            updateConditionModalState();
+        }
+
+        function closeConditionModal() {
+            conditionModal.hide();
+            $('body').removeClass('conditions-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('tab');
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+
+        $(document).on('click', '.js-open-condition-modal', function (e) {
+            e.preventDefault();
+            conditionForm.find('input[name="id"]').val('');
+            conditionForm.find('input[name="name"]').val('');
+            conditionForm.find('textarea[name="description"]').val('');
+            conditionForm.find('input[name="price_modifier"]').val('0');
+            conditionForm.find('input[name="sort_order"]').val('0');
+            conditionForm.find('.variant-availability-grid input[type="checkbox"]').prop('checked', true);
+            openConditionModal();
+        });
+
+        conditionModal.on('click', function (e) {
+            if (e.target === this) {
+                closeConditionModal();
+            }
+        });
+
+        conditionModal.find('.modal-close').on('click', closeConditionModal);
+
+        if (conditionModal.data('open') == 1) {
+            openConditionModal();
+        }
+    }
+
     var colorModal = $('#color-modal');
     if (colorModal.length) {
         function openColorModal() {
