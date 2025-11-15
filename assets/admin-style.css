@@ -3490,9 +3490,9 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 
 .activity-table .badge {
     padding: 0.3rem 0.6rem;
-    border-radius: 4px;
+    border-radius: 999px;
     color: #fff;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
 }
 .activity-table tr.pending-return { background-color: #efffec; }
 
