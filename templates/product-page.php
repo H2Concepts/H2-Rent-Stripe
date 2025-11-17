@@ -384,6 +384,8 @@ if ($price_layout !== 'sidebar') {
 }
 ?>
 
+        </div>
+
         <div class="produkt-right">
             <?php if ($price_layout === 'sidebar') { echo $price_display_markup; } ?>
             <div class="produkt-configuration">
