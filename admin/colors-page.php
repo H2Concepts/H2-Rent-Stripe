@@ -64,7 +64,7 @@ if (isset($_POST['submit'])) {
                 'sort_order' => $sort_order
             ],
             ['id' => intval($_POST['id'])],
-            ['%d','%s','%s','%s','%s','%d','%d'],
+            ['%d','%s','%s','%d','%s','%s','%d','%d'],
             ['%d']
         );
         $color_id = intval($_POST['id']);
@@ -81,7 +81,7 @@ if (isset($_POST['submit'])) {
                 'active' => $active,
                 'sort_order' => $sort_order
             ],
-            ['%d','%s','%s','%s','%s','%d','%d']
+            ['%d','%s','%s','%d','%s','%s','%d','%d']
         );
         $color_id = $wpdb->insert_id;
     }
