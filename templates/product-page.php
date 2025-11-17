@@ -312,7 +312,8 @@ ob_start();
                         <p class="produkt-price-label"><?php echo esc_html($price_label); ?></p>
                         <div class="produkt-price-wrapper">
                             <span class="produkt-original-price" id="produkt-original-price" style="display: none;"></span>
-                            <span class="produkt-final-price" id="produkt-final-price">0,00€</span>
+                            <?php $final_price_tag = $price_layout === 'sidebar' ? 'h2' : 'span'; ?>
+                            <<?php echo $final_price_tag; ?> class="produkt-final-price" id="produkt-final-price">0,00€</<?php echo $final_price_tag; ?>>
                             <?php if ($price_period === 'month'): ?>
                             <span class="produkt-price-period">/Monat</span>
                             <?php endif; ?>

@@ -257,6 +257,12 @@ img.wp-smiley, img.emoji {
     padding: 0;
 }
 
+.produkt-price-display.sidebar-layout .produkt-final-price {
+    font-size: 2.5rem;
+    margin: 0;
+    line-height: 1.2;
+}
+
 .produkt-price-content {
     display: flex;
     flex-direction: column;
