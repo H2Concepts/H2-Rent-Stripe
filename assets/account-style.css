@@ -232,36 +232,44 @@ body.produkt-login-page #colophon {
 .produkt-login-wrapper {
     width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
     min-height: 100vh;
 }
 
 .produkt-login-wrapper.login-layout-split {
     display: grid;
-    grid-template-columns: minmax(320px, 520px) 1fr;
+    grid-template-columns: minmax(360px, 520px) 1fr;
     align-items: stretch;
     background: #f6f7f6;
 }
 
 .produkt-login-panel {
-    background: linear-gradient(135deg, var(--produkt-login-primary, #5f7f5f) 0%, #f3f7f3 100%);
+    background: var(--produkt-login-primary, #5f7f5f);
     padding: 48px 56px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 18px;
+    color: #ffffff;
+}
+
+.login-panel-main {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    color: #0f2010;
+    justify-content: center;
 }
 
 .produkt-login-panel h1 {
     margin: 0 0 4px;
     font-size: 32px;
+    color: #ffffff;
 }
 
 .login-lead {
     margin: 0 0 8px;
     font-size: 15px;
-    color: #1f2f22;
+    color: #eef2ee;
 }
 
 .login-brand-logo img {
@@ -301,15 +309,16 @@ body.produkt-login-page #colophon {
     margin: 6px 0 0;
     line-height: 1.4;
     font-size: 14px;
+    color: #ffffff;
 }
 
 .login-signup-hint a {
-    color: #0f2010;
+    color: #ffffff;
     font-weight: 600;
 }
 
 .produkt-login-visual {
-    min-height: 60vh;
+    min-height: 100vh;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
