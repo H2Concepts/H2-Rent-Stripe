@@ -91,7 +91,7 @@ foreach ($filter_groups as $g) {
                 <h2>Layout</h2>
                 <p class="card-subline">Darstellung im Frontend</p>
                 <input type="hidden" name="layout_style" value="default">
-                <div class="layout-option-grid">
+                <div class="layout-option-grid" data-input-name="layout_style">
                     <div class="layout-option-card" data-value="default">
                         <div class="layout-option-name">Standard (Horizontal)</div>
                         <div class="layout-option-preview">
@@ -120,6 +120,32 @@ foreach ($filter_groups as $g) {
                                 <rect x="5" y="5" width="90" height="15" fill="#e5e7eb"/>
                                 <rect x="5" y="25" width="90" height="15" fill="#e5e7eb"/>
                                 <rect x="5" y="45" width="90" height="15" fill="#e5e7eb"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Layout Preis</h2>
+                <p class="card-subline">Position der Preisbox</p>
+                <input type="hidden" name="price_layout" value="default">
+                <div class="layout-option-grid" data-input-name="price_layout">
+                    <div class="layout-option-card" data-value="default">
+                        <div class="layout-option-name">Standardposition</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="5" y="10" width="50" height="40" fill="#e5e7eb"/>
+                                <rect x="70" y="35" width="45" height="15" fill="#cbd5e1"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="layout-option-card" data-value="sidebar">
+                        <div class="layout-option-name">Neben dem Konfigurator</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="5" y="10" width="50" height="40" fill="#e5e7eb"/>
+                                <rect x="70" y="10" width="45" height="15" fill="#cbd5e1"/>
                             </svg>
                         </div>
                     </div>

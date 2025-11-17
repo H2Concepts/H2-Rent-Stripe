@@ -532,6 +532,7 @@ class Admin {
             $price_period = sanitize_text_field($_POST['price_period'] ?? ($global_ui['price_period'] ?? 'month'));
             $vat_included = isset($_POST['vat_included']) ? 1 : (isset($global_ui['vat_included']) ? intval($global_ui['vat_included']) : 0);
             $layout_style = sanitize_text_field($_POST['layout_style']);
+            $price_layout = sanitize_text_field($_POST['price_layout'] ?? 'default');
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip'] ?? ($global_ui['duration_tooltip'] ?? ''));
             $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip'] ?? ($global_ui['condition_tooltip'] ?? ''));
             $show_features = isset($_POST['show_features']) ? 1 : 0;
@@ -650,6 +651,7 @@ class Admin {
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
+                        'price_layout' => $price_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -660,7 +662,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -799,6 +801,7 @@ class Admin {
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
+                        'price_layout' => $price_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -812,7 +815,7 @@ class Admin {
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'
+                        '%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
                     )
                 );
 

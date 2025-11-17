@@ -212,6 +212,7 @@ $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 
 // Layout
 $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'default';
+$price_layout = isset($category) ? ($category->price_layout ?? 'default') : 'default';
 
 // Tooltips
 $duration_tooltip = $ui['duration_tooltip'] ?? '';
@@ -302,6 +303,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
             </div>
 
+<?php
+ob_start();
+?>
             <div class="produkt-price-display<?php echo $select_shipping ? ' no-default-shipping' : ''; ?>" id="produkt-price-display" style="display: none;">
                 <div class="produkt-price-box produkt-monthly-box">
                     <div class="produkt-price-content">
@@ -373,9 +377,15 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 <?php endif; ?>
 
             </div>
-        </div>
+<?php
+$price_display_markup = ob_get_clean();
+if ($price_layout !== 'sidebar') {
+    echo $price_display_markup;
+}
+?>
 
         <div class="produkt-right">
+            <?php if ($price_layout === 'sidebar') { echo $price_display_markup; } ?>
             <div class="produkt-configuration">
                 <!-- Variants Selection -->
                 <?php if (!empty($variants)): ?>

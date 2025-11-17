@@ -961,7 +961,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.layout-option-grid').forEach(grid => {
-        const hidden = grid.closest('.dashboard-card').querySelector('input[name="layout_style"]');
+        const card = grid.closest('.dashboard-card');
+        const inputName = grid.dataset.inputName || 'layout_style';
+        let hidden = card ? card.querySelector(`input[name="${inputName}"]`) : null;
+        if (!hidden && card) {
+            hidden = card.querySelector('input[type="hidden"]');
+        }
         function setActive(val) {
             grid.querySelectorAll('.layout-option-card').forEach(card => {
                 card.classList.toggle('active', card.dataset.value === val);
