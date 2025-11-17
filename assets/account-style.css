@@ -219,6 +219,7 @@ body.produkt-login-page {
     background-position: center;
     background-repeat: no-repeat;
     margin: 0;
+    background-color: #f6f7f6;
 }
 
 body.produkt-login-page header,
@@ -234,6 +235,84 @@ body.produkt-login-page #colophon {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+}
+
+.produkt-login-wrapper.login-layout-split {
+    display: grid;
+    grid-template-columns: minmax(320px, 520px) 1fr;
+    align-items: stretch;
+    background: #f6f7f6;
+}
+
+.produkt-login-panel {
+    background: linear-gradient(135deg, var(--produkt-login-primary, #5f7f5f) 0%, #f3f7f3 100%);
+    padding: 48px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    color: #0f2010;
+}
+
+.produkt-login-panel h1 {
+    margin: 0 0 4px;
+    font-size: 32px;
+}
+
+.login-lead {
+    margin: 0 0 8px;
+    font-size: 15px;
+    color: #1f2f22;
+}
+
+.login-brand-logo img {
+    max-width: 180px;
+    height: auto;
+}
+
+.login-form-block {
+    background: #fff;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
+}
+
+.login-form-block input {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+    border-radius: 10px;
+    border: 1px solid #d6dede;
+    background: #f8faf8;
+    font-size: 15px;
+}
+
+.login-form-block button {
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 10px;
+    background: var(--produkt-login-primary, #5f7f5f);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.login-signup-hint {
+    margin: 6px 0 0;
+    line-height: 1.4;
+    font-size: 14px;
+}
+
+.login-signup-hint a {
+    color: #0f2010;
+    font-weight: 600;
+}
+
+.produkt-login-visual {
+    min-height: 60vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .produkt-login-image,
@@ -293,4 +372,16 @@ body.produkt-login-page #colophon {
     margin-top: 15px;
     color: #000;
     text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .produkt-login-wrapper.login-layout-split {
+        grid-template-columns: 1fr;
+    }
+    .produkt-login-panel {
+        padding: 32px 24px;
+    }
+    .produkt-login-visual {
+        min-height: 300px;
+    }
 }

@@ -1,4 +1,46 @@
 <?php if (!is_user_logged_in()) : ?>
+<?php
+    $login_layout    = $branding['login_layout'] ?? 'classic';
+    $login_logo      = $branding['login_logo'] ?? '';
+    $login_bg_image  = $branding['login_bg_image'] ?? '';
+    $site_name       = get_bloginfo('name');
+?>
+
+<?php if ($login_layout === 'split') : ?>
+<div class="produkt-login-wrapper login-layout-split">
+    <div class="produkt-login-panel">
+        <?php if ($login_logo) : ?>
+            <div class="login-brand-logo">
+                <img src="<?php echo esc_url($login_logo); ?>" alt="<?php echo esc_attr($site_name); ?> Logo">
+            </div>
+        <?php endif; ?>
+        <h1>Schön, dass du da bist!</h1>
+        <p class="login-lead">Melde dich mit der E-Mail an, die du bei deiner Bestellung angegeben hast. Wir senden dir einen Login-Code.</p>
+        <?php if (!empty($message)) { echo $message; } ?>
+        <form method="post" class="login-email-form login-form-block">
+            <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
+            <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
+            <label for="login-email" class="screen-reader-text">E-Mail-Adresse</label>
+            <input id="login-email" type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
+            <button type="submit" name="request_login_code">Code zum Einloggen anfordern</button>
+        </form>
+        <?php if ($show_code_form) : ?>
+            <form method="post" class="login-code-form login-form-block">
+                <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
+                <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
+                <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
+                <label for="login-code" class="screen-reader-text">6-stelliger Code</label>
+                <input id="login-code" type="text" name="code" placeholder="6-stelliger Code" required>
+                <button type="submit" name="verify_login_code">Einloggen</button>
+            </form>
+        <?php endif; ?>
+        <p class="login-signup-hint">Du hast noch kein <?php echo esc_html($site_name); ?>-Account?<br>
+            <a href="<?php echo esc_url(home_url('/shop')); ?>">Jetzt <?php echo esc_html($site_name); ?>-Kunde werden.</a>
+        </p>
+    </div>
+    <div class="produkt-login-visual"<?php echo $login_bg_image ? ' style="background-image:url(' . esc_url($login_bg_image) . ');"' : ''; ?> aria-hidden="true"></div>
+</div>
+<?php else : ?>
 <div class="produkt-login-wrapper">
     <div class="login-box">
         <h1>Login</h1>
@@ -22,6 +64,7 @@
         <a class="back-to-shop" href="<?php echo esc_url(home_url('/shop')); ?>">Zurück zum Shop</a>
     </div>
 </div>
+<?php endif; ?>
 <?php else : ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>

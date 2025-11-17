@@ -226,10 +226,22 @@ class Admin {
             );
 
             if ($is_account_page) {
-                $login_bg = $branding['login_bg_image'] ?? '';
-                if ($login_bg) {
-                    $login_css = 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
-                    wp_add_inline_style('produkt-account-style', $login_css);
+                $login_bg     = $branding['login_bg_image'] ?? '';
+                $login_layout = $branding['login_layout'] ?? 'classic';
+                $primary      = $branding['admin_color_primary'] ?? '#5f7f5f';
+                $inline_css   = '';
+
+                if ($login_layout === 'split') {
+                    $inline_css .= ':root{--produkt-login-primary:' . esc_attr($primary) . ';}';
+                    if ($login_bg) {
+                        $inline_css .= '.produkt-login-visual{background-image:url(' . esc_url($login_bg) . ');}';
+                    }
+                } elseif ($login_bg) {
+                    $inline_css .= 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
+                }
+
+                if ($inline_css) {
+                    wp_add_inline_style('produkt-account-style', $inline_css);
                 }
             }
         }
@@ -397,7 +409,7 @@ class Admin {
         // simple selects for reliability
     }
     
-    private function get_branding_settings() {
+    public function get_branding_settings() {
         global $wpdb;
         
         $settings = array();
