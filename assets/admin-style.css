@@ -2468,6 +2468,11 @@ body.conditions-modal-open {
     cursor: pointer;
 }
 
+.produkt-color-preview-circle--multicolor {
+    background: conic-gradient(#b75c55 0deg 65deg, #c47b45 65deg 130deg, #d9c255 130deg 195deg, #5f9186 195deg 245deg, #4d6ea2 245deg 300deg, #8677a5 300deg 360deg);
+    border: 2px solid #141835;
+}
+
 .produkt-color-preview-circle--small {
     width: 18px;
     height: 18px;

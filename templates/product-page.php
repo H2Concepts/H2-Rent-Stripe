@@ -588,10 +588,14 @@ if ($price_layout !== 'sidebar') {
                     <small id="selected-product-color-name" class="produkt-selected-color-name"></small>
                     <div class="produkt-options product-colors layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($initial_product_colors as $color): ?>
+                        <?php
+                            $color_preview_class = 'produkt-color-preview' . (!empty($color->is_multicolor) ? ' produkt-color-preview--multicolor' : '');
+                            $color_preview_style = empty($color->is_multicolor) ? 'background-color: ' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <div class="produkt-option" data-type="product-color" data-id="<?php echo esc_attr($color->id); ?>" data-available="true" data-color-name="<?php echo esc_attr($color->name); ?>" data-color-image="<?php echo esc_url($color->image_url ?? ''); ?>">
                             <div class="produkt-option-content">
                                 <div class="produkt-color-display">
-                                    <div class="produkt-color-preview" style="background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
+                                    <div class="<?php echo esc_attr($color_preview_class); ?>" style="<?php echo esc_attr($color_preview_style); ?>"></div>
                                 </div>
                             </div>
                         </div>
@@ -605,10 +609,14 @@ if ($price_layout !== 'sidebar') {
                     <small id="selected-frame-color-name" class="produkt-selected-color-name"></small>
                     <div class="produkt-options frame-colors layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($initial_frame_colors as $color): ?>
+                        <?php
+                            $frame_preview_class = 'produkt-color-preview' . (!empty($color->is_multicolor) ? ' produkt-color-preview--multicolor' : '');
+                            $frame_preview_style = empty($color->is_multicolor) ? 'background-color: ' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <div class="produkt-option" data-type="frame-color" data-id="<?php echo esc_attr($color->id); ?>" data-available="true" data-color-name="<?php echo esc_attr($color->name); ?>" data-color-image="<?php echo esc_url($color->image_url ?? ''); ?>">
                             <div class="produkt-option-content">
                                 <div class="produkt-color-display">
-                                    <div class="produkt-color-preview" style="background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
+                                    <div class="<?php echo esc_attr($frame_preview_class); ?>" style="<?php echo esc_attr($frame_preview_style); ?>"></div>
                                 </div>
                             </div>
                         </div>

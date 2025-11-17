@@ -15,6 +15,11 @@ if (empty($column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN image_url TEXT AFTER color_type");
 }
 
+$multicolor_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'is_multicolor'");
+if (empty($multicolor_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN is_multicolor TINYINT(1) DEFAULT 0 AFTER color_code");
+}
+
 // Get all categories
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
@@ -36,8 +41,12 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $color_code = sanitize_hex_color($_POST['color_code']);
+    if (!$color_code) {
+        $color_code = '#ffffff';
+    }
     $color_type = $is_sale ? 'product' : sanitize_text_field($_POST['color_type']);
     $image_url = esc_url_raw($_POST['image_url'] ?? '');
+    $is_multicolor = isset($_POST['is_multicolor']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order'] ?? 0);
 
@@ -48,6 +57,7 @@ if (isset($_POST['submit'])) {
                 'category_id' => $category_id,
                 'name' => $name,
                 'color_code' => $color_code,
+                'is_multicolor' => $is_multicolor,
                 'color_type' => $color_type,
                 'image_url' => $image_url,
                 'active' => $active,
@@ -65,6 +75,7 @@ if (isset($_POST['submit'])) {
                 'category_id' => $category_id,
                 'name' => $name,
                 'color_code' => $color_code,
+                'is_multicolor' => $is_multicolor,
                 'color_type' => $color_type,
                 'image_url' => $image_url,
                 'active' => $active,
@@ -239,9 +250,16 @@ $total_variants = count($variants);
                         ));
                         $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
                     ?>
+                        <?php
+                            $preview_class = 'produkt-color-preview-circle produkt-color-preview-circle--small';
+                            if (!empty($color->is_multicolor)) {
+                                $preview_class .= ' produkt-color-preview-circle--multicolor';
+                            }
+                            $preview_style = empty($color->is_multicolor) ? 'background-color:' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <tr>
                             <td><?php echo esc_html($color->name); ?></td>
-                            <td><span class="produkt-color-preview-circle produkt-color-preview-circle--small" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><span class="<?php echo esc_attr($preview_class); ?>" style="<?php echo esc_attr($preview_style); ?>"></span> <?php echo empty($color->is_multicolor) ? esc_html($color->color_code) : 'Mehrfarbig'; ?></td>
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>'">
@@ -283,9 +301,16 @@ $total_variants = count($variants);
                         ));
                         $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
                     ?>
+                        <?php
+                            $preview_class = 'produkt-color-preview-circle produkt-color-preview-circle--small';
+                            if (!empty($color->is_multicolor)) {
+                                $preview_class .= ' produkt-color-preview-circle--multicolor';
+                            }
+                            $preview_style = empty($color->is_multicolor) ? 'background-color:' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <tr>
                             <td><?php echo esc_html($color->name); ?></td>
-                            <td><span class="produkt-color-preview-circle produkt-color-preview-circle--small" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><span class="<?php echo esc_attr($preview_class); ?>" style="<?php echo esc_attr($preview_style); ?>"></span> <?php echo empty($color->is_multicolor) ? esc_html($color->color_code) : 'Mehrfarbig'; ?></td>
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>'">
@@ -318,13 +343,25 @@ $total_variants = count($variants);
                     <label for="color-name">Farbname</label>
                     <input type="text" id="color-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required>
                 </div>
-                <div class="produkt-form-group">
+                <?php
+                    $is_multicolor = !empty($edit_item->is_multicolor);
+                    $preview_class = 'produkt-color-preview-circle' . ($is_multicolor ? ' produkt-color-preview-circle--multicolor' : '');
+                    $preview_style = $is_multicolor ? '' : 'background-color:' . esc_attr($edit_item->color_code ?? '#ffffff') . ';';
+                ?>
+                <div class="produkt-form-group produkt-color-code-group" style="<?php echo $is_multicolor ? 'display:none;' : ''; ?>">
                     <label for="color-code">Farbcode</label>
                     <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>"></div>
+                        <div class="<?php echo esc_attr($preview_class); ?>" style="<?php echo esc_attr($preview_style); ?>"></div>
                         <input type="text" class="produkt-color-value" name="color_code" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
                     </div>
+                </div>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="color-multicolor" style="gap:0.5rem;">
+                        <input type="checkbox" id="color-multicolor" name="is_multicolor" <?php checked($is_multicolor, true); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Mehrfarbig</span>
+                    </label>
                 </div>
                 <?php if (!$is_sale): ?>
                 <div class="produkt-form-group">

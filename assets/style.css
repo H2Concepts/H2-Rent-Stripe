@@ -713,6 +713,11 @@ img.wp-smiley, img.emoji {
     position: relative;
 }
 
+.produkt-color-preview--multicolor {
+    background: conic-gradient(#b75c55 0deg 65deg, #c47b45 65deg 130deg, #d9c255 130deg 195deg, #5f9186 195deg 245deg, #4d6ea2 245deg 300deg, #8677a5 300deg 360deg);
+    border: 2px solid #141835;
+}
+
 .produkt-selected-color-name {
     display: block;
     font-size: 0.9rem;

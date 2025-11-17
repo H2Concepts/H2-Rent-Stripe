@@ -838,11 +838,13 @@ jQuery(document).ready(function($) {
                     </div>
                 `;
             } else if (optionType === 'product-color' || optionType === 'frame-color') {
+                const previewClass = option.is_multicolor == 1 ? 'produkt-color-preview produkt-color-preview--multicolor' : 'produkt-color-preview';
+                const previewStyle = option.is_multicolor == 1 ? '' : `style="background-color: ${option.color_code};"`;
                 optionHtml = `
                     <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
                         <div class="produkt-option-content">
                             <div class="produkt-color-display">
-                                <div class="produkt-color-preview" style="background-color: ${option.color_code};"></div>
+                                <div class="${previewClass}" ${previewStyle}></div>
                             </div>
                         </div>
                     </div>

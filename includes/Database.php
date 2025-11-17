@@ -449,6 +449,7 @@ class Database {
                 category_id mediumint(9) DEFAULT 1,
                 name varchar(255) NOT NULL,
                 color_code varchar(7) NOT NULL,
+                is_multicolor tinyint(1) DEFAULT 0,
                 color_type varchar(20) NOT NULL,
                 image_url text,
                 available tinyint(1) DEFAULT 1,
@@ -463,6 +464,11 @@ class Database {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_colors LIKE 'image_url'");
             if (empty($column_exists)) {
                 $wpdb->query("ALTER TABLE $table_colors ADD COLUMN image_url TEXT AFTER color_type");
+            }
+
+            $multicolor_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_colors LIKE 'is_multicolor'");
+            if (empty($multicolor_exists)) {
+                $wpdb->query("ALTER TABLE $table_colors ADD COLUMN is_multicolor TINYINT(1) DEFAULT 0 AFTER color_code");
             }
         }
 
@@ -1158,6 +1164,7 @@ class Database {
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
             color_code varchar(7) NOT NULL,
+            is_multicolor tinyint(1) DEFAULT 0,
             color_type varchar(20) NOT NULL,
             image_url text,
             available tinyint(1) DEFAULT 1,
