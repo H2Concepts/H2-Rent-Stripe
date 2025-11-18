@@ -20,7 +20,7 @@
             <h1>Schön, dass du da bist!</h1>
             <p class="login-lead">Melde dich mit der E-Mail an, die du bei deiner Bestellung angegeben hast. Wir senden dir einen Login-Code.</p>
             <?php if (!empty($message)) { echo $message; } ?>
-            <form method="post" class="login-email-form login-form-block">
+            <form method="post" class="login-email-form">
                 <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
                 <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
                 <label for="login-email" class="screen-reader-text">E-Mail-Adresse</label>
@@ -28,7 +28,7 @@
                 <button type="submit" name="request_login_code">Code zum Einloggen anfordern</button>
             </form>
             <?php if ($show_code_form) : ?>
-                <form method="post" class="login-code-form login-form-block">
+                <form method="post" class="login-code-form">
                     <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
                     <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
                     <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">

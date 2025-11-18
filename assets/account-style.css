@@ -253,7 +253,7 @@ body.produkt-login-page #colophon {
     display: grid;
     grid-template-rows: auto 1fr auto;
     gap: 18px;
-    color: #ffffff;
+    color: var(--produkt-login-text, #1f1f1f);
     min-height: 100vh;
 }
 
@@ -267,57 +267,56 @@ body.produkt-login-page #colophon {
 .produkt-login-panel h1 {
     margin: 0 0 4px;
     font-size: 32px;
-    color: #ffffff;
+    color: var(--produkt-login-text, #1f1f1f);
 }
 
 .login-lead {
     margin: 0 0 8px;
     font-size: 15px;
-    color: #eef2ee;
+    color: var(--produkt-login-text, #1f1f1f);
 }
 
 .login-brand-logo img {
-    max-width: 180px;
+    max-width: 100px;
     height: auto;
 }
 
-.login-form-block {
-    background: #fff;
-    padding: 18px;
-    border-radius: 12px;
-    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.08);
+.produkt-login-panel form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.login-form-block input {
+.produkt-login-panel input {
     width: 100%;
     padding: 12px 14px;
-    margin-bottom: 12px;
     border-radius: 10px;
     border: 1px solid #d6dede;
     background: #f8faf8;
     font-size: 15px;
 }
 
-.login-form-block button {
+.produkt-login-panel button {
     width: 100%;
     padding: 12px 14px;
     border: none;
     border-radius: 10px;
-    background: var(--produkt-login-primary, #5f7f5f);
-    color: #fff;
+    background: #000000;
+    color: #ffffff;
     font-size: 16px;
     cursor: pointer;
+    box-shadow: none;
 }
 
 .login-signup-hint {
     margin: 6px 0 0;
     line-height: 1.4;
     font-size: 14px;
-    color: #ffffff;
+    color: var(--produkt-login-text, #1f1f1f);
 }
 
 .login-signup-hint a {
-    color: #ffffff;
+    color: var(--produkt-login-text, #1f1f1f);
     font-weight: 600;
 }
 

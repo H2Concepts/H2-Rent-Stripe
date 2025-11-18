@@ -386,6 +386,7 @@ class Database {
                 'login_bg_image' => '',
                 'login_layout' => 'classic',
                 'login_logo'   => '',
+                'login_text_color' => '#1f1f1f',
                 'footer_text' => 'Powered by H2 Concepts',
                 'custom_css' => ''
             );
@@ -411,7 +412,8 @@ class Database {
             'product_padding'          => '1',
             'login_bg_image'           => '',
             'login_layout'            => 'classic',
-            'login_logo'              => ''
+            'login_logo'              => '',
+            'login_text_color'        => '#1f1f1f'
         );
         foreach ($branding_defaults as $key => $value) {
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_branding WHERE setting_key = %s", $key));

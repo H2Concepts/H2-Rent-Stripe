@@ -229,15 +229,20 @@ class Admin {
                 $login_bg     = $branding['login_bg_image'] ?? '';
                 $login_layout = $branding['login_layout'] ?? 'classic';
                 $primary      = $branding['admin_color_primary'] ?? '#5f7f5f';
+                $login_text   = $branding['login_text_color'] ?? '#1f1f1f';
                 $inline_css   = '';
 
                 if ($login_layout === 'split') {
-                    $inline_css .= ':root{--produkt-login-primary:' . esc_attr($primary) . ';}';
+                    $inline_css .= ':root{--produkt-login-primary:' . esc_attr($primary) . ';--produkt-login-text:' . esc_attr($login_text) . ';}';
                     if ($login_bg) {
                         $inline_css .= '.produkt-login-visual{background-image:url(' . esc_url($login_bg) . ');}';
                     }
                 } elseif ($login_bg) {
                     $inline_css .= 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
+                }
+
+                if ($inline_css === '' && $login_layout === 'split' && $login_text) {
+                    $inline_css .= ':root{--produkt-login-text:' . esc_attr($login_text) . ';}';
                 }
 
                 if ($inline_css) {

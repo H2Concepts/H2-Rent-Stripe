@@ -22,6 +22,7 @@ if (isset($_POST['submit_branding'])) {
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $login_layout = sanitize_text_field($_POST['login_layout'] ?? 'classic');
     $login_logo   = esc_url_raw($_POST['login_logo'] ?? '');
+    $login_text_color = sanitize_hex_color($_POST['login_text_color']);
     $footer_text = sanitize_text_field($_POST['footer_text']);
     $custom_css = sanitize_textarea_field($_POST['custom_css']);
     $product_padding = isset($_POST['product_padding']) ? 1 : 0;
@@ -47,6 +48,7 @@ if (isset($_POST['submit_branding'])) {
         'login_bg_image' => $login_bg_image,
         'login_layout' => $login_layout,
         'login_logo'   => $login_logo,
+        'login_text_color' => $login_text_color,
         'footer_text' => $footer_text,
         'custom_css' => $custom_css
     );
@@ -304,6 +306,17 @@ if (isset($_POST['submit_branding'])) {
                 </div>
 
                 <div class="form-grid">
+                    <div class="produkt-form-group">
+                        <label>Textfarbe Kundenlogin</label>
+                        <div class="produkt-color-picker">
+                            <?php $login_text_color = esc_attr($branding['login_text_color'] ?? '#1f1f1f'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $login_text_color; ?>;"></div>
+                            <input type="text" name="login_text_color" value="<?php echo $login_text_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $login_text_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe für Texte und Links im Kundenlogin</small>
+                    </div>
+
                     <div class="produkt-form-group full-width">
                         <label>Login Hintergrundbild</label>
                         <div class="image-field-row">
