@@ -242,6 +242,9 @@ body.produkt-login-page #colophon {
     grid-template-columns: minmax(360px, 520px) 1fr;
     align-items: stretch;
     background: #f6f7f6;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
 }
 
 .produkt-login-panel {
@@ -251,6 +254,7 @@ body.produkt-login-page #colophon {
     grid-template-rows: auto 1fr auto;
     gap: 18px;
     color: #ffffff;
+    min-height: 100vh;
 }
 
 .login-panel-main {
@@ -322,6 +326,7 @@ body.produkt-login-page #colophon {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    width: 100%;
 }
 
 .produkt-login-image,
