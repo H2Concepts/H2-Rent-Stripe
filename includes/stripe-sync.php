@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 use ProduktVerleih\StripeService;
+use ProduktVerleih\Database;
 
 function produkt_delete_or_archive_stripe_product($product_id, $local_id = null, $table = 'produkt_variants') {
     if (!$product_id) {
@@ -131,12 +132,80 @@ function produkt_hard_delete($produkt_id) {
     }
 
     global $wpdb;
-    $wpdb->delete(
-        $wpdb->prefix . 'produkt_product_to_category',
-        ['produkt_id' => $produkt_id]
+
+    // Collect variants so we can clean up everything tied to them
+    $variants = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, stripe_product_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
+            $produkt_id
+        )
     );
-    $wpdb->delete(
+
+    $variant_ids = array();
+    if ($variants) {
+        foreach ($variants as $variant) {
+            $variant_ids[] = $variant->id;
+            if (!empty($variant->stripe_product_id)) {
+                produkt_delete_or_archive_stripe_product($variant->stripe_product_id, $variant->id, 'produkt_variants');
+            }
+        }
+    }
+
+    if (!empty($variant_ids)) {
+        $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_color_variant_images WHERE variant_id IN ($placeholders)", ...$variant_ids));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id IN ($placeholders)", ...$variant_ids));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variant_durations WHERE variant_id IN ($placeholders)", ...$variant_ids));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)", ...$variant_ids));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders)", ...$variant_ids));
+    }
+
+    // Remove extras linked to the product
+    $extras = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, stripe_product_id FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d",
+            $produkt_id
+        )
+    );
+    if ($extras) {
+        foreach ($extras as $extra) {
+            if (!empty($extra->stripe_product_id)) {
+                produkt_delete_or_archive_stripe_product($extra->stripe_product_id, $extra->id, 'produkt_extras');
+            }
+        }
+        $wpdb->delete($wpdb->prefix . 'produkt_extras', ['category_id' => $produkt_id]);
+    }
+
+    // Remove durations belonging to the product
+    $wpdb->delete($wpdb->prefix . 'produkt_durations', ['category_id' => $produkt_id]);
+
+    // Remove conditions
+    $wpdb->delete($wpdb->prefix . 'produkt_conditions', ['category_id' => $produkt_id]);
+
+    // Remove colors and linked variant images
+    $color_ids = $wpdb->get_col($wpdb->prepare("SELECT id FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d", $produkt_id));
+    if (!empty($color_ids)) {
+        $color_placeholders = implode(',', array_fill(0, count($color_ids), '%d'));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id IN ($color_placeholders)", ...$color_ids));
+        $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_colors WHERE id IN ($color_placeholders)", ...$color_ids));
+    }
+
+    // Remove category filters, relationships and content blocks
+    $wpdb->delete($wpdb->prefix . 'produkt_category_filters', ['category_id' => $produkt_id]);
+    $wpdb->delete($wpdb->prefix . 'produkt_product_to_category', ['produkt_id' => $produkt_id]);
+    $wpdb->delete($wpdb->prefix . 'produkt_content_blocks', ['category_id' => $produkt_id]);
+    if (class_exists(Database::class)) {
+        Database::clear_content_blocks_cache($produkt_id);
+    }
+
+    // Remove shipping options tied to the product
+    $wpdb->delete($wpdb->prefix . 'produkt_shipping', ['category_id' => $produkt_id]);
+
+    // Finally remove the product itself
+    $result = $wpdb->delete(
         $wpdb->prefix . 'produkt_categories',
         ['id' => $produkt_id]
     );
+
+    return $result !== false;
 }

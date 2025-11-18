@@ -40,7 +40,7 @@ jQuery(document).ready(function($) {
 
     // Confirm delete actions
     $('.wp-list-table a[href*="delete"]').on('click', function(e) {
-        if (!confirm('Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?')) {
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
             e.preventDefault();
         }
     });
@@ -810,6 +810,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.note-delete-btn')) {
         e.preventDefault();
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
+            return;
+        }
         var btn = e.target.closest('.note-delete-btn');
         var noteEl = btn.closest('.order-note');
         if (!noteEl) return;
@@ -875,6 +878,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.customer-note-delete-btn')) {
         e.preventDefault();
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
+            return;
+        }
         var btn = e.target.closest('.customer-note-delete-btn');
         var noteEl = btn.closest('.order-note');
         if (!noteEl) return;

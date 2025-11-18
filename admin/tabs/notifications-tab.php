@@ -115,7 +115,7 @@ $notifications = $wpdb->get_results(
                                 ?>
                             </td>
                             <td>
-                                <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Eintrag wirklich löschen?');">🗑️ Löschen</a>
+                                <a href="<?php echo admin_url('admin.php?page=produkt-settings&tab=notifications&delete_notification=' . $note->id); ?>" class="button button-small" style="color:#dc3232;" onclick="return confirm('Bist du sicher das du Löschen möchtest?');">🗑️ Löschen</a>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -142,7 +142,7 @@ function deleteSelectedNotifications() {
         alert('Bitte wählen Sie mindestens einen Eintrag aus.');
         return;
     }
-    if (!confirm('Ausgewählte Einträge löschen?')) return;
+    if (!confirm('Bist du sicher das du Löschen möchtest?')) return;
     const form = document.createElement('form');
     form.method = 'POST';
     form.action = window.location.href;
