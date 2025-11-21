@@ -1601,7 +1601,7 @@ img.wp-smiley, img.emoji {
 
 @media (max-width: 768px) {
     .plugin-cart-icon {
-        margin-left: 0;
+        margin-left: 20px;
     }
 }
 .plugin-cart-icon .cart-icon {
