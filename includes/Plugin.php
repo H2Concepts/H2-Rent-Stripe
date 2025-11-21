@@ -372,6 +372,7 @@ class Plugin {
 
     public function render_customer_account() {
         require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        $branding       = $this->admin->get_branding_settings();
         $message        = $this->login_error;
         $show_code_form = isset($_POST['verify_login_code']);
         $email_value    = '';
