@@ -251,9 +251,17 @@ class Admin {
             }
         }
 
-        // Load scripts globally so the cart sidebar is functional everywhere
-        $load_script = true;
-        if ($load_script) {
+        // Load front-end script globally for cart/sidebar behavior
+        $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+        $needs_stripe    = false;
+
+        if ($checkout_page_id && is_page($checkout_page_id)) {
+            $needs_stripe = true;
+        } elseif (is_a($post, 'WP_Post') && has_shortcode($content, 'stripe_elements_form')) {
+            $needs_stripe = true;
+        }
+
+        if ($needs_stripe) {
             wp_enqueue_script(
                 'stripe-js',
                 'https://js.stripe.com/basil/stripe.js',
@@ -261,14 +269,15 @@ class Admin {
                 null,
                 false
             );
-            wp_enqueue_script(
-                'produkt-script',
-                PRODUKT_PLUGIN_URL . 'assets/script.js',
-                ['jquery', 'stripe-js'],
-                PRODUKT_VERSION,
-                true
-            );
         }
+
+        wp_enqueue_script(
+            'produkt-script',
+            PRODUKT_PLUGIN_URL . 'assets/script.js',
+            ['jquery'],
+            PRODUKT_VERSION,
+            true
+        );
 
         if (is_page() && isset($_GET['session_id'])) {
             wp_enqueue_script(
