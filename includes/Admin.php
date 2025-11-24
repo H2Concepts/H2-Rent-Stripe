@@ -279,6 +279,9 @@ class Admin {
             true
         );
 
+        // Always localize the front-end script so cart and configurator logic work site-wide
+        $load_script = true;
+
         if (is_page() && isset($_GET['session_id'])) {
             wp_enqueue_script(
                 'produkt-return',
