@@ -18,7 +18,9 @@ class Ajax {
         $days = isset($_POST['days']) ? max(1, intval($_POST['days'])) : 1;
         $start_date = isset($_POST['start_date']) ? sanitize_text_field($_POST['start_date']) : '';
         $end_date   = isset($_POST['end_date']) ? sanitize_text_field($_POST['end_date']) : '';
-        
+
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
         global $wpdb;
         
         $variant = $wpdb->get_row($wpdb->prepare(
@@ -53,8 +55,6 @@ class Ajax {
             $extras = $wpdb->get_results($query);
         }
         
-        $modus = get_option('produkt_betriebsmodus', 'miete');
-
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
             $duration_id
