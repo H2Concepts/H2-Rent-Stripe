@@ -1191,21 +1191,7 @@ jQuery(document).ready(function($) {
 
         buyButton.show();
         buyButton.find('.produkt-buy-price').text(formatPrice(directBuyPrice) + '€');
-
-        const requiredSelections = [];
-        if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
-        if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
-            requiredSelections.push(selectedCondition);
-        }
-        if ($('#product-color-section').is(':visible') && $('.produkt-options.product-colors .produkt-option').length > 0) {
-            requiredSelections.push(selectedProductColor);
-        }
-        if ($('#frame-color-section').is(':visible') && $('.produkt-options.frame-colors .produkt-option').length > 0) {
-            requiredSelections.push(selectedFrameColor);
-        }
-
-        const canBuy = !!(directBuyPriceId && directBuyPrice > 0 && requiredSelections.every(sel => sel !== null && sel !== false));
-        buyButton.prop('disabled', !canBuy);
+        buyButton.prop('disabled', false);
     }
 
     function initMobileStickyPrice() {

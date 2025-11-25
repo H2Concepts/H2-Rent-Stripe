@@ -253,16 +253,24 @@ class StripeService {
             $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
             $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
 
-            $sql = "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
+            $sql = "SELECT stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders_v) AND duration_id IN ($placeholders_d)";
             $query = $wpdb->prepare($sql, array_merge($variant_ids, $duration_ids));
-            $prices = $wpdb->get_col($query);
+            $prices = $wpdb->get_results($query);
 
-            foreach ($prices as $pid) {
-                $amount = self::get_cached_price_amount($pid, $expiration);
-                if (is_wp_error($amount)) continue;
-                if ($lowest === null || $amount < $lowest) {
-                    $lowest = $amount;
-                    $lowest_id = $pid;
+            foreach ($prices as $row) {
+                if (!empty($row->stripe_price_id)) {
+                    $amount = self::get_cached_price_amount($row->stripe_price_id, $expiration);
+                    if (is_wp_error($amount)) continue;
+                    if ($lowest === null || $amount < $lowest) {
+                        $lowest = $amount;
+                        $lowest_id = $row->stripe_price_id;
+                    }
+                }
+
+                $custom = ($row->custom_price !== null) ? floatval($row->custom_price) : 0.0;
+                if ($custom > 0 && ($lowest === null || $custom < $lowest)) {
+                    $lowest = $custom;
+                    $lowest_id = ''; // custom price has no Stripe ID
                 }
             }
         }
