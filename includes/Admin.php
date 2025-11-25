@@ -569,7 +569,7 @@ class Admin {
             $show_rating = isset($_POST['show_rating']) ? 1 : 0;
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
             $rating_value = $rating_value_input !== '' ? min(5, max(0, floatval($rating_value_input))) : 0;
-            $rating_link = esc_url_raw($_POST['rating_link']);
+            $rating_link = esc_url_raw($_POST['rating_link'] ?? '');
             if (!$show_rating) {
                 $rating_value = 0;
                 $rating_link = '';
