@@ -41,6 +41,13 @@ $variants = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
+$has_direct_buy = false;
+foreach ($variants as $variant_check) {
+    if (floatval($variant_check->verkaufspreis_einmalig) > 0) {
+        $has_direct_buy = true;
+        break;
+    }
+}
 
 $extras = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order",
@@ -404,6 +411,8 @@ if ($price_layout !== 'sidebar') {
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
                              data-weekend-price="<?php echo esc_attr($variant->weekend_price ?? 0); ?>"
+                             data-sale-price="<?php echo esc_attr(number_format((float) ($variant->verkaufspreis_einmalig ?? 0), 2, '.', '')); ?>"
+                             data-sale-price-id="<?php echo esc_attr($variant->stripe_price_id_sale ?: ($variant->stripe_price_id ?? '')); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -474,10 +483,20 @@ if ($price_layout !== 'sidebar') {
                             $pid = $modus === 'kauf'
                                 ? ($extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? ''))
                                 : ($extra->stripe_price_id_rent ?: ($extra->stripe_price_id ?? ''));
+                            $sale_pid = $extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? '');
+                            $sale_amount = 0;
+                            if (!empty($sale_pid)) {
+                                $sale_price = \ProduktVerleih\StripeService::get_price_amount($sale_pid);
+                                if (!is_wp_error($sale_price)) {
+                                    $sale_amount = (float) $sale_price;
+                                }
+                            }
                         ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
+                             data-sale-price-id="<?php echo esc_attr($sale_pid); ?>"
+                             data-sale-price="<?php echo esc_attr(number_format($sale_amount, 2, '.', '')); ?>"
                              data-available="<?php echo intval($extra->available ?? 1) ? 'true' : 'false'; ?>"
                              data-stock="<?php echo intval($extra->stock_available); ?>">
                             <div class="produkt-option-content">
@@ -671,6 +690,11 @@ if ($price_layout !== 'sidebar') {
                         <?php endif; ?>
                         <span><?php echo esc_html($button_text); ?></span>
                     </button>
+                    <?php if ($modus === 'miete' && $has_direct_buy): ?>
+                    <button id="produkt-buy-button" class="produkt-buy-button" disabled>
+                        <span class="produkt-buy-button-text">oder für <span class="produkt-buy-price">0,00€</span> direkt kaufen</span>
+                    </button>
+                    <?php endif; ?>
                     <p class="produkt-button-help" id="produkt-button-help">
                         Bitte treffen Sie alle Auswahlen um fortzufahren
                     </p>

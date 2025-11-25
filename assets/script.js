@@ -24,6 +24,8 @@ jQuery(document).ready(function($) {
     let variantWeekendOnly = false;
     let variantMinDays = 0;
     let weekendTariff = false;
+    let directBuyPrice = 0;
+    let directBuyPriceId = '';
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
@@ -469,6 +471,71 @@ jQuery(document).ready(function($) {
                 $('#checkout-login-modal').css('display', 'flex');
                 $('body').addClass('produkt-popup-open');
             }
+        }
+    });
+
+    $('#produkt-buy-button').on('click', function(e) {
+        if ($(this).prop('disabled')) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const extraSalePriceIds = $('.produkt-option[data-type="extra"].selected')
+            .map(function(){ return $(this).data('sale-price-id'); })
+            .get()
+            .filter(id => id);
+
+        const params = new URLSearchParams();
+        params.set('price_id', directBuyPriceId);
+        if (extraSalePriceIds.length) {
+            params.set('extra_price_ids', extraSalePriceIds.join(','));
+        }
+        if (shippingPriceId) {
+            params.set('shipping_price_id', shippingPriceId);
+        }
+        if (currentCategoryId) {
+            params.set('category_id', currentCategoryId);
+        }
+        if (selectedVariant) params.set('variant_id', selectedVariant);
+        if (selectedExtras.length) params.set('extra_ids', selectedExtras.join(','));
+        if (selectedCondition) params.set('condition_id', selectedCondition);
+        if (selectedProductColor) params.set('product_color_id', selectedProductColor);
+        if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
+
+        const finalPrice = directBuyPrice + $('.produkt-option[data-type="extra"].selected').map(function(){
+            const salePrice = parseFloat($(this).data('sale-price'));
+            return isNaN(salePrice) ? 0 : salePrice;
+        }).get().reduce((sum, val) => sum + val, 0);
+
+        if (finalPrice > 0) {
+            params.set('final_price', finalPrice);
+        }
+
+        params.set('purchase_mode', 'direct_buy');
+
+        const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+        const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
+            .map(function(){ return $(this).text().trim(); })
+            .get().join(', ');
+        const zustandName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+        const produktfarbeName = $('.produkt-option[data-type="product-color"].selected').data('color-name');
+        const gestellfarbeName = $('.produkt-option[data-type="frame-color"].selected').data('color-name');
+
+        if (produktName) params.set('produkt', produktName);
+        if (extraNames) params.set('extra', extraNames);
+        if (zustandName) params.set('zustand', zustandName);
+        if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
+        if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+
+        const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
+
+        if (produkt_ajax.is_logged_in) {
+            window.location.href = targetUrl;
+        } else {
+            pendingCheckoutUrl = targetUrl;
+            $('#checkout-login-modal').css('display', 'flex');
+            $('body').addClass('produkt-popup-open');
         }
     });
 
@@ -1095,6 +1162,46 @@ jQuery(document).ready(function($) {
             $('#produkt-rent-button span').text(label);
             $('.produkt-mobile-button span').text(label);
         }
+
+        updateDirectBuyButton();
+    }
+
+    function updateDirectBuyButton() {
+        const buyButton = $('#produkt-buy-button');
+        if (!buyButton.length) return;
+
+        const variantOption = $('.produkt-option[data-type="variant"].selected');
+        const salePriceRaw = variantOption.data('sale-price');
+        const salePriceId = variantOption.data('sale-price-id');
+        const salePrice = salePriceRaw !== undefined ? parseFloat(salePriceRaw) : 0;
+
+        directBuyPrice = isNaN(salePrice) ? 0 : salePrice;
+        directBuyPriceId = salePriceId ? salePriceId.toString() : '';
+
+        buyButton.toggle(directBuyPrice > 0);
+
+        if (directBuyPrice > 0) {
+            buyButton.find('.produkt-buy-price').text(formatPrice(directBuyPrice) + '€');
+        } else {
+            buyButton.find('.produkt-buy-price').text('0,00€');
+            buyButton.prop('disabled', true);
+            return;
+        }
+
+        const requiredSelections = [];
+        if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
+        if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
+            requiredSelections.push(selectedCondition);
+        }
+        if ($('#product-color-section').is(':visible') && $('.produkt-options.product-colors .produkt-option').length > 0) {
+            requiredSelections.push(selectedProductColor);
+        }
+        if ($('#frame-color-section').is(':visible') && $('.produkt-options.frame-colors .produkt-option').length > 0) {
+            requiredSelections.push(selectedFrameColor);
+        }
+
+        const canBuy = !!(directBuyPriceId && directBuyPrice > 0 && requiredSelections.every(sel => sel !== null && sel !== false));
+        buyButton.prop('disabled', !canBuy);
     }
 
     function initMobileStickyPrice() {
