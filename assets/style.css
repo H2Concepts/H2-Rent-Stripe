@@ -992,8 +992,8 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-feature-icon-large {
-    width: 48px;
-    height: 48px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
