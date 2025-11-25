@@ -39,6 +39,13 @@ if (empty($price_column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id VARCHAR(255) DEFAULT '' AFTER name");
 }
 
+// Ensure stripe_price_id_sale column exists
+$sale_price_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_price_id_sale'");
+if (empty($sale_price_column_exists)) {
+    $after = !empty($price_column_exists) ? 'stripe_price_id' : 'name';
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN stripe_price_id_sale VARCHAR(255) DEFAULT NULL AFTER $after");
+}
+
 // Ensure stripe_archived column exists
 $archived_column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'stripe_archived'");
 if (empty($archived_column_exists)) {
@@ -78,18 +85,20 @@ if (isset($_POST['submit'])) {
     $stripe_price_id   = '';
     if (!empty($_POST['id'])) {
         $existing_variant = $wpdb->get_row($wpdb->prepare(
-            "SELECT name, mietpreis_monatlich, verkaufspreis_einmalig, weekend_price, stripe_product_id, stripe_price_id, stripe_weekend_price_id FROM $table_name WHERE id = %d",
+            "SELECT name, mietpreis_monatlich, verkaufspreis_einmalig, weekend_price, stripe_product_id, stripe_price_id, stripe_price_id_sale, stripe_weekend_price_id FROM $table_name WHERE id = %d",
             intval($_POST['id'])
         ));
         if ($existing_variant) {
             $stripe_product_id = $existing_variant->stripe_product_id;
             $stripe_price_id   = $existing_variant->stripe_price_id;
+            $stripe_price_id_sale = $existing_variant->stripe_price_id_sale ?? null;
             if ($stripe_product_id && $existing_variant->name !== $name) {
                 StripeService::update_product_name($stripe_product_id, $name);
             }
         } else {
             $stripe_product_id = '';
             $stripe_price_id   = '';
+            $stripe_price_id_sale = null;
         }
     } else {
         $existing_variant = null;
@@ -212,6 +221,19 @@ if (isset($_POST['submit'])) {
                 }
             }
 
+            if ($mode !== 'kauf') {
+                if ($verkaufspreis_einmalig !== null && $verkaufspreis_einmalig > 0 && $product_id) {
+                    $sale_price = \ProduktVerleih\StripeService::create_price($product_id, round($verkaufspreis_einmalig * 100), 'kauf', 'Einmalverkauf');
+                    if (!is_wp_error($sale_price)) {
+                        $wpdb->update($table_name, ['stripe_price_id_sale' => $sale_price->id], ['id' => $variant_id], ['%s'], ['%d']);
+                        $stripe_price_id_sale = $sale_price->id;
+                    }
+                } else {
+                    $stripe_price_id_sale = null;
+                    $wpdb->update($table_name, ['stripe_price_id_sale' => null], ['id' => $variant_id], ['%s'], ['%d']);
+                }
+            }
+
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
             produkt_sync_weekend_price($variant_id, $weekend_price, $product_id);
 
@@ -281,6 +303,19 @@ if (isset($_POST['submit'])) {
                 $product_id = $res['stripe_product_id'];
             } else {
                 $product_id = '';
+            }
+
+            if ($mode !== 'kauf') {
+                if ($verkaufspreis_einmalig !== null && $verkaufspreis_einmalig > 0 && $product_id) {
+                    $sale_price = \ProduktVerleih\StripeService::create_price($product_id, round($verkaufspreis_einmalig * 100), 'kauf', 'Einmalverkauf');
+                    if (!is_wp_error($sale_price)) {
+                        $wpdb->update($table_name, ['stripe_price_id_sale' => $sale_price->id], ['id' => $variant_id], ['%s'], ['%d']);
+                        $stripe_price_id_sale = $sale_price->id;
+                    }
+                } else {
+                    $stripe_price_id_sale = null;
+                    $wpdb->update($table_name, ['stripe_price_id_sale' => null], ['id' => $variant_id], ['%s'], ['%d']);
+                }
             }
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
