@@ -15,6 +15,11 @@ if (empty($column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN image_url TEXT AFTER color_type");
 }
 
+$multicolor_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'is_multicolor'");
+if (empty($multicolor_exists)) {
+    $wpdb->query("ALTER TABLE $table_name ADD COLUMN is_multicolor TINYINT(1) DEFAULT 0 AFTER color_code");
+}
+
 // Get all categories
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
@@ -36,8 +41,12 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $color_code = sanitize_hex_color($_POST['color_code']);
+    if (!$color_code) {
+        $color_code = '#ffffff';
+    }
     $color_type = $is_sale ? 'product' : sanitize_text_field($_POST['color_type']);
     $image_url = esc_url_raw($_POST['image_url'] ?? '');
+    $is_multicolor = isset($_POST['is_multicolor']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
     $sort_order = intval($_POST['sort_order'] ?? 0);
 
@@ -48,13 +57,14 @@ if (isset($_POST['submit'])) {
                 'category_id' => $category_id,
                 'name' => $name,
                 'color_code' => $color_code,
+                'is_multicolor' => $is_multicolor,
                 'color_type' => $color_type,
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
             ],
             ['id' => intval($_POST['id'])],
-            ['%d','%s','%s','%s','%s','%d','%d'],
+            ['%d','%s','%s','%d','%s','%s','%d','%d'],
             ['%d']
         );
         $color_id = intval($_POST['id']);
@@ -65,12 +75,13 @@ if (isset($_POST['submit'])) {
                 'category_id' => $category_id,
                 'name' => $name,
                 'color_code' => $color_code,
+                'is_multicolor' => $is_multicolor,
                 'color_type' => $color_type,
                 'image_url' => $image_url,
                 'active' => $active,
                 'sort_order' => $sort_order
             ],
-            ['%d','%s','%s','%s','%s','%d','%d']
+            ['%d','%s','%s','%d','%s','%s','%d','%d']
         );
         $color_id = $wpdb->insert_id;
     }
@@ -239,15 +250,22 @@ $total_variants = count($variants);
                         ));
                         $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
                     ?>
+                        <?php
+                            $preview_class = 'produkt-color-preview-circle produkt-color-preview-circle--small';
+                            if (!empty($color->is_multicolor)) {
+                                $preview_class .= ' produkt-color-preview-circle--multicolor';
+                            }
+                            $preview_style = empty($color->is_multicolor) ? 'background-color:' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <tr>
                             <td><?php echo esc_html($color->name); ?></td>
-                            <td><span class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><span class="<?php echo esc_attr($preview_class); ?>" style="<?php echo esc_attr($preview_style); ?>"></span> <?php echo empty($color->is_multicolor) ? esc_html($color->color_code) : 'Mehrfarbig'; ?></td>
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>'">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1"><path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/><path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/></svg>
                                 </button>
-                                <button type="button" class="icon-btn" onclick="if(confirm('Sind Sie sicher?')){window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&produkt_admin_nonce=' . wp_create_nonce('produkt_admin_action')); ?>';}" aria-label="Löschen">
+                                <button type="button" class="icon-btn" onclick="if(confirm('Bist du sicher das du Löschen möchtest?')){window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&produkt_admin_nonce=' . wp_create_nonce('produkt_admin_action')); ?>';}" aria-label="Löschen">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
                                 </button>
                             </td>
@@ -283,15 +301,22 @@ $total_variants = count($variants);
                         ));
                         $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
                     ?>
+                        <?php
+                            $preview_class = 'produkt-color-preview-circle produkt-color-preview-circle--small';
+                            if (!empty($color->is_multicolor)) {
+                                $preview_class .= ' produkt-color-preview-circle--multicolor';
+                            }
+                            $preview_style = empty($color->is_multicolor) ? 'background-color:' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <tr>
                             <td><?php echo esc_html($color->name); ?></td>
-                            <td><span class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($color->color_code); ?>;"></span> <?php echo esc_html($color->color_code); ?></td>
+                            <td><span class="<?php echo esc_attr($preview_class); ?>" style="<?php echo esc_attr($preview_style); ?>"></span> <?php echo empty($color->is_multicolor) ? esc_html($color->color_code) : 'Mehrfarbig'; ?></td>
                             <td><?php echo esc_html($availability); ?></td>
                             <td>
                                 <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=edit&edit=' . $color->id); ?>'">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1"><path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/><path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/></svg>
                                 </button>
-                                <button type="button" class="icon-btn" onclick="if(confirm('Sind Sie sicher?')){window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&produkt_admin_nonce=' . wp_create_nonce('produkt_admin_action')); ?>';}" aria-label="Löschen">
+                                <button type="button" class="icon-btn" onclick="if(confirm('Bist du sicher das du Löschen möchtest?')){window.location.href='<?php echo admin_url('admin.php?page=produkt-colors&category=' . $selected_category . '&tab=list&delete=' . $color->id . '&produkt_admin_nonce=' . wp_create_nonce('produkt_admin_action')); ?>';}" aria-label="Löschen">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
                                 </button>
                             </td>
@@ -318,13 +343,25 @@ $total_variants = count($variants);
                     <label for="color-name">Farbname</label>
                     <input type="text" id="color-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required>
                 </div>
-                <div class="produkt-form-group">
+                <?php
+                    $is_multicolor = !empty($edit_item->is_multicolor);
+                    $preview_class = 'produkt-color-preview-circle' . ($is_multicolor ? ' produkt-color-preview-circle--multicolor' : '');
+                    $preview_style = $is_multicolor ? '' : 'background-color:' . esc_attr($edit_item->color_code ?? '#ffffff') . ';';
+                ?>
+                <div class="produkt-form-group produkt-color-code-group" style="<?php echo $is_multicolor ? 'display:none;' : ''; ?>">
                     <label for="color-code">Farbcode</label>
                     <div class="produkt-color-picker">
-                        <div class="produkt-color-preview-circle" style="background-color:<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>"></div>
+                        <div class="<?php echo esc_attr($preview_class); ?>" style="<?php echo esc_attr($preview_style); ?>"></div>
                         <input type="text" class="produkt-color-value" name="color_code" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
                         <input type="color" class="produkt-color-input" value="<?php echo esc_attr($edit_item->color_code ?? '#ffffff'); ?>">
                     </div>
+                </div>
+                <div class="produkt-form-group">
+                    <label class="produkt-toggle-label" for="color-multicolor" style="gap:0.5rem;">
+                        <input type="checkbox" id="color-multicolor" name="is_multicolor" <?php checked($is_multicolor, true); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Mehrfarbig</span>
+                    </label>
                 </div>
                 <?php if (!$is_sale): ?>
                 <div class="produkt-form-group">

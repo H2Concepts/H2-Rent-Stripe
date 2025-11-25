@@ -175,6 +175,26 @@ class Database {
         if (empty($badge_exists)) {
             $wpdb->query("ALTER TABLE $table_durations ADD COLUMN show_badge TINYINT(1) DEFAULT 0 AFTER discount");
         }
+
+        $popular_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'show_popular'");
+        if (empty($popular_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN show_popular TINYINT(1) DEFAULT 0 AFTER show_badge");
+        }
+
+        $popular_gradient_start_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'popular_gradient_start'");
+        if (empty($popular_gradient_start_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_gradient_start VARCHAR(30) DEFAULT '' AFTER show_popular");
+        }
+
+        $popular_gradient_end_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'popular_gradient_end'");
+        if (empty($popular_gradient_end_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_gradient_end VARCHAR(30) DEFAULT '' AFTER popular_gradient_start");
+        }
+
+        $popular_text_color_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_durations LIKE 'popular_text_color'");
+        if (empty($popular_text_color_exists)) {
+            $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_text_color VARCHAR(30) DEFAULT '' AFTER popular_gradient_end");
+        }
         
         // Create categories table if it doesn't exist
         $table_categories = $wpdb->prefix . 'produkt_categories';
@@ -217,6 +237,7 @@ class Database {
                 price_period varchar(20) DEFAULT 'month',
                 vat_included tinyint(1) DEFAULT 0,
                 layout_style varchar(50) DEFAULT 'default',
+                price_layout varchar(50) DEFAULT 'default',
                 duration_tooltip text DEFAULT '',
                 condition_tooltip text DEFAULT '',
                 show_features tinyint(1) DEFAULT 0,
@@ -266,6 +287,7 @@ class Database {
                 'price_period' => 'VARCHAR(20) DEFAULT "month"',
                 'vat_included' => 'TINYINT(1) DEFAULT 0',
                 'layout_style' => 'VARCHAR(50) DEFAULT "default"',
+                'price_layout' => 'VARCHAR(50) DEFAULT "default"',
                 'duration_tooltip' => 'TEXT',
                 'condition_tooltip' => 'TEXT',
                 'show_features' => 'TINYINT(1) DEFAULT 0',
@@ -362,6 +384,9 @@ class Database {
                 'filter_button_color'  => '#5f7f5f',
                 'product_padding'     => '1',
                 'login_bg_image' => '',
+                'login_layout' => 'classic',
+                'login_logo'   => '',
+                'login_text_color' => '#1f1f1f',
                 'footer_text' => 'Powered by H2 Concepts',
                 'custom_css' => ''
             );
@@ -385,7 +410,10 @@ class Database {
             'front_button_text_color'  => '#ffffff',
             'filter_button_color'      => '#5f7f5f',
             'product_padding'          => '1',
-            'login_bg_image'           => ''
+            'login_bg_image'           => '',
+            'login_layout'            => 'classic',
+            'login_logo'              => '',
+            'login_text_color'        => '#1f1f1f'
         );
         foreach ($branding_defaults as $key => $value) {
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_branding WHERE setting_key = %s", $key));
@@ -427,6 +455,7 @@ class Database {
                 category_id mediumint(9) DEFAULT 1,
                 name varchar(255) NOT NULL,
                 color_code varchar(7) NOT NULL,
+                is_multicolor tinyint(1) DEFAULT 0,
                 color_type varchar(20) NOT NULL,
                 image_url text,
                 available tinyint(1) DEFAULT 1,
@@ -441,6 +470,11 @@ class Database {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_colors LIKE 'image_url'");
             if (empty($column_exists)) {
                 $wpdb->query("ALTER TABLE $table_colors ADD COLUMN image_url TEXT AFTER color_type");
+            }
+
+            $multicolor_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_colors LIKE 'is_multicolor'");
+            if (empty($multicolor_exists)) {
+                $wpdb->query("ALTER TABLE $table_colors ADD COLUMN is_multicolor TINYINT(1) DEFAULT 0 AFTER color_code");
             }
         }
 
@@ -1073,6 +1107,10 @@ class Database {
             months_minimum int(11) NOT NULL,
             discount decimal(5,4) DEFAULT 0,
             show_badge tinyint(1) DEFAULT 0,
+            show_popular tinyint(1) DEFAULT 0,
+            popular_gradient_start varchar(30) DEFAULT '',
+            popular_gradient_end varchar(30) DEFAULT '',
+            popular_text_color varchar(30) DEFAULT '',
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1132,6 +1170,7 @@ class Database {
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
             color_code varchar(7) NOT NULL,
+            is_multicolor tinyint(1) DEFAULT 0,
             color_type varchar(20) NOT NULL,
             image_url text,
             available tinyint(1) DEFAULT 1,
@@ -1470,6 +1509,8 @@ class Database {
                 'front_button_text_color' => '#ffffff',
                 'product_padding'       => '1',
                 'login_bg_image'         => '',
+                'login_layout'          => 'classic',
+                'login_logo'            => '',
                 'footer_text' => '',
                 'custom_css' => ''
             );
@@ -1560,6 +1601,10 @@ class Database {
                         'months_minimum' => $duration[1],
                         'discount' => $duration[2],
                         'show_badge' => 0,
+                        'show_popular' => 0,
+                        'popular_gradient_start' => '',
+                        'popular_gradient_end' => '',
+                        'popular_text_color' => '',
                         'sort_order' => $index
                     )
                 );
@@ -2001,21 +2046,42 @@ class Database {
      */
     public static function get_due_returns() {
         global $wpdb;
-        $today = current_time('Y-m-d');
-        $orders = $wpdb->get_results($wpdb->prepare(
-            "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
-                    COALESCE(c.name, o.produkt_name) AS category_name,
-                    COALESCE(v.name, o.produkt_name) AS variant_name,
-                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
-             FROM {$wpdb->prefix}produkt_orders o
-             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
-             GROUP BY o.id
-             ORDER BY o.end_date",
-            $today
-        ));
+
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+
+        if ($mode === 'kauf') {
+            $today = current_time('Y-m-d');
+            $orders = $wpdb->get_results($wpdb->prepare(
+                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                        COALESCE(c.name, o.produkt_name) AS category_name,
+                        COALESCE(v.name, o.produkt_name) AS variant_name,
+                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                 FROM {$wpdb->prefix}produkt_orders o
+                 LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+                 LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+                 WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
+                 GROUP BY o.id
+                 ORDER BY o.end_date",
+                $today
+            ));
+        } else {
+            $orders = $wpdb->get_results(
+                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at,
+                        COALESCE(c.name, o.produkt_name) AS category_name,
+                        COALESCE(v.name, o.produkt_name) AS variant_name,
+                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                 FROM {$wpdb->prefix}produkt_orders o
+                 LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+                 LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+                 WHERE o.mode <> 'kauf' AND o.status = 'abgeschlossen' AND o.inventory_reverted = 0
+                 GROUP BY o.id
+                 ORDER BY o.created_at"
+            );
+        }
+
+        $orders = $orders ?: [];
 
         foreach ($orders as $o) {
             self::ensure_return_pending_log((int) $o->id);

@@ -21,7 +21,7 @@ function produkt_category_icon($slug)
         <a href="<?php echo admin_url('admin.php?page=produkt-categories&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action')); ?>"
            class="icon-btn categories-delete-btn"
            aria-label="Löschen"
-           onclick="return confirm('Sind Sie sicher, dass Sie dieses Produkt löschen möchten?\n\n\"<?php echo esc_js($edit_item->name); ?>\" und alle zugehörigen Daten werden unwiderruflich gelöscht!')">
+           onclick="return confirm('Bist du sicher das du Löschen möchtest?')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.7 90">
                 <path fill-rule="evenodd" d="m39.8 24.3h-29.9l4.5 57.2v0.2c0 1.1 0.4 1.9 1 2.5 0.7 0.7 1.8 1.2 3.2 1.4h21.2s21.2 0 21.2 0c1.5-0.3 2.5-0.7 3.2-1.4 0.6-0.6 1-1.5 1-2.7v-0.1l4.5-57.2h-30zm-17.8 14.1c0-1.1 0.7-2 1.8-2.1 1.1 0 2 0.7 2.1 1.8l2.7 33.6c0 1.1-0.7 2-1.8 2.1-1.1 0-2-0.7-2.1-1.8l-2.7-33.6zm31.8-0.3c0-1.1 1-1.9 2.1-1.8 1.1 0 1.9 1 1.8 2.1l-2.7 33.6c0 1.1-1 1.9-2.1 1.8-1.1 0-1.9-1-1.8-2.1l2.7-33.6zm-15.9 0.1c0-1.1 0.9-1.9 1.9-1.9s1.9 0.9 1.9 1.9v33.6c0 1.1-0.9 1.9-1.9 1.9s-1.9-0.9-1.9-1.9v-33.6zm22.7-23.6h-53.1c-0.9 0-1.8 0.3-2.3 0.9-0.6 0.5-0.9 1.3-0.9 2v2.9h35.6s35.6 0 35.6 0v-2.9c0-0.8-0.4-1.5-0.9-2-0.6-0.6-1.4-0.9-2.3-0.9h-11.5zm-53.1-3.9h19.4v-0.8c0-2.4 0.5-4.6 1.3-6.2 1-2 2.5-3.3 4.4-3.3h14.6c1.8 0 3.4 1.3 4.4 3.3 0.8 1.6 1.3 3.8 1.3 6.2v0.8h19.4c1.9 0 3.7 0.8 5 2s2.1 2.9 2.1 4.8v4.9c0 1.1-0.9 1.9-1.9 1.9h-3.7l-4.6 57.5c0 2.1-0.8 3.9-2.1 5.2s-3 2.1-5.3 2.5h-0.5-21.3s-21.3 0-21.3 0h-0.3c-2.4-0.4-4.2-1.2-5.5-2.5s-2-3-2.1-5.2l-4.6-57.5h-3.7c-1.1 0-1.9-0.9-1.9-1.9v-4.9c0-1.9 0.8-3.6 2.1-4.8s3.1-2 5-2zm23.3 0h18.2v-0.8c0-1.8-0.3-3.4-0.9-4.5-0.3-0.7-0.7-1.1-0.9-1.1h-14.6c-0.2 0-0.6 0.4-0.9 1.1-0.6 1.1-0.9 2.7-0.9 4.5v0.8z"/>
             </svg>
@@ -117,7 +117,7 @@ function produkt_category_icon($slug)
             <h2>Layout</h2>
             <p class="card-subline">Darstellung im Frontend</p>
             <input type="hidden" name="layout_style" value="<?php echo esc_attr($edit_item->layout_style ?? 'default'); ?>">
-            <div class="layout-option-grid">
+            <div class="layout-option-grid" data-input-name="layout_style">
                 <div class="layout-option-card" data-value="default">
                     <div class="layout-option-name">Standard (Horizontal)</div>
                     <div class="layout-option-preview">
@@ -146,6 +146,32 @@ function produkt_category_icon($slug)
                             <rect x="5" y="5" width="90" height="15" fill="#e5e7eb"/>
                             <rect x="5" y="25" width="90" height="15" fill="#e5e7eb"/>
                             <rect x="5" y="45" width="90" height="15" fill="#e5e7eb"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2>Layout Preis</h2>
+            <p class="card-subline">Position der Preisbox</p>
+            <input type="hidden" name="price_layout" value="<?php echo esc_attr($edit_item->price_layout ?? 'default'); ?>">
+            <div class="layout-option-grid" data-input-name="price_layout">
+                <div class="layout-option-card" data-value="default">
+                    <div class="layout-option-name">Standardposition</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="10" width="50" height="40" fill="#e5e7eb"/>
+                            <rect x="70" y="35" width="45" height="15" fill="#cbd5e1"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="layout-option-card" data-value="sidebar">
+                    <div class="layout-option-name">Neben dem Konfigurator</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="10" width="50" height="40" fill="#e5e7eb"/>
+                            <rect x="70" y="10" width="45" height="15" fill="#cbd5e1"/>
                         </svg>
                     </div>
                 </div>

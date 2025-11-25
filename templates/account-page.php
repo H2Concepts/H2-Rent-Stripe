@@ -48,6 +48,9 @@ if (is_user_logged_in()) {
     }
 
     foreach ($orders as $o) {
+        if (($o->status ?? '') !== 'abgeschlossen') {
+            continue;
+        }
         if (!empty($o->subscription_id)) {
             $order_map[$o->subscription_id] = $o;
         }

@@ -212,6 +212,7 @@ $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 
 // Layout
 $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'default';
+$price_layout = isset($category) ? ($category->price_layout ?? 'default') : 'default';
 
 // Tooltips
 $duration_tooltip = $ui['duration_tooltip'] ?? '';
@@ -302,13 +303,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 </div>
             </div>
 
-            <div class="produkt-price-display<?php echo $select_shipping ? ' no-default-shipping' : ''; ?>" id="produkt-price-display" style="display: none;">
+<?php
+ob_start();
+?>
+            <div class="produkt-price-display<?php echo $select_shipping ? ' no-default-shipping' : ''; ?><?php echo $price_layout === 'sidebar' ? ' sidebar-layout' : ''; ?>" id="produkt-price-display" style="display: none;">
                 <div class="produkt-price-box produkt-monthly-box">
                     <div class="produkt-price-content">
                         <p class="produkt-price-label"><?php echo esc_html($price_label); ?></p>
                         <div class="produkt-price-wrapper">
                             <span class="produkt-original-price" id="produkt-original-price" style="display: none;"></span>
-                            <span class="produkt-final-price" id="produkt-final-price">0,00€</span>
+                            <?php $final_price_tag = $price_layout === 'sidebar' ? 'h2' : 'span'; ?>
+                            <<?php echo $final_price_tag; ?> class="produkt-final-price" id="produkt-final-price">0,00€</<?php echo $final_price_tag; ?>>
                             <?php if ($price_period === 'month'): ?>
                             <span class="produkt-price-period">/Monat</span>
                             <?php endif; ?>
@@ -373,9 +378,17 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                 <?php endif; ?>
 
             </div>
+<?php
+$price_display_markup = ob_get_clean();
+if ($price_layout !== 'sidebar') {
+    echo $price_display_markup;
+}
+?>
+
         </div>
 
         <div class="produkt-right">
+            <?php if ($price_layout === 'sidebar') { echo $price_display_markup; } ?>
             <div class="produkt-configuration">
                 <!-- Variants Selection -->
                 <?php if (!empty($variants)): ?>
@@ -493,8 +506,27 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <?php endif; ?>
                     </h3>
                     <div class="produkt-options durations layout-<?php echo esc_attr($layout_style); ?>">
-                        <?php foreach ($durations as $duration): ?>
+                        <?php foreach ($durations as $duration):
+                            $popular_gradient_start = function_exists('pv_normalize_hex_color_value')
+                                ? pv_normalize_hex_color_value($duration->popular_gradient_start ?? '', '#ff8a3d')
+                                : (sanitize_hex_color($duration->popular_gradient_start ?? '') ?: '#ff8a3d');
+                            $popular_gradient_end = function_exists('pv_normalize_hex_color_value')
+                                ? pv_normalize_hex_color_value($duration->popular_gradient_end ?? '', '#ff5b0f')
+                                : (sanitize_hex_color($duration->popular_gradient_end ?? '') ?: '#ff5b0f');
+                            $popular_text_color = function_exists('pv_normalize_hex_color_value')
+                                ? pv_normalize_hex_color_value($duration->popular_text_color ?? '', '#ffffff')
+                                : (sanitize_hex_color($duration->popular_text_color ?? '') ?: '#ffffff');
+                            $popular_style = sprintf(
+                                '--popular-gradient-start:%1$s; --popular-gradient-end:%2$s; --popular-text-color:%3$s;',
+                                $popular_gradient_start,
+                                $popular_gradient_end,
+                                $popular_text_color
+                            );
+                        ?>
                         <div class="produkt-option" data-type="duration" data-id="<?php echo esc_attr($duration->id); ?>">
+                            <?php if (!empty($duration->show_popular)): ?>
+                            <span class="produkt-popular-badge" style="<?php echo esc_attr($popular_style); ?>">beliebt</span>
+                            <?php endif; ?>
                             <div class="produkt-option-content">
                                 <div class="produkt-duration-header">
                                     <span class="produkt-duration-name"><?php echo esc_html($duration->name); ?></span>
@@ -556,10 +588,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <small id="selected-product-color-name" class="produkt-selected-color-name"></small>
                     <div class="produkt-options product-colors layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($initial_product_colors as $color): ?>
+                        <?php
+                            $color_preview_class = 'produkt-color-preview' . (!empty($color->is_multicolor) ? ' produkt-color-preview--multicolor' : '');
+                            $color_preview_style = empty($color->is_multicolor) ? 'background-color: ' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <div class="produkt-option" data-type="product-color" data-id="<?php echo esc_attr($color->id); ?>" data-available="true" data-color-name="<?php echo esc_attr($color->name); ?>" data-color-image="<?php echo esc_url($color->image_url ?? ''); ?>">
                             <div class="produkt-option-content">
                                 <div class="produkt-color-display">
-                                    <div class="produkt-color-preview" style="background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
+                                    <div class="<?php echo esc_attr($color_preview_class); ?>" style="<?php echo esc_attr($color_preview_style); ?>"></div>
                                 </div>
                             </div>
                         </div>
@@ -573,10 +609,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <small id="selected-frame-color-name" class="produkt-selected-color-name"></small>
                     <div class="produkt-options frame-colors layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($initial_frame_colors as $color): ?>
+                        <?php
+                            $frame_preview_class = 'produkt-color-preview' . (!empty($color->is_multicolor) ? ' produkt-color-preview--multicolor' : '');
+                            $frame_preview_style = empty($color->is_multicolor) ? 'background-color: ' . esc_attr($color->color_code) . ';' : '';
+                        ?>
                         <div class="produkt-option" data-type="frame-color" data-id="<?php echo esc_attr($color->id); ?>" data-available="true" data-color-name="<?php echo esc_attr($color->name); ?>" data-color-image="<?php echo esc_url($color->image_url ?? ''); ?>">
                             <div class="produkt-option-content">
                                 <div class="produkt-color-display">
-                                    <div class="produkt-color-preview" style="background-color: <?php echo esc_attr($color->color_code); ?>;"></div>
+                                    <div class="<?php echo esc_attr($frame_preview_class); ?>" style="<?php echo esc_attr($frame_preview_style); ?>"></div>
                                 </div>
                             </div>
                         </div>

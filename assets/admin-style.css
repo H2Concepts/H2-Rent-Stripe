@@ -460,13 +460,6 @@
     min-width: 200px;
 }
 
-.produkt-category-info code {
-    background: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 13px;
-}
-
 /* Tab Navigation */
 .produkt-tab-nav {
     background: white;
@@ -546,6 +539,10 @@
     margin-bottom: 25px;
 }
 
+.produkt-form-grid--toggles {
+    align-items: center;
+}
+
 .produkt-form-group {
     display: flex;
     flex-direction: column;
@@ -619,11 +616,55 @@
     gap: 1rem;
 }
 
+.produkt-popular-settings {
+    display: none;
+    margin-top: 5px;
+}
+
+.produkt-popular-settings.is-visible {
+    display: block;
+}
+
 /* Section description */
 .produkt-section-description {
     margin: 0 0 15px 0;
     color: #6c757d;
     font-size: 0.9rem;
+}
+
+.popup-trigger-group {
+    margin-top: 10px;
+}
+
+.popup-trigger-grid {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 768px) {
+    .popup-trigger-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.popup-trigger-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+.popup-trigger-heading {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pv-muted);
+}
+
+.popup-trigger-column .produkt-toggle-label {
+    min-width: 0;
 }
 
 /* Image grid for variant forms */
@@ -904,6 +945,9 @@
     justify-content: center;
     background: #f9f9f9;
     overflow: hidden;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .image-preview img {
@@ -1283,6 +1327,54 @@
 .badge-warning { background: #ffc107; color: #212529; }
 .badge-danger { background: var(--pv-red); color: white; }
 .badge-gray { background: #dee2e6; color: #212529; }
+.produkt-duration-badges {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.badge-popular {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    background: linear-gradient(
+        135deg,
+        var(--popular-gradient-start, #ff8a3d) 0%,
+        var(--popular-gradient-end, #ff5b0f) 100%
+    );
+    color: var(--popular-text-color, #fff);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.produkt-popular-preview {
+    margin-top: 8px;
+}
+
+.produkt-popular-preview-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    background: linear-gradient(
+        135deg,
+        var(--popular-gradient-start, #ff8a3d) 0%,
+        var(--popular-gradient-end, #ff5b0f) 100%
+    );
+    color: var(--popular-text-color, #fff);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
 
 /* Buttons */
 .button-primary {
@@ -1352,6 +1444,14 @@ body.shipping-modal-open {
 }
 
 body.color-modal-open {
+    overflow: hidden;
+}
+
+body.duration-modal-open {
+    overflow: hidden;
+}
+
+body.conditions-modal-open {
     overflow: hidden;
 }
 
@@ -1449,15 +1549,6 @@ body.color-modal-open {
     padding: 0;
 }
 
-.produkt-list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #e9ecef;
-}
-
 .produkt-filter-form {
     display: flex;
     gap: 10px;
@@ -1468,11 +1559,6 @@ body.color-modal-open {
 .produkt-filter-form input[type="text"] {
     padding: 6px 8px;
     min-width: 200px;
-}
-
-.produkt-list-header h3 {
-    margin: 0;
-    color: #3c434a;
 }
 
 .produkt-categories-grid {
@@ -1600,17 +1686,6 @@ body.color-modal-open {
     border-top: 1px solid #f8f9fa;
 }
 
-.produkt-category-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.produkt-category-info small {
-    color: #6c757d;
-    font-size: 0.8rem;
-}
-
 .produkt-category-shipping {
     text-align: right;
     display: flex;
@@ -1644,22 +1719,6 @@ body.color-modal-open {
     text-align: center;
     font-size: 0.85rem;
     padding: 6px 12px;
-}
-
-@media (max-width: 768px) {
-    .produkt-list-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-
-    .produkt-categories-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .produkt-category-actions {
-        flex-direction: column;
-    }
 }
 
 /* Durations List */
@@ -2254,12 +2313,6 @@ body.color-modal-open {
 }
 
 @media (max-width: 768px) {
-    .produkt-list-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-
     .produkt-variants-grid {
         grid-template-columns: 1fr;
     }
@@ -2405,11 +2458,25 @@ body.color-modal-open {
 }
 
 .produkt-color-preview-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 40px;
     height: 40px;
     border-radius: 50%;
     border: 1px solid #ddd;
     cursor: pointer;
+}
+
+.produkt-color-preview-circle--multicolor {
+    background: conic-gradient(#b75c55 0deg 65deg, #c47b45 65deg 130deg, #d9c255 130deg 195deg, #5f9186 195deg 245deg, #4d6ea2 245deg 300deg, #8677a5 300deg 360deg);
+    border: 2px solid #141835;
+}
+
+.produkt-color-preview-circle--small {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
 }
 
 .produkt-color-picker input[type="text"] {
@@ -3428,9 +3495,9 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 
 .activity-table .badge {
     padding: 0.3rem 0.6rem;
-    border-radius: 4px;
+    border-radius: 999px;
     color: #fff;
-    font-size: 0.85rem;
+    font-size: 0.7rem;
 }
 .activity-table tr.pending-return { background-color: #efffec; }
 
@@ -4280,6 +4347,37 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .order-note .note-delete-btn svg {
     width: 12px;
     height: 12px;
+}
+
+.payment-total {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.payment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.payment-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.payment-row .payment-amount {
+    font-weight: 600;
+    justify-self: end;
+}
+
+.payment-note {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: -0.25rem;
+    padding-left: 0.2rem;
 }
 
 /* Category accordion styles */

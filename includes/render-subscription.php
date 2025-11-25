@@ -10,7 +10,34 @@ if (!defined('ABSPATH')) { exit; }
             <?php echo pv_get_subscription_status_badge($sub['status']); ?>
         </div>
     </div>
-    <p><strong>Produkt:</strong> <?php echo esc_html($product_name); ?></p>
+    <?php
+        $product_title      = $product_name;
+        $variant_label      = '';
+        $product_color      = '';
+        $frame_color        = '';
+
+        if ($order) {
+            $product_title = $order->produkt_name
+                ?: ($order->category_name ?? '')
+                ?: ($order->variant_name ?? '')
+                ?: $product_title;
+            $variant_label = $order->variant_name ?? '';
+            $product_color = $order->product_color_name
+                ?? ($order->produktfarbe_text ?? '');
+            $frame_color   = $order->frame_color_name
+                ?? ($order->gestellfarbe_text ?? '');
+        }
+    ?>
+    <p><strong>Produkt:</strong> <?php echo esc_html($product_title); ?></p>
+    <?php if (!empty($variant_label) && $variant_label !== $product_title) : ?>
+        <p><strong>Ausführung:</strong> <?php echo esc_html($variant_label); ?></p>
+    <?php endif; ?>
+    <?php if (!empty($product_color)) : ?>
+        <p><strong>Farbe:</strong> <?php echo esc_html($product_color); ?></p>
+    <?php endif; ?>
+    <?php if (!empty($frame_color)) : ?>
+        <p><strong>Gestellfarbe:</strong> <?php echo esc_html($frame_color); ?></p>
+    <?php endif; ?>
         <p><strong>Gemietet seit:</strong> <?php echo esc_html($start_formatted); ?></p>
         <p><strong>Kündbar ab:</strong> <?php echo esc_html($kuendigbar_ab_date); ?></p>
         <?php if (!empty($sub['current_period_end'])) : ?>

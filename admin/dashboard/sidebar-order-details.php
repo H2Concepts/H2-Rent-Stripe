@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 $order = $order_data ?? null;
+$modus = get_option('produkt_betriebsmodus', 'miete');
 
 if (empty($order) || !is_object($order)) {
     echo '<p>Fehler: Keine gültigen Auftragsdaten übergeben.</p>';
@@ -27,15 +28,64 @@ if (!empty($sd) && !empty($ed)) {
 }
 
 // Status-Text für den Badge ermitteln
-$badge_status = 'In Vermietung';
-if ($percent >= 100) {
-    $badge_status = 'Abgeschlossen';
-} elseif ($percent <= 0) {
-    $badge_status = 'Ausstehend';
+$order_status = isset($order->status) ? strtolower($order->status) : '';
+$is_completed_order = ($order_status === 'abgeschlossen');
+$is_open_order = ($order_status === 'offen');
+
+$badge_status = '–';
+if ($modus === 'miete') {
+    if ($is_completed_order) {
+        $badge_status = 'In Vermietung';
+    } elseif ($is_open_order) {
+        $badge_status = 'Nicht abgeschlossen';
+    } elseif ($order_status === 'gekündigt') {
+        $badge_status = 'Gekündigt';
+    } else {
+        $badge_status = $order_status ? ucfirst($order_status) : 'Miete';
+    }
+} else {
+    if ($percent >= 100) {
+        $badge_status = 'Abgeschlossen';
+    } elseif ($percent <= 0) {
+        $badge_status = 'Ausstehend';
+    } else {
+        $badge_status = 'In Bearbeitung';
+    }
 }
+
+// Start-Zeitpunkt bestimmen (inkl. Fallback auf Bestellzeit)
+$start_timestamp = null;
+if (!empty($sd)) {
+    $start_timestamp = strtotime($sd);
+} elseif (!empty($order->start_date)) {
+    $start_timestamp = strtotime($order->start_date);
+}
+
+if (!$start_timestamp && !empty($order->created_at)) {
+    $start_timestamp = strtotime($order->created_at);
+}
+
+// Laufende Miettage für Vermietungsmodus nur bei abgeschlossenen Aufträgen ermitteln
+$rental_elapsed_days = null;
+if ($modus === 'miete' && $is_completed_order && $start_timestamp) {
+    $now = function_exists('current_time') ? current_time('timestamp') : time();
+    $day_in_seconds = defined('DAY_IN_SECONDS') ? DAY_IN_SECONDS : 86400;
+    $diff_days = max(0, floor(($now - $start_timestamp) / $day_in_seconds));
+    $rental_elapsed_days = $diff_days;
+}
+
+$start_label_rental = ($modus === 'miete' && $is_completed_order && $start_timestamp)
+    ? date_i18n('d.m.Y', $start_timestamp)
+    : '–';
+$start_label_sale = $start_timestamp ? date_i18n('d. M', $start_timestamp) : '–';
+$end_label = $ed ? date_i18n('d. M', strtotime($ed)) : '–';
+$day_counter_label = ($rental_elapsed_days !== null)
+    ? $rental_elapsed_days . ' Tag' . ($rental_elapsed_days === 1 ? '' : 'e')
+    : '–';
 
 // Produkte ermitteln
 $produkte = $order->produkte ?? [$order]; // fallback
+$rental_payments = $rental_payments ?? [];
 ?>
 
 <div class="sidebar-wrapper" data-order-id="<?php echo esc_attr($order->id); ?>">
@@ -97,16 +147,26 @@ $produkte = $order->produkte ?? [$order]; // fallback
     <div class="rental-period-box">
         <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
         <h3>Mietzeitraum</h3>
-        <div class="rental-progress-number"><?php echo $percent; ?>%</div>
-        <div class="rental-progress">
-            <div class="bar">
-                <div class="fill" style="width: <?php echo $percent; ?>%;"></div>
+        <?php if ($modus === 'miete') : ?>
+            <div class="rental-progress-number"><?php echo esc_html($day_counter_label); ?></div>
+            <div class="rental-progress rental-progress-days">
+                <div class="day-counter-text">Tage seit Buchung</div>
             </div>
-        </div>
-        <div class="rental-dates">
-            <span>Abgeholt: <?php echo date_i18n('d. M', strtotime($sd)); ?></span>
-            <span>Rückgabe: <?php echo date_i18n('d. M', strtotime($ed)); ?></span>
-        </div>
+            <div class="rental-dates">
+                <span>Start: <?php echo esc_html($start_label_rental); ?></span>
+            </div>
+        <?php else : ?>
+            <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
+            <div class="rental-progress">
+                <div class="bar">
+                    <div class="fill" style="width: <?php echo intval($percent); ?>%;"></div>
+                </div>
+            </div>
+            <div class="rental-dates">
+                <span>Abgeholt: <?php echo esc_html($start_label_sale); ?></span>
+                <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Produktliste -->
@@ -138,7 +198,18 @@ $produkte = $order->produkte ?? [$order]; // fallback
                     <?php if (!empty($p->weekend_tariff)) : ?>
                         <div>Hinweis: Wochenendtarif</div>
                     <?php endif; ?>
-                    <div>Miettage: <?php echo esc_html($days !== null ? $days : ($p->dauer_text ?? '–')); ?></div>
+                    <?php
+                        $duration_label = ($modus === 'miete') ? 'Mindestlaufzeit' : 'Miettage';
+                        if ($modus === 'miete') {
+                            $duration_value = $p->duration_name ?? $p->dauer_text ?? '–';
+                        } else {
+                            $duration_value = $days !== null ? $days : ($p->dauer_text ?? '–');
+                            if ($days !== null) {
+                                $duration_value .= ' Tag' . ($days === 1 ? '' : 'e');
+                            }
+                        }
+                    ?>
+                    <div><?php echo esc_html($duration_label); ?>: <?php echo esc_html($duration_value); ?></div>
                 </div>
 
                 <div class="product-price">
@@ -176,7 +247,7 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <?php if (!empty($order_logs)) : ?>
                     <div class="order-log-list">
                         <?php
-                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
                         foreach ($order_logs as $log) :
                             $is_customer = !in_array($log->event, $system_events, true);
                             $avatar = $is_customer ? $initials : 'H2';
@@ -195,6 +266,9 @@ $produkte = $order->produkte ?? [$order]; // fallback
                                     break;
                                 case 'checkout_completed':
                                     $text = 'Checkout abgeschlossen.';
+                                    break;
+                                case 'auto_rental_payment':
+                                    $text = $log->message ?: 'Monatszahlung verbucht.';
                                     break;
                                 default:
                                     $text = $log->message ?: $log->event;
@@ -216,6 +290,40 @@ $produkte = $order->produkte ?? [$order]; // fallback
                 <?php endif; ?>
             </div>
         </div>
+        <?php if ($modus === 'miete') : ?>
+            <div class="produkt-accordion-item">
+                <button type="button" class="produkt-accordion-header">Zahlungen</button>
+                <div class="produkt-accordion-content">
+                    <?php if (!empty($rental_payments)) : ?>
+                        <?php
+                        $payment_total = array_reduce($rental_payments, function ($carry, $item) {
+                            return $carry + (float) ($item['amount'] ?? 0);
+                        }, 0.0);
+                        ?>
+                        <div class="payment-total"><strong>Gesamter Umsatz:</strong> <?php echo number_format($payment_total, 2, ',', '.'); ?> €</div>
+                        <div class="payment-list">
+                            <?php foreach ($rental_payments as $payment) :
+                                $date_label = !empty($payment['date']) ? date_i18n('d.m.Y', strtotime($payment['date'])) : '–';
+                                $type_label = ($payment['type'] ?? '') === 'initial' ? 'Erste Zahlung' : 'Monatszahlung';
+                                $amount     = number_format((float) ($payment['amount'] ?? 0), 2, ',', '.');
+                                $note       = $payment['note'] ?? '';
+                            ?>
+                                <div class="payment-row">
+                                    <div class="payment-date"><?php echo esc_html($date_label); ?></div>
+                                    <div class="payment-type"><?php echo esc_html($type_label); ?></div>
+                                    <div class="payment-amount"><?php echo esc_html($amount); ?> €</div>
+                                </div>
+                                <?php if ($note) : ?>
+                                    <div class="payment-note">Hinweis: <?php echo esc_html($note); ?></div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else : ?>
+                        <p>Keine Zahlungen verbucht.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
     <div class="order-notes-section">
         <h3>Notizen</h3>

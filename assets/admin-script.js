@@ -40,7 +40,7 @@ jQuery(document).ready(function($) {
 
     // Confirm delete actions
     $('.wp-list-table a[href*="delete"]').on('click', function(e) {
-        if (!confirm('Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?')) {
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
             e.preventDefault();
         }
     });
@@ -397,6 +397,130 @@ jQuery(document).ready(function($) {
     }
 }
 
+    var durationModal = $('#duration-modal');
+    if (durationModal.length) {
+        var durationForm = durationModal.find('form');
+        var durationTitle = durationModal.find('[data-duration-modal-title]');
+        var deleteWrapper = durationModal.find('[data-delete-wrapper]');
+        var defaultStart = durationForm.data('default-gradient-start') || '#ff8a3d';
+        var defaultEnd = durationForm.data('default-gradient-end') || '#ff5b0f';
+        var defaultText = durationForm.data('default-text-color') || '#ffffff';
+        var popularToggle = durationForm.find('#show_popular');
+
+        function updateDurationModalState() {
+            var hasId = $.trim(durationForm.find('input[name="id"]').val()).length > 0;
+            var titleText = hasId ? durationTitle.data('title-edit') : durationTitle.data('title-add');
+            if (titleText) {
+                durationTitle.text(titleText);
+            }
+            if (deleteWrapper.length) {
+                deleteWrapper.toggle(hasId);
+            }
+        }
+
+        function openDurationModal() {
+            durationModal.show();
+            $('body').addClass('duration-modal-open');
+            updateDurationModalState();
+        }
+
+        function closeDurationModal() {
+            durationModal.hide();
+            $('body').removeClass('duration-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('tab');
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+
+        $(document).on('click', '.js-open-duration-modal', function(e){
+            e.preventDefault();
+            durationForm.find('input[name="id"]').val('');
+            durationForm.find('input[name="name"]').val('');
+            durationForm.find('input[name="months_minimum"]').val('');
+            durationForm.find('#show_badge, #show_popular').prop('checked', false);
+            durationForm.find('input[name="sort_order"]').val(0);
+            durationForm.find('input[name^="variant_custom_price"]').val('');
+            if (popularToggle.length) {
+                popularToggle.trigger('change');
+            }
+
+            var startInput = durationForm.find('[data-popular-start]');
+            var endInput = durationForm.find('[data-popular-end]');
+            var textInput = durationForm.find('[data-popular-text]');
+
+            startInput.val(defaultStart).trigger('input');
+            endInput.val(defaultEnd).trigger('input');
+            textInput.val(defaultText).trigger('input');
+
+            updateDurationModalState();
+            openDurationModal();
+        });
+
+        durationModal.on('click', function(e){
+            if (e.target === this) {
+                closeDurationModal();
+            }
+        });
+        durationModal.find('.modal-close').on('click', closeDurationModal);
+
+        if (durationModal.data('open') == 1) {
+            openDurationModal();
+        }
+    }
+
+    var conditionModal = $('#condition-modal');
+    if (conditionModal.length) {
+        var conditionForm = conditionModal.find('form');
+        var conditionTitle = conditionModal.find('[data-condition-modal-title]');
+
+        function updateConditionModalState() {
+            var hasId = $.trim(conditionForm.find('input[name="id"]').val()).length > 0;
+            var titleText = hasId ? conditionTitle.data('title-edit') : conditionTitle.data('title-add');
+            if (titleText) {
+                conditionTitle.text(titleText);
+            }
+        }
+
+        function openConditionModal() {
+            conditionModal.show();
+            $('body').addClass('conditions-modal-open');
+            updateConditionModalState();
+        }
+
+        function closeConditionModal() {
+            conditionModal.hide();
+            $('body').removeClass('conditions-modal-open');
+            var url = new URL(window.location);
+            url.searchParams.delete('tab');
+            url.searchParams.delete('edit');
+            history.replaceState(null, '', url);
+        }
+
+        $(document).on('click', '.js-open-condition-modal', function (e) {
+            e.preventDefault();
+            conditionForm.find('input[name="id"]').val('');
+            conditionForm.find('input[name="name"]').val('');
+            conditionForm.find('textarea[name="description"]').val('');
+            conditionForm.find('input[name="price_modifier"]').val('0');
+            conditionForm.find('input[name="sort_order"]').val('0');
+            conditionForm.find('.variant-availability-grid input[type="checkbox"]').prop('checked', true);
+            openConditionModal();
+        });
+
+        conditionModal.on('click', function (e) {
+            if (e.target === this) {
+                closeConditionModal();
+            }
+        });
+
+        conditionModal.find('.modal-close').on('click', closeConditionModal);
+
+        if (conditionModal.data('open') == 1) {
+            openConditionModal();
+        }
+    }
+
     var colorModal = $('#color-modal');
     if (colorModal.length) {
         function openColorModal() {
@@ -411,6 +535,21 @@ jQuery(document).ready(function($) {
             url.searchParams.delete('tab');
             history.replaceState(null, '', url);
         }
+
+        function toggleColorCodeField() {
+            var isMulticolor = colorModal.find('#color-multicolor').is(':checked');
+            var codeGroup = colorModal.find('.produkt-color-code-group');
+            var preview = colorModal.find('.produkt-color-preview-circle');
+
+            if (isMulticolor) {
+                codeGroup.hide();
+                preview.addClass('produkt-color-preview-circle--multicolor');
+            } else {
+                codeGroup.show();
+                preview.removeClass('produkt-color-preview-circle--multicolor');
+                preview.css('background-color', colorModal.find('.produkt-color-input').val());
+            }
+        }
         $(document).on('click', '#add-color-btn', function(e){
             e.preventDefault();
             colorModal.find('input[name="id"]').val('');
@@ -420,6 +559,8 @@ jQuery(document).ready(function($) {
             colorModal.find('.produkt-color-preview-circle').css('background-color','#ffffff');
             colorModal.find('.produkt-color-input').val('#ffffff');
             colorModal.find('.produkt-color-value').val('#ffffff');
+            colorModal.find('#color-multicolor').prop('checked', false);
+            toggleColorCodeField();
             openColorModal();
         });
         colorModal.on('click', function(e){ if (e.target === this) { closeColorModal(); } });
@@ -441,6 +582,9 @@ jQuery(document).ready(function($) {
             colorModal.find('.image-preview').css('background-image','');
             colorModal.find('input[name="image_url"]').val('');
         });
+        colorModal.on('change', '#color-multicolor', toggleColorCodeField);
+
+        toggleColorCodeField();
         if (colorModal.data('open') == 1) {
             openColorModal();
         }
@@ -666,6 +810,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.note-delete-btn')) {
         e.preventDefault();
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
+            return;
+        }
         var btn = e.target.closest('.note-delete-btn');
         var noteEl = btn.closest('.order-note');
         if (!noteEl) return;
@@ -731,6 +878,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.customer-note-delete-btn')) {
         e.preventDefault();
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
+            return;
+        }
         var btn = e.target.closest('.customer-note-delete-btn');
         var noteEl = btn.closest('.order-note');
         if (!noteEl) return;
@@ -837,7 +987,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.layout-option-grid').forEach(grid => {
-        const hidden = grid.closest('.dashboard-card').querySelector('input[name="layout_style"]');
+        const card = grid.closest('.dashboard-card');
+        const inputName = grid.dataset.inputName || 'layout_style';
+        let hidden = card ? card.querySelector(`input[name="${inputName}"]`) : null;
+        if (!hidden && card) {
+            hidden = card.querySelector('input[type="hidden"]');
+        }
         function setActive(val) {
             grid.querySelectorAll('.layout-option-card').forEach(card => {
                 card.classList.toggle('active', card.dataset.value === val);

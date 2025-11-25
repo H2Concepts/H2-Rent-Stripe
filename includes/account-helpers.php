@@ -31,6 +31,47 @@ function pv_get_subscription_status_badge($status) {
     return '<span class="status-badge ' . esc_attr($class) . '">' . esc_html($label) . '</span>';
 }
 
+if (!function_exists('pv_normalize_hex_color_value')) {
+    /**
+     * Normalize stored hex color strings to a consistent "#rrggbb" format.
+     *
+     * Accepts values with or without a leading hash and expands shorthand
+     * values while falling back to a provided default when sanitization fails.
+     *
+     * @param string $value   Raw color value from storage/user input.
+     * @param string $default Default hex value to use when normalization fails.
+     *
+     * @return string Normalized hex color including leading hash.
+     */
+    function pv_normalize_hex_color_value($value, $default = '') {
+        if (!is_string($value)) {
+            $value = '';
+        }
+
+        $value = trim($value);
+        if ($value === '') {
+            return $default;
+        }
+
+        $value = '#' . ltrim($value, '#');
+        $sanitized = sanitize_hex_color($value);
+        if (!$sanitized) {
+            return $default;
+        }
+
+        if (strlen($sanitized) === 4) {
+            $sanitized = sprintf(
+                '#%1$s%1$s%2$s%2$s%3$s%3$s',
+                substr($sanitized, 1, 1),
+                substr($sanitized, 2, 1),
+                substr($sanitized, 3, 1)
+            );
+        }
+
+        return strtolower($sanitized);
+    }
+}
+
 function pv_get_minimum_duration_months($order) {
     global $wpdb;
     if ($order && !empty($order->duration_id)) {
@@ -142,6 +183,202 @@ function pv_get_order_rental_days($order) {
 }
 
 /**
+ * Determine the normalized rental start date for an order.
+ *
+ * @param object|array $order Order data
+ * @return string Empty string when unavailable otherwise Y-m-d formatted date
+ */
+function pv_get_order_start_date($order) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    if (empty($order)) {
+        return '';
+    }
+
+    if (!empty($order->start_date)) {
+        return substr($order->start_date, 0, 10);
+    }
+
+    list($start,) = pv_get_order_period($order);
+    if (!empty($start)) {
+        return substr($start, 0, 10);
+    }
+
+    if (!empty($order->created_at)) {
+        return substr($order->created_at, 0, 10);
+    }
+
+    return '';
+}
+
+/**
+ * Resolve the timestamp when a rental was marked as returned.
+ *
+ * @param object|array $order Order data
+ * @param array|null   $logs  Optional pre-fetched order logs
+ * @return int|null Unix timestamp or null when still active
+ */
+function pv_get_order_return_timestamp($order, $logs = null) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    if (empty($order) || empty($order->id)) {
+        return null;
+    }
+
+    $logs = is_array($logs) ? $logs : [];
+
+    foreach ($logs as $log) {
+        if (!isset($log->event) || $log->event !== 'inventory_returned_accepted') {
+            continue;
+        }
+        if (!empty($log->created_at)) {
+            $ts = strtotime($log->created_at);
+            if ($ts) {
+                return $ts;
+            }
+        }
+    }
+
+    if (!empty($order->inventory_reverted)) {
+        global $wpdb;
+        $created = $wpdb->get_var($wpdb->prepare(
+            "SELECT created_at FROM {$wpdb->prefix}produkt_order_logs WHERE order_id = %d AND event = 'inventory_returned_accepted' ORDER BY created_at DESC LIMIT 1",
+            $order->id
+        ));
+        if ($created) {
+            $ts = strtotime($created);
+            if ($ts) {
+                return $ts;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Build a synthetic payment history for rental orders.
+ *
+ * @param object|array $order Order data including pricing
+ * @param array|null   $logs  Optional order logs
+ * @return array{
+ *     payments: array<int, array{date:string,amount:float,type:string,note:string,shipping:float}>,
+ *     total: float,
+ *     log_entries: array,
+ *     monthly_amount: float,
+ *     shipping_once: float
+ * }
+ */
+function pv_calculate_rental_payments($order, $logs = null) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+
+    $monthly_amount = isset($order->final_price) ? max(0.0, (float) $order->final_price) : 0.0;
+    $shipping_cost  = isset($order->shipping_cost) ? max(0.0, (float) $order->shipping_cost) : 0.0;
+
+    $result = [
+        'payments'      => [],
+        'total'         => 0.0,
+        'log_entries'   => [],
+        'monthly_amount'=> $monthly_amount,
+        'shipping_once' => $shipping_cost,
+    ];
+
+    if (empty($order) || empty($order->mode) || empty($order->status)) {
+        return $result;
+    }
+
+    $mode    = strtolower($order->mode);
+    $status  = strtolower($order->status);
+    $allowed = ['abgeschlossen', 'gekündigt'];
+    if ($mode === 'kauf' || !in_array($status, $allowed, true)) {
+        return $result;
+    }
+
+    $start_date = pv_get_order_start_date($order);
+    if (!$start_date) {
+        return $result;
+    }
+
+    $timezone = function_exists('wp_timezone') ? wp_timezone() : new \DateTimeZone(date_default_timezone_get());
+    $current  = \DateTimeImmutable::createFromFormat('Y-m-d', $start_date, $timezone);
+    if (!$current) {
+        return $result;
+    }
+    $current = $current->setTime(0, 0, 0);
+
+    $now_ts = function_exists('current_time') ? current_time('timestamp') : time();
+    $return_ts = pv_get_order_return_timestamp($order, $logs);
+    $cutoff_ts = $return_ts ?: $now_ts;
+    $cutoff    = (new \DateTimeImmutable('@' . $cutoff_ts))->setTimezone($timezone)->setTime(23, 59, 59);
+
+    if ($current > $cutoff) {
+        return $result;
+    }
+
+    $monthly_amount = $result['monthly_amount'];
+    $shipping_cost  = $result['shipping_once'];
+    $iteration      = 0;
+
+    while ($current <= $cutoff) {
+        $iteration++;
+        if ($iteration > 240) {
+            break; // safety guard (~20 years)
+        }
+
+        $amount = $monthly_amount;
+        $note   = '';
+        $label  = 'Monatszahlung verbucht';
+        $shipping_portion = 0.0;
+        if ($iteration === 1) {
+            $amount += $shipping_cost;
+            if ($shipping_cost > 0) {
+                $note = 'inkl. Versand (einmalig)';
+                $shipping_portion = $shipping_cost;
+            }
+            $label = 'Erste Monatszahlung verbucht';
+        }
+
+        if ($amount > 0) {
+            $result['payments'][] = [
+                'date'  => $current->format('Y-m-d'),
+                'amount'=> $amount,
+                'type'  => $iteration === 1 ? 'initial' : 'recurring',
+                'note'  => $note,
+                'shipping' => $shipping_portion,
+            ];
+            $result['total'] += $amount;
+
+            $message = $label . ': ' . number_format($amount, 2, ',', '.') . ' €';
+            if ($note) {
+                $message .= ' (' . $note . ')';
+            }
+
+            $result['log_entries'][] = (object) [
+                'id'           => 'auto_' . ($order->id ?? 0) . '_' . $iteration,
+                'order_id'     => $order->id ?? 0,
+                'order_number' => $order->order_number ?? '',
+                'event'        => 'auto_rental_payment',
+                'message'      => $message,
+                'created_at'   => $current->format('Y-m-d H:i:s'),
+            ];
+        }
+
+        $current = $current->add(new \DateInterval('P1M'))->setTime(0, 0, 0);
+        if ($current > $cutoff) {
+            break;
+        }
+    }
+
+    return $result;
+}
+
+/**
  * Generate and increment the next order number.
  *
  * @return string Order number or empty string when numbering disabled
@@ -192,6 +429,16 @@ function pv_get_email_footer_html() {
     }
     return '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">'
         . implode('<br>', $parts) . '</div>';
+}
+
+/**
+ * Determine whether automatic invoice emails are enabled for customers.
+ *
+ * @return bool
+ */
+function pv_is_invoice_email_enabled() {
+    $value = get_option('produkt_invoice_email_enabled', '1');
+    return in_array($value, ['1', 1, true, 'true', 'on'], true);
 }
 
 /**

@@ -467,7 +467,7 @@ class Ajax {
 
             $duration_rows = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT id, show_badge, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
+                    "SELECT id, show_badge, show_popular, popular_gradient_start, popular_gradient_end, popular_text_color, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d",
                     $variant_data->category_id
                 )
             );
@@ -1905,7 +1905,7 @@ function pv_load_order_sidebar_details() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
     global $wpdb;
-    global $order, $order_logs, $order_notes, $sd, $ed, $days; // make variables available to the template
+    global $order, $order_logs, $order_notes, $sd, $ed, $days, $rental_payments; // make variables available to the template
 
     $order_array = pv_get_order_by_id($order_id);
     $order = $order_array ? (object) $order_array : null;
@@ -1924,6 +1924,19 @@ function pv_load_order_sidebar_details() {
          WHERE order_id = %d ORDER BY created_at DESC",
         $order_id
     ));
+
+    $payment_info    = pv_calculate_rental_payments($order, $logs);
+    $rental_payments = $payment_info['payments'];
+
+    if (!empty($payment_info['log_entries'])) {
+        $logs = array_merge($logs, $payment_info['log_entries']);
+        usort($logs, function ($a, $b) {
+            $ta = isset($a->created_at) ? strtotime($a->created_at) : 0;
+            $tb = isset($b->created_at) ? strtotime($b->created_at) : 0;
+            return $tb <=> $ta;
+        });
+    }
+
     $order_logs = $logs;
 
     $order_notes = $wpdb->get_results($wpdb->prepare(
@@ -2065,13 +2078,52 @@ function pv_load_customer_logs() {
 
     global $wpdb;
     $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-    $params = $order_ids;
-    $params[] = $offset;
-    $sql = "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC LIMIT 5 OFFSET %d";
-    $logs = $wpdb->get_results($wpdb->prepare($sql, $params));
+    $order_sql = $wpdb->prepare(
+        "SELECT id, order_number, status, mode, final_price, shipping_cost, start_date, created_at, inventory_reverted, dauer_text
+         FROM {$wpdb->prefix}produkt_orders WHERE id IN ($placeholders)",
+        $order_ids
+    );
+    $orders = $wpdb->get_results($order_sql, OBJECT_K);
+
+    $logs_sql = $wpdb->prepare(
+        "SELECT l.id, l.order_id, o.order_number, l.event, l.message, l.created_at FROM {$wpdb->prefix}produkt_order_logs l JOIN {$wpdb->prefix}produkt_orders o ON l.order_id = o.id WHERE l.order_id IN ($placeholders) ORDER BY l.created_at DESC",
+        $order_ids
+    );
+    $db_logs = $wpdb->get_results($logs_sql);
+
+    $payment_logs = [];
+    if ($orders) {
+        foreach ($orders as $oid => $order_row) {
+            if (empty($order_row->mode) || $order_row->mode === 'kauf') {
+                continue;
+            }
+            $info = pv_calculate_rental_payments($order_row);
+            if (empty($info['log_entries'])) {
+                continue;
+            }
+            foreach ($info['log_entries'] as $entry) {
+                if (empty($entry->order_number) && !empty($order_row->order_number)) {
+                    $entry->order_number = $order_row->order_number;
+                }
+                $payment_logs[] = $entry;
+            }
+        }
+    }
+
+    $all_logs = $db_logs;
+    if ($payment_logs) {
+        $all_logs = array_merge($all_logs, $payment_logs);
+        usort($all_logs, function ($a, $b) {
+            $ta = isset($a->created_at) ? strtotime($a->created_at) : 0;
+            $tb = isset($b->created_at) ? strtotime($b->created_at) : 0;
+            return $tb <=> $ta;
+        });
+    }
+
+    $logs = array_slice($all_logs, $offset, 5);
 
     ob_start();
-    $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed'];
+    $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
     foreach ($logs as $log) {
         $is_customer = !in_array($log->event, $system_events, true);
         $avatar = $is_customer ? $initials : 'H2';
@@ -2090,6 +2142,9 @@ function pv_load_customer_logs() {
                 break;
             case 'checkout_completed':
                 $text = 'Checkout abgeschlossen.';
+                break;
+            case 'auto_rental_payment':
+                $text = $log->message ?: 'Monatszahlung verbucht.';
                 break;
             default:
                 $text = $log->message ?: $log->event;

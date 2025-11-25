@@ -144,6 +144,7 @@ img.wp-smiley, img.emoji {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     justify-items: center;
+    row-gap: 0.75rem;
 }
 
 .produkt-thumbnail {
@@ -242,6 +243,24 @@ img.wp-smiley, img.emoji {
 .produkt-price-display.no-default-shipping .produkt-price-box {
     background: none;
     border: none;
+}
+
+.produkt-price-display.sidebar-layout {
+    background: none;
+    border: none;
+    margin-bottom: 1.5rem;
+}
+
+.produkt-price-display.sidebar-layout .produkt-price-box {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.produkt-price-display.sidebar-layout .produkt-final-price {
+    font-size: 2.5rem;
+    margin: 0;
+    line-height: 1.2;
 }
 
 .produkt-price-content {
@@ -397,7 +416,7 @@ img.wp-smiley, img.emoji {
 
 .produkt-options.layout-default.durations {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.75rem;
     max-width: 100%;
 }
@@ -410,6 +429,15 @@ img.wp-smiley, img.emoji {
 
 .produkt-options.layout-default.product-colors,
 .produkt-options.layout-default.frame-colors {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 0.5rem;
+}
+
+.produkt-options.layout-grid.product-colors,
+.produkt-options.layout-grid.frame-colors,
+.produkt-options.layout-list.product-colors,
+.produkt-options.layout-list.frame-colors {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
     gap: 0.5rem;
@@ -435,7 +463,7 @@ img.wp-smiley, img.emoji {
 
 @media (min-width: 1024px) {
     .produkt-options.layout-default.durations {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -613,6 +641,26 @@ img.wp-smiley, img.emoji {
     font-weight: 500;
 }
 
+.produkt-popular-badge {
+    position: absolute;
+    top: -0.6rem;
+    right: -0.6rem;
+    padding: 0.2rem 0.75rem;
+    border-radius: 9999px;
+    background: linear-gradient(
+        135deg,
+        var(--popular-gradient-start, #ff8a3d) 0%,
+        var(--popular-gradient-end, #ff5b0f) 100%
+    );
+    color: var(--popular-text-color, #ffffff);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    z-index: 2;
+    pointer-events: none;
+}
+
 .produkt-duration-info {
     font-size: 0.8rem;
     color: #6b7280;
@@ -663,6 +711,11 @@ img.wp-smiley, img.emoji {
     border: 2px solid #ddd;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: relative;
+}
+
+.produkt-color-preview--multicolor {
+    background: conic-gradient(#b75c55 0deg 65deg, #c47b45 65deg 130deg, #d9c255 130deg 195deg, #5f9186 195deg 245deg, #4d6ea2 245deg 300deg, #8677a5 300deg 360deg);
+    border: 2px solid #141835;
 }
 
 .produkt-selected-color-name {
@@ -931,32 +984,40 @@ img.wp-smiley, img.emoji {
 
 .produkt-feature-item {
     display: flex;
-    align-items: flex-start;
-    gap: 0.4rem;
+    align-items: center;
+    gap: 1rem;
     background: #e5e7eb;
     border-radius: 0.5rem;
     padding: 1rem;
 }
 
 .produkt-feature-icon-large {
-    width: 80px;
-    height: 50px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     overflow: hidden;
-    margin: 0 10px;
+    flex-shrink: 0;
+}
+
+.produkt-feature-icon-large img,
+.produkt-feature-icon-large svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.produkt-feature-text {
+    flex: 1;
 }
 
 .produkt-feature-icon-large img.wp-smiley,
-.produkt-feature-icon-large img.emoji {
-    height: 1.5rem;
-    width: 1.5rem;
-}
+.produkt-feature-icon-large img.emoji,
 .produkt-feature-icon-large svg {
-    height: 1.5rem;
-    width: 1.5rem;
+    width: 100%;
+    height: 100%;
 }
 
 .produkt-feature-text h4 {
@@ -1058,6 +1119,13 @@ img.wp-smiley, img.emoji {
         min-height: 350px;
         border-radius: .5rem .5rem .5rem .5rem;
         margin: 0;
+    }
+    .produkt-seo-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        max-height: 350px;
     }
     .produkt-seo-text h3 {
         font-size: 30px;
@@ -1541,7 +1609,7 @@ img.wp-smiley, img.emoji {
 
 @media (max-width: 768px) {
     .plugin-cart-icon {
-        margin-left: 0;
+        margin-left: 20px;
     }
 }
 .plugin-cart-icon .cart-icon {
@@ -2271,7 +2339,10 @@ body.shop-filter-open {
         flex: 1 1 auto;
     }
     .content-block-image {
-        min-height: 350px;
+        width: 100%;
+        min-height: 0;
+        aspect-ratio: 16 / 9;
+        max-height: 350px;
         border-radius: .5rem .5rem 0 0;
         margin: 0;
     }

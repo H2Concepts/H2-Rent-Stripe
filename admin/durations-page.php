@@ -7,6 +7,14 @@ global $wpdb;
 $table_name = $wpdb->prefix . 'produkt_durations';
 $table_prices = $wpdb->prefix . 'produkt_duration_prices';
 
+if (!function_exists('pv_normalize_hex_color_value')) {
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+}
+
+$popular_default_start = '#ff8a3d';
+$popular_default_end   = '#ff5b0f';
+$popular_default_text  = '#ffffff';
+
 // Ensure stripe_archived column exists in price table
 $archived_col = $wpdb->get_results("SHOW COLUMNS FROM $table_prices LIKE 'stripe_archived'");
 if (empty($archived_col)) {
@@ -38,7 +46,49 @@ if (isset($_POST['submit'])) {
     $name = sanitize_text_field($_POST['name']);
     $months_minimum = intval($_POST['months_minimum']);
     $show_badge = isset($_POST['show_badge']) ? 1 : 0;
+    $show_popular = isset($_POST['show_popular']) ? 1 : 0;
     $active = isset($_POST['active']) ? 1 : 0;
+    $existing_colors = [
+        'start' => '',
+        'end'   => '',
+        'text'  => '',
+    ];
+    if (!empty($_POST['id'])) {
+        $existing_row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT popular_gradient_start, popular_gradient_end, popular_text_color FROM $table_name WHERE id = %d",
+                intval($_POST['id'])
+            )
+        );
+        if ($existing_row) {
+            $existing_colors['start'] = $existing_row->popular_gradient_start ?? '';
+            $existing_colors['end']   = $existing_row->popular_gradient_end ?? '';
+            $existing_colors['text']  = $existing_row->popular_text_color ?? '';
+        }
+    }
+
+    $popular_gradient_start_input = isset($_POST['popular_gradient_start'])
+        ? wp_unslash($_POST['popular_gradient_start'])
+        : '';
+    $popular_gradient_end_input = isset($_POST['popular_gradient_end'])
+        ? wp_unslash($_POST['popular_gradient_end'])
+        : '';
+    $popular_text_color_input = isset($_POST['popular_text_color'])
+        ? wp_unslash($_POST['popular_text_color'])
+        : '';
+
+    $popular_gradient_start = pv_normalize_hex_color_value(
+        $popular_gradient_start_input,
+        $existing_colors['start'] !== '' ? $existing_colors['start'] : $popular_default_start
+    );
+    $popular_gradient_end = pv_normalize_hex_color_value(
+        $popular_gradient_end_input,
+        $existing_colors['end'] !== '' ? $existing_colors['end'] : $popular_default_end
+    );
+    $popular_text_color = pv_normalize_hex_color_value(
+        $popular_text_color_input,
+        $existing_colors['text'] !== '' ? $existing_colors['text'] : $popular_default_text
+    );
     $sort_order = intval($_POST['sort_order']);
 
     if (isset($_POST['id']) && $_POST['id']) {
@@ -51,11 +101,15 @@ if (isset($_POST['submit'])) {
                 'months_minimum' => $months_minimum,
                 'discount' => 0,
                 'show_badge' => $show_badge,
+                'show_popular' => $show_popular,
+                'popular_gradient_start' => $popular_gradient_start,
+                'popular_gradient_end' => $popular_gradient_end,
+                'popular_text_color' => $popular_text_color,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
             array('id' => intval($_POST['id'])),
-            array('%d', '%s', '%d', '%d', '%d', '%d', '%d'),
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d'),
             array('%d')
         );
         
@@ -76,10 +130,14 @@ if (isset($_POST['submit'])) {
                 'months_minimum' => $months_minimum,
                 'discount' => 0,
                 'show_badge' => $show_badge,
+                'show_popular' => $show_popular,
+                'popular_gradient_start' => $popular_gradient_start,
+                'popular_gradient_end' => $popular_gradient_end,
+                'popular_text_color' => $popular_text_color,
                 'active' => $active,
                 'sort_order' => $sort_order
             ),
-            array('%d', '%s', '%d', '%d', '%d', '%d', '%d')
+            array('%d', '%s', '%d', '%d', '%d', '%d', '%s', '%s', '%s', '%d', '%d')
         );
         
         $duration_id = $wpdb->insert_id;
@@ -157,6 +215,8 @@ if (isset($_POST['submit'])) {
             }
         }
     }
+
+    $active_tab = 'list';
 }
 
 // Handle delete
@@ -194,91 +254,439 @@ if (isset($_GET['edit'])) {
     $edit_item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", intval($_GET['edit'])));
     if ($edit_item) {
         $selected_category = $edit_item->category_id;
+    } else {
+        $active_tab = 'list';
     }
+} elseif ($active_tab === 'edit') {
+    $active_tab = 'list';
 }
 
 // Get current category info
 $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
 $durations = $wpdb->get_results($wpdb->prepare("SELECT d.*, MAX(p.stripe_price_id) AS stripe_price_id, MAX(p.stripe_product_id) AS stripe_product_id, MAX(p.stripe_archived) AS stripe_archived FROM $table_name d LEFT JOIN $table_prices p ON p.duration_id = d.id WHERE d.category_id = %d GROUP BY d.id ORDER BY d.sort_order, d.months_minimum", $selected_category));
-$variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
-?>
-<div class="wrap">
-    <!-- Kompakter Header -->
-    <div class="produkt-admin-header-compact">
-        <div class="produkt-admin-logo-compact">⏰</div>
-        <div class="produkt-admin-title-compact">
-            <h1>Mietdauern verwalten</h1>
-            <p>Laufzeiten & Rabatte</p>
-        </div>
-    </div>
-    
-    <!-- Breadcrumb Navigation -->
-    <div class="produkt-breadcrumb">
-        <a href="<?php echo admin_url('admin.php?page=produkt-verleih'); ?>">Dashboard</a> 
-        <span>→</span> 
-        <strong>Mietdauern</strong>
-    </div>
-    
-    <!-- Category Selection -->
-    <div class="produkt-category-selector">
-        <form method="get" action="">
-            <input type="hidden" name="page" value="produkt-durations">
-            <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-            <label for="category-select"><strong>🏷️ Produkt:</strong></label>
-            <select name="category" id="category-select" onchange="this.form.submit()">
-                <?php foreach ($categories as $category): ?>
-                <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
-                    <?php echo esc_html($category->name); ?>
-                </option>
-                <?php endforeach; ?>
-            </select>
-            <noscript><input type="submit" value="Wechseln" class="button"></noscript>
-        </form>
-        
-        <?php if ($current_category): ?>
-        <div class="produkt-category-info">
-            <code>[produkt_product category="<?php echo esc_html($current_category->shortcode); ?>"]</code>
-        </div>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Tab Navigation -->
-    <div class="produkt-tab-nav">
-        <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&tab=list'); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'list' ? 'active' : ''; ?>">
-            📋 Übersicht
-        </a>
-        <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&tab=add'); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'add' ? 'active' : ''; ?>">
-            ➕ Neue Mietdauer
-        </a>
-        <?php if ($edit_item): ?>
-        <a href="<?php echo admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&tab=edit&edit=' . $edit_item->id); ?>" 
-           class="produkt-tab <?php echo $active_tab === 'edit' ? 'active' : ''; ?>">
-            ✏️ Bearbeiten
-        </a>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Tab Content -->
-    <div class="produkt-tab-content">
-        <?php
-        switch ($active_tab) {
-            case 'add':
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-add-tab.php';
-                break;
-            case 'edit':
-                if ($edit_item) {
-                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-edit-tab.php';
-                } else {
-                    include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php';
-                }
-                break;
-            case 'list':
-            default:
-                include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php';
+$variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id, stripe_product_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
+$duration_prices = [];
+if ($edit_item) {
+    $price_rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT variant_id, custom_price, stripe_archived, stripe_price_id, stripe_product_id FROM $table_prices WHERE duration_id = %d",
+        $edit_item->id
+    ), OBJECT_K);
+
+    if ($price_rows) {
+        foreach ($price_rows as $pid => $row) {
+            $duration_prices[$pid] = [
+                'custom_price'    => $row->custom_price,
+                'stripe_archived' => $row->stripe_archived,
+                'stripe_price_id' => $row->stripe_price_id,
+                'stripe_product_id' => $row->stripe_product_id
+            ];
         }
-        ?>
+    }
+}
+
+$popular_gradient_start = $popular_default_start;
+$popular_gradient_end   = $popular_default_end;
+$popular_text_color     = $popular_default_text;
+if ($edit_item) {
+    $popular_gradient_start = pv_normalize_hex_color_value($edit_item->popular_gradient_start ?? '', $popular_gradient_start);
+    $popular_gradient_end   = pv_normalize_hex_color_value($edit_item->popular_gradient_end ?? '', $popular_gradient_end);
+    $popular_text_color     = pv_normalize_hex_color_value($edit_item->popular_text_color ?? '', $popular_text_color);
+}
+
+$modal_mode  = ($active_tab === 'edit' && $edit_item) ? 'edit' : (($active_tab === 'add') ? 'add' : 'list');
+$modal_title = ($modal_mode === 'edit') ? 'Mietdauer bearbeiten' : 'Neue Mietdauer';
+$modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
+$delete_url  = ($modal_mode === 'edit' && $edit_item)
+    ? admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action'))
+    : '';
+$delete_message = '';
+if ($delete_url && $edit_item) {
+    $delete_message = sprintf(
+        'Sind Sie sicher, dass Sie diese Mietdauer löschen möchten?\\n\\n"%s" wird unwiderruflich gelöscht!',
+        $edit_item->name
+    );
+}
+
+$subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
+?>
+
+<div class="produkt-admin dashboard-wrapper">
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline"><?php echo $subline_text; ?></p>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-left">
+            <div class="dashboard-card card-product-selector">
+                <h2>Produkt auswählen</h2>
+                <p class="card-subline">Für welches Produkt möchten Sie eine Mietdauer verwalten?</p>
+                <form method="get" action="" class="produkt-category-selector" style="background:none;border:none;padding:0;">
+                    <input type="hidden" name="page" value="produkt-durations">
+                    <input type="hidden" name="tab" value="list">
+                    <select name="category" id="category-select" onchange="this.form.submit()">
+                        <?php foreach ($categories as $category): ?>
+                            <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>>
+                                <?php echo esc_html($category->name); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <noscript><input type="submit" value="Wechseln" class="button"></noscript>
+                </form>
+                <?php if ($current_category): ?>
+                <div class="selected-product-preview">
+                    <?php if (!empty($current_category->default_image)): ?>
+                        <img src="<?php echo esc_url($current_category->default_image); ?>" alt="<?php echo esc_attr($current_category->name); ?>">
+                    <?php else: ?>
+                        <div class="placeholder-icon">⏰</div>
+                    <?php endif; ?>
+                    <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <div class="dashboard-right">
+            <div class="dashboard-row">
+                <div class="dashboard-card card-new-product">
+                    <h2>Neue Mietdauer</h2>
+                    <p class="card-subline">Mietdauer erstellen</p>
+                    <a href="#" class="icon-btn add-product-btn js-open-duration-modal" aria-label="Hinzufügen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
+                            <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
+                            <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
+                        </svg>
+                    </a>
+                </div>
+                <div class="dashboard-card card-quicknav">
+                    <h2>Schnellnavigation</h2>
+                    <p class="card-subline">Direkt zu wichtigen Listen</p>
+                    <div class="quicknav-grid">
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-verleih">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🏠</div>
+                                    <div class="quicknav-label">Dashboard</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-categories">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🧩</div>
+                                    <div class="quicknav-label">Kategorien</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-products">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🏷️</div>
+                                    <div class="quicknav-label">Produkte</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="quicknav-card">
+                            <a href="admin.php?page=produkt-variants&category=<?php echo $selected_category; ?>">
+                                <div class="quicknav-inner">
+                                    <div class="quicknav-icon-circle">🧩</div>
+                                    <div class="quicknav-label">Ausführungen</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Mietdauern</h2>
+                        <p class="card-subline">Verfügbare Mindestlaufzeiten</p>
+                    </div>
+                </div>
+                <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php'; ?>
+            </div>
+        </div>
+    </div>
+
+    <div id="duration-modal" class="modal-overlay" data-open="<?php echo esc_attr($modal_open); ?>" data-mode="<?php echo esc_attr($modal_mode); ?>">
+        <div class="modal-content">
+            <button type="button" class="modal-close">&times;</button>
+            <h2 data-duration-modal-title data-title-add="Neue Mietdauer" data-title-edit="Mietdauer bearbeiten"><?php echo esc_html($modal_title); ?></h2>
+            <form method="post" class="produkt-compact-form" data-default-gradient-start="<?php echo esc_attr($popular_default_start); ?>" data-default-gradient-end="<?php echo esc_attr($popular_default_end); ?>" data-default-text-color="<?php echo esc_attr($popular_default_text); ?>">
+                <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+                <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
+                <input type="hidden" name="id" value="<?php echo $edit_item ? esc_attr($edit_item->id) : ''; ?>">
+
+                <div class="produkt-form-grid">
+                    <div class="produkt-form-group">
+                        <label for="duration-name">Name *</label>
+                        <input type="text" id="duration-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label for="duration-months">Mindestmonate *</label>
+                        <input type="number" id="duration-months" name="months_minimum" value="<?php echo $edit_item ? intval($edit_item->months_minimum) : ''; ?>" min="1" required placeholder="1">
+                    </div>
+                </div>
+
+                <div class="produkt-form-grid produkt-form-grid--toggles">
+                    <div class="produkt-form-group">
+                        <label class="produkt-toggle-label" for="show_badge">
+                            <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>Rabatt-Badge anzeigen</span>
+                        </label>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label class="produkt-toggle-label" for="show_popular">
+                            <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>Beliebter Artikel</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="produkt-popular-settings <?php echo !empty($edit_item->show_popular) ? 'is-visible' : ''; ?>" data-popular-settings>
+                    <div class="produkt-form-grid">
+                        <div class="produkt-form-group">
+                            <label>Gradient Startfarbe</label>
+                            <div class="produkt-color-picker">
+                                <div class="produkt-color-preview-circle" data-popular-start-circle style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
+                                <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
+                                <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-picker>
+                                <input type="hidden" name="popular_gradient_start" value="<?php echo esc_attr($popular_gradient_start); ?>" data-popular-start-hidden>
+                            </div>
+                        </div>
+
+                        <div class="produkt-form-group">
+                            <label>Gradient Endfarbe</label>
+                            <div class="produkt-color-picker">
+                                <div class="produkt-color-preview-circle" data-popular-end-circle style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
+                                <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
+                                <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-picker>
+                                <input type="hidden" name="popular_gradient_end" value="<?php echo esc_attr($popular_gradient_end); ?>" data-popular-end-hidden>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Textfarbe</label>
+                        <div class="produkt-color-picker">
+                            <div class="produkt-color-preview-circle" data-popular-text-circle style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
+                            <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
+                            <input type="color" class="produkt-color-input" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-picker>
+                            <input type="hidden" name="popular_text_color" value="<?php echo esc_attr($popular_text_color); ?>" data-popular-text-hidden>
+                        </div>
+                    </div>
+
+                    <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
+                        <label>Badge-Vorschau</label>
+                        <div class="produkt-popular-preview">
+                            <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;">Beliebt</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="produkt-form-group">
+                    <label for="duration-sort">Sortierung</label>
+                    <input type="number" id="duration-sort" name="sort_order" value="<?php echo $edit_item ? intval($edit_item->sort_order) : 0; ?>" min="0">
+                </div>
+
+                <?php foreach ($variants as $variant):
+                    $variant_price = $duration_prices[$variant->id] ?? null;
+                    $custom_price  = $variant_price['custom_price'] ?? '';
+                    $archived      = false;
+                    $price_id      = $variant_price['stripe_price_id'] ?? '';
+                    if ($price_id) {
+                        $archived = \ProduktVerleih\StripeService::is_price_archived_cached($price_id);
+                    } elseif (!empty($variant_price['stripe_archived'])) {
+                        $archived = true;
+                    }
+                    $product_archived = false;
+                    if (!empty($variant->stripe_product_id)) {
+                        $product_archived = \ProduktVerleih\StripeService::is_product_archived_cached($variant->stripe_product_id);
+                    }
+                ?>
+                <div class="produkt-form-group full-width">
+                    <label><?php echo esc_html($variant->name); ?></label>
+                    <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($custom_price); ?>" placeholder="0.00">
+                    <small>Preis (monatlich in €)</small>
+                    <?php if ($archived): ?>
+                        <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                    <?php endif; ?>
+                    <?php if ($product_archived): ?>
+                        <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
+                    <?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+
+                <p>
+                    <button type="submit" name="submit" class="icon-btn" aria-label="Speichern">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"></path><path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"></path></svg>
+                    </button>
+                </p>
+            </form>
+        </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const HEX_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+    const popularToggle = document.getElementById('show_popular');
+    const popularSettings = document.querySelector('[data-popular-settings]');
+
+    const handlePopularToggle = function () {
+        if (!popularSettings) {
+            return;
+        }
+        if (popularToggle && popularToggle.checked) {
+            popularSettings.classList.add('is-visible');
+        } else {
+            popularSettings.classList.remove('is-visible');
+        }
+    };
+
+    if (popularToggle) {
+        popularToggle.addEventListener('change', handlePopularToggle);
+        handlePopularToggle();
+    }
+
+    const normalizeHex = function (value) {
+        const trimmed = (value || '').trim();
+        if (!HEX_PATTERN.test(trimmed)) {
+            return null;
+        }
+        if (trimmed.length === 4) {
+            return (
+                '#' +
+                trimmed[1] + trimmed[1] +
+                trimmed[2] + trimmed[2] +
+                trimmed[3] + trimmed[3]
+            ).toLowerCase();
+        }
+        return trimmed.toLowerCase();
+    };
+
+    const previewGroups = document.querySelectorAll('[data-popular-preview-root]');
+    previewGroups.forEach(function (group) {
+        const form = group.closest('form');
+        if (!form) {
+            return;
+        }
+
+        const startInput = form.querySelector('[data-popular-start]');
+        const startPicker = form.querySelector('[data-popular-start-picker]');
+        const startCircle = form.querySelector('[data-popular-start-circle]');
+        const startHidden = form.querySelector('[data-popular-start-hidden]');
+        const endInput = form.querySelector('[data-popular-end]');
+        const endPicker = form.querySelector('[data-popular-end-picker]');
+        const endCircle = form.querySelector('[data-popular-end-circle]');
+        const endHidden = form.querySelector('[data-popular-end-hidden]');
+        const textInput = form.querySelector('[data-popular-text]');
+        const textPicker = form.querySelector('[data-popular-text-picker]');
+        const textCircle = form.querySelector('[data-popular-text-circle]');
+        const textHidden = form.querySelector('[data-popular-text-hidden]');
+        const preview = group.querySelector('[data-popular-preview]');
+
+        if (!startInput || !endInput || !textInput || !preview) {
+            return;
+        }
+
+        const defaultStart = form.dataset.defaultGradientStart || '#ff8a3d';
+        const defaultEnd = form.dataset.defaultGradientEnd || '#ff5b0f';
+        const defaultText = form.dataset.defaultTextColor || '#ffffff';
+
+        const updatePreview = function () {
+            const startColor = normalizeHex(startInput.value) || defaultStart;
+            const endColor = normalizeHex(endInput.value) || defaultEnd;
+            const textColor = normalizeHex(textInput.value) || defaultText;
+
+            preview.style.setProperty('--popular-gradient-start', startColor);
+            preview.style.setProperty('--popular-gradient-end', endColor);
+            preview.style.setProperty('--popular-text-color', textColor);
+
+            if (startCircle) {
+                startCircle.style.backgroundColor = startColor;
+            }
+            if (endCircle) {
+                endCircle.style.backgroundColor = endColor;
+            }
+            if (textCircle) {
+                textCircle.style.backgroundColor = textColor;
+            }
+            if (startHidden) {
+                startHidden.value = startColor;
+            }
+            if (endHidden) {
+                endHidden.value = endColor;
+            }
+            if (textHidden) {
+                textHidden.value = textColor;
+            }
+            if (startPicker && startPicker.value !== startColor) {
+                startPicker.value = startColor;
+            }
+            if (endPicker && endPicker.value !== endColor) {
+                endPicker.value = endColor;
+            }
+            if (textPicker && textPicker.value !== textColor) {
+                textPicker.value = textColor;
+            }
+        };
+
+        const handlePickerChange = function (picker, input, fallback) {
+            const normalized = normalizeHex(picker.value) || fallback;
+            input.value = normalized;
+            updatePreview();
+        };
+
+        const handleTextChange = function (input, fallback) {
+            const normalized = normalizeHex(input.value) || fallback;
+            input.value = normalized;
+            updatePreview();
+        };
+
+        startInput.addEventListener('input', updatePreview);
+        endInput.addEventListener('input', updatePreview);
+        textInput.addEventListener('input', updatePreview);
+
+        startInput.addEventListener('change', function () {
+            handleTextChange(startInput, defaultStart);
+        });
+        endInput.addEventListener('change', function () {
+            handleTextChange(endInput, defaultEnd);
+        });
+        textInput.addEventListener('change', function () {
+            handleTextChange(textInput, defaultText);
+        });
+
+        if (startPicker) {
+            ['input', 'change'].forEach(function (eventName) {
+                startPicker.addEventListener(eventName, function () {
+                    handlePickerChange(startPicker, startInput, defaultStart);
+                });
+            });
+        }
+        if (endPicker) {
+            ['input', 'change'].forEach(function (eventName) {
+                endPicker.addEventListener(eventName, function () {
+                    handlePickerChange(endPicker, endInput, defaultEnd);
+                });
+            });
+        }
+        if (textPicker) {
+            ['input', 'change'].forEach(function (eventName) {
+                textPicker.addEventListener(eventName, function () {
+                    handlePickerChange(textPicker, textInput, defaultText);
+                });
+            });
+        }
+
+        handleTextChange(startInput, defaultStart);
+        handleTextChange(endInput, defaultEnd);
+        handleTextChange(textInput, defaultText);
+    });
+});
+</script>
