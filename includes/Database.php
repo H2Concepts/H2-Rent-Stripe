@@ -237,6 +237,7 @@ class Database {
                 price_period varchar(20) DEFAULT 'month',
                 vat_included tinyint(1) DEFAULT 0,
                 layout_style varchar(50) DEFAULT 'default',
+                price_layout varchar(50) DEFAULT 'default',
                 duration_tooltip text DEFAULT '',
                 condition_tooltip text DEFAULT '',
                 show_features tinyint(1) DEFAULT 0,
@@ -286,6 +287,7 @@ class Database {
                 'price_period' => 'VARCHAR(20) DEFAULT "month"',
                 'vat_included' => 'TINYINT(1) DEFAULT 0',
                 'layout_style' => 'VARCHAR(50) DEFAULT "default"',
+                'price_layout' => 'VARCHAR(50) DEFAULT "default"',
                 'duration_tooltip' => 'TEXT',
                 'condition_tooltip' => 'TEXT',
                 'show_features' => 'TINYINT(1) DEFAULT 0',
@@ -382,6 +384,9 @@ class Database {
                 'filter_button_color'  => '#5f7f5f',
                 'product_padding'     => '1',
                 'login_bg_image' => '',
+                'login_layout' => 'classic',
+                'login_logo'   => '',
+                'login_text_color' => '#1f1f1f',
                 'footer_text' => 'Powered by H2 Concepts',
                 'custom_css' => ''
             );
@@ -405,7 +410,10 @@ class Database {
             'front_button_text_color'  => '#ffffff',
             'filter_button_color'      => '#5f7f5f',
             'product_padding'          => '1',
-            'login_bg_image'           => ''
+            'login_bg_image'           => '',
+            'login_layout'            => 'classic',
+            'login_logo'              => '',
+            'login_text_color'        => '#1f1f1f'
         );
         foreach ($branding_defaults as $key => $value) {
             $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $table_branding WHERE setting_key = %s", $key));
@@ -447,6 +455,7 @@ class Database {
                 category_id mediumint(9) DEFAULT 1,
                 name varchar(255) NOT NULL,
                 color_code varchar(7) NOT NULL,
+                is_multicolor tinyint(1) DEFAULT 0,
                 color_type varchar(20) NOT NULL,
                 image_url text,
                 available tinyint(1) DEFAULT 1,
@@ -461,6 +470,11 @@ class Database {
             $column_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_colors LIKE 'image_url'");
             if (empty($column_exists)) {
                 $wpdb->query("ALTER TABLE $table_colors ADD COLUMN image_url TEXT AFTER color_type");
+            }
+
+            $multicolor_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_colors LIKE 'is_multicolor'");
+            if (empty($multicolor_exists)) {
+                $wpdb->query("ALTER TABLE $table_colors ADD COLUMN is_multicolor TINYINT(1) DEFAULT 0 AFTER color_code");
             }
         }
 
@@ -1156,6 +1170,7 @@ class Database {
             category_id mediumint(9) DEFAULT 1,
             name varchar(255) NOT NULL,
             color_code varchar(7) NOT NULL,
+            is_multicolor tinyint(1) DEFAULT 0,
             color_type varchar(20) NOT NULL,
             image_url text,
             available tinyint(1) DEFAULT 1,
@@ -1494,6 +1509,8 @@ class Database {
                 'front_button_text_color' => '#ffffff',
                 'product_padding'       => '1',
                 'login_bg_image'         => '',
+                'login_layout'          => 'classic',
+                'login_logo'            => '',
                 'footer_text' => '',
                 'custom_css' => ''
             );

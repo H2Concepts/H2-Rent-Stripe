@@ -40,7 +40,7 @@ jQuery(document).ready(function($) {
 
     // Confirm delete actions
     $('.wp-list-table a[href*="delete"]').on('click', function(e) {
-        if (!confirm('Sind Sie sicher, dass Sie diesen Eintrag löschen möchten?')) {
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
             e.preventDefault();
         }
     });
@@ -535,6 +535,21 @@ jQuery(document).ready(function($) {
             url.searchParams.delete('tab');
             history.replaceState(null, '', url);
         }
+
+        function toggleColorCodeField() {
+            var isMulticolor = colorModal.find('#color-multicolor').is(':checked');
+            var codeGroup = colorModal.find('.produkt-color-code-group');
+            var preview = colorModal.find('.produkt-color-preview-circle');
+
+            if (isMulticolor) {
+                codeGroup.hide();
+                preview.addClass('produkt-color-preview-circle--multicolor');
+            } else {
+                codeGroup.show();
+                preview.removeClass('produkt-color-preview-circle--multicolor');
+                preview.css('background-color', colorModal.find('.produkt-color-input').val());
+            }
+        }
         $(document).on('click', '#add-color-btn', function(e){
             e.preventDefault();
             colorModal.find('input[name="id"]').val('');
@@ -544,6 +559,8 @@ jQuery(document).ready(function($) {
             colorModal.find('.produkt-color-preview-circle').css('background-color','#ffffff');
             colorModal.find('.produkt-color-input').val('#ffffff');
             colorModal.find('.produkt-color-value').val('#ffffff');
+            colorModal.find('#color-multicolor').prop('checked', false);
+            toggleColorCodeField();
             openColorModal();
         });
         colorModal.on('click', function(e){ if (e.target === this) { closeColorModal(); } });
@@ -565,6 +582,9 @@ jQuery(document).ready(function($) {
             colorModal.find('.image-preview').css('background-image','');
             colorModal.find('input[name="image_url"]').val('');
         });
+        colorModal.on('change', '#color-multicolor', toggleColorCodeField);
+
+        toggleColorCodeField();
         if (colorModal.data('open') == 1) {
             openColorModal();
         }
@@ -790,6 +810,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.note-delete-btn')) {
         e.preventDefault();
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
+            return;
+        }
         var btn = e.target.closest('.note-delete-btn');
         var noteEl = btn.closest('.order-note');
         if (!noteEl) return;
@@ -855,6 +878,9 @@ document.addEventListener('click', function(e) {
 document.addEventListener('click', function(e) {
     if (e.target.closest('.customer-note-delete-btn')) {
         e.preventDefault();
+        if (!confirm('Bist du sicher das du Löschen möchtest?')) {
+            return;
+        }
         var btn = e.target.closest('.customer-note-delete-btn');
         var noteEl = btn.closest('.order-note');
         if (!noteEl) return;
@@ -961,7 +987,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.querySelectorAll('.layout-option-grid').forEach(grid => {
-        const hidden = grid.closest('.dashboard-card').querySelector('input[name="layout_style"]');
+        const card = grid.closest('.dashboard-card');
+        const inputName = grid.dataset.inputName || 'layout_style';
+        let hidden = card ? card.querySelector(`input[name="${inputName}"]`) : null;
+        if (!hidden && card) {
+            hidden = card.querySelector('input[type="hidden"]');
+        }
         function setActive(val) {
             grid.querySelectorAll('.layout-option-card').forEach(card => {
                 card.classList.toggle('active', card.dataset.value === val);

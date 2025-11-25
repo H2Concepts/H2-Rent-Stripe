@@ -219,6 +219,7 @@ body.produkt-login-page {
     background-position: center;
     background-repeat: no-repeat;
     margin: 0;
+    background-color: #f6f7f6;
 }
 
 body.produkt-login-page header,
@@ -231,9 +232,100 @@ body.produkt-login-page #colophon {
 .produkt-login-wrapper {
     width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
     min-height: 100vh;
+}
+
+.produkt-login-wrapper.login-layout-split {
+    display: grid;
+    grid-template-columns: minmax(360px, 520px) 1fr;
+    align-items: stretch;
+    background: #f6f7f6;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+
+.produkt-login-panel {
+    background: var(--produkt-login-primary, #5f7f5f);
+    padding: 48px 56px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 18px;
+    color: var(--produkt-login-text, #1f1f1f);
+    min-height: 100vh;
+}
+
+.login-panel-main {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    justify-content: center;
+}
+
+.produkt-login-panel h1 {
+    margin: 0 0 4px;
+    font-size: 32px;
+    color: var(--produkt-login-text, #1f1f1f);
+}
+
+.login-lead {
+    margin: 0 0 8px;
+    font-size: 15px;
+    color: var(--produkt-login-text, #1f1f1f);
+}
+
+.login-brand-logo img {
+    max-width: 100px;
+    height: auto;
+}
+
+.produkt-login-panel form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.produkt-login-panel input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #d6dede;
+    background: #f8faf8;
+    font-size: 15px;
+}
+
+.produkt-login-panel button {
+    width: 100%;
+    padding: 12px 14px;
+    border: none;
+    border-radius: 10px;
+    background: #000000;
+    color: #ffffff;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.login-signup-hint {
+    margin: 6px 0 0;
+    line-height: 1.4;
+    font-size: 14px;
+    color: var(--produkt-login-text, #1f1f1f);
+}
+
+.login-signup-hint a {
+    color: var(--produkt-login-text, #1f1f1f);
+    font-weight: 600;
+}
+
+.produkt-login-visual {
+    min-height: 100vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
 }
 
 .produkt-login-image,
@@ -293,4 +385,16 @@ body.produkt-login-page #colophon {
     margin-top: 15px;
     color: #000;
     text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .produkt-login-wrapper.login-layout-split {
+        grid-template-columns: 1fr;
+    }
+    .produkt-login-panel {
+        padding: 32px 24px;
+    }
+    .produkt-login-visual {
+        min-height: 300px;
+    }
 }

@@ -226,17 +226,42 @@ class Admin {
             );
 
             if ($is_account_page) {
-                $login_bg = $branding['login_bg_image'] ?? '';
-                if ($login_bg) {
-                    $login_css = 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
-                    wp_add_inline_style('produkt-account-style', $login_css);
+                $login_bg     = $branding['login_bg_image'] ?? '';
+                $login_layout = $branding['login_layout'] ?? 'classic';
+                $primary      = $branding['admin_color_primary'] ?? '#5f7f5f';
+                $login_text   = $branding['login_text_color'] ?? '#1f1f1f';
+                $inline_css   = '';
+
+                if ($login_layout === 'split') {
+                    $inline_css .= ':root{--produkt-login-primary:' . esc_attr($primary) . ';--produkt-login-text:' . esc_attr($login_text) . ';}';
+                    if ($login_bg) {
+                        $inline_css .= '.produkt-login-visual{background-image:url(' . esc_url($login_bg) . ');}';
+                    }
+                } elseif ($login_bg) {
+                    $inline_css .= 'body.produkt-login-page{background-image:url(' . esc_url($login_bg) . ');background-size:cover;background-position:center;background-repeat:no-repeat;}';
+                }
+
+                if ($inline_css === '' && $login_layout === 'split' && $login_text) {
+                    $inline_css .= ':root{--produkt-login-text:' . esc_attr($login_text) . ';}';
+                }
+
+                if ($inline_css) {
+                    wp_add_inline_style('produkt-account-style', $inline_css);
                 }
             }
         }
 
-        // Load scripts globally so the cart sidebar is functional everywhere
-        $load_script = true;
-        if ($load_script) {
+        // Load front-end script globally for cart/sidebar behavior
+        $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
+        $needs_stripe    = false;
+
+        if ($checkout_page_id && is_page($checkout_page_id)) {
+            $needs_stripe = true;
+        } elseif (is_a($post, 'WP_Post') && has_shortcode($content, 'stripe_elements_form')) {
+            $needs_stripe = true;
+        }
+
+        if ($needs_stripe) {
             wp_enqueue_script(
                 'stripe-js',
                 'https://js.stripe.com/basil/stripe.js',
@@ -244,14 +269,18 @@ class Admin {
                 null,
                 false
             );
-            wp_enqueue_script(
-                'produkt-script',
-                PRODUKT_PLUGIN_URL . 'assets/script.js',
-                ['jquery', 'stripe-js'],
-                PRODUKT_VERSION,
-                true
-            );
         }
+
+        wp_enqueue_script(
+            'produkt-script',
+            PRODUKT_PLUGIN_URL . 'assets/script.js',
+            ['jquery'],
+            PRODUKT_VERSION,
+            true
+        );
+
+        // Always localize the front-end script so cart and configurator logic work site-wide
+        $load_script = true;
 
         if (is_page() && isset($_GET['session_id'])) {
             wp_enqueue_script(
@@ -397,7 +426,7 @@ class Admin {
         // simple selects for reliability
     }
     
-    private function get_branding_settings() {
+    public function get_branding_settings() {
         global $wpdb;
         
         $settings = array();
@@ -532,6 +561,7 @@ class Admin {
             $price_period = sanitize_text_field($_POST['price_period'] ?? ($global_ui['price_period'] ?? 'month'));
             $vat_included = isset($_POST['vat_included']) ? 1 : (isset($global_ui['vat_included']) ? intval($global_ui['vat_included']) : 0);
             $layout_style = sanitize_text_field($_POST['layout_style']);
+            $price_layout = sanitize_text_field($_POST['price_layout'] ?? 'default');
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip'] ?? ($global_ui['duration_tooltip'] ?? ''));
             $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip'] ?? ($global_ui['condition_tooltip'] ?? ''));
             $show_features = isset($_POST['show_features']) ? 1 : 0;
@@ -539,7 +569,7 @@ class Admin {
             $show_rating = isset($_POST['show_rating']) ? 1 : 0;
             $rating_value_input = isset($_POST['rating_value']) ? str_replace(',', '.', $_POST['rating_value']) : '';
             $rating_value = $rating_value_input !== '' ? min(5, max(0, floatval($rating_value_input))) : 0;
-            $rating_link = esc_url_raw($_POST['rating_link']);
+            $rating_link = esc_url_raw($_POST['rating_link'] ?? '');
             if (!$show_rating) {
                 $rating_value = 0;
                 $rating_link = '';
@@ -650,6 +680,7 @@ class Admin {
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
+                        'price_layout' => $price_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -660,7 +691,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -799,6 +830,7 @@ class Admin {
                         'price_period' => $price_period,
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
+                        'price_layout' => $price_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -812,7 +844,7 @@ class Admin {
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'
+                        '%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
                     )
                 );
 
@@ -854,35 +886,11 @@ class Admin {
 
         if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
             $category_id = intval($_GET['delete']);
-            $table_name  = $wpdb->prefix . 'produkt_categories';
-
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
 
-            $variants = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT id, stripe_product_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
-                    $category_id
-                )
-            );
+            $result = produkt_hard_delete($category_id);
 
-            if ($variants) {
-                $variant_ids = array();
-                foreach ($variants as $v) {
-                    $variant_ids[] = $v->id;
-                    if ($v->stripe_product_id) {
-                        produkt_delete_or_archive_stripe_product($v->stripe_product_id);
-                    }
-                }
-
-                $placeholders = implode(',', array_fill(0, count($variant_ids), '%d'));
-                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders)", ...$variant_ids));
-                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id IN ($placeholders)", ...$variant_ids));
-                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_variant_durations WHERE variant_id IN ($placeholders)", ...$variant_ids));
-                $wpdb->query($wpdb->prepare("DELETE FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($placeholders)", ...$variant_ids));
-            }
-
-            $result = $wpdb->delete($table_name, ['id' => $category_id], ['%d']);
-            if ($result !== false) {
+            if ($result) {
                 echo '<div class="notice notice-success"><p>✅ Produkt gelöscht!</p></div>';
             } else {
                 echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
