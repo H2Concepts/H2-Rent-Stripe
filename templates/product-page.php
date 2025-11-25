@@ -43,7 +43,9 @@ $variants = $wpdb->get_results($wpdb->prepare(
 ));
 $has_direct_buy = false;
 foreach ($variants as $variant_check) {
-    if (floatval($variant_check->verkaufspreis_einmalig) > 0) {
+    $sale_price_exists = floatval($variant_check->verkaufspreis_einmalig) > 0;
+    $sale_price_id_set = !empty($variant_check->stripe_price_id_sale);
+    if ($sale_price_exists || $sale_price_id_set) {
         $has_direct_buy = true;
         break;
     }
@@ -441,15 +443,42 @@ if ($price_layout !== 'sidebar') {
                                         $display_price = floatval($variant->verkaufspreis_einmalig);
                                     } else {
                                         $variant_price_data = \ProduktVerleih\StripeService::get_lowest_price_with_durations([$variant->id], $duration_ids);
-                                        if (is_array($variant_price_data) && isset($variant_price_data['amount'])) {
+                                        if (is_array($variant_price_data) && isset($variant_price_data['amount']) && floatval($variant_price_data['amount']) > 0) {
                                             $display_price = (float) $variant_price_data['amount'];
-                                        } elseif (!empty($variant->stripe_price_id)) {
-                                            $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
-                                            if (!is_wp_error($p)) {
-                                                $display_price = $p;
+                                        } else {
+                                            // direct fallback per variant to avoid empty values
+                                            if (!empty($duration_ids)) {
+                                                $placeholders_durations = implode(',', array_fill(0, count($duration_ids), '%d'));
+                                                $duration_rows = $wpdb->get_results($wpdb->prepare(
+                                                    "SELECT stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d AND duration_id IN ($placeholders_durations)",
+                                                    array_merge([(int) $variant->id], $duration_ids)
+                                                ));
+
+                                                foreach ($duration_rows as $row) {
+                                                    $custom_price = ($row->custom_price !== null) ? floatval($row->custom_price) : 0.0;
+                                                    if ($custom_price > 0 && ($display_price <= 0 || $custom_price < $display_price)) {
+                                                        $display_price = $custom_price;
+                                                    }
+
+                                                    if (!empty($row->stripe_price_id)) {
+                                                        $duration_amount = \ProduktVerleih\StripeService::get_price_amount($row->stripe_price_id);
+                                                        if (!is_wp_error($duration_amount) && $duration_amount > 0 && ($display_price <= 0 || $duration_amount < $display_price)) {
+                                                            $display_price = $duration_amount;
+                                                        }
+                                                    }
+                                                }
                                             }
-                                        } elseif (is_array($price_data) && isset($price_data['amount'])) {
-                                            $display_price = (float) $price_data['amount'];
+
+                                            if ($display_price <= 0 && !empty($variant->stripe_price_id)) {
+                                                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                                if (!is_wp_error($p) && $p > 0) {
+                                                    $display_price = $p;
+                                                }
+                                            }
+
+                                            if ($display_price <= 0 && is_array($price_data) && isset($price_data['amount'])) {
+                                                $display_price = (float) $price_data['amount'];
+                                            }
                                         }
                                     }
 

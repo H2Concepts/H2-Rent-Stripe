@@ -1175,9 +1175,9 @@ jQuery(document).ready(function($) {
         const variantOption = $('.produkt-option[data-type="variant"].selected');
         const salePriceRaw = variantOption.data('sale-price');
         const salePriceId = variantOption.data('sale-price-id');
-        const salePrice = salePriceRaw !== undefined ? parseFloat(salePriceRaw) : 0;
+        const salePrice = salePriceRaw !== undefined ? parseFloat(salePriceRaw) : NaN;
 
-        if (!variantOption.length || isNaN(salePrice) || salePrice <= 0 || !salePriceId) {
+        if (!variantOption.length || isNaN(salePrice) || salePrice <= 0) {
             directBuyPrice = 0;
             directBuyPriceId = '';
             buyButton.hide();
@@ -1191,7 +1191,7 @@ jQuery(document).ready(function($) {
 
         buyButton.show();
         buyButton.find('.produkt-buy-price').text(formatPrice(directBuyPrice) + '€');
-        buyButton.prop('disabled', false);
+        buyButton.prop('disabled', !directBuyPriceId);
     }
 
     function initMobileStickyPrice() {
