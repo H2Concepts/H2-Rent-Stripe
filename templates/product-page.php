@@ -91,6 +91,15 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
     $price_count = (int) $wpdb->get_var($count_query);
 }
 
+$fallback_price = pv_get_lowest_rental_amount($variant_ids, $duration_ids);
+if ($fallback_price !== null) {
+    if (!is_array($price_data)) {
+        $price_data = ['amount' => $fallback_price, 'price_id' => ''];
+    } elseif (!isset($price_data['amount']) || (float) $price_data['amount'] <= 0 || $fallback_price < (float) $price_data['amount']) {
+        $price_data['amount'] = $fallback_price;
+    }
+}
+
 // Preise für Rabatt-Badges ermitteln
 $badge_base_price = 0.0;
 $badge_prices = [];
@@ -409,9 +418,16 @@ if ($price_layout !== 'sidebar') {
                     <div class="produkt-options variants layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($variants as $variant): ?>
                         <?php
-                            $variant_sale_amount = ($variant->verkaufspreis_einmalig && floatval($variant->verkaufspreis_einmalig) > 0)
-                                ? number_format((float) $variant->verkaufspreis_einmalig, 2, '.', '')
-                                : '';
+                            $variant_sale_amount = '';
+                            if ($variant->verkaufspreis_einmalig && floatval($variant->verkaufspreis_einmalig) > 0) {
+                                $variant_sale_amount = number_format((float) $variant->verkaufspreis_einmalig, 2, '.', '');
+                            } elseif (!empty($variant->stripe_price_id_sale)) {
+                                $sale_amount = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id_sale);
+                                if (!is_wp_error($sale_amount) && $sale_amount > 0) {
+                                    $variant_sale_amount = number_format((float) $sale_amount, 2, '.', '');
+                                }
+                            }
+
                             $variant_sale_price_id = '';
                             if ($variant_sale_amount !== '' && !empty($variant->stripe_price_id_sale)) {
                                 $variant_sale_price_id = $variant->stripe_price_id_sale;

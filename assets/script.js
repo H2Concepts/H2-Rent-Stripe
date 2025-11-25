@@ -1175,7 +1175,14 @@ jQuery(document).ready(function($) {
         const variantOption = $('.produkt-option[data-type="variant"].selected');
         const salePriceRaw = variantOption.data('sale-price');
         const salePriceId = variantOption.data('sale-price-id');
-        const salePrice = salePriceRaw !== undefined ? parseFloat(salePriceRaw) : NaN;
+        let salePrice = NaN;
+        if (salePriceRaw !== undefined) {
+            if (typeof salePriceRaw === 'string') {
+                salePrice = parseFloat(salePriceRaw.replace(',', '.'));
+            } else {
+                salePrice = parseFloat(salePriceRaw);
+            }
+        }
 
         if (!variantOption.length || isNaN(salePrice) || salePrice <= 0) {
             directBuyPrice = 0;

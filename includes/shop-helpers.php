@@ -27,6 +27,15 @@ function pv_get_lowest_stripe_price_by_category($category_id) {
     );
 
     $price_data = StripeService::get_lowest_price_with_durations($variant_ids, $duration_ids);
+    $fallback_amount = pv_get_lowest_rental_amount($variant_ids, $duration_ids);
+
+    if ($fallback_amount !== null) {
+        if (!is_array($price_data)) {
+            $price_data = ['amount' => $fallback_amount, 'price_id' => ''];
+        } elseif (!isset($price_data['amount']) || (float) $price_data['amount'] <= 0 || $fallback_amount < (float) $price_data['amount']) {
+            $price_data['amount'] = $fallback_amount;
+        }
+    }
 
     $duration_count = count($duration_ids);
     $price_count = 0;
@@ -42,13 +51,83 @@ function pv_get_lowest_stripe_price_by_category($category_id) {
         $price_count = (int) $wpdb->get_var($count_query);
     }
 
+    $amount = isset($price_data['amount']) ? (float) $price_data['amount'] : null;
+    if ($amount !== null && $amount <= 0) {
+        $amount = null;
+    }
+
     return [
-        'amount'         => $price_data['amount'] ?? null,
+        'amount'         => $amount,
         'price_id'       => $price_data['price_id'] ?? null,
         'count'          => $price_count,
         'duration_count' => $duration_count,
         'mode'           => get_option('produkt_betriebsmodus', 'miete'),
     ];
+}
+
+/**
+ * Find the lowest available rental amount for given variants and durations.
+ *
+ * @param array $variant_ids
+ * @param array $duration_ids
+ * @return float|null
+ */
+function pv_get_lowest_rental_amount($variant_ids, $duration_ids) {
+    global $wpdb;
+
+    if (empty($variant_ids)) {
+        return null;
+    }
+
+    $lowest = null;
+
+    if (!empty($duration_ids)) {
+        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $placeholders_d = implode(',', array_fill(0, count($duration_ids), '%d'));
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices
+                 WHERE variant_id IN ($placeholders_v)
+                   AND duration_id IN ($placeholders_d)",
+                array_merge($variant_ids, $duration_ids)
+            )
+        );
+
+        foreach ($rows as $row) {
+            $custom = ($row->custom_price !== null) ? (float) $row->custom_price : 0.0;
+            if ($custom > 0 && ($lowest === null || $custom < $lowest)) {
+                $lowest = $custom;
+            }
+
+            if (!empty($row->stripe_price_id)) {
+                $amount = StripeService::get_price_amount($row->stripe_price_id);
+                if (!is_wp_error($amount) && $amount > 0 && ($lowest === null || $amount < $lowest)) {
+                    $lowest = $amount;
+                }
+            }
+        }
+    }
+
+    if ($lowest === null) {
+        $placeholders_v = implode(',', array_fill(0, count($variant_ids), '%d'));
+        $stripe_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id IN ($placeholders_v)",
+                $variant_ids
+            )
+        );
+
+        foreach ($stripe_ids as $pid) {
+            if (!$pid) { continue; }
+            $amount = StripeService::get_price_amount($pid);
+            if (!is_wp_error($amount) && $amount > 0 && ($lowest === null || $amount < $lowest)) {
+                $lowest = $amount;
+            }
+        }
+    }
+
+    return $lowest;
 }
 
 /**
