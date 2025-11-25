@@ -1,9 +1,11 @@
 <?php
 // Variants Edit Tab Content
-$verkaufspreis_einmalig = floatval($edit_item->verkaufspreis_einmalig);
+$verkaufspreis_einmalig = isset($edit_item->verkaufspreis_einmalig) ? floatval($edit_item->verkaufspreis_einmalig) : null;
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $mietpreis_monatlich = number_format((float)$edit_item->mietpreis_monatlich, 2, '.', '');
-$verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.', '');
+$verkaufspreis_formatted = ($verkaufspreis_einmalig && $verkaufspreis_einmalig > 0)
+    ? number_format((float)$verkaufspreis_einmalig, 2, '.', '')
+    : '';
 $weekend_price = floatval($edit_item->weekend_price);
 $weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
 ?>

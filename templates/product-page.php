@@ -403,6 +403,15 @@ if ($price_layout !== 'sidebar') {
                     <h3>Wählen Sie Ihre Ausführung</h3>
                     <div class="produkt-options variants layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($variants as $variant): ?>
+                        <?php
+                            $variant_sale_amount = ($variant->verkaufspreis_einmalig && floatval($variant->verkaufspreis_einmalig) > 0)
+                                ? number_format((float) $variant->verkaufspreis_einmalig, 2, '.', '')
+                                : '';
+                            $variant_sale_price_id = '';
+                            if ($variant_sale_amount !== '' && !empty($variant->stripe_price_id_sale)) {
+                                $variant_sale_price_id = $variant->stripe_price_id_sale;
+                            }
+                        ?>
                         <div class="produkt-option <?php echo !($variant->available ?? 1) ? 'unavailable' : ''; ?>"
                              data-type="variant"
                              data-id="<?php echo esc_attr($variant->id); ?>"
@@ -411,8 +420,8 @@ if ($price_layout !== 'sidebar') {
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
                              data-weekend-price="<?php echo esc_attr($variant->weekend_price ?? 0); ?>"
-                             data-sale-price="<?php echo esc_attr(number_format((float) ($variant->verkaufspreis_einmalig ?? 0), 2, '.', '')); ?>"
-                             data-sale-price-id="<?php echo esc_attr($variant->stripe_price_id_sale ?: ($variant->stripe_price_id ?? '')); ?>"
+                             data-sale-price="<?php echo esc_attr($variant_sale_amount); ?>"
+                             data-sale-price-id="<?php echo esc_attr($variant_sale_price_id); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -436,6 +445,8 @@ if ($price_layout !== 'sidebar') {
                                             if (!is_wp_error($p)) {
                                                 $display_price = $p;
                                             }
+                                        } elseif (is_array($price_data) && isset($price_data['amount'])) {
+                                            $display_price = (float) $price_data['amount'];
                                         }
                                     }
                                 ?>
@@ -483,12 +494,14 @@ if ($price_layout !== 'sidebar') {
                             $pid = $modus === 'kauf'
                                 ? ($extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? ''))
                                 : ($extra->stripe_price_id_rent ?: ($extra->stripe_price_id ?? ''));
-                            $sale_pid = $extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? '');
-                            $sale_amount = 0;
-                            if (!empty($sale_pid)) {
-                                $sale_price = \ProduktVerleih\StripeService::get_price_amount($sale_pid);
-                                if (!is_wp_error($sale_price)) {
-                                    $sale_amount = (float) $sale_price;
+
+                            $sale_amount = '';
+                            $sale_pid = '';
+                            if (!empty($extra->stripe_price_id_sale)) {
+                                $sale_price = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id_sale);
+                                if (!is_wp_error($sale_price) && $sale_price > 0) {
+                                    $sale_amount = number_format((float) $sale_price, 2, '.', '');
+                                    $sale_pid = $extra->stripe_price_id_sale;
                                 }
                             }
                         ?>
@@ -496,7 +509,7 @@ if ($price_layout !== 'sidebar') {
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
                              data-sale-price-id="<?php echo esc_attr($sale_pid); ?>"
-                             data-sale-price="<?php echo esc_attr(number_format($sale_amount, 2, '.', '')); ?>"
+                             data-sale-price="<?php echo esc_attr($sale_amount); ?>"
                              data-available="<?php echo intval($extra->available ?? 1) ? 'true' : 'false'; ?>"
                              data-stock="<?php echo intval($extra->stock_available); ?>">
                             <div class="produkt-option-content">
@@ -692,7 +705,7 @@ if ($price_layout !== 'sidebar') {
                     </button>
                     <?php if ($modus === 'miete' && $has_direct_buy): ?>
                     <button id="produkt-buy-button" class="produkt-buy-button" disabled>
-                        <span class="produkt-buy-button-text">oder für <span class="produkt-buy-price">0,00€</span> direkt kaufen</span>
+                        <span class="produkt-buy-button-text">oder für <span class="produkt-buy-price"></span> direkt kaufen</span>
                     </button>
                     <?php endif; ?>
                     <p class="produkt-button-help" id="produkt-button-help">

@@ -1175,18 +1175,20 @@ jQuery(document).ready(function($) {
         const salePriceId = variantOption.data('sale-price-id');
         const salePrice = salePriceRaw !== undefined ? parseFloat(salePriceRaw) : 0;
 
-        directBuyPrice = isNaN(salePrice) ? 0 : salePrice;
-        directBuyPriceId = salePriceId ? salePriceId.toString() : '';
-
-        buyButton.toggle(directBuyPrice > 0);
-
-        if (directBuyPrice > 0) {
-            buyButton.find('.produkt-buy-price').text(formatPrice(directBuyPrice) + '€');
-        } else {
-            buyButton.find('.produkt-buy-price').text('0,00€');
+        if (!variantOption.length || isNaN(salePrice) || salePrice <= 0 || !salePriceId) {
+            directBuyPrice = 0;
+            directBuyPriceId = '';
+            buyButton.hide();
+            buyButton.find('.produkt-buy-price').text('');
             buyButton.prop('disabled', true);
             return;
         }
+
+        directBuyPrice = salePrice;
+        directBuyPriceId = salePriceId ? salePriceId.toString() : '';
+
+        buyButton.show();
+        buyButton.find('.produkt-buy-price').text(formatPrice(directBuyPrice) + '€');
 
         const requiredSelections = [];
         if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);

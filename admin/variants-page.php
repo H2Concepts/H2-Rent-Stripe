@@ -96,11 +96,12 @@ if (isset($_POST['submit'])) {
     }
     $description = sanitize_textarea_field($_POST['description']);
     $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $verkaufspreis_raw      = isset($_POST['verkaufspreis_einmalig']) ? trim($_POST['verkaufspreis_einmalig']) : '';
     if ($mode === 'kauf') {
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? intval($_POST['verkaufspreis_einmalig']) / 100 : 0;
+        $verkaufspreis_einmalig = ($verkaufspreis_raw !== '') ? intval($verkaufspreis_raw) / 100 : 0;
         $weekend_price = isset($_POST['weekend_price']) ? intval($_POST['weekend_price']) / 100 : 0;
     } else {
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $verkaufspreis_einmalig = ($verkaufspreis_raw === '') ? null : floatval($verkaufspreis_raw);
         $weekend_price = isset($_POST['weekend_price']) ? floatval($_POST['weekend_price']) : 0;
     }
     $available = isset($_POST['available']) ? 1 : 0;
@@ -137,15 +138,22 @@ if (isset($_POST['submit'])) {
             'active'                 => $active,
             'sort_order'             => $sort_order
         ), $image_data);
-        
+
+        $update_formats = array_merge(
+            array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
+            array_fill(0, 5, '%s')
+        );
+
+        if ($verkaufspreis_einmalig === null) {
+            $update_data['verkaufspreis_einmalig'] = null;
+            $update_formats[4] = '%s';
+        }
+
         $result = $wpdb->update(
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
-            array_merge(
-                array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
-                array_fill(0, 5, '%s')
-            ),
+            $update_formats,
             array('%d')
         );
         
@@ -207,6 +215,13 @@ if (isset($_POST['submit'])) {
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
             produkt_sync_weekend_price($variant_id, $weekend_price, $product_id);
 
+            if ($verkaufspreis_einmalig === null && $mode !== 'kauf') {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $table_name SET verkaufspreis_einmalig = NULL WHERE id = %d",
+                    $variant_id
+                ));
+            }
+
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
             echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
@@ -229,14 +244,21 @@ if (isset($_POST['submit'])) {
             'active'                 => $active,
             'sort_order'             => $sort_order
         ), $image_data);
-        
+
+        $insert_formats = array_merge(
+            array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
+            array_fill(0, 5, '%s')
+        );
+
+        if ($verkaufspreis_einmalig === null) {
+            $insert_data['verkaufspreis_einmalig'] = null;
+            $insert_formats[4] = '%s';
+        }
+
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
-            array_merge(
-                array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
-                array_fill(0, 5, '%s')
-            )
+            $insert_formats
         );
 
         $variant_id = $wpdb->insert_id;
@@ -263,6 +285,13 @@ if (isset($_POST['submit'])) {
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';
             produkt_sync_weekend_price($variant_id, $weekend_price, $product_id);
+
+            if ($verkaufspreis_einmalig === null && $mode !== 'kauf') {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE $table_name SET verkaufspreis_einmalig = NULL WHERE id = %d",
+                    $variant_id
+                ));
+            }
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
