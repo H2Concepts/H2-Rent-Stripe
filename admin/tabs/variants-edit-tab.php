@@ -1,6 +1,6 @@
 <?php
 // Variants Edit Tab Content
-$verkaufspreis_einmalig = floatval($edit_item->verkaufspreis_einmalig);
+$verkaufspreis_einmalig = $edit_item->verkaufspreis_einmalig ?? null;
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $mietpreis_monatlich = number_format((float)$edit_item->mietpreis_monatlich, 2, '.', '');
 $verkaufspreis_formatted = $edit_item->verkaufspreis_einmalig === null || $edit_item->verkaufspreis_einmalig === ''
