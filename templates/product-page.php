@@ -419,7 +419,10 @@ if ($price_layout !== 'sidebar') {
                                     if ($modus === 'kauf') {
                                         $display_price = floatval($variant->verkaufspreis_einmalig);
                                     } else {
-                                        if (!empty($variant->stripe_price_id)) {
+                                        $variant_price_data = \ProduktVerleih\StripeService::get_lowest_price_with_durations([$variant->id], $duration_ids);
+                                        if (is_array($variant_price_data) && isset($variant_price_data['amount'])) {
+                                            $display_price = (float) $variant_price_data['amount'];
+                                        } elseif (!empty($variant->stripe_price_id)) {
                                             $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                                             if (!is_wp_error($p)) {
                                                 $display_price = $p;
@@ -428,7 +431,7 @@ if ($price_layout !== 'sidebar') {
                                     }
                                 ?>
                                 <?php
-                                    $price_prefix = ($modus === 'miete' && $duration_count >= 2 && $display_price > 0) ? 'ab ' : '';
+                                    $price_prefix = ($modus === 'miete' && $display_price > 0) ? 'ab ' : '';
                                     $formatted_price = number_format($display_price, 2, ',', '.') . '€';
                                     if ($modus !== 'kauf' && $price_period === 'month') {
                                         $formatted_price .= '/Monat';

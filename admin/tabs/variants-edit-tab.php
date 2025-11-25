@@ -39,13 +39,10 @@ $weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
                     </div>
                     <?php if ($modus !== 'kauf'): ?>
                     <div class="produkt-form-group">
-                        <label>Monatlicher Mietpreis *</label>
-                        <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo esc_attr($mietpreis_monatlich); ?>" required>
-                    </div>
-                    <div class="produkt-form-group">
                         <label>Einmaliger Verkaufspreis</label>
                         <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($verkaufspreis_formatted); ?>">
                     </div>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php else: ?>
                         <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php endif; ?>
