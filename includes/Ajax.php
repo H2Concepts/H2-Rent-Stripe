@@ -111,6 +111,10 @@ class Ajax {
                     $price_id_to_use = $variant->stripe_price_id_rent ?: $variant->stripe_price_id;
                 }
 
+                if (empty($price_id_to_use)) {
+                    wp_send_json_error('Kein Stripe-Preis für Miete hinterlegt.');
+                }
+
                 $used_price_id = $price_id_to_use;
 
                 // For display always use the variant's own Stripe price ID for rentals
@@ -1371,6 +1375,10 @@ function produkt_create_checkout_session() {
             ];
         }
 
+        if (empty($line_items)) {
+            wp_send_json_error(['message' => 'Kein Stripe-Preis gefunden']);
+        }
+
         $tos_url = get_option('produkt_tos_url', home_url('/agb'));
         $custom_text = [];
         $agb_msg = get_option('produkt_ct_agb', '');
@@ -1553,11 +1561,50 @@ function produkt_create_embedded_checkout_session() {
 
         $line_items = [];
         $orders = [];
+        $determine_price_id = function($variant_id, $duration_id) use ($modus) {
+            global $wpdb;
+
+            if (!$variant_id) {
+                return '';
+            }
+
+            $variant = $wpdb->get_row($wpdb->prepare(
+                "SELECT stripe_price_id, stripe_price_id_rent FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                $variant_id
+            ));
+
+            if (!$variant) {
+                return '';
+            }
+
+            if ($modus === 'kauf') {
+                return $variant->stripe_price_id ?: '';
+            }
+
+            $duration_price_id = null;
+            if ($duration_id) {
+                $duration_price_id = $wpdb->get_var($wpdb->prepare(
+                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $duration_id,
+                    $variant_id
+                ));
+            }
+
+            if (!empty($duration_price_id)) {
+                return $duration_price_id;
+            }
+
+            return $variant->stripe_price_id_rent ?: $variant->stripe_price_id ?: '';
+        };
+
         foreach ($cart_items as $it) {
             $it_days = isset($it['days']) ? max(1, intval($it['days'])) : 1;
             $it_start = sanitize_text_field($it['start_date'] ?? '');
             $it_end   = sanitize_text_field($it['end_date'] ?? '');
             $pid      = sanitize_text_field($it['price_id'] ?? '');
+            if (!$pid) {
+                $pid = $determine_price_id(intval($it['variant_id'] ?? 0), intval($it['duration_id'] ?? 0));
+            }
             if (!$pid) { continue; }
             $line_items[] = [ 'price' => $pid, 'quantity' => $it_days ];
 
