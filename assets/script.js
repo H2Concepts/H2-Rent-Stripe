@@ -462,7 +462,7 @@ jQuery(document).ready(function($) {
             if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
             const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
 
-            if (produkt_ajax.is_logged_in) {
+            if (produkt_ajax.betriebsmodus !== 'kauf' || produkt_ajax.is_logged_in) {
                 window.location.href = targetUrl;
             } else {
                 pendingCheckoutUrl = targetUrl;
@@ -1620,7 +1620,7 @@ function updateSelectedDays() {
         if (!cart.length) return;
         saveCart();
         const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingPriceId ? '&shipping_price_id=' + encodeURIComponent(shippingPriceId) : '');
-        if (produkt_ajax.is_logged_in) {
+        if (produkt_ajax.betriebsmodus !== 'kauf' || produkt_ajax.is_logged_in) {
             window.location.href = targetUrl;
         } else {
             pendingCheckoutUrl = targetUrl;
