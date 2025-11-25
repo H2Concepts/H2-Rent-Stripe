@@ -21,6 +21,8 @@ class Ajax {
         
         global $wpdb;
         
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
         $variant = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
@@ -35,11 +37,21 @@ class Ajax {
             ));
             if ($base_duration) {
                 $base_duration_id = (int) $base_duration->id;
-                $base_duration_price = $wpdb->get_var($wpdb->prepare(
-                    "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $base_row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT custom_price, stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
                     $base_duration_id,
                     $variant_id
                 ));
+                if ($base_row) {
+                    if ($base_row->custom_price !== null && floatval($base_row->custom_price) > 0) {
+                        $base_duration_price = floatval($base_row->custom_price);
+                    } elseif (!empty($base_row->stripe_price_id)) {
+                        $amount = StripeService::get_price_amount($base_row->stripe_price_id);
+                        if (!is_wp_error($amount)) {
+                            $base_duration_price = floatval($amount);
+                        }
+                    }
+                }
             }
         }
         
@@ -53,8 +65,6 @@ class Ajax {
             $extras = $wpdb->get_results($query);
         }
         
-        $modus = get_option('produkt_betriebsmodus', 'miete');
-
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
             $duration_id
@@ -101,11 +111,26 @@ class Ajax {
                 }
             } else {
                 // Determine the Stripe price ID to send to checkout
-                $price_id_to_use = $wpdb->get_var($wpdb->prepare(
-                    "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $price_row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
                     $duration_id,
                     $variant_id
                 ));
+
+                $duration_price = 0.0;
+                $price_id_to_use = '';
+                if ($price_row) {
+                    $price_id_to_use = $price_row->stripe_price_id ?: '';
+                    if ($price_row->custom_price !== null && floatval($price_row->custom_price) > 0) {
+                        $duration_price = floatval($price_row->custom_price);
+                    } elseif (!empty($price_row->stripe_price_id)) {
+                        $amount = StripeService::get_price_amount($price_row->stripe_price_id);
+                        if (is_wp_error($amount)) {
+                            wp_send_json_error('Price fetch failed');
+                        }
+                        $duration_price = floatval($amount);
+                    }
+                }
 
                 if (empty($price_id_to_use)) {
                     $price_id_to_use = $variant->stripe_price_id;
@@ -113,8 +138,10 @@ class Ajax {
 
                 $used_price_id = $price_id_to_use;
 
-                // For display always use the variant's own Stripe price ID
-                if (!empty($variant->stripe_price_id)) {
+                // For display use the selected duration price or fallback to the variant Stripe price
+                if ($duration_price > 0) {
+                    $variant_price = $duration_price;
+                } elseif (!empty($variant->stripe_price_id)) {
                     $price_res = StripeService::get_price_amount($variant->stripe_price_id);
                     if (is_wp_error($price_res)) {
                         wp_send_json_error('Price fetch failed');
@@ -122,9 +149,6 @@ class Ajax {
                     $variant_price = floatval($price_res);
                 } else {
                     $variant_price = floatval($variant->base_price);
-                    if ($variant_price <= 0) {
-                        $variant_price = floatval($variant->mietpreis_monatlich);
-                    }
                 }
             }
 
@@ -167,12 +191,12 @@ class Ajax {
                 $original_price = null;
                 $discount = 0;
             } else {
-                $duration_custom_price = $wpdb->get_var($wpdb->prepare(
-                    "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
-                    $duration_id,
-                    $variant_id
-                ));
-                $duration_price = ($duration_custom_price !== null) ? floatval($duration_custom_price) : $base_price;
+                $duration_custom_price = ($price_row && $price_row->custom_price !== null) ? floatval($price_row->custom_price) : null;
+                $duration_price = ($duration_custom_price !== null && $duration_custom_price > 0) ? $duration_custom_price : $duration_price;
+
+                if ($duration_price <= 0) {
+                    $duration_price = $base_price;
+                }
 
                 $original_price = null;
                 $discount = 0;
@@ -473,16 +497,21 @@ class Ajax {
             );
             $price_rows = $wpdb->get_results(
                 $wpdb->prepare(
-                    "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
+                    "SELECT duration_id, custom_price, stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d",
                     $variant_id
                 )
             );
             $price_map = [];
             foreach ($price_rows as $row) {
                 $duration_id = (int) $row->duration_id;
-                $price = ($row->custom_price !== null) ? floatval($row->custom_price) : null;
-                if ($price !== null && $price <= 0) {
-                    $price = null;
+                $price = null;
+                if ($row->custom_price !== null && floatval($row->custom_price) > 0) {
+                    $price = floatval($row->custom_price);
+                } elseif (!empty($row->stripe_price_id)) {
+                    $amount = StripeService::get_price_amount($row->stripe_price_id);
+                    if (!is_wp_error($amount)) {
+                        $price = floatval($amount);
+                    }
                 }
                 $price_map[$duration_id] = $price;
             }
@@ -516,9 +545,6 @@ class Ajax {
             }
             if ($base_price <= 0) {
                 $base_price = floatval($variant_data->base_price);
-                if ($base_price <= 0) {
-                    $base_price = floatval($variant_data->mietpreis_monatlich);
-                }
             }
 
             foreach ($duration_rows as $d) {

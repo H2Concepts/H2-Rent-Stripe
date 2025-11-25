@@ -141,19 +141,22 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
     }
 }
 
-if ($badge_base_duration_id !== null && isset($badge_prices[$badge_base_duration_id])) {
-    $badge_base_price = $badge_prices[$badge_base_duration_id];
-} elseif (!empty($variants)) {
-    foreach ($variants as $variant) {
-        $base = floatval($variant->base_price);
-        if ($base <= 0) {
-            $base = floatval($variant->mietpreis_monatlich);
-        }
-        if ($base > 0 && ($badge_base_price <= 0 || $base < $badge_base_price)) {
-            $badge_base_price = $base;
+    if ($badge_base_duration_id !== null && isset($badge_prices[$badge_base_duration_id])) {
+        $badge_base_price = $badge_prices[$badge_base_duration_id];
+    } elseif (!empty($variants)) {
+        foreach ($variants as $variant) {
+            $base = floatval($variant->base_price);
+            if ($base <= 0 && !empty($variant->stripe_price_id)) {
+                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                if (!is_wp_error($p)) {
+                    $base = $p;
+                }
+            }
+            if ($base > 0 && ($badge_base_price <= 0 || $base < $badge_base_price)) {
+                $badge_base_price = $base;
+            }
         }
     }
-}
 
 // Get category settings
 $default_image = isset($category) ? $category->default_image : '';
