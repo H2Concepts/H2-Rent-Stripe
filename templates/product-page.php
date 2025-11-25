@@ -452,6 +452,10 @@ if ($price_layout !== 'sidebar') {
                                             $display_price = (float) $price_data['amount'];
                                         }
                                     }
+
+                                    if ($display_price <= 0 && is_array($price_data) && isset($price_data['amount'])) {
+                                        $display_price = (float) $price_data['amount'];
+                                    }
                                 ?>
                                 <?php
                                     $price_prefix = ($modus === 'miete' && $display_price > 0) ? 'ab ' : '';

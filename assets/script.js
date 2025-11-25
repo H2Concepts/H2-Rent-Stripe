@@ -220,6 +220,8 @@ jQuery(document).ready(function($) {
         updateColorImage(null);
     }
 
+    updateDirectBuyButton();
+
     // Initialize mobile sticky price bar only on small screens
     initMobileStickyPrice();
     $(window).on('resize', function() {
