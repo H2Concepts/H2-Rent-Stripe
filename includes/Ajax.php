@@ -1225,6 +1225,7 @@ function produkt_create_subscription() {
 function produkt_create_checkout_session() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
     try {
+        global $wpdb;
         $init = StripeService::init();
         if (is_wp_error($init)) {
             wp_send_json_error(['message' => $init->get_error_message()]);
@@ -1517,6 +1518,7 @@ function produkt_create_checkout_session() {
 function produkt_create_embedded_checkout_session() {
     require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
     try {
+        global $wpdb;
         $init = StripeService::init();
         if (is_wp_error($init)) {
             wp_send_json_error(['message' => $init->get_error_message()]);
@@ -1557,7 +1559,36 @@ function produkt_create_embedded_checkout_session() {
             $it_start = sanitize_text_field($it['start_date'] ?? '');
             $it_end   = sanitize_text_field($it['end_date'] ?? '');
             $pid      = sanitize_text_field($it['price_id'] ?? '');
-            if (!$pid) { continue; }
+            if (!$pid) {
+                $variant_id = intval($it['variant_id'] ?? 0);
+                $duration_id = intval($it['duration_id'] ?? 0);
+
+                if ($variant_id) {
+                    if ($modus === 'kauf') {
+                        $pid = $wpdb->get_var($wpdb->prepare(
+                            "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                            $variant_id
+                        ));
+                    } else {
+                        $pid = $wpdb->get_var($wpdb->prepare(
+                            "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                            $duration_id,
+                            $variant_id
+                        ));
+
+                        if (empty($pid)) {
+                            $pid = $wpdb->get_var($wpdb->prepare(
+                                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                                $variant_id
+                            ));
+                        }
+                    }
+                }
+
+                if (!$pid) {
+                    wp_send_json_error(['message' => 'Preis konnte nicht ermittelt werden']);
+                }
+            }
             $line_items[] = [ 'price' => $pid, 'quantity' => $it_days ];
 
             $extra_price_ids = [];
