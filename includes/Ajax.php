@@ -108,14 +108,15 @@ class Ajax {
                 ));
 
                 if (empty($price_id_to_use)) {
-                    $price_id_to_use = $variant->stripe_price_id;
+                    $price_id_to_use = $variant->stripe_price_id_rent ?: $variant->stripe_price_id;
                 }
 
                 $used_price_id = $price_id_to_use;
 
-                // For display always use the variant's own Stripe price ID
-                if (!empty($variant->stripe_price_id)) {
-                    $price_res = StripeService::get_price_amount($variant->stripe_price_id);
+                // For display always use the variant's own Stripe price ID for rentals
+                $display_price_id = $variant->stripe_price_id_rent ?: $variant->stripe_price_id;
+                if (!empty($display_price_id)) {
+                    $price_res = StripeService::get_price_amount($display_price_id);
                     if (is_wp_error($price_res)) {
                         wp_send_json_error('Price fetch failed');
                     }
