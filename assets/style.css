@@ -984,32 +984,40 @@ img.wp-smiley, img.emoji {
 
 .produkt-feature-item {
     display: flex;
-    align-items: flex-start;
-    gap: 0.4rem;
+    align-items: center;
+    gap: 1rem;
     background: #e5e7eb;
     border-radius: 0.5rem;
     padding: 1rem;
 }
 
 .produkt-feature-icon-large {
-    width: 80px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
     overflow: hidden;
-    margin: 0 10px;
+    flex-shrink: 0;
+}
+
+.produkt-feature-icon-large img,
+.produkt-feature-icon-large svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.produkt-feature-text {
+    flex: 1;
 }
 
 .produkt-feature-icon-large img.wp-smiley,
-.produkt-feature-icon-large img.emoji {
-    height: 1.5rem;
-    width: 1.5rem;
-}
+.produkt-feature-icon-large img.emoji,
 .produkt-feature-icon-large svg {
-    height: 1.5rem;
-    width: 1.5rem;
+    width: 100%;
+    height: 100%;
 }
 
 .produkt-feature-text h4 {
