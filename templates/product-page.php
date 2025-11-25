@@ -70,6 +70,7 @@ $durations = $wpdb->get_results($wpdb->prepare(
     $category_id
 ));
 $duration_count = count($durations);
+$stripe_cache_ttl = 10 * MINUTE_IN_SECONDS;
 
 // Get blocked days for booking calendar
 $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
@@ -158,7 +159,7 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
         foreach ($variants as $variant) {
             $base = floatval($variant->base_price);
             if ($base <= 0 && !empty($variant->stripe_price_id)) {
-                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                $p = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id, $stripe_cache_ttl);
                 if (!is_wp_error($p)) {
                     $base = $p;
                 }
@@ -422,7 +423,7 @@ if ($price_layout !== 'sidebar') {
                             if ($variant->verkaufspreis_einmalig && floatval($variant->verkaufspreis_einmalig) > 0) {
                                 $variant_sale_amount = number_format((float) $variant->verkaufspreis_einmalig, 2, '.', '');
                             } elseif (!empty($variant->stripe_price_id_sale)) {
-                                $sale_amount = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id_sale);
+                                $sale_amount = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id_sale, $stripe_cache_ttl);
                                 if (!is_wp_error($sale_amount) && $sale_amount > 0) {
                                     $variant_sale_amount = number_format((float) $sale_amount, 2, '.', '');
                                 }
@@ -477,7 +478,7 @@ if ($price_layout !== 'sidebar') {
                                                     }
 
                                                     if (!empty($row->stripe_price_id)) {
-                                                        $duration_amount = \ProduktVerleih\StripeService::get_price_amount($row->stripe_price_id);
+                                                        $duration_amount = \ProduktVerleih\StripeService::get_cached_price_amount($row->stripe_price_id, $stripe_cache_ttl);
                                                         if (!is_wp_error($duration_amount) && $duration_amount > 0 && ($display_price <= 0 || $duration_amount < $display_price)) {
                                                             $display_price = $duration_amount;
                                                         }
@@ -486,7 +487,7 @@ if ($price_layout !== 'sidebar') {
                                             }
 
                                             if ($display_price <= 0 && !empty($variant->stripe_price_id)) {
-                                                $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+                                                $p = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id, $stripe_cache_ttl);
                                                 if (!is_wp_error($p) && $p > 0) {
                                                     $display_price = $p;
                                                 }
@@ -550,7 +551,7 @@ if ($price_layout !== 'sidebar') {
                             $sale_amount = '';
                             $sale_pid = '';
                             if (!empty($extra->stripe_price_id_sale)) {
-                                $sale_price = \ProduktVerleih\StripeService::get_price_amount($extra->stripe_price_id_sale);
+                                $sale_price = \ProduktVerleih\StripeService::get_cached_price_amount($extra->stripe_price_id_sale, $stripe_cache_ttl);
                                 if (!is_wp_error($sale_price) && $sale_price > 0) {
                                     $sale_amount = number_format((float) $sale_price, 2, '.', '');
                                     $sale_pid = $extra->stripe_price_id_sale;
@@ -567,7 +568,7 @@ if ($price_layout !== 'sidebar') {
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
                                 <?php if (!empty($pid)) {
-                                    $p = \ProduktVerleih\StripeService::get_price_amount($pid);
+                                    $p = \ProduktVerleih\StripeService::get_cached_price_amount($pid, $stripe_cache_ttl);
                                     if (!is_wp_error($p) && $p > 0) {
                                         echo '<div class="produkt-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
                                     }

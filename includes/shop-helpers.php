@@ -12,6 +12,13 @@ use ProduktVerleih\StripeService;
 function pv_get_lowest_stripe_price_by_category($category_id) {
     global $wpdb;
 
+    $mode = get_option('produkt_betriebsmodus', 'miete');
+    $cache_key = 'pv_lowest_price_cat_' . $mode . '_' . $category_id;
+    $cached = get_transient($cache_key);
+    if ($cached !== false) {
+        return $cached;
+    }
+
     $variant_ids = $wpdb->get_col(
         $wpdb->prepare(
             "SELECT id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d",
@@ -56,13 +63,18 @@ function pv_get_lowest_stripe_price_by_category($category_id) {
         $amount = null;
     }
 
-    return [
+    $result = [
         'amount'         => $amount,
         'price_id'       => $price_data['price_id'] ?? null,
         'count'          => $price_count,
         'duration_count' => $duration_count,
-        'mode'           => get_option('produkt_betriebsmodus', 'miete'),
+        'mode'           => $mode,
     ];
+
+    // Cache for 10 minutes to avoid repeated Stripe lookups on archive pages.
+    set_transient($cache_key, $result, 10 * MINUTE_IN_SECONDS);
+
+    return $result;
 }
 
 /**
@@ -101,7 +113,7 @@ function pv_get_lowest_rental_amount($variant_ids, $duration_ids) {
             }
 
             if (!empty($row->stripe_price_id)) {
-                $amount = StripeService::get_price_amount($row->stripe_price_id);
+                $amount = StripeService::get_cached_price_amount($row->stripe_price_id, 10 * MINUTE_IN_SECONDS);
                 if (!is_wp_error($amount) && $amount > 0 && ($lowest === null || $amount < $lowest)) {
                     $lowest = $amount;
                 }
@@ -120,7 +132,7 @@ function pv_get_lowest_rental_amount($variant_ids, $duration_ids) {
 
         foreach ($stripe_ids as $pid) {
             if (!$pid) { continue; }
-            $amount = StripeService::get_price_amount($pid);
+            $amount = StripeService::get_cached_price_amount($pid, 10 * MINUTE_IN_SECONDS);
             if (!is_wp_error($amount) && $amount > 0 && ($lowest === null || $amount < $lowest)) {
                 $lowest = $amount;
             }
