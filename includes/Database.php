@@ -2071,12 +2071,13 @@ class Database {
             $today = current_time('Y-m-d');
             $orders = $wpdb->get_results($wpdb->prepare(
                 "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date, o.order_items,
-                        COALESCE(c.name, o.produkt_name) AS category_name,
+                        COALESCE(c.name, vc.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
                         COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+                 LEFT JOIN {$wpdb->prefix}produkt_categories vc ON v.category_id = vc.id
                  LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
                  WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
                  GROUP BY o.id
@@ -2086,12 +2087,13 @@ class Database {
         } else {
             $orders = $wpdb->get_results(
                 "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at, o.order_items,
-                        COALESCE(c.name, o.produkt_name) AS category_name,
+                        COALESCE(c.name, vc.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
                         COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+                 LEFT JOIN {$wpdb->prefix}produkt_categories vc ON v.category_id = vc.id
                  LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
                  WHERE o.mode <> 'kauf' AND o.status = 'abgeschlossen' AND o.inventory_reverted = 0
                  GROUP BY o.id
