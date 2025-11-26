@@ -38,14 +38,7 @@ $sale_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <label>Name *</label>
                         <input type="text" name="name" required placeholder="z.B. Premium Produkt">
                     </div>
-                    <?php if ($modus !== 'kauf'): ?>
-                    <div class="produkt-form-group">
-                        <label>Monatlicher Mietpreis *</label>
-                        <input type="number" step="0.01" name="mietpreis_monatlich" required placeholder="0.00">
-                    </div>
-                    <?php else: ?>
-                        <input type="hidden" name="mietpreis_monatlich" value="0">
-                    <?php endif; ?>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>Beschreibung</label>

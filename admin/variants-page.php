@@ -69,6 +69,23 @@ foreach ($availability_columns as $column) {
     }
 }
 
+function produkt_get_lowest_duration_price_for_variant($variant_id) {
+    global $wpdb;
+
+    $variant_id = intval($variant_id);
+    if ($variant_id <= 0) {
+        return 0.0;
+    }
+
+    $table_prices = $wpdb->prefix . 'produkt_duration_prices';
+    $min_price = $wpdb->get_var($wpdb->prepare(
+        "SELECT MIN(custom_price) FROM $table_prices WHERE variant_id = %d AND custom_price > 0",
+        $variant_id
+    ));
+
+    return $min_price ? floatval($min_price) : 0.0;
+}
+
 function produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors) {
     global $wpdb;
 
@@ -162,7 +179,12 @@ if (isset($_POST['submit'])) {
         $existing_variant = null;
     }
     $description = sanitize_textarea_field($_POST['description']);
-    $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $variant_id_for_price = isset($_POST['id']) ? intval($_POST['id']) : 0;
+    if ($mode === 'miete') {
+        $mietpreis_monatlich = produkt_get_lowest_duration_price_for_variant($variant_id_for_price);
+    } else {
+        $mietpreis_monatlich = floatval($_POST['mietpreis_monatlich']);
+    }
     $sale_enabled = ($mode !== 'kauf' && isset($_POST['sale_enabled'])) ? 1 : 0;
     if ($mode === 'kauf') {
         $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? intval($_POST['verkaufspreis_einmalig']) / 100 : 0;
@@ -236,47 +258,63 @@ if (isset($_POST['submit'])) {
             $product_id = $stripe_product_id;
             $price_id   = $stripe_price_id;
 
-            $needs_price_update = false;
-            if ($existing_variant) {
-                $current_price = ($mode === 'kauf')
-                    ? floatval($existing_variant->verkaufspreis_einmalig)
-                    : floatval($existing_variant->mietpreis_monatlich);
+            if ($mode === 'kauf' || $mietpreis_monatlich > 0) {
+                $needs_price_update = false;
+                if ($existing_variant) {
+                    $current_price = ($mode === 'kauf')
+                        ? floatval($existing_variant->verkaufspreis_einmalig)
+                        : floatval($existing_variant->mietpreis_monatlich);
 
-                $new_price = ($mode === 'kauf')
-                    ? $verkaufspreis_einmalig
-                    : $mietpreis_monatlich;
+                    $new_price = ($mode === 'kauf')
+                        ? $verkaufspreis_einmalig
+                        : $mietpreis_monatlich;
 
-                if ($existing_variant->name !== $name || $current_price != $new_price) {
-                    $needs_price_update = true;
+                    if ($existing_variant->name !== $name || $current_price != $new_price) {
+                        $needs_price_update = true;
+                    }
                 }
-            }
 
-            if ($product_id) {
-                if ($needs_price_update) {
-                    $amount = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
-                    $nickname = ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat';
-                    $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($amount * 100), $mode, $nickname);
-                    if (!is_wp_error($new_price)) {
-                        $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $variant_id], ['%s'], ['%d']);
-                        $price_id = $new_price->id;
+                if ($product_id) {
+                    if ($needs_price_update) {
+                        $amount = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
+                        $nickname = ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat';
+                        $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($amount * 100), $mode, $nickname);
+                        if (!is_wp_error($new_price)) {
+                            $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $variant_id], ['%s'], ['%d']);
+                            $price_id = $new_price->id;
+                        }
+                    }
+                } else {
+                    $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                        'plugin_product_id' => $variant_id,
+                        'variant_id'        => $variant_id,
+                        'duration_id'       => null,
+                        'name'              => $name,
+                        'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
+                        'mode'              => $mode,
+                    ]);
+                    if (!is_wp_error($res)) {
+                        $product_id = $res['stripe_product_id'];
+                        $price_id   = $res['stripe_price_id'];
+                        $wpdb->update($table_name, [
+                            'stripe_product_id' => $product_id,
+                            'stripe_price_id'   => $price_id,
+                        ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
                     }
                 }
             } else {
-                $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                $product_res = \ProduktVerleih\StripeService::create_or_retrieve_product([
                     'plugin_product_id' => $variant_id,
                     'variant_id'        => $variant_id,
                     'duration_id'       => null,
                     'name'              => $name,
-                    'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
                     'mode'              => $mode,
                 ]);
-                if (!is_wp_error($res)) {
-                    $product_id = $res['stripe_product_id'];
-                    $price_id   = $res['stripe_price_id'];
+                if (!is_wp_error($product_res)) {
+                    $product_id = $product_res['stripe_product_id'];
                     $wpdb->update($table_name, [
                         'stripe_product_id' => $product_id,
-                        'stripe_price_id'   => $price_id,
-                    ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+                    ], ['id' => $variant_id], ['%s'], ['%d']);
                 }
             }
 
@@ -321,22 +359,40 @@ if (isset($_POST['submit'])) {
             produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors);
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
             $mode = get_option('produkt_betriebsmodus', 'miete');
-            $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
-                'plugin_product_id' => $variant_id,
-                'variant_id'        => $variant_id,
-                'duration_id'       => null,
-                'name'              => $name,
-                'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
-                'mode'              => $mode,
-            ]);
-            if (!is_wp_error($res)) {
-                $wpdb->update($table_name, [
-                    'stripe_product_id' => $res['stripe_product_id'],
-                    'stripe_price_id'   => $res['stripe_price_id'],
-                ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
-                $product_id = $res['stripe_product_id'];
+            if ($mode === 'kauf' || $mietpreis_monatlich > 0) {
+                $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
+                    'plugin_product_id' => $variant_id,
+                    'variant_id'        => $variant_id,
+                    'duration_id'       => null,
+                    'name'              => $name,
+                    'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
+                    'mode'              => $mode,
+                ]);
+                if (!is_wp_error($res)) {
+                    $wpdb->update($table_name, [
+                        'stripe_product_id' => $res['stripe_product_id'],
+                        'stripe_price_id'   => $res['stripe_price_id'],
+                    ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
+                    $product_id = $res['stripe_product_id'];
+                } else {
+                    $product_id = '';
+                }
             } else {
-                $product_id = '';
+                $product_res = \ProduktVerleih\StripeService::create_or_retrieve_product([
+                    'plugin_product_id' => $variant_id,
+                    'variant_id'        => $variant_id,
+                    'duration_id'       => null,
+                    'name'              => $name,
+                    'mode'              => $mode,
+                ]);
+                if (!is_wp_error($product_res)) {
+                    $product_id = $product_res['stripe_product_id'];
+                    $wpdb->update($table_name, [
+                        'stripe_product_id' => $product_id,
+                    ], ['id' => $variant_id], ['%s'], ['%d']);
+                } else {
+                    $product_id = '';
+                }
             }
 
             require_once PRODUKT_PLUGIN_PATH . 'includes/stripe-sync.php';

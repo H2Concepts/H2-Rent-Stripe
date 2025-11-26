@@ -39,6 +39,33 @@ if (empty($category_column_exists)) {
     $wpdb->query("ALTER TABLE $table_name ADD COLUMN category_id mediumint(9) DEFAULT 1 AFTER id");
 }
 
+function produkt_update_variant_base_price_from_durations($variant_id) {
+    global $wpdb;
+
+    $variant_id = intval($variant_id);
+    if ($variant_id <= 0) {
+        return;
+    }
+
+    $min_price = $wpdb->get_var($wpdb->prepare(
+        "SELECT MIN(custom_price) FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d AND custom_price > 0",
+        $variant_id
+    ));
+
+    $price_value = $min_price ? floatval($min_price) : 0.0;
+
+    $wpdb->update(
+        $wpdb->prefix . 'produkt_variants',
+        [
+            'base_price'          => $price_value,
+            'mietpreis_monatlich' => $price_value,
+        ],
+        ['id' => $variant_id],
+        ['%f', '%f'],
+        ['%d']
+    );
+}
+
 // Handle form submissions
 if (isset($_POST['submit'])) {
     \ProduktVerleih\Admin::verify_admin_action();
@@ -171,6 +198,23 @@ if (isset($_POST['submit'])) {
                 $v_id
             ));
             if (!$stripe_product_id) {
+                $variant_name = $wpdb->get_var($wpdb->prepare(
+                    "SELECT name FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                    $v_id
+                ));
+                $product_res = \ProduktVerleih\StripeService::create_or_retrieve_product([
+                    'plugin_product_id' => $v_id,
+                    'variant_id'        => $v_id,
+                    'duration_id'       => null,
+                    'name'              => $variant_name ?: $duration_name,
+                    'mode'              => 'miete',
+                ]);
+                if (!is_wp_error($product_res)) {
+                    $stripe_product_id = $product_res['stripe_product_id'];
+                    $wpdb->update($wpdb->prefix . 'produkt_variants', ['stripe_product_id' => $stripe_product_id], ['id' => $v_id], ['%s'], ['%d']);
+                }
+            }
+            if (!$stripe_product_id) {
                 continue;
             }
 
@@ -213,6 +257,8 @@ if (isset($_POST['submit'])) {
                     );
                 }
             }
+
+            produkt_update_variant_base_price_from_durations($v_id);
         }
     }
 

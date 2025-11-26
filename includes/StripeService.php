@@ -546,6 +546,66 @@ class StripeService {
             return new \WP_Error('stripe_create', $e->getMessage());
         }
     }
+
+    /**
+     * Create or retrieve a Stripe product without creating a price.
+     *
+     * @param array $product_data {
+     *     @type string   $name
+     *     @type string   $mode
+     *     @type int      $plugin_product_id
+     *     @type int      $variant_id
+     *     @type int|null $duration_id
+     * }
+     * @return array|\WP_Error
+     */
+    public static function create_or_retrieve_product($product_data) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            $cache_key = 'produkt_stripe_product_' . md5(json_encode($product_data));
+            $cached    = get_transient($cache_key);
+            if ($cached !== false) {
+                return $cached;
+            }
+
+            $query = sprintf(
+                'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["duration_id"]:"%d" AND metadata["mode"]:"%s"',
+                $product_data['plugin_product_id'],
+                $product_data['variant_id'],
+                $product_data['duration_id'] ?? 0,
+                $product_data['mode']
+            );
+
+            $found = \Stripe\Product::search(['query' => $query, 'limit' => 1]);
+            $stripe_product = $found && !empty($found->data) ? $found->data[0] : null;
+
+            if (!$stripe_product) {
+                $stripe_product = \Stripe\Product::create([
+                    'name'     => $product_data['name'],
+                    'metadata' => [
+                        'plugin_product_id' => $product_data['plugin_product_id'],
+                        'variant_id'        => $product_data['variant_id'],
+                        'duration_id'       => $product_data['duration_id'] ?? 0,
+                        'mode'              => $product_data['mode'],
+                    ],
+                ]);
+            }
+
+            $result = [
+                'stripe_product_id' => $stripe_product->id,
+            ];
+
+            set_transient($cache_key, $result, DAY_IN_SECONDS);
+
+            return $result;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_product_create', $e->getMessage());
+        }
+    }
     /**
      * Create a Stripe product and price for an extra.
      *
