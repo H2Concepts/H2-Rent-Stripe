@@ -41,7 +41,7 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     return new WP_REST_Response(['status' => 'ok'], 200);
 }
 
-function send_produkt_welcome_email(array $order, int $order_id) {
+function send_produkt_welcome_email(array $order, int $order_id, bool $attach_invoice = true) {
     if (empty($order['customer_email'])) {
         return;
     }
@@ -231,7 +231,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $pdf_path = pv_generate_invoice_pdf($order_id);
 
     $attachments = [];
-    if ($invoice_emails_enabled && $pdf_path && file_exists($pdf_path)) {
+    if ($attach_invoice && $invoice_emails_enabled && $pdf_path && file_exists($pdf_path)) {
         $attachments[] = $pdf_path;
     }
 

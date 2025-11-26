@@ -1,7 +1,7 @@
 <?php
 // Email Settings Tab
 
-if (isset($_POST['submit_email_settings'])) {
+if (isset($_POST['submit_email_settings']) || isset($_POST['send_test_email'])) {
     \ProduktVerleih\Admin::verify_admin_action();
     $footer = [
         'company'      => sanitize_text_field($_POST['footer_company'] ?? ''),
@@ -34,6 +34,65 @@ if (isset($_POST['submit_email_settings'])) {
     }
 
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
+
+    if (isset($_POST['send_test_email'])) {
+        $test_result = produkt_send_test_customer_email();
+        if (true === $test_result) {
+            echo '<div class="notice notice-success"><p>✅ Test-E-Mail wurde versendet.</p></div>';
+        } elseif (is_wp_error($test_result)) {
+            echo '<div class="notice notice-error"><p>❌ Test-E-Mail konnte nicht gesendet werden: ' . esc_html($test_result->get_error_message()) . '</p></div>';
+        }
+    }
+}
+
+if (!function_exists('produkt_send_test_customer_email')) {
+    function produkt_send_test_customer_email() {
+        $admin_email = get_option('admin_email');
+        if (empty($admin_email)) {
+            return new \WP_Error('missing_admin_email', 'Es ist keine Admin-E-Mail-Adresse hinterlegt.');
+        }
+
+        $start = current_time('timestamp');
+        $end   = strtotime('+30 days', $start);
+
+        $order = [
+            'customer_email'    => $admin_email,
+            'customer_name'     => 'Max Mustermann',
+            'customer_phone'    => '01234 567890',
+            'customer_street'   => 'Musterstraße 1',
+            'customer_postal'   => '12345',
+            'customer_city'     => 'Musterstadt',
+            'customer_country'  => 'Deutschland',
+            'created_at'        => current_time('mysql'),
+            'final_price'       => 199.99,
+            'shipping_cost'     => 9.99,
+            'order_items'       => json_encode([
+                [
+                    'produkt_name'       => 'Kinderwagen Modell X',
+                    'variant_name'       => 'Edition 2024',
+                    'extra_names'        => 'Regenschutz, Becherhalter',
+                    'product_color_name' => 'Space Grau',
+                    'frame_color_name'   => 'Schwarz',
+                    'condition_name'     => 'Neu',
+                    'duration_name'      => '1 Monat',
+                    'start_date'         => date('Y-m-d', $start),
+                    'end_date'           => date('Y-m-d', $end),
+                    'final_price'        => 199.99,
+                ],
+            ]),
+            'order_number'      => 'TEST-1001',
+            'produkt_name'      => 'Kinderwagen Modell X',
+            'extra_text'        => 'Regenschutz, Becherhalter',
+            'dauer_text'        => '1 Monat',
+            'zustand_text'      => 'Neu',
+            'produktfarbe_text' => 'Space Grau',
+            'gestellfarbe_text' => 'Schwarz',
+        ];
+
+        \ProduktVerleih\send_produkt_welcome_email($order, 0, false);
+
+        return true;
+    }
 }
 
 $footer = get_option('produkt_email_footer', [
@@ -72,11 +131,7 @@ $invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
                         <h2>Email Footer</h2>
                         <p class="card-subline">Absenderinformationen</p>
                     </div>
-                    <label class="produkt-toggle-label">
-                        <input type="checkbox" name="invoice_email_enabled" value="1" <?php checked($invoice_email_enabled, '1'); ?>>
-                        <span class="produkt-toggle-slider"></span>
-                        <span>Rechnungsversand aktivieren</span>
-                    </label>
+                    <button type="submit" name="send_test_email" value="1" class="button button-secondary">Test Email versenden</button>
                 </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">
@@ -106,8 +161,17 @@ $invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
                 </div>
             </div>
             <div class="dashboard-card">
-                <h2>Daten Rechnungsversand</h2>
-                <p class="card-subline">Angaben für Rechnungen</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Daten Rechnungsversand</h2>
+                        <p class="card-subline">Angaben für Rechnungen</p>
+                    </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="invoice_email_enabled" value="1" <?php checked($invoice_email_enabled, '1'); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Rechnungsversand aktivieren</span>
+                    </label>
+                </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Firmenname</label>
