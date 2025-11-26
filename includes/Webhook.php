@@ -130,7 +130,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
     }
 
-    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 12px;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h1>';
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h1>';
     $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($customer_name) . ',<br>herzlichen Dank für Ihre Bestellung! Wir freuen uns sehr, Sie als neuen Kunden begrüßen zu dürfen.</p>';
 
     $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
@@ -330,7 +330,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
     }
 
-    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 12px;">Neue Bestellung eingegangen</h1>';
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Neue Bestellung eingegangen</h1>';
     $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo Team, es ist eine neue Bestellung eingegangen.</p>';
 
     $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
