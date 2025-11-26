@@ -162,9 +162,9 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $message .= $divider;
 
     $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Produktdaten</h2>';
-    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $message .= '<thead><tr style="background:#F6F7FA;"><th align="left" style="padding:8px 6px;">Produkt</th><th align="left" style="padding:8px 6px;">Details</th><th align="right" style="padding:8px 6px;">Preis/Monat</th></tr></thead><tbody>';
-    foreach ($items as $item) {
+    $message .= '<div style="display:flex;flex-direction:column;">';
+    $item_count = count($items);
+    foreach ($items as $idx => $item) {
         $details = [];
         if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
         if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
@@ -183,13 +183,32 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         } elseif (!empty($duration_text)) {
             $details[] = 'Miettage: ' . esc_html($duration_text);
         }
-        $message .= '<tr>';
-        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
-        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
-        $message .= '<td style="padding:8px 6px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
-        $message .= '</tr>';
+
+        $message .= '<div style="padding:12px 0;">';
+        $message .= '<div style="display:flex;gap:12px;align-items:flex-start;">';
+        if (!empty($item->image_url)) {
+            $message .= '<div style="width:64px;flex-shrink:0;">'
+                . '<img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;">'
+                . '</div>';
+        } else {
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;"></div>';
+        }
+        $message .= '<div style="flex:1;">';
+        $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
+        $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name) . '</div>';
+        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</div>';
+        $message .= '</div>';
+        if (!empty($details)) {
+            $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
+        }
+        $message .= '</div>';
+        $message .= '</div>';
+        if ($idx < $item_count - 1) {
+            $message .= '<div style="height:1px;background:#E6E8ED;margin:8px 0 4px;"></div>';
+        }
+        $message .= '</div>';
     }
-    $message .= '</tbody></table>';
+    $message .= '</div>';
 
     $message .= $divider;
 
@@ -204,12 +223,12 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
 
     $message .= '<p style="margin:16px 0 8px;font-size:12px;line-height:1.6;">Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
 
-    $message .= '<div style="text-align:center;margin:16px 0;">';
-    $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:12px 28px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:14px;">Zum Kundenkonto</a>';
+    $message .= '<div style="text-align:center;margin:18px 0 8px;">';
+    $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:14px 36px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Zum Kundenkonto</a>';
     $message .= '</div>';
 
     if ($logo_url) {
-        $message .= '<div style="text-align:center;margin:12px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
+        $message .= '<div style="text-align:center;margin:22px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
     }
 
     $message .= $divider;
@@ -343,9 +362,9 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $message .= $divider;
 
     $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Produktdaten</h2>';
-    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $message .= '<thead><tr style="background:#F6F7FA;"><th align="left" style="padding:8px 6px;">Produkt</th><th align="left" style="padding:8px 6px;">Details</th><th align="right" style="padding:8px 6px;">Preis/Monat</th></tr></thead><tbody>';
-    foreach ($items as $item) {
+    $message .= '<div style="display:flex;flex-direction:column;">';
+    $item_count = count($items);
+    foreach ($items as $idx => $item) {
         $details = [];
         if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
         if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
@@ -364,13 +383,32 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         } elseif (!empty($duration_text)) {
             $details[] = 'Miettage: ' . esc_html($duration_text);
         }
-        $message .= '<tr>';
-        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
-        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
-        $message .= '<td style="padding:8px 6px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
-        $message .= '</tr>';
+
+        $message .= '<div style="padding:12px 0;">';
+        $message .= '<div style="display:flex;gap:12px;align-items:flex-start;">';
+        if (!empty($item->image_url)) {
+            $message .= '<div style="width:64px;flex-shrink:0;">'
+                . '<img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;">'
+                . '</div>';
+        } else {
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;"></div>';
+        }
+        $message .= '<div style="flex:1;">';
+        $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
+        $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name) . '</div>';
+        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</div>';
+        $message .= '</div>';
+        if (!empty($details)) {
+            $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
+        }
+        $message .= '</div>';
+        $message .= '</div>';
+        if ($idx < $item_count - 1) {
+            $message .= '<div style="height:1px;background:#E6E8ED;margin:8px 0 4px;"></div>';
+        }
+        $message .= '</div>';
     }
-    $message .= '</tbody></table>';
+    $message .= '</div>';
 
     $message .= $divider;
 
