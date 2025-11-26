@@ -865,6 +865,9 @@ class Plugin {
      * Append a cart icon to the main navigation menu.
      */
     public function add_cart_icon_to_menu($items, $args) {
+        if (!$this->is_cart_enabled()) {
+            return $items;
+        }
         $inject_menus = (array) get_option('produkt_menu_locations', []);
 
         $current_menu_id = 0;
@@ -899,6 +902,9 @@ class Plugin {
      * Inject cart icon into block-based navigation menus.
      */
     public function maybe_inject_cart_icon_block($content, $block) {
+        if (!$this->is_cart_enabled()) {
+            return $content;
+        }
         if (($block['blockName'] ?? '') !== 'core/navigation') {
             return $content;
         }
@@ -926,7 +932,20 @@ class Plugin {
      * Output the sliding cart sidebar markup in the footer so it is available on all pages.
      */
     public function render_cart_sidebar() {
+        if (!$this->is_cart_enabled()) {
+            return;
+        }
         include PRODUKT_PLUGIN_PATH . 'templates/cart-sidebar.php';
+    }
+
+    private function is_cart_enabled() {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        if ($mode === 'kauf') {
+            return true;
+        }
+
+        $cart_mode = get_option('produkt_miete_cart_mode', 'direct');
+        return $mode === 'miete' && $cart_mode === 'cart';
     }
 
     /**

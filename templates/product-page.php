@@ -239,7 +239,11 @@ $shipping_price_id = $shipping->stripe_price_id ?? '';
 $shipping_cost = $shipping->price ?? 0;
 $shipping_provider = $shipping->service_provider ?? '';
 $modus = get_option('produkt_betriebsmodus', 'miete');
-$button_text = !empty($button_text) ? $button_text : ($modus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+$cart_mode = get_option('produkt_miete_cart_mode', 'direct');
+$cart_enabled = $modus === 'kauf' || ($modus === 'miete' && $cart_mode === 'cart');
+$button_text = !empty($button_text)
+    ? $button_text
+    : ($modus === 'kauf' ? 'Jetzt kaufen' : ($cart_enabled ? 'In den Warenkorb' : 'Jetzt mieten'));
 $price_label = $ui['price_label'] ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis');
 $shipping_label = $ui['shipping_label'] ?? 'Einmalige Versandkosten:';
 $price_period = $ui['price_period'] ?? 'month';

@@ -543,6 +543,13 @@
     align-items: center;
 }
 
+.produkt-form-inline {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
 .produkt-form-group {
     display: flex;
     flex-direction: column;
