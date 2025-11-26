@@ -47,7 +47,7 @@
                     if (!empty($duration->stripe_price_id)) {
                         $price_amount = \ProduktVerleih\StripeService::get_cached_price_amount($duration->stripe_price_id, 5 * MINUTE_IN_SECONDS);
                         if ($price_amount !== null) {
-                            $price_label = esc_html(number_format($price_amount / 100, 2, ',', '.')) . ' €';
+                            $price_label = esc_html(number_format((float) $price_amount, 2, ',', '.')) . ' €';
                         }
                     }
                 ?>

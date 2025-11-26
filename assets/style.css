@@ -633,8 +633,12 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-discount-badge {
+    background: #e3e8e3;
+    color: var(--produkt-secondary);
+    padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;
+    font-weight: 500;
 }
 
 .produkt-popular-badge {
