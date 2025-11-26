@@ -37,7 +37,7 @@ $category             = null;
 
 if (!empty($category_slug)) {
     $category = $wpdb->get_row($wpdb->prepare(
-        "SELECT id FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
+        "SELECT id, name FROM {$wpdb->prefix}produkt_product_categories WHERE slug = %s",
         $category_slug
     ));
 
@@ -85,7 +85,7 @@ foreach ($content_blocks as $b) {
         <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
         <p>Kategorie nicht gefunden.</p>
     <?php elseif (!empty($category_slug)): ?>
-        <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
+        <h1><?= esc_html($category->name ?? ucfirst($category_slug)) ?></h1>
     <?php else: ?>
         <h2>Shop</h2>
     <?php endif; ?>
