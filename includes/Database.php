@@ -41,6 +41,7 @@ class Database {
             'stripe_weekend_price_id'=> 'VARCHAR(255) DEFAULT NULL',
             'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
             'mode'                   => "VARCHAR(10) DEFAULT 'miete'",
+            'sale_enabled'           => 'TINYINT(1) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
             'image_url_3' => 'TEXT',
@@ -75,6 +76,8 @@ class Database {
                     $after = 'verkaufspreis_einmalig';
                 } elseif ($column === 'stripe_weekend_price_id') {
                     $after = 'weekend_price';
+                } elseif ($column === 'sale_enabled') {
+                    $after = 'mode';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
                 } elseif ($column === 'sku') {
@@ -509,6 +512,7 @@ class Database {
                 option_type varchar(50) NOT NULL,
                 option_id mediumint(9) NOT NULL,
                 available tinyint(1) DEFAULT 1,
+                sale_available tinyint(1) DEFAULT 0,
                 stock_available int DEFAULT 0,
                 stock_rented int DEFAULT 0,
                 sku varchar(255) DEFAULT NULL,
@@ -776,6 +780,11 @@ class Database {
         $sku_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sku'");
         if (empty($sku_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sku VARCHAR(255) DEFAULT NULL AFTER stock_rented");
+        }
+
+        $sale_available_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sale_available'");
+        if (empty($sale_available_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sale_available TINYINT(1) DEFAULT 0 AFTER available");
         }
 
         // Create order logs table if it doesn't exist
@@ -1057,6 +1066,7 @@ class Database {
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             mode varchar(10) DEFAULT 'miete',
+            sale_enabled tinyint(1) DEFAULT 0,
             image_url_1 text,
             image_url_2 text,
             image_url_3 text,
@@ -1198,6 +1208,7 @@ class Database {
             option_type varchar(50) NOT NULL,
             option_id mediumint(9) NOT NULL,
             available tinyint(1) DEFAULT 1,
+            sale_available tinyint(1) DEFAULT 0,
             PRIMARY KEY (id),
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";

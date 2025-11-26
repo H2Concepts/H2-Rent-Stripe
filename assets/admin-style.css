@@ -4392,3 +4392,18 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .category-accordion .category-tile:hover{background:#f0f0f0;}
 .category-accordion .category-tile.selected{background:#000;color:#fff;}
 .form-wrap p,p.description{margin:15px 0 5px;color:#646970;}
+
+.produkt-sale-card .sale-option-grid {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.produkt-sale-card.sale-disabled {
+    opacity: 0.7;
+}
+
+.produkt-sale-card.sale-disabled .produkt-toggle-label,
+.produkt-sale-card.sale-disabled input.sale-dependent {
+    cursor: not-allowed;
+}

@@ -69,6 +69,73 @@ foreach ($availability_columns as $column) {
     }
 }
 
+function produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors) {
+    global $wpdb;
+
+    $option_sets = array(
+        'condition' => array(
+            'ids' => $sale_conditions,
+            'query' => $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_conditions WHERE category_id = %d",
+                $category_id
+            ),
+        ),
+        'product_color' => array(
+            'ids' => $sale_product_colors,
+            'query' => $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'product'",
+                $category_id
+            ),
+        ),
+        'frame_color' => array(
+            'ids' => $sale_frame_colors,
+            'query' => $wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'frame'",
+                $category_id
+            ),
+        ),
+    );
+
+    foreach ($option_sets as $type => $data) {
+        $option_ids = $wpdb->get_col($data['query']);
+        if (empty($option_ids)) {
+            continue;
+        }
+
+        foreach ($option_ids as $oid) {
+            $is_selected = ($sale_enabled && in_array(intval($oid), $data['ids'], true)) ? 1 : 0;
+            $existing = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
+                $variant_id,
+                $type,
+                $oid
+            ));
+
+            if ($existing) {
+                $wpdb->update(
+                    $wpdb->prefix . 'produkt_variant_options',
+                    array('sale_available' => $is_selected),
+                    array('id' => $existing->id),
+                    array('%d'),
+                    array('%d')
+                );
+            } elseif ($is_selected) {
+                $wpdb->insert(
+                    $wpdb->prefix . 'produkt_variant_options',
+                    array(
+                        'variant_id'     => $variant_id,
+                        'option_type'    => $type,
+                        'option_id'      => $oid,
+                        'available'      => 1,
+                        'sale_available' => 1,
+                    ),
+                    array('%d','%s','%d','%d','%d')
+                );
+            }
+        }
+    }
+}
+
 // Handle form submissions
 if (isset($_POST['submit'])) {
     \ProduktVerleih\Admin::verify_admin_action();
@@ -96,11 +163,15 @@ if (isset($_POST['submit'])) {
     }
     $description = sanitize_textarea_field($_POST['description']);
     $mietpreis_monatlich    = floatval($_POST['mietpreis_monatlich']);
+    $sale_enabled = ($mode !== 'kauf' && isset($_POST['sale_enabled'])) ? 1 : 0;
     if ($mode === 'kauf') {
         $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? intval($_POST['verkaufspreis_einmalig']) / 100 : 0;
         $weekend_price = isset($_POST['weekend_price']) ? intval($_POST['weekend_price']) / 100 : 0;
     } else {
         $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        if (!$sale_enabled) {
+            $verkaufspreis_einmalig = 0;
+        }
         $weekend_price = isset($_POST['weekend_price']) ? floatval($_POST['weekend_price']) : 0;
     }
     $available = isset($_POST['available']) ? 1 : 0;
@@ -110,6 +181,9 @@ if (isset($_POST['submit'])) {
     $min_rental_days  = isset($_POST['min_rental_days']) ? intval($_POST['min_rental_days']) : 0;
     $active           = isset($_POST['active']) ? 1 : 0;
     $sort_order       = intval($_POST['sort_order']);
+    $sale_conditions = array_map('intval', $_POST['sale_conditions'] ?? array());
+    $sale_product_colors = array_map('intval', $_POST['sale_product_colors'] ?? array());
+    $sale_frame_colors = array_map('intval', $_POST['sale_frame_colors'] ?? array());
     
     // Handle multiple images
     $image_data = array();
@@ -129,6 +203,7 @@ if (isset($_POST['submit'])) {
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
             'weekend_price'         => $weekend_price,
             'base_price'             => $mietpreis_monatlich,
+            'sale_enabled'           => $sale_enabled,
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
@@ -143,14 +218,15 @@ if (isset($_POST['submit'])) {
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
+                array('%d','%s','%s','%f','%f','%f','%f','%d','%d','%s','%s','%d','%d','%d','%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
         );
-        
+
         $variant_id = intval($_POST['id']);
         if ($result !== false) {
+            produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors);
             if ($result === 0) {
                 echo '<div class="notice notice-warning"><p>⚠️ Keine Änderungen erkannt.</p></div>';
             } else {
@@ -221,6 +297,7 @@ if (isset($_POST['submit'])) {
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
             'weekend_price'         => $weekend_price,
             'base_price'             => $mietpreis_monatlich,
+            'sale_enabled'           => $sale_enabled,
             'available'              => $available,
             'availability_note'      => $availability_note,
             'delivery_time'          => $delivery_time,
@@ -234,13 +311,14 @@ if (isset($_POST['submit'])) {
             $table_name,
             $insert_data,
             array_merge(
-                array('%d','%s','%s','%f','%f','%f','%f','%d','%s','%s','%d','%d','%d','%d'),
+                array('%d','%s','%s','%f','%f','%f','%f','%d','%d','%s','%s','%d','%d','%d','%d'),
                 array_fill(0, 5, '%s')
             )
         );
 
         $variant_id = $wpdb->insert_id;
         if ($result !== false) {
+            produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors);
             echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
             $mode = get_option('produkt_betriebsmodus', 'miete');
             $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
