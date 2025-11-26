@@ -2122,7 +2122,7 @@ class Database {
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-                 WHERE o.mode <> 'kauf' AND o.status = 'abgeschlossen' AND o.inventory_reverted = 0
+                 WHERE o.mode <> 'kauf' AND o.status IN ('abgeschlossen','offen') AND o.inventory_reverted = 0
                  ORDER BY o.created_at"
             );
         }
