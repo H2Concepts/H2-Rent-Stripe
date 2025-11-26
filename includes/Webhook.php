@@ -90,6 +90,16 @@ function send_produkt_welcome_email(array $order, int $order_id) {
         }
     }
 
+    if (empty($order['order_items'])) {
+        $raw_items = $wpdb->get_var($wpdb->prepare(
+            "SELECT order_items FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($raw_items) {
+            $order['order_items'] = $raw_items;
+        }
+    }
+
     $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date = date_i18n('d.m.Y', strtotime($order['created_at']));
     $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
@@ -129,7 +139,7 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $items = pv_expand_order_products($order);
     $message .= '<h3>Ihre Produktdaten</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis</th></tr></thead><tbody>';
+    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis/Monat</th></tr></thead><tbody>';
     foreach ($items as $item) {
         $details = [];
         if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
@@ -190,12 +200,8 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     // Rechnung erzeugen und Anhang vorbereiten
     $pdf_path = pv_generate_invoice_pdf($order_id);
 
-    if (!$invoice_emails_enabled) {
-        return;
-    }
-
     $attachments = [];
-    if ($pdf_path && file_exists($pdf_path)) {
+    if ($invoice_emails_enabled && $pdf_path && file_exists($pdf_path)) {
         $attachments[] = $pdf_path;
     }
 
@@ -211,6 +217,16 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
+
+    if (empty($order['order_items'])) {
+        $raw_items = $wpdb->get_var($wpdb->prepare(
+            "SELECT order_items FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($raw_items) {
+            $order['order_items'] = $raw_items;
+        }
+    }
 
     global $wpdb;
     if (empty($order['produkt_name']) || empty($order['extra_text'])) {
@@ -276,7 +292,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $items = pv_expand_order_products($order);
     $message .= '<h3>Produktdaten</h3>';
     $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis</th></tr></thead><tbody>';
+    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis/Monat</th></tr></thead><tbody>';
     foreach ($items as $item) {
         $details = [];
         if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }

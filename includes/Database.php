@@ -2070,7 +2070,7 @@ class Database {
         if ($mode === 'kauf') {
             $today = current_time('Y-m-d');
             $orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date, o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
                         COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
@@ -2085,7 +2085,7 @@ class Database {
             ));
         } else {
             $orders = $wpdb->get_results(
-                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at,
+                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at, o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
                         COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names

@@ -16,7 +16,9 @@ if (!defined('ABSPATH')) { exit; }
                 <div class="order-product-row">
                     <?php $thumb = $produkt->image_url ?? $image_url ?? ''; ?>
                     <?php if (!empty($thumb)) : ?>
-                        <img class="order-product-thumb" src="<?php echo esc_url($thumb); ?>" alt="">
+                        <div class="order-product-thumbwrap">
+                            <img class="order-product-thumb" src="<?php echo esc_url($thumb); ?>" alt="">
+                        </div>
                     <?php endif; ?>
                     <div class="order-product-meta">
                         <p><strong>Produkt:</strong> <?php echo esc_html($produkt->produkt_name ?: ($order->category_name ?? $order->produkt_name)); ?></p>

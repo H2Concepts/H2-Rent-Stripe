@@ -140,6 +140,59 @@ img.wp-smiley, img.emoji {
     margin: 8px 0;
 }
 
+.order-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.order-product-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 150px) 1fr auto;
+    gap: 14px;
+    align-items: start;
+    padding: 12px 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.order-product-row:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.order-product-thumbwrap {
+    max-width: 150px;
+}
+
+.order-product-thumb {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+}
+
+.order-product-meta p {
+    margin: 4px 0;
+}
+
+.order-product-price {
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .order-product-row {
+        grid-template-columns: 1fr;
+    }
+
+    .order-product-price {
+        text-align: left;
+    }
+}
+
 .abo-box form {
     margin-top: 16px;
 }
