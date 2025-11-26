@@ -551,7 +551,7 @@ if ($active_tab === 'add') {
                             <th>Bild</th>
                             <th>Name</th>
                             <th>Verfügbar</th>
-                            <th>Preis</th>
+                            <th><?php echo ($modus === 'kauf') ? 'Preis' : 'Einmal-Preis'; ?></th>
                             <th>Bilder</th>
                             <th>Aktionen</th>
                         </tr>
@@ -586,7 +586,11 @@ if ($active_tab === 'add') {
                                     <?php if ($modus === 'kauf'): ?>
                                         <?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€
                                     <?php else: ?>
-                                        <?php echo number_format($variant->mietpreis_monatlich, 2, ',', '.'); ?>€
+                                        <?php if (!empty($variant->sale_enabled) && floatval($variant->verkaufspreis_einmalig) > 0): ?>
+                                            <?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€
+                                        <?php else: ?>
+                                            –
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </td>
                                 <td><?php echo $image_count; ?></td>

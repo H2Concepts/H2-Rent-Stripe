@@ -310,7 +310,7 @@ if (isset($_GET['edit'])) {
 // Get current category info
 $current_category = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}produkt_categories WHERE id = %d", $selected_category));
 
-$durations = $wpdb->get_results($wpdb->prepare("SELECT d.*, MAX(p.stripe_price_id) AS stripe_price_id, MAX(p.stripe_product_id) AS stripe_product_id, MAX(p.stripe_archived) AS stripe_archived FROM $table_name d LEFT JOIN $table_prices p ON p.duration_id = d.id WHERE d.category_id = %d GROUP BY d.id ORDER BY d.sort_order, d.months_minimum", $selected_category));
+$durations = $wpdb->get_results($wpdb->prepare("SELECT d.*, MAX(p.stripe_price_id) AS stripe_price_id, MAX(p.stripe_product_id) AS stripe_product_id, MAX(p.stripe_archived) AS stripe_archived, MIN(NULLIF(p.custom_price, 0)) AS monthly_price FROM $table_name d LEFT JOIN $table_prices p ON p.duration_id = d.id WHERE d.category_id = %d GROUP BY d.id ORDER BY d.sort_order, d.months_minimum", $selected_category));
 $variants = $wpdb->get_results($wpdb->prepare("SELECT id, name, stripe_price_id, stripe_product_id FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order", $selected_category));
 $duration_prices = [];
 if ($edit_item) {
