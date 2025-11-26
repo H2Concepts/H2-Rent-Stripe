@@ -1461,8 +1461,8 @@ function produkt_create_checkout_session() {
         // store preliminary order with status "offen"
         global $wpdb;
         $extra_id = !empty($extra_ids) ? $extra_ids[0] : 0;
-        // Assign custom order number if numbering is enabled
-        $order_number = \pv_generate_order_number();
+        // Assign provisional order number; final number is set after checkout completion
+        $order_number = \pv_generate_preliminary_order_number();
         $insert_data = [
             'category_id'       => $category_id,
             'variant_id'        => $variant_id,
@@ -1500,9 +1500,7 @@ function produkt_create_checkout_session() {
             'status'            => 'offen',
             'created_at'        => current_time('mysql', 1),
         ];
-        if ($order_number !== '') {
-            $insert_data['order_number'] = $order_number;
-        }
+        $insert_data['order_number'] = $order_number;
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             $insert_data
@@ -1752,7 +1750,7 @@ function produkt_create_embedded_checkout_session() {
         }
 
         $primary = $orders[0] ?? [];
-        $order_number = pv_generate_order_number();
+        $order_number = pv_generate_preliminary_order_number();
         $wpdb->insert(
             $wpdb->prefix . 'produkt_orders',
             [

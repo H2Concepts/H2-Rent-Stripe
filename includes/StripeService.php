@@ -1152,12 +1152,21 @@ class StripeService {
             }
 
             $welcome_sent = false;
+            $final_order_number = null;
+
             if (!empty($existing_orders)) {
                 foreach ($existing_orders as $ord) {
                     $send_welcome = ($ord->status !== 'abgeschlossen');
                     $update_data = $data;
                     $update_data['created_at'] = $ord->created_at;
-                    if (empty($ord->order_number)) {
+                    $finalize_number = ($ord->status === 'offen');
+                    if ($finalize_number && $final_order_number === null) {
+                        $final_order_number = pv_generate_order_number();
+                    }
+
+                    if ($finalize_number && $final_order_number !== '') {
+                        $update_data['order_number'] = $final_order_number;
+                    } elseif (empty($ord->order_number)) {
                         $gen_num = pv_generate_order_number();
                         if ($gen_num !== '') {
                             $update_data['order_number'] = $gen_num;
@@ -1176,6 +1185,13 @@ class StripeService {
                         $update_data,
                         ['id' => $ord->id]
                     );
+                    if (!empty($update_data['order_number']) && $update_data['order_number'] !== $ord->order_number) {
+                        produkt_add_order_log(
+                            $ord->id,
+                            'order_number_finalized',
+                            ($ord->order_number ? $ord->order_number . ' -> ' : '') . $update_data['order_number']
+                        );
+                    }
                     if ($send_welcome) {
                         produkt_add_order_log($ord->id, 'status_updated', 'offen -> abgeschlossen');
                     }

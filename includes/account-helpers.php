@@ -405,6 +405,19 @@ function pv_generate_order_number() {
 }
 
 /**
+ * Create a provisional order number based on the current date and time.
+ *
+ * Uses the pattern DDMMYYHHMM so open orders get a unique, time-based
+ * identifier that will later be replaced by the final sequential number.
+ *
+ * @return string
+ */
+function pv_generate_preliminary_order_number() {
+    $timestamp = function_exists('current_time') ? current_time('timestamp') : time();
+    return date_i18n('dmyHi', $timestamp);
+}
+
+/**
  * Build the email footer HTML from stored settings.
  *
  * @return string
@@ -549,9 +562,12 @@ function pv_get_order_by_id($order_id) {
                     }
                 }
 
+                $variant_id  = intval($itm['variant_id'] ?? 0);
+                $category_id = intval($itm['category_id'] ?? $row['category_id'] ?? 0);
+
                 $produkte[] = (object) [
                     'produkt_name'      => $itm['metadata']['produkt'] ?? $row['produkt_name'] ?? '',
-                    'variant_name'      => $variant_map[intval($itm['variant_id'] ?? 0)] ?? '',
+                    'variant_name'      => $variant_map[$variant_id] ?? '',
                     'extra_names'       => implode(', ', $extra_names),
                     'duration_name'     => $duration_map[intval($itm['duration_id'] ?? 0)] ?? ($itm['metadata']['dauer_name'] ?? $row['duration_name'] ?? ''),
                     'condition_name'    => $condition_map[intval($itm['condition_id'] ?? 0)] ?? ($itm['metadata']['zustand'] ?? ''),
@@ -561,6 +577,8 @@ function pv_get_order_by_id($order_id) {
                     'final_price'       => floatval($itm['final_price'] ?? 0),
                     'start_date'        => $itm['start_date'] ?? null,
                     'end_date'          => $itm['end_date'] ?? null,
+                    'image_url'         => pv_get_image_url_by_variant_or_category($variant_id, $category_id),
+                    'category_id'       => $category_id,
                 ];
             }
 
