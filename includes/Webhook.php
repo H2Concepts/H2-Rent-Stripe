@@ -209,6 +209,8 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 }
 
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {
+    global $wpdb;
+
     $subject    = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
     $order_date = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
@@ -228,7 +230,6 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         }
     }
 
-    global $wpdb;
     if (empty($order['produkt_name']) || empty($order['extra_text'])) {
         $row = $wpdb->get_row($wpdb->prepare(
             "SELECT variant_id, category_id, extra_ids FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
