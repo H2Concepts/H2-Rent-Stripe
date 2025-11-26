@@ -481,13 +481,12 @@ if ($active_tab === 'add') {
                             <th>Bild</th>
                             <th>Name</th>
                             <th>Verfügbar</th>
-                            <th>Preis</th>
+                            <th>Einmal-Verkaufspreis</th>
                             <th>Bilder</th>
                             <th>Aktionen</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
                         <?php foreach ($variants as $variant): ?>
                             <?php
                                 $image_count = 0;
@@ -513,11 +512,12 @@ if ($active_tab === 'add') {
                                 <td><?php echo esc_html($variant->name); ?></td>
                                 <td><?php echo ($variant->available ?? 1) ? '✅' : '❌'; ?></td>
                                 <td>
-                                    <?php if ($modus === 'kauf'): ?>
-                                        <?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€
-                                    <?php else: ?>
-                                        <?php echo number_format($variant->mietpreis_monatlich, 2, ',', '.'); ?>€
-                                    <?php endif; ?>
+                                    <?php
+                                        $sale_price = $variant->verkaufspreis_einmalig;
+                                        echo $sale_price !== null && $sale_price !== ''
+                                            ? number_format((float) $sale_price, 2, ',', '.') . '€'
+                                            : '–';
+                                    ?>
                                 </td>
                                 <td><?php echo $image_count; ?></td>
                                 <td>
