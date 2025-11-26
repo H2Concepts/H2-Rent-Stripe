@@ -1,50 +1,6 @@
 <?php
 // Email Settings Tab
 
-if (isset($_POST['submit_email_settings']) || isset($_POST['send_test_email'])) {
-    \ProduktVerleih\Admin::verify_admin_action();
-    $footer = [
-        'company'      => sanitize_text_field($_POST['footer_company'] ?? ''),
-        'owner'        => sanitize_text_field($_POST['footer_owner'] ?? ''),
-        'street'       => sanitize_text_field($_POST['footer_street'] ?? ''),
-        'postal_city'  => sanitize_text_field($_POST['footer_postal_city'] ?? ''),
-        'website'      => sanitize_text_field($_POST['footer_website'] ?? ''),
-        'copyright'    => sanitize_text_field($_POST['footer_copyright'] ?? ''),
-    ];
-    update_option('produkt_email_footer', $footer);
-
-    $invoice = [
-        'firma_name'    => sanitize_text_field($_POST['firma_name'] ?? ''),
-        'firma_strasse' => sanitize_text_field($_POST['firma_strasse'] ?? ''),
-        'firma_plz_ort' => sanitize_text_field($_POST['firma_plz_ort'] ?? ''),
-        'firma_ust_id'  => sanitize_text_field($_POST['firma_ust_id'] ?? ''),
-        'firma_email'   => sanitize_text_field($_POST['firma_email'] ?? ''),
-        'firma_telefon' => sanitize_text_field($_POST['firma_telefon'] ?? ''),
-    ];
-    update_option('produkt_invoice_sender', $invoice);
-
-    $email_toggle = !empty($_POST['invoice_email_enabled']) ? '1' : '0';
-    update_option('produkt_invoice_email_enabled', $email_toggle);
-
-    // Logo für Rechnungen separat speichern
-    if (!empty($_POST['firma_logo_url'])) {
-        update_option('plugin_firma_logo_url', esc_url_raw($_POST['firma_logo_url']));
-    } else {
-        delete_option('plugin_firma_logo_url');
-    }
-
-    echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
-
-    if (isset($_POST['send_test_email'])) {
-        $test_result = produkt_send_test_customer_email();
-        if (true === $test_result) {
-            echo '<div class="notice notice-success"><p>✅ Test-E-Mail wurde versendet.</p></div>';
-        } elseif (is_wp_error($test_result)) {
-            echo '<div class="notice notice-error"><p>❌ Test-E-Mail konnte nicht gesendet werden: ' . esc_html($test_result->get_error_message()) . '</p></div>';
-        }
-    }
-}
-
 if (!function_exists('produkt_send_test_customer_email')) {
     function produkt_send_test_customer_email() {
         $admin_email = get_option('admin_email');
@@ -95,23 +51,69 @@ if (!function_exists('produkt_send_test_customer_email')) {
     }
 }
 
-$footer = get_option('produkt_email_footer', [
-    'company' => '',
-    'owner' => '',
-    'street' => '',
-    'postal_city' => '',
-    'website' => '',
-    'copyright' => ''
-]);
+if (isset($_POST['submit_email_settings']) || isset($_POST['send_test_email'])) {
+    \ProduktVerleih\Admin::verify_admin_action();
+    $footer = [
+        'company'      => sanitize_text_field($_POST['footer_company'] ?? ''),
+        'owner'        => sanitize_text_field($_POST['footer_owner'] ?? ''),
+        'street'       => sanitize_text_field($_POST['footer_street'] ?? ''),
+        'postal_city'  => sanitize_text_field($_POST['footer_postal_city'] ?? ''),
+        'website'      => sanitize_text_field($_POST['footer_website'] ?? ''),
+        'copyright'    => sanitize_text_field($_POST['footer_copyright'] ?? ''),
+    ];
+    update_option('produkt_email_footer', $footer);
 
-$invoice = get_option('produkt_invoice_sender', [
+    $invoice = [
+        'firma_name'    => sanitize_text_field($_POST['firma_name'] ?? ''),
+        'firma_strasse' => sanitize_text_field($_POST['firma_strasse'] ?? ''),
+        'firma_plz_ort' => sanitize_text_field($_POST['firma_plz_ort'] ?? ''),
+        'firma_ust_id'  => sanitize_text_field($_POST['firma_ust_id'] ?? ''),
+        'firma_email'   => sanitize_text_field($_POST['firma_email'] ?? ''),
+        'firma_telefon' => sanitize_text_field($_POST['firma_telefon'] ?? ''),
+    ];
+    update_option('produkt_invoice_sender', $invoice);
+
+    $email_toggle = !empty($_POST['invoice_email_enabled']) ? '1' : '0';
+    update_option('produkt_invoice_email_enabled', $email_toggle);
+
+    // Logo für Rechnungen separat speichern
+    if (!empty($_POST['firma_logo_url'])) {
+        update_option('plugin_firma_logo_url', esc_url_raw($_POST['firma_logo_url']));
+    } else {
+        delete_option('plugin_firma_logo_url');
+    }
+
+    echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
+
+    if (isset($_POST['send_test_email'])) {
+        $test_result = produkt_send_test_customer_email();
+        if (true === $test_result) {
+            echo '<div class="notice notice-success"><p>✅ Test-E-Mail wurde versendet.</p></div>';
+        } elseif (is_wp_error($test_result)) {
+            echo '<div class="notice notice-error"><p>❌ Test-E-Mail konnte nicht gesendet werden: ' . esc_html($test_result->get_error_message()) . '</p></div>';
+        }
+    }
+}
+
+$footer_defaults = [
+    'company'     => '',
+    'owner'       => '',
+    'street'      => '',
+    'postal_city' => '',
+    'website'     => '',
+    'copyright'   => '',
+];
+$footer = wp_parse_args((array) get_option('produkt_email_footer', []), $footer_defaults);
+
+$invoice_defaults = [
     'firma_name'    => '',
     'firma_strasse' => '',
     'firma_plz_ort' => '',
     'firma_ust_id'  => '',
     'firma_email'   => '',
     'firma_telefon' => '',
-]);
+];
+$invoice = wp_parse_args((array) get_option('produkt_invoice_sender', []), $invoice_defaults);
 $logo_url = get_option('plugin_firma_logo_url', '');
 $invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
 ?>
