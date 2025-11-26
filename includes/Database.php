@@ -2125,10 +2125,10 @@ class Database {
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-                 WHERE o.mode <> 'kauf'
-                   AND COALESCE(o.inventory_reverted, 0) = 0
-                   AND (o.status IS NULL OR o.status NOT IN ('storniert','abgebrochen','cancelled','refunded'))
-                 ORDER BY o.created_at"
+                 WHERE COALESCE(o.inventory_reverted, 0) = 0
+                   AND (o.mode IS NULL OR o.mode NOT IN ('kauf','sale'))
+                   AND (o.status IS NULL OR o.status NOT IN ('storniert','abgebrochen','cancelled','refunded','failed'))
+                 ORDER BY COALESCE(o.end_date, o.created_at)"
             );
         }
 
