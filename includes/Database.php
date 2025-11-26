@@ -677,6 +677,11 @@ class Database {
                 }
             }
 
+            $order_items_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_orders LIKE 'order_items'");
+            if (empty($order_items_exists)) {
+                $wpdb->query("ALTER TABLE $table_orders ADD COLUMN order_items LONGTEXT AFTER client_info");
+            }
+
             // Fill newly added date columns from dauer_text if possible
             $missing_dates = $wpdb->get_results("SELECT id, dauer_text FROM $table_orders WHERE start_date IS NULL AND dauer_text LIKE '%-%'");
             foreach ($missing_dates as $row) {

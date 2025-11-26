@@ -495,7 +495,104 @@ function pv_get_order_by_id($order_id) {
     );
 
     $row = $wpdb->get_row($sql, ARRAY_A);
-    return $row ?: null;
+
+    if (!$row) {
+        return null;
+    }
+
+    if (!empty($row['order_items'])) {
+        $items = json_decode($row['order_items'], true);
+        if (is_array($items)) {
+            $variant_ids   = [];
+            $duration_ids  = [];
+            $condition_ids = [];
+            $color_ids     = [];
+            $frame_ids     = [];
+            $extra_ids_all = [];
+
+            foreach ($items as $itm) {
+                $variant_ids[]   = intval($itm['variant_id'] ?? 0);
+                $duration_ids[]  = intval($itm['duration_id'] ?? 0);
+                $condition_ids[] = intval($itm['condition_id'] ?? 0);
+                $color_ids[]     = intval($itm['product_color_id'] ?? 0);
+                $frame_ids[]     = intval($itm['frame_color_id'] ?? 0);
+
+                $extra_raw = $itm['extra_ids'] ?? '';
+                if (is_array($extra_raw)) {
+                    $extra_ids_all = array_merge($extra_ids_all, array_map('intval', $extra_raw));
+                } elseif (!empty($extra_raw)) {
+                    $extra_ids_all = array_merge($extra_ids_all, array_map('intval', explode(',', $extra_raw)));
+                }
+            }
+
+            $variant_map = pv_get_name_map($wpdb->prefix . 'produkt_variants', $variant_ids);
+            $duration_map = pv_get_name_map($wpdb->prefix . 'produkt_durations', $duration_ids);
+            $condition_map = pv_get_name_map($wpdb->prefix . 'produkt_conditions', $condition_ids);
+            $color_map = pv_get_name_map($wpdb->prefix . 'produkt_colors', $color_ids);
+            $frame_map = pv_get_name_map($wpdb->prefix . 'produkt_colors', $frame_ids);
+            $extras_map = pv_get_name_map($wpdb->prefix . 'produkt_extras', $extra_ids_all);
+
+            $produkte = [];
+            foreach ($items as $itm) {
+                $extra_raw = $itm['extra_ids'] ?? '';
+                $extra_ids = [];
+                if (is_array($extra_raw)) {
+                    $extra_ids = array_filter(array_map('intval', $extra_raw));
+                } elseif (!empty($extra_raw)) {
+                    $extra_ids = array_filter(array_map('intval', explode(',', $extra_raw)));
+                }
+
+                $extra_names = [];
+                foreach ($extra_ids as $exid) {
+                    if (isset($extras_map[$exid])) {
+                        $extra_names[] = $extras_map[$exid];
+                    }
+                }
+
+                $produkte[] = (object) [
+                    'produkt_name'      => $itm['metadata']['produkt'] ?? $row['produkt_name'] ?? '',
+                    'variant_name'      => $variant_map[intval($itm['variant_id'] ?? 0)] ?? '',
+                    'extra_names'       => implode(', ', $extra_names),
+                    'duration_name'     => $duration_map[intval($itm['duration_id'] ?? 0)] ?? ($itm['metadata']['dauer_name'] ?? $row['duration_name'] ?? ''),
+                    'condition_name'    => $condition_map[intval($itm['condition_id'] ?? 0)] ?? ($itm['metadata']['zustand'] ?? ''),
+                    'product_color_name'=> $color_map[intval($itm['product_color_id'] ?? 0)] ?? ($itm['metadata']['produktfarbe'] ?? ''),
+                    'frame_color_name'  => $frame_map[intval($itm['frame_color_id'] ?? 0)] ?? ($itm['metadata']['gestellfarbe'] ?? ''),
+                    'weekend_tariff'    => !empty($itm['weekend_tariff']) ? 1 : 0,
+                    'final_price'       => floatval($itm['final_price'] ?? 0),
+                    'start_date'        => $itm['start_date'] ?? null,
+                    'end_date'          => $itm['end_date'] ?? null,
+                ];
+            }
+
+            $row['produkte'] = $produkte;
+        }
+    }
+
+    return $row;
+}
+
+function pv_get_name_map($table, $ids) {
+    global $wpdb;
+
+    $ids = array_values(array_filter(array_map('intval', (array) $ids)));
+    if (empty($ids)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, name FROM {$table} WHERE id IN ($placeholders)",
+            ...$ids
+        )
+    );
+
+    $map = [];
+    foreach ($rows as $row) {
+        $map[intval($row->id)] = $row->name;
+    }
+
+    return $map;
 }
 
 /**
