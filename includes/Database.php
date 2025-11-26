@@ -2109,6 +2109,7 @@ class Database {
                         o.variant_id,
                         o.extra_ids,
                         o.start_date,
+                        o.end_date,
                         o.created_at,
                         o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
