@@ -624,30 +624,20 @@ class Plugin {
             return '<p>Keine Bestellung gefunden.</p>';
         }
 
-        global $wpdb;
-        $order = $wpdb->get_row($wpdb->prepare(
-            "SELECT o.*, c.name AS category_name,
-                    COALESCE(v.name, o.produkt_name) AS variant_name,
-                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
-                    sm.name AS shipping_name
-             FROM {$wpdb->prefix}produkt_orders o
-             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
-                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
-             WHERE o.stripe_session_id = %s
-             GROUP BY o.id
-             ORDER BY o.id DESC LIMIT 1",
-            $session_id
-        ));
-
-        if (!$order) {
+        $order_data = pv_get_order_by_session_id($session_id);
+        if (!$order_data) {
             return '<p>Bestellung nicht gefunden.</p>';
         }
 
-        $variant_id = $order->variant_id ?? 0;
-        $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+        $order = (object) $order_data;
+        $image_url  = '';
+        if (!empty($order->produkte)) {
+            $first = $order->produkte[0];
+            $image_url = $first->image_url ?? '';
+        } else {
+            $variant_id = $order->variant_id ?? 0;
+            $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+        }
 
         ob_start();
         ?>
@@ -865,6 +855,9 @@ class Plugin {
      * Append a cart icon to the main navigation menu.
      */
     public function add_cart_icon_to_menu($items, $args) {
+        if (!$this->is_cart_enabled()) {
+            return $items;
+        }
         $inject_menus = (array) get_option('produkt_menu_locations', []);
 
         $current_menu_id = 0;
@@ -899,6 +892,9 @@ class Plugin {
      * Inject cart icon into block-based navigation menus.
      */
     public function maybe_inject_cart_icon_block($content, $block) {
+        if (!$this->is_cart_enabled()) {
+            return $content;
+        }
         if (($block['blockName'] ?? '') !== 'core/navigation') {
             return $content;
         }
@@ -926,7 +922,20 @@ class Plugin {
      * Output the sliding cart sidebar markup in the footer so it is available on all pages.
      */
     public function render_cart_sidebar() {
+        if (!$this->is_cart_enabled()) {
+            return;
+        }
         include PRODUKT_PLUGIN_PATH . 'templates/cart-sidebar.php';
+    }
+
+    private function is_cart_enabled() {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        if ($mode === 'kauf') {
+            return true;
+        }
+
+        $cart_mode = get_option('produkt_miete_cart_mode', 'direct');
+        return $mode === 'miete' && $cart_mode === 'cart';
     }
 
     /**

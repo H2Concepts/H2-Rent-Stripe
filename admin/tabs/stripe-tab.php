@@ -15,6 +15,7 @@ if (isset($_POST['submit_stripe'])) {
     update_option('produkt_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
     update_option('produkt_ct_agb', wp_kses_post($_POST['ct_agb'] ?? ''));
     update_option('produkt_betriebsmodus', sanitize_text_field($_POST['produkt_betriebsmodus'] ?? 'miete'));
+    update_option('produkt_miete_cart_mode', sanitize_text_field($_POST['produkt_miete_cart_mode'] ?? 'direct'));
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
@@ -30,6 +31,7 @@ $ct_submit           = get_option('produkt_ct_submit', '');
 $ct_after_submit     = get_option('produkt_ct_after_submit', '');
 $ct_agb              = get_option('produkt_ct_agb', '');
 $modus               = get_option('produkt_betriebsmodus', 'miete');
+$cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
 ?>
 
 <div class="settings-tab">
@@ -79,10 +81,19 @@ $modus               = get_option('produkt_betriebsmodus', 'miete');
                     </div>
                     <div class="produkt-form-group">
                         <label for="produkt_betriebsmodus">Betriebsmodus</label>
-                        <select name="produkt_betriebsmodus" id="produkt_betriebsmodus">
-                            <option value="miete" <?php selected($modus, 'miete'); ?>>Vermietung</option>
-                            <option value="kauf" <?php selected($modus, 'kauf'); ?>>Einmalverkauf</option>
-                        </select>
+                        <div class="produkt-form-inline">
+                            <select name="produkt_betriebsmodus" id="produkt_betriebsmodus">
+                                <option value="miete" <?php selected($modus, 'miete'); ?>>Vermietung</option>
+                                <option value="kauf" <?php selected($modus, 'kauf'); ?>>Einmalverkauf</option>
+                            </select>
+                            <div class="produkt-form-group" id="produkt-cart-mode" style="display: <?php echo $modus === 'miete' ? 'block' : 'none'; ?>; margin: 0;">
+                                <label for="produkt_miete_cart_mode">Warenkorb-Funktion</label>
+                                <select name="produkt_miete_cart_mode" id="produkt_miete_cart_mode">
+                                    <option value="cart" <?php selected($cart_mode, 'cart'); ?>>Mit Warenkorb-Funktion</option>
+                                    <option value="direct" <?php selected($cart_mode, 'direct'); ?>>Ohne Warenkorb-Funktion</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -172,5 +183,13 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = input.dataset.full;
         });
     });
+
+    const modusSelect = document.getElementById('produkt_betriebsmodus');
+    const cartModeWrapper = document.getElementById('produkt-cart-mode');
+    if (modusSelect && cartModeWrapper) {
+        modusSelect.addEventListener('change', function() {
+            cartModeWrapper.style.display = this.value === 'miete' ? 'block' : 'none';
+        });
+    }
 });
 </script>

@@ -41,6 +41,7 @@ class Database {
             'stripe_weekend_price_id'=> 'VARCHAR(255) DEFAULT NULL',
             'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
             'mode'                   => "VARCHAR(10) DEFAULT 'miete'",
+            'sale_enabled'           => 'TINYINT(1) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
             'image_url_3' => 'TEXT',
@@ -75,6 +76,8 @@ class Database {
                     $after = 'verkaufspreis_einmalig';
                 } elseif ($column === 'stripe_weekend_price_id') {
                     $after = 'weekend_price';
+                } elseif ($column === 'sale_enabled') {
+                    $after = 'mode';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
                 } elseif ($column === 'sku') {
@@ -509,6 +512,7 @@ class Database {
                 option_type varchar(50) NOT NULL,
                 option_id mediumint(9) NOT NULL,
                 available tinyint(1) DEFAULT 1,
+                sale_available tinyint(1) DEFAULT 0,
                 stock_available int DEFAULT 0,
                 stock_rented int DEFAULT 0,
                 sku varchar(255) DEFAULT NULL,
@@ -673,6 +677,11 @@ class Database {
                 }
             }
 
+            $order_items_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_orders LIKE 'order_items'");
+            if (empty($order_items_exists)) {
+                $wpdb->query("ALTER TABLE $table_orders ADD COLUMN order_items LONGTEXT AFTER client_info");
+            }
+
             // Fill newly added date columns from dauer_text if possible
             $missing_dates = $wpdb->get_results("SELECT id, dauer_text FROM $table_orders WHERE start_date IS NULL AND dauer_text LIKE '%-%'");
             foreach ($missing_dates as $row) {
@@ -776,6 +785,11 @@ class Database {
         $sku_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sku'");
         if (empty($sku_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sku VARCHAR(255) DEFAULT NULL AFTER stock_rented");
+        }
+
+        $sale_available_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sale_available'");
+        if (empty($sale_available_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sale_available TINYINT(1) DEFAULT 0 AFTER available");
         }
 
         // Create order logs table if it doesn't exist
@@ -1057,6 +1071,7 @@ class Database {
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             mode varchar(10) DEFAULT 'miete',
+            sale_enabled tinyint(1) DEFAULT 0,
             image_url_1 text,
             image_url_2 text,
             image_url_3 text,
@@ -1198,6 +1213,7 @@ class Database {
             option_type varchar(50) NOT NULL,
             option_id mediumint(9) NOT NULL,
             available tinyint(1) DEFAULT 1,
+            sale_available tinyint(1) DEFAULT 0,
             PRIMARY KEY (id),
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";
@@ -2047,47 +2063,100 @@ class Database {
     public static function get_due_returns() {
         global $wpdb;
 
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
         $mode = get_option('produkt_betriebsmodus', 'miete');
 
         if ($mode === 'kauf') {
             $today = current_time('Y-m-d');
             $orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                "SELECT
+                        o.id,
+                        o.order_number,
+                        o.customer_name,
+                        o.variant_id,
+                        o.extra_ids,
+                        o.start_date,
+                        o.end_date,
+                        o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
-                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                        COALESCE(
+                            NULLIF(
+                                (SELECT GROUP_CONCAT(ex.name SEPARATOR ', ')
+                                 FROM {$wpdb->prefix}produkt_extras ex
+                                 WHERE FIND_IN_SET(ex.id, o.extra_ids)),
+                                ''
+                            ),
+                            o.extra_text
+                        ) AS extra_names
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-                 WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
-                 GROUP BY o.id
+                 WHERE o.mode = 'kauf'
+                   AND o.end_date IS NOT NULL
+                   AND o.end_date <= %s
+                   AND COALESCE(o.inventory_reverted, 0) = 0
                  ORDER BY o.end_date",
                 $today
             ));
         } else {
             $orders = $wpdb->get_results(
-                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at,
+                "SELECT
+                        o.id,
+                        o.order_number,
+                        o.customer_name,
+                        o.variant_id,
+                        o.extra_ids,
+                        o.start_date,
+                        o.end_date,
+                        o.created_at,
+                        o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
-                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                        COALESCE(
+                            NULLIF(
+                                (SELECT GROUP_CONCAT(ex.name SEPARATOR ', ')
+                                 FROM {$wpdb->prefix}produkt_extras ex
+                                 WHERE FIND_IN_SET(ex.id, o.extra_ids)),
+                                ''
+                            ),
+                            o.extra_text
+                        ) AS extra_names
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-                 WHERE o.mode <> 'kauf' AND o.status = 'abgeschlossen' AND o.inventory_reverted = 0
-                 GROUP BY o.id
-                 ORDER BY o.created_at"
+                 WHERE COALESCE(o.inventory_reverted, 0) = 0
+                   AND (o.mode IS NULL OR o.mode NOT IN ('kauf','sale'))
+                   AND (o.status IS NULL OR o.status NOT IN ('storniert','abgebrochen','cancelled','refunded','failed'))
+                 ORDER BY COALESCE(o.end_date, o.created_at)"
             );
         }
 
         $orders = $orders ?: [];
 
+        $expanded_orders = [];
         foreach ($orders as $o) {
             self::ensure_return_pending_log((int) $o->id);
+
+            $products = pv_expand_order_products($o);
+            if (empty($products)) {
+                $expanded_orders[] = $o;
+                continue;
+            }
+
+            foreach ($products as $p) {
+                $clone = clone $o;
+                $clone->category_name = $p->produkt_name ?? $o->category_name;
+                $clone->variant_name  = $p->variant_name ?? $o->variant_name;
+                $clone->extra_names   = $p->extra_names ?? $o->extra_names;
+                $clone->start_date    = $p->start_date ?? $o->start_date;
+                $clone->end_date      = $p->end_date ?? $o->end_date;
+                $expanded_orders[]    = $clone;
+            }
         }
 
-        return $orders;
+        return $expanded_orders;
     }
 
     /**

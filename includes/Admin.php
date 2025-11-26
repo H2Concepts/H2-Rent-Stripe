@@ -373,6 +373,8 @@ class Admin {
 
         if ($load_script) {
             $modus = get_option('produkt_betriebsmodus', 'miete');
+            $cart_mode = get_option('produkt_miete_cart_mode', 'direct');
+            $cart_enabled = $modus === 'kauf' || ($modus === 'miete' && $cart_mode === 'cart');
             $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
             $category_button_text = isset($category) && property_exists($category, 'button_text') ? trim((string) $category->button_text) : '';
             $global_button_text = isset($ui['button_text']) ? trim((string) $ui['button_text']) : '';
@@ -392,6 +394,7 @@ class Admin {
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
+                'cart_enabled' => $cart_enabled ? 1 : 0,
                 'button_text' => $localized_button_text,
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
