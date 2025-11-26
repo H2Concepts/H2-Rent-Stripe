@@ -41,6 +41,15 @@ $variants = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order",
     $category_id
 ));
+$has_direct_buy = false;
+foreach ($variants as $variant_check) {
+    $sale_price_exists = floatval($variant_check->verkaufspreis_einmalig) > 0;
+    $sale_price_id_set = !empty($variant_check->stripe_price_id_sale);
+    if ($sale_price_exists || $sale_price_id_set) {
+        $has_direct_buy = true;
+        break;
+    }
+}
 
 $extras = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE category_id = %d ORDER BY sort_order",
@@ -61,6 +70,7 @@ $durations = $wpdb->get_results($wpdb->prepare(
     $category_id
 ));
 $duration_count = count($durations);
+$stripe_cache_ttl = 10 * MINUTE_IN_SECONDS;
 
 // Get blocked days for booking calendar
 $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
@@ -80,6 +90,15 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
         array_merge($variant_ids, $duration_ids)
     );
     $price_count = (int) $wpdb->get_var($count_query);
+}
+
+$fallback_price = pv_get_lowest_rental_amount($variant_ids, $duration_ids);
+if ($fallback_price !== null) {
+    if (!is_array($price_data)) {
+        $price_data = ['amount' => $fallback_price, 'price_id' => ''];
+    } elseif (!isset($price_data['amount']) || (float) $price_data['amount'] <= 0 || $fallback_price < (float) $price_data['amount']) {
+        $price_data['amount'] = $fallback_price;
+    }
 }
 
 // Preise für Rabatt-Badges ermitteln
@@ -134,19 +153,22 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
     }
 }
 
-if ($badge_base_duration_id !== null && isset($badge_prices[$badge_base_duration_id])) {
-    $badge_base_price = $badge_prices[$badge_base_duration_id];
-} elseif (!empty($variants)) {
-    foreach ($variants as $variant) {
-        $base = floatval($variant->base_price);
-        if ($base <= 0) {
-            $base = floatval($variant->mietpreis_monatlich);
-        }
-        if ($base > 0 && ($badge_base_price <= 0 || $base < $badge_base_price)) {
-            $badge_base_price = $base;
+    if ($badge_base_duration_id !== null && isset($badge_prices[$badge_base_duration_id])) {
+        $badge_base_price = $badge_prices[$badge_base_duration_id];
+    } elseif (!empty($variants)) {
+        foreach ($variants as $variant) {
+            $base = floatval($variant->base_price);
+            if ($base <= 0 && !empty($variant->stripe_price_id)) {
+                $p = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id, $stripe_cache_ttl);
+                if (!is_wp_error($p)) {
+                    $base = $p;
+                }
+            }
+            if ($base > 0 && ($badge_base_price <= 0 || $base < $badge_base_price)) {
+                $badge_base_price = $base;
+            }
         }
     }
-}
 
 // Get category settings
 $default_image = isset($category) ? $category->default_image : '';
@@ -396,6 +418,22 @@ if ($price_layout !== 'sidebar') {
                     <h3>Wählen Sie Ihre Ausführung</h3>
                     <div class="produkt-options variants layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($variants as $variant): ?>
+                        <?php
+                            $variant_sale_amount = '';
+                            if ($variant->verkaufspreis_einmalig && floatval($variant->verkaufspreis_einmalig) > 0) {
+                                $variant_sale_amount = number_format((float) $variant->verkaufspreis_einmalig, 2, '.', '');
+                            } elseif (!empty($variant->stripe_price_id_sale)) {
+                                $sale_amount = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id_sale, $stripe_cache_ttl);
+                                if (!is_wp_error($sale_amount) && $sale_amount > 0) {
+                                    $variant_sale_amount = number_format((float) $sale_amount, 2, '.', '');
+                                }
+                            }
+
+                            $variant_sale_price_id = '';
+                            if ($variant_sale_amount !== '' && !empty($variant->stripe_price_id_sale)) {
+                                $variant_sale_price_id = $variant->stripe_price_id_sale;
+                            }
+                        ?>
                         <div class="produkt-option <?php echo !($variant->available ?? 1) ? 'unavailable' : ''; ?>"
                              data-type="variant"
                              data-id="<?php echo esc_attr($variant->id); ?>"
@@ -404,6 +442,8 @@ if ($price_layout !== 'sidebar') {
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
                              data-weekend-price="<?php echo esc_attr($variant->weekend_price ?? 0); ?>"
+                             data-sale-price="<?php echo esc_attr($variant_sale_amount); ?>"
+                             data-sale-price-id="<?php echo esc_attr($variant_sale_price_id); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -419,16 +459,52 @@ if ($price_layout !== 'sidebar') {
                                     if ($modus === 'kauf') {
                                         $display_price = floatval($variant->verkaufspreis_einmalig);
                                     } else {
-                                        if (!empty($variant->stripe_price_id)) {
-                                            $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
-                                            if (!is_wp_error($p)) {
-                                                $display_price = $p;
+                                        $variant_price_data = \ProduktVerleih\StripeService::get_lowest_price_with_durations([$variant->id], $duration_ids);
+                                        if (is_array($variant_price_data) && isset($variant_price_data['amount']) && floatval($variant_price_data['amount']) > 0) {
+                                            $display_price = (float) $variant_price_data['amount'];
+                                        } else {
+                                            // direct fallback per variant to avoid empty values
+                                            if (!empty($duration_ids)) {
+                                                $placeholders_durations = implode(',', array_fill(0, count($duration_ids), '%d'));
+                                                $duration_rows = $wpdb->get_results($wpdb->prepare(
+                                                    "SELECT stripe_price_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id = %d AND duration_id IN ($placeholders_durations)",
+                                                    array_merge([(int) $variant->id], $duration_ids)
+                                                ));
+
+                                                foreach ($duration_rows as $row) {
+                                                    $custom_price = ($row->custom_price !== null) ? floatval($row->custom_price) : 0.0;
+                                                    if ($custom_price > 0 && ($display_price <= 0 || $custom_price < $display_price)) {
+                                                        $display_price = $custom_price;
+                                                    }
+
+                                                    if (!empty($row->stripe_price_id)) {
+                                                        $duration_amount = \ProduktVerleih\StripeService::get_cached_price_amount($row->stripe_price_id, $stripe_cache_ttl);
+                                                        if (!is_wp_error($duration_amount) && $duration_amount > 0 && ($display_price <= 0 || $duration_amount < $display_price)) {
+                                                            $display_price = $duration_amount;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if ($display_price <= 0 && !empty($variant->stripe_price_id)) {
+                                                $p = \ProduktVerleih\StripeService::get_cached_price_amount($variant->stripe_price_id, $stripe_cache_ttl);
+                                                if (!is_wp_error($p) && $p > 0) {
+                                                    $display_price = $p;
+                                                }
+                                            }
+
+                                            if ($display_price <= 0 && is_array($price_data) && isset($price_data['amount'])) {
+                                                $display_price = (float) $price_data['amount'];
                                             }
                                         }
                                     }
+
+                                    if ($display_price <= 0 && is_array($price_data) && isset($price_data['amount'])) {
+                                        $display_price = (float) $price_data['amount'];
+                                    }
                                 ?>
                                 <?php
-                                    $price_prefix = ($modus === 'miete' && $duration_count >= 2 && $display_price > 0) ? 'ab ' : '';
+                                    $price_prefix = ($modus === 'miete' && $display_price > 0) ? 'ab ' : '';
                                     $formatted_price = number_format($display_price, 2, ',', '.') . '€';
                                     if ($modus !== 'kauf' && $price_period === 'month') {
                                         $formatted_price .= '/Monat';
@@ -471,16 +547,28 @@ if ($price_layout !== 'sidebar') {
                             $pid = $modus === 'kauf'
                                 ? ($extra->stripe_price_id_sale ?: ($extra->stripe_price_id ?? ''))
                                 : ($extra->stripe_price_id_rent ?: ($extra->stripe_price_id ?? ''));
+
+                            $sale_amount = '';
+                            $sale_pid = '';
+                            if (!empty($extra->stripe_price_id_sale)) {
+                                $sale_price = \ProduktVerleih\StripeService::get_cached_price_amount($extra->stripe_price_id_sale, $stripe_cache_ttl);
+                                if (!is_wp_error($sale_price) && $sale_price > 0) {
+                                    $sale_amount = number_format((float) $sale_price, 2, '.', '');
+                                    $sale_pid = $extra->stripe_price_id_sale;
+                                }
+                            }
                         ?>
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
+                             data-sale-price-id="<?php echo esc_attr($sale_pid); ?>"
+                             data-sale-price="<?php echo esc_attr($sale_amount); ?>"
                              data-available="<?php echo intval($extra->available ?? 1) ? 'true' : 'false'; ?>"
                              data-stock="<?php echo intval($extra->stock_available); ?>">
                             <div class="produkt-option-content">
                                 <span class="produkt-extra-name"><?php echo esc_html($extra->name); ?></span>
                                 <?php if (!empty($pid)) {
-                                    $p = \ProduktVerleih\StripeService::get_price_amount($pid);
+                                    $p = \ProduktVerleih\StripeService::get_cached_price_amount($pid, $stripe_cache_ttl);
                                     if (!is_wp_error($p) && $p > 0) {
                                         echo '<div class="produkt-extra-price">+' . number_format($p, 2, ',', '.') . '€' . ($price_period === 'month' ? '/Monat' : '') . '</div>';
                                     }
@@ -668,6 +756,11 @@ if ($price_layout !== 'sidebar') {
                         <?php endif; ?>
                         <span><?php echo esc_html($button_text); ?></span>
                     </button>
+                    <?php if ($modus === 'miete' && $has_direct_buy): ?>
+                    <button id="produkt-buy-button" class="produkt-buy-button" disabled>
+                        <span class="produkt-buy-button-text">oder für <span class="produkt-buy-price"></span> direkt kaufen</span>
+                    </button>
+                    <?php endif; ?>
                     <p class="produkt-button-help" id="produkt-button-help">
                         Bitte treffen Sie alle Auswahlen um fortzufahren
                     </p>

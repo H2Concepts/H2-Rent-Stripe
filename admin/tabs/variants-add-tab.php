@@ -25,13 +25,10 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
                     </div>
                     <?php if ($modus !== 'kauf'): ?>
                     <div class="produkt-form-group">
-                        <label>Monatlicher Mietpreis *</label>
-                        <input type="number" step="0.01" name="mietpreis_monatlich" required placeholder="0.00">
-                    </div>
-                    <div class="produkt-form-group">
                         <label>Einmaliger Verkaufspreis</label>
                         <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="0.00">
                     </div>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php else: ?>
                         <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php endif; ?>

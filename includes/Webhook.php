@@ -47,6 +47,17 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     }
 
     $invoice_emails_enabled = pv_is_invoice_email_enabled();
+    $betriebsmodus          = get_option('produkt_betriebsmodus', 'miete');
+    $order_mode             = $order['mode'] ?? '';
+
+    // In rental mode, skip invoice emails for subscriptions to avoid duplicate Stripe invoices.
+    if ($betriebsmodus === 'miete' && $order_mode === 'miete') {
+        return;
+    }
+
+    if (!$invoice_emails_enabled) {
+        return;
+    }
 
     $full_name = trim($order['customer_name']);
     if (strpos($full_name, ' ') !== false) {
@@ -185,10 +196,6 @@ function send_produkt_welcome_email(array $order, int $order_id) {
 
     // Rechnung erzeugen und Anhang vorbereiten
     $pdf_path = pv_generate_invoice_pdf($order_id);
-
-    if (!$invoice_emails_enabled) {
-        return;
-    }
 
     $attachments = [];
     if ($pdf_path && file_exists($pdf_path)) {

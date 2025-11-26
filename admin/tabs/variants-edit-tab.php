@@ -1,9 +1,11 @@
 <?php
 // Variants Edit Tab Content
-$verkaufspreis_einmalig = floatval($edit_item->verkaufspreis_einmalig);
+$verkaufspreis_einmalig = isset($edit_item->verkaufspreis_einmalig) ? floatval($edit_item->verkaufspreis_einmalig) : null;
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $mietpreis_monatlich = number_format((float)$edit_item->mietpreis_monatlich, 2, '.', '');
-$verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.', '');
+$verkaufspreis_formatted = ($verkaufspreis_einmalig && $verkaufspreis_einmalig > 0)
+    ? number_format((float)$verkaufspreis_einmalig, 2, '.', '')
+    : '';
 $weekend_price = floatval($edit_item->weekend_price);
 $weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
 ?>
@@ -39,13 +41,10 @@ $weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
                     </div>
                     <?php if ($modus !== 'kauf'): ?>
                     <div class="produkt-form-group">
-                        <label>Monatlicher Mietpreis *</label>
-                        <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo esc_attr($mietpreis_monatlich); ?>" required>
-                    </div>
-                    <div class="produkt-form-group">
                         <label>Einmaliger Verkaufspreis</label>
                         <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($verkaufspreis_formatted); ?>">
                     </div>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php else: ?>
                         <input type="hidden" name="mietpreis_monatlich" value="0">
                     <?php endif; ?>

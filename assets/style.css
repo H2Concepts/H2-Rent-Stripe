@@ -634,7 +634,7 @@ img.wp-smiley, img.emoji {
 
 .produkt-discount-badge {
     background: #e3e8e3;
-    color: var(--produkt-text-color);
+    color: var(--produkt-secondary);
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;
@@ -883,6 +883,40 @@ img.wp-smiley, img.emoji {
 .produkt-rent-button:disabled .produkt-button-icon,
 .produkt-rent-button:disabled .produkt-button-icon-img {
     filter: brightness(0) saturate(100%) invert(73%) sepia(6%) saturate(519%) hue-rotate(179deg) brightness(88%) contrast(92%);
+}
+
+.produkt-buy-button {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    margin-top: 0.5rem;
+    border-radius: 999px;
+    border: 2px solid var(--produkt-button-bg);
+    background: #fff;
+    color: var(--produkt-text-color);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.produkt-buy-button:hover:enabled {
+    background: rgba(255, 165, 0, 0.08);
+    color: var(--produkt-button-bg);
+}
+
+.produkt-buy-button:disabled {
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.produkt-buy-button-text {
+    display: inline-block;
+    text-align: center;
+}
+
+.produkt-buy-price {
+    font-weight: 800;
 }
 
 .produkt-button-icon {
