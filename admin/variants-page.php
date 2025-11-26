@@ -420,6 +420,13 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
 
     $result = $wpdb->delete($table_name, array('id' => $variant_id), array('%d'));
     if ($result !== false) {
+        $wpdb->delete(
+            $wpdb->prefix . 'produkt_variant_options',
+            array('variant_id' => $variant_id),
+            array('%d')
+        );
+    }
+    if ($result !== false) {
         echo '<div class="notice notice-success"><p>✅ Ausführung gelöscht!</p></div>';
     } else {
         echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
