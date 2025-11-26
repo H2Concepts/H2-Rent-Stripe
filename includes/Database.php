@@ -2080,7 +2080,7 @@ class Database {
                         o.end_date,
                         o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
-                        COALESCE(v.name, o.variant_name) AS variant_name,
+                        COALESCE(v.name, o.produkt_name) AS variant_name,
                         COALESCE(
                             NULLIF(
                                 (SELECT GROUP_CONCAT(ex.name SEPARATOR ', ')
@@ -2112,7 +2112,7 @@ class Database {
                         o.created_at,
                         o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
-                        COALESCE(v.name, o.variant_name) AS variant_name,
+                        COALESCE(v.name, o.produkt_name) AS variant_name,
                         COALESCE(
                             NULLIF(
                                 (SELECT GROUP_CONCAT(ex.name SEPARATOR ', ')

@@ -552,6 +552,7 @@ if ($active_tab === 'add') {
                         <p class="card-subline">Vorhandene Varianten des Produkts</p>
                     </div>
                 </div>
+                <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
                 <table class="activity-table">
                     <thead>
                         <tr>
@@ -564,7 +565,6 @@ if ($active_tab === 'add') {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
                         <?php foreach ($variants as $variant): ?>
                             <?php
                                 $image_count = 0;
