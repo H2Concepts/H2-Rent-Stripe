@@ -134,8 +134,10 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                         <div>
                             <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
                             <?php echo esc_html($return->customer_name); ?><br>
-                            <?php echo esc_html($return->category_name); ?><br>
-                            <?php if (!empty($return->variant_name) && $return->variant_name !== $return->category_name): ?>
+                            <?php if (!empty($return->category_name)): ?>
+                                Produkt: <?php echo esc_html($return->category_name); ?><br>
+                            <?php endif; ?>
+                            <?php if (!empty($return->variant_name)): ?>
                                 Ausführung: <?php echo esc_html($return->variant_name); ?><br>
                             <?php endif; ?>
                             <?php if (!empty($return->extra_names)): ?>

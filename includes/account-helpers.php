@@ -597,6 +597,7 @@ function pv_expand_order_products($row) {
     }
 
     $variant_ids   = [];
+    $category_ids  = [];
     $duration_ids  = [];
     $condition_ids = [];
     $color_ids     = [];
@@ -605,6 +606,7 @@ function pv_expand_order_products($row) {
 
     foreach ($items as $itm) {
         $variant_ids[]   = intval($itm['variant_id'] ?? 0);
+        $category_ids[]  = intval($itm['category_id'] ?? ($row_arr['category_id'] ?? 0));
         $duration_ids[]  = intval($itm['duration_id'] ?? 0);
         $condition_ids[] = intval($itm['condition_id'] ?? 0);
         $color_ids[]     = intval($itm['product_color_id'] ?? 0);
@@ -619,6 +621,7 @@ function pv_expand_order_products($row) {
     }
 
     $variant_map   = pv_get_name_map($wpdb->prefix . 'produkt_variants', $variant_ids);
+    $category_map  = pv_get_name_map($wpdb->prefix . 'produkt_categories', $category_ids);
     $duration_map  = pv_get_name_map($wpdb->prefix . 'produkt_durations', $duration_ids);
     $condition_map = pv_get_name_map($wpdb->prefix . 'produkt_conditions', $condition_ids);
     $color_map     = pv_get_name_map($wpdb->prefix . 'produkt_colors', $color_ids);
@@ -645,8 +648,19 @@ function pv_expand_order_products($row) {
         $variant_id  = intval($itm['variant_id'] ?? 0);
         $category_id = intval($itm['category_id'] ?? $row_arr['category_id'] ?? 0);
 
+        $category_name = '';
+        if ($category_id && isset($category_map[$category_id])) {
+            $category_name = $category_map[$category_id];
+        } elseif (!empty($itm['metadata']['produkt'])) {
+            $category_name = $itm['metadata']['produkt'];
+        } elseif (!empty($row_arr['category_name'])) {
+            $category_name = $row_arr['category_name'];
+        } elseif (!empty($row_arr['produkt_name'])) {
+            $category_name = $row_arr['produkt_name'];
+        }
+
         $produkte[] = (object) [
-            'produkt_name'       => $itm['metadata']['produkt'] ?? ($row_arr['category_name'] ?? $row_arr['produkt_name'] ?? ''),
+            'produkt_name'       => $category_name,
             'variant_name'       => $variant_map[$variant_id] ?? ($row_arr['variant_name'] ?? ''),
             'extra_names'        => implode(', ', $extra_names),
             'duration_name'      => $duration_map[intval($itm['duration_id'] ?? 0)] ?? ($itm['metadata']['dauer_name'] ?? $row_arr['duration_name'] ?? ''),
