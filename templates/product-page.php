@@ -85,6 +85,7 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
 // Preise für Rabatt-Badges ermitteln
 $badge_base_price = 0.0;
 $badge_prices = [];
+$variant_min_prices = [];
 $badge_base_duration_id = null;
 $badge_base_duration_months = PHP_INT_MAX;
 $badge_base_duration_sort = PHP_INT_MAX;
@@ -120,16 +121,50 @@ if (!empty($variant_ids) && !empty($duration_ids)) {
     $duration_placeholders = implode(',', array_fill(0, count($duration_ids), '%d'));
     $query_args = array_merge($variant_ids, $duration_ids);
     $rows = $wpdb->get_results($wpdb->prepare(
-        "SELECT duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($variant_placeholders) AND duration_id IN ($duration_placeholders)",
+        "SELECT variant_id, duration_id, custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE variant_id IN ($variant_placeholders) AND duration_id IN ($duration_placeholders)",
         $query_args
     ));
     foreach ($rows as $row) {
         $duration_id = (int) $row->duration_id;
+        $variant_id = (int) $row->variant_id;
         $price = ($row->custom_price !== null) ? floatval($row->custom_price) : 0.0;
         if ($price > 0) {
             if (!isset($badge_prices[$duration_id]) || $price < $badge_prices[$duration_id]) {
                 $badge_prices[$duration_id] = $price;
             }
+            if (!isset($variant_min_prices[$variant_id]) || $price < $variant_min_prices[$variant_id]) {
+                $variant_min_prices[$variant_id] = $price;
+            }
+        }
+    }
+}
+
+if (!empty($variants)) {
+    foreach ($variants as $variant) {
+        $variant_id = (int) $variant->id;
+        $base_price = 0.0;
+
+        if (isset($variant_min_prices[$variant_id])) {
+            continue;
+        }
+
+        if (!empty($variant->base_price)) {
+            $base_price = floatval($variant->base_price);
+        }
+
+        if ($base_price <= 0 && !empty($variant->mietpreis_monatlich)) {
+            $base_price = floatval($variant->mietpreis_monatlich);
+        }
+
+        if ($base_price <= 0 && !empty($variant->stripe_price_id)) {
+            $stripe_price = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
+            if (!is_wp_error($stripe_price)) {
+                $base_price = floatval($stripe_price);
+            }
+        }
+
+        if ($base_price > 0) {
+            $variant_min_prices[$variant_id] = $base_price;
         }
     }
 }
@@ -416,10 +451,13 @@ if ($price_layout !== 'sidebar') {
                                 <p><?php echo esc_html($variant->description); ?></p>
                                 <?php
                                     $display_price = 0;
+                                    $variant_id = (int) $variant->id;
                                     if ($modus === 'kauf') {
                                         $display_price = floatval($variant->verkaufspreis_einmalig);
                                     } else {
-                                        if (!empty($variant->stripe_price_id)) {
+                                        if (isset($variant_min_prices[$variant_id])) {
+                                            $display_price = $variant_min_prices[$variant_id];
+                                        } elseif (!empty($variant->stripe_price_id)) {
                                             $p = \ProduktVerleih\StripeService::get_price_amount($variant->stripe_price_id);
                                             if (!is_wp_error($p)) {
                                                 $display_price = $p;
