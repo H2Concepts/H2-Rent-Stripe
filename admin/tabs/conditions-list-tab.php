@@ -4,29 +4,23 @@ $variant_total = isset($variants) ? count($variants) : 0;
 ?>
 
 <div class="produkt-conditions-list">
-
-    <?php if (empty($conditions)): ?>
-        <div class="produkt-empty-state">
-            <div class="produkt-empty-icon">🔄</div>
-            <h4>Noch keine Zustände vorhanden</h4>
-            <p>Legen Sie Ihren ersten Zustand für dieses Produkt an.</p>
-            <button type="button" class="button button-primary js-open-condition-modal">
-                ➕ Zustand erstellen
-            </button>
-        </div>
-    <?php else: ?>
-        <table class="activity-table">
-            <thead>
+    <table class="activity-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Beschreibung</th>
+                <th>Preisanpassung</th>
+                <th>Verfügbarkeit</th>
+                <th>Sortierung</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($conditions)): ?>
                 <tr>
-                    <th>Name</th>
-                    <th>Beschreibung</th>
-                    <th>Preisanpassung</th>
-                    <th>Verfügbarkeit</th>
-                    <th>Sortierung</th>
-                    <th>Aktionen</th>
+                    <td colspan="6"></td>
                 </tr>
-            </thead>
-            <tbody>
+            <?php else: ?>
                 <?php foreach ($conditions as $condition): ?>
                 <?php
                     $modifier = round(floatval($condition->price_modifier) * 100, 2);
@@ -74,7 +68,7 @@ $variant_total = isset($variants) ? count($variants) : 0;
                     </td>
                 </tr>
                 <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>

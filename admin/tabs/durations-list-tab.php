@@ -3,28 +3,23 @@
 ?>
 
 <div class="produkt-durations-list">
-
-    <?php if (empty($durations)): ?>
-        <div class="produkt-empty-state">
-            <div class="produkt-empty-icon">⏰</div>
-            <h4>Noch keine Mietdauern vorhanden</h4>
-            <p>Erstellen Sie Ihre erste Mietdauer für dieses Produkt.</p>
-            <button type="button" class="button button-primary js-open-duration-modal">
-                ➕ Erste Mietdauer erstellen
-            </button>
-        </div>
-    <?php else: ?>
-        <table class="activity-table">
-            <thead>
+    <table class="activity-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Mindestlaufzeit</th>
+                <th>Preis</th>
+                <th>Badges</th>
+                <th>Sortierung</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (empty($durations)): ?>
                 <tr>
-                    <th>Name</th>
-                    <th>Mindestlaufzeit</th>
-                    <th>Badges</th>
-                    <th>Sortierung</th>
-                    <th>Aktionen</th>
+                    <td colspan="6"></td>
                 </tr>
-            </thead>
-            <tbody>
+            <?php else: ?>
                 <?php foreach ($durations as $duration):
                     $popular_gradient_start = function_exists('pv_normalize_hex_color_value')
                         ? pv_normalize_hex_color_value($duration->popular_gradient_start ?? '', '#ff8a3d')
@@ -47,6 +42,14 @@
                     if (!empty($duration->stripe_product_id)) {
                         $product_archived = \ProduktVerleih\StripeService::is_product_archived_cached($duration->stripe_product_id);
                     }
+
+                    $price_label = '–';
+                    if (!empty($duration->stripe_price_id)) {
+                        $price_amount = \ProduktVerleih\StripeService::get_cached_price_amount($duration->stripe_price_id, 5 * MINUTE_IN_SECONDS);
+                        if ($price_amount !== null) {
+                            $price_label = esc_html(number_format($price_amount / 100, 2, ',', '.')) . ' €';
+                        }
+                    }
                 ?>
                 <tr>
                     <td>
@@ -61,6 +64,7 @@
                     <td>
                         <?php echo intval($duration->months_minimum); ?> Monat<?php echo $duration->months_minimum > 1 ? 'e' : ''; ?>
                     </td>
+                    <td><?php echo $price_label; ?></td>
                     <td>
                         <?php if ($duration->show_badge || !empty($duration->show_popular)): ?>
                             <div class="produkt-duration-badges">
@@ -92,9 +96,9 @@
                     </td>
                 </tr>
                 <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php endif; ?>
+            <?php endif; ?>
+        </tbody>
+    </table>
 </div>
 
 
