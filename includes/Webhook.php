@@ -103,43 +103,67 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date = date_i18n('d.m.Y', strtotime($order['created_at']));
     $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
-    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $shipping   = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
-    $site_title = get_bloginfo('name');
-    $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">';
-    $message .= '<div style="max-width:600px;margin:auto;">';
-    $message .= '<div style="background:#007cba;color:#fff;padding:20px;text-align:center;font-size:20px;font-weight:bold;">' . esc_html($site_title) . '</div>';
-    $message .= '<div style="padding:20px;">';
-    $message .= '<h2 style="color:#007cba;margin-top:0;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h2>';
-    $message .= '<p>Hallo ' . esc_html($first . ' ' . $last) . ',</p>';
-    $message .= '<p>herzlichen Dank für Ihre Bestellung!<br>Wir freuen uns sehr, Sie als neuen Kunden begrüßen zu dürfen.</p>';
+    $site_title     = get_bloginfo('name');
+    $logo_url       = get_option('plugin_firma_logo_url', '');
+    $bestellnr      = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $divider        = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+    $items          = pv_expand_order_products($order);
+    $shipping_name  = '';
 
-    $message .= '<h3>Ihre Bestellübersicht</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestelldatum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
+    if (!empty($order['shipping_price_id'])) {
+        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
+    }
+
+    $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+    $account_url     = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+    $customer_name   = trim($first . ' ' . $last);
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 12px;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($customer_name) . ',<br>herzlichen Dank für Ihre Bestellung! Wir freuen uns sehr, Sie als neuen Kunden begrüßen zu dürfen.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Bestelldetails</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Status:</strong></td><td>Bezahlt</td></tr>';
+    if ($shipping_name) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Versandart:</strong></td><td>' . esc_html($shipping_name) . '</td></tr>';
+    }
     $message .= '</table>';
 
-    $message .= '<h3>Ihre Kundendaten</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Name:</strong></td><td>' . esc_html($full_name) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>E-Mail:</strong></td><td>' . esc_html($order['customer_email']) . '</td></tr>';
+    $message .= $divider;
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Kundendaten</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Name:</strong></td><td>' . esc_html($customer_name) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>E-Mail:</strong></td><td>' . esc_html($order['customer_email']) . '</td></tr>';
     if (!empty($order['customer_phone'])) {
-        $message .= '<tr><td style="padding:4px 0;"><strong>Telefon:</strong></td><td>' . esc_html($order['customer_phone']) . '</td></tr>';
+        $message .= '<tr><td style="padding:6px 0;"><strong>Telefon:</strong></td><td>' . esc_html($order['customer_phone']) . '</td></tr>';
     }
     if (!empty($address)) {
-        $message .= '<tr><td style="padding:4px 0;"><strong>Adresse:</strong></td><td>' . esc_html($address) . '</td></tr>';
+        $message .= '<tr><td style="padding:6px 0;"><strong>Adresse:</strong></td><td>' . esc_html($address) . '</td></tr>';
     }
     $message .= '</table>';
 
-    $items = pv_expand_order_products($order);
-    $message .= '<h3>Ihre Produktdaten</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis/Monat</th></tr></thead><tbody>';
+    $message .= $divider;
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Produktdaten</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+    $message .= '<thead><tr style="background:#F6F7FA;"><th align="left" style="padding:8px 6px;">Produkt</th><th align="left" style="padding:8px 6px;">Details</th><th align="right" style="padding:8px 6px;">Preis/Monat</th></tr></thead><tbody>';
     foreach ($items as $item) {
         $details = [];
         if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
@@ -160,35 +184,41 @@ function send_produkt_welcome_email(array $order, int $order_id) {
             $details[] = 'Miettage: ' . esc_html($duration_text);
         }
         $message .= '<tr>';
-        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
-        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
-        $message .= '<td style="padding:6px 4px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
+        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
+        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
+        $message .= '<td style="padding:8px 6px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
         $message .= '</tr>';
     }
     $message .= '</tbody></table>';
-    $message .= '<p><strong>Zwischensumme:</strong> ' . esc_html($price) . '</p>';
-    $shipping_name = '';
-    if (!empty($order['shipping_price_id'])) {
-        global $wpdb;
-        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
-    }
-    if ($order['shipping_cost'] > 0 || $shipping_name) {
-        $ship_text = $shipping_name ?: 'Versand';
-        $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
-        if ($order['shipping_cost'] > 0) {
-            $message .= ' - ' . esc_html($shipping);
-        }
-        $message .= '</p>';
-    }
-    $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
+
+    $message .= $divider;
+
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
+    $ship_text = $shipping_name ?: 'Versand';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
+    $message .= '</table>';
+
     $message .= '</div>';
 
-    $message .= '<p>Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
+    $message .= '<p style="margin:16px 0 8px;font-size:12px;line-height:1.6;">Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
+
+    $message .= '<div style="text-align:center;margin:16px 0;">';
+    $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:12px 28px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:14px;">Zum Kundenkonto</a>';
     $message .= '</div>';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin:12px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
+    }
+
+    $message .= $divider;
+
     $footer_html = pv_get_email_footer_html();
     if ($footer_html) {
         $message .= $footer_html;
     }
+
     $message .= '</div>';
     $message .= '</body></html>';
 
@@ -263,37 +293,58 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         }
     }
 
-    $site_title = get_bloginfo('name');
-    $message  = '<html><body style="font-family:Arial,sans-serif;color:#333;margin:0;padding:0;">';
-    $message .= '<div style="max-width:600px;margin:auto;">';
-    $message .= '<div style="background:#007cba;color:#fff;padding:20px;text-align:center;font-size:20px;font-weight:bold;">' . esc_html($site_title) . '</div>';
-    $message .= '<div style="padding:20px;">';
-    $message .= '<h2 style="color:#007cba;margin-top:0;">Neue Bestellung eingegangen</h2>';
+    $site_title    = get_bloginfo('name');
+    $logo_url      = get_option('plugin_firma_logo_url', '');
+    $bestellnr     = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $divider       = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+    $items         = pv_expand_order_products($order);
+    $shipping_name = '';
 
-    $message .= '<h3>Bestelldetails</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : $order_id;
-    $message .= '<tr><td style="padding:4px 0;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Status:</strong></td><td>Bezahlt</td></tr>';
+    if (!empty($order['shipping_price_id'])) {
+        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
+    }
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 12px;">Neue Bestellung eingegangen</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo Team, es ist eine neue Bestellung eingegangen.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Bestelldetails</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Status:</strong></td><td>Bezahlt</td></tr>';
+    if ($shipping_name) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Versandart:</strong></td><td>' . esc_html($shipping_name) . '</td></tr>';
+    }
     $message .= '</table>';
 
-    $message .= '<h3>Kundendaten</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<tr><td style="padding:4px 0;"><strong>Name:</strong></td><td>' . esc_html($order['customer_name']) . '</td></tr>';
-    $message .= '<tr><td style="padding:4px 0;"><strong>E-Mail:</strong></td><td>' . esc_html($order['customer_email']) . '</td></tr>';
+    $message .= $divider;
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Kundendaten</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Name:</strong></td><td>' . esc_html($order['customer_name']) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>E-Mail:</strong></td><td>' . esc_html($order['customer_email']) . '</td></tr>';
     if (!empty($order['customer_phone'])) {
-        $message .= '<tr><td style="padding:4px 0;"><strong>Telefon:</strong></td><td>' . esc_html($order['customer_phone']) . '</td></tr>';
+        $message .= '<tr><td style="padding:6px 0;"><strong>Telefon:</strong></td><td>' . esc_html($order['customer_phone']) . '</td></tr>';
     }
     if (!empty($address)) {
-        $message .= '<tr><td style="padding:4px 0;"><strong>Adresse:</strong></td><td>' . esc_html($address) . '</td></tr>';
+        $message .= '<tr><td style="padding:6px 0;"><strong>Adresse:</strong></td><td>' . esc_html($address) . '</td></tr>';
     }
     $message .= '</table>';
 
-    $items = pv_expand_order_products($order);
-    $message .= '<h3>Produktdaten</h3>';
-    $message .= '<table style="width:100%;border-collapse:collapse;">';
-    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis/Monat</th></tr></thead><tbody>';
+    $message .= $divider;
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Produktdaten</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+    $message .= '<thead><tr style="background:#F6F7FA;"><th align="left" style="padding:8px 6px;">Produkt</th><th align="left" style="padding:8px 6px;">Details</th><th align="right" style="padding:8px 6px;">Preis/Monat</th></tr></thead><tbody>';
     foreach ($items as $item) {
         $details = [];
         if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
@@ -314,35 +365,31 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
             $details[] = 'Miettage: ' . esc_html($duration_text);
         }
         $message .= '<tr>';
-        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
-        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
-        $message .= '<td style="padding:6px 4px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
+        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
+        $message .= '<td style="padding:8px 6px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
+        $message .= '<td style="padding:8px 6px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
         $message .= '</tr>';
     }
     $message .= '</tbody></table>';
-    $message .= '<p><strong>Zwischensumme:</strong> ' . esc_html($price) . '</p>';
-    $shipping_name = '';
-    if (!empty($order['shipping_price_id'])) {
-        global $wpdb;
-        $shipping_name = $wpdb->get_var($wpdb->prepare("SELECT name FROM {$wpdb->prefix}produkt_shipping_methods WHERE stripe_price_id = %s", $order['shipping_price_id']));
-    }
-    if ($order['shipping_cost'] > 0 || $shipping_name) {
-        $ship_text = $shipping_name ?: 'Versand';
-        $message .= '<p><strong>Versand:</strong> ' . esc_html($ship_text);
-        if ($order['shipping_cost'] > 0) {
-            $message .= ' - ' . esc_html($shipping);
-        }
-        $message .= '</p>';
-    }
-    $message .= '<p><strong>Gesamtsumme:</strong> ' . esc_html($total_first) . '</p>';
+
+    $message .= $divider;
+
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
+    $ship_text = $shipping_name ?: 'Versand';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
+    $message .= '</table>';
+
     $message .= '</div>';
 
-    $message .= '<p>Session-ID: ' . esc_html($session_id) . '</p>';
-    $message .= '</div>';
+    $message .= '<p style="margin:16px 0 0;font-size:12px;line-height:1.6;">Session-ID: ' . esc_html($session_id) . '</p>';
+
     $footer_html = pv_get_email_footer_html();
     if ($footer_html) {
-        $message .= $footer_html;
+        $message .= $divider . $footer_html;
     }
+
     $message .= '</div>';
     $message .= '</body></html>';
 
@@ -351,7 +398,6 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
     wp_mail(get_option('admin_email'), $subject, $message, $headers);
 }
-
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {
     global $wpdb;

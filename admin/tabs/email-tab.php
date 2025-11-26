@@ -8,6 +8,8 @@ if (isset($_POST['submit_email_settings'])) {
         'owner'        => sanitize_text_field($_POST['footer_owner'] ?? ''),
         'street'       => sanitize_text_field($_POST['footer_street'] ?? ''),
         'postal_city'  => sanitize_text_field($_POST['footer_postal_city'] ?? ''),
+        'website'      => sanitize_text_field($_POST['footer_website'] ?? ''),
+        'copyright'    => sanitize_text_field($_POST['footer_copyright'] ?? ''),
     ];
     update_option('produkt_email_footer', $footer);
 
@@ -38,7 +40,9 @@ $footer = get_option('produkt_email_footer', [
     'company' => '',
     'owner' => '',
     'street' => '',
-    'postal_city' => ''
+    'postal_city' => '',
+    'website' => '',
+    'copyright' => ''
 ]);
 
 $invoice = get_option('produkt_invoice_sender', [
@@ -90,6 +94,14 @@ $invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
                     <div class="produkt-form-group">
                         <label>PLZ &amp; Ort</label>
                         <input type="text" name="footer_postal_city" value="<?php echo esc_attr($footer['postal_city']); ?>">
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Webseite</label>
+                        <input type="text" name="footer_website" value="<?php echo esc_attr($footer['website']); ?>">
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Copyright</label>
+                        <input type="text" name="footer_copyright" value="<?php echo esc_attr($footer['copyright']); ?>">
                     </div>
                 </div>
             </div>
