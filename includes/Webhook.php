@@ -126,33 +126,37 @@ function send_produkt_welcome_email(array $order, int $order_id) {
     }
     $message .= '</table>';
 
+    $items = pv_expand_order_products($order);
     $message .= '<h3>Ihre Produktdaten</h3>';
-    $message .= '<div style="line-height:1.5;">';
-    $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
-    if (!empty($order['zustand_text'])) {
-        $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
+    $message .= '<table style="width:100%;border-collapse:collapse;">';
+    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis</th></tr></thead><tbody>';
+    foreach ($items as $item) {
+        $details = [];
+        if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
+        if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
+        if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
+        if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
+        if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+        $period_obj = (object) array_merge((array) $order, (array) $item);
+        list($sd, $ed) = pv_get_order_period($period_obj);
+        if ($sd && $ed) {
+            $details[] = 'Zeitraum: ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed)));
+        }
+        $days = pv_get_order_rental_days($period_obj);
+        $duration_text = $item->duration_name ?? ($order['dauer_text'] ?? '');
+        if ($days !== null) {
+            $details[] = 'Miettage: ' . esc_html($days);
+        } elseif (!empty($duration_text)) {
+            $details[] = 'Miettage: ' . esc_html($duration_text);
+        }
+        $message .= '<tr>';
+        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
+        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
+        $message .= '<td style="padding:6px 4px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
+        $message .= '</tr>';
     }
-    if (!empty($order['extra_text'])) {
-        $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
-    }
-    if (!empty($order['produktfarbe_text'])) {
-        $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
-    }
-    if (!empty($order['gestellfarbe_text'])) {
-        $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
-    }
-    $order_obj = (object) $order;
-    list($sd, $ed) = pv_get_order_period($order_obj);
-    if ($sd && $ed) {
-        $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
-    }
-    $days = pv_get_order_rental_days($order_obj);
-    if ($days !== null) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
-    } elseif (!empty($order['dauer_text'])) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
-    }
-    $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
+    $message .= '</tbody></table>';
+    $message .= '<p><strong>Zwischensumme:</strong> ' . esc_html($price) . '</p>';
     $shipping_name = '';
     if (!empty($order['shipping_price_id'])) {
         global $wpdb;
@@ -269,33 +273,37 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     }
     $message .= '</table>';
 
+    $items = pv_expand_order_products($order);
     $message .= '<h3>Produktdaten</h3>';
-    $message .= '<div style="line-height:1.5;">';
-    $message .= '<p><strong>Produkt:</strong> ' . esc_html($order['produkt_name']) . '</p>';
-    if (!empty($order['zustand_text'])) {
-        $message .= '<p><strong>Ausführung:</strong> ' . esc_html($order['zustand_text']) . '</p>';
+    $message .= '<table style="width:100%;border-collapse:collapse;">';
+    $message .= '<thead><tr><th align="left">Produkt</th><th align="left">Details</th><th align="right">Preis</th></tr></thead><tbody>';
+    foreach ($items as $item) {
+        $details = [];
+        if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
+        if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
+        if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
+        if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
+        if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+        $period_obj = (object) array_merge((array) $order, (array) $item);
+        list($sd,$ed) = pv_get_order_period($period_obj);
+        if ($sd && $ed) {
+            $details[] = 'Zeitraum: ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed)));
+        }
+        $days = pv_get_order_rental_days($period_obj);
+        $duration_text = $item->duration_name ?? ($order['dauer_text'] ?? '');
+        if ($days !== null) {
+            $details[] = 'Miettage: ' . esc_html($days);
+        } elseif (!empty($duration_text)) {
+            $details[] = 'Miettage: ' . esc_html($duration_text);
+        }
+        $message .= '<tr>';
+        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . esc_html($item->produkt_name) . '</td>';
+        $message .= '<td style="padding:6px 4px;vertical-align:top;">' . implode('<br>', $details) . '</td>';
+        $message .= '<td style="padding:6px 4px;vertical-align:top;text-align:right;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</td>';
+        $message .= '</tr>';
     }
-    if (!empty($order['extra_text'])) {
-        $message .= '<p><strong>Extras:</strong> ' . esc_html($order['extra_text']) . '</p>';
-    }
-    if (!empty($order['produktfarbe_text'])) {
-        $message .= '<p><strong>Farbe:</strong> ' . esc_html($order['produktfarbe_text']) . '</p>';
-    }
-    if (!empty($order['gestellfarbe_text'])) {
-        $message .= '<p><strong>Gestellfarbe:</strong> ' . esc_html($order['gestellfarbe_text']) . '</p>';
-    }
-    $order_obj = (object) $order;
-    list($sd,$ed) = pv_get_order_period($order_obj);
-    if ($sd && $ed) {
-        $message .= '<p><strong>Zeitraum:</strong> ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed))) . '</p>';
-    }
-    $days = pv_get_order_rental_days($order_obj);
-    if ($days !== null) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($days) . '</p>';
-    } elseif (!empty($order['dauer_text'])) {
-        $message .= '<p><strong>Miettage:</strong> ' . esc_html($order['dauer_text']) . '</p>';
-    }
-    $message .= '<p><strong>Preis:</strong> ' . esc_html($price) . '</p>';
+    $message .= '</tbody></table>';
+    $message .= '<p><strong>Zwischensumme:</strong> ' . esc_html($price) . '</p>';
     $shipping_name = '';
     if (!empty($order['shipping_price_id'])) {
         global $wpdb;

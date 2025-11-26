@@ -513,80 +513,157 @@ function pv_get_order_by_id($order_id) {
         return null;
     }
 
-    if (!empty($row['order_items'])) {
-        $items = json_decode($row['order_items'], true);
-        if (is_array($items)) {
-            $variant_ids   = [];
-            $duration_ids  = [];
-            $condition_ids = [];
-            $color_ids     = [];
-            $frame_ids     = [];
-            $extra_ids_all = [];
+    $row['produkte'] = pv_expand_order_products($row);
 
-            foreach ($items as $itm) {
-                $variant_ids[]   = intval($itm['variant_id'] ?? 0);
-                $duration_ids[]  = intval($itm['duration_id'] ?? 0);
-                $condition_ids[] = intval($itm['condition_id'] ?? 0);
-                $color_ids[]     = intval($itm['product_color_id'] ?? 0);
-                $frame_ids[]     = intval($itm['frame_color_id'] ?? 0);
+    return $row;
+}
 
-                $extra_raw = $itm['extra_ids'] ?? '';
-                if (is_array($extra_raw)) {
-                    $extra_ids_all = array_merge($extra_ids_all, array_map('intval', $extra_raw));
-                } elseif (!empty($extra_raw)) {
-                    $extra_ids_all = array_merge($extra_ids_all, array_map('intval', explode(',', $extra_raw)));
-                }
-            }
+/**
+ * Retrieve an order by Stripe session id including expanded products.
+ *
+ * @param string $session_id
+ * @return array|null
+ */
+function pv_get_order_by_session_id($session_id) {
+    global $wpdb;
 
-            $variant_map = pv_get_name_map($wpdb->prefix . 'produkt_variants', $variant_ids);
-            $duration_map = pv_get_name_map($wpdb->prefix . 'produkt_durations', $duration_ids);
-            $condition_map = pv_get_name_map($wpdb->prefix . 'produkt_conditions', $condition_ids);
-            $color_map = pv_get_name_map($wpdb->prefix . 'produkt_colors', $color_ids);
-            $frame_map = pv_get_name_map($wpdb->prefix . 'produkt_colors', $frame_ids);
-            $extras_map = pv_get_name_map($wpdb->prefix . 'produkt_extras', $extra_ids_all);
+    $sql = $wpdb->prepare(
+        "SELECT o.*, c.name AS category_name,
+                COALESCE(v.name, o.produkt_name) AS variant_name,
+                COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                sm.name AS shipping_name
+         FROM {$wpdb->prefix}produkt_orders o
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+         LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+         LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+         LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+            ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
+         WHERE o.stripe_session_id = %s
+         GROUP BY o.id
+         ORDER BY o.id DESC LIMIT 1",
+        $session_id
+    );
 
-            $produkte = [];
-            foreach ($items as $itm) {
-                $extra_raw = $itm['extra_ids'] ?? '';
-                $extra_ids = [];
-                if (is_array($extra_raw)) {
-                    $extra_ids = array_filter(array_map('intval', $extra_raw));
-                } elseif (!empty($extra_raw)) {
-                    $extra_ids = array_filter(array_map('intval', explode(',', $extra_raw)));
-                }
+    $row = $wpdb->get_row($sql, ARRAY_A);
+    if (!$row) {
+        return null;
+    }
 
-                $extra_names = [];
-                foreach ($extra_ids as $exid) {
-                    if (isset($extras_map[$exid])) {
-                        $extra_names[] = $extras_map[$exid];
-                    }
-                }
+    $row['produkte'] = pv_expand_order_products($row);
+    return $row;
+}
 
-                $variant_id  = intval($itm['variant_id'] ?? 0);
-                $category_id = intval($itm['category_id'] ?? $row['category_id'] ?? 0);
+/**
+ * Expand serialized order items into product objects with resolved names and images.
+ *
+ * @param array|object $row Order row data
+ * @return array
+ */
+function pv_expand_order_products($row) {
+    global $wpdb;
 
-                $produkte[] = (object) [
-                    'produkt_name'      => $itm['metadata']['produkt'] ?? $row['produkt_name'] ?? '',
-                    'variant_name'      => $variant_map[$variant_id] ?? '',
-                    'extra_names'       => implode(', ', $extra_names),
-                    'duration_name'     => $duration_map[intval($itm['duration_id'] ?? 0)] ?? ($itm['metadata']['dauer_name'] ?? $row['duration_name'] ?? ''),
-                    'condition_name'    => $condition_map[intval($itm['condition_id'] ?? 0)] ?? ($itm['metadata']['zustand'] ?? ''),
-                    'product_color_name'=> $color_map[intval($itm['product_color_id'] ?? 0)] ?? ($itm['metadata']['produktfarbe'] ?? ''),
-                    'frame_color_name'  => $frame_map[intval($itm['frame_color_id'] ?? 0)] ?? ($itm['metadata']['gestellfarbe'] ?? ''),
-                    'weekend_tariff'    => !empty($itm['weekend_tariff']) ? 1 : 0,
-                    'final_price'       => floatval($itm['final_price'] ?? 0),
-                    'start_date'        => $itm['start_date'] ?? null,
-                    'end_date'          => $itm['end_date'] ?? null,
-                    'image_url'         => pv_get_image_url_by_variant_or_category($variant_id, $category_id),
-                    'category_id'       => $category_id,
-                ];
-            }
+    $row_arr = is_object($row) ? (array) $row : (array) $row;
 
-            $row['produkte'] = $produkte;
+    $items = [];
+    if (!empty($row_arr['order_items'])) {
+        $decoded = json_decode($row_arr['order_items'], true);
+        if (is_array($decoded)) {
+            $items = $decoded;
         }
     }
 
-    return $row;
+    if (empty($items)) {
+        $items[] = [
+            'category_id'      => $row_arr['category_id'] ?? 0,
+            'variant_id'       => $row_arr['variant_id'] ?? 0,
+            'extra_ids'        => $row_arr['extra_ids'] ?? '',
+            'duration_id'      => $row_arr['duration_id'] ?? 0,
+            'condition_id'     => $row_arr['condition_id'] ?? 0,
+            'product_color_id' => $row_arr['product_color_id'] ?? 0,
+            'frame_color_id'   => $row_arr['frame_color_id'] ?? 0,
+            'final_price'      => $row_arr['final_price'] ?? 0,
+            'start_date'       => $row_arr['start_date'] ?? null,
+            'end_date'         => $row_arr['end_date'] ?? null,
+            'weekend_tariff'   => $row_arr['weekend_tariff'] ?? 0,
+            'metadata'         => [
+                'produkt'      => $row_arr['produkt_name'] ?? '',
+                'extra'        => $row_arr['extra_text'] ?? '',
+                'dauer_name'   => $row_arr['dauer_text'] ?? '',
+                'zustand'      => $row_arr['zustand_text'] ?? '',
+                'produktfarbe' => $row_arr['produktfarbe_text'] ?? '',
+                'gestellfarbe' => $row_arr['gestellfarbe_text'] ?? '',
+            ],
+        ];
+    }
+
+    $variant_ids   = [];
+    $duration_ids  = [];
+    $condition_ids = [];
+    $color_ids     = [];
+    $frame_ids     = [];
+    $extra_ids_all = [];
+
+    foreach ($items as $itm) {
+        $variant_ids[]   = intval($itm['variant_id'] ?? 0);
+        $duration_ids[]  = intval($itm['duration_id'] ?? 0);
+        $condition_ids[] = intval($itm['condition_id'] ?? 0);
+        $color_ids[]     = intval($itm['product_color_id'] ?? 0);
+        $frame_ids[]     = intval($itm['frame_color_id'] ?? 0);
+
+        $extra_raw = $itm['extra_ids'] ?? '';
+        if (is_array($extra_raw)) {
+            $extra_ids_all = array_merge($extra_ids_all, array_map('intval', $extra_raw));
+        } elseif (!empty($extra_raw)) {
+            $extra_ids_all = array_merge($extra_ids_all, array_map('intval', explode(',', $extra_raw)));
+        }
+    }
+
+    $variant_map   = pv_get_name_map($wpdb->prefix . 'produkt_variants', $variant_ids);
+    $duration_map  = pv_get_name_map($wpdb->prefix . 'produkt_durations', $duration_ids);
+    $condition_map = pv_get_name_map($wpdb->prefix . 'produkt_conditions', $condition_ids);
+    $color_map     = pv_get_name_map($wpdb->prefix . 'produkt_colors', $color_ids);
+    $frame_map     = pv_get_name_map($wpdb->prefix . 'produkt_colors', $frame_ids);
+    $extras_map    = pv_get_name_map($wpdb->prefix . 'produkt_extras', $extra_ids_all);
+
+    $produkte = [];
+    foreach ($items as $itm) {
+        $extra_raw = $itm['extra_ids'] ?? '';
+        $extra_ids = [];
+        if (is_array($extra_raw)) {
+            $extra_ids = array_filter(array_map('intval', $extra_raw));
+        } elseif (!empty($extra_raw)) {
+            $extra_ids = array_filter(array_map('intval', explode(',', $extra_raw)));
+        }
+
+        $extra_names = [];
+        foreach ($extra_ids as $exid) {
+            if (isset($extras_map[$exid])) {
+                $extra_names[] = $extras_map[$exid];
+            }
+        }
+
+        $variant_id  = intval($itm['variant_id'] ?? 0);
+        $category_id = intval($itm['category_id'] ?? $row_arr['category_id'] ?? 0);
+
+        $produkte[] = (object) [
+            'produkt_name'       => $itm['metadata']['produkt'] ?? ($row_arr['category_name'] ?? $row_arr['produkt_name'] ?? ''),
+            'variant_name'       => $variant_map[$variant_id] ?? ($row_arr['variant_name'] ?? ''),
+            'extra_names'        => implode(', ', $extra_names),
+            'duration_name'      => $duration_map[intval($itm['duration_id'] ?? 0)] ?? ($itm['metadata']['dauer_name'] ?? $row_arr['duration_name'] ?? ''),
+            'condition_name'     => $condition_map[intval($itm['condition_id'] ?? 0)] ?? ($itm['metadata']['zustand'] ?? ''),
+            'product_color_name' => $color_map[intval($itm['product_color_id'] ?? 0)] ?? ($itm['metadata']['produktfarbe'] ?? ''),
+            'frame_color_name'   => $frame_map[intval($itm['frame_color_id'] ?? 0)] ?? ($itm['metadata']['gestellfarbe'] ?? ''),
+            'weekend_tariff'     => !empty($itm['weekend_tariff']) ? 1 : 0,
+            'final_price'        => floatval($itm['final_price'] ?? 0),
+            'start_date'         => $itm['start_date'] ?? ($row_arr['start_date'] ?? null),
+            'end_date'           => $itm['end_date'] ?? ($row_arr['end_date'] ?? null),
+            'image_url'          => pv_get_image_url_by_variant_or_category($variant_id, $category_id),
+            'category_id'        => $category_id,
+            'duration_id'        => intval($itm['duration_id'] ?? 0),
+        ];
+    }
+
+    return $produkte;
 }
 
 function pv_get_name_map($table, $ids) {

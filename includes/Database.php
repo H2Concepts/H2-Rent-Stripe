@@ -2063,6 +2063,8 @@ class Database {
     public static function get_due_returns() {
         global $wpdb;
 
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
         $mode = get_option('produkt_betriebsmodus', 'miete');
 
         if ($mode === 'kauf') {
@@ -2099,11 +2101,28 @@ class Database {
 
         $orders = $orders ?: [];
 
+        $expanded_orders = [];
         foreach ($orders as $o) {
             self::ensure_return_pending_log((int) $o->id);
+
+            $products = pv_expand_order_products($o);
+            if (empty($products)) {
+                $expanded_orders[] = $o;
+                continue;
+            }
+
+            foreach ($products as $p) {
+                $clone = clone $o;
+                $clone->category_name = $p->produkt_name ?? $o->category_name;
+                $clone->variant_name  = $p->variant_name ?? $o->variant_name;
+                $clone->extra_names   = $p->extra_names ?? $o->extra_names;
+                $clone->start_date    = $p->start_date ?? $o->start_date;
+                $clone->end_date      = $p->end_date ?? $o->end_date;
+                $expanded_orders[]    = $clone;
+            }
         }
 
-        return $orders;
+        return $expanded_orders;
     }
 
     /**

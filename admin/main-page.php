@@ -2,6 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 global $wpdb;
+require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
 
 // Rückgabe bestätigen (wenn Button gedrückt)
 if (isset($_POST['confirm_return_id'])) {
@@ -40,6 +41,19 @@ $orders = $wpdb->get_results("
     ORDER BY o.created_at DESC
     LIMIT 5
 ");
+
+foreach ($orders as $order_item) {
+    if (!empty($order_item->order_items)) {
+        $expanded = pv_expand_order_products($order_item);
+        if (!empty($expanded)) {
+            $names = [];
+            foreach ($expanded as $p) {
+                $names[] = trim($p->produkt_name . ($p->variant_name ? ' (' . $p->variant_name . ')' : ''));
+            }
+            $order_item->produkt_name = implode(', ', array_filter($names));
+        }
+    }
+}
 
 // Rückgaben abrufen (fällige Rückgaben, noch nicht bestätigt)
 $return_orders = \ProduktVerleih\Database::get_due_returns();
