@@ -87,7 +87,7 @@ foreach ($content_blocks as $b) {
     <?php elseif (!empty($category_slug)): ?>
         <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
     <?php else: ?>
-        <h1>Shop</h1>
+        <h2>Shop</h2>
     <?php endif; ?>
 
 
