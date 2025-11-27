@@ -73,6 +73,7 @@
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
     <h1>Kundenkonto</h1>
     <?php if (!empty($message)) { echo $message; } ?>
+    <?php if ($is_sale) : ?>
         <div class="account-layout">
             <aside class="account-sidebar shop-category-list">
                 <h2>Hallo <?php echo esc_html($full_name); ?></h2>
@@ -86,7 +87,6 @@
                 </ul>
             </aside>
             <div>
-        <?php if ($is_sale) : ?>
             <?php if (!empty($sale_orders)) : ?>
                 <?php $first = $sale_orders[0]; ?>
                 <div class="abo-row">
@@ -137,47 +137,50 @@
             <?php else : ?>
                 <p>Keine Bestellungen.</p>
             <?php endif; ?>
-        <?php else : ?>
-            <?php if (!empty($subscriptions)) : ?>
-                <?php foreach ($subscriptions as $sub) : ?>
-                    <?php
+            </div>
+        </div>
+    <?php else : ?>
+        <?php
+            $active_subscriptions = !empty($subscriptions) ? array_filter($subscriptions) : [];
+            $active_count         = is_array($active_subscriptions) ? count($active_subscriptions) : 0;
+
+            $monthly_total = 0.0;
+            if (!empty($active_subscriptions)) {
+                foreach ($active_subscriptions as $sub) {
                     $order = $order_map[$sub['subscription_id']] ?? null;
-                    if (!$order) {
-                        continue;
+                    if ($order && isset($order->final_price)) {
+                        $monthly_total += max(0.0, (float) $order->final_price);
                     }
-                    $product_name = $order->produkt_name ?? $sub['subscription_id'];
-                    $start_ts = strtotime($sub['start_date']);
-                    $start_formatted = date_i18n('d.m.Y', $start_ts);
-                    $laufzeit_in_monaten = pv_get_minimum_duration_months($order);
-                    $cancelable_ts            = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
-                    $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
-                    $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
-                    $cancelable               = time() >= $kuendigungsfenster_ts;
-                    $is_extended              = time() > $cancelable_ts;
+                }
+            }
 
-                    $period_end_ts   = null;
-                    $period_end_date = '';
-                    if (!empty($sub['current_period_end'])) {
-                        $period_end_ts   = strtotime($sub['current_period_end']);
-                        $period_end_date = date_i18n('d.m.Y', $period_end_ts);
-                    }
-
-                    $variant_id = $order->variant_id ?? 0;
-                    $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
-
-                    $address = '';
-                    if (!empty($order->customer_street) && !empty($order->customer_postal) && !empty($order->customer_city)) {
-                        $address = esc_html(trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city));
-                    }
-                    ?>
-                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-subscription.php'; ?>
-                <?php endforeach; ?>
-            <?php else : ?>
-                <p>Keine aktiven Abos.</p>
-            <?php endif; ?>
-        <?php endif; ?>
-
+            $monthly_total_formatted = number_format($monthly_total, 2, ',', '.');
+            $user_id                 = get_current_user_id();
+            $ref_seed                = $user_id ? $user_id . wp_get_current_user()->user_email : 'customer';
+            $invite_code             = 'FREUND-' . strtoupper(substr(md5($ref_seed), 0, 6));
+        ?>
+        <div class="account-dashboard-grid">
+            <div class="account-dashboard-card">
+                <div class="card-title">Aktive Abos</div>
+                <div class="card-metric"><?php echo esc_html($active_count); ?></div>
+                <button type="button" class="card-button" aria-disabled="true">Abos ansehen</button>
+            </div>
+            <div class="account-dashboard-card">
+                <div class="card-title">Summe pro Monat</div>
+                <div class="card-metric"><?php echo esc_html($monthly_total_formatted); ?>€</div>
+                <button type="button" class="card-button" aria-disabled="true">Alle Rechnungen</button>
+            </div>
+            <div class="account-dashboard-card">
+                <div class="card-title">Freunde einladen</div>
+                <div class="card-code"><?php echo esc_html($invite_code); ?></div>
+                <button type="button" class="card-button" aria-disabled="true">Code kopieren</button>
+            </div>
+            <div class="account-dashboard-card">
+                <div class="card-title">Logout</div>
+                <div class="card-helper">Beende deine Sitzung sicher.</div>
+                <a class="card-button card-button-link" href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Jetzt ausloggen</a>
             </div>
         </div>
     <?php endif; ?>
 </div>
+<?php endif; ?>
