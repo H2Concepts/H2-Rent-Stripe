@@ -424,7 +424,46 @@ class Plugin {
                     ['code' => $code, 'expires' => $expires]
                 );
 
-                $headers    = ['Content-Type: text/plain; charset=UTF-8'];
+                $site_title     = get_bloginfo('name');
+                $logo_url       = get_option('plugin_firma_logo_url', '');
+                $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                $account_url     = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+                $divider         = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+                $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+                $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+                }
+
+                $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Login-Code für dein Kundenkonto</h1>';
+
+                $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+                $message .= '<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Gebe den Code zum Einloggen im Kundenkonto ein:</p>';
+                $message .= '<div style="text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;padding:14px;border:1px solid #E6E8ED;border-radius:12px;background:#F6F7FA;">' . esc_html($code) . '</div>';
+                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">Nutze diesen Code um die Verifizierung auf der Webseite abzuschließen.<br><br>Gib diesen Code bitte nicht weiter. Mitarbeiter von LittleLoopa werden dich niemals bitten, diesen Code per Telefon oder SMS zu bestätigen.<br><br>Dieser Code ist nun für 15 Minuten gültig.</p>';
+                $message .= '</div>';
+
+                $message .= '<div style="text-align:center;margin:22px 0 8px;">';
+                $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:16px 40px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:16px;">Zum Kundenkonto</a>';
+                $message .= '</div>';
+
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin:26px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
+                }
+
+                $message .= $divider;
+
+                $footer_html = function_exists('pv_get_email_footer_html') ? pv_get_email_footer_html() : '';
+                if ($footer_html) {
+                    $message .= $footer_html;
+                }
+
+                $message .= '</div>';
+                $message .= '</body></html>';
+
+                $headers    = ['Content-Type: text/html; charset=UTF-8'];
                 $from_name  = get_bloginfo('name');
                 $from_email = get_option('admin_email');
                 $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
@@ -432,7 +471,7 @@ class Plugin {
                 wp_mail(
                     $email,
                     'Ihr Login-Code',
-                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten.",
+                    $message,
                     $headers
                 );
                 $message        = '<p>Login-Code gesendet.</p>';
