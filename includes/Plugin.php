@@ -442,15 +442,11 @@ class Plugin {
                 $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
                 $message .= '<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Gebe den Code zum Einloggen im Kundenkonto ein:</p>';
                 $message .= '<div style="text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;padding:14px;border:1px solid #E6E8ED;border-radius:12px;background:#F6F7FA;">' . esc_html($code) . '</div>';
-                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">Nutze diesen Code um die Verifizierung auf der Webseite abzuschließen.<br><br>Gib diesen Code bitte nicht weiter. Mitarbeiter von LittleLoopa werden dich niemals bitten, diesen Code per Telefon oder SMS zu bestätigen.<br><br>Dieser Code ist nun für 15 Minuten gültig.</p>';
-                $message .= '</div>';
-
-                $message .= '<div style="text-align:center;margin:22px 0 8px;">';
-                $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:16px 40px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:16px;">Zum Kundenkonto</a>';
+                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">Nutze diesen Code um die Verifizierung auf der Webseite abzuschließen.<br><br>Gib diesen Code bitte nicht weiter. Mitarbeiter von ' . esc_html($site_title) . ' werden dich niemals bitten, diesen Code per Telefon oder SMS zu bestätigen.<br><br><strong>Dieser Code ist nun für 15 Minuten gültig.</strong></p>';
                 $message .= '</div>';
 
                 if ($logo_url) {
-                    $message .= '<div style="text-align:center;margin:26px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
+                    $message .= '<div style="text-align:center;margin:30px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
                 }
 
                 $message .= $divider;
