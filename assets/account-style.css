@@ -14,10 +14,9 @@
 }
 
 .account-dashboard-card {
-    background: #fff;
+    background: #e8e8e8;
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -26,17 +25,15 @@
 }
 
 .card-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
     color: #111;
-    letter-spacing: 0.2px;
 }
 
 .card-metric {
-    font-size: 36px;
+    font-size: 50px;
     font-weight: 700;
     color: #000;
-    margin-top: auto;
 }
 
 .card-code {
@@ -59,10 +56,12 @@
 }
 
 .card-button {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     text-align: center;
-    padding: 12px 16px;
+    padding: 20px 16px;
     background: #000;
     color: #fff;
     border: none;
@@ -71,6 +70,7 @@
     font-size: 15px;
     cursor: default;
     text-decoration: none;
+    margin-top: auto;
 }
 
 .card-button-link {
@@ -82,6 +82,153 @@
 }
 
 .account-dashboard-card .card-button:hover {
+    background: #1a1a1a;
+}
+
+.account-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0 20px;
+}
+
+.account-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #e8e8e8;
+    color: #000;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.account-back-link:hover {
+    background: #dcdcdc;
+}
+
+.subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.subscription-card {
+    grid-column: 1 / -1;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    text-decoration: none;
+    color: #000;
+    border: 1px solid #e3e3e3;
+}
+
+.subscription-card:hover {
+    border-color: #000;
+}
+
+.subscription-thumb {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #f2f2f2;
+}
+
+.subscription-card-body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 16px;
+    width: 100%;
+}
+
+.subscription-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.subscription-price {
+    font-size: 18px;
+    font-weight: 700;
+    align-self: start;
+}
+
+.subscription-meta {
+    grid-column: 1 / 2;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.subscription-meta .status-badge {
+    margin: 2px 0;
+    align-self: flex-start;
+}
+
+.subscription-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.subscription-detail-card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid #e3e3e3;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.subscription-detail-card h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.subscription-detail-card p {
+    margin: 2px 0;
+}
+
+.subscription-wide-card {
+    grid-column: 1 / -1;
+}
+
+.pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+}
+
+.pill-badge.success {
+    background: #d4edda;
+    color: #1b5e20;
+}
+
+.cancel-button {
+    background: #c9c9c9;
+    color: #555;
+    cursor: not-allowed;
+}
+
+.cancel-button.is-active {
+    background: #000;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cancel-button.is-active:hover {
     background: #1a1a1a;
 }
 img.wp-smiley, img.emoji {

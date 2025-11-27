@@ -144,6 +144,11 @@
             $active_subscriptions = !empty($subscriptions) ? array_filter($subscriptions) : [];
             $active_count         = is_array($active_subscriptions) ? count($active_subscriptions) : 0;
 
+            $view             = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'overview';
+            $selected_sub_id  = isset($_GET['subscription']) ? sanitize_text_field($_GET['subscription']) : '';
+            $overview_url     = remove_query_arg(['view', 'subscription']);
+            $subscriptions_url = add_query_arg('view', 'abos', $overview_url);
+
             $monthly_total = 0.0;
             if (!empty($active_subscriptions)) {
                 foreach ($active_subscriptions as $sub) {
@@ -158,29 +163,142 @@
             $user_id                 = get_current_user_id();
             $ref_seed                = $user_id ? $user_id . wp_get_current_user()->user_email : 'customer';
             $invite_code             = 'FREUND-' . strtoupper(substr(md5($ref_seed), 0, 6));
+
+            $selected_order = null;
+            if ($selected_sub_id) {
+                $selected_order = $order_map[$selected_sub_id] ?? null;
+            }
         ?>
-        <div class="account-dashboard-grid">
-            <div class="account-dashboard-card">
-                <div class="card-title">Aktive Abos</div>
-                <div class="card-metric"><?php echo esc_html($active_count); ?></div>
-                <button type="button" class="card-button" aria-disabled="true">Abos ansehen</button>
+        <?php if ($view === 'abos' && !$selected_sub_id) : ?>
+            <div class="account-section-header">
+                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
+                <h2>Meine Abos</h2>
             </div>
-            <div class="account-dashboard-card">
-                <div class="card-title">Summe pro Monat</div>
-                <div class="card-metric"><?php echo esc_html($monthly_total_formatted); ?>€</div>
-                <button type="button" class="card-button" aria-disabled="true">Alle Rechnungen</button>
+            <div class="subscription-grid">
+                <?php if (!empty($active_subscriptions)) : ?>
+                    <?php foreach ($active_subscriptions as $sub) : ?>
+                        <?php
+                            $order      = $order_map[$sub['subscription_id']] ?? null;
+                            $variant_id = $order ? ($order->variant_id ?? 0) : 0;
+                            $category_id = $order ? ($order->category_id ?? 0) : 0;
+                            $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+                            $product    = $order ? ($order->variant_name ?? $order->product_title ?? $order->produkt_name ?? ($order->category_name ?? 'Produkt')) : 'Produkt';
+                            $order_date = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
+                            $duration   = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
+                            $payments   = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
+                            $monthly    = number_format($payments['monthly_amount'] ?? 0, 2, ',', '.') . ' €';
+                            $min_months = $order ? pv_get_minimum_duration_months($order) : 0;
+                            $min_label  = $min_months ? $min_months . ' Monate' : '';
+                            $detail_url = add_query_arg(
+                                [
+                                    'view'         => 'abo-detail',
+                                    'subscription' => $sub['subscription_id'],
+                                ],
+                                $overview_url
+                            );
+                        ?>
+                        <a class="subscription-card" href="<?php echo esc_url($detail_url); ?>">
+                            <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                            <div class="subscription-card-body">
+                                <div class="subscription-card-title"><?php echo esc_html($product); ?></div>
+                                <div class="subscription-price"><?php echo esc_html($monthly); ?></div>
+                                <div class="subscription-meta">
+                                    <span class="pill-badge success">ABO AKTIV</span>
+                                    <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
+                                    <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
+                                    <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                                </div>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <p>Keine aktiven Abos vorhanden.</p>
+                <?php endif; ?>
             </div>
-            <div class="account-dashboard-card">
-                <div class="card-title">Freunde einladen</div>
-                <div class="card-code"><?php echo esc_html($invite_code); ?></div>
-                <button type="button" class="card-button" aria-disabled="true">Code kopieren</button>
+        <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
+            <?php
+                $product      = $selected_order->variant_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->category_name ?? 'Produkt');
+                $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
+                $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
+                $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : 'Mindestlaufzeit');
+                $condition    = $selected_order->condition_name ?? $selected_order->zustand_text ?? '';
+                $color        = $selected_order->product_color_name ?? $selected_order->produktfarbe_text ?? '';
+                $variant      = $selected_order->variant_name ?? '';
+                $payments     = pv_calculate_rental_payments($selected_order);
+                $monthly      = number_format($payments['monthly_amount'], 2, ',', '.') . ' €';
+
+                $start_date_raw = pv_get_order_start_date($selected_order);
+                $start_date_raw = $start_date_raw ?: (!empty($selected_order->created_at) ? date('Y-m-d', strtotime($selected_order->created_at)) : '');
+                $start_ts       = $start_date_raw ? strtotime($start_date_raw) : current_time('timestamp');
+                $min_months     = pv_get_minimum_duration_months($selected_order);
+                $min_end_ts     = strtotime('+' . $min_months . ' months', $start_ts);
+                $min_end_date   = date_i18n('d.m.Y', $min_end_ts);
+                $cancel_ready_ts = strtotime('-14 days', $min_end_ts);
+                $cancel_ready    = current_time('timestamp') >= $cancel_ready_ts;
+                $cancel_open_date = date_i18n('d.m.Y', $cancel_ready_ts);
+            ?>
+            <div class="account-section-header">
+                <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
+                <h2><?php echo esc_html($product); ?></h2>
             </div>
-            <div class="account-dashboard-card">
-                <div class="card-title">Logout</div>
-                <div class="card-helper">Beende deine Sitzung sicher.</div>
-                <a class="card-button card-button-link" href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Jetzt ausloggen</a>
+            <div class="subscription-detail-grid">
+                <div class="subscription-detail-card">
+                    <h3>Bestellt</h3>
+                    <p><strong>Bestelldatum:</strong><br><?php echo esc_html($order_date); ?></p>
+                    <p><strong>Bestellnummer:</strong><br><?php echo esc_html($order_number); ?></p>
+                </div>
+                <div class="subscription-detail-card">
+                    <h3>Produkt</h3>
+                    <p><strong>Produkt:</strong><br><?php echo esc_html($product); ?></p>
+                    <?php if (!empty($variant)) : ?><p><strong>Ausführung:</strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
+                    <?php if (!empty($condition)) : ?><p><strong>Zustand:</strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
+                    <?php if (!empty($color)) : ?><p><strong>Farbe:</strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
+                </div>
+                <div class="subscription-detail-card">
+                    <h3>Ende der Mindestlaufzeit</h3>
+                    <p><strong>Datum:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                </div>
+                <div class="subscription-detail-card">
+                    <h3>Kündigung</h3>
+                    <form method="post">
+                        <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
+                        <input type="hidden" name="subscription_id" value="<?php echo esc_attr($selected_sub_id); ?>">
+                        <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo $cancel_ready ? '' : 'disabled'; ?>>Jetzt kündigen</button>
+                    </form>
+                    <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
+                </div>
+                <div class="subscription-detail-card subscription-wide-card">
+                    <h3>Abodetails</h3>
+                    <p><strong>Mindestlaufzeit:</strong><br><?php echo esc_html($min_months . ' Monate'); ?></p>
+                    <p><strong>Monatlicher Mietpreis:</strong><br><?php echo esc_html($monthly); ?></p>
+                    <p><strong>Ende der Mindestlaufzeit:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                    <p><strong>Datum für Kündigung:</strong><br><?php echo esc_html($cancel_open_date); ?></p>
+                </div>
             </div>
-        </div>
+        <?php else : ?>
+            <div class="account-dashboard-grid">
+                <div class="account-dashboard-card">
+                    <div class="card-title">Aktive Abos</div>
+                    <div class="card-metric"><?php echo esc_html($active_count); ?></div>
+                    <a class="card-button card-button-link" href="<?php echo esc_url($subscriptions_url); ?>">Abos ansehen</a>
+                </div>
+                <div class="account-dashboard-card">
+                    <div class="card-title">Summe pro Monat</div>
+                    <div class="card-metric"><?php echo esc_html($monthly_total_formatted); ?>€</div>
+                    <button type="button" class="card-button" aria-disabled="true">Alle Rechnungen</button>
+                </div>
+                <div class="account-dashboard-card">
+                    <div class="card-title">Freunde einladen</div>
+                    <div class="card-code"><?php echo esc_html($invite_code); ?></div>
+                    <button type="button" class="card-button" aria-disabled="true">Code kopieren</button>
+                </div>
+                <div class="account-dashboard-card">
+                    <div class="card-title">Logout</div>
+                    <div class="card-helper">Beende deine Sitzung sicher.</div>
+                    <a class="card-button card-button-link" href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Jetzt ausloggen</a>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
 <?php endif; ?>
