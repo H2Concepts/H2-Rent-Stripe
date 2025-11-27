@@ -424,24 +424,45 @@ function pv_generate_preliminary_order_number() {
  */
 function pv_get_email_footer_html() {
     $footer = get_option('produkt_email_footer', []);
-    $parts = [];
+    $lines = [];
+
     if (!empty($footer['company'])) {
-        $parts[] = esc_html($footer['company']);
+        $lines[] = esc_html($footer['company']);
     }
     if (!empty($footer['owner'])) {
-        $parts[] = esc_html($footer['owner']);
+        $lines[] = esc_html($footer['owner']);
     }
     if (!empty($footer['street'])) {
-        $parts[] = esc_html($footer['street']);
+        $lines[] = esc_html($footer['street']);
     }
     if (!empty($footer['postal_city'])) {
-        $parts[] = esc_html($footer['postal_city']);
+        $lines[] = esc_html($footer['postal_city']);
     }
-    if (!$parts) {
+
+    $website   = !empty($footer['website']) ? esc_url($footer['website']) : '';
+    $copyright = !empty($footer['copyright']) ? esc_html($footer['copyright']) : '';
+
+    if (!$lines && !$website && !$copyright) {
         return '';
     }
-    return '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">'
-        . implode('<br>', $parts) . '</div>';
+
+    $content = '<div style="padding:20px;text-align:center;background:#F6F7FA;color:#000;font-size:12px;line-height:1.6;">';
+
+    if ($lines) {
+        $content .= '<div>' . implode('<br>', $lines) . '</div>';
+    }
+
+    if ($website) {
+        $content .= '<div style="margin-top:8px;"><a href="' . $website . '" style="color:#000;text-decoration:none;">' . esc_html($footer['website']) . '</a></div>';
+    }
+
+    if ($copyright) {
+        $content .= '<div style="margin-top:8px;">' . $copyright . '</div>';
+    }
+
+    $content .= '</div>';
+
+    return $content;
 }
 
 /**
