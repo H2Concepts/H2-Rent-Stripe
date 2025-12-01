@@ -151,9 +151,19 @@
             $subscriptions_url  = add_query_arg('view', 'abos', $overview_url);
 
             $monthly_total = 0.0;
+            if (is_array($active_subscriptions) && count($active_subscriptions) === 1) {
+                $sole_sub_id = trim((string) ($active_subscriptions[0]['subscription_id'] ?? ''));
+                if ($sole_sub_id !== '' && empty($order_map[$sole_sub_id]) && !empty($rental_orders)) {
+                    foreach ($rental_orders as $rental_order) {
+                        $order_map[$sole_sub_id][] = $rental_order;
+                    }
+                }
+            }
+
             if (!empty($active_subscriptions)) {
                 foreach ($active_subscriptions as $sub) {
-                    $orders_for_sub = $order_map[$sub['subscription_id']] ?? [];
+                    $sub_id        = trim((string) ($sub['subscription_id'] ?? ''));
+                    $orders_for_sub = $order_map[$sub_id] ?? [];
                     if (!is_array($orders_for_sub)) {
                         $orders_for_sub = [$orders_for_sub];
                     }
@@ -172,6 +182,8 @@
             $invite_code             = 'FREUND-' . strtoupper(substr(md5($ref_seed), 0, 6));
 
             $selected_order = null;
+            $selected_sub_id = trim((string) $selected_sub_id);
+
             if ($selected_sub_id) {
                 $orders_for_selected = $order_map[$selected_sub_id] ?? [];
                 if (!is_array($orders_for_selected)) {
@@ -201,7 +213,8 @@
                 <?php if (!empty($active_subscriptions)) : ?>
                     <?php foreach ($active_subscriptions as $sub) : ?>
                         <?php
-                            $orders_for_sub = $order_map[$sub['subscription_id']] ?? [];
+                            $sub_id        = trim((string) ($sub['subscription_id'] ?? ''));
+                            $orders_for_sub = $order_map[$sub_id] ?? [];
                             if (!is_array($orders_for_sub)) {
                                 $orders_for_sub = [$orders_for_sub];
                             }

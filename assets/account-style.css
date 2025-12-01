@@ -88,7 +88,7 @@
 .account-section-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     margin: 10px 0 20px;
 }
 
@@ -99,6 +99,11 @@
     border-radius: 12px;
     text-decoration: none !important;
     font-weight: 400;
+}
+
+.account-section-header h4 {
+    margin: 0;
+    align-self: center;
 }
 
 .subscription-grid {

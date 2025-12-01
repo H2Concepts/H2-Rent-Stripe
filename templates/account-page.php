@@ -47,20 +47,29 @@ if (is_user_logged_in()) {
         }
     }
 
-    foreach ($orders as $o) {
-        if (($o->status ?? '') !== 'abgeschlossen') {
-            continue;
-        }
-        if (!empty($o->subscription_id)) {
-            if (!isset($order_map[$o->subscription_id])) {
-                $order_map[$o->subscription_id] = [];
-            }
-            $order_map[$o->subscription_id][] = $o;
-        }
-        if ($o->mode === 'kauf') {
-            $sale_orders[] = $o;
-        }
+$rental_orders = [];
+
+foreach ($orders as $o) {
+    if (($o->status ?? '') !== 'abgeschlossen') {
+        continue;
     }
+
+    if (($o->mode ?? '') === 'miete') {
+        $rental_orders[] = $o;
+    }
+
+    $sub_id = isset($o->subscription_id) ? trim((string) $o->subscription_id) : '';
+    if ($sub_id !== '') {
+        if (!isset($order_map[$sub_id])) {
+            $order_map[$sub_id] = [];
+        }
+        $order_map[$sub_id][] = $o;
+    }
+
+    if ($o->mode === 'kauf') {
+        $sale_orders[] = $o;
+    }
+}
 
     $customer_id = Database::get_stripe_customer_id_for_user($user_id);
     if ($customer_id) {
