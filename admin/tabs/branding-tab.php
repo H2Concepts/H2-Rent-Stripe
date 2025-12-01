@@ -19,6 +19,10 @@ if (isset($_POST['submit_branding'])) {
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
     $account_card_bg = sanitize_hex_color($_POST['account_card_bg']);
     $account_card_text = sanitize_hex_color($_POST['account_card_text']);
+    $account_button_bg = sanitize_hex_color($_POST['account_button_bg']);
+    $account_button_hover_bg = sanitize_hex_color($_POST['account_button_hover_bg']);
+    $account_button_text = sanitize_hex_color($_POST['account_button_text']);
+    $account_button_hover_text = sanitize_hex_color($_POST['account_button_hover_text']);
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
@@ -46,6 +50,10 @@ if (isset($_POST['submit_branding'])) {
         'filter_button_color' => $filter_button_color,
         'account_card_bg' => $account_card_bg,
         'account_card_text' => $account_card_text,
+        'account_button_bg' => $account_button_bg,
+        'account_button_hover_bg' => $account_button_hover_bg,
+        'account_button_text' => $account_button_text,
+        'account_button_hover_text' => $account_button_hover_text,
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
         'product_padding' => $product_padding,
@@ -228,6 +236,50 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $account_card_text; ?>" class="produkt-color-input">
                         </div>
                         <small>Textfarbe für Karten im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Farbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_bg = esc_attr($branding['account_button_bg'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_bg; ?>;"></div>
+                            <input type="text" name="account_button_bg" value="<?php echo $account_button_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Primäre Button-Farbe im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button Hover-Farbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_hover_bg = esc_attr($branding['account_button_hover_bg'] ?? '#1a1a1a'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_hover_bg; ?>;"></div>
+                            <input type="text" name="account_button_hover_bg" value="<?php echo $account_button_hover_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_hover_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hover-Farbe der Buttons im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Textfarbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_text = esc_attr($branding['account_button_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_text; ?>;"></div>
+                            <input type="text" name="account_button_text" value="<?php echo $account_button_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe der Buttons im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Text Hover-Farbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_hover_text = esc_attr($branding['account_button_hover_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_hover_text; ?>;"></div>
+                            <input type="text" name="account_button_hover_text" value="<?php echo $account_button_hover_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_hover_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe bei Hover auf Buttons im Kundenkonto</small>
                     </div>
 
                     <div class="produkt-form-group">

@@ -9,6 +9,10 @@
 :root {
     --produkt-account-card-bg: #e8e8e8;
     --produkt-account-card-text: #000;
+    --produkt-account-button-bg: #000;
+    --produkt-account-button-hover-bg: #1a1a1a;
+    --produkt-account-button-text: #fff;
+    --produkt-account-button-hover-text: #fff;
 }
 
 .account-dashboard-grid {
@@ -68,27 +72,30 @@
     width: 100%;
     text-align: center;
     padding: 20px 16px;
-    background: #000;
-    color: #fff;
+    background: var(--produkt-account-button-bg, #000);
+    color: var(--produkt-account-button-text, #fff);
     border: none;
     border-radius: 10px;
     font-weight: 600;
     font-size: 15px;
     cursor: default;
-    text-decoration: none;
+    text-decoration: none !important;
     margin-top: auto;
 }
 
 .card-button-link {
     cursor: pointer;
+    text-decoration: none !important;
 }
 
 .card-button[aria-disabled="true"] {
     opacity: 0.85;
 }
 
-.account-dashboard-card .card-button:hover {
-    background: #1a1a1a;
+.card-button:hover {
+    background: var(--produkt-account-button-hover-bg, #1a1a1a);
+    color: var(--produkt-account-button-hover-text, #fff);
+    text-decoration: none !important;
 }
 
 .account-section-header {
@@ -231,13 +238,14 @@
 }
 
 .cancel-button.is-active {
-    background: #000;
-    color: #fff;
+    background: var(--produkt-account-button-bg, #000);
+    color: var(--produkt-account-button-text, #fff);
     cursor: pointer;
 }
 
 .cancel-button.is-active:hover {
-    background: #1a1a1a;
+    background: var(--produkt-account-button-hover-bg, #1a1a1a);
+    color: var(--produkt-account-button-hover-text, #fff);
 }
 img.wp-smiley, img.emoji {
     height: 1em;

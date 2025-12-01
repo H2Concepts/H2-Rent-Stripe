@@ -232,6 +232,10 @@ class Admin {
                 $login_text   = $branding['login_text_color'] ?? '#1f1f1f';
                 $card_bg      = $branding['account_card_bg'] ?? '#e8e8e8';
                 $card_text    = $branding['account_card_text'] ?? '#000000';
+                $btn_bg       = $branding['account_button_bg'] ?? '#000000';
+                $btn_hover_bg = $branding['account_button_hover_bg'] ?? '#1a1a1a';
+                $btn_text     = $branding['account_button_text'] ?? '#ffffff';
+                $btn_hover_text = $branding['account_button_hover_text'] ?? '#ffffff';
                 $inline_css   = '';
 
                 if ($login_layout === 'split') {
@@ -247,8 +251,15 @@ class Admin {
                     $inline_css .= ':root{--produkt-login-text:' . esc_attr($login_text) . ';}';
                 }
 
-                if ($card_bg || $card_text) {
-                    $inline_css .= ':root{--produkt-account-card-bg:' . esc_attr($card_bg ?: '#e8e8e8') . ';--produkt-account-card-text:' . esc_attr($card_text ?: '#000000') . ';}';
+                if ($card_bg || $card_text || $btn_bg || $btn_hover_bg || $btn_text || $btn_hover_text) {
+                    $inline_css .= ':root{'
+                        . '--produkt-account-card-bg:' . esc_attr($card_bg ?: '#e8e8e8') . ';'
+                        . '--produkt-account-card-text:' . esc_attr($card_text ?: '#000000') . ';'
+                        . '--produkt-account-button-bg:' . esc_attr($btn_bg ?: '#000000') . ';'
+                        . '--produkt-account-button-hover-bg:' . esc_attr($btn_hover_bg ?: '#1a1a1a') . ';'
+                        . '--produkt-account-button-text:' . esc_attr($btn_text ?: '#ffffff') . ';'
+                        . '--produkt-account-button-hover-text:' . esc_attr($btn_hover_text ?: '#ffffff') . ';'
+                        . '}';
                 }
 
                 if ($inline_css) {
