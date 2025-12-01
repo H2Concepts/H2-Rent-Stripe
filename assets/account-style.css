@@ -89,6 +89,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    width: 100%;
     margin: 10px 0 20px;
 }
 
@@ -175,15 +176,15 @@
 
 .subscription-detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 16px;
 }
 
 .subscription-detail-card {
-    background: #ffffff;
+    background: #e8e8e8;
     border-radius: 16px;
     padding: 20px;
-    border: 1px solid #e3e3e3;
+    border: none;
     display: flex;
     flex-direction: column;
     gap: 8px;

@@ -258,7 +258,7 @@
             </div>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
             <?php
-                $product      = $selected_order->category_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->variant_name ?? 'Produkt');
+                $product      = $selected_order->produkt_name ?? $selected_order->category_name ?? $selected_order->product_title ?? ($selected_order->variant_name ?? 'Produkt');
                 $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
                 $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
                 $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : 'Mindestlaufzeit');
@@ -279,6 +279,7 @@
                 $cancel_open_date = date_i18n('d.m.Y', $cancel_ready_ts);
                 $selected_meta   = $subscription_lookup[$selected_sub_id] ?? [];
                 $cancel_sub_id   = $selected_meta['subscription_id'] ?? $selected_sub_id;
+                $cancel_label    = $cancel_ready ? 'Jetzt kündigen' : 'Nicht möglich';
             ?>
             <div class="account-section-header">
                 <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
@@ -306,7 +307,7 @@
                     <form method="post">
                         <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
                         <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
-                        <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>>Jetzt kündigen</button>
+                        <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>><?php echo esc_html($cancel_label); ?></button>
                     </form>
                     <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
                 </div>
