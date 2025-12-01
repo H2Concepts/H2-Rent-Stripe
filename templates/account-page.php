@@ -23,12 +23,13 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 }
 
 
-$orders        = [];
-$sale_orders   = [];
-$order_map     = [];
-$subscriptions = [];
-$full_name     = '';
-$customer_addr = '';
+$orders          = [];
+$sale_orders     = [];
+$order_map       = [];
+$subscriptions   = [];
+$full_name       = '';
+$customer_addr   = '';
+$subscription_map = [];
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -56,14 +57,43 @@ foreach ($orders as $o) {
 
     if (($o->mode ?? '') === 'miete') {
         $rental_orders[] = $o;
-    }
 
-    $sub_id = isset($o->subscription_id) ? trim((string) $o->subscription_id) : '';
-    if ($sub_id !== '') {
-        if (!isset($order_map[$sub_id])) {
-            $order_map[$sub_id] = [];
+        $produkte = pv_expand_order_products($o);
+        foreach ($produkte as $idx => $prod) {
+            $base_sub_id = isset($o->subscription_id) ? trim((string) $o->subscription_id) : '';
+            $sub_key     = $base_sub_id !== '' ? ($base_sub_id . '-' . $idx) : ('order-' . $o->id . '-' . $idx);
+
+            $item_data = (object) array_merge((array) $o, [
+                'category_name'      => $prod->produkt_name,
+                'variant_name'       => $prod->variant_name,
+                'duration_name'      => $prod->duration_name,
+                'condition_name'     => $prod->condition_name,
+                'product_color_name' => $prod->product_color_name,
+                'frame_color_name'   => $prod->frame_color_name ?? '',
+                'final_price'        => $prod->final_price,
+                'start_date'         => $prod->start_date ?? ($o->start_date ?? null),
+                'end_date'           => $prod->end_date ?? ($o->end_date ?? null),
+                'image_url'          => $prod->image_url,
+                'variant_id'         => $prod->variant_id ?? 0,
+                'category_id'        => $prod->category_id ?? 0,
+                'duration_id'        => $prod->duration_id ?? 0,
+                'product_index'      => $idx,
+            ]);
+
+            if (!isset($order_map[$sub_key])) {
+                $order_map[$sub_key] = [];
+            }
+            $order_map[$sub_key][] = $item_data;
+
+            if (!isset($subscription_map[$sub_key])) {
+                $subscription_map[$sub_key] = [
+                    'subscription_key' => $sub_key,
+                    'subscription_id'  => $base_sub_id,
+                    'status'           => $o->status ?? '',
+                    'start_date'       => $item_data->start_date ?? '',
+                ];
+            }
         }
-        $order_map[$sub_id][] = $o;
     }
 
     if ($o->mode === 'kauf') {
@@ -75,10 +105,24 @@ foreach ($orders as $o) {
     if ($customer_id) {
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
         if (!is_wp_error($subs)) {
-            $subscriptions = $subs;
+            foreach ($subs as $sub) {
+                $base_id = trim((string) ($sub['subscription_id'] ?? ''));
+                if ($base_id === '') {
+                    continue;
+                }
+
+                foreach ($subscription_map as $key => $meta) {
+                    if (strpos($key, $base_id) === 0) {
+                        $subscription_map[$key]['status']     = $sub['status'] ?? ($meta['status'] ?? 'active');
+                        $subscription_map[$key]['start_date'] = $sub['start_date'] ?? ($meta['start_date'] ?? '');
+                    }
+                }
+            }
         }
 
     }
+
+    $subscriptions = array_values($subscription_map);
 
     foreach ($orders as $o) {
         if (!empty($o->customer_name)) {

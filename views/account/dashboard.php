@@ -143,6 +143,12 @@
         <?php
             $active_subscriptions = !empty($subscriptions) ? array_filter($subscriptions) : [];
             $active_count         = is_array($active_subscriptions) ? count($active_subscriptions) : 0;
+            $subscription_lookup  = [];
+            foreach ($active_subscriptions as $sub_meta) {
+                if (!empty($sub_meta['subscription_key'])) {
+                    $subscription_lookup[$sub_meta['subscription_key']] = $sub_meta;
+                }
+            }
 
             $view               = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'overview';
             $selected_sub_id    = isset($_GET['subscription']) ? sanitize_text_field($_GET['subscription']) : '';
@@ -151,18 +157,10 @@
             $subscriptions_url  = add_query_arg('view', 'abos', $overview_url);
 
             $monthly_total = 0.0;
-            if (is_array($active_subscriptions) && count($active_subscriptions) === 1) {
-                $sole_sub_id = trim((string) ($active_subscriptions[0]['subscription_id'] ?? ''));
-                if ($sole_sub_id !== '' && empty($order_map[$sole_sub_id]) && !empty($rental_orders)) {
-                    foreach ($rental_orders as $rental_order) {
-                        $order_map[$sole_sub_id][] = $rental_order;
-                    }
-                }
-            }
 
             if (!empty($active_subscriptions)) {
                 foreach ($active_subscriptions as $sub) {
-                    $sub_id        = trim((string) ($sub['subscription_id'] ?? ''));
+                    $sub_id         = trim((string) ($sub['subscription_key'] ?? ''));
                     $orders_for_sub = $order_map[$sub_id] ?? [];
                     if (!is_array($orders_for_sub)) {
                         $orders_for_sub = [$orders_for_sub];
@@ -213,7 +211,7 @@
                 <?php if (!empty($active_subscriptions)) : ?>
                     <?php foreach ($active_subscriptions as $sub) : ?>
                         <?php
-                            $sub_id        = trim((string) ($sub['subscription_id'] ?? ''));
+                            $sub_id         = trim((string) ($sub['subscription_key'] ?? ''));
                             $orders_for_sub = $order_map[$sub_id] ?? [];
                             if (!is_array($orders_for_sub)) {
                                 $orders_for_sub = [$orders_for_sub];
@@ -234,7 +232,7 @@
                                 $detail_url  = add_query_arg(
                                     [
                                         'view'         => 'abo-detail',
-                                        'subscription' => $sub['subscription_id'],
+                                        'subscription' => $sub_id,
                                         'order'        => $order->id ?? '',
                                     ],
                                     $overview_url
@@ -279,6 +277,8 @@
                 $cancel_ready_ts = strtotime('-14 days', $min_end_ts);
                 $cancel_ready    = current_time('timestamp') >= $cancel_ready_ts;
                 $cancel_open_date = date_i18n('d.m.Y', $cancel_ready_ts);
+                $selected_meta   = $subscription_lookup[$selected_sub_id] ?? [];
+                $cancel_sub_id   = $selected_meta['subscription_id'] ?? $selected_sub_id;
             ?>
             <div class="account-section-header">
                 <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
@@ -305,8 +305,8 @@
                     <h3>Kündigung</h3>
                     <form method="post">
                         <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
-                        <input type="hidden" name="subscription_id" value="<?php echo esc_attr($selected_sub_id); ?>">
-                        <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo $cancel_ready ? '' : 'disabled'; ?>>Jetzt kündigen</button>
+                        <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
+                        <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>>Jetzt kündigen</button>
                     </form>
                     <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
                 </div>
