@@ -17,6 +17,8 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $account_card_bg = sanitize_hex_color($_POST['account_card_bg']);
+    $account_card_text = sanitize_hex_color($_POST['account_card_text']);
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
@@ -42,6 +44,8 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'account_card_bg' => $account_card_bg,
+        'account_card_text' => $account_card_text,
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
         'product_padding' => $product_padding,
@@ -202,6 +206,28 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $front_text_color; ?>" class="produkt-color-input">
                         </div>
                         <small>Farbe für Preis- und Hinweistexte</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Karten-Hintergrund (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_card_bg = esc_attr($branding['account_card_bg'] ?? '#e8e8e8'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_card_bg; ?>;"></div>
+                            <input type="text" name="account_card_bg" value="<?php echo $account_card_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_card_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hintergrundfarbe für Karten im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Karten-Textfarbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_card_text = esc_attr($branding['account_card_text'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_card_text; ?>;"></div>
+                            <input type="text" name="account_card_text" value="<?php echo $account_card_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_card_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe für Karten im Kundenkonto</small>
                     </div>
 
                     <div class="produkt-form-group">

@@ -230,6 +230,8 @@ class Admin {
                 $login_layout = $branding['login_layout'] ?? 'classic';
                 $primary      = $branding['admin_color_primary'] ?? '#5f7f5f';
                 $login_text   = $branding['login_text_color'] ?? '#1f1f1f';
+                $card_bg      = $branding['account_card_bg'] ?? '#e8e8e8';
+                $card_text    = $branding['account_card_text'] ?? '#000000';
                 $inline_css   = '';
 
                 if ($login_layout === 'split') {
@@ -243,6 +245,10 @@ class Admin {
 
                 if ($inline_css === '' && $login_layout === 'split' && $login_text) {
                     $inline_css .= ':root{--produkt-login-text:' . esc_attr($login_text) . ';}';
+                }
+
+                if ($card_bg || $card_text) {
+                    $inline_css .= ':root{--produkt-account-card-bg:' . esc_attr($card_bg ?: '#e8e8e8') . ';--produkt-account-card-text:' . esc_attr($card_text ?: '#000000') . ';}';
                 }
 
                 if ($inline_css) {

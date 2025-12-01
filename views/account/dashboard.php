@@ -222,7 +222,8 @@
                                 $variant_id  = $order ? ($order->variant_id ?? 0) : 0;
                                 $category_id = $order ? ($order->category_id ?? 0) : 0;
                                 $image_url   = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
-                                $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? ($order->variant_name ?? 'Produkt')) : 'Produkt';
+                                $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
+                                $product     = $product ?: ($order ? ($order->variant_name ?? 'Produkt') : 'Produkt');
                                 $order_date  = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
                                 $duration    = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
                                 $payments    = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
@@ -258,7 +259,8 @@
             </div>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
             <?php
-                $product      = $selected_order->produkt_name ?? $selected_order->category_name ?? $selected_order->product_title ?? ($selected_order->variant_name ?? 'Produkt');
+                $product      = $selected_order->category_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->category_title ?? '');
+                $product      = $product ?: ($selected_order->variant_name ?? 'Produkt');
                 $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
                 $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
                 $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : 'Mindestlaufzeit');
@@ -287,23 +289,23 @@
             </div>
             <div class="subscription-detail-grid">
                 <div class="subscription-detail-card">
-                    <h3>Bestellt</h3>
+                    <div class="card-title">Bestellt</div>
                     <p><strong>Bestelldatum:</strong><br><?php echo esc_html($order_date); ?></p>
                     <p><strong>Bestellnummer:</strong><br><?php echo esc_html($order_number); ?></p>
                 </div>
                 <div class="subscription-detail-card">
-                    <h3>Produkt</h3>
+                    <div class="card-title">Produkt</div>
                     <p><strong>Produkt:</strong><br><?php echo esc_html($product); ?></p>
                     <?php if (!empty($variant)) : ?><p><strong>Ausführung:</strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
                     <?php if (!empty($condition)) : ?><p><strong>Zustand:</strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
                     <?php if (!empty($color)) : ?><p><strong>Farbe:</strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
                 </div>
                 <div class="subscription-detail-card">
-                    <h3>Ende der Mindestlaufzeit</h3>
+                    <div class="card-title">Ende Mindestlaufzeit</div>
                     <p><strong>Datum:</strong><br><?php echo esc_html($min_end_date); ?></p>
                 </div>
                 <div class="subscription-detail-card">
-                    <h3>Kündigung</h3>
+                    <div class="card-title">Kündigung</div>
                     <form method="post">
                         <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
                         <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
@@ -312,10 +314,10 @@
                     <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
                 </div>
                 <div class="subscription-detail-card subscription-wide-card">
-                    <h3>Abodetails</h3>
+                    <div class="card-title">Abodetails</div>
                     <p><strong>Mindestlaufzeit:</strong><br><?php echo esc_html($min_months . ' Monate'); ?></p>
                     <p><strong>Monatlicher Mietpreis:</strong><br><?php echo esc_html($monthly); ?></p>
-                    <p><strong>Ende der Mindestlaufzeit:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                    <p><strong>Ende Mindestlaufzeit:</strong><br><?php echo esc_html($min_end_date); ?></p>
                     <p><strong>Datum für Kündigung:</strong><br><?php echo esc_html($cancel_open_date); ?></p>
                 </div>
             </div>

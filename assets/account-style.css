@@ -6,6 +6,11 @@
     border-radius: 1rem;
 }
 
+:root {
+    --produkt-account-card-bg: #e8e8e8;
+    --produkt-account-card-text: #000;
+}
+
 .account-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -14,7 +19,7 @@
 }
 
 .account-dashboard-card {
-    background: #e8e8e8;
+    background: var(--produkt-account-card-bg, #e8e8e8);
     border-radius: 16px;
     padding: 20px;
     display: flex;
@@ -22,12 +27,13 @@
     gap: 12px;
     justify-content: space-between;
     aspect-ratio: 1 / 1;
+    color: var(--produkt-account-card-text, #000);
 }
 
 .card-title {
     font-size: 18px;
     font-weight: 700;
-    color: #111;
+    color: var(--produkt-account-card-text, #111);
 }
 
 .card-metric {
@@ -115,14 +121,14 @@
 
 .subscription-card {
     grid-column: 1 / -1;
-    background: #e8e8e8;
+    background: var(--produkt-account-card-bg, #e8e8e8);
     border-radius: 16px;
     padding: 20px;
     display: flex;
     gap: 16px;
     align-items: stretch;
     text-decoration: none !important;
-    color: #000;
+    color: var(--produkt-account-card-text, #000);
     border: none;
 }
 
@@ -181,19 +187,18 @@
 }
 
 .subscription-detail-card {
-    background: #e8e8e8;
+    background: var(--produkt-account-card-bg, #e8e8e8);
     border-radius: 16px;
     padding: 20px;
     border: none;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    color: var(--produkt-account-card-text, #000);
 }
 
-.subscription-detail-card h3 {
+.subscription-detail-card .card-title {
     margin: 0 0 6px;
-    font-size: 16px;
-    font-weight: 700;
 }
 
 .subscription-detail-card p {
