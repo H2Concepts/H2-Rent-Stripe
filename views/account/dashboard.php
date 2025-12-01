@@ -144,17 +144,24 @@
             $active_subscriptions = !empty($subscriptions) ? array_filter($subscriptions) : [];
             $active_count         = is_array($active_subscriptions) ? count($active_subscriptions) : 0;
 
-            $view             = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'overview';
-            $selected_sub_id  = isset($_GET['subscription']) ? sanitize_text_field($_GET['subscription']) : '';
-            $overview_url     = remove_query_arg(['view', 'subscription']);
-            $subscriptions_url = add_query_arg('view', 'abos', $overview_url);
+            $view               = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'overview';
+            $selected_sub_id    = isset($_GET['subscription']) ? sanitize_text_field($_GET['subscription']) : '';
+            $selected_order_id  = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : '';
+            $overview_url       = remove_query_arg(['view', 'subscription', 'order']);
+            $subscriptions_url  = add_query_arg('view', 'abos', $overview_url);
 
             $monthly_total = 0.0;
             if (!empty($active_subscriptions)) {
                 foreach ($active_subscriptions as $sub) {
-                    $order = $order_map[$sub['subscription_id']] ?? null;
-                    if ($order && isset($order->final_price)) {
-                        $monthly_total += max(0.0, (float) $order->final_price);
+                    $orders_for_sub = $order_map[$sub['subscription_id']] ?? [];
+                    if (!is_array($orders_for_sub)) {
+                        $orders_for_sub = [$orders_for_sub];
+                    }
+
+                    foreach ($orders_for_sub as $order) {
+                        if ($order && isset($order->final_price)) {
+                            $monthly_total += max(0.0, (float) $order->final_price);
+                        }
                     }
                 }
             }
@@ -166,50 +173,73 @@
 
             $selected_order = null;
             if ($selected_sub_id) {
-                $selected_order = $order_map[$selected_sub_id] ?? null;
+                $orders_for_selected = $order_map[$selected_sub_id] ?? [];
+                if (!is_array($orders_for_selected)) {
+                    $orders_for_selected = [$orders_for_selected];
+                }
+
+                if ($selected_order_id) {
+                    foreach ($orders_for_selected as $order_item) {
+                        if ((string) ($order_item->id ?? '') === (string) $selected_order_id) {
+                            $selected_order = $order_item;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$selected_order && !empty($orders_for_selected)) {
+                    $selected_order = $orders_for_selected[0];
+                }
             }
         ?>
         <?php if ($view === 'abos' && !$selected_sub_id) : ?>
             <div class="account-section-header">
                 <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
-                <h2>Meine Abos</h2>
+                <h4>Meine Abos</h4>
             </div>
             <div class="subscription-grid">
                 <?php if (!empty($active_subscriptions)) : ?>
                     <?php foreach ($active_subscriptions as $sub) : ?>
                         <?php
-                            $order      = $order_map[$sub['subscription_id']] ?? null;
-                            $variant_id = $order ? ($order->variant_id ?? 0) : 0;
-                            $category_id = $order ? ($order->category_id ?? 0) : 0;
-                            $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
-                            $product    = $order ? ($order->variant_name ?? $order->product_title ?? $order->produkt_name ?? ($order->category_name ?? 'Produkt')) : 'Produkt';
-                            $order_date = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
-                            $duration   = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
-                            $payments   = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
-                            $monthly    = number_format($payments['monthly_amount'] ?? 0, 2, ',', '.') . ' €';
-                            $min_months = $order ? pv_get_minimum_duration_months($order) : 0;
-                            $min_label  = $min_months ? $min_months . ' Monate' : '';
-                            $detail_url = add_query_arg(
-                                [
-                                    'view'         => 'abo-detail',
-                                    'subscription' => $sub['subscription_id'],
-                                ],
-                                $overview_url
-                            );
+                            $orders_for_sub = $order_map[$sub['subscription_id']] ?? [];
+                            if (!is_array($orders_for_sub)) {
+                                $orders_for_sub = [$orders_for_sub];
+                            }
                         ?>
-                        <a class="subscription-card" href="<?php echo esc_url($detail_url); ?>">
-                            <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
-                            <div class="subscription-card-body">
-                                <div class="subscription-card-title"><?php echo esc_html($product); ?></div>
-                                <div class="subscription-price"><?php echo esc_html($monthly); ?></div>
-                                <div class="subscription-meta">
-                                    <span class="pill-badge success">ABO AKTIV</span>
-                                    <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
-                                    <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
-                                    <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                        <?php foreach ($orders_for_sub as $order) : ?>
+                            <?php
+                                $variant_id  = $order ? ($order->variant_id ?? 0) : 0;
+                                $category_id = $order ? ($order->category_id ?? 0) : 0;
+                                $image_url   = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+                                $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? ($order->variant_name ?? 'Produkt')) : 'Produkt';
+                                $order_date  = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
+                                $duration    = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
+                                $payments    = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
+                                $monthly     = number_format($payments['monthly_amount'] ?? 0, 2, ',', '.') . ' €';
+                                $min_months  = $order ? pv_get_minimum_duration_months($order) : 0;
+                                $min_label   = $min_months ? $min_months . ' Monate' : '';
+                                $detail_url  = add_query_arg(
+                                    [
+                                        'view'         => 'abo-detail',
+                                        'subscription' => $sub['subscription_id'],
+                                        'order'        => $order->id ?? '',
+                                    ],
+                                    $overview_url
+                                );
+                            ?>
+                            <a class="subscription-card" href="<?php echo esc_url($detail_url); ?>">
+                                <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                                <div class="subscription-card-body">
+                                    <div class="subscription-card-title"><?php echo esc_html($product); ?></div>
+                                    <div class="subscription-meta">
+                                        <span class="pill-badge success">ABO AKTIV</span>
+                                        <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
+                                        <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
+                                        <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                                    </div>
                                 </div>
-                            </div>
-                        </a>
+                            </a>
+                        <?php endforeach; ?>
                     <?php endforeach; ?>
                 <?php else : ?>
                     <p>Keine aktiven Abos vorhanden.</p>
@@ -217,7 +247,7 @@
             </div>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
             <?php
-                $product      = $selected_order->variant_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->category_name ?? 'Produkt');
+                $product      = $selected_order->category_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->variant_name ?? 'Produkt');
                 $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
                 $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
                 $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : 'Mindestlaufzeit');
@@ -239,7 +269,7 @@
             ?>
             <div class="account-section-header">
                 <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
-                <h2><?php echo esc_html($product); ?></h2>
+                <h4><?php echo esc_html($product); ?></h4>
             </div>
             <div class="subscription-detail-grid">
                 <div class="subscription-detail-card">

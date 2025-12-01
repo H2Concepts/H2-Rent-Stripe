@@ -52,7 +52,10 @@ if (is_user_logged_in()) {
             continue;
         }
         if (!empty($o->subscription_id)) {
-            $order_map[$o->subscription_id] = $o;
+            if (!isset($order_map[$o->subscription_id])) {
+                $order_map[$o->subscription_id] = [];
+            }
+            $order_map[$o->subscription_id][] = $o;
         }
         if ($o->mode === 'kauf') {
             $sale_orders[] = $o;
