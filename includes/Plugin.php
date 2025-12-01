@@ -434,7 +434,7 @@ class Plugin {
                 $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
 
                 if ($logo_url) {
-                    $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+                    $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
                 }
 
                 $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Login-Code für dein Kundenkonto</h1>';
@@ -446,7 +446,7 @@ class Plugin {
                 $message .= '</div>';
 
                 if ($logo_url) {
-                    $message .= '<div style="text-align:center;margin:30px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
+                    $message .= '<div style="text-align:center;margin:30px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:70px;max-width:100%;height:auto;"></div>';
                 }
 
                 $message .= $divider;
