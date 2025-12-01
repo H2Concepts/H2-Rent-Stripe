@@ -71,7 +71,7 @@
 <?php endif; ?>
 <?php else : ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
-    <h1>Kundenkonto</h1>
+    <h1>Mein Konto</h1>
     <?php if (!empty($message)) { echo $message; } ?>
     <?php if ($is_sale) : ?>
         <div class="account-layout">
