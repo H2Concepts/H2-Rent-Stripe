@@ -542,6 +542,7 @@ jQuery(document).ready(function($) {
         if (selectedProductColor) params.set('product_color_id', selectedProductColor);
         if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
         if (selectedSalePrice) params.set('final_price', selectedSalePrice);
+        params.set('sale_mode', '1');
 
         const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
         const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
