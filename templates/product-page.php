@@ -443,6 +443,9 @@ if ($price_layout !== 'sidebar') {
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
                              data-weekend-price="<?php echo esc_attr($variant->weekend_price ?? 0); ?>"
+                             data-sale-enabled="<?php echo esc_attr($variant->sale_enabled ?? 0); ?>"
+                             data-sale-price-id="<?php echo esc_attr($variant->stripe_price_id_sale ?? ''); ?>"
+                             data-sale-price="<?php echo esc_attr($variant->verkaufspreis_einmalig ?? 0); ?>"
                              data-images="<?php echo esc_attr(json_encode(array(
                                  $variant->image_url_1 ?? '',
                                  $variant->image_url_2 ?? '',
@@ -517,6 +520,8 @@ if ($price_layout !== 'sidebar') {
                         <div class="produkt-option" data-type="extra" data-id="<?php echo esc_attr($extra->id); ?>"
                              data-extra-image="<?php echo esc_attr($extra->image_url ?? ''); ?>"
                              data-price-id="<?php echo esc_attr($pid); ?>"
+                             data-sale-price-id="<?php echo esc_attr($extra->stripe_price_id_sale ?? ''); ?>"
+                             data-rent-price-id="<?php echo esc_attr($extra->stripe_price_id_rent ?? ''); ?>"
                              data-available="<?php echo intval($extra->available ?? 1) ? 'true' : 'false'; ?>"
                              data-stock="<?php echo intval($extra->stock_available); ?>">
                             <div class="produkt-option-content">
@@ -709,6 +714,9 @@ if ($price_layout !== 'sidebar') {
                             <img src="<?php echo esc_url($button_icon); ?>" alt="Button Icon" class="produkt-button-icon-img">
                         <?php endif; ?>
                         <span><?php echo esc_html($button_text); ?></span>
+                    </button>
+                    <button id="produkt-direct-buy-button" type="button" class="produkt-direct-buy-button" style="display:none;">
+                        <span>oder direkt kaufen</span>
                     </button>
                     <p class="produkt-button-help" id="produkt-button-help">
                         Bitte treffen Sie alle Auswahlen um fortzufahren

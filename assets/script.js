@@ -16,6 +16,9 @@ jQuery(document).ready(function($) {
     let currentPrice = 0;
     let currentShippingCost = 0;
     let currentPriceId = '';
+    let selectedSalePriceId = '';
+    let selectedSalePrice = 0;
+    let selectedVariantSaleEnabled = false;
     let shippingPriceId = '';
     let shippingProvider = '';
     let startDate = null;
@@ -194,6 +197,8 @@ jQuery(document).ready(function($) {
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
 
+    updateDirectBuyButton();
+
     function resetAllSelections() {
         selectedVariant = null;
         selectedExtras = [];
@@ -201,6 +206,9 @@ jQuery(document).ready(function($) {
         selectedCondition = null;
         selectedProductColor = null;
         selectedFrameColor = null;
+        selectedSalePriceId = '';
+        selectedSalePrice = 0;
+        selectedVariantSaleEnabled = false;
         startDate = null;
         endDate = null;
         selectedDays = 0;
@@ -216,6 +224,32 @@ jQuery(document).ready(function($) {
 
         updateExtraImage(null);
         updateColorImage(null);
+    }
+
+    function canDirectBuy() {
+        const requiredSelections = [];
+        if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
+        if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
+            requiredSelections.push(selectedCondition);
+        }
+        if ($('#product-color-section').is(':visible') && $('.produkt-options.product-colors .produkt-option').length > 0) {
+            requiredSelections.push(selectedProductColor);
+        }
+        if ($('#frame-color-section').is(':visible') && $('.produkt-options.frame-colors .produkt-option').length > 0) {
+            requiredSelections.push(selectedFrameColor);
+        }
+        return requiredSelections.every(selection => selection !== null && selection !== false);
+    }
+
+    function updateDirectBuyButton() {
+        const saleReady = selectedVariantSaleEnabled && selectedSalePriceId;
+        const showButton = saleReady;
+        if (showButton) {
+            const canBuy = canDirectBuy();
+            $('#produkt-direct-buy-button').show().prop('disabled', !canBuy);
+        } else {
+            $('#produkt-direct-buy-button').hide().prop('disabled', true);
+        }
     }
 
     // Initialize mobile sticky price bar only on small screens
@@ -276,6 +310,9 @@ jQuery(document).ready(function($) {
         // Update selection variables
         if (type === 'variant') {
             selectedVariant = id;
+            selectedSalePriceId = $(this).data('sale-price-id') ? $(this).data('sale-price-id').toString() : '';
+            selectedSalePrice = parseFloat($(this).data('sale-price')) || 0;
+            selectedVariantSaleEnabled = $(this).data('sale-enabled') == 1 || $(this).data('sale-enabled') === true || $(this).data('sale-enabled') === '1';
             variantWeekendOnly = $(this).data('weekend') == 1;
             variantMinDays = parseInt($(this).data('min-days'),10) || 0;
             produkt_ajax.variant_weekend_only = variantWeekendOnly;
@@ -340,6 +377,7 @@ jQuery(document).ready(function($) {
 
         // Update price and button state
         updatePriceAndButton();
+        updateDirectBuyButton();
     });
 
      // Handle rent button click -> redirect with parameters
@@ -469,6 +507,64 @@ jQuery(document).ready(function($) {
                 $('#checkout-login-modal').css('display', 'flex');
                 $('body').addClass('produkt-popup-open');
             }
+        }
+    });
+
+    $('#produkt-direct-buy-button').on('click', function(e) {
+        if ($(this).prop('disabled') || !selectedSalePriceId) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
+            .map(function(){
+                const salePid = $(this).data('sale-price-id');
+                const basePid = $(this).data('price-id');
+                return salePid || basePid;
+            })
+            .get()
+            .filter(id => id);
+
+        const params = new URLSearchParams();
+        params.set('price_id', selectedSalePriceId);
+        if (extraPriceIds.length) {
+            params.set('extra_price_ids', extraPriceIds.join(','));
+        }
+        if (shippingPriceId) {
+            params.set('shipping_price_id', shippingPriceId);
+        }
+        if (currentCategoryId) {
+            params.set('category_id', currentCategoryId);
+        }
+        if (selectedVariant) params.set('variant_id', selectedVariant);
+        if (selectedCondition) params.set('condition_id', selectedCondition);
+        if (selectedProductColor) params.set('product_color_id', selectedProductColor);
+        if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
+        if (selectedSalePrice) params.set('final_price', selectedSalePrice);
+
+        const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+        const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
+            .map(function(){ return $(this).text().trim(); })
+            .get().join(', ');
+        const zustandName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+        const produktfarbeName = $('.produkt-option[data-type="product-color"].selected').data('color-name');
+        const gestellfarbeName = $('.produkt-option[data-type="frame-color"].selected').data('color-name');
+
+        if (produktName) params.set('produkt', produktName);
+        if (extraNames) params.set('extra', extraNames);
+        if (zustandName) params.set('zustand', zustandName);
+        if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
+        if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+
+        const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
+
+        if (produkt_ajax.is_logged_in) {
+            window.location.href = targetUrl;
+        } else {
+            pendingCheckoutUrl = targetUrl;
+            $('#checkout-login-modal').css('display', 'flex');
+            $('body').addClass('produkt-popup-open');
         }
     });
 
@@ -1063,6 +1159,7 @@ jQuery(document).ready(function($) {
                         }
                         $('#produkt-rent-button span').text(label);
                         $('.produkt-mobile-button span').text(label);
+                        updateDirectBuyButton();
                     }
                 },
                 error: function() {
@@ -1098,6 +1195,7 @@ jQuery(document).ready(function($) {
             }
             $('#produkt-rent-button span').text(label);
             $('.produkt-mobile-button span').text(label);
+            updateDirectBuyButton();
         }
     }
 

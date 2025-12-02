@@ -885,6 +885,31 @@ img.wp-smiley, img.emoji {
     filter: brightness(0) saturate(100%) invert(73%) sepia(6%) saturate(519%) hue-rotate(179deg) brightness(88%) contrast(92%);
 }
 
+.produkt-direct-buy-button {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.9rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid var(--produkt-button-bg);
+    background: #fff;
+    color: var(--produkt-button-bg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.produkt-direct-buy-button:hover:enabled {
+    background: var(--produkt-button-bg);
+    color: #fff;
+}
+
+.produkt-direct-buy-button:disabled {
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    background: #f9fafb;
+    cursor: not-allowed;
+}
+
 .produkt-button-icon {
     font-size: 1.25rem;
     filter: brightness(0) saturate(100%) invert(95%) sepia(0%) saturate(7500%) hue-rotate(112deg) brightness(107%) contrast(97%);
