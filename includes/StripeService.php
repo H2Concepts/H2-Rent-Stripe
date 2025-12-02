@@ -357,7 +357,6 @@ class StripeService {
             $invoices = \Stripe\Invoice::all([
                 'customer' => $customer_id,
                 'limit'    => $limit,
-                'status'   => 'paid',
                 'expand'   => ['data.lines'],
             ]);
 
@@ -382,6 +381,8 @@ class StripeService {
                     'period_end'   => $period_end,
                     'amount_total' => $invoice->total ?? 0,
                     'currency'     => isset($invoice->currency) ? strtoupper($invoice->currency) : '',
+                    'status'       => $invoice->status ?? '',
+                    'paid'         => !empty($invoice->paid),
                 ];
             }
 

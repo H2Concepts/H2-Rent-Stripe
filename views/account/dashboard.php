@@ -278,15 +278,43 @@
                                 $period_label = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '');
                                 $amount_label = number_format((float) ($invoice['amount_total'] / 100), 2, ',', '.');
                                 $currency     = !empty($invoice['currency']) ? $invoice['currency'] : 'EUR';
+
+                                $status_raw   = $invoice['status'] ?? '';
+                                $is_paid_flag = !empty($invoice['paid']);
+
+                                $status_label = 'Unbekannt';
+                                $status_class = 'status-unknown';
+
+                                if ($is_paid_flag || $status_raw === 'paid') {
+                                    $status_label = 'Bezahlt';
+                                    $status_class = 'status-paid';
+                                } elseif ($status_raw === 'open') {
+                                    $status_label = 'Offen';
+                                    $status_class = 'status-open';
+                                } elseif ($status_raw === 'void') {
+                                    $status_label = 'Storniert';
+                                    $status_class = 'status-void';
+                                } elseif ($status_raw === 'uncollectible') {
+                                    $status_label = 'Nicht einziehbar';
+                                    $status_class = 'status-uncollectible';
+                                } elseif ($status_raw === 'draft') {
+                                    $status_label = 'Entwurf';
+                                    $status_class = 'status-draft';
+                                }
                             ?>
                             <div class="invoice-card">
                                 <div class="invoice-header">
                                     <div class="invoice-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
-                                    <?php if (!empty($invoice['pdf_url'])) : ?>
-                                        <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
-                                            Herunterladen
-                                        </a>
-                                    <?php endif; ?>
+                                    <div class="invoice-actions">
+                                        <span class="invoice-status-badge <?php echo esc_attr($status_class); ?>">
+                                            <?php echo esc_html($status_label); ?>
+                                        </span>
+                                        <?php if (!empty($invoice['pdf_url'])) : ?>
+                                            <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
+                                                Herunterladen
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
 
                                 <div class="invoice-meta">
