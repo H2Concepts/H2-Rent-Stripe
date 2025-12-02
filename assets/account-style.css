@@ -206,6 +206,10 @@
     justify-content: space-between;
 }
 
+.subscription-detail-card:not(.subscription-wide-card) {
+    aspect-ratio: 1 / 1;
+}
+
 .subscription-detail-card .card-title {
     margin: 0 0 6px;
 }
@@ -223,6 +227,7 @@
 
 .subscription-wide-card {
     grid-column: 1 / -1;
+    aspect-ratio: auto;
 }
 
 .pill-badge {
@@ -480,6 +485,10 @@ img.wp-smiley, img.emoji {
 
     .subscription-detail-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .subscription-detail-card {
+        aspect-ratio: auto;
     }
 }
 
