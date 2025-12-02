@@ -26,6 +26,8 @@ class Ajax {
             $variant_id
         ));
 
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
         $base_duration_id = null;
         $base_duration_price = null;
         if ($variant && $modus !== 'kauf') {
@@ -53,8 +55,6 @@ class Ajax {
             $extras = $wpdb->get_results($query);
         }
         
-        $modus = get_option('produkt_betriebsmodus', 'miete');
-
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
             $duration_id
