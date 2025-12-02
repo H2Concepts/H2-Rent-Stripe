@@ -10,6 +10,10 @@ if (!defined('ABSPATH')) {
 $modus    = get_option('produkt_betriebsmodus', 'miete');
 $is_sale  = ($modus === 'kauf');
 
+if (!isset($message)) {
+    $message = '';
+}
+
 if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
         $sub_id = sanitize_text_field($_POST['subscription_id']);
@@ -31,6 +35,7 @@ $full_name        = '';
 $customer_addr    = '';
 $subscription_map = [];
 $invoice_orders   = [];
+$stripe_invoices  = [];
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -106,6 +111,15 @@ foreach ($orders as $o) {
 
     $customer_id = Database::get_stripe_customer_id_for_user($user_id);
     if ($customer_id) {
+        if (!$is_sale) {
+            $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($customer_id, 20);
+            if (is_wp_error($invoice_data)) {
+                $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
+            } else {
+                $stripe_invoices = $invoice_data;
+            }
+        }
+
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
         if (!is_wp_error($subs)) {
             foreach ($subs as $sub) {

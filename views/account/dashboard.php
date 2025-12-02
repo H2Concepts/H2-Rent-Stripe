@@ -266,47 +266,98 @@
                 <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
                 <h4>Meine Rechnungen</h4>
             </div>
-            <div class="invoice-list">
-                <?php if (!empty($invoice_orders)) : ?>
-                    <?php foreach ($invoice_orders as $invoice) : ?>
-                        <?php
-                            $invoice_number  = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
-                            $period_start    = !empty($invoice->start_date) ? date_i18n('d.m.Y', strtotime($invoice->start_date)) : '';
-                            $period_end      = !empty($invoice->end_date) ? date_i18n('d.m.Y', strtotime($invoice->end_date)) : '';
-                            $period_label    = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '–');
-                            $invoice_date    = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
-                            $amount_cents    = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
-                            $amount_number   = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0);
-                            $amount_label    = number_format($amount_number, 2, ',', '.');
-                            $download_url    = !empty($invoice->invoice_url) ? $invoice->invoice_url : '';
-                        ?>
-                        <div class="invoice-card">
-                            <div class="invoice-card-header">
-                                <div class="card-title invoice-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
-                                <?php if ($download_url) : ?>
-                                    <a class="invoice-download" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>Herunterladen</a>
-                                <?php else : ?>
-                                    <span class="invoice-download disabled">Nicht verfügbar</span>
-                                <?php endif; ?>
+            <?php if (!$is_sale) : ?>
+                <?php if (!empty($stripe_invoices)) : ?>
+                    <div class="account-section account-invoices">
+                        <?php foreach ($stripe_invoices as $invoice) : ?>
+                            <?php
+                                $date_format  = get_option('date_format') ?: 'd.m.Y';
+                                $created      = !empty($invoice['created']) ? date_i18n($date_format, $invoice['created']) : '';
+                                $period_start = !empty($invoice['period_start']) ? date_i18n($date_format, $invoice['period_start']) : '';
+                                $period_end   = !empty($invoice['period_end']) ? date_i18n($date_format, $invoice['period_end']) : '';
+                                $period_label = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '');
+                                $amount_label = number_format((float) ($invoice['amount_total'] / 100), 2, ',', '.');
+                                $currency     = !empty($invoice['currency']) ? $invoice['currency'] : 'EUR';
+                            ?>
+                            <div class="invoice-card">
+                                <div class="invoice-header">
+                                    <div class="invoice-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
+                                    <?php if (!empty($invoice['pdf_url'])) : ?>
+                                        <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
+                                            Herunterladen
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="invoice-meta">
+                                    <?php if ($period_label) : ?>
+                                        <div class="invoice-row">
+                                            <span>Zeitraum:</span>
+                                            <strong><?php echo esc_html($period_label); ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php if ($created) : ?>
+                                        <div class="invoice-row">
+                                            <span>Rechnungsdatum:</span>
+                                            <strong><?php echo esc_html($created); ?></strong>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <div class="invoice-row">
+                                        <span>Rechnungsbetrag:</span>
+                                        <strong><?php echo esc_html($amount_label . ' ' . $currency); ?></strong>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="invoice-row">
-                                <span>Zeitraum:</span>
-                                <span class="invoice-value"><?php echo esc_html($period_label); ?></span>
-                            </div>
-                            <div class="invoice-row">
-                                <span>Rechnungsdatum:</span>
-                                <span class="invoice-value"><?php echo esc_html($invoice_date); ?></span>
-                            </div>
-                            <div class="invoice-row">
-                                <span>Betrag:</span>
-                                <span class="invoice-value"><?php echo esc_html($amount_label); ?> €</span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
                 <?php else : ?>
-                    <p>Keine Rechnungen gefunden.</p>
+                    <p>Aktuell liegen keine Rechnungen vor.</p>
                 <?php endif; ?>
-            </div>
+            <?php else : ?>
+                <div class="invoice-list">
+                    <?php if (!empty($invoice_orders)) : ?>
+                        <?php foreach ($invoice_orders as $invoice) : ?>
+                            <?php
+                                $invoice_number  = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
+                                $period_start    = !empty($invoice->start_date) ? date_i18n('d.m.Y', strtotime($invoice->start_date)) : '';
+                                $period_end      = !empty($invoice->end_date) ? date_i18n('d.m.Y', strtotime($invoice->end_date)) : '';
+                                $period_label    = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '–');
+                                $invoice_date    = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
+                                $amount_cents    = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
+                                $amount_number   = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0);
+                                $amount_label    = number_format($amount_number, 2, ',', '.');
+                                $download_url    = !empty($invoice->invoice_url) ? $invoice->invoice_url : '';
+                            ?>
+                            <div class="invoice-card">
+                                <div class="invoice-card-header">
+                                    <div class="card-title invoice-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
+                                    <?php if ($download_url) : ?>
+                                        <a class="invoice-download" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>Herunterladen</a>
+                                    <?php else : ?>
+                                        <span class="invoice-download disabled">Nicht verfügbar</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="invoice-row">
+                                    <span>Zeitraum:</span>
+                                    <span class="invoice-value"><?php echo esc_html($period_label); ?></span>
+                                </div>
+                                <div class="invoice-row">
+                                    <span>Rechnungsdatum:</span>
+                                    <span class="invoice-value"><?php echo esc_html($invoice_date); ?></span>
+                                </div>
+                                <div class="invoice-row">
+                                    <span>Betrag:</span>
+                                    <span class="invoice-value"><?php echo esc_html($amount_label); ?> €</span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else : ?>
+                        <p>Keine Rechnungen gefunden.</p>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
             <?php
                 $product      = $selected_order->category_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->category_title ?? '');

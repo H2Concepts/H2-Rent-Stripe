@@ -336,6 +336,61 @@ class StripeService {
         }
     }
 
+    /**
+     * Retrieve paid invoices for a Stripe customer.
+     *
+     * @param string $customer_id Stripe customer ID
+     * @param int    $limit       Maximum number of invoices to fetch
+     * @return array|\WP_Error
+     */
+    public static function get_customer_invoices($customer_id, $limit = 20) {
+        if (empty($customer_id)) {
+            return [];
+        }
+
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            $invoices = \Stripe\Invoice::all([
+                'customer' => $customer_id,
+                'limit'    => $limit,
+                'status'   => 'paid',
+                'expand'   => ['data.lines'],
+            ]);
+
+            $result = [];
+
+            foreach ($invoices->data as $invoice) {
+                $period_start = null;
+                $period_end   = null;
+
+                if (!empty($invoice->lines->data) && !empty($invoice->lines->data[0]->period)) {
+                    $period_start = $invoice->lines->data[0]->period->start ?? null;
+                    $period_end   = $invoice->lines->data[0]->period->end ?? null;
+                }
+
+                $result[] = [
+                    'id'           => $invoice->id,
+                    'number'       => $invoice->number ?? $invoice->id,
+                    'hosted_url'   => $invoice->hosted_invoice_url ?? '',
+                    'pdf_url'      => $invoice->invoice_pdf ?? '',
+                    'created'      => $invoice->created ?? null,
+                    'period_start' => $period_start,
+                    'period_end'   => $period_end,
+                    'amount_total' => $invoice->total ?? 0,
+                    'currency'     => isset($invoice->currency) ? strtoupper($invoice->currency) : '',
+                ];
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_invoices', $e->getMessage());
+        }
+    }
+
 
 
     /**
