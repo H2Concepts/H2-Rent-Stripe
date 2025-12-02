@@ -71,7 +71,7 @@
 <?php endif; ?>
 <?php else : ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
-    <h1>Mein Konto</h1>
+    <h2>Mein Konto</h2>
     <?php if (!empty($message)) { echo $message; } ?>
     <?php if ($is_sale) : ?>
         <div class="account-layout">
@@ -223,6 +223,9 @@
                                 $category_id = $order ? ($order->category_id ?? 0) : 0;
                                 $image_url   = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
                                 $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
+                                if (!$product && !empty($order->category_id)) {
+                                    $product = pv_get_category_title_by_id((int) $order->category_id);
+                                }
                                 $product     = $product ?: ($order ? ($order->variant_name ?? 'Produkt') : 'Produkt');
                                 $order_date  = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
                                 $duration    = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
@@ -260,6 +263,9 @@
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
             <?php
                 $product      = $selected_order->category_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->category_title ?? '');
+                if (!$product && !empty($selected_order->category_id)) {
+                    $product = pv_get_category_title_by_id((int) $selected_order->category_id);
+                }
                 $product      = $product ?: ($selected_order->variant_name ?? 'Produkt');
                 $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
                 $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
@@ -282,6 +288,23 @@
                 $selected_meta   = $subscription_lookup[$selected_sub_id] ?? [];
                 $cancel_sub_id   = $selected_meta['subscription_id'] ?? $selected_sub_id;
                 $cancel_label    = $cancel_ready ? 'Jetzt kündigen' : 'Nicht möglich';
+
+                $status_raw   = strtolower($selected_meta['status'] ?? ($selected_order->status ?? 'active'));
+                $status_class = 'success';
+                $status_label = 'Abo Aktiv';
+
+                if (in_array($status_raw, ['canceled', 'cancelled'], true)) {
+                    if (current_time('timestamp') >= $min_end_ts) {
+                        $status_class = 'inactive';
+                        $status_label = 'Inaktiv';
+                    } else {
+                        $status_class = 'cancelled';
+                        $status_label = 'Gekündigt';
+                    }
+                } elseif (in_array($status_raw, ['inactive', 'inaktiv'], true)) {
+                    $status_class = 'inactive';
+                    $status_label = 'Inaktiv';
+                }
             ?>
             <div class="account-section-header">
                 <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
@@ -314,6 +337,7 @@
                     <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
                 </div>
                 <div class="subscription-detail-card subscription-wide-card">
+                    <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"><?php echo esc_html($status_label); ?></span>
                     <div class="card-title">Abodetails</div>
                     <p><strong>Mindestlaufzeit:</strong><br><?php echo esc_html($min_months . ' Monate'); ?></p>
                     <p><strong>Monatlicher Mietpreis:</strong><br><?php echo esc_html($monthly); ?></p>

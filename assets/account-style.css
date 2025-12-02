@@ -189,7 +189,7 @@
 
 .subscription-detail-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
 }
 
@@ -202,6 +202,7 @@
     flex-direction: column;
     gap: 8px;
     color: var(--produkt-account-card-text, #000);
+    position: relative;
 }
 
 .subscription-detail-card .card-title {
@@ -229,6 +230,23 @@
 .pill-badge.success {
     background: #d4edda;
     color: #1b5e20;
+}
+
+.pill-badge.cancelled {
+    background: #ffe1e1;
+    color: #8a1f1f;
+}
+
+.pill-badge.inactive {
+    background: #ededed;
+    color: #4a4a4a;
+}
+
+.subscription-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: auto;
 }
 
 .cancel-button {
@@ -432,6 +450,24 @@ img.wp-smiley, img.emoji {
 
     .order-product-price {
         text-align: left;
+    }
+}
+
+@media (max-width: 720px) {
+    .account-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card-title {
+        font-size: 15px;
+    }
+
+    .card-metric {
+        font-size: 34px;
+    }
+
+    .subscription-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 

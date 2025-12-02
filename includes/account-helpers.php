@@ -120,6 +120,23 @@ function pv_get_image_url_by_variant_or_category($variant_id, $category_id) {
     return $image_url ?: '';
 }
 
+function pv_get_category_title_by_id($category_id) {
+    global $wpdb;
+
+    if (!$category_id) {
+        return '';
+    }
+
+    $title = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+            $category_id
+        )
+    );
+
+    return $title ?: '';
+}
+
 /**
  * Determine the start and end dates for an order.
  * Falls back to parsing the dauer_text when the explicit
