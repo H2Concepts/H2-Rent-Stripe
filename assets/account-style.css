@@ -203,6 +203,7 @@
     gap: 8px;
     color: var(--produkt-account-card-text, #000);
     position: relative;
+    justify-content: space-between;
 }
 
 .subscription-detail-card .card-title {
@@ -211,6 +212,13 @@
 
 .subscription-detail-card p {
     margin: 2px 0;
+}
+
+.subscription-detail-content {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .subscription-wide-card {
@@ -464,6 +472,10 @@ img.wp-smiley, img.emoji {
 
     .card-metric {
         font-size: 34px;
+    }
+
+    .card-code {
+        font-size: 15px;
     }
 
     .subscription-detail-grid {

@@ -313,36 +313,46 @@
             <div class="subscription-detail-grid">
                 <div class="subscription-detail-card">
                     <div class="card-title">Bestellt</div>
-                    <p><strong>Bestelldatum:</strong><br><?php echo esc_html($order_date); ?></p>
-                    <p><strong>Bestellnummer:</strong><br><?php echo esc_html($order_number); ?></p>
+                    <div class="subscription-detail-content">
+                        <p><strong>Bestelldatum:</strong><br><?php echo esc_html($order_date); ?></p>
+                        <p><strong>Bestellnummer:</strong><br><?php echo esc_html($order_number); ?></p>
+                    </div>
                 </div>
                 <div class="subscription-detail-card">
                     <div class="card-title">Produkt</div>
-                    <p><strong>Produkt:</strong><br><?php echo esc_html($product); ?></p>
-                    <?php if (!empty($variant)) : ?><p><strong>Ausführung:</strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
-                    <?php if (!empty($condition)) : ?><p><strong>Zustand:</strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
-                    <?php if (!empty($color)) : ?><p><strong>Farbe:</strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
+                    <div class="subscription-detail-content">
+                        <p><strong>Produkt:</strong><br><?php echo esc_html($product); ?></p>
+                        <?php if (!empty($variant)) : ?><p><strong>Ausführung:</strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
+                        <?php if (!empty($condition)) : ?><p><strong>Zustand:</strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
+                        <?php if (!empty($color)) : ?><p><strong>Farbe:</strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
+                    </div>
                 </div>
                 <div class="subscription-detail-card">
                     <div class="card-title">Ende Mindestlaufzeit</div>
-                    <p><strong>Datum:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                    <div class="subscription-detail-content">
+                        <p><strong>Datum:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                    </div>
                 </div>
                 <div class="subscription-detail-card">
                     <div class="card-title">Kündigung</div>
-                    <form method="post">
-                        <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
-                        <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
-                        <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>><?php echo esc_html($cancel_label); ?></button>
-                    </form>
-                    <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
+                    <div class="subscription-detail-content">
+                        <form method="post">
+                            <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
+                            <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
+                            <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>><?php echo esc_html($cancel_label); ?></button>
+                        </form>
+                        <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
+                    </div>
                 </div>
                 <div class="subscription-detail-card subscription-wide-card">
                     <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"><?php echo esc_html($status_label); ?></span>
                     <div class="card-title">Abodetails</div>
-                    <p><strong>Mindestlaufzeit:</strong><br><?php echo esc_html($min_months . ' Monate'); ?></p>
-                    <p><strong>Monatlicher Mietpreis:</strong><br><?php echo esc_html($monthly); ?></p>
-                    <p><strong>Ende Mindestlaufzeit:</strong><br><?php echo esc_html($min_end_date); ?></p>
-                    <p><strong>Datum für Kündigung:</strong><br><?php echo esc_html($cancel_open_date); ?></p>
+                    <div class="subscription-detail-content">
+                        <p><strong>Mindestlaufzeit:</strong><br><?php echo esc_html($min_months . ' Monate'); ?></p>
+                        <p><strong>Monatlicher Mietpreis:</strong><br><?php echo esc_html($monthly); ?></p>
+                        <p><strong>Ende Mindestlaufzeit:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                        <p><strong>Datum für Kündigung:</strong><br><?php echo esc_html($cancel_open_date); ?></p>
+                    </div>
                 </div>
             </div>
         <?php else : ?>
