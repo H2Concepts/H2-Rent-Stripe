@@ -210,6 +210,64 @@
     aspect-ratio: 1 / 1;
 }
 
+.invoice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.invoice-card {
+    background: var(--produkt-account-card-bg, #e8e8e8);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--produkt-account-card-text, #000);
+}
+
+.invoice-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.invoice-title {
+    margin: 0;
+}
+
+.invoice-download {
+    font-weight: 600;
+    text-decoration: none !important;
+    color: var(--produkt-account-card-text, #000);
+}
+
+.invoice-download:hover {
+    text-decoration: underline;
+}
+
+.invoice-download.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.invoice-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+
+.invoice-row span:first-child {
+    font-weight: 600;
+}
+
+.invoice-value {
+    font-weight: 700;
+}
+
 .subscription-detail-card .card-title {
     margin: 0 0 6px;
 }

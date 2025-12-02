@@ -23,13 +23,14 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
 }
 
 
-$orders          = [];
-$sale_orders     = [];
-$order_map       = [];
-$subscriptions   = [];
-$full_name       = '';
-$customer_addr   = '';
+$orders           = [];
+$sale_orders      = [];
+$order_map        = [];
+$subscriptions    = [];
+$full_name        = '';
+$customer_addr    = '';
 $subscription_map = [];
+$invoice_orders   = [];
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -54,6 +55,8 @@ foreach ($orders as $o) {
     if (($o->status ?? '') !== 'abgeschlossen') {
         continue;
     }
+
+    $invoice_orders[] = $o;
 
     if (($o->mode ?? '') === 'miete') {
         $rental_orders[] = $o;

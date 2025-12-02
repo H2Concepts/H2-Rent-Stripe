@@ -155,6 +155,7 @@
             $selected_order_id  = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : '';
             $overview_url       = remove_query_arg(['view', 'subscription', 'order']);
             $subscriptions_url  = add_query_arg('view', 'abos', $overview_url);
+            $invoices_url       = add_query_arg('view', 'rechnungen', $overview_url);
 
             $monthly_total = 0.0;
 
@@ -258,6 +259,52 @@
                     <?php endforeach; ?>
                 <?php else : ?>
                     <p>Keine aktiven Abos vorhanden.</p>
+                <?php endif; ?>
+            </div>
+        <?php elseif ($view === 'rechnungen') : ?>
+            <div class="account-section-header">
+                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
+                <h4>Meine Rechnungen</h4>
+            </div>
+            <div class="invoice-list">
+                <?php if (!empty($invoice_orders)) : ?>
+                    <?php foreach ($invoice_orders as $invoice) : ?>
+                        <?php
+                            $invoice_number  = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
+                            $period_start    = !empty($invoice->start_date) ? date_i18n('d.m.Y', strtotime($invoice->start_date)) : '';
+                            $period_end      = !empty($invoice->end_date) ? date_i18n('d.m.Y', strtotime($invoice->end_date)) : '';
+                            $period_label    = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '–');
+                            $invoice_date    = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
+                            $amount_cents    = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
+                            $amount_number   = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0);
+                            $amount_label    = number_format($amount_number, 2, ',', '.');
+                            $download_url    = !empty($invoice->invoice_url) ? $invoice->invoice_url : '';
+                        ?>
+                        <div class="invoice-card">
+                            <div class="invoice-card-header">
+                                <div class="card-title invoice-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
+                                <?php if ($download_url) : ?>
+                                    <a class="invoice-download" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>Herunterladen</a>
+                                <?php else : ?>
+                                    <span class="invoice-download disabled">Nicht verfügbar</span>
+                                <?php endif; ?>
+                            </div>
+                            <div class="invoice-row">
+                                <span>Zeitraum:</span>
+                                <span class="invoice-value"><?php echo esc_html($period_label); ?></span>
+                            </div>
+                            <div class="invoice-row">
+                                <span>Rechnungsdatum:</span>
+                                <span class="invoice-value"><?php echo esc_html($invoice_date); ?></span>
+                            </div>
+                            <div class="invoice-row">
+                                <span>Betrag:</span>
+                                <span class="invoice-value"><?php echo esc_html($amount_label); ?> €</span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <p>Keine Rechnungen gefunden.</p>
                 <?php endif; ?>
             </div>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
@@ -365,7 +412,7 @@
                 <div class="account-dashboard-card">
                     <div class="card-title">Summe pro Monat</div>
                     <div class="card-metric"><?php echo esc_html($monthly_total_formatted); ?>€</div>
-                    <button type="button" class="card-button" aria-disabled="true">Alle Rechnungen</button>
+                    <a class="card-button card-button-link" href="<?php echo esc_url($invoices_url); ?>">Alle Rechnungen</a>
                 </div>
                 <div class="account-dashboard-card">
                     <div class="card-title">Freunde einladen</div>
