@@ -303,12 +303,12 @@
                                 }
                             ?>
                             <div class="invoice-card">
+                                <span class="status-badge invoice-status-badge <?php echo esc_attr($status_class); ?>">
+                                    <?php echo esc_html($status_label); ?>
+                                </span>
                                 <div class="invoice-header">
                                     <div class="invoice-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
                                     <div class="invoice-actions">
-                                        <span class="invoice-status-badge <?php echo esc_attr($status_class); ?>">
-                                            <?php echo esc_html($status_label); ?>
-                                        </span>
                                         <?php if (!empty($invoice['pdf_url'])) : ?>
                                             <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
                                                 Herunterladen

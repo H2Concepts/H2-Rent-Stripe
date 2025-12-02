@@ -224,6 +224,7 @@
     flex-direction: column;
     gap: 10px;
     color: var(--produkt-account-card-text, #000);
+    position: relative;
 }
 
 .invoice-card-header {
@@ -250,6 +251,32 @@
 .invoice-download.disabled {
     opacity: 0.6;
     pointer-events: none;
+}
+
+.invoice-status-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+.status-badge.status-paid {
+    background-color: #28a745;
+}
+
+.status-badge.status-open {
+    background-color: #fd7e14;
+}
+
+.status-badge.status-void {
+    background-color: #6c757d;
+}
+
+.status-badge.status-uncollectible {
+    background-color: #c53030;
+}
+
+.status-badge.status-draft {
+    background-color: #17a2b8;
 }
 
 .invoice-row {
