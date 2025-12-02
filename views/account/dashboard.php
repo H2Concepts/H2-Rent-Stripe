@@ -348,10 +348,10 @@
                     <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"><?php echo esc_html($status_label); ?></span>
                     <div class="card-title">Abodetails</div>
                     <div class="subscription-detail-content">
-                        <p><strong>Mindestlaufzeit:</strong><br><?php echo esc_html($min_months . ' Monate'); ?></p>
-                        <p><strong>Monatlicher Mietpreis:</strong><br><?php echo esc_html($monthly); ?></p>
-                        <p><strong>Ende Mindestlaufzeit:</strong><br><?php echo esc_html($min_end_date); ?></p>
-                        <p><strong>Datum für Kündigung:</strong><br><?php echo esc_html($cancel_open_date); ?></p>
+                        <p><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_months . ' Monate'); ?></p>
+                        <p><strong>Monatlicher Mietpreis:</strong> <?php echo esc_html($monthly); ?></p>
+                        <p><strong>Ende Mindestlaufzeit:</strong> <?php echo esc_html($min_end_date); ?></p>
+                        <p><strong>Datum für Kündigung:</strong> <?php echo esc_html($cancel_open_date); ?></p>
                     </div>
                 </div>
             </div>
