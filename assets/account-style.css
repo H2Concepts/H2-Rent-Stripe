@@ -488,7 +488,7 @@ img.wp-smiley, img.emoji {
     }
 
     .subscription-detail-card {
-        aspect-ratio: auto;
+        aspect-ratio: auto !important;
     }
 }
 
