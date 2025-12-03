@@ -181,7 +181,9 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
             </div>
             <?php if ($show_filter_toggle): ?>
                 <div id="shop-filter-dropdown" class="shop-filter-dropdown" hidden>
-                    <?php echo $filter_panel_markup; ?>
+                    <div class="shop-category-list">
+                        <?php echo $filter_panel_markup; ?>
+                    </div>
                 </div>
             <?php endif; ?>
         <?php else: ?>

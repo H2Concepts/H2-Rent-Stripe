@@ -2132,7 +2132,7 @@ body.produkt-popup-open {
     padding: 0.65rem 1rem;
     background: var(--produkt-button-bg);
     color: var(--produkt-button-text);
-    border: 1px solid var(--produkt-border-color);
+    border: none;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
