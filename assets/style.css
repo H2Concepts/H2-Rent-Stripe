@@ -39,7 +39,7 @@ img.wp-smiley, img.emoji {
 .produkt-breadcrumbs a:visited,
 .produkt-breadcrumbs a:focus {
     color: var(--produkt-text-color);
-    text-decoration: none;
+    text-decoration: none !important;
 }
 
 .produkt-breadcrumbs a:hover {
