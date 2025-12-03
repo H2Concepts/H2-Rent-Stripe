@@ -179,6 +179,11 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
                     </button>
                 <?php endif; ?>
             </div>
+            <?php if ($show_filter_toggle): ?>
+                <div id="shop-filter-dropdown" class="shop-filter-dropdown" hidden>
+                    <?php echo $filter_panel_markup; ?>
+                </div>
+            <?php endif; ?>
         <?php else: ?>
             <<?php echo $heading_tag; ?>><?= esc_html($heading_text) ?></<?php echo $heading_tag; ?>>
         <?php endif; ?>
@@ -189,12 +194,8 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
             <aside class="shop-category-list">
                 <?php echo $filter_panel_markup; ?>
             </aside>
-        <?php elseif ($shop_layout === 'filters_top' && $show_filter_toggle): ?>
-            <div id="shop-filter-dropdown" class="shop-filter-dropdown" hidden>
-                <?php echo $filter_panel_markup; ?>
-            </div>
         <?php endif; ?>
-        <div>
+        <div class="shop-products-area">
             <?php if (empty($categories) && !$not_found): ?>
                 <p>Keine Produkte in dieser Kategorie gefunden.</p>
             <?php endif; ?>
