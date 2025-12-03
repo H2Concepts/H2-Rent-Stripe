@@ -80,6 +80,11 @@ foreach ($content_blocks as $b) {
 }
 
 ?>
+<?php if (function_exists('rank_math_the_breadcrumbs')): ?>
+    <nav class="produkt-breadcrumbs" aria-label="Breadcrumb">
+        <?php rank_math_the_breadcrumbs(); ?>
+    </nav>
+<?php endif; ?>
 <div class="produkt-shop-archive shop-overview-container produkt-container">
     <?php if ($category_slug && !$category): ?>
         <h1><?= esc_html(ucfirst($category_slug)) ?></h1>

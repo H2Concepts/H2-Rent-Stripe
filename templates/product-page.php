@@ -281,6 +281,12 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
 ));
 ?>
 
+<?php if (function_exists('rank_math_the_breadcrumbs')): ?>
+    <nav class="produkt-breadcrumbs" aria-label="Breadcrumb">
+        <?php rank_math_the_breadcrumbs(); ?>
+    </nav>
+<?php endif; ?>
+
 <div class="produkt-container" data-category-id="<?php echo esc_attr($category_id); ?>" data-layout="<?php echo esc_attr($layout_style); ?>" data-shipping-cost="<?php echo esc_attr($shipping_cost); ?>" data-shipping-price-id="<?php echo esc_attr($shipping_price_id); ?>" data-shipping-provider="<?php echo esc_attr($shipping_provider); ?>">
 
     <div class="produkt-content">

@@ -31,6 +31,20 @@ img.wp-smiley, img.emoji {
     border-radius: 1rem;
 }
 
+.produkt-breadcrumbs {
+    margin: 0 0 20px;
+    font-size: 14px;
+}
+
+.produkt-breadcrumbs a {
+    color: var(--produkt-button-bg);
+    text-decoration: none;
+}
+
+.produkt-breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
 .produkt-header {
     text-align: center;
     margin-bottom: 3rem;
