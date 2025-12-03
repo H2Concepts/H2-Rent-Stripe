@@ -2143,8 +2143,8 @@ input[type="checkbox"] {
     position: fixed;
     bottom: 20px;
     left: 20px;
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     background: var(--produkt-filter-button-bg, var(--produkt-button-bg));
     color: var(--produkt-filter-button-icon, var(--produkt-button-text));
@@ -2153,8 +2153,8 @@ input[type="checkbox"] {
     align-items: center;
     justify-content: center;
     padding: 0;
-    min-width: 50px;
-    min-height: 50px;
+    min-width: 60px;
+    min-height: 60px;
     z-index: 1000;
 }
 
