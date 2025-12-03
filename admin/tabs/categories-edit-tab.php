@@ -178,6 +178,34 @@ function produkt_category_icon($slug)
             </div>
         </div>
 
+        <div class="dashboard-card">
+            <h2>Layout Beschreibung</h2>
+            <p class="card-subline">Position der Produktdetails</p>
+            <input type="hidden" name="description_layout" value="<?php echo esc_attr($edit_item->description_layout ?? 'left'); ?>">
+            <div class="layout-option-grid" data-input-name="description_layout">
+                <div class="layout-option-card" data-value="left">
+                    <div class="layout-option-name">Standard (Links unter den Bildern)</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="5" width="50" height="50" fill="#e5e7eb"/>
+                            <rect x="60" y="35" width="55" height="15" fill="#cbd5e1"/>
+                            <rect x="60" y="10" width="55" height="20" fill="#94a3b8"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="layout-option-card" data-value="right">
+                    <div class="layout-option-name">Rechts über dem Konfigurator</div>
+                    <div class="layout-option-preview">
+                        <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="5" width="50" height="50" fill="#e5e7eb"/>
+                            <rect x="65" y="5" width="45" height="20" fill="#94a3b8"/>
+                            <rect x="65" y="30" width="45" height="15" fill="#cbd5e1"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         </div><!-- end produkt-form-sections -->
 
         </div><!-- end tab-general -->

@@ -252,6 +252,7 @@ $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 // Layout
 $layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'default';
 $price_layout = isset($category) ? ($category->price_layout ?? 'default') : 'default';
+$description_layout = isset($category) ? ($category->description_layout ?? 'left') : 'left';
 
 // Tooltips
 $duration_tooltip = $ui['duration_tooltip'] ?? '';
@@ -313,6 +314,9 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     </div>
                 </div>
                 
+                <?php
+                ob_start();
+                ?>
                 <div class="produkt-product-details">
                     <h1><?php echo esc_html($product_title); ?></h1>
                     <div class="produkt-card-price">
@@ -338,8 +342,14 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                     <div class="produkt-product-description">
                         <?php echo wp_kses_post(wpautop($product_description)); ?>
                     </div>
-                    
+
                 </div>
+                <?php
+                $product_details_markup = ob_get_clean();
+                if ($description_layout !== 'right') {
+                    echo $product_details_markup;
+                }
+                ?>
             </div>
 
 <?php
@@ -427,6 +437,7 @@ if ($price_layout !== 'sidebar') {
         </div>
 
         <div class="produkt-right">
+            <?php if ($description_layout === 'right') { echo $product_details_markup; } ?>
             <?php if ($price_layout === 'sidebar') { echo $price_display_markup; } ?>
             <div class="produkt-configuration">
                 <!-- Variants Selection -->
