@@ -149,10 +149,26 @@ class SeoModule {
             return $crumbs;
         }
 
-        // Remove empty crumb entries to avoid double separators
-        $crumbs = array_values(array_filter($crumbs, function ($crumb) {
-            return self::get_crumb_label($crumb) !== '';
+        // Normalize incoming crumbs and keep the home label if present
+        $normalized_crumbs = array_values(array_filter($crumbs, function ($crumb) {
+            return trim(self::get_crumb_label($crumb)) !== '';
         }));
+
+        $home_label = !empty($normalized_crumbs) ? self::get_crumb_label($normalized_crumbs[0]) : __('Home', 'h2-concepts');
+        $home_url   = home_url('/');
+
+        if (!empty($normalized_crumbs)) {
+            $first = $normalized_crumbs[0];
+            if (is_array($first)) {
+                if (!empty($first['url'])) {
+                    $home_url = $first['url'];
+                } elseif (!empty($first[1])) {
+                    $home_url = $first[1];
+                }
+            } elseif (is_object($first) && !empty($first->url)) {
+                $home_url = $first->url;
+            }
+        }
 
         $shop_page_id = get_option(\PRODUKT_SHOP_PAGE_OPTION);
         $shop_label   = __('Shop', 'h2-concepts');
@@ -167,24 +183,38 @@ class SeoModule {
             $shop_url = home_url('/shop/');
         }
 
-        if (!self::crumb_exists($crumbs, $shop_label)) {
-            $crumbs[] = [
+        $final_crumbs = [
+            [
+                'label' => $home_label,
+                'url'   => $home_url,
+            ],
+            [
                 'label' => $shop_label,
                 'url'   => $shop_url,
-            ];
+            ],
+        ];
+
+        if (!empty($category_slug)) {
+            $category = self::get_product_by_slug($category_slug);
+            if ($category) {
+                $final_crumbs[] = [
+                    'label' => $category->product_title,
+                    'url'   => '',
+                ];
+            }
         }
 
         if (!empty($slug)) {
             $product = self::get_product_by_slug($slug);
-            if ($product && !self::crumb_exists($crumbs, $product->product_title)) {
-                $crumbs[] = [
+            if ($product) {
+                $final_crumbs[] = [
                     'label' => $product->product_title,
                     'url'   => '',
                 ];
             }
         }
 
-        return $crumbs;
+        return $final_crumbs;
     }
 
     private static function crumb_exists($crumbs, $label) {

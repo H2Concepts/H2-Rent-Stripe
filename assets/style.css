@@ -33,7 +33,6 @@ img.wp-smiley, img.emoji {
 
 .produkt-breadcrumbs {
     margin: 0 0 20px;
-    font-size: 14px;
 }
 
 .produkt-breadcrumbs a {
@@ -42,7 +41,7 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-breadcrumbs a:hover {
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 .produkt-header {
