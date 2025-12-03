@@ -17,6 +17,7 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $filter_button_icon_color = sanitize_hex_color($_POST['filter_button_icon_color']);
     $account_card_bg = sanitize_hex_color($_POST['account_card_bg']);
     $account_card_text = sanitize_hex_color($_POST['account_card_text']);
     $account_button_bg = sanitize_hex_color($_POST['account_button_bg']);
@@ -49,6 +50,7 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'filter_button_icon_color' => $filter_button_icon_color,
         'account_card_bg' => $account_card_bg,
         'account_card_text' => $account_card_text,
         'account_button_bg' => $account_button_bg,
@@ -205,6 +207,17 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $filter_button_color; ?>" class="produkt-color-input">
                         </div>
                         <small>Farbe des mobilen Filter-Buttons</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Filter-Icon-Farbe</label>
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_icon_color = esc_attr($branding['filter_button_icon_color'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_icon_color; ?>;"></div>
+                            <input type="text" name="filter_button_icon_color" value="<?php echo $filter_button_icon_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_icon_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe des Icons auf dem mobilen Filter-Button</small>
                     </div>
 
                     <div class="produkt-form-group">

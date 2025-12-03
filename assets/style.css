@@ -2147,7 +2147,7 @@ input[type="checkbox"] {
     height: 50px;
     border-radius: 50%;
     background: var(--produkt-filter-button-bg, var(--produkt-button-bg));
-    color: var(--produkt-button-text);
+    color: var(--produkt-filter-button-icon, var(--produkt-button-text));
     border: none;
     display: none;
     align-items: center;
