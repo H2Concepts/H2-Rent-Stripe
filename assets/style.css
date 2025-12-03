@@ -37,7 +37,7 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-breadcrumbs a {
-    color: var(--produkt-button-bg);
+    color: var(--produkt-text-color);
     text-decoration: none;
 }
 

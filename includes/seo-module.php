@@ -149,6 +149,11 @@ class SeoModule {
             return $crumbs;
         }
 
+        // Remove empty crumb entries to avoid double separators
+        $crumbs = array_values(array_filter($crumbs, function ($crumb) {
+            return self::get_crumb_label($crumb) !== '';
+        }));
+
         $shop_page_id = get_option(\PRODUKT_SHOP_PAGE_OPTION);
         $shop_label   = __('Shop', 'h2-concepts');
         $shop_url     = '';
@@ -163,13 +168,19 @@ class SeoModule {
         }
 
         if (!self::crumb_exists($crumbs, $shop_label)) {
-            $crumbs[] = [$shop_label, $shop_url];
+            $crumbs[] = [
+                'label' => $shop_label,
+                'url'   => $shop_url,
+            ];
         }
 
         if (!empty($slug)) {
             $product = self::get_product_by_slug($slug);
             if ($product && !self::crumb_exists($crumbs, $product->product_title)) {
-                $crumbs[] = [$product->product_title, ''];
+                $crumbs[] = [
+                    'label' => $product->product_title,
+                    'url'   => '',
+                ];
             }
         }
 
@@ -178,12 +189,7 @@ class SeoModule {
 
     private static function crumb_exists($crumbs, $label) {
         foreach ($crumbs as $crumb) {
-            $existing_label = '';
-            if (is_array($crumb)) {
-                $existing_label = $crumb['label'] ?? ($crumb[0] ?? '');
-            } elseif (is_object($crumb) && isset($crumb->label)) {
-                $existing_label = $crumb->label;
-            }
+            $existing_label = self::get_crumb_label($crumb);
 
             if (!empty($existing_label) && strtolower($existing_label) === strtolower($label)) {
                 return true;
@@ -191,6 +197,18 @@ class SeoModule {
         }
 
         return false;
+    }
+
+    private static function get_crumb_label($crumb) {
+        if (is_array($crumb)) {
+            return $crumb['label'] ?? ($crumb[0] ?? '');
+        }
+
+        if (is_object($crumb) && isset($crumb->label)) {
+            return $crumb->label;
+        }
+
+        return '';
     }
 
     private static function get_product_by_slug($slug) {
