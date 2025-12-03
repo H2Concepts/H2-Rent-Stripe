@@ -244,11 +244,14 @@ jQuery(document).ready(function($) {
     function updateDirectBuyButton() {
         const saleReady = selectedVariantSaleEnabled && selectedSalePriceId;
         const showButton = saleReady;
+        const $directBuyButton = $('#produkt-direct-buy-button');
         if (showButton) {
             const canBuy = canDirectBuy();
-            $('#produkt-direct-buy-button').show().prop('disabled', !canBuy);
+            const priceText = selectedSalePrice > 0 ? `oder für ${formatPrice(selectedSalePrice)}€ kaufen` : 'oder direkt kaufen';
+            $directBuyButton.find('span').text(priceText);
+            $directBuyButton.show().prop('disabled', !canBuy);
         } else {
-            $('#produkt-direct-buy-button').hide().prop('disabled', true);
+            $directBuyButton.hide().prop('disabled', true).find('span').text('oder direkt kaufen');
         }
     }
 

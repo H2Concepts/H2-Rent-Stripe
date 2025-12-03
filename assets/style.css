@@ -888,12 +888,17 @@ img.wp-smiley, img.emoji {
 .produkt-direct-buy-button {
     width: 100%;
     margin-top: 0.5rem;
-    padding: 0.9rem 1.25rem;
+    padding: 1.3rem 1.5rem;
     border-radius: 999px;
     border: 1px solid var(--produkt-button-bg);
     background: #fff;
     color: var(--produkt-button-bg);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.125rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
