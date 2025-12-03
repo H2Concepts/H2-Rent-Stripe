@@ -346,6 +346,7 @@ if (isset($_POST['submit_branding'])) {
                         <?php $filter_button_position = esc_attr($branding['filter_button_position'] ?? 'bottom_left'); ?>
                         <select name="filter_button_position">
                             <option value="bottom_left" <?php selected($filter_button_position, 'bottom_left'); ?>>Unten links</option>
+                            <option value="bottom_center" <?php selected($filter_button_position, 'bottom_center'); ?>>Unten mittig</option>
                             <option value="bottom_right" <?php selected($filter_button_position, 'bottom_right'); ?>>Unten rechts</option>
                             <option value="middle_left" <?php selected($filter_button_position, 'middle_left'); ?>>Mitte links</option>
                             <option value="middle_right" <?php selected($filter_button_position, 'middle_right'); ?>>Mitte rechts</option>

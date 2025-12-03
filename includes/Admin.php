@@ -330,6 +330,9 @@ class Admin {
             case 'bottom_right':
                 $position_styles = 'bottom:20px;top:auto;left:auto;right:20px;transform:translate(0,0);';
                 break;
+            case 'bottom_center':
+                $position_styles = 'bottom:20px;top:auto;left:50%;right:auto;transform:translateX(-50%);';
+                break;
             case 'middle_left':
                 $position_styles = 'top:50%;bottom:auto;left:20px;right:auto;transform:translateY(-50%);';
                 break;
