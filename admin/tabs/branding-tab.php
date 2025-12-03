@@ -210,6 +210,17 @@ if (isset($_POST['submit_branding'])) {
                     </div>
 
                     <div class="produkt-form-group">
+                        <label>Filter-Button-Farbe (Hover)</label>
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_hover_color = esc_attr($branding['filter_button_hover_color'] ?? ($branding['filter_button_color'] ?? '#5f7f5f')); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_hover_color; ?>;"></div>
+                            <input type="text" name="filter_button_hover_color" value="<?php echo $filter_button_hover_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_hover_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe des mobilen Filter-Buttons bei Hover</small>
+                    </div>
+
+                    <div class="produkt-form-group">
                         <label>Filter-Icon-Farbe</label>
                         <div class="produkt-color-picker">
                             <?php $filter_button_icon_color = esc_attr($branding['filter_button_icon_color'] ?? '#ffffff'); ?>

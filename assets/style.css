@@ -2158,9 +2158,19 @@ input[type="checkbox"] {
     z-index: 1000;
 }
 
+.shop-filter-button:hover,
+.shop-filter-button:focus {
+    background: var(--produkt-filter-button-hover-bg, var(--produkt-filter-button-bg, var(--produkt-button-bg)));
+    outline: none;
+}
+
 .shop-filter-button svg {
     width: 30px;
     height: auto;
+    fill: currentColor;
+}
+
+.shop-filter-button svg path {
     fill: currentColor;
 }
 
