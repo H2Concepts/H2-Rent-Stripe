@@ -2103,6 +2103,60 @@ body.produkt-popup-open {
     gap: 2rem;
 }
 
+.shop-layout-filters-top .shop-overview-layout {
+    display: block;
+}
+
+.shop-layout-filters-top .shop-filter-button {
+    display: none !important;
+}
+
+.shop-layout-filters-top .shop-product-grid {
+    margin-top: 1.5rem;
+}
+
+.shop-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.shop-filter-dropdown-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    background: var(--produkt-button-bg);
+    color: var(--produkt-button-text);
+    border: 1px solid var(--produkt-border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.shop-filter-dropdown-toggle svg {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.2s ease;
+}
+
+.shop-filter-dropdown-toggle.open svg {
+    transform: rotate(180deg);
+}
+
+.shop-filter-dropdown {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.shop-filter-dropdown[hidden] {
+    display: none;
+}
+
 .shop-category-list h2 {
     margin-top: 0;
     font-size: 1.2rem;

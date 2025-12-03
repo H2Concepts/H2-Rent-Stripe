@@ -27,6 +27,7 @@ if (isset($_POST['submit_branding'])) {
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
     $filter_button_position = sanitize_text_field($_POST['filter_button_position'] ?? 'bottom_left');
+    $shop_layout = sanitize_text_field($_POST['shop_layout'] ?? 'filters_left');
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $login_layout = sanitize_text_field($_POST['login_layout'] ?? 'classic');
     $login_logo   = esc_url_raw($_POST['login_logo'] ?? '');
@@ -60,6 +61,7 @@ if (isset($_POST['submit_branding'])) {
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
         'filter_button_position' => $filter_button_position,
+        'shop_layout' => $shop_layout,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'login_layout' => $login_layout,
@@ -386,6 +388,39 @@ if (isset($_POST['submit_branding'])) {
                         <label>Custom CSS</label>
                         <textarea name="custom_css" rows="4"><?php echo esc_textarea($branding['custom_css'] ?? ''); ?></textarea>
                         <small>Eigene CSS-Regeln für die Produktseite</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Shop-Layout</h2>
+                <p class="card-subline">Steuerung der Filter-Position im Shop</p>
+
+                <div class="layout-option-grid" data-input-name="shop_layout">
+                    <?php $selected_shop_layout = $branding['shop_layout'] ?? 'filters_left'; ?>
+                    <div class="layout-option-card <?php echo ($selected_shop_layout === 'filters_left') ? 'active' : ''; ?>" data-value="filters_left">
+                        <div class="layout-option-name">Filter links</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="12" width="40" height="76" rx="8" fill="#d8e8de" />
+                                <rect x="60" y="20" width="88" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="60" y="40" width="88" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="60" y="60" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                        <input type="hidden" name="shop_layout" value="<?php echo esc_attr($selected_shop_layout); ?>">
+                    </div>
+                    <div class="layout-option-card <?php echo ($selected_shop_layout === 'filters_top') ? 'active' : ''; ?>" data-value="filters_top">
+                        <div class="layout-option-name">Filter oben (Dropdown)</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="16" y="14" width="128" height="16" rx="8" fill="#d8e8de" />
+                                <rect x="120" y="14" width="24" height="16" rx="8" fill="#cbd5e1" />
+                                <rect x="16" y="38" width="128" height="48" rx="10" fill="#ffffff" stroke="#d1d5db" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>

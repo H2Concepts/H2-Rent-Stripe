@@ -1787,6 +1787,25 @@ window.addEventListener("load", () => {
 });
 
 jQuery(function($) {
+    const $dropdownToggle = $('#shop-filter-dropdown-toggle');
+    const $dropdown = $('#shop-filter-dropdown');
+
+    if ($dropdownToggle.length && $dropdown.length) {
+        $dropdownToggle.on('click', function() {
+            const isOpen = $(this).attr('aria-expanded') === 'true';
+            $(this).attr('aria-expanded', (!isOpen).toString());
+            $(this).toggleClass('open', !isOpen);
+
+            if ($dropdown.is(':visible')) {
+                $dropdown.slideUp(200, function() {
+                    $dropdown.attr('hidden', true);
+                });
+            } else {
+                $dropdown.hide().removeAttr('hidden').slideDown(200);
+            }
+        });
+    }
+
     $('#shop-filter-toggle').on('click', function() {
         $('#shop-filter-overlay').addClass('open');
         $('body').addClass('shop-filter-open');

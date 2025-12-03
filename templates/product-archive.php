@@ -12,6 +12,17 @@ require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
 global $wpdb;
 
+$branding_settings = [];
+$branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {$wpdb->prefix}produkt_branding");
+foreach ($branding_results as $setting) {
+    $branding_settings[$setting->setting_key] = $setting->setting_value;
+}
+
+$shop_layout = $branding_settings['shop_layout'] ?? 'filters_left';
+if (!in_array($shop_layout, ['filters_left', 'filters_top'], true)) {
+    $shop_layout = 'filters_left';
+}
+
 // Fetch all categories (products) and default to an empty array on failure
 $categories = Database::get_all_categories(true);
 if (!is_array($categories)) {
@@ -79,89 +90,112 @@ foreach ($content_blocks as $b) {
     $blocks_by_position_mobile[$b->position_mobile][] = $b;
 }
 
+$kats_raw = $wpdb->get_results(
+    "SELECT pc.id, pc.parent_id, pc.name, pc.slug, COUNT(ptc.produkt_id) AS product_count
+     FROM {$wpdb->prefix}produkt_product_categories pc
+     LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON pc.id = ptc.category_id
+     GROUP BY pc.id"
+);
+$kats = Database::get_product_categories_tree();
+$cnt_map = [];
+foreach ($kats_raw as $r) { $cnt_map[$r->id] = $r->product_count; }
+foreach ($kats as $c) { $c->product_count = $cnt_map[$c->id] ?? 0; }
+$kats = array_filter($kats, function($c){ return $c->product_count > 0; });
+
+// Retrieve filter groups with at least one assigned product
+$filter_groups = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_filter_groups ORDER BY name");
+$filters_by_group = [];
+foreach ($filter_groups as $fg) {
+    $filters = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT f.id, f.name, COUNT(cf.category_id) AS cnt
+             FROM {$wpdb->prefix}produkt_filters f
+             LEFT JOIN {$wpdb->prefix}produkt_category_filters cf ON cf.filter_id = f.id
+             WHERE f.group_id = %d
+             GROUP BY f.id
+             HAVING cnt > 0
+             ORDER BY f.name",
+            $fg->id
+        )
+    );
+    if (!empty($filters)) {
+        $filters_by_group[$fg->id] = $filters;
+    }
+}
+
+ob_start();
 ?>
-<div class="produkt-shop-archive shop-overview-container produkt-container">
-    <?php if ($category_slug && !$category): ?>
-        <h1><?= esc_html(ucfirst($category_slug)) ?></h1>
+    <h2>Produkte</h2>
+    <ul>
+        <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
+        <?php foreach ($kats as $kat): ?>
+            <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
+            <li class="<?php echo esc_attr($cls); ?>">
+                <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
+                    <?php echo esc_html($kat->name); ?>
+                </a>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <?php if (!empty($filters_by_group)): ?>
+        <div class="shop-filter-checkboxes">
+            <?php foreach ($filter_groups as $fg): if (empty($filters_by_group[$fg->id])) continue; ?>
+                <strong><?php echo esc_html($fg->name); ?></strong>
+                <ul>
+                    <?php foreach ($filters_by_group[$fg->id] as $f): ?>
+                        <li>
+                            <label>
+                                <input type="checkbox" class="shop-filter-checkbox" value="<?php echo $f->id; ?>" <?php checked(in_array($f->id, $selected_filters)); ?>>
+                                <?php echo esc_html($f->name); ?>
+                            </label>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+<?php
+$filter_panel_markup = trim(ob_get_clean());
+$heading_tag = !empty($category_slug) ? 'h1' : 'h2';
+$heading_text = !empty($category_slug) ? ($category->name ?? ucfirst($category_slug)) : 'Shop';
+$not_found = ($category_slug && !$category);
+$show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !== '');
+?>
+<div class="produkt-shop-archive shop-overview-container produkt-container shop-layout-<?php echo esc_attr($shop_layout); ?>">
+    <?php if ($not_found): ?>
+        <<?php echo $heading_tag; ?>><?= esc_html($heading_text) ?></<?php echo $heading_tag; ?>>
         <p>Kategorie nicht gefunden.</p>
-    <?php elseif (!empty($category_slug)): ?>
-        <h1><?= esc_html($category->name ?? ucfirst($category_slug)) ?></h1>
     <?php else: ?>
-        <h2>Shop</h2>
+        <?php if ($shop_layout === 'filters_top'): ?>
+            <div class="shop-title-row">
+                <<?php echo $heading_tag; ?>><?= esc_html($heading_text) ?></<?php echo $heading_tag; ?>>
+                <?php if ($show_filter_toggle): ?>
+                    <button id="shop-filter-dropdown-toggle" class="shop-filter-dropdown-toggle" aria-expanded="false" aria-controls="shop-filter-dropdown">
+                        <span>Filter</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M12 15.5 5 8.5l1.4-1.4L12 12.7l5.6-5.6L19 8.5z" />
+                        </svg>
+                    </button>
+                <?php endif; ?>
+            </div>
+        <?php else: ?>
+            <<?php echo $heading_tag; ?>><?= esc_html($heading_text) ?></<?php echo $heading_tag; ?>>
+        <?php endif; ?>
     <?php endif; ?>
 
-
-    <?php
-    global $wpdb;
-    $kats_raw = $wpdb->get_results(
-        "SELECT pc.id, pc.parent_id, pc.name, pc.slug, COUNT(ptc.produkt_id) AS product_count
-         FROM {$wpdb->prefix}produkt_product_categories pc
-         LEFT JOIN {$wpdb->prefix}produkt_product_to_category ptc ON pc.id = ptc.category_id
-         GROUP BY pc.id"
-    );
-    $kats = Database::get_product_categories_tree();
-    $cnt_map = [];
-    foreach ($kats_raw as $r) { $cnt_map[$r->id] = $r->product_count; }
-    foreach ($kats as $c) { $c->product_count = $cnt_map[$c->id] ?? 0; }
-    $kats = array_filter($kats, function($c){ return $c->product_count > 0; });
-
-    // Retrieve filter groups with at least one assigned product
-    $filter_groups = $wpdb->get_results("SELECT id, name FROM {$wpdb->prefix}produkt_filter_groups ORDER BY name");
-    $filters_by_group = [];
-    foreach ($filter_groups as $fg) {
-        $filters = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT f.id, f.name, COUNT(cf.category_id) AS cnt
-                 FROM {$wpdb->prefix}produkt_filters f
-                 LEFT JOIN {$wpdb->prefix}produkt_category_filters cf ON cf.filter_id = f.id
-                 WHERE f.group_id = %d
-                 GROUP BY f.id
-                 HAVING cnt > 0
-                 ORDER BY f.name",
-                $fg->id
-            )
-        );
-        if (!empty($filters)) {
-            $filters_by_group[$fg->id] = $filters;
-        }
-    }
-    ?>
-
     <div class="shop-overview-layout">
-        <aside class="shop-category-list">
-            <h2>Produkte</h2>
-            <ul>
-                <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
-                <?php foreach ($kats as $kat): ?>
-                    <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
-                    <li class="<?php echo esc_attr($cls); ?>">
-                        <a href="<?php echo esc_url(home_url('/shop/' . $kat->slug)); ?>" class="<?php echo ($category_slug === $kat->slug) ? 'active' : ''; ?>">
-                            <?php echo esc_html($kat->name); ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-
-            <?php if (!empty($filters_by_group)): ?>
-                <div class="shop-filter-checkboxes">
-                    <?php foreach ($filter_groups as $fg): if (empty($filters_by_group[$fg->id])) continue; ?>
-                        <strong><?php echo esc_html($fg->name); ?></strong>
-                        <ul>
-                            <?php foreach ($filters_by_group[$fg->id] as $f): ?>
-                                <li>
-                                    <label>
-                                        <input type="checkbox" class="shop-filter-checkbox" value="<?php echo $f->id; ?>" <?php checked(in_array($f->id, $selected_filters)); ?>>
-                                        <?php echo esc_html($f->name); ?>
-                                    </label>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </aside>
+        <?php if ($shop_layout === 'filters_left' && !$not_found): ?>
+            <aside class="shop-category-list">
+                <?php echo $filter_panel_markup; ?>
+            </aside>
+        <?php elseif ($shop_layout === 'filters_top' && $show_filter_toggle): ?>
+            <div id="shop-filter-dropdown" class="shop-filter-dropdown" hidden>
+                <?php echo $filter_panel_markup; ?>
+            </div>
+        <?php endif; ?>
         <div>
-            <?php if (empty($categories)): ?>
+            <?php if (empty($categories) && !$not_found): ?>
                 <p>Keine Produkte in dieser Kategorie gefunden.</p>
             <?php endif; ?>
 
