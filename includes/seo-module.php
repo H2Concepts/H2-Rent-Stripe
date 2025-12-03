@@ -149,25 +149,12 @@ class SeoModule {
             return $crumbs;
         }
 
-        // Normalize incoming crumbs and keep the home label if present
-        $normalized_crumbs = array_values(array_filter($crumbs, function ($crumb) {
-            return trim(self::get_crumb_label($crumb)) !== '';
-        }));
-
-        $home_label = !empty($normalized_crumbs) ? self::get_crumb_label($normalized_crumbs[0]) : __('Home', 'h2-concepts');
+        $home_label = __('Home', 'h2-concepts');
         $home_url   = home_url('/');
 
-        if (!empty($normalized_crumbs)) {
-            $first = $normalized_crumbs[0];
-            if (is_array($first)) {
-                if (!empty($first['url'])) {
-                    $home_url = $first['url'];
-                } elseif (!empty($first[1])) {
-                    $home_url = $first[1];
-                }
-            } elseif (is_object($first) && !empty($first->url)) {
-                $home_url = $first->url;
-            }
+        if (!empty($crumbs)) {
+            $home_label = self::get_crumb_label($crumbs[0]) ?: $home_label;
+            $home_url   = self::get_crumb_url($crumbs[0]) ?: $home_url;
         }
 
         $shop_page_id = get_option(\PRODUKT_SHOP_PAGE_OPTION);
@@ -187,19 +174,26 @@ class SeoModule {
             [
                 'label' => $home_label,
                 'url'   => $home_url,
+                0       => $home_label,
+                1       => $home_url,
             ],
             [
                 'label' => $shop_label,
                 'url'   => $shop_url,
+                0       => $shop_label,
+                1       => $shop_url,
             ],
         ];
 
         if (!empty($category_slug)) {
             $category = self::get_product_by_slug($category_slug);
             if ($category) {
+                $label = $category->product_title;
                 $final_crumbs[] = [
-                    'label' => $category->product_title,
+                    'label' => $label,
                     'url'   => '',
+                    0       => $label,
+                    1       => '',
                 ];
             }
         }
@@ -207,9 +201,12 @@ class SeoModule {
         if (!empty($slug)) {
             $product = self::get_product_by_slug($slug);
             if ($product) {
+                $label = $product->product_title;
                 $final_crumbs[] = [
-                    'label' => $product->product_title,
+                    'label' => $label,
                     'url'   => '',
+                    0       => $label,
+                    1       => '',
                 ];
             }
         }
@@ -236,6 +233,18 @@ class SeoModule {
 
         if (is_object($crumb) && isset($crumb->label)) {
             return $crumb->label;
+        }
+
+        return '';
+    }
+
+    private static function get_crumb_url($crumb) {
+        if (is_array($crumb)) {
+            return $crumb['url'] ?? ($crumb[1] ?? '');
+        }
+
+        if (is_object($crumb) && isset($crumb->url)) {
+            return $crumb->url;
         }
 
         return '';
