@@ -322,7 +322,31 @@ class Admin {
         $cart_badge_text = $branding['cart_badge_text'] ?? '#ffffff';
         $custom_css = $branding['custom_css'] ?? '';
         $product_padding = $branding['product_padding'] ?? '1';
+        $filter_button_position = $branding['filter_button_position'] ?? 'bottom_left';
         $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
+        $position_styles = '';
+        switch ($filter_button_position) {
+            case 'bottom_right':
+                $position_styles = 'bottom:20px;top:auto;left:auto;right:20px;transform:translate(0,0);';
+                break;
+            case 'middle_left':
+                $position_styles = 'top:50%;bottom:auto;left:20px;right:auto;transform:translateY(-50%);';
+                break;
+            case 'middle_right':
+                $position_styles = 'top:50%;bottom:auto;right:20px;left:auto;transform:translateY(-50%);';
+                break;
+            case 'top_left':
+                $position_styles = 'top:20px;bottom:auto;left:20px;right:auto;transform:translate(0,0);';
+                break;
+            case 'top_right':
+                $position_styles = 'top:20px;bottom:auto;right:20px;left:auto;transform:translate(0,0);';
+                break;
+            case 'bottom_left':
+            default:
+                $position_styles = 'bottom:20px;top:auto;left:20px;right:auto;transform:translate(0,0);';
+                break;
+        }
+        $inline_css .= "\n.shop-filter-button{{$position_styles}}";
         if ($product_padding !== '1') {
         $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }

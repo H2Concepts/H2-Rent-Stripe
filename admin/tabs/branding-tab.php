@@ -25,6 +25,7 @@ if (isset($_POST['submit_branding'])) {
     $account_button_hover_text = sanitize_hex_color($_POST['account_button_hover_text']);
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
+    $filter_button_position = sanitize_text_field($_POST['filter_button_position'] ?? 'bottom_left');
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $login_layout = sanitize_text_field($_POST['login_layout'] ?? 'classic');
     $login_logo   = esc_url_raw($_POST['login_logo'] ?? '');
@@ -56,6 +57,7 @@ if (isset($_POST['submit_branding'])) {
         'account_button_hover_text' => $account_button_hover_text,
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
+        'filter_button_position' => $filter_button_position,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'login_layout' => $login_layout,
@@ -324,6 +326,20 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $cart_badge_text; ?>" class="produkt-color-input">
                         </div>
                         <small>Textfarbe der Warenkorb-Badge</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Position des mobilen Filter-Buttons</label>
+                        <?php $filter_button_position = esc_attr($branding['filter_button_position'] ?? 'bottom_left'); ?>
+                        <select name="filter_button_position">
+                            <option value="bottom_left" <?php selected($filter_button_position, 'bottom_left'); ?>>Unten links</option>
+                            <option value="bottom_right" <?php selected($filter_button_position, 'bottom_right'); ?>>Unten rechts</option>
+                            <option value="middle_left" <?php selected($filter_button_position, 'middle_left'); ?>>Mitte links</option>
+                            <option value="middle_right" <?php selected($filter_button_position, 'middle_right'); ?>>Mitte rechts</option>
+                            <option value="top_left" <?php selected($filter_button_position, 'top_left'); ?>>Oben links</option>
+                            <option value="top_right" <?php selected($filter_button_position, 'top_right'); ?>>Oben rechts</option>
+                        </select>
+                        <small>Steuert die Position des Filter/Kategorien-Buttons auf Mobilgeräten.</small>
                     </div>
 
                     <div class="produkt-form-group">
