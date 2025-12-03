@@ -35,7 +35,9 @@ img.wp-smiley, img.emoji {
     margin: 0 0 20px;
 }
 
-.produkt-breadcrumbs a {
+.produkt-breadcrumbs a,
+.produkt-breadcrumbs a:visited,
+.produkt-breadcrumbs a:focus {
     color: var(--produkt-text-color);
     text-decoration: none;
 }

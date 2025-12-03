@@ -186,9 +186,9 @@ class SeoModule {
         ];
 
         if (!empty($category_slug)) {
-            $category = self::get_product_by_slug($category_slug);
+            $category = self::get_product_category_by_slug($category_slug);
             if ($category) {
-                $label = $category->product_title;
+                $label = $category->name;
                 $final_crumbs[] = [
                     'label' => $label,
                     'url'   => '',
@@ -266,6 +266,32 @@ class SeoModule {
             $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
             foreach ($categories as $cat) {
                 if (sanitize_title($cat->product_title) === $slug) {
+                    $category = $cat;
+                    break;
+                }
+            }
+        }
+
+        return $category;
+    }
+
+    private static function get_product_category_by_slug($slug) {
+        global $wpdb;
+
+        if (empty($slug)) {
+            return null;
+        }
+
+        $table = $wpdb->prefix . 'produkt_product_categories';
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE slug = %s",
+            $slug
+        ));
+
+        if (!$category) {
+            $categories = $wpdb->get_results("SELECT * FROM {$table}");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->name) === $slug) {
                     $category = $cat;
                     break;
                 }
