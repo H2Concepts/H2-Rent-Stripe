@@ -2099,19 +2099,22 @@ body.produkt-popup-open {
 
 .shop-overview-layout {
     display: grid;
-    grid-template-columns: 200px 1fr;
     gap: 2rem;
 }
 
-.shop-layout-filters-top .shop-overview-layout {
-    display: block;
+.shop-layout-filters_left .shop-overview-layout {
+    grid-template-columns: 200px 1fr;
 }
 
-.shop-layout-filters-top .shop-filter-button {
+.shop-layout-filters_top .shop-overview-layout {
+    grid-template-columns: 1fr;
+}
+
+.shop-layout-filters_top .shop-filter-button {
     display: none !important;
 }
 
-.shop-layout-filters-top .shop-product-grid {
+.shop-layout-filters_top .shop-product-grid {
     margin-top: 1.5rem;
 }
 
