@@ -2403,7 +2403,7 @@ body.shop-filter-open {
 
 .content-block-wave {
     display: block;
-    margin-top: -55px;
+    margin-top: -52px;
     width: 100%;
     height: 40px;
     color: var(--block-bg, #0099ff);
@@ -2473,6 +2473,14 @@ body.shop-filter-open {
 @media (max-width: 768px) {
     .shop-category-list {
         display: none;
+    }
+
+    .shop-layout-filters_top .shop-filter-dropdown .shop-category-list {
+        display: block;
+    }
+
+    .shop-layout-filters_left .shop-overview-layout {
+        grid-template-columns: 1fr;
     }
 
     .shop-filter-button {
