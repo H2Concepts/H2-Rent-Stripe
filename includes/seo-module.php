@@ -13,6 +13,7 @@ class SeoModule {
         add_action('wp_head', [self::class, 'add_schema_markup']);
         add_action('init', [self::class, 'add_sitemap_rewrite']);
         add_action('template_redirect', [self::class, 'render_sitemap']);
+        add_filter('rank_math/frontend/breadcrumb/items', [self::class, 'filter_breadcrumb_items']);
         // add sitemap reference to robots.txt
         add_filter('robots_txt', [self::class, 'add_sitemap_to_robots'], 10, 2);
     }
@@ -138,6 +139,83 @@ class SeoModule {
         if (!empty($og_image)) {
             echo '<meta name="twitter:image" content="' . esc_url($og_image) . '">' . "\n";
         }
+    }
+
+    public static function filter_breadcrumb_items($crumbs) {
+        $slug          = sanitize_title(get_query_var('produkt_slug'));
+        $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+
+        if (empty($slug) && empty($category_slug)) {
+            return $crumbs;
+        }
+
+        $shop_page_id = get_option(\PRODUKT_SHOP_PAGE_OPTION);
+        $shop_label   = __('Shop', 'h2-concepts');
+        $shop_url     = '';
+
+        if ($shop_page_id) {
+            $shop_label = get_the_title($shop_page_id) ?: $shop_label;
+            $shop_url   = get_permalink($shop_page_id);
+        }
+
+        if (empty($shop_url)) {
+            $shop_url = home_url('/shop/');
+        }
+
+        if (!self::crumb_exists($crumbs, $shop_label)) {
+            $crumbs[] = [$shop_label, $shop_url];
+        }
+
+        if (!empty($slug)) {
+            $product = self::get_product_by_slug($slug);
+            if ($product && !self::crumb_exists($crumbs, $product->product_title)) {
+                $crumbs[] = [$product->product_title, ''];
+            }
+        }
+
+        return $crumbs;
+    }
+
+    private static function crumb_exists($crumbs, $label) {
+        foreach ($crumbs as $crumb) {
+            $existing_label = '';
+            if (is_array($crumb)) {
+                $existing_label = $crumb['label'] ?? ($crumb[0] ?? '');
+            } elseif (is_object($crumb) && isset($crumb->label)) {
+                $existing_label = $crumb->label;
+            }
+
+            if (!empty($existing_label) && strtolower($existing_label) === strtolower($label)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function get_product_by_slug($slug) {
+        global $wpdb;
+
+        if (empty($slug)) {
+            return null;
+        }
+
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE REPLACE(LOWER(product_title),' ', '-') = %s",
+            $slug
+        ));
+
+        if (!$category) {
+            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->product_title) === $slug) {
+                    $category = $cat;
+                    break;
+                }
+            }
+        }
+
+        return $category;
     }
 
     public static function add_schema_markup() {
