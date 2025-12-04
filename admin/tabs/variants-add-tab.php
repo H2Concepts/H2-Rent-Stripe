@@ -2,6 +2,9 @@
 // Variants Add Tab Content
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $sale_enabled = 0;
+$sale_price_cents = 0;
+$weekend_price_cents = 0;
+$has_sale_options = false;
 
 global $wpdb;
 $sale_conditions = $wpdb->get_results($wpdb->prepare(
@@ -16,6 +19,7 @@ $sale_frame_colors = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE category_id = %d AND color_type = 'frame' ORDER BY sort_order, name",
     $selected_category
 ));
+$has_sale_options = !empty($sale_product_colors) || !empty($sale_frame_colors) || !empty($sale_conditions);
 ?>
 
 <div class="produkt-add-variant">
@@ -59,56 +63,79 @@ $sale_frame_colors = $wpdb->get_results($wpdb->prepare(
                         <span>Verkauf aktiv</span>
                     </label>
                 </div>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label>Einmaliger Verkaufspreis</label>
-                        <input type="number" step="0.01" name="verkaufspreis_einmalig" placeholder="0.00" class="sale-dependent">
+                <div class="price-cards sale-price-cards">
+                  <div class="price-card" data-field="verkaufspreis_einmalig">
+                    <div class="price-card-head">
+                      <div class="price-title">Standardpreis</div>
+                      <span class="price-badge">EUR</span>
                     </div>
-                </div>
-                <?php if (!empty($sale_conditions)): ?>
-                <div class="produkt-form-group full-width">
-                    <label>Zustände für Verkauf</label>
-                    <div class="sale-option-grid">
-                        <?php foreach ($sale_conditions as $condition): ?>
-                        <label class="produkt-toggle-label sale-option-toggle">
-                            <input type="checkbox" name="sale_conditions[]" value="<?php echo esc_attr($condition->id); ?>" class="sale-dependent">
-                            <span class="produkt-toggle-slider"></span>
-                            <span><?php echo esc_html($condition->name); ?></span>
-                        </label>
-                        <?php endforeach; ?>
+                    <div class="price-display">
+                      <input type="text" class="price-input sale-dependent" placeholder="0,00" aria-label="Standardpreis in Euro" />
+                      <span class="price-suffix">€</span>
+                      <input type="hidden" name="verkaufspreis_einmalig" class="price-hidden sale-dependent" value="<?php echo $sale_price_cents; ?>">
                     </div>
-                </div>
-                <?php endif; ?>
+                    <?php if ($has_sale_options): ?>
+                    <div class="price-options">
+                      <?php if (!empty($sale_product_colors)): ?>
+                      <div class="price-option-group">
+                        <div class="price-option-title">Produktfarbe</div>
+                        <div class="sale-option-grid">
+                            <?php foreach ($sale_product_colors as $color): ?>
+                            <label class="produkt-toggle-label sale-option-toggle">
+                                <input type="checkbox" name="sale_product_colors[]" value="<?php echo esc_attr($color->id); ?>" class="sale-dependent">
+                                <span class="produkt-toggle-slider"></span>
+                                <span><?php echo esc_html($color->name); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                      </div>
+                      <?php endif; ?>
 
-                <?php if (!empty($sale_product_colors)): ?>
-                <div class="produkt-form-group full-width">
-                    <label>Produktfarben für Verkauf</label>
-                    <div class="sale-option-grid">
-                        <?php foreach ($sale_product_colors as $color): ?>
-                        <label class="produkt-toggle-label sale-option-toggle">
-                            <input type="checkbox" name="sale_product_colors[]" value="<?php echo esc_attr($color->id); ?>" class="sale-dependent">
-                            <span class="produkt-toggle-slider"></span>
-                            <span><?php echo esc_html($color->name); ?></span>
-                        </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
+                      <?php if (!empty($sale_frame_colors)): ?>
+                      <div class="price-option-group">
+                        <div class="price-option-title">Gestellfarbe</div>
+                        <div class="sale-option-grid">
+                            <?php foreach ($sale_frame_colors as $color): ?>
+                            <label class="produkt-toggle-label sale-option-toggle">
+                                <input type="checkbox" name="sale_frame_colors[]" value="<?php echo esc_attr($color->id); ?>" class="sale-dependent">
+                                <span class="produkt-toggle-slider"></span>
+                                <span><?php echo esc_html($color->name); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                      </div>
+                      <?php endif; ?>
 
-                <?php if (!empty($sale_frame_colors)): ?>
-                <div class="produkt-form-group full-width">
-                    <label>Gestellfarben für Verkauf</label>
-                    <div class="sale-option-grid">
-                        <?php foreach ($sale_frame_colors as $color): ?>
-                        <label class="produkt-toggle-label sale-option-toggle">
-                            <input type="checkbox" name="sale_frame_colors[]" value="<?php echo esc_attr($color->id); ?>" class="sale-dependent">
-                            <span class="produkt-toggle-slider"></span>
-                            <span><?php echo esc_html($color->name); ?></span>
-                        </label>
-                        <?php endforeach; ?>
+                      <?php if (!empty($sale_conditions)): ?>
+                      <div class="price-option-group">
+                        <div class="price-option-title">Zustand</div>
+                        <div class="sale-option-grid">
+                            <?php foreach ($sale_conditions as $condition): ?>
+                            <label class="produkt-toggle-label sale-option-toggle">
+                                <input type="checkbox" name="sale_conditions[]" value="<?php echo esc_attr($condition->id); ?>" class="sale-dependent">
+                                <span class="produkt-toggle-slider"></span>
+                                <span><?php echo esc_html($condition->name); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                      </div>
+                      <?php endif; ?>
                     </div>
+                    <?php endif; ?>
+                  </div>
+
+                  <div class="price-card" data-field="weekend_price">
+                    <div class="price-card-head">
+                      <div class="price-title">Wochenendpreis <span class="price-sub">(Fr–So)</span></div>
+                      <span class="price-badge">EUR</span>
+                    </div>
+                    <div class="price-display">
+                      <input type="text" class="price-input sale-dependent" placeholder="0,00" aria-label="Wochenendpreis in Euro" />
+                      <span class="price-suffix">€</span>
+                      <input type="hidden" name="weekend_price" class="price-hidden sale-dependent" value="<?php echo $weekend_price_cents; ?>">
+                    </div>
+                  </div>
                 </div>
-                <?php endif; ?>
             </div>
             <?php endif; ?>
 
