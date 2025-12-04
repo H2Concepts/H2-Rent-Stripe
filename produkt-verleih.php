@@ -168,6 +168,7 @@ function produkt_simple_checkout_button($atts = []) {
     $product_color_id= isset($_GET['product_color_id']) ? intval($_GET['product_color_id']) : 0;
     $frame_color_id  = isset($_GET['frame_color_id']) ? intval($_GET['frame_color_id']) : 0;
     $final_price     = isset($_GET['final_price']) ? floatval($_GET['final_price']) : 0;
+    $sale_mode       = !empty($_GET['sale_mode']);
 
     $metadata = [
         'produkt'       => isset($_GET['produkt']) ? sanitize_text_field($_GET['produkt']) : '',
@@ -192,6 +193,7 @@ function produkt_simple_checkout_button($atts = []) {
         const publishableKey = <?php echo json_encode(\ProduktVerleih\StripeService::get_publishable_key()); ?>;
         if (!publishableKey) return;
         const stripe = Stripe(publishableKey);
+        const saleMode = <?php echo $sale_mode ? 'true' : 'false'; ?>;
         async function collectClientInfo() {
             const info = {
                 language: navigator.language || '',
@@ -249,6 +251,7 @@ function produkt_simple_checkout_button($atts = []) {
                     product_color_id: <?php echo json_encode($product_color_id); ?>,
                     frame_color_id: <?php echo json_encode($frame_color_id); ?>,
                     final_price: <?php echo json_encode($final_price); ?>,
+                    sale_mode: saleMode,
                     produkt: <?php echo json_encode($metadata['produkt']); ?>,
                     extra: <?php echo json_encode($metadata['extra']); ?>,
                     dauer: <?php echo json_encode($metadata['dauer']); ?>,

@@ -318,11 +318,40 @@ class Admin {
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';
         $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
         $filter_button_color = $branding['filter_button_color'] ?? '#5f7f5f';
+        $filter_button_hover_color = $branding['filter_button_hover_color'] ?? $filter_button_color;
+        $filter_button_icon_color = $branding['filter_button_icon_color'] ?? '#ffffff';
         $cart_badge_bg = $branding['cart_badge_bg'] ?? '#000000';
         $cart_badge_text = $branding['cart_badge_text'] ?? '#ffffff';
         $custom_css = $branding['custom_css'] ?? '';
         $product_padding = $branding['product_padding'] ?? '1';
-        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
+        $filter_button_position = $branding['filter_button_position'] ?? 'bottom_left';
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-filter-button-hover-bg:{$filter_button_hover_color};--produkt-filter-button-icon:{$filter_button_icon_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
+        $position_styles = '';
+        switch ($filter_button_position) {
+            case 'bottom_right':
+                $position_styles = 'bottom:20px;top:auto;left:auto;right:20px;transform:translate(0,0);';
+                break;
+            case 'bottom_center':
+                $position_styles = 'bottom:20px;top:auto;left:50%;right:auto;transform:translateX(-50%);';
+                break;
+            case 'middle_left':
+                $position_styles = 'top:50%;bottom:auto;left:20px;right:auto;transform:translateY(-50%);';
+                break;
+            case 'middle_right':
+                $position_styles = 'top:50%;bottom:auto;right:20px;left:auto;transform:translateY(-50%);';
+                break;
+            case 'top_left':
+                $position_styles = 'top:20px;bottom:auto;left:20px;right:auto;transform:translate(0,0);';
+                break;
+            case 'top_right':
+                $position_styles = 'top:20px;bottom:auto;right:20px;left:auto;transform:translate(0,0);';
+                break;
+            case 'bottom_left':
+            default:
+                $position_styles = 'bottom:20px;top:auto;left:20px;right:auto;transform:translate(0,0);';
+                break;
+        }
+        $inline_css .= "\n.shop-filter-button{{$position_styles}}";
         if ($product_padding !== '1') {
         $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }
@@ -582,6 +611,7 @@ class Admin {
             $vat_included = isset($_POST['vat_included']) ? 1 : (isset($global_ui['vat_included']) ? intval($global_ui['vat_included']) : 0);
             $layout_style = sanitize_text_field($_POST['layout_style']);
             $price_layout = sanitize_text_field($_POST['price_layout'] ?? 'default');
+            $description_layout = sanitize_text_field($_POST['description_layout'] ?? 'left');
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip'] ?? ($global_ui['duration_tooltip'] ?? ''));
             $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip'] ?? ($global_ui['condition_tooltip'] ?? ''));
             $show_features = isset($_POST['show_features']) ? 1 : 0;
@@ -701,6 +731,7 @@ class Admin {
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
                         'price_layout' => $price_layout,
+                        'description_layout' => $description_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -711,7 +742,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -851,6 +882,7 @@ class Admin {
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
                         'price_layout' => $price_layout,
+                        'description_layout' => $description_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -864,7 +896,7 @@ class Admin {
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
+                        '%s','%s','%d','%s','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
                     )
                 );
 

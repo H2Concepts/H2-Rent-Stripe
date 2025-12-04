@@ -17,6 +17,7 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $filter_button_icon_color = sanitize_hex_color($_POST['filter_button_icon_color']);
     $account_card_bg = sanitize_hex_color($_POST['account_card_bg']);
     $account_card_text = sanitize_hex_color($_POST['account_card_text']);
     $account_button_bg = sanitize_hex_color($_POST['account_button_bg']);
@@ -25,6 +26,8 @@ if (isset($_POST['submit_branding'])) {
     $account_button_hover_text = sanitize_hex_color($_POST['account_button_hover_text']);
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
+    $filter_button_position = sanitize_text_field($_POST['filter_button_position'] ?? 'bottom_left');
+    $shop_layout = sanitize_text_field($_POST['shop_layout'] ?? 'filters_left');
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $login_layout = sanitize_text_field($_POST['login_layout'] ?? 'classic');
     $login_logo   = esc_url_raw($_POST['login_logo'] ?? '');
@@ -48,6 +51,7 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'filter_button_icon_color' => $filter_button_icon_color,
         'account_card_bg' => $account_card_bg,
         'account_card_text' => $account_card_text,
         'account_button_bg' => $account_button_bg,
@@ -56,6 +60,8 @@ if (isset($_POST['submit_branding'])) {
         'account_button_hover_text' => $account_button_hover_text,
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
+        'filter_button_position' => $filter_button_position,
+        'shop_layout' => $shop_layout,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'login_layout' => $login_layout,
@@ -206,6 +212,28 @@ if (isset($_POST['submit_branding'])) {
                     </div>
 
                     <div class="produkt-form-group">
+                        <label>Filter-Button-Farbe (Hover)</label>
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_hover_color = esc_attr($branding['filter_button_hover_color'] ?? ($branding['filter_button_color'] ?? '#5f7f5f')); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_hover_color; ?>;"></div>
+                            <input type="text" name="filter_button_hover_color" value="<?php echo $filter_button_hover_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_hover_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe des mobilen Filter-Buttons bei Hover</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Filter-Icon-Farbe</label>
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_icon_color = esc_attr($branding['filter_button_icon_color'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_icon_color; ?>;"></div>
+                            <input type="text" name="filter_button_icon_color" value="<?php echo $filter_button_icon_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_icon_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe des Icons auf dem mobilen Filter-Button</small>
+                    </div>
+
+                    <div class="produkt-form-group">
                         <label>Textfarbe (Frontend)</label>
                         <div class="produkt-color-picker">
                             <?php $front_text_color = esc_attr($branding['front_text_color'] ?? '#4a674a'); ?>
@@ -327,6 +355,21 @@ if (isset($_POST['submit_branding'])) {
                     </div>
 
                     <div class="produkt-form-group">
+                        <label>Position des mobilen Filter-Buttons</label>
+                        <?php $filter_button_position = esc_attr($branding['filter_button_position'] ?? 'bottom_left'); ?>
+                        <select name="filter_button_position">
+                            <option value="bottom_left" <?php selected($filter_button_position, 'bottom_left'); ?>>Unten links</option>
+                            <option value="bottom_center" <?php selected($filter_button_position, 'bottom_center'); ?>>Unten mittig</option>
+                            <option value="bottom_right" <?php selected($filter_button_position, 'bottom_right'); ?>>Unten rechts</option>
+                            <option value="middle_left" <?php selected($filter_button_position, 'middle_left'); ?>>Mitte links</option>
+                            <option value="middle_right" <?php selected($filter_button_position, 'middle_right'); ?>>Mitte rechts</option>
+                            <option value="top_left" <?php selected($filter_button_position, 'top_left'); ?>>Oben links</option>
+                            <option value="top_right" <?php selected($filter_button_position, 'top_right'); ?>>Oben rechts</option>
+                        </select>
+                        <small>Steuert die Position des Filter/Kategorien-Buttons auf Mobilgeräten.</small>
+                    </div>
+
+                    <div class="produkt-form-group">
                         <label class="produkt-toggle-label">
                             <input type="checkbox" name="product_padding" value="1" <?php echo !isset($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
                             <span class="produkt-toggle-slider"></span>
@@ -345,6 +388,39 @@ if (isset($_POST['submit_branding'])) {
                         <label>Custom CSS</label>
                         <textarea name="custom_css" rows="4"><?php echo esc_textarea($branding['custom_css'] ?? ''); ?></textarea>
                         <small>Eigene CSS-Regeln für die Produktseite</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Shop-Layout</h2>
+                <p class="card-subline">Steuerung der Filter-Position im Shop</p>
+
+                <div class="layout-option-grid" data-input-name="shop_layout">
+                    <?php $selected_shop_layout = $branding['shop_layout'] ?? 'filters_left'; ?>
+                    <div class="layout-option-card <?php echo ($selected_shop_layout === 'filters_left') ? 'active' : ''; ?>" data-value="filters_left">
+                        <div class="layout-option-name">Filter links</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="12" width="40" height="76" rx="8" fill="#d8e8de" />
+                                <rect x="60" y="20" width="88" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="60" y="40" width="88" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="60" y="60" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                        <input type="hidden" name="shop_layout" value="<?php echo esc_attr($selected_shop_layout); ?>">
+                    </div>
+                    <div class="layout-option-card <?php echo ($selected_shop_layout === 'filters_top') ? 'active' : ''; ?>" data-value="filters_top">
+                        <div class="layout-option-name">Filter oben (Dropdown)</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="16" y="14" width="128" height="16" rx="8" fill="#d8e8de" />
+                                <rect x="120" y="14" width="24" height="16" rx="8" fill="#cbd5e1" />
+                                <rect x="16" y="38" width="128" height="48" rx="10" fill="#ffffff" stroke="#d1d5db" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>

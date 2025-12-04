@@ -26,6 +26,8 @@ class Ajax {
             $variant_id
         ));
 
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
         $base_duration_id = null;
         $base_duration_price = null;
         if ($variant && $modus !== 'kauf') {
@@ -53,8 +55,6 @@ class Ajax {
             $extras = $wpdb->get_results($query);
         }
         
-        $modus = get_option('produkt_betriebsmodus', 'miete');
-
         $duration = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
             $duration_id
@@ -1234,7 +1234,8 @@ function produkt_create_checkout_session() {
         $days       = isset($body['days']) ? max(1, intval($body['days'])) : 1;
         $start_date = sanitize_text_field($body['start_date'] ?? '');
         $end_date   = sanitize_text_field($body['end_date'] ?? '');
-        $modus      = get_option('produkt_betriebsmodus', 'miete');
+        $sale_mode  = !empty($body['sale_mode']);
+        $modus      = $sale_mode ? 'kauf' : get_option('produkt_betriebsmodus', 'miete');
         $price_id = sanitize_text_field($body['price_id'] ?? '');
         if (!$price_id) {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);
@@ -1293,7 +1294,6 @@ function produkt_create_checkout_session() {
             'quantity' => $days,
         ]];
 
-        $modus = get_option('produkt_betriebsmodus', 'miete');
         if ($modus === 'kauf') {
             $stripe_customer_id = null;
             if ($customer_email) {
@@ -1521,8 +1521,9 @@ function produkt_create_embedded_checkout_session() {
         }
 
         $body = json_decode(file_get_contents('php://input'), true);
+        $sale_mode = !empty($body['sale_mode']);
         $client_info = !empty($body['client_info']) ? wp_json_encode($body['client_info']) : '';
-        $modus      = get_option('produkt_betriebsmodus', 'miete');
+        $modus      = $sale_mode ? 'kauf' : get_option('produkt_betriebsmodus', 'miete');
         $cart_items = [];
         if (!empty($body['cart_items']) && is_array($body['cart_items'])) {
             $cart_items = $body['cart_items'];
