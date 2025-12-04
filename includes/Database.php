@@ -2069,6 +2069,36 @@ class Database {
         }
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'heading_tag'");
     }
+
+    /**
+     * Search active products (categories) by term for frontend search results.
+     *
+     * @param string $term  Search term from WordPress search query.
+     * @param int    $limit Maximum number of results to return.
+     * @return array<int, object>
+     */
+    public function search_products_by_term($term, $limit = 50) {
+        global $wpdb;
+
+        $like = '%' . $wpdb->esc_like($term) . '%';
+        $table = $wpdb->prefix . 'produkt_categories';
+
+        $sql = $wpdb->prepare(
+            "SELECT id, product_title, product_description, short_description, default_image, rating_value, show_rating
+             FROM $table
+             WHERE active = 1
+               AND (product_title LIKE %s OR product_description LIKE %s OR short_description LIKE %s)
+             ORDER BY sort_order ASC
+             LIMIT %d",
+            $like,
+            $like,
+            $like,
+            intval($limit)
+        );
+
+        return $wpdb->get_results($sql);
+    }
+
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *
