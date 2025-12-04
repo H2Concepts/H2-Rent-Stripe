@@ -84,7 +84,8 @@ class Plugin {
         add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
         add_filter('render_block', [$this, 'maybe_inject_cart_icon_block'], 10, 2);
         add_action('wp_footer', [$this, 'render_cart_sidebar']);
-        add_action('loop_end', [$this, 'maybe_output_search_results']);
+        add_action('loop_start', [$this, 'maybe_output_search_results']);
+        add_action('loop_no_results', [$this, 'maybe_output_search_results'], 10, 1);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -970,7 +971,9 @@ class Plugin {
      * @param \WP_Query $query Current loop query instance.
      */
     public function maybe_output_search_results($query) {
-        if (is_admin() || !$query->is_main_query() || !$query->is_search()) {
+        static $done = false;
+
+        if ($done || is_admin() || !$query->is_main_query() || !$query->is_search()) {
             return;
         }
 
@@ -984,11 +987,13 @@ class Plugin {
             return;
         }
 
+        $done = true;
+
         require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
         echo '<section class="produkt-search-products">';
         echo '<h2 class="produkt-search-products__title">' . esc_html__('Gefundene Produkte', 'h2-concepts') . '</h2>';
-        echo '<div class="produkt-search-products__grid">';
+        echo '<div class="shop-product-grid">';
 
         foreach ($products as $product) {
             $title = $product->product_title ?: ($product->name ?? '');
@@ -998,39 +1003,35 @@ class Plugin {
             $price_data  = pv_get_lowest_stripe_price_by_category((int) $product->id);
             $price_label = pv_format_price_label($price_data);
 
-            $excerpt_source = $product->short_description ?: $product->product_description;
-            $excerpt        = $excerpt_source ? wp_trim_words(wp_strip_all_tags($excerpt_source), 22, '…') : '';
-
-            echo '<article class="produkt-search-product">';
-
-            if ($image) {
-                echo '<a href="' . esc_url($url) . '" class="produkt-search-product__thumb">';
-                echo '<img src="' . $image . '" alt="' . esc_attr($title) . '">';
-                echo '</a>';
-            }
-
-            echo '<div class="produkt-search-product__body">';
-            echo '<h3 class="produkt-search-product__title"><a href="' . esc_url($url) . '">' . esc_html($title) . '</a></h3>';
-
+            $excerpt = $product->short_description ?: $product->product_description;
             $rating_value = isset($product->rating_value) ? floatval(str_replace(',', '.', $product->rating_value)) : 0;
+
+            echo '<div class="shop-product-item">';
+            echo '<a href="' . esc_url($url) . '">';
+            echo '<div class="shop-product-image">';
+            if ($image) {
+                echo '<img src="' . $image . '" alt="' . esc_attr($title) . '">';
+            }
+            echo '</div>';
+            echo '<h3 class="shop-product-title">' . esc_html($title) . '</h3>';
+            echo '<div class="shop-product-shortdesc">' . esc_html(wp_strip_all_tags($excerpt ?? '')) . '</div>';
+            echo '<div class="shop-product-footer">';
+
             if (!empty($product->show_rating) && $rating_value > 0) {
                 $rating_display = number_format($rating_value, 1, ',', '');
-                echo '<div class="produkt-rating produkt-search-product__rating">';
+                echo '<div class="produkt-rating">';
                 echo '<span class="produkt-rating-number">' . esc_html($rating_display) . '</span>';
                 echo '<span class="produkt-star-rating" style="--rating: ' . esc_attr($rating_value) . ';"></span>';
                 echo '</div>';
             }
 
             if (!empty($price_label)) {
-                echo '<div class="produkt-search-product__price">' . esc_html($price_label) . '</div>';
-            }
-
-            if (!empty($excerpt)) {
-                echo '<p class="produkt-search-product__excerpt">' . esc_html($excerpt) . '</p>';
+                echo '<div class="shop-product-price">' . esc_html($price_label) . '</div>';
             }
 
             echo '</div>';
-            echo '</article>';
+            echo '</a>';
+            echo '</div>';
         }
 
         echo '</div>';
