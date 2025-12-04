@@ -3,7 +3,6 @@
 $modus = get_option('produkt_betriebsmodus', 'miete');
 $sale_enabled = 0;
 $sale_price_cents = 0;
-$weekend_price_cents = 0;
 $has_sale_options = false;
 
 global $wpdb;
@@ -66,11 +65,11 @@ $has_sale_options = !empty($sale_product_colors) || !empty($sale_frame_colors) |
                 <div class="price-cards sale-price-cards">
                   <div class="price-card" data-field="verkaufspreis_einmalig">
                     <div class="price-card-head">
-                      <div class="price-title">Standardpreis</div>
+                      <div class="price-title">Verkaufspreis Direktverkauf</div>
                       <span class="price-badge">EUR</span>
                     </div>
                     <div class="price-display">
-                      <input type="text" class="price-input sale-dependent" placeholder="0,00" aria-label="Standardpreis in Euro" />
+                      <input type="text" class="price-input sale-dependent" placeholder="0,00" aria-label="Verkaufspreis Direktverkauf in Euro" />
                       <span class="price-suffix">€</span>
                       <input type="hidden" name="verkaufspreis_einmalig" class="price-hidden sale-dependent" value="<?php echo $sale_price_cents; ?>">
                     </div>
@@ -122,18 +121,6 @@ $has_sale_options = !empty($sale_product_colors) || !empty($sale_frame_colors) |
                       <?php endif; ?>
                     </div>
                     <?php endif; ?>
-                  </div>
-
-                  <div class="price-card" data-field="weekend_price">
-                    <div class="price-card-head">
-                      <div class="price-title">Wochenendpreis <span class="price-sub">(Fr–So)</span></div>
-                      <span class="price-badge">EUR</span>
-                    </div>
-                    <div class="price-display">
-                      <input type="text" class="price-input sale-dependent" placeholder="0,00" aria-label="Wochenendpreis in Euro" />
-                      <span class="price-suffix">€</span>
-                      <input type="hidden" name="weekend_price" class="price-hidden sale-dependent" value="<?php echo $weekend_price_cents; ?>">
-                    </div>
                   </div>
                 </div>
             </div>
