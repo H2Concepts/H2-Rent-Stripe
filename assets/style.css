@@ -1200,7 +1200,7 @@ img.wp-smiley, img.emoji {
     border-bottom: 1px solid #e5e7eb;
     padding: 20px 15px;
     box-shadow: none;
-    z-index: 1000;
+    z-index: 99999;
     transform: translateY(-100%);
     transition: transform 0.3s ease;
     display: block;
@@ -1211,7 +1211,6 @@ img.wp-smiley, img.emoji {
     bottom: 0;
     border-bottom: none;
     border-top: 1px solid #e5e7eb;
-    border-radius: 0.5rem 0.5rem 0 0;
     transform: translateY(100%);
 }
 
