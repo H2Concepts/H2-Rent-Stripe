@@ -255,15 +255,11 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Initialize mobile sticky price bar only on small screens
+    // Initialize sticky price bar
     initMobileStickyPrice();
     $(window).on('resize', function() {
-        if (window.innerWidth <= 768) {
-            if (!$('#mobile-sticky-price').length) {
-                initMobileStickyPrice();
-            }
-        } else {
-            destroyMobileStickyPrice();
+        if (!$('#mobile-sticky-price').length) {
+            initMobileStickyPrice();
         }
     });
 
@@ -1204,66 +1200,66 @@ jQuery(document).ready(function($) {
     }
 
     function initMobileStickyPrice() {
-        if (window.innerWidth <= 768) {
-            // Determine button label and icon from main button
-            const mainButton = $('#produkt-rent-button');
-            let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '')
-                ? produkt_ajax.button_text
-                : (mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : (produkt_ajax.cart_enabled ? 'In den Warenkorb' : 'Jetzt mieten')));
-            const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
+        if ($('#mobile-sticky-price').length) return;
 
-            // Create mobile sticky price bar
-            const suffix = produkt_ajax.betriebsmodus === 'kauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
-            const stickyHtml = `
-                <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
-                    <div class="produkt-mobile-sticky-content">
-                        <div class="produkt-mobile-price-info">
-                            <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
-                            <div class="produkt-mobile-price-wrapper">
-                                <span class="produkt-mobile-original-price" id="mobile-original-price" style="display:none;"></span>
-                                <span class="produkt-mobile-final-price" id="mobile-price-value">0,00€</span>
-                                <span class="produkt-mobile-price-period">${suffix}</span>
-                            </div>
+        // Determine button label and icon from main button
+        const mainButton = $('#produkt-rent-button');
+        let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '')
+            ? produkt_ajax.button_text
+            : (mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : (produkt_ajax.cart_enabled ? 'In den Warenkorb' : 'Jetzt mieten')));
+        const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
+
+        // Create sticky price bar
+        const suffix = produkt_ajax.betriebsmodus === 'kauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
+        const stickyHtml = `
+            <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
+                <div class="produkt-mobile-sticky-content">
+                    <div class="produkt-mobile-price-info">
+                        <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
+                        <div class="produkt-mobile-price-wrapper">
+                            <span class="produkt-mobile-original-price" id="mobile-original-price" style="display:none;"></span>
+                            <span class="produkt-mobile-final-price" id="mobile-price-value">0,00€</span>
+                            <span class="produkt-mobile-price-period">${suffix}</span>
                         </div>
-                        <button class="produkt-mobile-button" disabled>
-                            ${mainIcon}
-                            <span>${mainLabel}</span>
-                        </button>
                     </div>
+                    <button class="produkt-mobile-button" disabled>
+                        ${mainIcon}
+                        <span>${mainLabel}</span>
+                    </button>
                 </div>
-            `;
-            $('body').append(stickyHtml);
-            if (produkt_ajax.betriebsmodus === 'kauf') {
-                $('.produkt-mobile-price-period').hide();
-            }
-            
-            // Show/hide based on scroll position
-            $(window).scroll(function() {
-                const scrollTop = $(this).scrollTop();
-                const priceDisplay = $('#produkt-price-display');
-                
-                if (priceDisplay.is(':visible') && currentPrice > 0) {
-                    const priceDisplayTop = priceDisplay.offset().top;
-                    const priceDisplayBottom = priceDisplayTop + priceDisplay.outerHeight();
-                    
-                    // Show sticky price when price display is scrolled out of view (above viewport)
-                    // Keep it visible for the entire page - never hide it once shown
-                    const priceOutOfView = scrollTop > priceDisplayBottom;
-                    
-                    if (priceOutOfView) {
-                        showMobileStickyPrice();
-                    } else {
-                        hideMobileStickyPrice();
-                    }
+            </div>
+        `;
+        $('body').append(stickyHtml);
+        if (produkt_ajax.betriebsmodus === 'kauf') {
+            $('.produkt-mobile-price-period').hide();
+        }
+
+        // Show/hide based on scroll position
+        $(window).scroll(function() {
+            const scrollTop = $(this).scrollTop();
+            const priceDisplay = $('#produkt-price-display');
+
+            if (priceDisplay.is(':visible') && currentPrice > 0) {
+                const priceDisplayTop = priceDisplay.offset().top;
+                const priceDisplayBottom = priceDisplayTop + priceDisplay.outerHeight();
+
+                // Show sticky price when price display is scrolled out of view (above viewport)
+                // Keep it visible for the entire page - never hide it once shown
+                const priceOutOfView = scrollTop > priceDisplayBottom;
+
+                if (priceOutOfView) {
+                    showMobileStickyPrice();
                 } else {
                     hideMobileStickyPrice();
                 }
-            });
-        }
+            } else {
+                hideMobileStickyPrice();
+            }
+        });
     }
 
     function updateMobileStickyPrice(finalPrice, originalPrice, discount, isAvailable) {
-        if (window.innerWidth <= 768 && $('#mobile-sticky-price').length) {
+        if ($('#mobile-sticky-price').length) {
             $('#mobile-price-value').text(formatPrice(finalPrice) + '€');
 
             if (discount > 0 && originalPrice) {
@@ -1277,7 +1273,7 @@ jQuery(document).ready(function($) {
     }
 
     function showMobileStickyPrice() {
-        if (window.innerWidth <= 768 && $('#mobile-sticky-price').length) {
+        if ($('#mobile-sticky-price').length) {
             $('#mobile-sticky-price').addClass('show');
         }
     }

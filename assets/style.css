@@ -1189,7 +1189,7 @@ img.wp-smiley, img.emoji {
     }
 }
 
-/* Mobile Sticky Price Bar */
+/* Sticky Price Bar */
 .produkt-mobile-sticky-price {
     position: fixed;
     top: 0;
@@ -1203,7 +1203,7 @@ img.wp-smiley, img.emoji {
     z-index: 1000;
     transform: translateY(-100%);
     transition: transform 0.3s ease;
-    display: none;
+    display: block;
 }
 
 .produkt-mobile-sticky-price.show {
@@ -1308,15 +1308,12 @@ img.wp-smiley, img.emoji {
 
 @media (min-width: 769px) {
     .produkt-mobile-sticky-price {
-        display: none !important;
+        border-radius: 0 0 0.5rem 0.5rem;
+        box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
     }
 }
 
 @media (max-width: 768px) {
-    .produkt-mobile-sticky-price {
-        display: block;
-    }
-    
     .produkt-extra-overlay {
         width: 100px;
         height: 100px;
