@@ -1036,6 +1036,10 @@ class Plugin {
 
         echo '</div>';
         echo '</section>';
+
+        echo '<div class="produkt-search-divider">';
+        echo '<h2 class="produkt-search-divider__title">' . esc_html__('Weitere Themen', 'h2-concepts') . '</h2>';
+        echo '</div>';
     }
 
     private function is_cart_enabled() {

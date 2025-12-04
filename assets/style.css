@@ -2695,4 +2695,13 @@ body.shop-filter-open {
     margin-top: 1rem;
 }
 
+.produkt-search-divider {
+    margin: 2.5rem 0 1.5rem;
+}
+
+.produkt-search-divider__title {
+    font-size: 1.4rem;
+    margin: 0;
+}
+
 
