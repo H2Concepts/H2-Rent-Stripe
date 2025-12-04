@@ -1269,7 +1269,7 @@ img.wp-smiley, img.emoji {
 
 .produkt-mobile-button {
     background: var(--produkt-button-bg);
-    color: var(--produkt-button-text);
+    color: var(--produkt-button-text) !important;
     border: none;
     padding: 12px 16px;
     border-radius: 999px;
@@ -1284,6 +1284,7 @@ img.wp-smiley, img.emoji {
 
 .produkt-mobile-button:hover {
     background: var(--produkt-text-color);
+    color: var(--produkt-button-text) !important;
 }
 
 .produkt-mobile-button:disabled {
