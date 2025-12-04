@@ -31,6 +31,14 @@ jQuery(document).ready(function($) {
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
 
+    function getStickyHeaderMode() {
+        const allowed = ['disabled', 'header', 'footer'];
+        const mode = (typeof produkt_ajax !== 'undefined' && typeof produkt_ajax.sticky_header_mode === 'string')
+            ? produkt_ajax.sticky_header_mode.toLowerCase()
+            : 'header';
+        return allowed.includes(mode) ? mode : 'header';
+    }
+
     function updateCartBadge() {
         $('.h2-cart-badge').text(cart.length); // alle Instanzen (Desktop/Mobil/Sticky)
     }
@@ -1202,6 +1210,9 @@ jQuery(document).ready(function($) {
     function initMobileStickyPrice() {
         if ($('#mobile-sticky-price').length) return;
 
+        const stickyMode = getStickyHeaderMode();
+        if (stickyMode === 'disabled') return;
+
         // Determine button label and icon from main button
         const mainButton = $('#produkt-rent-button');
         let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '')
@@ -1211,8 +1222,9 @@ jQuery(document).ready(function($) {
 
         // Create sticky price bar
         const suffix = produkt_ajax.betriebsmodus === 'kauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
+        const stickyClass = stickyMode === 'footer' ? ' sticky-footer' : '';
         const stickyHtml = `
-            <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
+            <div class="produkt-mobile-sticky-price${stickyClass}" id="mobile-sticky-price" data-mode="${stickyMode}">
                 <div class="produkt-mobile-sticky-content">
                     <div class="produkt-mobile-price-info">
                         <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
