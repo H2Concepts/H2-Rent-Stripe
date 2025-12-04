@@ -325,7 +325,11 @@ class Admin {
         $custom_css = $branding['custom_css'] ?? '';
         $product_padding = $branding['product_padding'] ?? '1';
         $filter_button_position = $branding['filter_button_position'] ?? 'bottom_left';
-        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-filter-button-hover-bg:{$filter_button_hover_color};--produkt-filter-button-icon:{$filter_button_icon_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
+        $sticky_header_mode = $branding['sticky_header_mode'] ?? 'header';
+        if (!in_array($sticky_header_mode, ['disabled', 'header', 'footer'], true)) {
+            $sticky_header_mode = 'header';
+        }
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-filter-button-hover-bg:{$filter_button_hover_color};--produkt-filter-button-icon:{$filter_button_icon_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}"; 
         $position_styles = '';
         switch ($filter_button_position) {
             case 'bottom_right':
@@ -442,6 +446,7 @@ class Admin {
                 'betriebsmodus' => $modus,
                 'cart_enabled' => $cart_enabled ? 1 : 0,
                 'button_text' => $localized_button_text,
+                'sticky_header_mode' => $sticky_header_mode,
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
                 'popup_settings' => [

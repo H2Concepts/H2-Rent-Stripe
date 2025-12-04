@@ -28,6 +28,8 @@ if (isset($_POST['submit_branding'])) {
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
     $filter_button_position = sanitize_text_field($_POST['filter_button_position'] ?? 'bottom_left');
     $shop_layout = sanitize_text_field($_POST['shop_layout'] ?? 'filters_left');
+    $sticky_header_mode = sanitize_text_field($_POST['sticky_header_mode'] ?? 'header');
+    $sticky_header_mode = in_array($sticky_header_mode, ['disabled', 'header', 'footer'], true) ? $sticky_header_mode : 'header';
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $login_layout = sanitize_text_field($_POST['login_layout'] ?? 'classic');
     $login_logo   = esc_url_raw($_POST['login_logo'] ?? '');
@@ -62,6 +64,7 @@ if (isset($_POST['submit_branding'])) {
         'cart_badge_text' => $cart_badge_text,
         'filter_button_position' => $filter_button_position,
         'shop_layout' => $shop_layout,
+        'sticky_header_mode' => $sticky_header_mode,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'login_layout' => $login_layout,
@@ -423,6 +426,52 @@ if (isset($_POST['submit_branding'])) {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Sticky-Header</h2>
+                <p class="card-subline">Steuerung der Preisleiste auf Produktseiten</p>
+
+                <div class="layout-option-grid" data-input-name="sticky_header_mode">
+                    <?php $sticky_header_mode = in_array($branding['sticky_header_mode'] ?? 'header', ['disabled', 'header', 'footer'], true) ? $branding['sticky_header_mode'] : 'header'; ?>
+                    <div class="layout-option-card <?php echo ($sticky_header_mode === 'disabled') ? 'active' : ''; ?>" data-value="disabled">
+                        <div class="layout-option-name">Deaktiviert</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#f6f6f6" />
+                                <rect x="20" y="18" width="120" height="18" rx="8" fill="#e5e7eb" />
+                                <line x1="20" y1="64" x2="140" y2="64" stroke="#d1d5db" stroke-width="6" stroke-linecap="round" />
+                                <line x1="20" y1="78" x2="100" y2="78" stroke="#e5e7eb" stroke-width="6" stroke-linecap="round" />
+                                <line x1="110" y1="78" x2="140" y2="78" stroke="#e5e7eb" stroke-width="6" stroke-linecap="round" />
+                                <line x1="20" y1="32" x2="140" y2="32" stroke="#ef4444" stroke-width="12" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="layout-option-card <?php echo ($sticky_header_mode === 'header') ? 'active' : ''; ?>" data-value="header">
+                        <div class="layout-option-name">Sticky oben</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="10" width="136" height="20" rx="10" fill="#d8e8de" />
+                                <rect x="20" y="40" width="120" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="20" y="60" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="layout-option-card <?php echo ($sticky_header_mode === 'footer') ? 'active' : ''; ?>" data-value="footer">
+                        <div class="layout-option-name">Sticky unten</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="70" width="136" height="20" rx="10" fill="#d8e8de" />
+                                <rect x="20" y="20" width="120" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="20" y="40" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                    </div>
+                    <input type="hidden" name="sticky_header_mode" value="<?php echo esc_attr($sticky_header_mode); ?>">
+                </div>
+                <p class="card-subline">Optionen gelten für mobile und Desktop-Ansichten.</p>
             </div>
 
             <div class="dashboard-card">

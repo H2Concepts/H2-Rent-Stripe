@@ -193,11 +193,11 @@ if (isset($_POST['submit'])) {
         $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? intval($_POST['verkaufspreis_einmalig']) / 100 : 0;
         $weekend_price = isset($_POST['weekend_price']) ? intval($_POST['weekend_price']) / 100 : 0;
     } else {
-        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? floatval($_POST['verkaufspreis_einmalig']) : 0;
+        $verkaufspreis_einmalig = isset($_POST['verkaufspreis_einmalig']) ? intval($_POST['verkaufspreis_einmalig']) / 100 : 0;
         if (!$sale_enabled) {
             $verkaufspreis_einmalig = 0;
         }
-        $weekend_price = isset($_POST['weekend_price']) ? floatval($_POST['weekend_price']) : 0;
+        $weekend_price = isset($_POST['weekend_price']) ? intval($_POST['weekend_price']) / 100 : 0;
     }
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);

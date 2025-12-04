@@ -285,6 +285,30 @@
     cursor: pointer;
 }
 .price-chip:hover { background: #f7f8fa; }
+.sale-price-cards {
+    align-items: start;
+}
+.price-options {
+    width: 100%;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 16px;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.price-option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.price-option-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+.price-option-group .sale-option-grid {
+    gap: 8px;
+}
 
 /* Variant availability cards */
 .variant-availability-grid {
