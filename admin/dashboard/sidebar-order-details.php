@@ -2,7 +2,8 @@
 if (!defined('ABSPATH')) exit;
 
 $order = $order_data ?? null;
-$modus = get_option('produkt_betriebsmodus', 'miete');
+$modus = !empty($order_mode) ? $order_mode : get_option('produkt_betriebsmodus', 'miete');
+$is_purchase = ($modus === 'kauf');
 
 if (empty($order) || !is_object($order)) {
     echo '<p>Fehler: Keine gültigen Auftragsdaten übergeben.</p>';
@@ -74,6 +75,25 @@ if ($modus === 'miete' && $is_completed_order && $start_timestamp) {
     $rental_elapsed_days = $diff_days;
 }
 
+$invoice_number_display = '';
+$invoice_url = '';
+if ($is_purchase) {
+    $invoice_number_display = pv_ensure_invoice_number((array) ($order_data ?? []), (int) $order->id);
+    $invoice_url = $order->invoice_url ?? '';
+
+    if (!$invoice_url) {
+        $generated_path = pv_generate_invoice_pdf((int) $order->id);
+
+        if ($generated_path) {
+            $refreshed_order = pv_get_order_by_id((int) $order->id);
+            if ($refreshed_order) {
+                $order = (object) $refreshed_order;
+                $invoice_url = $order->invoice_url ?? '';
+            }
+        }
+    }
+}
+
 $start_label_rental = ($modus === 'miete' && $is_completed_order && $start_timestamp)
     ? date_i18n('d.m.Y', $start_timestamp)
     : '–';
@@ -143,31 +163,33 @@ $rental_payments = $rental_payments ?? [];
         <?php endif; ?>
     </div>
 
-    <!-- Mietzeitraum -->
-    <div class="rental-period-box">
-        <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
-        <h3>Mietzeitraum</h3>
-        <?php if ($modus === 'miete') : ?>
-            <div class="rental-progress-number"><?php echo esc_html($day_counter_label); ?></div>
-            <div class="rental-progress rental-progress-days">
-                <div class="day-counter-text">Tage seit Buchung</div>
-            </div>
-            <div class="rental-dates">
-                <span>Start: <?php echo esc_html($start_label_rental); ?></span>
-            </div>
-        <?php else : ?>
-            <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
-            <div class="rental-progress">
-                <div class="bar">
-                    <div class="fill" style="width: <?php echo intval($percent); ?>%;"></div>
+    <?php if (!$is_purchase) : ?>
+        <!-- Mietzeitraum -->
+        <div class="rental-period-box">
+            <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
+            <h3>Mietzeitraum</h3>
+            <?php if ($modus === 'miete') : ?>
+                <div class="rental-progress-number"><?php echo esc_html($day_counter_label); ?></div>
+                <div class="rental-progress rental-progress-days">
+                    <div class="day-counter-text">Tage seit Buchung</div>
                 </div>
-            </div>
-            <div class="rental-dates">
-                <span>Abgeholt: <?php echo esc_html($start_label_sale); ?></span>
-                <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
-            </div>
-        <?php endif; ?>
-    </div>
+                <div class="rental-dates">
+                    <span>Start: <?php echo esc_html($start_label_rental); ?></span>
+                </div>
+            <?php else : ?>
+                <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
+                <div class="rental-progress">
+                    <div class="bar">
+                        <div class="fill" style="width: <?php echo intval($percent); ?>%;"></div>
+                    </div>
+                </div>
+                <div class="rental-dates">
+                    <span>Abgeholt: <?php echo esc_html($start_label_sale); ?></span>
+                    <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
     <!-- Produktliste -->
     <div class="product-list">
@@ -320,6 +342,23 @@ $rental_payments = $rental_payments ?? [];
                         </div>
                     <?php else : ?>
                         <p>Keine Zahlungen verbucht.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php elseif ($is_purchase) : ?>
+            <div class="produkt-accordion-item">
+                <button type="button" class="produkt-accordion-header">Rechnung</button>
+                <div class="produkt-accordion-content">
+                    <?php if ($invoice_number_display) : ?>
+                        <p><strong>Rechnungsnummer:</strong> <?php echo esc_html($invoice_number_display); ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($invoice_url) : ?>
+                        <a class="button button-primary" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
+                            Rechnung herunterladen
+                        </a>
+                    <?php else : ?>
+                        <p>Keine Rechnung verfügbar.</p>
                     <?php endif; ?>
                 </div>
             </div>
