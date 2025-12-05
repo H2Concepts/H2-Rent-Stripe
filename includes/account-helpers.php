@@ -871,8 +871,8 @@ function pv_generate_invoice_pdf($order_id) {
 
     // 3. Daten aufbauen
     $sender    = pv_get_invoice_sender();
-    $logo_url = get_option('plugin_firma_logo_url', '');
-    $product    = $order['produkt_name'];
+    $logo_url  = get_option('plugin_firma_logo_url', '');
+    $product   = $order['produkt_name'];
     if (!$product) {
         $product = $order['variant_name'] ?? '';
     }
@@ -883,13 +883,19 @@ function pv_generate_invoice_pdf($order_id) {
         $product .= ' – ' . $order['frame_color_name'];
     }
 
+    // UI-Einstellungen (Buttons & Tooltips) laden – u.a. MwSt-Toggle
+    $ui           = get_option('produkt_ui_settings', []);
+    $vat_included = isset($ui['vat_included']) ? (int) $ui['vat_included'] : 0;
+
     $customer_name = trim($order['customer_name']);
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $post_data = [
         'rechnungsnummer'  => $invoice_display,
-        'bestellnummer'    => $order_number_display,
         'rechnungsdatum'   => date('Y-m-d'),
+        // Bestellnummer für das Template (falls vorhanden, sonst Fallback auf ID)
+        'bestellnummer'    => $order_number_display,
+
         'kunde_name'       => $customer_name ?: 'Kunde',
         'kunde_adresse'    => $customer_addr,
 
@@ -901,6 +907,9 @@ function pv_generate_invoice_pdf($order_id) {
         'firma_email'      => $sender['firma_email'],
         'firma_telefon'    => $sender['firma_telefon'],
         'firma_logo_url'   => $logo_url,
+
+        // MwSt-Einstellung aus dem Buttons-&-Tooltips-Tab
+        'vat_included'     => $vat_included ? 1 : 0,
     ];
 
     // 4. Mietdauer bestimmen
