@@ -422,6 +422,67 @@ function pv_generate_order_number() {
 }
 
 /**
+ * Generate and increment the next invoice number.
+ *
+ * @return string Invoice number or empty string when numbering disabled
+ */
+function pv_generate_invoice_number() {
+    $next = get_option('produkt_next_invoice_number', '');
+    if ($next === '') {
+        return '';
+    }
+
+    if (preg_match('/^(.*?)(\d+)$/', $next, $m)) {
+        $prefix   = $m[1];
+        $num      = (int) $m[2];
+        $len      = strlen($m[2]);
+        $next_val = $prefix . str_pad($num + 1, $len, '0', STR_PAD_LEFT);
+    } else {
+        $num      = (int) $next;
+        $next_val = (string) ($num + 1);
+    }
+
+    update_option('produkt_next_invoice_number', $next_val);
+    update_option('produkt_last_invoice_number', $next);
+
+    return $next;
+}
+
+/**
+ * Ensure an invoice number exists for the given order.
+ *
+ * @param array $order
+ * @param int   $order_id
+ * @return string Invoice number or empty string when not available
+ */
+function pv_ensure_invoice_number(array $order, int $order_id) {
+    if ($order_id <= 0) {
+        return $order['invoice_number'] ?? '';
+    }
+
+    $invoice_number = $order['invoice_number'] ?? '';
+    if ($invoice_number !== '') {
+        return $invoice_number;
+    }
+
+    $generated = pv_generate_invoice_number();
+    if ($generated === '') {
+        return '';
+    }
+
+    global $wpdb;
+    $wpdb->update(
+        "{$wpdb->prefix}produkt_orders",
+        ['invoice_number' => $generated],
+        ['id' => $order_id],
+        ['%s'],
+        ['%d']
+    );
+
+    return $generated;
+}
+
+/**
  * Create a provisional order number based on the current date and time.
  *
  * Uses the pattern DDMMYYHHMM so open orders get a unique, time-based
@@ -490,6 +551,52 @@ function pv_get_email_footer_html() {
 function pv_is_invoice_email_enabled() {
     $value = get_option('produkt_invoice_email_enabled', '1');
     return in_array($value, ['1', 1, true, 'true', 'on'], true);
+}
+
+/**
+ * Determine the order mode, falling back to database or global defaults when missing.
+ *
+ * @param array $order    Order payload
+ * @param int   $order_id Optional order ID reference
+ * @return string Either 'kauf' or 'miete'
+ */
+function pv_get_order_mode(array $order = [], int $order_id = 0) {
+    $mode = $order['mode'] ?? '';
+
+    if (!$mode && $order_id) {
+        global $wpdb;
+        $mode = $wpdb->get_var($wpdb->prepare(
+            "SELECT mode FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+    }
+
+    if (!$mode) {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+    }
+
+    $mode = strtolower(trim((string) $mode));
+
+    if (in_array($mode, ['kauf', 'sale', 'einmalkauf', 'direct', 'purchase'], true)) {
+        return 'kauf';
+    }
+
+    return 'miete';
+}
+
+/**
+ * Decide whether the plugin should send its own invoice email for the given order.
+ *
+ * @param array $order    Order payload
+ * @param int   $order_id Optional order ID reference
+ * @return bool
+ */
+function pv_should_send_invoice_email(array $order = [], int $order_id = 0) {
+    if (!pv_is_invoice_email_enabled()) {
+        return false;
+    }
+
+    return pv_get_order_mode($order, $order_id) === 'kauf';
 }
 
 /**
@@ -755,29 +862,72 @@ function pv_generate_invoice_pdf($order_id) {
         return false;
     }
 
+    $invoice_number       = pv_ensure_invoice_number($order, $order_id);
+    $order_number_display = !empty($order['order_number']) ? $order['order_number'] : (string) $order_id;
+    $invoice_display      = $invoice_number ?: ($order_number_display ? $order_number_display : ('RE-' . $order_id));
+
     // 2. PDF-API-Endpunkt + Key
     $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
 
     // 3. Daten aufbauen
     $sender    = pv_get_invoice_sender();
-    $logo_url = get_option('plugin_firma_logo_url', '');
-    $product    = $order['produkt_name'];
-    if (!$product) {
-        $product = $order['variant_name'] ?? '';
+    $logo_url  = get_option('plugin_firma_logo_url', '');
+
+    // Haupt-Produktname: zuerst Kategorie, dann Fallbacks (inkl. erstem Positionseintrag)
+    $first_item     = !empty($order['produkte'][0]) ? $order['produkte'][0] : null;
+    $variant_name   = $order['variant_name'] ?? ($first_item->variant_name ?? '');
+    $condition_name = $order['condition_name'] ?? ($first_item->condition_name ?? '');
+    $product_color  = $order['product_color_name'] ?? ($first_item->product_color_name ?? '');
+    $frame_color    = $order['frame_color_name'] ?? ($first_item->frame_color_name ?? '');
+
+    $base_product = $order['category_name']
+        ?: ($first_item ? ($first_item->produkt_name ?? '') : '')
+        ?: $order['produkt_name']
+        ?: $variant_name;
+
+    $details = [];
+
+    // Ausführung (Variant)
+    if (!empty($variant_name) && $variant_name !== $base_product) {
+        $details[] = 'Ausführung: ' . $variant_name;
     }
-    if (!empty($order['product_color_name'])) {
-        $product .= ' – ' . $order['product_color_name'];
+
+    // Zustand
+    if (!empty($condition_name)) {
+        $details[] = 'Zustand: ' . $condition_name;
     }
-    if (!empty($order['frame_color_name'])) {
-        $product .= ' – ' . $order['frame_color_name'];
+
+    // Farben (Produkt + Gestell)
+    $color_parts = [];
+    if (!empty($product_color)) {
+        $color_parts[] = $product_color;
     }
+    if (!empty($frame_color)) {
+        $color_parts[] = $frame_color;
+    }
+    if ($color_parts) {
+        $details[] = 'Farbe: ' . implode(' / ', $color_parts);
+    }
+
+    // Alles zu einem mehrzeiligen Produkt-String zusammenbauen
+    $product = $base_product;
+    if ($details) {
+        $product .= "\n" . implode("\n", $details);
+    }
+
+    // UI-Einstellungen (Buttons & Tooltips) laden – u.a. MwSt-Toggle
+    $ui           = get_option('produkt_ui_settings', []);
+    $vat_included = isset($ui['vat_included']) ? (int) $ui['vat_included'] : 0;
 
     $customer_name = trim($order['customer_name']);
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $post_data = [
-        'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
+        'rechnungsnummer'  => $invoice_display,
         'rechnungsdatum'   => date('Y-m-d'),
+        // Bestellnummer für das Template (falls vorhanden, sonst Fallback auf ID)
+        'bestellnummer'    => $order_number_display,
+
         'kunde_name'       => $customer_name ?: 'Kunde',
         'kunde_adresse'    => $customer_addr,
 
@@ -789,6 +939,9 @@ function pv_generate_invoice_pdf($order_id) {
         'firma_email'      => $sender['firma_email'],
         'firma_telefon'    => $sender['firma_telefon'],
         'firma_logo_url'   => $logo_url,
+
+        // MwSt-Einstellung aus dem Buttons-&-Tooltips-Tab
+        'vat_included'     => $vat_included ? 1 : 0,
     ];
 
     // 4. Mietdauer bestimmen
@@ -887,7 +1040,7 @@ function pv_generate_invoice_pdf($order_id) {
         wp_mkdir_p($subdir);
     }
 
-    $filename = 'rechnung-' . $order_id . '.pdf';
+    $filename = 'rechnung-' . sanitize_title_with_dashes($invoice_display) . '.pdf';
     $path     = $subdir . $filename;
     file_put_contents($path, $pdf_data);
 

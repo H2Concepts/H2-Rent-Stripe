@@ -17,6 +17,7 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $filter_button_hover_color = sanitize_hex_color($_POST['filter_button_hover_color'] ?? $_POST['filter_button_color']);
     $filter_button_icon_color = sanitize_hex_color($_POST['filter_button_icon_color']);
     $account_card_bg = sanitize_hex_color($_POST['account_card_bg']);
     $account_card_text = sanitize_hex_color($_POST['account_card_text']);
@@ -53,6 +54,7 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'filter_button_hover_color' => $filter_button_hover_color,
         'filter_button_icon_color' => $filter_button_icon_color,
         'account_card_bg' => $account_card_bg,
         'account_card_text' => $account_card_text,

@@ -640,6 +640,7 @@ class Database {
                 customer_name varchar(255) DEFAULT '',
                 customer_email varchar(255) DEFAULT '',
                 order_number varchar(50) DEFAULT '',
+                invoice_number varchar(50) DEFAULT '',
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
                 client_info text DEFAULT NULL,
@@ -672,6 +673,7 @@ class Database {
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
                 'shipping_price_id' => "varchar(255) DEFAULT ''",
                 'order_number'      => "varchar(50) DEFAULT ''",
+                'invoice_number'    => "varchar(50) DEFAULT ''",
                 'mode'              => "varchar(10) DEFAULT 'miete'",
                 'start_date'        => 'date DEFAULT NULL',
                 'end_date'          => 'date DEFAULT NULL',
@@ -2056,6 +2058,22 @@ class Database {
     }
 
     /**
+     * Determine if any variants are configured for direct sale with a price.
+     *
+     * @return bool
+     */
+    public function has_sale_enabled_variants() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_variants';
+
+        $count = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table} WHERE sale_enabled = 1 AND verkaufspreis_einmalig > 0"
+        );
+
+        return $count > 0;
+    }
+
+    /**
      * Check if the category layouts table exists with required columns.
      *
      * @return bool
@@ -2069,6 +2087,36 @@ class Database {
         }
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'heading_tag'");
     }
+
+    /**
+     * Search active products (categories) by term for frontend search results.
+     *
+     * @param string $term  Search term from WordPress search query.
+     * @param int    $limit Maximum number of results to return.
+     * @return array<int, object>
+     */
+    public function search_products_by_term($term, $limit = 50) {
+        global $wpdb;
+
+        $like = '%' . $wpdb->esc_like($term) . '%';
+        $table = $wpdb->prefix . 'produkt_categories';
+
+        $sql = $wpdb->prepare(
+            "SELECT id, product_title, product_description, short_description, default_image, rating_value, show_rating
+             FROM $table
+             WHERE active = 1
+               AND (product_title LIKE %s OR product_description LIKE %s OR short_description LIKE %s)
+             ORDER BY sort_order ASC
+             LIMIT %d",
+            $like,
+            $like,
+            $like,
+            intval($limit)
+        );
+
+        return $wpdb->get_results($sql);
+    }
+
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *

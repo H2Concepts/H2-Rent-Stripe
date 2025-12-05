@@ -216,13 +216,22 @@
     gap: 16px;
 }
 
+.invoice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.invoice-grid .invoice-card {
+    grid-column: 1 / -1;
+}
+
 .invoice-card {
     background: var(--produkt-account-card-bg, #e8e8e8);
     border-radius: 16px;
     padding: 20px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
+    gap: 16px;
     color: var(--produkt-account-card-text, #000);
     position: relative;
 }
@@ -232,6 +241,18 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.invoice-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.invoice-actions {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .invoice-title {

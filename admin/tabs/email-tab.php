@@ -19,6 +19,7 @@ if (!function_exists('produkt_send_test_customer_email')) {
             'customer_postal'   => '12345',
             'customer_city'     => 'Musterstadt',
             'customer_country'  => 'Deutschland',
+            'mode'              => 'kauf',
             'created_at'        => current_time('mysql'),
             'final_price'       => 199.99,
             'shipping_cost'     => 9.99,
@@ -45,7 +46,7 @@ if (!function_exists('produkt_send_test_customer_email')) {
             'gestellfarbe_text' => 'Schwarz',
         ];
 
-        \ProduktVerleih\send_produkt_welcome_email($order, 0, false);
+        \ProduktVerleih\send_produkt_welcome_email($order, 0, false, true);
 
         return true;
     }

@@ -23,6 +23,7 @@ function render_order_details($order_id) {
     }
 
     // Daten vorbereiten
+    $order_mode = pv_get_order_mode($order_data ?? [], (int) $order_id);
     $image_url = pv_get_order_image($order);
     list($sd, $ed) = pv_get_order_period($order);
     $days = pv_get_order_rental_days($order);

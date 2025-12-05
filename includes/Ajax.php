@@ -281,7 +281,7 @@ class Ajax {
         
         // Get variant-specific options
         $variant_options = $wpdb->get_results($wpdb->prepare(
-            "SELECT option_type, option_id, available, stock_available, stock_rented, sku FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d",
+            "SELECT option_type, option_id, available, sale_available, stock_available, stock_rented, sku FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d",
             $variant_id
         ));
         
@@ -302,6 +302,7 @@ class Ajax {
                         ));
                         if ($condition) {
                             $condition->available = intval($option->available);
+                            $condition->sale_available = isset($option->sale_available) ? intval($option->sale_available) : 0;
                             $conditions[] = $condition;
                         }
                         break;
@@ -312,6 +313,7 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
+                            $color->sale_available = isset($option->sale_available) ? intval($option->sale_available) : 0;
                             $color->stock_available = intval($option->stock_available);
                             $color->stock_rented = intval($option->stock_rented);
                             $color->sku = $option->sku;
@@ -333,6 +335,7 @@ class Ajax {
                         ));
                         if ($color) {
                             $color->available = intval($option->available);
+                            $color->sale_available = isset($option->sale_available) ? intval($option->sale_available) : 0;
                             $color->stock_available = intval($option->stock_available);
                             $color->stock_rented = intval($option->stock_rented);
                             $color->sku = $option->sku;

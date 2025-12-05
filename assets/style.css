@@ -987,6 +987,10 @@ img.wp-smiley, img.emoji {
     text-indent: 10px;
 }
 
+.produkt-notify-form input::placeholder {
+    color: #000;
+}
+
 .produkt-notify-form button {
     background: var(--produkt-button-bg);
     color: var(--produkt-button-text);
@@ -999,7 +1003,7 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-notify-form button:hover {
-    background: #395539;
+    background: #000;
 }
 
 .produkt-notify-success {
@@ -2680,6 +2684,28 @@ body.shop-filter-open {
     .produkt-category-layout.layout-1 .layout-card .layout-cat-img-last {
         width: 60%;
     }
+}
+
+.produkt-search-products {
+    margin-top: 3rem;
+}
+
+.produkt-search-products__title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+}
+
+.produkt-search-products .shop-product-grid {
+    margin-top: 1rem;
+}
+
+.produkt-search-divider {
+    margin: 2.5rem 0 1.5rem;
+}
+
+.produkt-search-divider__title {
+    font-size: 1.75rem;
+    margin: 10rem 0 1rem;
 }
 
 

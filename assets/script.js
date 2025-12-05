@@ -249,12 +249,30 @@ jQuery(document).ready(function($) {
         return requiredSelections.every(selection => selection !== null && selection !== false);
     }
 
+    function isSaleSelectionAllowed($option) {
+        if (!$option || !$option.length) {
+            return true;
+        }
+        const flag = $option.data('sale-available');
+        if (typeof flag === 'undefined') {
+            return true;
+        }
+        return !(flag === 0 || flag === '0' || flag === false || flag === 'false');
+    }
+
+    function saleOptionsAllowed() {
+        const conditionOk = isSaleSelectionAllowed($('.produkt-options.conditions .produkt-option.selected'));
+        const productColorOk = isSaleSelectionAllowed($('.produkt-options.product-colors .produkt-option.selected'));
+        const frameColorOk = isSaleSelectionAllowed($('.produkt-options.frame-colors .produkt-option.selected'));
+        return conditionOk && productColorOk && frameColorOk;
+    }
+
     function updateDirectBuyButton() {
         const saleReady = selectedVariantSaleEnabled && selectedSalePriceId;
         const showButton = saleReady;
         const $directBuyButton = $('#produkt-direct-buy-button');
         if (showButton) {
-            const canBuy = canDirectBuy();
+            const canBuy = canDirectBuy() && saleOptionsAllowed();
             const priceText = selectedSalePrice > 0 ? `oder für ${formatPrice(selectedSalePrice)}€ kaufen` : 'oder direkt kaufen';
             $directBuyButton.find('span').text(priceText);
             $directBuyButton.show().prop('disabled', !canBuy);
@@ -930,7 +948,7 @@ jQuery(document).ready(function($) {
                     `<span class="produkt-condition-badge">${option.price_modifier > 0 ? '+' : ''}${Math.round(option.price_modifier * 100)}%</span>` : '';
 
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="condition" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}">
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="condition" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-sale-available="${typeof option.sale_available !== 'undefined' ? option.sale_available : ''}">
                         <div class="produkt-option-content">
                             <div class="produkt-condition-header">
                                 <span class="produkt-condition-name">${option.name}</span>
@@ -945,7 +963,7 @@ jQuery(document).ready(function($) {
                 const previewClass = option.is_multicolor == 1 ? 'produkt-color-preview produkt-color-preview--multicolor' : 'produkt-color-preview';
                 const previewStyle = option.is_multicolor == 1 ? '' : `style="background-color: ${option.color_code};"`;
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-sale-available="${typeof option.sale_available !== 'undefined' ? option.sale_available : ''}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
                         <div class="produkt-option-content">
                             <div class="produkt-color-display">
                                 <div class="${previewClass}" ${previewStyle}></div>

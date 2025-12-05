@@ -35,6 +35,7 @@ $full_name        = '';
 $customer_addr    = '';
 $subscription_map = [];
 $invoice_orders   = [];
+$subscription_order_numbers = [];
 $stripe_invoices  = [];
 
 if (is_user_logged_in()) {
@@ -62,6 +63,12 @@ foreach ($orders as $o) {
     }
 
     $invoice_orders[] = $o;
+
+    if (!empty($o->subscription_id)) {
+        $subscription_order_numbers[$o->subscription_id] = !empty($o->order_number)
+            ? $o->order_number
+            : (string) $o->id;
+    }
 
     if (($o->mode ?? '') === 'miete') {
         $rental_orders[] = $o;
@@ -111,13 +118,11 @@ foreach ($orders as $o) {
 
     $customer_id = Database::get_stripe_customer_id_for_user($user_id);
     if ($customer_id) {
-        if (!$is_sale) {
-            $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($customer_id, 20);
-            if (is_wp_error($invoice_data)) {
-                $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
-            } else {
-                $stripe_invoices = $invoice_data;
-            }
+        $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($customer_id, 20);
+        if (is_wp_error($invoice_data)) {
+            $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
+        } else {
+            $stripe_invoices = $invoice_data;
         }
 
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);

@@ -374,6 +374,8 @@ class StripeService {
                 $result[] = [
                     'id'           => $invoice->id,
                     'number'       => $invoice->number ?? $invoice->id,
+                    'subscription' => $invoice->subscription ?? '',
+                    'order_number' => $invoice->metadata->order_number ?? $invoice->metadata->order_id ?? '',
                     'hosted_url'   => $invoice->hosted_invoice_url ?? '',
                     'pdf_url'      => $invoice->invoice_pdf ?? '',
                     'created'      => $invoice->created ?? null,

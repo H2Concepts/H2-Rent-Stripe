@@ -39,6 +39,9 @@ if (isset($_POST['submit_buttons'])) {
     if (isset($_POST['order_number_start'])) {
         update_option('produkt_next_order_number', sanitize_text_field($_POST['order_number_start']));
     }
+    if (isset($_POST['invoice_number_start'])) {
+        update_option('produkt_next_invoice_number', sanitize_text_field($_POST['invoice_number_start']));
+    }
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
 }
 
@@ -56,6 +59,8 @@ $ui = get_option('produkt_ui_settings', [
 ]);
 $next_order_nr = get_option('produkt_next_order_number', '');
 $last_order_nr = get_option('produkt_last_order_number', '');
+$next_invoice_nr = get_option('produkt_next_invoice_number', '');
+$last_invoice_nr = get_option('produkt_last_invoice_number', '');
 $menu_locations = get_option('produkt_menu_locations', []);
 $all_menus      = wp_get_nav_menus();
 $inject_block_nav_all = (int) get_option('produkt_inject_block_nav_all', 0);
@@ -208,6 +213,19 @@ $inject_block_nav_all = (int) get_option('produkt_inject_block_nav_all', 0);
                         <input type="text" name="order_number_start" value="<?php echo esc_attr($next_order_nr); ?>">
                         <?php if ($last_order_nr): ?>
                         <p class="description">Letzte vergebene Bestellnummer: <?php echo esc_html($last_order_nr); ?></p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <h2>Rechnungsnummer</h2>
+                <p class="card-subline">Startwert der laufenden Rechnungsnummer</p>
+                <div class="form-grid">
+                    <div class="produkt-form-group full-width">
+                        <label>Rechnungsnummer Startwert</label>
+                        <input type="text" name="invoice_number_start" value="<?php echo esc_attr($next_invoice_nr); ?>">
+                        <?php if ($last_invoice_nr): ?>
+                        <p class="description">Letzte vergebene Rechnungsnummer: <?php echo esc_html($last_invoice_nr); ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
