@@ -493,6 +493,46 @@ function pv_is_invoice_email_enabled() {
 }
 
 /**
+ * Determine the order mode, falling back to database or global defaults when missing.
+ *
+ * @param array $order    Order payload
+ * @param int   $order_id Optional order ID reference
+ * @return string Either 'kauf' or 'miete'
+ */
+function pv_get_order_mode(array $order = [], int $order_id = 0) {
+    $mode = $order['mode'] ?? '';
+
+    if (!$mode && $order_id) {
+        global $wpdb;
+        $mode = $wpdb->get_var($wpdb->prepare(
+            "SELECT mode FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+    }
+
+    if (!$mode) {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+    }
+
+    return $mode;
+}
+
+/**
+ * Decide whether the plugin should send its own invoice email for the given order.
+ *
+ * @param array $order    Order payload
+ * @param int   $order_id Optional order ID reference
+ * @return bool
+ */
+function pv_should_send_invoice_email(array $order = [], int $order_id = 0) {
+    if (!pv_is_invoice_email_enabled()) {
+        return false;
+    }
+
+    return pv_get_order_mode($order, $order_id) === 'kauf';
+}
+
+/**
  * Retrieve invoice sender data.
  *
  * @return array

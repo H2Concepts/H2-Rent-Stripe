@@ -2056,6 +2056,22 @@ class Database {
     }
 
     /**
+     * Determine if any variants are configured for direct sale with a price.
+     *
+     * @return bool
+     */
+    public function has_sale_enabled_variants() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_variants';
+
+        $count = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table} WHERE sale_enabled = 1 AND verkaufspreis_einmalig > 0"
+        );
+
+        return $count > 0;
+    }
+
+    /**
      * Check if the category layouts table exists with required columns.
      *
      * @return bool

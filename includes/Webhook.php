@@ -46,6 +46,10 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         return;
     }
 
+    if (!pv_should_send_invoice_email($order, $order_id)) {
+        return;
+    }
+
     $invoice_emails_enabled = pv_is_invoice_email_enabled();
 
     $full_name = trim($order['customer_name']);

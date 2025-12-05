@@ -86,6 +86,7 @@ class Plugin {
         add_action('wp_footer', [$this, 'render_cart_sidebar']);
         add_action('loop_start', [$this, 'maybe_output_search_results']);
         add_action('loop_no_results', [$this, 'maybe_output_search_results'], 10, 1);
+        add_action('admin_notices', [$this, 'maybe_show_invoice_notice']);
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -1040,6 +1041,40 @@ class Plugin {
         echo '<div class="produkt-search-divider">';
         echo '<h2 class="produkt-search-divider__title">' . esc_html__('Weitere Themen', 'h2-concepts') . '</h2>';
         echo '</div>';
+    }
+
+    /**
+     * Warn admins when direct sale prices are active but invoice emails are disabled in rental mode.
+     */
+    public function maybe_show_invoice_notice() {
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        if ($mode !== 'miete') {
+            return;
+        }
+
+        if (pv_is_invoice_email_enabled()) {
+            return;
+        }
+
+        if (!$this->db->has_sale_enabled_variants()) {
+            return;
+        }
+
+        if (function_exists('get_current_screen')) {
+            $screen = get_current_screen();
+            if ($screen && strpos($screen->id, 'produkt') === false) {
+                return;
+            }
+        }
+
+        $settings_url = admin_url('admin.php?page=produkt-settings&tab=email');
+        echo '<div class="notice notice-warning"><p><strong>' . esc_html__('Sie bieten Produkte zum Verkauf an, bitte aktivieren Sie den Rechnungsversand in den Einstellungen, damit der Kunde eine automatisierte Rechnung erhält.', 'h2-concepts') . '</strong> ';
+        echo '<a href="' . esc_url($settings_url) . '">' . esc_html__('Zu den Einstellungen wechseln', 'h2-concepts') . '</a>';
+        echo '</p></div>';
     }
 
     private function is_cart_enabled() {
