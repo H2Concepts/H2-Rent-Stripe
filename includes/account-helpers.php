@@ -862,8 +862,9 @@ function pv_generate_invoice_pdf($order_id) {
         return false;
     }
 
-    $invoice_number = pv_ensure_invoice_number($order, $order_id);
-    $invoice_display = $invoice_number ?: ($order['order_number'] ?: ('RE-' . $order_id));
+    $invoice_number       = pv_ensure_invoice_number($order, $order_id);
+    $order_number_display = !empty($order['order_number']) ? $order['order_number'] : (string) $order_id;
+    $invoice_display      = $invoice_number ?: ($order_number_display ? $order_number_display : ('RE-' . $order_id));
 
     // 2. PDF-API-Endpunkt + Key
     $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
@@ -887,6 +888,7 @@ function pv_generate_invoice_pdf($order_id) {
 
     $post_data = [
         'rechnungsnummer'  => $invoice_display,
+        'bestellnummer'    => $order_number_display,
         'rechnungsdatum'   => date('Y-m-d'),
         'kunde_name'       => $customer_name ?: 'Kunde',
         'kunde_adresse'    => $customer_addr,
