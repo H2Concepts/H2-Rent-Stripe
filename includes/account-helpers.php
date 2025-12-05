@@ -872,15 +872,40 @@ function pv_generate_invoice_pdf($order_id) {
     // 3. Daten aufbauen
     $sender    = pv_get_invoice_sender();
     $logo_url  = get_option('plugin_firma_logo_url', '');
-    $product   = $order['produkt_name'];
-    if (!$product) {
-        $product = $order['variant_name'] ?? '';
+
+    // Haupt-Produktname: zuerst Kategorie, dann Fallbacks
+    $base_product = $order['category_name']
+        ?: $order['produkt_name']
+        ?: ($order['variant_name'] ?? '');
+
+    $details = [];
+
+    // Ausführung (Variant)
+    if (!empty($order['variant_name']) && $order['variant_name'] !== $base_product) {
+        $details[] = 'Ausführung: ' . $order['variant_name'];
     }
+
+    // Zustand
+    if (!empty($order['condition_name'])) {
+        $details[] = 'Zustand: ' . $order['condition_name'];
+    }
+
+    // Farben (Produkt + Gestell)
+    $color_parts = [];
     if (!empty($order['product_color_name'])) {
-        $product .= ' – ' . $order['product_color_name'];
+        $color_parts[] = $order['product_color_name'];
     }
     if (!empty($order['frame_color_name'])) {
-        $product .= ' – ' . $order['frame_color_name'];
+        $color_parts[] = $order['frame_color_name'];
+    }
+    if ($color_parts) {
+        $details[] = 'Farbe: ' . implode(' / ', $color_parts);
+    }
+
+    // Alles zu einem mehrzeiligen Produkt-String zusammenbauen
+    $product = $base_product;
+    if ($details) {
+        $product .= "\n" . implode("\n", $details);
     }
 
     // UI-Einstellungen (Buttons & Tooltips) laden – u.a. MwSt-Toggle
