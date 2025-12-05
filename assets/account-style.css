@@ -227,6 +227,12 @@
     position: relative;
 }
 
+.account-invoices {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
 .invoice-card-header {
     display: flex;
     align-items: center;
