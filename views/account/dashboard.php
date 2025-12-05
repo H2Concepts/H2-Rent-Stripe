@@ -346,7 +346,9 @@
                     <?php if (!empty($purchase_invoices)) : ?>
                         <?php foreach ($purchase_invoices as $invoice) : ?>
                             <?php
-                                $invoice_number = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
+                                $invoice_number = !empty($invoice->invoice_number)
+                                    ? $invoice->invoice_number
+                                    : (!empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? ''));
                                 $purchase_date  = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
                                 $invoice_date   = !empty($invoice->invoice_sent_at) ? date_i18n('d.m.Y', strtotime($invoice->invoice_sent_at)) : $purchase_date;
                                 $amount_cents   = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;

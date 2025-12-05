@@ -422,6 +422,67 @@ function pv_generate_order_number() {
 }
 
 /**
+ * Generate and increment the next invoice number.
+ *
+ * @return string Invoice number or empty string when numbering disabled
+ */
+function pv_generate_invoice_number() {
+    $next = get_option('produkt_next_invoice_number', '');
+    if ($next === '') {
+        return '';
+    }
+
+    if (preg_match('/^(.*?)(\d+)$/', $next, $m)) {
+        $prefix   = $m[1];
+        $num      = (int) $m[2];
+        $len      = strlen($m[2]);
+        $next_val = $prefix . str_pad($num + 1, $len, '0', STR_PAD_LEFT);
+    } else {
+        $num      = (int) $next;
+        $next_val = (string) ($num + 1);
+    }
+
+    update_option('produkt_next_invoice_number', $next_val);
+    update_option('produkt_last_invoice_number', $next);
+
+    return $next;
+}
+
+/**
+ * Ensure an invoice number exists for the given order.
+ *
+ * @param array $order
+ * @param int   $order_id
+ * @return string Invoice number or empty string when not available
+ */
+function pv_ensure_invoice_number(array $order, int $order_id) {
+    if ($order_id <= 0) {
+        return $order['invoice_number'] ?? '';
+    }
+
+    $invoice_number = $order['invoice_number'] ?? '';
+    if ($invoice_number !== '') {
+        return $invoice_number;
+    }
+
+    $generated = pv_generate_invoice_number();
+    if ($generated === '') {
+        return '';
+    }
+
+    global $wpdb;
+    $wpdb->update(
+        "{$wpdb->prefix}produkt_orders",
+        ['invoice_number' => $generated],
+        ['id' => $order_id],
+        ['%s'],
+        ['%d']
+    );
+
+    return $generated;
+}
+
+/**
  * Create a provisional order number based on the current date and time.
  *
  * Uses the pattern DDMMYYHHMM so open orders get a unique, time-based
@@ -795,6 +856,9 @@ function pv_generate_invoice_pdf($order_id) {
         return false;
     }
 
+    $invoice_number = pv_ensure_invoice_number($order, $order_id);
+    $invoice_display = $invoice_number ?: ($order['order_number'] ?: ('RE-' . $order_id));
+
     // 2. PDF-API-Endpunkt + Key
     $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
 
@@ -816,7 +880,7 @@ function pv_generate_invoice_pdf($order_id) {
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $post_data = [
-        'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
+        'rechnungsnummer'  => $invoice_display,
         'rechnungsdatum'   => date('Y-m-d'),
         'kunde_name'       => $customer_name ?: 'Kunde',
         'kunde_adresse'    => $customer_addr,
@@ -927,7 +991,7 @@ function pv_generate_invoice_pdf($order_id) {
         wp_mkdir_p($subdir);
     }
 
-    $filename = 'rechnung-' . $order_id . '.pdf';
+    $filename = 'rechnung-' . sanitize_title_with_dashes($invoice_display) . '.pdf';
     $path     = $subdir . $filename;
     file_put_contents($path, $pdf_data);
 
