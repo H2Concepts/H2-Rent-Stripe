@@ -284,6 +284,13 @@
                                 $period_label = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '');
                                 $amount_label = number_format((float) ($invoice['amount_total'] / 100), 2, ',', '.');
                                 $currency     = !empty($invoice['currency']) ? $invoice['currency'] : 'EUR';
+                                $order_number = '';
+
+                                if (!empty($invoice['order_number'])) {
+                                    $order_number = $invoice['order_number'];
+                                } elseif (!empty($invoice['subscription']) && !empty($subscription_order_numbers[$invoice['subscription']] ?? '')) {
+                                    $order_number = $subscription_order_numbers[$invoice['subscription']];
+                                }
 
                                 $status_raw   = $invoice['status'] ?? '';
                                 $is_paid_flag = !empty($invoice['paid']);
@@ -315,6 +322,12 @@
                                 <div class="subscription-card-body">
                                     <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
                                     <div class="subscription-meta invoice-meta">
+                                        <?php if ($order_number) : ?>
+                                            <div class="invoice-row">
+                                                <strong>Bestellnummer:</strong> <?php echo esc_html($order_number); ?>
+                                            </div>
+                                        <?php endif; ?>
+
                                         <?php if ($period_label) : ?>
                                             <div class="invoice-row">
                                                 <strong>Zeitraum:</strong> <?php echo esc_html($period_label); ?>

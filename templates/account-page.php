@@ -35,6 +35,7 @@ $full_name        = '';
 $customer_addr    = '';
 $subscription_map = [];
 $invoice_orders   = [];
+$subscription_order_numbers = [];
 $stripe_invoices  = [];
 
 if (is_user_logged_in()) {
@@ -62,6 +63,12 @@ foreach ($orders as $o) {
     }
 
     $invoice_orders[] = $o;
+
+    if (!empty($o->subscription_id)) {
+        $subscription_order_numbers[$o->subscription_id] = !empty($o->order_number)
+            ? $o->order_number
+            : (string) $o->id;
+    }
 
     if (($o->mode ?? '') === 'miete') {
         $rental_orders[] = $o;
