@@ -46,7 +46,7 @@ if (!function_exists('produkt_send_test_customer_email')) {
             'gestellfarbe_text' => 'Schwarz',
         ];
 
-        \ProduktVerleih\send_produkt_welcome_email($order, 0, false);
+        \ProduktVerleih\send_produkt_welcome_email($order, 0, false, true);
 
         return true;
     }

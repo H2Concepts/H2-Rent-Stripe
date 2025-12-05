@@ -41,12 +41,12 @@ function handle_stripe_webhook(WP_REST_Request $request) {
     return new WP_REST_Response(['status' => 'ok'], 200);
 }
 
-function send_produkt_welcome_email(array $order, int $order_id, bool $attach_invoice = true) {
+function send_produkt_welcome_email(array $order, int $order_id, bool $attach_invoice = true, bool $force_send = false) {
     if (empty($order['customer_email'])) {
         return;
     }
 
-    if (!pv_should_send_invoice_email($order, $order_id)) {
+    if (!$force_send && !pv_should_send_invoice_email($order, $order_id)) {
         return;
     }
 
