@@ -354,7 +354,7 @@ $rental_payments = $rental_payments ?? [];
                     <?php endif; ?>
 
                     <?php if ($invoice_url) : ?>
-                        <a class="button button-primary" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
+                        <a class="button button-primary invoice-download-btn" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
                             Rechnung herunterladen
                         </a>
                     <?php else : ?>
