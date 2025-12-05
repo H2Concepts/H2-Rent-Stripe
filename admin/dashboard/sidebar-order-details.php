@@ -2,7 +2,7 @@
 if (!defined('ABSPATH')) exit;
 
 $order = $order_data ?? null;
-$modus = !empty($order_mode) ? $order_mode : get_option('produkt_betriebsmodus', 'miete');
+$modus = pv_get_order_mode((array) ($order_data ?? []), (int) ($order->id ?? 0));
 $is_purchase = ($modus === 'kauf');
 
 if (empty($order) || !is_object($order)) {

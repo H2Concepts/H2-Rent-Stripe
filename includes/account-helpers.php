@@ -575,7 +575,13 @@ function pv_get_order_mode(array $order = [], int $order_id = 0) {
         $mode = get_option('produkt_betriebsmodus', 'miete');
     }
 
-    return $mode;
+    $mode = strtolower(trim((string) $mode));
+
+    if (in_array($mode, ['kauf', 'sale', 'einmalkauf', 'direct', 'purchase'], true)) {
+        return 'kauf';
+    }
+
+    return 'miete';
 }
 
 /**
