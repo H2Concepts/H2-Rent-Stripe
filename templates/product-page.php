@@ -744,7 +744,7 @@ if ($price_layout !== 'sidebar') {
                     <div class="produkt-notify" id="produkt-notify" style="display: none;">
                         <p>Benachrichtigen Sie mich sobald das Produkt wieder erhältlich ist.</p>
                         <div class="produkt-notify-form">
-                            <input type="email" id="produkt-notify-email" placeholder="Ihre E-Mail" required>
+                            <input type="email" id="produkt-notify-email" placeholder="Email Adresse" required>
                             <button id="produkt-notify-submit">Senden</button>
                         </div>
                         <p class="produkt-notify-success" id="produkt-notify-success" style="display:none;">Vielen Dank! Wir benachrichtigen Sie umgehend.</p>
