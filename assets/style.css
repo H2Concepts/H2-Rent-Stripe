@@ -987,6 +987,10 @@ img.wp-smiley, img.emoji {
     text-indent: 10px;
 }
 
+.produkt-notify-form input::placeholder {
+    color: #000;
+}
+
 .produkt-notify-form button {
     background: var(--produkt-button-bg);
     color: var(--produkt-button-text);
