@@ -111,13 +111,11 @@ foreach ($orders as $o) {
 
     $customer_id = Database::get_stripe_customer_id_for_user($user_id);
     if ($customer_id) {
-        if (!$is_sale) {
-            $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($customer_id, 20);
-            if (is_wp_error($invoice_data)) {
-                $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
-            } else {
-                $stripe_invoices = $invoice_data;
-            }
+        $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($customer_id, 20);
+        if (is_wp_error($invoice_data)) {
+            $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
+        } else {
+            $stripe_invoices = $invoice_data;
         }
 
         $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);

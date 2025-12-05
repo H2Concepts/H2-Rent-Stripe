@@ -131,7 +131,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
 
     if ($logo_url) {
-        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
     }
 
     $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Herzlich willkommen und vielen Dank für Ihre Bestellung!</h1>';
@@ -189,7 +189,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         }
 
         $message .= '<div style="padding:12px 0;">';
-        $message .= '<div style="display:flex;gap:12px;align-items:flex-start;">';
+        $message .= '<div style="display:flex;gap:16px;align-items:flex-start;">';
         if (!empty($item->image_url)) {
             $message .= '<div style="width:64px;flex-shrink:0;">'
                 . '<img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;">'
@@ -232,7 +232,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $message .= '</div>';
 
     if ($logo_url) {
-        $message .= '<div style="text-align:center;margin:22px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:70px;height:auto;"></div>';
+        $message .= '<div style="text-align:center;margin:22px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:70px;max-width:100%;height:auto;"></div>';
     }
 
     $message .= $divider;
