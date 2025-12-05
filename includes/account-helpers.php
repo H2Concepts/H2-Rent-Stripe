@@ -873,30 +873,37 @@ function pv_generate_invoice_pdf($order_id) {
     $sender    = pv_get_invoice_sender();
     $logo_url  = get_option('plugin_firma_logo_url', '');
 
-    // Haupt-Produktname: zuerst Kategorie, dann Fallbacks
+    // Haupt-Produktname: zuerst Kategorie, dann Fallbacks (inkl. erstem Positionseintrag)
+    $first_item     = !empty($order['produkte'][0]) ? $order['produkte'][0] : null;
+    $variant_name   = $order['variant_name'] ?? ($first_item->variant_name ?? '');
+    $condition_name = $order['condition_name'] ?? ($first_item->condition_name ?? '');
+    $product_color  = $order['product_color_name'] ?? ($first_item->product_color_name ?? '');
+    $frame_color    = $order['frame_color_name'] ?? ($first_item->frame_color_name ?? '');
+
     $base_product = $order['category_name']
+        ?: ($first_item ? ($first_item->produkt_name ?? '') : '')
         ?: $order['produkt_name']
-        ?: ($order['variant_name'] ?? '');
+        ?: $variant_name;
 
     $details = [];
 
     // Ausführung (Variant)
-    if (!empty($order['variant_name']) && $order['variant_name'] !== $base_product) {
-        $details[] = 'Ausführung: ' . $order['variant_name'];
+    if (!empty($variant_name) && $variant_name !== $base_product) {
+        $details[] = 'Ausführung: ' . $variant_name;
     }
 
     // Zustand
-    if (!empty($order['condition_name'])) {
-        $details[] = 'Zustand: ' . $order['condition_name'];
+    if (!empty($condition_name)) {
+        $details[] = 'Zustand: ' . $condition_name;
     }
 
     // Farben (Produkt + Gestell)
     $color_parts = [];
-    if (!empty($order['product_color_name'])) {
-        $color_parts[] = $order['product_color_name'];
+    if (!empty($product_color)) {
+        $color_parts[] = $product_color;
     }
-    if (!empty($order['frame_color_name'])) {
-        $color_parts[] = $order['frame_color_name'];
+    if (!empty($frame_color)) {
+        $color_parts[] = $frame_color;
     }
     if ($color_parts) {
         $details[] = 'Farbe: ' . implode(' / ', $color_parts);
