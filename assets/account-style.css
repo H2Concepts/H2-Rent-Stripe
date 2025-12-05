@@ -233,6 +233,10 @@
     gap: 16px;
 }
 
+.account-invoices .invoice-card + .invoice-card {
+    margin-top: 16px;
+}
+
 .invoice-card-header {
     display: flex;
     align-items: center;
