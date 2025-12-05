@@ -271,125 +271,116 @@
                     return ($inv->mode ?? '') === 'kauf';
                 });
             ?>
-            <?php if (!empty($stripe_invoices)) : ?>
-                <div class="account-section account-invoices">
-                    <?php foreach ($stripe_invoices as $invoice) : ?>
-                        <?php
-                            $date_format  = get_option('date_format') ?: 'd.m.Y';
-                            $created      = !empty($invoice['created']) ? date_i18n($date_format, $invoice['created']) : '';
-                            $period_start = !empty($invoice['period_start']) ? date_i18n($date_format, $invoice['period_start']) : '';
-                            $period_end   = !empty($invoice['period_end']) ? date_i18n($date_format, $invoice['period_end']) : '';
-                            $period_label = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '');
-                            $amount_label = number_format((float) ($invoice['amount_total'] / 100), 2, ',', '.');
-                            $currency     = !empty($invoice['currency']) ? $invoice['currency'] : 'EUR';
+            <?php $has_invoices = !empty($stripe_invoices) || !empty($purchase_invoices); ?>
+            <?php if ($has_invoices) : ?>
+                <div class="subscription-grid invoice-grid">
+                    <?php if (!empty($stripe_invoices)) : ?>
+                        <?php foreach ($stripe_invoices as $invoice) : ?>
+                            <?php
+                                $date_format  = get_option('date_format') ?: 'd.m.Y';
+                                $created      = !empty($invoice['created']) ? date_i18n($date_format, $invoice['created']) : '';
+                                $period_start = !empty($invoice['period_start']) ? date_i18n($date_format, $invoice['period_start']) : '';
+                                $period_end   = !empty($invoice['period_end']) ? date_i18n($date_format, $invoice['period_end']) : '';
+                                $period_label = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '');
+                                $amount_label = number_format((float) ($invoice['amount_total'] / 100), 2, ',', '.');
+                                $currency     = !empty($invoice['currency']) ? $invoice['currency'] : 'EUR';
 
-                            $status_raw   = $invoice['status'] ?? '';
-                            $is_paid_flag = !empty($invoice['paid']);
+                                $status_raw   = $invoice['status'] ?? '';
+                                $is_paid_flag = !empty($invoice['paid']);
 
-                            $status_label = 'Unbekannt';
-                            $status_class = 'status-unknown';
+                                $status_label = 'Unbekannt';
+                                $status_class = 'status-unknown';
 
-                            if ($is_paid_flag || $status_raw === 'paid') {
-                                $status_label = 'Bezahlt';
-                                $status_class = 'status-paid';
-                            } elseif ($status_raw === 'open') {
-                                $status_label = 'Offen';
-                                $status_class = 'status-open';
-                            } elseif ($status_raw === 'void') {
-                                $status_label = 'Storniert';
-                                $status_class = 'status-void';
-                            } elseif ($status_raw === 'uncollectible') {
-                                $status_label = 'Nicht einziehbar';
-                                $status_class = 'status-uncollectible';
-                            } elseif ($status_raw === 'draft') {
-                                $status_label = 'Entwurf';
-                                $status_class = 'status-draft';
-                            }
-                        ?>
-                        <div class="invoice-card">
-                            <span class="status-badge invoice-status-badge <?php echo esc_attr($status_class); ?>">
-                                <?php echo esc_html($status_label); ?>
-                            </span>
-                            <div class="invoice-header">
-                                <div class="invoice-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
-                                <div class="invoice-actions">
-                                    <?php if (!empty($invoice['pdf_url'])) : ?>
-                                        <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
-                                            Herunterladen
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
+                                if ($is_paid_flag || $status_raw === 'paid') {
+                                    $status_label = 'Bezahlt';
+                                    $status_class = 'status-paid';
+                                } elseif ($status_raw === 'open') {
+                                    $status_label = 'Offen';
+                                    $status_class = 'status-open';
+                                } elseif ($status_raw === 'void') {
+                                    $status_label = 'Storniert';
+                                    $status_class = 'status-void';
+                                } elseif ($status_raw === 'uncollectible') {
+                                    $status_label = 'Nicht einziehbar';
+                                    $status_class = 'status-uncollectible';
+                                } elseif ($status_raw === 'draft') {
+                                    $status_label = 'Entwurf';
+                                    $status_class = 'status-draft';
+                                }
+                            ?>
+                            <div class="subscription-card invoice-card">
+                                <span class="status-badge invoice-status-badge <?php echo esc_attr($status_class); ?>">
+                                    <?php echo esc_html($status_label); ?>
+                                </span>
+                                <div class="subscription-card-body">
+                                    <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
+                                    <div class="subscription-meta invoice-meta">
+                                        <?php if ($period_label) : ?>
+                                            <div class="invoice-row">
+                                                <strong>Zeitraum:</strong> <?php echo esc_html($period_label); ?>
+                                            </div>
+                                        <?php endif; ?>
 
-                            <div class="invoice-meta">
-                                <?php if ($period_label) : ?>
-                                    <div class="invoice-row">
-                                        <span>Zeitraum:</span>
-                                        <strong><?php echo esc_html($period_label); ?></strong>
+                                        <?php if ($created) : ?>
+                                            <div class="invoice-row">
+                                                <strong>Rechnungsdatum:</strong> <?php echo esc_html($created); ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div class="invoice-row">
+                                            <strong>Rechnungsbetrag:</strong> <?php echo esc_html($amount_label . ' ' . $currency); ?>
+                                        </div>
                                     </div>
-                                <?php endif; ?>
-
-                                <?php if ($created) : ?>
-                                    <div class="invoice-row">
-                                        <span>Rechnungsdatum:</span>
-                                        <strong><?php echo esc_html($created); ?></strong>
+                                    <div class="invoice-actions">
+                                        <?php if (!empty($invoice['pdf_url'])) : ?>
+                                            <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
+                                                Herunterladen
+                                            </a>
+                                        <?php endif; ?>
                                     </div>
-                                <?php endif; ?>
-
-                                <div class="invoice-row">
-                                    <span>Rechnungsbetrag:</span>
-                                    <strong><?php echo esc_html($amount_label . ' ' . $currency); ?></strong>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <?php if (!empty($purchase_invoices)) : ?>
+                        <?php foreach ($purchase_invoices as $invoice) : ?>
+                            <?php
+                                $invoice_number = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
+                                $purchase_date  = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
+                                $invoice_date   = !empty($invoice->invoice_sent_at) ? date_i18n('d.m.Y', strtotime($invoice->invoice_sent_at)) : $purchase_date;
+                                $amount_cents   = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
+                                $amount_number  = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0) + floatval($invoice->shipping_cost ?? 0);
+                                $amount_label   = number_format($amount_number, 2, ',', '.');
+                                $download_url   = !empty($invoice->invoice_url) ? $invoice->invoice_url : '';
+                            ?>
+                            <div class="subscription-card invoice-card">
+                                <div class="subscription-card-body">
+                                    <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
+                                    <div class="subscription-meta invoice-meta">
+                                        <div class="invoice-row">
+                                            <strong>Kaufdatum:</strong> <?php echo esc_html($purchase_date); ?>
+                                        </div>
+                                        <div class="invoice-row">
+                                            <strong>Rechnungsdatum:</strong> <?php echo esc_html($invoice_date ?: '–'); ?>
+                                        </div>
+                                        <div class="invoice-row">
+                                            <strong>Rechnungsbetrag:</strong> <?php echo esc_html($amount_label); ?> €
+                                        </div>
+                                    </div>
+                                    <div class="invoice-actions">
+                                        <?php if ($download_url) : ?>
+                                            <a class="invoice-download-btn" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>
+                                                Herunterladen
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
-
-            <?php if (!empty($purchase_invoices)) : ?>
-                <div class="account-section account-invoices">
-                    <?php foreach ($purchase_invoices as $invoice) : ?>
-                        <?php
-                            $invoice_number = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
-                            $purchase_date  = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
-                            $invoice_date   = !empty($invoice->invoice_sent_at) ? date_i18n('d.m.Y', strtotime($invoice->invoice_sent_at)) : $purchase_date;
-                            $amount_cents   = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
-                            $amount_number  = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0) + floatval($invoice->shipping_cost ?? 0);
-                            $amount_label   = number_format($amount_number, 2, ',', '.');
-                            $download_url   = !empty($invoice->invoice_url) ? $invoice->invoice_url : '';
-                        ?>
-                        <div class="invoice-card">
-                            <div class="invoice-header">
-                                <div class="invoice-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
-                                <div class="invoice-actions">
-                                    <?php if ($download_url) : ?>
-                                        <a class="invoice-download-btn" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>
-                                            Herunterladen
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-
-                            <div class="invoice-meta">
-                                <div class="invoice-row">
-                                    <span>Kaufdatum:</span>
-                                    <strong><?php echo esc_html($purchase_date); ?></strong>
-                                </div>
-                                <div class="invoice-row">
-                                    <span>Rechnungsdatum:</span>
-                                    <strong><?php echo esc_html($invoice_date ?: '–'); ?></strong>
-                                </div>
-                                <div class="invoice-row">
-                                    <span>Rechnungsbetrag:</span>
-                                    <strong><?php echo esc_html($amount_label); ?> €</strong>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php if (empty($stripe_invoices) && empty($purchase_invoices)) : ?>
+            <?php else : ?>
                 <p>Aktuell liegen keine Rechnungen vor.</p>
             <?php endif; ?>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
