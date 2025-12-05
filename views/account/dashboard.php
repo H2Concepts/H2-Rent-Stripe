@@ -349,6 +349,7 @@
                                 $invoice_number = !empty($invoice->invoice_number)
                                     ? $invoice->invoice_number
                                     : (!empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? ''));
+                                $order_number   = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
                                 $purchase_date  = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
                                 $invoice_date   = !empty($invoice->invoice_sent_at) ? date_i18n('d.m.Y', strtotime($invoice->invoice_sent_at)) : $purchase_date;
                                 $amount_cents   = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
@@ -360,6 +361,9 @@
                                 <div class="subscription-card-body">
                                     <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
                                     <div class="subscription-meta invoice-meta">
+                                        <div class="invoice-row">
+                                            <strong>Bestellnummer:</strong> <?php echo esc_html($order_number ?: '–'); ?>
+                                        </div>
                                         <div class="invoice-row">
                                             <strong>Kaufdatum:</strong> <?php echo esc_html($purchase_date); ?>
                                         </div>
