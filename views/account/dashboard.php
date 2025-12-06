@@ -368,7 +368,10 @@
                                 $amount_cents   = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
                                 $amount_number  = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0) + floatval($invoice->shipping_cost ?? 0);
                                 $amount_label   = number_format($amount_number, 2, ',', '.');
-                                $download_url   = !empty($invoice->invoice_url) ? $invoice->invoice_url : '';
+                                $download_url   = pv_get_invoice_download_url((int) ($invoice->id ?? 0));
+                                if (!$download_url && !empty($invoice->invoice_url)) {
+                                    $download_url = $invoice->invoice_url;
+                                }
                             ?>
                             <div class="subscription-card invoice-card">
                                 <div class="subscription-card-body">

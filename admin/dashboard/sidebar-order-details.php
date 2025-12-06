@@ -79,7 +79,10 @@ $invoice_number_display = '';
 $invoice_url = '';
 if ($is_purchase) {
     $invoice_number_display = pv_ensure_invoice_number((array) ($order_data ?? []), (int) $order->id);
-    $invoice_url = $order->invoice_url ?? '';
+    $invoice_url = pv_get_invoice_download_url((int) $order->id);
+    if (!$invoice_url) {
+        $invoice_url = $order->invoice_url ?? '';
+    }
 
     if (!$invoice_url) {
         $generated_path = pv_generate_invoice_pdf((int) $order->id);

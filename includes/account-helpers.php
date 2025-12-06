@@ -850,6 +850,97 @@ function pv_get_name_map($table, $ids) {
 }
 
 /**
+ * Generate a deterministic HMAC token for secure invoice downloads.
+ *
+ * @param int $order_id
+ * @return string
+ */
+function pv_get_invoice_download_token($order_id) {
+    $order_id = (int) $order_id;
+    $secret   = (defined('AUTH_SALT') ? AUTH_SALT : '') . (defined('LOGGED_IN_SALT') ? LOGGED_IN_SALT : '');
+
+    if (!$order_id || !$secret) {
+        return '';
+    }
+
+    return hash_hmac('sha256', (string) $order_id, $secret);
+}
+
+/**
+ * Build a signed download URL for an invoice.
+ *
+ * @param int $order_id
+ * @return string
+ */
+function pv_get_invoice_download_url($order_id) {
+    $order_id = (int) $order_id;
+    $token    = pv_get_invoice_download_token($order_id);
+
+    if (!$order_id || !$token) {
+        return '';
+    }
+
+    return add_query_arg(
+        [
+            'h2_invoice_download' => $order_id,
+            'token'               => $token,
+        ],
+        home_url('/')
+    );
+}
+
+/**
+ * Stream an invoice PDF after validating the signed token.
+ */
+function pv_handle_invoice_download() {
+    if (empty($_GET['h2_invoice_download']) || empty($_GET['token'])) {
+        return;
+    }
+
+    $order_id = (int) $_GET['h2_invoice_download'];
+    $token    = sanitize_text_field(wp_unslash($_GET['token']));
+
+    $expected = pv_get_invoice_download_token($order_id);
+    if (!$order_id || !$expected || !hash_equals($expected, $token)) {
+        wp_die('Ungültiger Download-Link.', 'Fehler', ['response' => 403]);
+    }
+
+    global $wpdb;
+
+    $table_orders = $wpdb->prefix . 'produkt_orders';
+    $order        = $wpdb->get_row(
+        $wpdb->prepare("SELECT invoice_url, invoice_number FROM {$table_orders} WHERE id = %d", $order_id)
+    );
+
+    if (!$order || empty($order->invoice_url)) {
+        wp_die('Rechnung nicht gefunden.', 'Fehler', ['response' => 404]);
+    }
+
+    $upload_dir = wp_upload_dir();
+    $basedir    = trailingslashit($upload_dir['basedir']) . 'rechnungen-h2-rental-pro/';
+
+    $filename = basename($order->invoice_url);
+    $filepath = $basedir . $filename;
+
+    if (!file_exists($filepath)) {
+        wp_die('Datei nicht gefunden.', 'Fehler', ['response' => 404]);
+    }
+
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    header('Content-Type: application/pdf');
+
+    $download_name = 'rechnung-' . preg_replace('/[^a-zA-Z0-9_\-]/', '', $order->invoice_number ?? (string) $order_id) . '.pdf';
+    header('Content-Disposition: attachment; filename="' . $download_name . '"');
+    header('Content-Length: ' . filesize($filepath));
+
+    readfile($filepath);
+    exit;
+}
+
+/**
  * Generate an invoice PDF for an order using the external API.
  *
  * @param int $order_id Order ID

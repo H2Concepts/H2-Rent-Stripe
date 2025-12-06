@@ -30,6 +30,8 @@ class Plugin {
     public function init() {
         $this->ensure_required_pages();
 
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
         // Replace deprecated emoji and admin bar functions with enqueue versions.
         $this->replace_deprecated_wp_functions();
 
@@ -87,6 +89,8 @@ class Plugin {
         add_action('loop_start', [$this, 'maybe_output_search_results']);
         add_action('loop_no_results', [$this, 'maybe_output_search_results'], 10, 1);
         add_action('admin_notices', [$this, 'maybe_show_invoice_notice']);
+
+        add_action('template_redirect', 'pv_handle_invoice_download');
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);

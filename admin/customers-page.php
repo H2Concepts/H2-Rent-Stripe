@@ -485,10 +485,16 @@ if (!$customer_id) {
                     </thead>
                     <tbody>
                         <?php foreach ($invoices as $inv) : ?>
+                            <?php
+                                $download_url = pv_get_invoice_download_url((int) ($inv->id ?? 0));
+                                if (!$download_url && !empty($inv->invoice_url)) {
+                                    $download_url = $inv->invoice_url;
+                                }
+                            ?>
                             <tr>
                                 <td>#<?php echo esc_html($inv->order_number ?: $inv->id); ?></td>
                                 <td class="details-cell">
-                                    <a href="<?php echo esc_url($inv->invoice_url); ?>" class="icon-btn icon-btn-no-stroke" target="_blank" download aria-label="Download">
+                                    <a href="<?php echo esc_url($download_url); ?>" class="icon-btn icon-btn-no-stroke" target="_blank" download aria-label="Download">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18v10l4-4 1.41 1.41L12 16.83 6.59 11.41 8 10l4 4V2h-2z"/></svg>
                                     </a>
                                 </td>
