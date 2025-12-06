@@ -1040,13 +1040,29 @@ function pv_generate_invoice_pdf($order_id) {
         wp_mkdir_p($subdir);
     }
 
-    $filename = 'rechnung-' . sanitize_title_with_dashes($invoice_display) . '.pdf';
+    // Sicheren Dateinamen generieren:
+    // Rechnungsnummer + zufälliger Token, damit niemand über "36 -> 37" andere Rechnungen findet
+    if (!function_exists('wp_generate_password')) {
+        require_once ABSPATH . 'wp-includes/pluggable.php';
+    }
+
+    // 20 Zeichen, nur Buchstaben/Zahlen, alles klein = URL- & Dateinamen-tauglich
+    $random_suffix = strtolower(wp_generate_password(20, false, false));
+
+    $safe_invoice_slug = sanitize_title_with_dashes($invoice_display);
+    if ($safe_invoice_slug === '') {
+        $safe_invoice_slug = 'rechnung-' . (int) $order_id;
+    }
+
+    $filename = 'rechnung-' . $safe_invoice_slug . '-' . $random_suffix . '.pdf';
     $path     = $subdir . $filename;
+
     file_put_contents($path, $pdf_data);
 
     // URL speichern
     global $wpdb;
     $invoice_url = trailingslashit($upload_dir['baseurl']) . 'rechnungen-h2-rental-pro/' . $filename;
+
     $wpdb->update(
         "{$wpdb->prefix}produkt_orders",
         ['invoice_url' => $invoice_url],
