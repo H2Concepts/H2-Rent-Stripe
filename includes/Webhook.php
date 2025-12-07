@@ -298,7 +298,28 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
     $total_first  = number_format((float) ($order['final_price'] ?? 0) + (float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
     $shipping_name = $order['shipping_name'] ?? '';
     $provider      = $order['shipping_provider'] ?? '';
-    $tracking_url  = 'https://www.17track.net/de?nums=' . rawurlencode($tracking_number);
+    $postal_code   = isset($order['customer_postal']) ? preg_replace('/[^0-9A-Za-z]/', '', $order['customer_postal']) : '';
+
+    switch (strtolower($provider)) {
+        case 'gls':
+            $tracking_url = 'https://www.gls-pakete.de/reach-sendungsverfolgung?trackingNumber=' . rawurlencode($tracking_number);
+            if ($postal_code !== '') {
+                $tracking_url .= '&postCode=' . rawurlencode($postal_code);
+            }
+            break;
+        case 'hermes':
+            $tracking_url = 'https://www.myhermes.de/empfangen/sendungsverfolgung/suchen/sendungsinformation?TrackID=' . rawurlencode($tracking_number);
+            if ($postal_code !== '') {
+                $tracking_url .= '&PLZ=' . rawurlencode($postal_code);
+            }
+            break;
+        case 'dpd':
+            $tracking_url = 'https://www.dpd.com/de/de/empfangen/sendungsverfolgung/';
+            break;
+        default:
+            $tracking_url = 'https://www.dpd.com/de/de/empfangen/sendungsverfolgung/';
+            break;
+    }
     $customer_name = trim($first . ' ' . $last);
 
     $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
@@ -328,7 +349,6 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
     $message .= '<div style="text-align:center;margin:20px 0 8px;">';
     $message .= '<a href="' . esc_url($tracking_url) . '" style="display:inline-block;padding:14px 32px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Paket verfolgen</a>';
     $message .= '</div>';
-    $message .= '<p style="margin:8px 0 0;font-size:12px;text-align:center;">Es kann bis zu 24 Stunden dauern bis das Tracking aktiv ist.</p>';
     $message .= '</div>';
 
     $message .= $divider;

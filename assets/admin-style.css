@@ -3207,6 +3207,13 @@ body.conditions-modal-open {
 .orders-accordion .order-product-image{width:64px;height:64px;object-fit:cover;border-radius:6px;display:block;margin-bottom:10px;}
 .orders-accordion .invoice-download-btn{background-color:#2d6a4f!important;color:#fff!important;border:none!important;border-radius:6px;padding:8px 16px;display:inline-flex;align-items:center;gap:8px;font-weight:600;text-decoration:none!important;}
 .orders-accordion .invoice-download-btn:hover{background-color:#d0ecc4!important;color:#000!important;}
+.orders-accordion .tracking-input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end;margin-bottom:12px;}
+.orders-accordion .tracking-provider label{display:block;font-weight:600;margin-bottom:4px;}
+.orders-accordion .tracking-provider select{width:100%;padding:8px;border-radius:6px;border:1px solid #d4d7dd;background:#fff;}
+.orders-accordion .tracking-number-field input{width:100%;padding:10px;border-radius:6px;border:1px solid #d4d7dd;}
+.orders-accordion .tracking-actions{display:flex;flex-wrap:wrap;gap:10px;}
+.orders-accordion .tracking-actions .invoice-download-btn{margin:0!important;}
+.orders-accordion .tracking-actions .button{box-shadow:none!important;}
 
 
 .produkt-return-confirm{color:#000;background-color:#fff;border:0;border-radius:999px;padding:5px 15px;}

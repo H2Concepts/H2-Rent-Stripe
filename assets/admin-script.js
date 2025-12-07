@@ -774,10 +774,12 @@ function produktHandleTrackingAction(options) {
     if (!wrapper) return;
 
     var input = wrapper.querySelector('.tracking-number-input');
+    var providerSelect = wrapper.querySelector('.tracking-provider-select');
     var orderId = produktSidebarOrderId();
     if (!orderId) return;
 
     var trackingValue = input ? input.value.trim() : '';
+    var providerValue = providerSelect ? providerSelect.value : '';
     if (options.sendEmail && !options.clear && !trackingValue) {
         produktSetTrackingStatus('Bitte eine Trackingnummer eintragen.', true);
         return;
@@ -789,6 +791,9 @@ function produktHandleTrackingAction(options) {
     data.append('order_id', orderId);
     if (trackingValue) {
         data.append('tracking_number', trackingValue);
+    }
+    if (providerValue) {
+        data.append('shipping_provider', providerValue);
     }
     if (options.sendEmail) {
         data.append('send_email', '1');
@@ -808,8 +813,12 @@ function produktHandleTrackingAction(options) {
         .then(function(res) {
             if (res && res.success) {
                 var newValue = res.data.tracking_number || '';
+                var newProvider = res.data.shipping_provider || '';
                 if (input) {
                     input.value = newValue;
+                }
+                if (providerSelect) {
+                    providerSelect.value = newProvider;
                 }
                 produktSetTrackingStatus(res.data.message || 'Tracking gespeichert.', false);
             } else {

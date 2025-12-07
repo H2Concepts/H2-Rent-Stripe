@@ -378,16 +378,26 @@ $rental_payments = $rental_payments ?? [];
             <button type="button" class="produkt-accordion-header">Tracking</button>
             <div class="produkt-accordion-content">
                 <p class="tracking-hint">Hinterlegen Sie die Sendungsnummer, um sie bei Bedarf anzupassen oder erneut an den Kunden zu senden.</p>
-                <label for="tracking-number-input" class="screen-reader-text">Trackingnummer</label>
                 <div class="tracking-input-row">
-                    <input type="text" id="tracking-number-input" class="tracking-number-input" placeholder="z. B. 003404341234" value="<?php echo esc_attr($order->tracking_number ?? ''); ?>">
-                    <button type="button" class="button button-primary tracking-send-btn">An Kunden senden</button>
+                    <div class="tracking-provider">
+                        <label for="tracking-provider-select">Versanddienstleister</label>
+                        <select id="tracking-provider-select" class="tracking-provider-select">
+                            <option value="">Auswählen …</option>
+                            <option value="gls" <?php selected(($order->shipping_provider ?? '') === 'gls'); ?>>GLS</option>
+                            <option value="hermes" <?php selected(($order->shipping_provider ?? '') === 'hermes'); ?>>Hermes</option>
+                            <option value="dpd" <?php selected(($order->shipping_provider ?? '') === 'dpd'); ?>>DPD</option>
+                        </select>
+                    </div>
+                    <div class="tracking-number-field">
+                        <label for="tracking-number-input" class="screen-reader-text">Trackingnummer</label>
+                        <input type="text" id="tracking-number-input" class="tracking-number-input" placeholder="z. B. 003404341234" value="<?php echo esc_attr($order->tracking_number ?? ''); ?>">
+                    </div>
                 </div>
                 <div class="tracking-actions">
-                    <button type="button" class="button tracking-save-btn">Nur speichern</button>
-                    <button type="button" class="button button-link tracking-clear-btn">Tracking löschen</button>
+                    <button type="button" class="button button-primary invoice-download-btn tracking-send-btn">An Kunden senden</button>
+                    <button type="button" class="button button-primary invoice-download-btn tracking-save-btn">Nur speichern</button>
+                    <button type="button" class="button button-primary invoice-download-btn tracking-clear-btn">Tracking löschen</button>
                 </div>
-                <p class="tracking-subline">Beim Versenden erhält der Kunde eine E-Mail mit den bestellten Produkten, dem Hinweis zur Aktivierung des Trackings (bis zu 24 Stunden) und einem Direktlink zur Sendungsverfolgung.</p>
                 <div class="tracking-status" aria-live="polite"></div>
             </div>
         </div>

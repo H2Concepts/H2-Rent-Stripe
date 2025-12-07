@@ -2047,6 +2047,7 @@ function pv_save_tracking_number() {
 
     $order_id = intval($_POST['order_id'] ?? 0);
     $tracking_number = isset($_POST['tracking_number']) ? sanitize_text_field(wp_unslash($_POST['tracking_number'])) : '';
+    $shipping_provider = isset($_POST['shipping_provider']) ? sanitize_text_field(wp_unslash($_POST['shipping_provider'])) : '';
     $send_email = !empty($_POST['send_email']);
     $clear_tracking = !empty($_POST['clear_tracking']);
 
@@ -2068,6 +2069,11 @@ function pv_save_tracking_number() {
     ];
     $formats = ['%s'];
 
+    if ($shipping_provider !== '') {
+        $update_data['shipping_provider'] = $shipping_provider;
+        $formats[] = '%s';
+    }
+
     if ($send_email) {
         $update_data['tracking_sent_at'] = current_time('mysql');
         $formats[] = '%s';
@@ -2086,6 +2092,9 @@ function pv_save_tracking_number() {
     }
 
     $order['tracking_number'] = $update_data['tracking_number'];
+    if (isset($update_data['shipping_provider'])) {
+        $order['shipping_provider'] = $shipping_provider;
+    }
     if ($send_email) {
         $order['tracking_sent_at'] = $update_data['tracking_sent_at'];
     }
@@ -2113,6 +2122,7 @@ function pv_save_tracking_number() {
         'email_sent'       => $email_sent,
         'tracking_sent_at' => $send_email ? $order['tracking_sent_at'] : ($order['tracking_sent_at'] ?? null),
         'message'          => $response_message,
+        'shipping_provider' => $order['shipping_provider'] ?? '',
     ]);
 }
 
