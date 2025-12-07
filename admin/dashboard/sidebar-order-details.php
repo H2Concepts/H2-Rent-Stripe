@@ -372,8 +372,6 @@ $rental_payments = $rental_payments ?? [];
                 </div>
             </div>
         <?php endif; ?>
-    </div>
-    <div class="orders-accordion tracking-accordion-wrapper">
         <div class="produkt-accordion-item tracking-accordion">
             <button type="button" class="produkt-accordion-header">Tracking</button>
             <div class="produkt-accordion-content">
@@ -385,6 +383,7 @@ $rental_payments = $rental_payments ?? [];
                             <option value="">Auswählen …</option>
                             <option value="gls" <?php selected(($order->shipping_provider ?? '') === 'gls'); ?>>GLS</option>
                             <option value="hermes" <?php selected(($order->shipping_provider ?? '') === 'hermes'); ?>>Hermes</option>
+                            <option value="dhl" <?php selected(($order->shipping_provider ?? '') === 'dhl'); ?>>DHL</option>
                             <option value="dpd" <?php selected(($order->shipping_provider ?? '') === 'dpd'); ?>>DPD</option>
                         </select>
                     </div>

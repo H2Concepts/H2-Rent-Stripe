@@ -313,6 +313,9 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
                 $tracking_url .= '&PLZ=' . rawurlencode($postal_code);
             }
             break;
+        case 'dhl':
+            $tracking_url = 'https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html';
+            break;
         case 'dpd':
             $tracking_url = 'https://www.dpd.com/de/de/empfangen/sendungsverfolgung/';
             break;

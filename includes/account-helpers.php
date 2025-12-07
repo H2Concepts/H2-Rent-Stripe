@@ -636,7 +636,7 @@ function pv_get_order_by_id($order_id) {
                 COALESCE(pc.name, o.produktfarbe_text) AS product_color_name,
                 COALESCE(fc.name, o.gestellfarbe_text) AS frame_color_name,
                 sm.name AS shipping_name,
-                sm.service_provider AS shipping_provider
+                COALESCE(NULLIF(o.shipping_provider, ''), sm.service_provider) AS shipping_provider
          FROM {$wpdb->prefix}produkt_orders o
          LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
          LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
