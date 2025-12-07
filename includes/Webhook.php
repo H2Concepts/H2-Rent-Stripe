@@ -261,6 +261,139 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     wp_mail($order['customer_email'], $subject, $message, $headers, $attachments);
 }
 
+function send_produkt_tracking_email(array $order, int $order_id, string $tracking_number): bool {
+    if (empty($order['customer_email']) || $tracking_number === '') {
+        return false;
+    }
+
+    global $wpdb;
+
+    if (empty($order['order_items'])) {
+        $raw_items = $wpdb->get_var($wpdb->prepare(
+            "SELECT order_items FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if ($raw_items) {
+            $order['order_items'] = $raw_items;
+        }
+    }
+
+    $items = pv_expand_order_products($order);
+
+    $full_name = trim($order['customer_name'] ?? '');
+    if (strpos($full_name, ' ') !== false) {
+        [$first, $last] = explode(' ', $full_name, 2);
+    } else {
+        $first = $full_name;
+        $last  = '';
+    }
+
+    $site_title   = get_bloginfo('name');
+    $logo_url     = get_option('plugin_firma_logo_url', '');
+    $bestellnr    = !empty($order['order_number']) ? $order['order_number'] : $order_id;
+    $divider      = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+    $order_date   = !empty($order['created_at']) ? date_i18n('d.m.Y', strtotime($order['created_at'])) : date_i18n('d.m.Y');
+    $shipping     = number_format((float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
+    $subtotal     = number_format((float) ($order['final_price'] ?? 0), 2, ',', '.') . '€';
+    $total_first  = number_format((float) ($order['final_price'] ?? 0) + (float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
+    $shipping_name = $order['shipping_name'] ?? '';
+    $provider      = $order['shipping_provider'] ?? '';
+    $tracking_url  = 'https://www.17track.net/de?nums=' . rawurlencode($tracking_number);
+    $customer_name = trim($first . ' ' . $last);
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 24px;">Ihr Paket ist unterwegs!</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($customer_name) . ',<br>wir haben Ihre Bestellung verpackt und an den Versand übergeben. Hier finden Sie alle Infos zur Sendungsverfolgung und zu Ihren Produkten.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Sendungsverfolgung</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:42%;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
+    if ($shipping_name) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Versandart:</strong></td><td>' . esc_html($shipping_name) . '</td></tr>';
+    }
+    if ($provider) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Versandanbieter:</strong></td><td>' . esc_html($provider) . '</td></tr>';
+    }
+    $message .= '<tr><td style="padding:6px 0;"><strong>Trackingnummer:</strong></td><td>' . esc_html($tracking_number) . '</td></tr>';
+    $message .= '</table>';
+
+    $message .= '<div style="text-align:center;margin:20px 0 8px;">';
+    $message .= '<a href="' . esc_url($tracking_url) . '" style="display:inline-block;padding:14px 32px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Paket verfolgen</a>';
+    $message .= '</div>';
+    $message .= '<p style="margin:8px 0 0;font-size:12px;text-align:center;">Es kann bis zu 24 Stunden dauern bis das Tracking aktiv ist.</p>';
+    $message .= '</div>';
+
+    $message .= $divider;
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Ihre Produkte</h2>';
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<div style="display:flex;flex-direction:column;">';
+    $item_count = count($items);
+    foreach ($items as $idx => $item) {
+        $details = [];
+        if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
+        if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
+        if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
+        if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
+        if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+
+        $message .= '<div style="padding:12px 0;">';
+        $message .= '<div style="display:flex;gap:16px;align-items:flex-start;">';
+        if (!empty($item->image_url)) {
+            $message .= '<div style="width:64px;flex-shrink:0;"><img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;"></div>';
+        } else {
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;"></div>';
+        }
+        $message .= '<div style="flex:1;">';
+        $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
+        $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name) . '</div>';
+        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</div>';
+        $message .= '</div>';
+        if (!empty($details)) {
+            $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
+        }
+        $message .= '</div>';
+        $message .= '</div>';
+        if ($idx < $item_count - 1) {
+            $message .= '<div style="height:1px;background:#E6E8ED;margin:8px 0 4px;"></div>';
+        }
+        $message .= '</div>';
+    }
+    $message .= '</div>';
+
+    $message .= $divider;
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+    $ship_text = $shipping_name ?: 'Versand';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($subtotal) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
+    $message .= '</table>';
+    $message .= '</div>';
+
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+
+    $message .= '</div>';
+    $message .= '</body></html>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    $from_name  = get_bloginfo('name');
+    $from_email = get_option('admin_email');
+    $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+    return wp_mail($order['customer_email'], 'Ihre Bestellung ist unterwegs – Sendungsverfolgung', $message, $headers);
+}
+
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {
     global $wpdb;
 

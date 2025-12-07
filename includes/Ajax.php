@@ -2037,6 +2037,85 @@ function pv_delete_order_note() {
     }
 }
 
+add_action('wp_ajax_pv_save_tracking_number', __NAMESPACE__ . '\\pv_save_tracking_number');
+function pv_save_tracking_number() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('forbidden', 403);
+    }
+
+    $order_id = intval($_POST['order_id'] ?? 0);
+    $tracking_number = isset($_POST['tracking_number']) ? sanitize_text_field(wp_unslash($_POST['tracking_number'])) : '';
+    $send_email = !empty($_POST['send_email']);
+    $clear_tracking = !empty($_POST['clear_tracking']);
+
+    if (!$order_id) {
+        wp_send_json_error(['message' => 'missing'], 400);
+    }
+
+    if ($send_email && $tracking_number === '') {
+        wp_send_json_error(['message' => 'tracking_required'], 400);
+    }
+
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+    global $wpdb;
+    $table = $wpdb->prefix . 'produkt_orders';
+
+    $update_data = [
+        'tracking_number' => $clear_tracking ? '' : $tracking_number,
+    ];
+    $formats = ['%s'];
+
+    if ($send_email) {
+        $update_data['tracking_sent_at'] = current_time('mysql');
+        $formats[] = '%s';
+    }
+
+    $updated = $wpdb->update($table, $update_data, ['id' => $order_id], $formats, ['%d']);
+
+    if ($updated === false) {
+        wp_send_json_error(['message' => 'db']);
+    }
+
+    $order = pv_get_order_by_id($order_id);
+
+    if (!$order) {
+        wp_send_json_error(['message' => 'missing'], 404);
+    }
+
+    $order['tracking_number'] = $update_data['tracking_number'];
+    if ($send_email) {
+        $order['tracking_sent_at'] = $update_data['tracking_sent_at'];
+    }
+
+    $log_message = $clear_tracking
+        ? 'Tracking entfernt.'
+        : 'Tracking aktualisiert: ' . $order['tracking_number'];
+
+    produkt_add_order_log($order_id, 'tracking_updated', $log_message);
+
+    $email_sent = false;
+    if ($send_email) {
+        $email_sent = send_produkt_tracking_email($order, $order_id, $order['tracking_number']);
+        produkt_add_order_log($order_id, 'tracking_email_sent', 'Tracking: ' . $order['tracking_number']);
+    }
+
+    $response_message = $clear_tracking
+        ? 'Tracking entfernt.'
+        : ($send_email
+            ? ($email_sent ? 'Tracking gespeichert und gesendet.' : 'Tracking gespeichert, E-Mail konnte nicht gesendet werden.')
+            : 'Tracking gespeichert.');
+
+    wp_send_json_success([
+        'tracking_number'  => $order['tracking_number'],
+        'email_sent'       => $email_sent,
+        'tracking_sent_at' => $send_email ? $order['tracking_sent_at'] : ($order['tracking_sent_at'] ?? null),
+        'message'          => $response_message,
+    ]);
+}
+
 add_action('wp_ajax_pv_save_customer_note', __NAMESPACE__ . '\\pv_save_customer_note');
 function pv_save_customer_note() {
     check_ajax_referer('produkt_admin_action', 'nonce');
@@ -2151,7 +2230,7 @@ function pv_load_customer_logs() {
     $logs = array_slice($all_logs, $offset, 5);
 
     ob_start();
-    $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
+    $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment','tracking_updated','tracking_email_sent'];
     foreach ($logs as $log) {
         $is_customer = !in_array($log->event, $system_events, true);
         $avatar = $is_customer ? $initials : 'H2';
@@ -2173,6 +2252,12 @@ function pv_load_customer_logs() {
                 break;
             case 'auto_rental_payment':
                 $text = $log->message ?: 'Monatszahlung verbucht.';
+                break;
+            case 'tracking_updated':
+                $text = $log->message ?: 'Tracking aktualisiert.';
+                break;
+            case 'tracking_email_sent':
+                $text = $log->message ?: 'Tracking an Kunden gesendet.';
                 break;
             default:
                 $text = $log->message ?: $log->event;

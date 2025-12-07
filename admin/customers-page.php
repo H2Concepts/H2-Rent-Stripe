@@ -409,7 +409,7 @@ if (!$customer_id) {
                     <?php if ($customer_logs) : ?>
                         <div class="order-log-list">
                             <?php
-                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
+                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment','tracking_updated','tracking_email_sent'];
                             foreach ($customer_logs as $log) :
                                 $is_customer = !in_array($log->event, $system_events, true);
                                 $avatar = $is_customer ? $initials : 'H2';
@@ -431,6 +431,12 @@ if (!$customer_id) {
                                         break;
                                     case 'auto_rental_payment':
                                         $text = $log->message ?: 'Monatszahlung verbucht.';
+                                        break;
+                                    case 'tracking_updated':
+                                        $text = $log->message ?: 'Tracking aktualisiert.';
+                                        break;
+                                    case 'tracking_email_sent':
+                                        $text = $log->message ?: 'Tracking an Kunden gesendet.';
                                         break;
                                     default:
                                         $text = $log->message ?: $log->event;

@@ -272,7 +272,7 @@ $rental_payments = $rental_payments ?? [];
                 <?php if (!empty($order_logs)) : ?>
                     <div class="order-log-list">
                         <?php
-                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
+                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment','tracking_updated','tracking_email_sent'];
                         foreach ($order_logs as $log) :
                             $is_customer = !in_array($log->event, $system_events, true);
                             $avatar = $is_customer ? $initials : 'H2';
@@ -294,6 +294,12 @@ $rental_payments = $rental_payments ?? [];
                                     break;
                                 case 'auto_rental_payment':
                                     $text = $log->message ?: 'Monatszahlung verbucht.';
+                                    break;
+                                case 'tracking_updated':
+                                    $text = $log->message ?: 'Tracking aktualisiert.';
+                                    break;
+                                case 'tracking_email_sent':
+                                    $text = $log->message ?: 'Tracking an Kunden gesendet.';
                                     break;
                                 default:
                                     $text = $log->message ?: $log->event;
@@ -366,6 +372,25 @@ $rental_payments = $rental_payments ?? [];
                 </div>
             </div>
         <?php endif; ?>
+    </div>
+    <div class="orders-accordion tracking-accordion-wrapper">
+        <div class="produkt-accordion-item tracking-accordion">
+            <button type="button" class="produkt-accordion-header">Tracking</button>
+            <div class="produkt-accordion-content">
+                <p class="tracking-hint">Hinterlegen Sie die Sendungsnummer, um sie bei Bedarf anzupassen oder erneut an den Kunden zu senden.</p>
+                <label for="tracking-number-input" class="screen-reader-text">Trackingnummer</label>
+                <div class="tracking-input-row">
+                    <input type="text" id="tracking-number-input" class="tracking-number-input" placeholder="z. B. 003404341234" value="<?php echo esc_attr($order->tracking_number ?? ''); ?>">
+                    <button type="button" class="button button-primary tracking-send-btn">An Kunden senden</button>
+                </div>
+                <div class="tracking-actions">
+                    <button type="button" class="button tracking-save-btn">Nur speichern</button>
+                    <button type="button" class="button button-link tracking-clear-btn">Tracking löschen</button>
+                </div>
+                <p class="tracking-subline">Beim Versenden erhält der Kunde eine E-Mail mit den bestellten Produkten, dem Hinweis zur Aktivierung des Trackings (bis zu 24 Stunden) und einem Direktlink zur Sendungsverfolgung.</p>
+                <div class="tracking-status" aria-live="polite"></div>
+            </div>
+        </div>
     </div>
     <div class="order-notes-section">
         <h3>Notizen</h3>

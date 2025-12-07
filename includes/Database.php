@@ -644,6 +644,8 @@ class Database {
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
                 client_info text DEFAULT NULL,
+                tracking_number varchar(255) DEFAULT '',
+                tracking_sent_at datetime DEFAULT NULL,
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY category_id (category_id),
@@ -681,7 +683,9 @@ class Database {
                 'weekend_tariff'    => 'tinyint(1) DEFAULT 0',
                 'status'            => "varchar(20) DEFAULT 'offen'",
                 'invoice_url'       => "varchar(255) DEFAULT ''",
-                'client_info'       => 'text'
+                'client_info'       => 'text',
+                'tracking_number'   => "varchar(255) DEFAULT ''",
+                'tracking_sent_at'  => 'datetime DEFAULT NULL'
             );
 
             foreach ($new_order_columns as $column => $type) {
