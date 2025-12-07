@@ -191,11 +191,11 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         $message .= '<div style="padding:12px 0;">';
         $message .= '<div style="display:flex;gap:16px;align-items:flex-start;">';
         if (!empty($item->image_url)) {
-            $message .= '<div style="width:64px;flex-shrink:0;">'
+            $message .= '<div style="width:64px;flex-shrink:0;margin-right:12px;">'
                 . '<img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;">'
                 . '</div>';
         } else {
-            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;"></div>';
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;margin-right:12px;"></div>';
         }
         $message .= '<div style="flex:1;">';
         $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
@@ -371,9 +371,9 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
         $message .= '<div style="padding:12px 0;">';
         $message .= '<div style="display:flex;gap:16px;align-items:flex-start;">';
         if (!empty($item->image_url)) {
-            $message .= '<div style="width:64px;flex-shrink:0;"><img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;"></div>';
+            $message .= '<div style="width:64px;flex-shrink:0;margin-right:12px;"><img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;"></div>';
         } else {
-            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;"></div>';
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;margin-right:12px;"></div>';
         }
         $message .= '<div style="flex:1;">';
         $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
@@ -547,11 +547,11 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         $message .= '<div style="padding:12px 0;">';
         $message .= '<div style="display:flex;gap:12px;align-items:flex-start;">';
         if (!empty($item->image_url)) {
-            $message .= '<div style="width:64px;flex-shrink:0;">'
+            $message .= '<div style="width:64px;flex-shrink:0;margin-right:12px;">'
                 . '<img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;">'
                 . '</div>';
         } else {
-            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;"></div>';
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;margin-right:12px;"></div>';
         }
         $message .= '<div style="flex:1;">';
         $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
