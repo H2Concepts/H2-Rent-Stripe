@@ -2099,17 +2099,23 @@ function pv_save_tracking_number() {
         $order['tracking_sent_at'] = $update_data['tracking_sent_at'];
     }
 
-    $log_message = $clear_tracking
-        ? 'Tracking entfernt.'
-        : 'Tracking aktualisiert: ' . $order['tracking_number'];
-
-    produkt_add_order_log($order_id, 'tracking_updated', $log_message);
-
     $email_sent = false;
     if ($send_email) {
         $email_sent = send_produkt_tracking_email($order, $order_id, $order['tracking_number']);
         produkt_add_order_log($order_id, 'tracking_email_sent', 'Tracking: ' . $order['tracking_number']);
     }
+
+    $log_message = $clear_tracking
+        ? 'Tracking entfernt.'
+        : 'Tracking aktualisiert: ' . $order['tracking_number'];
+
+    if ($send_email) {
+        $log_message .= $email_sent
+            ? ' (E-Mail an Kunden gesendet)'
+            : ' (E-Mail konnte nicht gesendet werden)';
+    }
+
+    produkt_add_order_log($order_id, 'tracking_updated', $log_message);
 
     $response_message = $clear_tracking
         ? 'Tracking entfernt.'
