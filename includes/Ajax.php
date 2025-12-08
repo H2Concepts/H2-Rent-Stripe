@@ -2185,6 +2185,42 @@ function pv_delete_customer_note() {
     }
 }
 
+add_action('wp_ajax_pv_delete_customer', __NAMESPACE__ . '\\pv_delete_customer');
+function pv_delete_customer() {
+    check_ajax_referer('produkt_admin_action', 'nonce');
+    if (!current_user_can('manage_options') && !current_user_can('delete_users')) {
+        wp_send_json_error(['message' => 'Nicht autorisiert'], 403);
+    }
+
+    $customer_id = intval($_POST['customer_id'] ?? 0);
+    if (!$customer_id) {
+        wp_send_json_error(['message' => 'Ungültige Kunden-ID']);
+    }
+
+    $user = get_user_by('ID', $customer_id);
+    if (!$user) {
+        wp_send_json_error(['message' => 'Kunde nicht gefunden']);
+    }
+
+    if (!in_array('kunde', (array) $user->roles, true)) {
+        wp_send_json_error(['message' => 'Nur Kundenkonten können gelöscht werden']);
+    }
+
+    // Clean up related customer records
+    global $wpdb;
+    $wpdb->delete($wpdb->prefix . 'produkt_customer_notes', ['customer_id' => $customer_id], ['%d']);
+    if (!empty($user->user_email)) {
+        $wpdb->delete($wpdb->prefix . 'produkt_customers', ['email' => $user->user_email], ['%s']);
+    }
+
+    $deleted = wp_delete_user($customer_id);
+    if (!$deleted) {
+        wp_send_json_error(['message' => 'Kunde konnte nicht gelöscht werden']);
+    }
+
+    wp_send_json_success(['message' => 'Kunde gelöscht']);
+}
+
 add_action('wp_ajax_pv_load_customer_logs', __NAMESPACE__ . '\\pv_load_customer_logs');
 function pv_load_customer_logs() {
     check_ajax_referer('produkt_admin_action', 'nonce');

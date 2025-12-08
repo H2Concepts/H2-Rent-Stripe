@@ -38,6 +38,42 @@ jQuery(document).ready(function($) {
         $('#order-details-overlay').removeClass('visible');
     });
 
+    $(document).on('click', '.customer-delete-btn', function() {
+        var btn = $(this);
+        var card = btn.closest('.customer-card');
+        var customerId = btn.data('customer-id');
+        if (!customerId) {
+            return;
+        }
+        if (!confirm('Möchtest du diesen Kunden wirklich löschen?')) {
+            return;
+        }
+        btn.prop('disabled', true);
+        $.ajax({
+            url: (typeof produkt_admin !== 'undefined' ? produkt_admin.ajax_url : ajaxurl),
+            method: 'POST',
+            data: {
+                action: 'pv_delete_customer',
+                nonce: typeof produkt_admin !== 'undefined' ? produkt_admin.nonce : '',
+                customer_id: customerId
+            },
+            success: function(response) {
+                if (response && response.success) {
+                    card.fadeOut(200, function() {
+                        $(this).remove();
+                    });
+                } else {
+                    btn.prop('disabled', false);
+                    alert((response && response.data && response.data.message) ? response.data.message : 'Kunde konnte nicht gelöscht werden.');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false);
+                alert('Fehler beim Löschen des Kunden.');
+            }
+        });
+    });
+
     // Confirm delete actions
     $('.wp-list-table a[href*="delete"]').on('click', function(e) {
         if (!confirm('Bist du sicher das du Löschen möchtest?')) {

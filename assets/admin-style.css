@@ -3272,8 +3272,9 @@ body.day-modal-open{overflow:hidden;}
 #produkt-admin-customers .customer-email{margin:2px 0 0;font-size:14px;color:#444;}
 #produkt-admin-customers .customer-phone{margin:0 0 8px;font-size:14px;}
 #produkt-admin-customers .customer-orders-row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:8px;}
-#produkt-admin-customers .customer-actions{text-align:right;margin-top:2rem;}
+#produkt-admin-customers .customer-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:2rem;}
 #produkt-admin-customers .customer-actions .icon-btn svg{width:20px;height:20px;}
+#produkt-admin-customers .customer-actions .customer-delete-btn svg{fill:#d61515;}
 
 /* Customer detail layout */
 .customer-detail-grid{display:flex;gap:0rem;align-items:flex-start;margin-top:2rem;}

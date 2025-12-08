@@ -124,6 +124,11 @@ if (!$customer_id) {
                                 <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
                             </svg>
                         </a>
+                        <button type="button" class="icon-btn icon-btn-no-stroke customer-delete-btn" aria-label="Kunde löschen" data-customer-id="<?php echo esc_attr($kunde->id); ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M18.3 5.7a1 1 0 0 0-1.4-1.4L12 9.17 7.1 4.3A1 1 0 0 0 5.7 5.7L10.6 10.6 5.7 15.5a1 1 0 1 0 1.4 1.4L12 12l4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 10.6z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             <?php endforeach; ?>
