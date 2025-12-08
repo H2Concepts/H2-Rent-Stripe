@@ -1685,41 +1685,54 @@ function produkt_create_embedded_checkout_session() {
 
         if ($modus !== 'kauf') {
             $session_params['subscription_data'] = [ 'metadata' => $metadata ];
-        } else {
-            if (!empty($customer_email)) {
-                $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
-                if (!$stripe_customer_id) {
-                    $customer = \Stripe\Customer::create([
-                        'email' => $customer_email,
-                        'name'  => $fullname,
-                        'phone' => $phone,
-                    ]);
-                    $stripe_customer_id = $customer->id;
-                    Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
-                    Database::upsert_customer_record_by_email(
-                        $customer_email,
-                        $stripe_customer_id,
-                        $fullname,
-                        $phone,
-                        [
-                            'street'      => $body['street'] ?? '',
-                            'postal_code' => $body['postal'] ?? '',
-                            'city'        => $body['city'] ?? '',
-                            'country'     => $body['country'] ?? '',
-                        ]
-                    );
-                    $user = get_user_by('email', $customer_email);
-                    if ($user) {
-                        update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
-                    }
+        }
+
+        // Einheitliche Kundenlogik für Miete & Kauf
+        $stripe_customer_id = null;
+
+        if (!empty($customer_email)) {
+            $fullname = sanitize_text_field($body['fullname'] ?? '');
+            $phone    = sanitize_text_field($body['phone'] ?? '');
+
+            // 1. Versuchen, bestehende Stripe-Kunden-ID zu finden
+            $stripe_customer_id = Database::get_stripe_customer_id_by_email($customer_email);
+
+            // 2. Wenn keine vorhanden: neuen Stripe-Kunden anlegen und speichern
+            if (!$stripe_customer_id) {
+                $customer = \Stripe\Customer::create([
+                    'email' => $customer_email,
+                    'name'  => $fullname,
+                    'phone' => $phone,
+                ]);
+
+                $stripe_customer_id = $customer->id;
+
+                Database::update_stripe_customer_id_by_email($customer_email, $stripe_customer_id);
+
+                Database::upsert_customer_record_by_email(
+                    $customer_email,
+                    $stripe_customer_id,
+                    $fullname,
+                    $phone,
+                    [
+                        'street'      => $body['street'] ?? '',
+                        'postal_code' => $body['postal'] ?? '',
+                        'city'        => $body['city'] ?? '',
+                        'country'     => $body['country'] ?? '',
+                    ]
+                );
+
+                $user = get_user_by('email', $customer_email);
+                if ($user) {
+                    update_user_meta($user->ID, 'stripe_customer_id', $stripe_customer_id);
                 }
             }
+        }
 
-            if (!empty($stripe_customer_id)) {
-                $session_params['customer'] = $stripe_customer_id;
-            } else {
-                $session_params['customer_creation'] = 'always';
-            }
+        if (!empty($stripe_customer_id)) {
+            $session_params['customer'] = $stripe_customer_id;
+        } else {
+            $session_params['customer_creation'] = 'always';
         }
 
         if (!empty($session_params['automatic_tax']['enabled'])) {

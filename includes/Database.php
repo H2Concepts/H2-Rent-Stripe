@@ -1830,7 +1830,23 @@ class Database {
      * @return string Customer ID or empty string if none found
      */
     public static function get_stripe_customer_id_for_user($user_id) {
-        return get_user_meta($user_id, 'stripe_customer_id', true);
+        // 1. Prefer the usermeta value if present
+        $customer_id = get_user_meta($user_id, 'stripe_customer_id', true);
+        if (!empty($customer_id)) {
+            return $customer_id;
+        }
+
+        // 2. Fallback: look up by email in the custom customers table
+        $user = get_userdata($user_id);
+        if ($user && !empty($user->user_email)) {
+            $by_email = self::get_stripe_customer_id_by_email($user->user_email);
+            if (!empty($by_email)) {
+                update_user_meta($user_id, 'stripe_customer_id', $by_email);
+                return $by_email;
+            }
+        }
+
+        return '';
     }
 
     /**
