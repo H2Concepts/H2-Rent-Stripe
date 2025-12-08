@@ -354,15 +354,21 @@ class StripeService {
         }
 
         try {
-            $invoices = \Stripe\Invoice::all([
+            $page_limit = max(1, min($limit, 100));
+            $invoices   = \Stripe\Invoice::all([
                 'customer' => $customer_id,
-                'limit'    => $limit,
+                'limit'    => $page_limit,
                 'expand'   => ['data.lines'],
             ]);
 
             $result = [];
+            $count  = 0;
 
-            foreach ($invoices->data as $invoice) {
+            foreach ($invoices->autoPagingIterator() as $invoice) {
+                $count++;
+                if ($count > $limit) {
+                    break;
+                }
                 $period_start = null;
                 $period_end   = null;
 

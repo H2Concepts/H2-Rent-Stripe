@@ -101,10 +101,12 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         }
     }
 
-    $subject    = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
-    $order_date = date_i18n('d.m.Y', strtotime($order['created_at']));
-    $price      = number_format((float) $order['final_price'], 2, ',', '.') . '€';
-    $shipping   = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $mode        = pv_get_order_mode($order, $order_id);
+    $is_rental   = ($mode === 'miete');
+    $subject     = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
+    $order_date  = date_i18n('d.m.Y', strtotime($order['created_at']));
+    $price_label = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
+    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
@@ -179,10 +181,11 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         }
         $days = pv_get_order_rental_days($period_obj);
         $duration_text = $item->duration_name ?? ($order['dauer_text'] ?? '');
+        $duration_label = $is_rental ? 'Mindestlaufzeit' : 'Miettage';
         if ($days !== null) {
-            $details[] = 'Miettage: ' . esc_html($days);
+            $details[] = $duration_label . ': ' . esc_html($days);
         } elseif (!empty($duration_text)) {
-            $details[] = 'Miettage: ' . esc_html($duration_text);
+            $details[] = $duration_label . ': ' . esc_html($duration_text);
         }
 
         $message .= '<div style="padding:12px 0;">';
@@ -197,7 +200,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
         $message .= '<div style="flex:1;">';
         $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
         $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name) . '</div>';
-        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</div>';
+        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€' . ($is_rental ? '/Monat' : '') . '</div>';
         $message .= '</div>';
         if (!empty($details)) {
             $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
@@ -214,7 +217,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $message .= $divider;
 
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price_label) . '</td></tr>';
     $ship_text = $shipping_name ?: 'Versand';
     $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
     $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
@@ -289,9 +292,11 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
     $logo_url     = get_option('plugin_firma_logo_url', '');
     $bestellnr    = !empty($order['order_number']) ? $order['order_number'] : $order_id;
     $divider      = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+    $mode         = pv_get_order_mode($order, $order_id);
+    $is_rental    = ($mode === 'miete');
     $order_date   = !empty($order['created_at']) ? date_i18n('d.m.Y', strtotime($order['created_at'])) : date_i18n('d.m.Y');
     $shipping     = number_format((float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
-    $subtotal     = number_format((float) ($order['final_price'] ?? 0), 2, ',', '.') . '€';
+    $subtotal     = number_format((float) ($order['final_price'] ?? 0), 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
     $total_first  = number_format((float) ($order['final_price'] ?? 0) + (float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
     $shipping_name = $order['shipping_name'] ?? '';
     $provider      = $order['shipping_provider'] ?? '';
@@ -375,7 +380,7 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
         $message .= '<div style="flex:1;">';
         $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
         $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name) . '</div>';
-        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</div>';
+        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€' . ($is_rental ? '/Monat' : '') . '</div>';
         $message .= '</div>';
         if (!empty($details)) {
             $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
@@ -417,10 +422,12 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
 function send_admin_order_email(array $order, int $order_id, string $session_id): void {
     global $wpdb;
 
-    $subject    = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
-    $order_date = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
+    $mode        = pv_get_order_mode($order, $order_id);
+    $is_rental   = ($mode === 'miete');
+    $subject     = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
+    $order_date  = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
-    $price       = number_format((float) $order['final_price'], 2, ',', '.') . '€';
+    $price_label = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
     $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
     $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
 
@@ -535,10 +542,11 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         }
         $days = pv_get_order_rental_days($period_obj);
         $duration_text = $item->duration_name ?? ($order['dauer_text'] ?? '');
+        $duration_label = $is_rental ? 'Mindestlaufzeit' : 'Miettage';
         if ($days !== null) {
-            $details[] = 'Miettage: ' . esc_html($days);
+            $details[] = $duration_label . ': ' . esc_html($days);
         } elseif (!empty($duration_text)) {
-            $details[] = 'Miettage: ' . esc_html($duration_text);
+            $details[] = $duration_label . ': ' . esc_html($duration_text);
         }
 
         $message .= '<div style="padding:12px 0;">';
@@ -553,7 +561,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
         $message .= '<div style="flex:1;">';
         $message .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">';
         $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name) . '</div>';
-        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€</div>';
+        $message .= '<div style="font-weight:700;font-size:14px;">' . esc_html(number_format((float) ($item->final_price ?? 0), 2, ',', '.')) . '€' . ($is_rental ? '/Monat' : '') . '</div>';
         $message .= '</div>';
         if (!empty($details)) {
             $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
@@ -570,7 +578,7 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $message .= $divider;
 
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price_label) . '</td></tr>';
     $ship_text = $shipping_name ?: 'Versand';
     $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
     $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';

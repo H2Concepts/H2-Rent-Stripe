@@ -3,7 +3,12 @@ if (!defined('ABSPATH')) { exit; }
 ?>
 <div class="abo-row">
     <div class="order-box">
-        <?php $nr = !empty($order->order_number) ? $order->order_number : $order->id; ?>
+        <?php
+            $nr          = !empty($order->order_number) ? $order->order_number : $order->id;
+            $mode        = pv_get_order_mode((array) ($order ?? []), (int) ($order->id ?? 0));
+            $is_rental   = ($mode === 'miete');
+            $price_suffix = $is_rental ? '/Monat' : '';
+        ?>
         <h3>Bestellung #<?php echo esc_html($nr); ?></h3>
         <p><strong>Datum:</strong> <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?></p>
 
@@ -45,24 +50,25 @@ if (!defined('ABSPATH')) { exit; }
                             $days = pv_get_order_rental_days($period_obj);
                             $duration_text = $produkt->duration_name ?? ($order->dauer_text ?? '');
                         ?>
+                        <?php $duration_label = $is_rental ? 'Mindestlaufzeit' : 'Miettage'; ?>
                         <?php if ($days !== null) : ?>
-                            <p><strong>Miettage:</strong> <?php echo esc_html($days); ?></p>
+                            <p><strong><?php echo esc_html($duration_label); ?>:</strong> <?php echo esc_html($days); ?></p>
                         <?php elseif (!empty($duration_text)) : ?>
-                            <p><strong>Miettage:</strong> <?php echo esc_html($duration_text); ?></p>
+                            <p><strong><?php echo esc_html($duration_label); ?>:</strong> <?php echo esc_html($duration_text); ?></p>
                         <?php endif; ?>
                         <?php if (!empty($produkt->weekend_tariff)) : ?>
                             <p><strong>Hinweis:</strong> Wochenendtarif</p>
                         <?php endif; ?>
                     </div>
                     <div class="order-product-price">
-                        <?php echo esc_html(number_format((float) ($produkt->final_price ?? 0), 2, ',', '.')); ?>€
+                        <?php echo esc_html(number_format((float) ($produkt->final_price ?? 0), 2, ',', '.')); ?>€<?php echo esc_html($price_suffix); ?>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
 
         <div class="order-totals">
-            <p><strong>Zwischensumme:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€</p>
+            <p><strong>Zwischensumme:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€<?php echo esc_html($price_suffix); ?></p>
             <?php if ($order->shipping_cost > 0 || !empty($order->shipping_name)) : ?>
                 <p><strong>Versand:</strong> <?php echo esc_html($order->shipping_name ?: 'Versand'); ?> <?php if ($order->shipping_cost > 0) : ?>- <?php echo esc_html(number_format((float) $order->shipping_cost, 2, ',', '.')); ?>€<?php endif; ?></p>
             <?php endif; ?>

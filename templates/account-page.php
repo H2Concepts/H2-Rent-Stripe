@@ -37,6 +37,7 @@ $subscription_map = [];
 $invoice_orders   = [];
 $subscription_order_numbers = [];
 $stripe_invoices  = [];
+$customer_ids     = [];
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -118,30 +119,58 @@ foreach ($orders as $o) {
 
     $customer_id = Database::get_stripe_customer_id_for_user($user_id);
     if ($customer_id) {
-        $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($customer_id, 20);
-        if (is_wp_error($invoice_data)) {
-            $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
-        } else {
-            $stripe_invoices = $invoice_data;
+        $customer_ids[] = $customer_id;
+    }
+
+    foreach ($orders as $order_row) {
+        if (!empty($order_row->stripe_customer_id)) {
+            $customer_ids[] = trim((string) $order_row->stripe_customer_id);
         }
+    }
 
-        $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($customer_id);
-        if (!is_wp_error($subs)) {
-            foreach ($subs as $sub) {
-                $base_id = trim((string) ($sub['subscription_id'] ?? ''));
-                if ($base_id === '') {
-                    continue;
-                }
+    $customer_ids = array_values(array_unique(array_filter($customer_ids)));
 
-                foreach ($subscription_map as $key => $meta) {
-                    if (strpos($key, $base_id) === 0) {
-                        $subscription_map[$key]['status']     = $sub['status'] ?? ($meta['status'] ?? 'active');
-                        $subscription_map[$key]['start_date'] = $sub['start_date'] ?? ($meta['start_date'] ?? '');
+    if (!empty($customer_ids)) {
+        $invoice_lookup = [];
+
+        foreach ($customer_ids as $cid) {
+            $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($cid, 50);
+            if (is_wp_error($invoice_data)) {
+                $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
+            } else {
+                foreach ($invoice_data as $invoice_row) {
+                    if (!empty($invoice_row['id'])) {
+                        $invoice_lookup[$invoice_row['id']] = $invoice_row;
                     }
                 }
             }
+
+            $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($cid);
+            if (!is_wp_error($subs)) {
+                foreach ($subs as $sub) {
+                    $base_id = trim((string) ($sub['subscription_id'] ?? ''));
+                    if ($base_id === '') {
+                        continue;
+                    }
+
+                    foreach ($subscription_map as $key => $meta) {
+                        if (strpos($key, $base_id) === 0) {
+                            $subscription_map[$key]['status']     = $sub['status'] ?? ($meta['status'] ?? 'active');
+                            $subscription_map[$key]['start_date'] = $sub['start_date'] ?? ($meta['start_date'] ?? '');
+                        }
+                    }
+                }
+            } else {
+                $message .= '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+            }
         }
 
+        if (!empty($invoice_lookup)) {
+            $stripe_invoices = array_values($invoice_lookup);
+            usort($stripe_invoices, function ($a, $b) {
+                return ($b['created'] ?? 0) <=> ($a['created'] ?? 0);
+            });
+        }
     }
 
     $subscriptions = array_values($subscription_map);
