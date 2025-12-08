@@ -1731,7 +1731,8 @@ function produkt_create_embedded_checkout_session() {
 
         if (!empty($stripe_customer_id)) {
             $session_params['customer'] = $stripe_customer_id;
-        } else {
+        } elseif ($modus === 'kauf') {
+            // Stripe only allows explicit customer creation hints for payment mode; subscriptions create customers automatically
             $session_params['customer_creation'] = 'always';
         }
 
