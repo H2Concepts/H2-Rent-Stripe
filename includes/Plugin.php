@@ -46,6 +46,7 @@ class Plugin {
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
+        add_action('wp_footer', [$this, 'render_google_customer_reviews_optin']);
 
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
@@ -689,6 +690,89 @@ class Plugin {
         <p>Wir bedanken uns für Ihr Vertrauen. Bei Fragen rund um unseren Service oder Produkte, stehen wir dir gerne zur Verfügung. <a href="<?php echo esc_url(home_url('/')); ?>" style="text-decoration: underline;">Zurück zur Startseite</a></p>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Render Google Kundenrezensionen Opt-in on the order confirmation page when enabled.
+     */
+    public function render_google_customer_reviews_optin() {
+        if (is_admin()) {
+            return;
+        }
+
+        $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if (!$confirm_page_id || !is_page($confirm_page_id)) {
+            return;
+        }
+
+        $popup_settings = get_option('produkt_popup_settings');
+        if ($popup_settings === false) {
+            $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
+            $popup_settings = get_option($legacy_key, []);
+        }
+        $google_optin_enabled = isset($popup_settings['google_optin_enabled']) ? intval($popup_settings['google_optin_enabled']) : 0;
+        $google_merchant_id   = isset($popup_settings['google_merchant_id']) ? sanitize_text_field($popup_settings['google_merchant_id']) : '';
+
+        if (!$google_optin_enabled || !$google_merchant_id) {
+            return;
+        }
+
+        $session_id = isset($_GET['session_id']) ? sanitize_text_field($_GET['session_id']) : '';
+        if (!$session_id) {
+            return;
+        }
+
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+        $order_data = pv_get_order_by_session_id($session_id);
+        if (!$order_data) {
+            return;
+        }
+
+        $order = (object) $order_data;
+
+        $order_id = !empty($order->order_number) ? $order->order_number : $order->id;
+        $customer_email = !empty($order->customer_email) ? $order->customer_email : '';
+        $delivery_country = !empty($order->customer_country) ? $order->customer_country : 'DE';
+
+        $period = pv_get_order_period($order);
+        if (is_array($period) && !empty($period[0])) {
+            $estimated_delivery_date = $period[0];
+        } else {
+            $estimated_delivery_date = (new \DateTime('+3 days'))->format('Y-m-d');
+        }
+
+        if (!$customer_email || !$estimated_delivery_date) {
+            return;
+        }
+        ?>
+        <!-- Google Kundenrezensionen: Sprache auf Deutsch -->
+        <script>
+        window.___gcfg = {
+            lang: 'de'
+        };
+        </script>
+
+        <!-- Opt-in-Modul von Google Kundenrezensionen -->
+        <script src="https://apis.google.com/js/platform.js?onload=renderOptIn" async defer></script>
+        <script>
+        window.renderOptIn = function() {
+            if (!window.gapi || !window.gapi.load) {
+                return;
+            }
+            window.gapi.load('surveyoptin', function() {
+                window.gapi.surveyoptin.render({
+                    "merchant_id": <?php echo (int) $google_merchant_id; ?>,
+                    "order_id": "<?php echo esc_js($order_id); ?>",
+                    "email": "<?php echo esc_js($customer_email); ?>",
+                    "delivery_country": "<?php echo esc_js($delivery_country); ?>",
+                    "estimated_delivery_date": "<?php echo esc_js($estimated_delivery_date); ?>",
+                    "opt_in_style": "BOTTOM_LEFT_DIALOG"
+                });
+            });
+        };
+        </script>
+        <?php
     }
 
     public function maybe_display_product_page() {

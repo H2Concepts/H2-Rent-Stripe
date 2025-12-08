@@ -15,6 +15,8 @@ if (isset($_POST['submit_popup'])) {
             'mobile_scroll'     => isset($_POST['popup_trigger_mobile_scroll']) ? 1 : 0,
             'mobile_inactivity' => isset($_POST['popup_trigger_mobile_inactivity']) ? 1 : 0,
         ],
+        'google_optin_enabled' => isset($_POST['google_optin_enabled']) ? 1 : 0,
+        'google_merchant_id'   => sanitize_text_field($_POST['google_merchant_id'] ?? ''),
     ];
     update_option('produkt_popup_settings', $settings);
 
@@ -32,6 +34,8 @@ $popup_email_enabled = isset($popup_settings['email_enabled']) ? intval($popup_s
 $popup_title   = $popup_settings['title'] ?? '';
 $popup_content = $popup_settings['content'] ?? '';
 $popup_options = $popup_settings['options'] ?? '';
+$google_optin_enabled = isset($popup_settings['google_optin_enabled']) ? intval($popup_settings['google_optin_enabled']) : 0;
+$google_merchant_id   = isset($popup_settings['google_merchant_id']) ? sanitize_text_field($popup_settings['google_merchant_id']) : '';
 $trigger_defaults = [
     'desktop_exit'      => 1,
     'mobile_scroll'     => 1,
@@ -115,6 +119,26 @@ $popup_triggers = array_map('intval', $popup_triggers);
                             </label>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-header-flex">
+                <div>
+                    <h2>Google Opt-In</h2>
+                    <p class="card-subline">Aktiviere das Google Kundenrezensionen Opt-In auf der Bestellbestätigung</p>
+                </div>
+                <label class="produkt-toggle-label">
+                    <input type="checkbox" name="google_optin_enabled" value="1" <?php checked($google_optin_enabled, 1); ?>>
+                    <span class="produkt-toggle-slider"></span>
+                    <span>Opt-In aktivieren</span>
+                </label>
+            </div>
+            <div class="form-grid">
+                <div class="produkt-form-group">
+                    <label>Merchant ID</label>
+                    <input type="text" name="google_merchant_id" value="<?php echo esc_attr($google_merchant_id); ?>" placeholder="z.B. 1234567890">
                 </div>
             </div>
         </div>
