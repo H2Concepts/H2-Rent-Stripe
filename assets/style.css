@@ -1527,7 +1527,7 @@ img.wp-smiley, img.emoji {
 }
 
 /* Cart Panel */
-.produkt-cart-panel { 
+.produkt-cart-panel {
     position: fixed;
     top: 0;
     right: 0;
@@ -1537,7 +1537,7 @@ img.wp-smiley, img.emoji {
     background: #fff;
     transform: translateX(100%);
     transition: transform 0.3s ease;
-    z-index: 10000;
+    z-index: 100001;
     display: flex;
     flex-direction: column;
 }
@@ -1629,7 +1629,7 @@ img.wp-smiley, img.emoji {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
+    z-index: 100000;
 }
 
 .produkt-cart-overlay.open {
