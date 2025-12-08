@@ -1862,7 +1862,24 @@ class Database {
     }
 
     public static function get_stripe_customer_id_by_email($email) {
-        $customer_id = self::get_stripe_customer_id_from_usermeta(sanitize_email($email));
+        global $wpdb;
+
+        $email = sanitize_email($email);
+
+        // Check the custom customers table first to reuse existing Stripe customers for guests
+        $table = $wpdb->prefix . 'produkt_customers';
+        $customer_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT stripe_customer_id FROM $table WHERE email = %s LIMIT 1",
+                $email
+            )
+        );
+
+        // Fallback to WordPress user meta for existing accounts
+        if (!$customer_id) {
+            $customer_id = self::get_stripe_customer_id_from_usermeta($email);
+        }
+
         return $customer_id ? $customer_id : '';
     }
 
