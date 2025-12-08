@@ -2202,8 +2202,9 @@ function pv_delete_customer() {
         wp_send_json_error(['message' => 'Kunde nicht gefunden']);
     }
 
-    if (!in_array('kunde', (array) $user->roles, true)) {
-        wp_send_json_error(['message' => 'Nur Kundenkonten können gelöscht werden']);
+    $user_roles = (array) $user->roles;
+    if (in_array('administrator', $user_roles, true) || user_can($user, 'manage_options')) {
+        wp_send_json_error(['message' => 'Administratoren können nicht gelöscht werden']);
     }
 
     // Clean up related customer records
