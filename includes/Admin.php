@@ -440,6 +440,7 @@ class Admin {
                 'account_url' => Plugin::get_customer_page_url(),
                 'login_nonce' => wp_create_nonce('request_login_code_action'),
                 'is_logged_in' => is_user_logged_in(),
+                'current_user_email' => is_user_logged_in() ? wp_get_current_user()->user_email : '',
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,

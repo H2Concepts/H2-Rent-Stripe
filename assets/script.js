@@ -30,6 +30,82 @@ jQuery(document).ready(function($) {
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
+    let emailCheckTimer = null;
+
+    const $loginModal = $('#checkout-login-modal');
+    const $loginEmail = $('#checkout-login-email');
+    const $emailWarning = $('#checkout-email-warning');
+
+    function getStoredCheckoutEmail() {
+        try {
+            return localStorage.getItem('produkt_checkout_email') || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function setStoredCheckoutEmail(email) {
+        try {
+            localStorage.setItem('produkt_checkout_email', email);
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
+    function showCheckoutLoginModal() {
+        const defaultEmail = (typeof produkt_ajax !== 'undefined' && produkt_ajax.current_user_email)
+            ? produkt_ajax.current_user_email
+            : '';
+        const storedEmail = getStoredCheckoutEmail();
+        const existing = $loginEmail.val().trim();
+        const fillEmail = existing || defaultEmail || storedEmail;
+        if (fillEmail) {
+            $loginEmail.val(fillEmail);
+        }
+        $loginModal.css('display', 'flex');
+        $('body').addClass('produkt-popup-open');
+        triggerEmailCheck();
+    }
+
+    function appendEmailToCheckoutUrl(url, email) {
+        if (!url) return url;
+        try {
+            const built = new URL(url, window.location.origin);
+            built.searchParams.set('customer_email', email);
+            return built.toString();
+        } catch (e) {
+            const separator = url.includes('?') ? '&' : '?';
+            return url + separator + 'customer_email=' + encodeURIComponent(email);
+        }
+    }
+
+    function triggerEmailCheck() {
+        if (emailCheckTimer) {
+            clearTimeout(emailCheckTimer);
+        }
+        emailCheckTimer = setTimeout(() => {
+            const email = $loginEmail.val().trim();
+            if (!email) {
+                $emailWarning.hide();
+                return;
+            }
+            $.post(produkt_ajax.ajax_url, {
+                action: 'produkt_check_customer_email',
+                nonce: produkt_ajax.nonce,
+                email
+            }, function(res){
+                if (res && res.success && res.data && res.data.exists) {
+                    $emailWarning.show();
+                } else {
+                    $emailWarning.hide();
+                }
+            }).fail(function(){
+                $emailWarning.hide();
+            });
+        }, 200);
+    }
+
+    $loginEmail.on('input blur', triggerEmailCheck);
 
     function getStickyHeaderMode() {
         const allowed = ['disabled', 'header', 'footer'];
@@ -529,8 +605,7 @@ jQuery(document).ready(function($) {
                 window.location.href = targetUrl;
             } else {
                 pendingCheckoutUrl = targetUrl;
-                $('#checkout-login-modal').css('display', 'flex');
-                $('body').addClass('produkt-popup-open');
+                showCheckoutLoginModal();
             }
         }
     });
@@ -589,8 +664,7 @@ jQuery(document).ready(function($) {
             window.location.href = targetUrl;
         } else {
             pendingCheckoutUrl = targetUrl;
-            $('#checkout-login-modal').css('display', 'flex');
-            $('body').addClass('produkt-popup-open');
+            showCheckoutLoginModal();
         }
     });
 
@@ -1735,11 +1809,12 @@ function updateSelectedDays() {
     window.openCartSidebar = openCart;
     $('#checkout-login-btn').on('click', function(e){
         e.preventDefault();
-        const email = $('#checkout-login-email').val().trim();
+        const email = $loginEmail.val().trim();
         if (!email) {
             alert('Bitte E-Mail eingeben');
             return;
         }
+        setStoredCheckoutEmail(email);
         const form = $('<form>', {method: 'POST', action: produkt_ajax.account_url});
         form.append($('<input>', {type: 'hidden', name: 'request_login_code_nonce', value: produkt_ajax.login_nonce}));
         form.append($('<input>', {type: 'hidden', name: 'request_login_code', value: '1'}));
@@ -1758,18 +1833,31 @@ function updateSelectedDays() {
             window.location.href = targetUrl;
         } else {
             pendingCheckoutUrl = targetUrl;
-            $('#checkout-login-modal').css('display', 'flex');
-            $('body').addClass('produkt-popup-open');
+            showCheckoutLoginModal();
         }
     });
 
     $('#checkout-guest-link').on('click', function(e){
         e.preventDefault();
-        $('#checkout-login-modal').hide();
+        const email = $loginEmail.val().trim();
+        if (!email) {
+            alert('Bitte E-Mail eingeben');
+            return;
+        }
+        setStoredCheckoutEmail(email);
+        $loginModal.hide();
         $('body').removeClass('produkt-popup-open');
         if (pendingCheckoutUrl) {
-            window.location.href = pendingCheckoutUrl;
+            const redirectUrl = appendEmailToCheckoutUrl(pendingCheckoutUrl, email);
+            window.location.href = redirectUrl;
         }
+    });
+
+    $('#checkout-back-shop').on('click', function(e){
+        e.preventDefault();
+        $loginModal.hide();
+        $('body').removeClass('produkt-popup-open');
+        pendingCheckoutUrl = '';
     });
 
 });

@@ -1003,6 +1003,8 @@ add_action('wp_ajax_create_checkout_session', __NAMESPACE__ . '\\produkt_create_
 add_action('wp_ajax_nopriv_create_checkout_session', __NAMESPACE__ . '\\produkt_create_checkout_session');
 add_action('wp_ajax_create_embedded_checkout_session', __NAMESPACE__ . '\\produkt_create_embedded_checkout_session');
 add_action('wp_ajax_nopriv_create_embedded_checkout_session', __NAMESPACE__ . '\\produkt_create_embedded_checkout_session');
+add_action('wp_ajax_produkt_check_customer_email', __NAMESPACE__ . '\\produkt_check_customer_email');
+add_action('wp_ajax_nopriv_produkt_check_customer_email', __NAMESPACE__ . '\\produkt_check_customer_email');
 
 function produkt_create_payment_intent() {
     $init = StripeService::init();
@@ -1513,6 +1515,21 @@ function produkt_create_checkout_session() {
     } catch (\Exception $e) {
         wp_send_json_error(['message' => $e->getMessage()]);
     }
+}
+
+function produkt_check_customer_email() {
+    check_ajax_referer('produkt_nonce', 'nonce');
+
+    $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
+    if (empty($email)) {
+        wp_send_json_success(['exists' => 0]);
+    }
+
+    $user = get_user_by('email', $email);
+    $stripe_id = Database::get_stripe_customer_id_by_email($email);
+    $exists = ($user && $user->exists()) || !empty($stripe_id);
+
+    wp_send_json_success(['exists' => $exists ? 1 : 0]);
 }
 
 function produkt_create_embedded_checkout_session() {

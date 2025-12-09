@@ -16,11 +16,17 @@
 
 <div id="checkout-login-modal" class="checkout-login-modal" style="display:none;">
     <div class="modal-content">
-        <h3>Login</h3>
-        <p>Zum Einloggen bitte Ihre Email Adresse verwenden</p>
-        <input type="email" id="checkout-login-email" placeholder="Ihre E-Mail">
+        <h3>Willkommen zurück</h3>
+        <p class="subline">Zum Einloggen bitte Ihre Email Adresse verwenden</p>
+        <label for="checkout-login-email" class="checkout-label">Email Adresse</label>
+        <input type="email" id="checkout-login-email" placeholder="name@mail.com" required>
+        <div id="checkout-email-warning" class="checkout-email-warning" style="display:none;">
+            Zu dieser E-Mail-Adresse besteht bereits ein Kundenkonto.<br>
+            Sie können sich anmelden, damit wir Ihre Daten automatisch übernehmen.
+        </div>
         <button id="checkout-login-btn">Code zum einloggen anfordern</button>
-        <p class="guest-text"><a href="#" id="checkout-guest-link">Als Gast fortfahren</a></p>
+        <button id="checkout-back-shop" class="secondary">&#10229; Zurück zum Shop</button>
+        <p class="guest-text"><span>Noch kein Konto bei uns?</span> <a href="#" id="checkout-guest-link">Als Gast bestellen</a></p>
     </div>
 </div>
 

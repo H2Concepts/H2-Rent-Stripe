@@ -183,6 +183,14 @@ function produkt_simple_checkout_button($atts = []) {
         'days'         => isset($_GET['days']) ? intval($_GET['days']) : 1,
     ];
 
+    $customer_email = '';
+    $current_user = wp_get_current_user();
+    if ($current_user && $current_user->exists()) {
+        $customer_email = $current_user->user_email;
+    } elseif (!empty($_GET['customer_email'])) {
+        $customer_email = sanitize_email($_GET['customer_email']);
+    }
+
     ob_start();
     ?>
     <div class="produkt-container shop-overview-container">
@@ -194,6 +202,15 @@ function produkt_simple_checkout_button($atts = []) {
         if (!publishableKey) return;
         const stripe = Stripe(publishableKey);
         const saleMode = <?php echo $sale_mode ? 'true' : 'false'; ?>;
+        const prefilledEmail = <?php echo json_encode($customer_email); ?>;
+        const storedCheckoutEmail = (() => {
+            try {
+                return localStorage.getItem('produkt_checkout_email') || '';
+            } catch(e) {
+                return '';
+            }
+        })();
+        const checkoutEmail = prefilledEmail || storedCheckoutEmail;
         async function collectClientInfo() {
             const info = {
                 language: navigator.language || '',
@@ -232,7 +249,8 @@ function produkt_simple_checkout_button($atts = []) {
                 body: JSON.stringify({
                     cart_items: items,
                     shipping_price_id: <?php echo json_encode($shipping_price_id); ?>,
-                    client_info: clientInfo
+                    client_info: clientInfo,
+                    email: checkoutEmail
                 })
             });
 <?php else: ?>
@@ -262,7 +280,8 @@ function produkt_simple_checkout_button($atts = []) {
                     start_date: <?php echo json_encode($metadata['start_date']); ?>,
                     end_date: <?php echo json_encode($metadata['end_date']); ?>,
                     days: <?php echo json_encode($metadata['days']); ?>,
-                    client_info: clientInfo
+                    client_info: clientInfo,
+                    email: checkoutEmail
                 })
             });
 <?php endif; ?>
