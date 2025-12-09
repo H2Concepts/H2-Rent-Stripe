@@ -230,6 +230,12 @@ class Admin {
                 $login_layout = $branding['login_layout'] ?? 'classic';
                 $primary      = $branding['admin_color_primary'] ?? '#5f7f5f';
                 $login_text   = $branding['login_text_color'] ?? '#1f1f1f';
+                $card_bg      = $branding['account_card_bg'] ?? '#e8e8e8';
+                $card_text    = $branding['account_card_text'] ?? '#000000';
+                $btn_bg       = $branding['account_button_bg'] ?? '#000000';
+                $btn_hover_bg = $branding['account_button_hover_bg'] ?? '#1a1a1a';
+                $btn_text     = $branding['account_button_text'] ?? '#ffffff';
+                $btn_hover_text = $branding['account_button_hover_text'] ?? '#ffffff';
                 $inline_css   = '';
 
                 if ($login_layout === 'split') {
@@ -243,6 +249,17 @@ class Admin {
 
                 if ($inline_css === '' && $login_layout === 'split' && $login_text) {
                     $inline_css .= ':root{--produkt-login-text:' . esc_attr($login_text) . ';}';
+                }
+
+                if ($card_bg || $card_text || $btn_bg || $btn_hover_bg || $btn_text || $btn_hover_text) {
+                    $inline_css .= ':root{'
+                        . '--produkt-account-card-bg:' . esc_attr($card_bg ?: '#e8e8e8') . ';'
+                        . '--produkt-account-card-text:' . esc_attr($card_text ?: '#000000') . ';'
+                        . '--produkt-account-button-bg:' . esc_attr($btn_bg ?: '#000000') . ';'
+                        . '--produkt-account-button-hover-bg:' . esc_attr($btn_hover_bg ?: '#1a1a1a') . ';'
+                        . '--produkt-account-button-text:' . esc_attr($btn_text ?: '#ffffff') . ';'
+                        . '--produkt-account-button-hover-text:' . esc_attr($btn_hover_text ?: '#ffffff') . ';'
+                        . '}';
                 }
 
                 if ($inline_css) {
@@ -301,11 +318,44 @@ class Admin {
         $border_color = $branding['front_border_color'] ?? '#a4b8a4';
         $button_text_color = $branding['front_button_text_color'] ?? '#ffffff';
         $filter_button_color = $branding['filter_button_color'] ?? '#5f7f5f';
+        $filter_button_hover_color = $branding['filter_button_hover_color'] ?? $filter_button_color;
+        $filter_button_icon_color = $branding['filter_button_icon_color'] ?? '#ffffff';
         $cart_badge_bg = $branding['cart_badge_bg'] ?? '#000000';
         $cart_badge_text = $branding['cart_badge_text'] ?? '#ffffff';
         $custom_css = $branding['custom_css'] ?? '';
         $product_padding = $branding['product_padding'] ?? '1';
-        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}";
+        $filter_button_position = $branding['filter_button_position'] ?? 'bottom_left';
+        $sticky_header_mode = $branding['sticky_header_mode'] ?? 'header';
+        if (!in_array($sticky_header_mode, ['disabled', 'header', 'footer'], true)) {
+            $sticky_header_mode = 'header';
+        }
+        $inline_css = ":root{--produkt-button-bg:{$button_color};--produkt-text-color:{$text_color};--produkt-border-color:{$border_color};--produkt-button-text:{$button_text_color};--produkt-filter-button-bg:{$filter_button_color};--produkt-filter-button-hover-bg:{$filter_button_hover_color};--produkt-filter-button-icon:{$filter_button_icon_color};--produkt-cart-badge-bg:{$cart_badge_bg};--produkt-cart-badge-color:{$cart_badge_text};}"; 
+        $position_styles = '';
+        switch ($filter_button_position) {
+            case 'bottom_right':
+                $position_styles = 'bottom:20px;top:auto;left:auto;right:20px;transform:translate(0,0);';
+                break;
+            case 'bottom_center':
+                $position_styles = 'bottom:20px;top:auto;left:50%;right:auto;transform:translateX(-50%);';
+                break;
+            case 'middle_left':
+                $position_styles = 'top:50%;bottom:auto;left:20px;right:auto;transform:translateY(-50%);';
+                break;
+            case 'middle_right':
+                $position_styles = 'top:50%;bottom:auto;right:20px;left:auto;transform:translateY(-50%);';
+                break;
+            case 'top_left':
+                $position_styles = 'top:20px;bottom:auto;left:20px;right:auto;transform:translate(0,0);';
+                break;
+            case 'top_right':
+                $position_styles = 'top:20px;bottom:auto;right:20px;left:auto;transform:translate(0,0);';
+                break;
+            case 'bottom_left':
+            default:
+                $position_styles = 'bottom:20px;top:auto;left:20px;right:auto;transform:translate(0,0);';
+                break;
+        }
+        $inline_css .= "\n.shop-filter-button{{$position_styles}}";
         if ($product_padding !== '1') {
         $inline_css .= "\n.produkt-product-info,.produkt-right{padding:0;}\n.produkt-content{gap:4rem;}";
         }
@@ -373,6 +423,8 @@ class Admin {
 
         if ($load_script) {
             $modus = get_option('produkt_betriebsmodus', 'miete');
+            $cart_mode = get_option('produkt_miete_cart_mode', 'direct');
+            $cart_enabled = $modus === 'kauf' || ($modus === 'miete' && $cart_mode === 'cart');
             $blocked_days = $wpdb->get_col("SELECT day FROM {$wpdb->prefix}produkt_blocked_days");
             $category_button_text = isset($category) && property_exists($category, 'button_text') ? trim((string) $category->button_text) : '';
             $global_button_text = isset($ui['button_text']) ? trim((string) $ui['button_text']) : '';
@@ -388,11 +440,14 @@ class Admin {
                 'account_url' => Plugin::get_customer_page_url(),
                 'login_nonce' => wp_create_nonce('request_login_code_action'),
                 'is_logged_in' => is_user_logged_in(),
+                'current_user_email' => is_user_logged_in() ? wp_get_current_user()->user_email : '',
                 'price_period' => $category->price_period ?? 'month',
                 'price_label' => $category->price_label ?? ($modus === 'kauf' ? 'Einmaliger Kaufpreis' : 'Monatlicher Mietpreis'),
                 'vat_included' => isset($category->vat_included) ? intval($category->vat_included) : 0,
                 'betriebsmodus' => $modus,
+                'cart_enabled' => $cart_enabled ? 1 : 0,
                 'button_text' => $localized_button_text,
+                'sticky_header_mode' => $sticky_header_mode,
                 'blocked_days' => $blocked_days,
                 'variant_blocked_days' => [],
                 'popup_settings' => [
@@ -562,6 +617,7 @@ class Admin {
             $vat_included = isset($_POST['vat_included']) ? 1 : (isset($global_ui['vat_included']) ? intval($global_ui['vat_included']) : 0);
             $layout_style = sanitize_text_field($_POST['layout_style']);
             $price_layout = sanitize_text_field($_POST['price_layout'] ?? 'default');
+            $description_layout = sanitize_text_field($_POST['description_layout'] ?? 'left');
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip'] ?? ($global_ui['duration_tooltip'] ?? ''));
             $condition_tooltip = sanitize_textarea_field($_POST['condition_tooltip'] ?? ($global_ui['condition_tooltip'] ?? ''));
             $show_features = isset($_POST['show_features']) ? 1 : 0;
@@ -681,6 +737,7 @@ class Admin {
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
                         'price_layout' => $price_layout,
+                        'description_layout' => $description_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -691,7 +748,7 @@ class Admin {
                         'sort_order' => $sort_order,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -831,6 +888,7 @@ class Admin {
                         'vat_included' => $vat_included,
                         'layout_style' => $layout_style,
                         'price_layout' => $price_layout,
+                        'description_layout' => $description_layout,
                         'duration_tooltip' => $duration_tooltip,
                         'condition_tooltip' => $condition_tooltip,
                         'show_features' => $show_features,
@@ -844,7 +902,7 @@ class Admin {
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
+                        '%s','%s','%d','%s','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
                     )
                 );
 

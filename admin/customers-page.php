@@ -124,6 +124,11 @@ if (!$customer_id) {
                                 <path d="M16,0C7.2,0,0,4.9,0,11s7.2,11,16,11,16-4.9,16-11S24.8,0,16,0ZM16,20c-7.7,0-14-4-14-9S8.3,2,16,2s14,4,14,9-6.3,9-14,9ZM16,5c-3.3,0-6,2.7-6,6s2.7,6,6,6,6-2.7,6-6-2.7-6-6-6ZM16,15c-2.2,0-4-1.8-4-4s1.8-4,4-4,4,1.8,4,4-1.8,4-4,4Z"/>
                             </svg>
                         </a>
+                        <button type="button" class="icon-btn icon-btn-no-stroke customer-delete-btn" aria-label="Kunde löschen" data-customer-id="<?php echo esc_attr($kunde->id); ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M18.3 5.7a1 1 0 0 0-1.4-1.4L12 9.17 7.1 4.3A1 1 0 0 0 5.7 5.7L10.6 10.6 5.7 15.5a1 1 0 1 0 1.4 1.4L12 12l4.9 4.9a1 1 0 0 0 1.4-1.4L13.4 10.6z"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -409,7 +414,7 @@ if (!$customer_id) {
                     <?php if ($customer_logs) : ?>
                         <div class="order-log-list">
                             <?php
-                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
+                            $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment','tracking_updated','tracking_email_sent'];
                             foreach ($customer_logs as $log) :
                                 $is_customer = !in_array($log->event, $system_events, true);
                                 $avatar = $is_customer ? $initials : 'H2';
@@ -431,6 +436,12 @@ if (!$customer_id) {
                                         break;
                                     case 'auto_rental_payment':
                                         $text = $log->message ?: 'Monatszahlung verbucht.';
+                                        break;
+                                    case 'tracking_updated':
+                                        $text = $log->message ?: 'Tracking aktualisiert.';
+                                        break;
+                                    case 'tracking_email_sent':
+                                        $text = $log->message ?: 'Tracking an Kunden gesendet.';
                                         break;
                                     default:
                                         $text = $log->message ?: $log->event;
@@ -485,10 +496,16 @@ if (!$customer_id) {
                     </thead>
                     <tbody>
                         <?php foreach ($invoices as $inv) : ?>
+                            <?php
+                                $download_url = pv_get_invoice_download_url((int) ($inv->id ?? 0));
+                                if (!$download_url && !empty($inv->invoice_url)) {
+                                    $download_url = $inv->invoice_url;
+                                }
+                            ?>
                             <tr>
                                 <td>#<?php echo esc_html($inv->order_number ?: $inv->id); ?></td>
                                 <td class="details-cell">
-                                    <a href="<?php echo esc_url($inv->invoice_url); ?>" class="icon-btn icon-btn-no-stroke" target="_blank" download aria-label="Download">
+                                    <a href="<?php echo esc_url($download_url); ?>" class="icon-btn icon-btn-no-stroke" target="_blank" download aria-label="Download">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18v10l4-4 1.41 1.41L12 16.83 6.59 11.41 8 10l4 4V2h-2z"/></svg>
                                     </a>
                                 </td>

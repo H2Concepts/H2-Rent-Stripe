@@ -30,6 +30,8 @@ class Plugin {
     public function init() {
         $this->ensure_required_pages();
 
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
         // Replace deprecated emoji and admin bar functions with enqueue versions.
         $this->replace_deprecated_wp_functions();
 
@@ -44,6 +46,7 @@ class Plugin {
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
+        add_action('wp_footer', [$this, 'render_google_customer_reviews_optin']);
 
         add_rewrite_rule('^shop/produkt/([^/]+)/?$', 'index.php?produkt_slug=$matches[1]', 'top');
         add_rewrite_rule('^shop/([^/]+)/?$', 'index.php?pagename=shop&produkt_category_slug=$matches[1]', 'top');
@@ -84,6 +87,11 @@ class Plugin {
         add_filter('wp_nav_menu_items', [$this, 'add_cart_icon_to_menu'], 10, 2);
         add_filter('render_block', [$this, 'maybe_inject_cart_icon_block'], 10, 2);
         add_action('wp_footer', [$this, 'render_cart_sidebar']);
+        add_action('loop_start', [$this, 'maybe_output_search_results']);
+        add_action('loop_no_results', [$this, 'maybe_output_search_results'], 10, 1);
+        add_action('admin_notices', [$this, 'maybe_show_invoice_notice']);
+
+        add_action('template_redirect', 'pv_handle_invoice_download');
 
         // Handle "Jetzt mieten" form submissions before headers are sent
         add_action('template_redirect', [$this, 'handle_rent_request']);
@@ -424,7 +432,42 @@ class Plugin {
                     ['code' => $code, 'expires' => $expires]
                 );
 
-                $headers    = ['Content-Type: text/plain; charset=UTF-8'];
+                $site_title     = get_bloginfo('name');
+                $logo_url       = get_option('plugin_firma_logo_url', '');
+                $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                $account_url     = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+                $divider         = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+                $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+                $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+                }
+
+                $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Login-Code für dein Kundenkonto</h1>';
+
+                $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+                $message .= '<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Gebe den Code zum Einloggen im Kundenkonto ein:</p>';
+                $message .= '<div style="text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;padding:14px;border:1px solid #E6E8ED;border-radius:12px;background:#F6F7FA;">' . esc_html($code) . '</div>';
+                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">Nutze diesen Code um die Verifizierung auf der Webseite abzuschließen.<br><br>Gib diesen Code bitte nicht weiter. Mitarbeiter von ' . esc_html($site_title) . ' werden dich niemals bitten, diesen Code per Telefon oder SMS zu bestätigen.<br><br><strong>Dieser Code ist nun für 15 Minuten gültig.</strong></p>';
+                $message .= '</div>';
+
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin:30px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:70px;max-width:100%;height:auto;"></div>';
+                }
+
+                $message .= $divider;
+
+                $footer_html = function_exists('pv_get_email_footer_html') ? pv_get_email_footer_html() : '';
+                if ($footer_html) {
+                    $message .= $footer_html;
+                }
+
+                $message .= '</div>';
+                $message .= '</body></html>';
+
+                $headers    = ['Content-Type: text/html; charset=UTF-8'];
                 $from_name  = get_bloginfo('name');
                 $from_email = get_option('admin_email');
                 $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
@@ -432,7 +475,7 @@ class Plugin {
                 wp_mail(
                     $email,
                     'Ihr Login-Code',
-                    "Ihr Login-Code lautet: $code\nGültig für 15 Minuten.",
+                    $message,
                     $headers
                 );
                 $message        = '<p>Login-Code gesendet.</p>';
@@ -624,30 +667,20 @@ class Plugin {
             return '<p>Keine Bestellung gefunden.</p>';
         }
 
-        global $wpdb;
-        $order = $wpdb->get_row($wpdb->prepare(
-            "SELECT o.*, c.name AS category_name,
-                    COALESCE(v.name, o.produkt_name) AS variant_name,
-                    COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
-                    sm.name AS shipping_name
-             FROM {$wpdb->prefix}produkt_orders o
-             LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
-             LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-             LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-             LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
-                ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
-             WHERE o.stripe_session_id = %s
-             GROUP BY o.id
-             ORDER BY o.id DESC LIMIT 1",
-            $session_id
-        ));
-
-        if (!$order) {
+        $order_data = pv_get_order_by_session_id($session_id);
+        if (!$order_data) {
             return '<p>Bestellung nicht gefunden.</p>';
         }
 
-        $variant_id = $order->variant_id ?? 0;
-        $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+        $order = (object) $order_data;
+        $image_url  = '';
+        if (!empty($order->produkte)) {
+            $first = $order->produkte[0];
+            $image_url = $first->image_url ?? '';
+        } else {
+            $variant_id = $order->variant_id ?? 0;
+            $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
+        }
 
         ob_start();
         ?>
@@ -657,6 +690,89 @@ class Plugin {
         <p>Wir bedanken uns für Ihr Vertrauen. Bei Fragen rund um unseren Service oder Produkte, stehen wir dir gerne zur Verfügung. <a href="<?php echo esc_url(home_url('/')); ?>" style="text-decoration: underline;">Zurück zur Startseite</a></p>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Render Google Kundenrezensionen Opt-in on the order confirmation page when enabled.
+     */
+    public function render_google_customer_reviews_optin() {
+        if (is_admin()) {
+            return;
+        }
+
+        $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
+        if (!$confirm_page_id || !is_page($confirm_page_id)) {
+            return;
+        }
+
+        $popup_settings = get_option('produkt_popup_settings');
+        if ($popup_settings === false) {
+            $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
+            $popup_settings = get_option($legacy_key, []);
+        }
+        $google_optin_enabled = isset($popup_settings['google_optin_enabled']) ? intval($popup_settings['google_optin_enabled']) : 0;
+        $google_merchant_id   = isset($popup_settings['google_merchant_id']) ? sanitize_text_field($popup_settings['google_merchant_id']) : '';
+
+        if (!$google_optin_enabled || !$google_merchant_id) {
+            return;
+        }
+
+        $session_id = isset($_GET['session_id']) ? sanitize_text_field($_GET['session_id']) : '';
+        if (!$session_id) {
+            return;
+        }
+
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+        $order_data = pv_get_order_by_session_id($session_id);
+        if (!$order_data) {
+            return;
+        }
+
+        $order = (object) $order_data;
+
+        $order_id = !empty($order->order_number) ? $order->order_number : $order->id;
+        $customer_email = !empty($order->customer_email) ? $order->customer_email : '';
+        $delivery_country = !empty($order->customer_country) ? $order->customer_country : 'DE';
+
+        $period = pv_get_order_period($order);
+        if (is_array($period) && !empty($period[0])) {
+            $estimated_delivery_date = $period[0];
+        } else {
+            $estimated_delivery_date = (new \DateTime('+3 days'))->format('Y-m-d');
+        }
+
+        if (!$customer_email || !$estimated_delivery_date) {
+            return;
+        }
+        ?>
+        <!-- Google Kundenrezensionen: Sprache auf Deutsch -->
+        <script>
+        window.___gcfg = {
+            lang: 'de'
+        };
+        </script>
+
+        <!-- Opt-in-Modul von Google Kundenrezensionen -->
+        <script src="https://apis.google.com/js/platform.js?onload=renderOptIn" async defer></script>
+        <script>
+        window.renderOptIn = function() {
+            if (!window.gapi || !window.gapi.load) {
+                return;
+            }
+            window.gapi.load('surveyoptin', function() {
+                window.gapi.surveyoptin.render({
+                    "merchant_id": <?php echo (int) $google_merchant_id; ?>,
+                    "order_id": "<?php echo esc_js($order_id); ?>",
+                    "email": "<?php echo esc_js($customer_email); ?>",
+                    "delivery_country": "<?php echo esc_js($delivery_country); ?>",
+                    "estimated_delivery_date": "<?php echo esc_js($estimated_delivery_date); ?>",
+                    "opt_in_style": "BOTTOM_LEFT_DIALOG"
+                });
+            });
+        };
+        </script>
+        <?php
     }
 
     public function maybe_display_product_page() {
@@ -865,6 +981,9 @@ class Plugin {
      * Append a cart icon to the main navigation menu.
      */
     public function add_cart_icon_to_menu($items, $args) {
+        if (!$this->is_cart_enabled()) {
+            return $items;
+        }
         $inject_menus = (array) get_option('produkt_menu_locations', []);
 
         $current_menu_id = 0;
@@ -899,6 +1018,9 @@ class Plugin {
      * Inject cart icon into block-based navigation menus.
      */
     public function maybe_inject_cart_icon_block($content, $block) {
+        if (!$this->is_cart_enabled()) {
+            return $content;
+        }
         if (($block['blockName'] ?? '') !== 'core/navigation') {
             return $content;
         }
@@ -926,7 +1048,131 @@ class Plugin {
      * Output the sliding cart sidebar markup in the footer so it is available on all pages.
      */
     public function render_cart_sidebar() {
+        if (!$this->is_cart_enabled()) {
+            return;
+        }
         include PRODUKT_PLUGIN_PATH . 'templates/cart-sidebar.php';
+    }
+
+    /**
+     * Append plugin products to the native WordPress search results page.
+     *
+     * @param \WP_Query $query Current loop query instance.
+     */
+    public function maybe_output_search_results($query) {
+        static $done = false;
+
+        if ($done || is_admin() || !$query->is_main_query() || !$query->is_search()) {
+            return;
+        }
+
+        $term = get_search_query(false);
+        if (empty($term)) {
+            return;
+        }
+
+        $products = $this->db->search_products_by_term($term);
+        if (empty($products)) {
+            return;
+        }
+
+        $done = true;
+
+        require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
+
+        echo '<section class="produkt-search-products">';
+        echo '<h2 class="produkt-search-products__title">' . esc_html__('Gefundene Produkte', 'h2-concepts') . '</h2>';
+        echo '<div class="shop-product-grid">';
+
+        foreach ($products as $product) {
+            $title = $product->product_title ?: ($product->name ?? '');
+            $url   = home_url('/shop/produkt/' . sanitize_title($title));
+            $image = !empty($product->default_image) ? esc_url($product->default_image) : '';
+
+            $price_data  = pv_get_lowest_stripe_price_by_category((int) $product->id);
+            $price_label = pv_format_price_label($price_data);
+
+            $excerpt = $product->short_description ?: $product->product_description;
+            $rating_value = isset($product->rating_value) ? floatval(str_replace(',', '.', $product->rating_value)) : 0;
+
+            echo '<div class="shop-product-item">';
+            echo '<a href="' . esc_url($url) . '">';
+            echo '<div class="shop-product-image">';
+            if ($image) {
+                echo '<img src="' . $image . '" alt="' . esc_attr($title) . '">';
+            }
+            echo '</div>';
+            echo '<h3 class="shop-product-title">' . esc_html($title) . '</h3>';
+            echo '<div class="shop-product-shortdesc">' . esc_html(wp_strip_all_tags($excerpt ?? '')) . '</div>';
+            echo '<div class="shop-product-footer">';
+
+            if (!empty($product->show_rating) && $rating_value > 0) {
+                $rating_display = number_format($rating_value, 1, ',', '');
+                echo '<div class="produkt-rating">';
+                echo '<span class="produkt-rating-number">' . esc_html($rating_display) . '</span>';
+                echo '<span class="produkt-star-rating" style="--rating: ' . esc_attr($rating_value) . ';"></span>';
+                echo '</div>';
+            }
+
+            if (!empty($price_label)) {
+                echo '<div class="shop-product-price">' . esc_html($price_label) . '</div>';
+            }
+
+            echo '</div>';
+            echo '</a>';
+            echo '</div>';
+        }
+
+        echo '</div>';
+        echo '</section>';
+
+        echo '<div class="produkt-search-divider">';
+        echo '<h2 class="produkt-search-divider__title">' . esc_html__('Weitere Themen', 'h2-concepts') . '</h2>';
+        echo '</div>';
+    }
+
+    /**
+     * Warn admins when direct sale prices are active but invoice emails are disabled in rental mode.
+     */
+    public function maybe_show_invoice_notice() {
+        if (!is_admin() || !current_user_can('manage_options')) {
+            return;
+        }
+
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        if ($mode !== 'miete') {
+            return;
+        }
+
+        if (pv_is_invoice_email_enabled()) {
+            return;
+        }
+
+        if (!$this->db->has_sale_enabled_variants()) {
+            return;
+        }
+
+        if (function_exists('get_current_screen')) {
+            $screen = get_current_screen();
+            if ($screen && strpos($screen->id, 'produkt') === false) {
+                return;
+            }
+        }
+
+        $settings_url = admin_url('admin.php?page=produkt-settings&tab=email');
+        echo '<div class="notice notice-warning"><p><strong>' . esc_html__('Sie bieten Produkte zum Verkauf an, bitte aktivieren Sie den Rechnungsversand in den Einstellungen, damit der Kunde eine automatisierte Rechnung erhält.', 'h2-concepts') . '</strong> ';
+        echo '<a href="' . esc_url($settings_url) . '">' . esc_html__('Zu den Einstellungen wechseln', 'h2-concepts') . '</a>';
+        echo '</p></div>';
+    }
+
+    private function is_cart_enabled() {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+        if ($mode === 'kauf') {
+            return true;
+        }
+
+        $cart_mode = get_option('produkt_miete_cart_mode', 'direct');
+        return $mode === 'miete' && $cart_mode === 'cart';
     }
 
     /**

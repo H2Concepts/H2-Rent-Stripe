@@ -16,6 +16,9 @@ jQuery(document).ready(function($) {
     let currentPrice = 0;
     let currentShippingCost = 0;
     let currentPriceId = '';
+    let selectedSalePriceId = '';
+    let selectedSalePrice = 0;
+    let selectedVariantSaleEnabled = false;
     let shippingPriceId = '';
     let shippingProvider = '';
     let startDate = null;
@@ -27,6 +30,132 @@ jQuery(document).ready(function($) {
     let calendarMonth = new Date();
     let colorNotificationTimeout = null;
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
+    let emailCheckTimer = null;
+    let emailExists = false;
+
+    const $loginModal = $('#checkout-login-modal');
+    const $loginEmail = $('#checkout-login-email');
+    const $emailWarning = $('#checkout-email-warning');
+    const $guestLink = $('#checkout-guest-link');
+
+    function getStoredCheckoutEmail() {
+        try {
+            return localStorage.getItem('produkt_checkout_email') || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function setStoredCheckoutEmail(email) {
+        try {
+            localStorage.setItem('produkt_checkout_email', email);
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
+    /**
+     * Validiert eine E-Mail-Adresse
+     * @param {string} email - Die zu prüfende E-Mail-Adresse
+     * @returns {boolean} - true wenn gültig, false wenn ungültig
+     */
+    function isValidEmail(email) {
+        if (!email || typeof email !== 'string') {
+            return false;
+        }
+        // RFC 5322 kompatible E-Mail-Validierung
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+        return emailRegex.test(email.trim());
+    }
+
+    function showCheckoutLoginModal() {
+        // Warenkorb schließen, bevor das Login-Modal geöffnet wird
+        closeCart();
+        
+        const defaultEmail = (typeof produkt_ajax !== 'undefined' && produkt_ajax.current_user_email)
+            ? produkt_ajax.current_user_email
+            : '';
+        const storedEmail = getStoredCheckoutEmail();
+        const existing = $loginEmail.val().trim();
+        const fillEmail = existing || defaultEmail || storedEmail;
+        if (fillEmail) {
+            $loginEmail.val(fillEmail);
+        }
+        emailExists = false;
+        updateGuestLinkState();
+        $loginModal.css('display', 'flex');
+        $('body').addClass('produkt-popup-open');
+        triggerEmailCheck();
+    }
+
+    function appendEmailToCheckoutUrl(url, email) {
+        if (!url) return url;
+        try {
+            const built = new URL(url, window.location.origin);
+            built.searchParams.set('customer_email', email);
+            return built.toString();
+        } catch (e) {
+            const separator = url.includes('?') ? '&' : '?';
+            return url + separator + 'customer_email=' + encodeURIComponent(email);
+        }
+    }
+
+    function triggerEmailCheck() {
+        if (emailCheckTimer) {
+            clearTimeout(emailCheckTimer);
+        }
+        emailCheckTimer = setTimeout(() => {
+            const email = $loginEmail.val().trim();
+            if (!email) {
+                $emailWarning.hide();
+                emailExists = false;
+                updateGuestLinkState();
+                return;
+            }
+            $.post(produkt_ajax.ajax_url, {
+                action: 'produkt_check_customer_email',
+                nonce: produkt_ajax.nonce,
+                email
+            }, function(res){
+                if (res && res.success && res.data && res.data.exists) {
+                    $emailWarning.show();
+                    emailExists = true;
+                } else {
+                    $emailWarning.hide();
+                    emailExists = false;
+                }
+                updateGuestLinkState();
+            }).fail(function(){
+                $emailWarning.hide();
+                emailExists = false;
+                updateGuestLinkState();
+            });
+        }, 200);
+    }
+
+    function updateGuestLinkState() {
+        if (emailExists) {
+            $guestLink.addClass('disabled').css({
+                'opacity': '0.5',
+                'cursor': 'not-allowed'
+            });
+        } else {
+            $guestLink.removeClass('disabled').css({
+                'opacity': '1',
+                'cursor': 'pointer'
+            });
+        }
+    }
+
+    $loginEmail.on('input blur', triggerEmailCheck);
+
+    function getStickyHeaderMode() {
+        const allowed = ['disabled', 'header', 'footer'];
+        const mode = (typeof produkt_ajax !== 'undefined' && typeof produkt_ajax.sticky_header_mode === 'string')
+            ? produkt_ajax.sticky_header_mode.toLowerCase()
+            : 'header';
+        return allowed.includes(mode) ? mode : 'header';
+    }
 
     function updateCartBadge() {
         $('.h2-cart-badge').text(cart.length); // alle Instanzen (Desktop/Mobil/Sticky)
@@ -89,30 +218,54 @@ jQuery(document).ready(function($) {
                 imgWrap.append($('<img>', {src: item.image, alt: 'Produkt'}));
             }
             const details = $('<div>', {class: 'cart-item-details'});
-            details.append($('<div>', {class: 'cart-item-name'}).text(item.produkt || 'Produkt'));
-            if (item.extra) {
+            // Kategoriename als Hauptname (Fallback auf produkt oder 'Produkt')
+            const categoryName = item.category_name || item.produkt || 'Produkt';
+            details.append($('<div>', {class: 'cart-item-name'}).text(categoryName));
+            
+            // Ausführung (nur wenn vorhanden)
+            if (item.variant_name && item.variant_name.trim()) {
+                details.append($('<div>', {class: 'cart-item-variant'}).text('Ausführung: ' + item.variant_name));
+            }
+            
+            // Extras (nur wenn vorhanden)
+            if (item.extra && item.extra.trim()) {
                 const extrasContainer = $('<div>', {class: 'cart-item-extras'});
                 item.extra.split(',').forEach(function(ex){
                     const trimmed = ex.trim();
                     if (trimmed) extrasContainer.append($('<div>').text(trimmed));
                 });
-                details.append(extrasContainer);
+                if (extrasContainer.children().length > 0) {
+                    details.append(extrasContainer);
+                }
             }
-            if (item.produktfarbe) {
+            
+            // Produktfarbe (nur wenn vorhanden)
+            if (item.produktfarbe && item.produktfarbe.trim()) {
                 details.append($('<div>', {class: 'cart-item-color'}).text('Farbe: ' + item.produktfarbe));
             }
-            if (item.gestellfarbe) {
+            
+            // Gestellfarbe (nur wenn vorhanden)
+            if (item.gestellfarbe && item.gestellfarbe.trim()) {
                 details.append($('<div>', {class: 'cart-item-color'}).text('Gestellfarbe: ' + item.gestellfarbe));
             }
+            
+            // Zustand (nur wenn vorhanden)
+            if (item.zustand && item.zustand.trim()) {
+                details.append($('<div>', {class: 'cart-item-condition'}).text('Zustand: ' + item.zustand));
+            }
+            
+            // Mietdauer (nur wenn vorhanden)
             let period = '';
             if (item.start_date && item.end_date) {
                 period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';
-            } else if (item.dauer_name) {
+            } else if (item.dauer_name && item.dauer_name.trim()) {
                 period = item.dauer_name;
             }
             if (period) {
-                details.append($('<div>', {class: 'cart-item-period'}).text(period));
+                details.append($('<div>', {class: 'cart-item-period'}).text('Mietdauer: ' + period));
             }
+            
+            // Wochenendtarif (nur wenn vorhanden)
             if (item.weekend_tarif) {
                 details.append($('<div>', {class: 'cart-item-weekend'}).text('Wochenendtarif'));
             }
@@ -194,6 +347,8 @@ jQuery(document).ready(function($) {
     // Remove old inline color labels if they exist
     $('.produkt-color-name').remove();
 
+    updateDirectBuyButton();
+
     function resetAllSelections() {
         selectedVariant = null;
         selectedExtras = [];
@@ -201,6 +356,9 @@ jQuery(document).ready(function($) {
         selectedCondition = null;
         selectedProductColor = null;
         selectedFrameColor = null;
+        selectedSalePriceId = '';
+        selectedSalePrice = 0;
+        selectedVariantSaleEnabled = false;
         startDate = null;
         endDate = null;
         selectedDays = 0;
@@ -218,15 +376,58 @@ jQuery(document).ready(function($) {
         updateColorImage(null);
     }
 
-    // Initialize mobile sticky price bar only on small screens
+    function canDirectBuy() {
+        const requiredSelections = [];
+        if ($('.produkt-options.variants').length > 0) requiredSelections.push(selectedVariant);
+        if ($('#condition-section').is(':visible') && $('.produkt-options.conditions .produkt-option').length > 0) {
+            requiredSelections.push(selectedCondition);
+        }
+        if ($('#product-color-section').is(':visible') && $('.produkt-options.product-colors .produkt-option').length > 0) {
+            requiredSelections.push(selectedProductColor);
+        }
+        if ($('#frame-color-section').is(':visible') && $('.produkt-options.frame-colors .produkt-option').length > 0) {
+            requiredSelections.push(selectedFrameColor);
+        }
+        return requiredSelections.every(selection => selection !== null && selection !== false);
+    }
+
+    function isSaleSelectionAllowed($option) {
+        if (!$option || !$option.length) {
+            return true;
+        }
+        const flag = $option.data('sale-available');
+        if (typeof flag === 'undefined') {
+            return true;
+        }
+        return !(flag === 0 || flag === '0' || flag === false || flag === 'false');
+    }
+
+    function saleOptionsAllowed() {
+        const conditionOk = isSaleSelectionAllowed($('.produkt-options.conditions .produkt-option.selected'));
+        const productColorOk = isSaleSelectionAllowed($('.produkt-options.product-colors .produkt-option.selected'));
+        const frameColorOk = isSaleSelectionAllowed($('.produkt-options.frame-colors .produkt-option.selected'));
+        return conditionOk && productColorOk && frameColorOk;
+    }
+
+    function updateDirectBuyButton() {
+        const saleReady = selectedVariantSaleEnabled && selectedSalePriceId;
+        const showButton = saleReady;
+        const $directBuyButton = $('#produkt-direct-buy-button');
+        if (showButton) {
+            const canBuy = canDirectBuy() && saleOptionsAllowed();
+            const priceText = selectedSalePrice > 0 ? `oder für ${formatPrice(selectedSalePrice)}€ kaufen` : 'oder direkt kaufen';
+            $directBuyButton.find('span').text(priceText);
+            $directBuyButton.show().prop('disabled', !canBuy);
+        } else {
+            $directBuyButton.hide().prop('disabled', true).find('span').text('oder direkt kaufen');
+        }
+    }
+
+    // Initialize sticky price bar
     initMobileStickyPrice();
     $(window).on('resize', function() {
-        if (window.innerWidth <= 768) {
-            if (!$('#mobile-sticky-price').length) {
-                initMobileStickyPrice();
-            }
-        } else {
-            destroyMobileStickyPrice();
+        if (!$('#mobile-sticky-price').length) {
+            initMobileStickyPrice();
         }
     });
 
@@ -276,6 +477,9 @@ jQuery(document).ready(function($) {
         // Update selection variables
         if (type === 'variant') {
             selectedVariant = id;
+            selectedSalePriceId = $(this).data('sale-price-id') ? $(this).data('sale-price-id').toString() : '';
+            selectedSalePrice = parseFloat($(this).data('sale-price')) || 0;
+            selectedVariantSaleEnabled = $(this).data('sale-enabled') == 1 || $(this).data('sale-enabled') === true || $(this).data('sale-enabled') === '1';
             variantWeekendOnly = $(this).data('weekend') == 1;
             variantMinDays = parseInt($(this).data('min-days'),10) || 0;
             produkt_ajax.variant_weekend_only = variantWeekendOnly;
@@ -340,6 +544,7 @@ jQuery(document).ready(function($) {
 
         // Update price and button state
         updatePriceAndButton();
+        updateDirectBuyButton();
     });
 
      // Handle rent button click -> redirect with parameters
@@ -359,8 +564,9 @@ jQuery(document).ready(function($) {
             frame_color_id: selectedFrameColor
         });
 
-        if (produkt_ajax.betriebsmodus === 'kauf') {
-            const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+        if (produkt_ajax.cart_enabled) {
+            const categoryName = $('.produkt-product-info h1').text().trim() || $('.produkt-container').data('category-name') || '';
+            const variantName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
             const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
                 .map(function(){ return $(this).text().trim(); })
                 .get().join(', ');
@@ -404,7 +610,9 @@ jQuery(document).ready(function($) {
                     }
                     return img;
                 })(),
-                produkt: produktName,
+                produkt: categoryName || variantName,
+                category_name: categoryName,
+                variant_name: variantName,
                 extra: extraNames,
                 dauer_name: dauerName,
                 zustand: zustandName,
@@ -466,9 +674,66 @@ jQuery(document).ready(function($) {
                 window.location.href = targetUrl;
             } else {
                 pendingCheckoutUrl = targetUrl;
-                $('#checkout-login-modal').css('display', 'flex');
-                $('body').addClass('produkt-popup-open');
+                showCheckoutLoginModal();
             }
+        }
+    });
+
+    $('#produkt-direct-buy-button').on('click', function(e) {
+        if ($(this).prop('disabled') || !selectedSalePriceId) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const extraPriceIds = $('.produkt-option[data-type="extra"].selected')
+            .map(function(){
+                const salePid = $(this).data('sale-price-id');
+                const basePid = $(this).data('price-id');
+                return salePid || basePid;
+            })
+            .get()
+            .filter(id => id);
+
+        const params = new URLSearchParams();
+        params.set('price_id', selectedSalePriceId);
+        if (extraPriceIds.length) {
+            params.set('extra_price_ids', extraPriceIds.join(','));
+        }
+        if (shippingPriceId) {
+            params.set('shipping_price_id', shippingPriceId);
+        }
+        if (currentCategoryId) {
+            params.set('category_id', currentCategoryId);
+        }
+        if (selectedVariant) params.set('variant_id', selectedVariant);
+        if (selectedCondition) params.set('condition_id', selectedCondition);
+        if (selectedProductColor) params.set('product_color_id', selectedProductColor);
+        if (selectedFrameColor) params.set('frame_color_id', selectedFrameColor);
+        if (selectedSalePrice) params.set('final_price', selectedSalePrice);
+        params.set('sale_mode', '1');
+
+        const produktName = $('.produkt-option[data-type="variant"].selected h4').text().trim();
+        const extraNames = $('.produkt-option[data-type="extra"].selected .produkt-extra-name')
+            .map(function(){ return $(this).text().trim(); })
+            .get().join(', ');
+        const zustandName = $('.produkt-option[data-type="condition"].selected .produkt-condition-name').text().trim();
+        const produktfarbeName = $('.produkt-option[data-type="product-color"].selected').data('color-name');
+        const gestellfarbeName = $('.produkt-option[data-type="frame-color"].selected').data('color-name');
+
+        if (produktName) params.set('produkt', produktName);
+        if (extraNames) params.set('extra', extraNames);
+        if (zustandName) params.set('zustand', zustandName);
+        if (produktfarbeName) params.set('produktfarbe', produktfarbeName);
+        if (gestellfarbeName) params.set('gestellfarbe', gestellfarbeName);
+
+        const targetUrl = produkt_ajax.checkout_url + '?' + params.toString();
+
+        if (produkt_ajax.is_logged_in) {
+            window.location.href = targetUrl;
+        } else {
+            pendingCheckoutUrl = targetUrl;
+            showCheckoutLoginModal();
         }
     });
 
@@ -826,7 +1091,7 @@ jQuery(document).ready(function($) {
                     `<span class="produkt-condition-badge">${option.price_modifier > 0 ? '+' : ''}${Math.round(option.price_modifier * 100)}%</span>` : '';
 
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="condition" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}">
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="condition" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-sale-available="${typeof option.sale_available !== 'undefined' ? option.sale_available : ''}">
                         <div class="produkt-option-content">
                             <div class="produkt-condition-header">
                                 <span class="produkt-condition-name">${option.name}</span>
@@ -841,7 +1106,7 @@ jQuery(document).ready(function($) {
                 const previewClass = option.is_multicolor == 1 ? 'produkt-color-preview produkt-color-preview--multicolor' : 'produkt-color-preview';
                 const previewStyle = option.is_multicolor == 1 ? '' : `style="background-color: ${option.color_code};"`;
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
+                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-sale-available="${typeof option.sale_available !== 'undefined' ? option.sale_available : ''}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
                         <div class="produkt-option-content">
                             <div class="produkt-color-display">
                                 <div class="${previewClass}" ${previewStyle}></div>
@@ -1051,7 +1316,9 @@ jQuery(document).ready(function($) {
                         // Update mobile sticky price
                         updateMobileStickyPrice(data.final_price, data.original_price, data.discount, isAvailable);
 
-                        const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+                        const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '')
+                            ? produkt_ajax.button_text
+                            : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : (produkt_ajax.cart_enabled ? 'In den Warenkorb' : 'Jetzt mieten'));
                         if (produkt_ajax.betriebsmodus === 'kauf') {
                             $('.produkt-price-period').hide();
                             $('.produkt-mobile-price-period').hide();
@@ -1061,6 +1328,7 @@ jQuery(document).ready(function($) {
                         }
                         $('#produkt-rent-button span').text(label);
                         $('.produkt-mobile-button span').text(label);
+                        updateDirectBuyButton();
                     }
                 },
                 error: function() {
@@ -1084,7 +1352,9 @@ jQuery(document).ready(function($) {
             // Hide mobile sticky price
             hideMobileStickyPrice();
 
-            const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten');
+            const label = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '')
+                ? produkt_ajax.button_text
+                : (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : (produkt_ajax.cart_enabled ? 'In den Warenkorb' : 'Jetzt mieten'));
             if (produkt_ajax.betriebsmodus === 'kauf') {
                 $('.produkt-price-period').hide();
                 $('.produkt-mobile-price-period').hide();
@@ -1094,68 +1364,75 @@ jQuery(document).ready(function($) {
             }
             $('#produkt-rent-button span').text(label);
             $('.produkt-mobile-button span').text(label);
+            updateDirectBuyButton();
         }
     }
 
     function initMobileStickyPrice() {
-        if (window.innerWidth <= 768) {
-            // Determine button label and icon from main button
-            const mainButton = $('#produkt-rent-button');
-            let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '') ? produkt_ajax.button_text : (mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : 'Jetzt mieten'));
-            const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
+        if ($('#mobile-sticky-price').length) return;
 
-            // Create mobile sticky price bar
-            const suffix = produkt_ajax.betriebsmodus === 'kauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
-            const stickyHtml = `
-                <div class="produkt-mobile-sticky-price" id="mobile-sticky-price">
-                    <div class="produkt-mobile-sticky-content">
-                        <div class="produkt-mobile-price-info">
-                            <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
-                            <div class="produkt-mobile-price-wrapper">
-                                <span class="produkt-mobile-original-price" id="mobile-original-price" style="display:none;"></span>
-                                <span class="produkt-mobile-final-price" id="mobile-price-value">0,00€</span>
-                                <span class="produkt-mobile-price-period">${suffix}</span>
-                            </div>
+        const stickyMode = getStickyHeaderMode();
+        if (stickyMode === 'disabled') return;
+
+        // Determine button label and icon from main button
+        const mainButton = $('#produkt-rent-button');
+        let mainLabel = (produkt_ajax.button_text && produkt_ajax.button_text.trim() !== '')
+            ? produkt_ajax.button_text
+            : (mainButton.find('span').text().trim() || (produkt_ajax.betriebsmodus === 'kauf' ? 'Jetzt kaufen' : (produkt_ajax.cart_enabled ? 'In den Warenkorb' : 'Jetzt mieten')));
+        const mainIcon = mainButton.data('icon') ? `<img src="${mainButton.data('icon')}" class="produkt-button-icon-img" alt="Button Icon">` : '';
+
+        // Create sticky price bar
+        const suffix = produkt_ajax.betriebsmodus === 'kauf' ? '' : (produkt_ajax.price_period === 'month' ? '/Monat' : '');
+        const stickyClass = stickyMode === 'footer' ? ' sticky-footer' : '';
+        const stickyHtml = `
+            <div class="produkt-mobile-sticky-price${stickyClass}" id="mobile-sticky-price" data-mode="${stickyMode}">
+                <div class="produkt-mobile-sticky-content">
+                    <div class="produkt-mobile-price-info">
+                        <div class="produkt-mobile-price-label">${produkt_ajax.price_label}</div>
+                        <div class="produkt-mobile-price-wrapper">
+                            <span class="produkt-mobile-original-price" id="mobile-original-price" style="display:none;"></span>
+                            <span class="produkt-mobile-final-price" id="mobile-price-value">0,00€</span>
+                            <span class="produkt-mobile-price-period">${suffix}</span>
                         </div>
-                        <button class="produkt-mobile-button" disabled>
-                            ${mainIcon}
-                            <span>${mainLabel}</span>
-                        </button>
                     </div>
+                    <button class="produkt-mobile-button" disabled>
+                        ${mainIcon}
+                        <span>${mainLabel}</span>
+                    </button>
                 </div>
-            `;
-            $('body').append(stickyHtml);
-            if (produkt_ajax.betriebsmodus === 'kauf') {
-                $('.produkt-mobile-price-period').hide();
-            }
-            
-            // Show/hide based on scroll position
-            $(window).scroll(function() {
-                const scrollTop = $(this).scrollTop();
-                const priceDisplay = $('#produkt-price-display');
-                
-                if (priceDisplay.is(':visible') && currentPrice > 0) {
-                    const priceDisplayTop = priceDisplay.offset().top;
-                    const priceDisplayBottom = priceDisplayTop + priceDisplay.outerHeight();
-                    
-                    // Show sticky price when price display is scrolled out of view (above viewport)
-                    // Keep it visible for the entire page - never hide it once shown
-                    const priceOutOfView = scrollTop > priceDisplayBottom;
-                    
-                    if (priceOutOfView) {
-                        showMobileStickyPrice();
-                    } else {
-                        hideMobileStickyPrice();
-                    }
+            </div>
+        `;
+        $('body').append(stickyHtml);
+        if (produkt_ajax.betriebsmodus === 'kauf') {
+            $('.produkt-mobile-price-period').hide();
+        }
+
+        // Show/hide based on scroll position
+        $(window).scroll(function() {
+            const scrollTop = $(this).scrollTop();
+            const priceDisplay = $('#produkt-price-display');
+
+            if (priceDisplay.is(':visible') && currentPrice > 0) {
+                const priceDisplayTop = priceDisplay.offset().top;
+                const priceDisplayBottom = priceDisplayTop + priceDisplay.outerHeight();
+
+                // Show sticky price when price display is scrolled out of view (above viewport)
+                // Keep it visible for the entire page - never hide it once shown
+                const priceOutOfView = scrollTop > priceDisplayBottom;
+
+                if (priceOutOfView) {
+                    showMobileStickyPrice();
                 } else {
                     hideMobileStickyPrice();
                 }
-            });
-        }
+            } else {
+                hideMobileStickyPrice();
+            }
+        });
     }
 
     function updateMobileStickyPrice(finalPrice, originalPrice, discount, isAvailable) {
-        if (window.innerWidth <= 768 && $('#mobile-sticky-price').length) {
+        if ($('#mobile-sticky-price').length) {
             $('#mobile-price-value').text(formatPrice(finalPrice) + '€');
 
             if (discount > 0 && originalPrice) {
@@ -1169,7 +1446,7 @@ jQuery(document).ready(function($) {
     }
 
     function showMobileStickyPrice() {
-        if (window.innerWidth <= 768 && $('#mobile-sticky-price').length) {
+        if ($('#mobile-sticky-price').length) {
             $('#mobile-sticky-price').addClass('show');
         }
     }
@@ -1601,18 +1878,116 @@ function updateSelectedDays() {
     window.openCartSidebar = openCart;
     $('#checkout-login-btn').on('click', function(e){
         e.preventDefault();
-        const email = $('#checkout-login-email').val().trim();
+        const email = $loginEmail.val().trim();
         if (!email) {
             alert('Bitte E-Mail eingeben');
             return;
         }
-        const form = $('<form>', {method: 'POST', action: produkt_ajax.account_url});
-        form.append($('<input>', {type: 'hidden', name: 'request_login_code_nonce', value: produkt_ajax.login_nonce}));
-        form.append($('<input>', {type: 'hidden', name: 'request_login_code', value: '1'}));
-        form.append($('<input>', {type: 'hidden', name: 'email', value: email}));
-        form.append($('<input>', {type: 'hidden', name: 'redirect_to', value: pendingCheckoutUrl}));
-        $('body').append(form);
-        form.submit();
+        if (!isValidEmail(email)) {
+            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+            return;
+        }
+        
+        const $btn = $(this);
+        const originalText = $btn.text();
+        $btn.prop('disabled', true).text('Wird gesendet...');
+        
+        $.post(produkt_ajax.ajax_url, {
+            action: 'produkt_request_login_code',
+            nonce: produkt_ajax.nonce,
+            email: email
+        }, function(response) {
+            if (response && response.success) {
+                // Code wurde gesendet - Code-Eingabefelder anzeigen
+                $('#checkout-login-email-section').hide();
+                $('#checkout-login-code-section').show();
+                setStoredCheckoutEmail(email);
+                // Code-Eingabe initialisieren und Fokus setzen
+                // Warte etwas länger, damit das DOM vollständig gerendert ist
+                setTimeout(function() {
+                    // Markiere als nicht initialisiert, damit initCodeInputs() es neu initialisiert
+                    $('#checkout-login-code-section .code-input-group').removeData('code-inputs-initialized');
+                    initCodeInputs();
+                    const $firstInput = $('#checkout-login-code-section .code-input').first();
+                    if ($firstInput.length) {
+                        $firstInput.focus();
+                    }
+                }, 200);
+            } else {
+                alert(response && response.data && response.data.message ? response.data.message : 'Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.');
+                $btn.prop('disabled', false).text(originalText);
+            }
+        }).fail(function() {
+            alert('Fehler beim Senden des Codes. Bitte versuchen Sie es erneut.');
+            $btn.prop('disabled', false).text(originalText);
+        });
+    });
+    
+    $('#checkout-verify-code-btn').on('click', function(e){
+        e.preventDefault();
+        const $btn = $(this);
+        const $codeSection = $('#checkout-login-code-section');
+        const $codeInputs = $codeSection.find('.code-input');
+        const $hiddenInput = $('#checkout-login-code-combined');
+        const $errorDiv = $('#checkout-code-error');
+        const email = $loginEmail.val().trim();
+        
+        // Code aus den einzelnen Feldern zusammenfügen
+        let code = '';
+        $codeInputs.each(function() {
+            code += $(this).val() || '';
+        });
+        
+        if (code.length !== 6) {
+            $errorDiv.text('Bitte geben Sie den vollständigen 6-stelligen Code ein.').show();
+            $codeInputs.first().focus();
+            return;
+        }
+        
+        $hiddenInput.val(code);
+        $errorDiv.hide();
+        
+        const originalText = $btn.text();
+        $btn.prop('disabled', true).text('Wird verifiziert...');
+        
+        $.post(produkt_ajax.ajax_url, {
+            action: 'produkt_verify_login_code',
+            nonce: produkt_ajax.nonce,
+            email: email,
+            code: code,
+            redirect_to: pendingCheckoutUrl
+        }, function(response) {
+            if (response && response.success) {
+                // Erfolgreich eingeloggt - weiterleiten
+                if (response.data && response.data.redirect_to) {
+                    window.location.href = response.data.redirect_to;
+                } else if (pendingCheckoutUrl) {
+                    window.location.href = pendingCheckoutUrl;
+                } else {
+                    window.location.reload();
+                }
+            } else {
+                $errorDiv.text(response && response.data && response.data.message ? response.data.message : 'Der Code ist ungültig oder abgelaufen.').show();
+                $btn.prop('disabled', false).text(originalText);
+                // Code-Felder leeren
+                $codeInputs.val('');
+                $codeInputs.first().focus();
+            }
+        }).fail(function() {
+            $errorDiv.text('Fehler bei der Verifizierung. Bitte versuchen Sie es erneut.').show();
+            $btn.prop('disabled', false).text(originalText);
+        });
+    });
+    
+    $('#checkout-back-email').on('click', function(e){
+        e.preventDefault();
+        $('#checkout-login-code-section').hide();
+        $('#checkout-login-email-section').show();
+        $('#checkout-code-error').hide();
+        $('#checkout-login-code-section .code-input').val('');
+        // Button-Status zurücksetzen
+        const $loginBtn = $('#checkout-login-btn');
+        $loginBtn.prop('disabled', false).text('Code zum einloggen anfordern');
     });
 
     $('#produkt-cart-checkout').on('click', function(e){
@@ -1624,18 +1999,42 @@ function updateSelectedDays() {
             window.location.href = targetUrl;
         } else {
             pendingCheckoutUrl = targetUrl;
-            $('#checkout-login-modal').css('display', 'flex');
-            $('body').addClass('produkt-popup-open');
+            showCheckoutLoginModal();
         }
     });
 
     $('#checkout-guest-link').on('click', function(e){
         e.preventDefault();
-        $('#checkout-login-modal').hide();
+        
+        // Prüfe ob E-Mail existiert
+        if (emailExists) {
+            alert('Bestellung als Gast mit der Email Adresse nicht möglich');
+            return;
+        }
+        
+        const email = $loginEmail.val().trim();
+        if (!email) {
+            alert('Bitte E-Mail eingeben');
+            return;
+        }
+        if (!isValidEmail(email)) {
+            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+            return;
+        }
+        setStoredCheckoutEmail(email);
+        $loginModal.hide();
         $('body').removeClass('produkt-popup-open');
         if (pendingCheckoutUrl) {
-            window.location.href = pendingCheckoutUrl;
+            const redirectUrl = appendEmailToCheckoutUrl(pendingCheckoutUrl, email);
+            window.location.href = redirectUrl;
         }
+    });
+
+    $('#checkout-back-shop').on('click', function(e){
+        e.preventDefault();
+        $loginModal.hide();
+        $('body').removeClass('produkt-popup-open');
+        pendingCheckoutUrl = '';
     });
 
 });
@@ -1679,6 +2078,25 @@ window.addEventListener("load", () => {
 });
 
 jQuery(function($) {
+    const $dropdownToggle = $('#shop-filter-dropdown-toggle');
+    const $dropdown = $('#shop-filter-dropdown');
+
+    if ($dropdownToggle.length && $dropdown.length) {
+        $dropdownToggle.on('click', function() {
+            const isOpen = $(this).attr('aria-expanded') === 'true';
+            $(this).attr('aria-expanded', (!isOpen).toString());
+            $(this).toggleClass('open', !isOpen);
+
+            if ($dropdown.is(':visible')) {
+                $dropdown.slideUp(200, function() {
+                    $dropdown.attr('hidden', true);
+                });
+            } else {
+                $dropdown.hide().removeAttr('hidden').slideDown(200);
+            }
+        });
+    }
+
     $('#shop-filter-toggle').on('click', function() {
         $('#shop-filter-overlay').addClass('open');
         $('body').addClass('shop-filter-open');
@@ -1712,4 +2130,187 @@ jQuery(function($) {
         $('.shop-filter-checkbox').filter(`[value="${val}"]`).prop('checked', this.checked);
         updateFilterQuery();
     });
+
+    // Code input handling for 6-digit login code
+    function initCodeInputs() {
+        $('.code-input-group').each(function() {
+            const $group = $(this);
+            const $inputs = $group.find('.code-input');
+            
+            // Prüfe ob bereits initialisiert (hat data-Attribut)
+            if ($group.data('code-inputs-initialized')) {
+                return;
+            }
+            
+            if ($inputs.length !== 6) return;
+            
+            // Verstecktes Input-Feld finden (kann in Form oder direkt im Modal sein)
+            let $hiddenInput = $group.closest('form').find('input[type="hidden"][name="code"]');
+            if (!$hiddenInput.length) {
+                // Fallback: Suche nach verstecktem Input in der Nähe (z.B. im Modal)
+                $hiddenInput = $group.siblings('input[type="hidden"][name="code"]');
+                if (!$hiddenInput.length) {
+                    // Suche im Modal-Content oder in der Code-Sektion
+                    $hiddenInput = $group.closest('.modal-content, .login-code-form, #checkout-login-code-section').find('input[type="hidden"][name="code"]');
+                }
+                // Speziell für das Checkout-Modal
+                if (!$hiddenInput.length) {
+                    $hiddenInput = $('#checkout-login-code-combined');
+                }
+            }
+            
+            // Wenn kein verstecktes Input gefunden, erstelle eines
+            if (!$hiddenInput.length) {
+                $hiddenInput = $('<input>', {
+                    type: 'hidden',
+                    name: 'code',
+                    id: 'code-input-combined-' + Date.now()
+                });
+                $group.after($hiddenInput);
+            }
+
+            function updateCombinedCode() {
+                let code = '';
+                $inputs.each(function() {
+                    code += $(this).val() || '';
+                });
+                $hiddenInput.val(code);
+            }
+
+            // Event-Handler entfernen, falls bereits vorhanden, dann neu anhängen
+            $inputs.off('input.code-input-handler keydown.code-input-handler paste.code-input-handler');
+
+            $inputs.on('input.code-input-handler', function() {
+                const $this = $(this);
+                let value = $this.val();
+                
+                // Nur Zahlen erlauben
+                value = value.replace(/[^0-9]/g, '');
+                if (value.length > 1) {
+                    value = value.charAt(0);
+                }
+                $this.val(value);
+                
+                updateCombinedCode();
+                
+                // Automatisch zum nächsten Feld springen
+                // Index relativ zu den Input-Feldern berechnen (ohne Separator)
+                const currentIndex = $inputs.index($this);
+                if (value && currentIndex < $inputs.length - 1) {
+                    // Kurze Verzögerung, damit der Wert gesetzt wird
+                    setTimeout(function() {
+                        $inputs.eq(currentIndex + 1).focus();
+                    }, 10);
+                }
+            });
+
+            $inputs.on('keydown.code-input-handler', function(e) {
+                const $this = $(this);
+                // Index relativ zu den Input-Feldern berechnen (ohne Separator)
+                const index = $inputs.index($this);
+                
+                // Backspace: Wenn Feld leer ist, zum vorherigen Feld springen
+                if (e.key === 'Backspace' && !$this.val() && index > 0) {
+                    e.preventDefault();
+                    $inputs.eq(index - 1).focus().val('');
+                    updateCombinedCode();
+                }
+                
+                // Pfeiltasten für Navigation
+                if (e.key === 'ArrowLeft' && index > 0) {
+                    e.preventDefault();
+                    $inputs.eq(index - 1).focus();
+                }
+                if (e.key === 'ArrowRight' && index < $inputs.length - 1) {
+                    e.preventDefault();
+                    $inputs.eq(index + 1).focus();
+                }
+                
+                // Paste-Handling
+                if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                    e.preventDefault();
+                    navigator.clipboard.readText().then(function(text) {
+                        const digits = text.replace(/[^0-9]/g, '').substring(0, 6);
+                        $inputs.each(function(i) {
+                            $(this).val(digits[i] || '');
+                        });
+                        updateCombinedCode();
+                        if (digits.length === 6) {
+                            $inputs.last().focus();
+                        } else if (digits.length > 0) {
+                            $inputs.eq(digits.length).focus();
+                        }
+                    }).catch(function() {
+                        // Clipboard-Zugriff fehlgeschlagen, ignorieren
+                    });
+                }
+            });
+
+            $inputs.on('paste.code-input-handler', function(e) {
+                e.preventDefault();
+            });
+            
+            // Markiere als initialisiert
+            $group.data('code-inputs-initialized', true);
+
+            // Form-Submit validieren (falls in einem Form)
+            const $form = $group.closest('form');
+            if ($form.length) {
+                $form.off('submit.code-input-validation');
+                $form.on('submit.code-input-validation', function(e) {
+                    updateCombinedCode();
+                    const code = $hiddenInput.val();
+                    if (code.length !== 6) {
+                        e.preventDefault();
+                        alert('Bitte geben Sie den vollständigen 6-stelligen Code ein.');
+                        $inputs.first().focus();
+                        return false;
+                    }
+                });
+            }
+
+            // Fokus auf erstes Feld setzen, wenn Code-Form erscheint
+            if ($group.is(':visible')) {
+                setTimeout(function() {
+                    $inputs.first().focus();
+                }, 100);
+            }
+        });
+    }
+
+    // Initialisierung beim Laden und bei dynamischen Änderungen
+    initCodeInputs();
+    
+    // Re-initialisieren, wenn das Code-Form erscheint (z.B. nach AJAX)
+    $(document).on('DOMNodeInserted', function(e) {
+        if ($(e.target).find('.code-input-group').length || $(e.target).is('.code-input-group')) {
+            setTimeout(initCodeInputs, 50);
+        }
+    });
+    
+    // MutationObserver für moderne Browser
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(function(mutations) {
+            let shouldInit = false;
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    for (let i = 0; i < mutation.addedNodes.length; i++) {
+                        const node = mutation.addedNodes[i];
+                        if (node.nodeType === 1 && ($(node).find('.code-input-group').length || $(node).is('.code-input-group'))) {
+                            shouldInit = true;
+                            break;
+                        }
+                    }
+                }
+            });
+            if (shouldInit) {
+                setTimeout(initCodeInputs, 50);
+            }
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
 });

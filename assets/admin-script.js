@@ -38,6 +38,42 @@ jQuery(document).ready(function($) {
         $('#order-details-overlay').removeClass('visible');
     });
 
+    $(document).on('click', '.customer-delete-btn', function() {
+        var btn = $(this);
+        var card = btn.closest('.customer-card');
+        var customerId = btn.data('customer-id');
+        if (!customerId) {
+            return;
+        }
+        if (!confirm('Möchtest du diesen Kunden wirklich löschen?')) {
+            return;
+        }
+        btn.prop('disabled', true);
+        $.ajax({
+            url: (typeof produkt_admin !== 'undefined' ? produkt_admin.ajax_url : ajaxurl),
+            method: 'POST',
+            data: {
+                action: 'pv_delete_customer',
+                nonce: typeof produkt_admin !== 'undefined' ? produkt_admin.nonce : '',
+                customer_id: customerId
+            },
+            success: function(response) {
+                if (response && response.success) {
+                    card.fadeOut(200, function() {
+                        $(this).remove();
+                    });
+                } else {
+                    btn.prop('disabled', false);
+                    alert((response && response.data && response.data.message) ? response.data.message : 'Kunde konnte nicht gelöscht werden.');
+                }
+            },
+            error: function() {
+                btn.prop('disabled', false);
+                alert('Fehler beim Löschen des Kunden.');
+            }
+        });
+    });
+
     // Confirm delete actions
     $('.wp-list-table a[href*="delete"]').on('click', function(e) {
         if (!confirm('Bist du sicher das du Löschen möchtest?')) {
@@ -757,6 +793,84 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function produktSidebarOrderId() {
+    var orderIdEl = document.querySelector('.sidebar-wrapper');
+    return orderIdEl ? orderIdEl.getAttribute('data-order-id') : '';
+}
+
+function produktSetTrackingStatus(message, isError) {
+    var statusEl = document.querySelector('.tracking-status');
+    if (!statusEl) return;
+    statusEl.textContent = message || '';
+    statusEl.style.color = isError ? '#b63b3b' : '#1d5c1d';
+}
+
+function produktHandleTrackingAction(options) {
+    var wrapper = document.querySelector('.tracking-accordion');
+    if (!wrapper) return;
+
+    var input = wrapper.querySelector('.tracking-number-input');
+    var providerSelect = wrapper.querySelector('.tracking-provider-select');
+    var orderId = produktSidebarOrderId();
+    if (!orderId) return;
+
+    var trackingValue = input ? input.value.trim() : '';
+    var providerValue = providerSelect ? providerSelect.value : '';
+    if (options.sendEmail && !options.clear && !trackingValue) {
+        produktSetTrackingStatus('Bitte eine Trackingnummer eintragen.', true);
+        return;
+    }
+
+    var data = new URLSearchParams();
+    data.append('action', 'pv_save_tracking_number');
+    data.append('nonce', produkt_admin.nonce);
+    data.append('order_id', orderId);
+    if (trackingValue) {
+        data.append('tracking_number', trackingValue);
+    }
+    if (providerValue) {
+        data.append('shipping_provider', providerValue);
+    }
+    if (options.sendEmail) {
+        data.append('send_email', '1');
+    }
+    if (options.clear) {
+        data.append('clear_tracking', '1');
+    }
+
+    var trigger = options.trigger;
+    if (trigger) {
+        trigger.disabled = true;
+    }
+    produktSetTrackingStatus('Wird gespeichert …', false);
+
+    fetch(produkt_admin.ajax_url, {method: 'POST', body: data})
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res && res.success) {
+                var newValue = res.data.tracking_number || '';
+                var newProvider = res.data.shipping_provider || '';
+                if (input) {
+                    input.value = newValue;
+                }
+                if (providerSelect) {
+                    providerSelect.value = newProvider;
+                }
+                produktSetTrackingStatus(res.data.message || 'Tracking gespeichert.', false);
+            } else {
+                produktSetTrackingStatus('Fehler beim Speichern des Trackings.', true);
+            }
+        })
+        .catch(function() {
+            produktSetTrackingStatus('Fehler beim Speichern des Trackings.', true);
+        })
+        .finally(function() {
+            if (trigger) {
+                trigger.disabled = false;
+            }
+        });
+}
+
 // Order note functionality
 document.addEventListener('click', function(e) {
     if (e.target.closest('.note-icon')) {
@@ -830,6 +944,29 @@ document.addEventListener('click', function(e) {
                     alert('Fehler beim Löschen');
                 }
             });
+    }
+});
+
+document.addEventListener('click', function(e) {
+    var sendBtn = e.target.closest('.tracking-send-btn');
+    var saveBtn = e.target.closest('.tracking-save-btn');
+    var clearBtn = e.target.closest('.tracking-clear-btn');
+
+    if (sendBtn) {
+        e.preventDefault();
+        produktHandleTrackingAction({sendEmail: true, clear: false, trigger: sendBtn});
+    }
+
+    if (saveBtn) {
+        e.preventDefault();
+        produktHandleTrackingAction({sendEmail: false, clear: false, trigger: saveBtn});
+    }
+
+    if (clearBtn) {
+        e.preventDefault();
+        if (confirm('Trackingnummer wirklich entfernen?')) {
+            produktHandleTrackingAction({sendEmail: false, clear: true, trigger: clearBtn});
+        }
     }
 });
 

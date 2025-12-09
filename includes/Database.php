@@ -41,6 +41,7 @@ class Database {
             'stripe_weekend_price_id'=> 'VARCHAR(255) DEFAULT NULL',
             'price_from'             => 'DECIMAL(10,2) DEFAULT 0',
             'mode'                   => "VARCHAR(10) DEFAULT 'miete'",
+            'sale_enabled'           => 'TINYINT(1) DEFAULT 0',
             'image_url_1' => 'TEXT',
             'image_url_2' => 'TEXT',
             'image_url_3' => 'TEXT',
@@ -75,6 +76,8 @@ class Database {
                     $after = 'verkaufspreis_einmalig';
                 } elseif ($column === 'stripe_weekend_price_id') {
                     $after = 'weekend_price';
+                } elseif ($column === 'sale_enabled') {
+                    $after = 'mode';
                 } elseif ($column === 'mode') {
                     $after = 'price_from';
                 } elseif ($column === 'sku') {
@@ -238,6 +241,7 @@ class Database {
                 vat_included tinyint(1) DEFAULT 0,
                 layout_style varchar(50) DEFAULT 'default',
                 price_layout varchar(50) DEFAULT 'default',
+                description_layout varchar(50) DEFAULT 'left',
                 duration_tooltip text DEFAULT '',
                 condition_tooltip text DEFAULT '',
                 show_features tinyint(1) DEFAULT 0,
@@ -288,6 +292,7 @@ class Database {
                 'vat_included' => 'TINYINT(1) DEFAULT 0',
                 'layout_style' => 'VARCHAR(50) DEFAULT "default"',
                 'price_layout' => 'VARCHAR(50) DEFAULT "default"',
+                'description_layout' => 'VARCHAR(50) DEFAULT "left"',
                 'duration_tooltip' => 'TEXT',
                 'condition_tooltip' => 'TEXT',
                 'show_features' => 'TINYINT(1) DEFAULT 0',
@@ -382,6 +387,11 @@ class Database {
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
                 'filter_button_color'  => '#5f7f5f',
+                'filter_button_hover_color'  => '#5f7f5f',
+                'filter_button_icon_color' => '#ffffff',
+                'filter_button_position' => 'bottom_left',
+                'shop_layout' => 'filters_left',
+                'sticky_header_mode' => 'header',
                 'product_padding'     => '1',
                 'login_bg_image' => '',
                 'login_layout' => 'classic',
@@ -409,6 +419,11 @@ class Database {
             'front_border_color'       => '#a4b8a4',
             'front_button_text_color'  => '#ffffff',
             'filter_button_color'      => '#5f7f5f',
+            'filter_button_hover_color'  => '#5f7f5f',
+            'filter_button_icon_color' => '#ffffff',
+            'filter_button_position'   => 'bottom_left',
+            'shop_layout'              => 'filters_left',
+            'sticky_header_mode'       => 'header',
             'product_padding'          => '1',
             'login_bg_image'           => '',
             'login_layout'            => 'classic',
@@ -509,6 +524,7 @@ class Database {
                 option_type varchar(50) NOT NULL,
                 option_id mediumint(9) NOT NULL,
                 available tinyint(1) DEFAULT 1,
+                sale_available tinyint(1) DEFAULT 0,
                 stock_available int DEFAULT 0,
                 stock_rented int DEFAULT 0,
                 sku varchar(255) DEFAULT NULL,
@@ -606,6 +622,7 @@ class Database {
                 frame_color_id mediumint(9) DEFAULT NULL,
                 final_price decimal(10,2) NOT NULL,
                 shipping_cost decimal(10,2) DEFAULT 0,
+                shipping_provider varchar(50) DEFAULT '',
                 mode varchar(10) DEFAULT 'miete',
                 start_date date DEFAULT NULL,
                 end_date date DEFAULT NULL,
@@ -624,9 +641,12 @@ class Database {
                 customer_name varchar(255) DEFAULT '',
                 customer_email varchar(255) DEFAULT '',
                 order_number varchar(50) DEFAULT '',
+                invoice_number varchar(50) DEFAULT '',
                 user_ip varchar(45) DEFAULT NULL,
                 user_agent text DEFAULT NULL,
                 client_info text DEFAULT NULL,
+                tracking_number varchar(255) DEFAULT '',
+                tracking_sent_at datetime DEFAULT NULL,
                 created_at timestamp DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (id),
                 KEY category_id (category_id),
@@ -654,8 +674,10 @@ class Database {
                 'customer_city'     => "varchar(100) DEFAULT ''",
                 'customer_country'  => "varchar(2) DEFAULT ''",
                 'shipping_cost'     => 'decimal(10,2) DEFAULT 0',
+                'shipping_provider' => "varchar(50) DEFAULT ''",
                 'shipping_price_id' => "varchar(255) DEFAULT ''",
                 'order_number'      => "varchar(50) DEFAULT ''",
+                'invoice_number'    => "varchar(50) DEFAULT ''",
                 'mode'              => "varchar(10) DEFAULT 'miete'",
                 'start_date'        => 'date DEFAULT NULL',
                 'end_date'          => 'date DEFAULT NULL',
@@ -663,7 +685,9 @@ class Database {
                 'weekend_tariff'    => 'tinyint(1) DEFAULT 0',
                 'status'            => "varchar(20) DEFAULT 'offen'",
                 'invoice_url'       => "varchar(255) DEFAULT ''",
-                'client_info'       => 'text'
+                'client_info'       => 'text',
+                'tracking_number'   => "varchar(255) DEFAULT ''",
+                'tracking_sent_at'  => 'datetime DEFAULT NULL'
             );
 
             foreach ($new_order_columns as $column => $type) {
@@ -671,6 +695,11 @@ class Database {
                 if (empty($column_exists)) {
                     $wpdb->query("ALTER TABLE $table_orders ADD COLUMN $column $type AFTER extra_id");
                 }
+            }
+
+            $order_items_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_orders LIKE 'order_items'");
+            if (empty($order_items_exists)) {
+                $wpdb->query("ALTER TABLE $table_orders ADD COLUMN order_items LONGTEXT AFTER client_info");
             }
 
             // Fill newly added date columns from dauer_text if possible
@@ -776,6 +805,11 @@ class Database {
         $sku_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sku'");
         if (empty($sku_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sku VARCHAR(255) DEFAULT NULL AFTER stock_rented");
+        }
+
+        $sale_available_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sale_available'");
+        if (empty($sale_available_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sale_available TINYINT(1) DEFAULT 0 AFTER available");
         }
 
         // Create order logs table if it doesn't exist
@@ -1057,6 +1091,7 @@ class Database {
             base_price decimal(10,2) NOT NULL,
             price_from decimal(10,2) DEFAULT 0,
             mode varchar(10) DEFAULT 'miete',
+            sale_enabled tinyint(1) DEFAULT 0,
             image_url_1 text,
             image_url_2 text,
             image_url_3 text,
@@ -1198,6 +1233,7 @@ class Database {
             option_type varchar(50) NOT NULL,
             option_id mediumint(9) NOT NULL,
             available tinyint(1) DEFAULT 1,
+            sale_available tinyint(1) DEFAULT 0,
             PRIMARY KEY (id),
             UNIQUE KEY variant_option (variant_id, option_type, option_id)
         ) $charset_collate;";
@@ -1507,6 +1543,8 @@ class Database {
                 'front_text_color'      => '#4a674a',
                 'front_border_color'    => '#a4b8a4',
                 'front_button_text_color' => '#ffffff',
+                'shop_layout'           => 'filters_left',
+                'sticky_header_mode'   => 'header',
                 'product_padding'       => '1',
                 'login_bg_image'         => '',
                 'login_layout'          => 'classic',
@@ -1792,7 +1830,23 @@ class Database {
      * @return string Customer ID or empty string if none found
      */
     public static function get_stripe_customer_id_for_user($user_id) {
-        return get_user_meta($user_id, 'stripe_customer_id', true);
+        // 1. Prefer the usermeta value if present
+        $customer_id = get_user_meta($user_id, 'stripe_customer_id', true);
+        if (!empty($customer_id)) {
+            return $customer_id;
+        }
+
+        // 2. Fallback: look up by email in the custom customers table
+        $user = get_userdata($user_id);
+        if ($user && !empty($user->user_email)) {
+            $by_email = self::get_stripe_customer_id_by_email($user->user_email);
+            if (!empty($by_email)) {
+                update_user_meta($user_id, 'stripe_customer_id', $by_email);
+                return $by_email;
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -1824,7 +1878,24 @@ class Database {
     }
 
     public static function get_stripe_customer_id_by_email($email) {
-        $customer_id = self::get_stripe_customer_id_from_usermeta(sanitize_email($email));
+        global $wpdb;
+
+        $email = sanitize_email($email);
+
+        // Check the custom customers table first to reuse existing Stripe customers for guests
+        $table = $wpdb->prefix . 'produkt_customers';
+        $customer_id = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT stripe_customer_id FROM $table WHERE email = %s LIMIT 1",
+                $email
+            )
+        );
+
+        // Fallback to WordPress user meta for existing accounts
+        if (!$customer_id) {
+            $customer_id = self::get_stripe_customer_id_from_usermeta($email);
+        }
+
         return $customer_id ? $customer_id : '';
     }
 
@@ -2026,6 +2097,22 @@ class Database {
     }
 
     /**
+     * Determine if any variants are configured for direct sale with a price.
+     *
+     * @return bool
+     */
+    public function has_sale_enabled_variants() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_variants';
+
+        $count = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$table} WHERE sale_enabled = 1 AND verkaufspreis_einmalig > 0"
+        );
+
+        return $count > 0;
+    }
+
+    /**
      * Check if the category layouts table exists with required columns.
      *
      * @return bool
@@ -2039,6 +2126,36 @@ class Database {
         }
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'heading_tag'");
     }
+
+    /**
+     * Search active products (categories) by term for frontend search results.
+     *
+     * @param string $term  Search term from WordPress search query.
+     * @param int    $limit Maximum number of results to return.
+     * @return array<int, object>
+     */
+    public function search_products_by_term($term, $limit = 50) {
+        global $wpdb;
+
+        $like = '%' . $wpdb->esc_like($term) . '%';
+        $table = $wpdb->prefix . 'produkt_categories';
+
+        $sql = $wpdb->prepare(
+            "SELECT id, product_title, product_description, short_description, default_image, rating_value, show_rating
+             FROM $table
+             WHERE active = 1
+               AND (product_title LIKE %s OR product_description LIKE %s OR short_description LIKE %s)
+             ORDER BY sort_order ASC
+             LIMIT %d",
+            $like,
+            $like,
+            $like,
+            intval($limit)
+        );
+
+        return $wpdb->get_results($sql);
+    }
+
     /**
      * Get orders whose rental period has ended and inventory has not yet been returned.
      *
@@ -2047,47 +2164,100 @@ class Database {
     public static function get_due_returns() {
         global $wpdb;
 
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
         $mode = get_option('produkt_betriebsmodus', 'miete');
 
         if ($mode === 'kauf') {
             $today = current_time('Y-m-d');
             $orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.end_date,
+                "SELECT
+                        o.id,
+                        o.order_number,
+                        o.customer_name,
+                        o.variant_id,
+                        o.extra_ids,
+                        o.start_date,
+                        o.end_date,
+                        o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
-                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                        COALESCE(
+                            NULLIF(
+                                (SELECT GROUP_CONCAT(ex.name SEPARATOR ', ')
+                                 FROM {$wpdb->prefix}produkt_extras ex
+                                 WHERE FIND_IN_SET(ex.id, o.extra_ids)),
+                                ''
+                            ),
+                            o.extra_text
+                        ) AS extra_names
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-                 WHERE o.mode = 'kauf' AND o.end_date IS NOT NULL AND o.end_date <= %s AND o.inventory_reverted = 0
-                 GROUP BY o.id
+                 WHERE o.mode = 'kauf'
+                   AND o.end_date IS NOT NULL
+                   AND o.end_date <= %s
+                   AND COALESCE(o.inventory_reverted, 0) = 0
                  ORDER BY o.end_date",
                 $today
             ));
         } else {
             $orders = $wpdb->get_results(
-                "SELECT o.id, o.order_number, o.customer_name, o.variant_id, o.extra_ids, o.start_date, o.created_at,
+                "SELECT
+                        o.id,
+                        o.order_number,
+                        o.customer_name,
+                        o.variant_id,
+                        o.extra_ids,
+                        o.start_date,
+                        o.end_date,
+                        o.created_at,
+                        o.order_items,
                         COALESCE(c.name, o.produkt_name) AS category_name,
                         COALESCE(v.name, o.produkt_name) AS variant_name,
-                        COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names
+                        COALESCE(
+                            NULLIF(
+                                (SELECT GROUP_CONCAT(ex.name SEPARATOR ', ')
+                                 FROM {$wpdb->prefix}produkt_extras ex
+                                 WHERE FIND_IN_SET(ex.id, o.extra_ids)),
+                                ''
+                            ),
+                            o.extra_text
+                        ) AS extra_names
                  FROM {$wpdb->prefix}produkt_orders o
                  LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
-                 LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
-                 WHERE o.mode <> 'kauf' AND o.status = 'abgeschlossen' AND o.inventory_reverted = 0
-                 GROUP BY o.id
-                 ORDER BY o.created_at"
+                 WHERE COALESCE(o.inventory_reverted, 0) = 0
+                   AND (o.mode IS NULL OR o.mode NOT IN ('kauf','sale'))
+                   AND (o.status IS NULL OR o.status NOT IN ('storniert','abgebrochen','cancelled','refunded','failed'))
+                 ORDER BY COALESCE(o.end_date, o.created_at)"
             );
         }
 
         $orders = $orders ?: [];
 
+        $expanded_orders = [];
         foreach ($orders as $o) {
             self::ensure_return_pending_log((int) $o->id);
+
+            $products = pv_expand_order_products($o);
+            if (empty($products)) {
+                $expanded_orders[] = $o;
+                continue;
+            }
+
+            foreach ($products as $p) {
+                $clone = clone $o;
+                $clone->category_name = $p->produkt_name ?? $o->category_name;
+                $clone->variant_name  = $p->variant_name ?? $o->variant_name;
+                $clone->extra_names   = $p->extra_names ?? $o->extra_names;
+                $clone->start_date    = $p->start_date ?? $o->start_date;
+                $clone->end_date      = $p->end_date ?? $o->end_date;
+                $expanded_orders[]    = $clone;
+            }
         }
 
-        return $orders;
+        return $expanded_orders;
     }
 
     /**

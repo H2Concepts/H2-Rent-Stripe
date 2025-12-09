@@ -5,6 +5,387 @@
     background: transparent;
     border-radius: 1rem;
 }
+
+:root {
+    --produkt-account-card-bg: #e8e8e8;
+    --produkt-account-card-text: #000;
+    --produkt-account-button-bg: #000;
+    --produkt-account-button-hover-bg: #1a1a1a;
+    --produkt-account-button-text: #fff;
+    --produkt-account-button-hover-text: #fff;
+}
+
+.account-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.account-dashboard-card {
+    background: var(--produkt-account-card-bg, #e8e8e8);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: space-between;
+    aspect-ratio: 1 / 1;
+    color: var(--produkt-account-card-text, #000);
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--produkt-account-card-text, #111);
+}
+
+.card-metric {
+    font-size: 50px;
+    font-weight: 700;
+    color: #000;
+}
+
+.card-code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-weight: 700;
+    font-size: 20px;
+    padding: 12px;
+    background: #f6f7fa;
+    border-radius: 10px;
+    border: 1px solid #e7e9ee;
+    text-align: center;
+    letter-spacing: 1px;
+}
+
+.card-helper {
+    color: #4a4a4a;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: auto;
+}
+
+.card-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+    padding: 20px 16px;
+    background: var(--produkt-account-button-bg, #000);
+    color: var(--produkt-account-button-text, #fff);
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: default;
+    text-decoration: none !important;
+    margin-top: auto;
+}
+
+.card-button-link {
+    cursor: pointer;
+    text-decoration: none !important;
+}
+
+.card-button[aria-disabled="true"] {
+    opacity: 0.85;
+}
+
+.card-button:hover {
+    background: var(--produkt-account-button-hover-bg, #1a1a1a);
+    color: var(--produkt-account-button-hover-text, #fff);
+    text-decoration: none !important;
+}
+
+.account-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 10px 0 20px;
+}
+
+.account-back-link {
+    display: inline-flex;
+    align-items: center;
+    color: #000;
+    border-radius: 12px;
+    text-decoration: none !important;
+    font-weight: 400;
+}
+
+.account-section-header h4 {
+    margin: 0;
+    align-self: center;
+}
+
+.subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.subscription-card {
+    grid-column: 1 / -1;
+    background: var(--produkt-account-card-bg, #e8e8e8);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: stretch;
+    text-decoration: none !important;
+    color: var(--produkt-account-card-text, #000);
+    border: none;
+}
+
+.subscription-card:hover {
+    border-color: #000;
+}
+
+.subscription-card * {
+    text-decoration: none !important;
+}
+
+.subscription-thumb {
+    width: 140px;
+    min-width: 140px;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    background: #f2f2f2;
+    align-self: stretch;
+}
+
+.subscription-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.subscription-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.subscription-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.subscription-meta .status-badge {
+    margin: 2px 0;
+    align-self: flex-start;
+}
+
+.subscription-meta .pill-badge {
+    width: auto;
+    align-self: flex-start;
+}
+
+.subscription-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+}
+
+.subscription-detail-card {
+    background: var(--produkt-account-card-bg, #e8e8e8);
+    border-radius: 16px;
+    padding: 20px;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--produkt-account-card-text, #000);
+    position: relative;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.subscription-detail-card:not(.subscription-wide-card) {
+    /* aspect-ratio entfernt, damit alle Cards die gleiche Höhe haben */
+}
+
+.invoice-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.invoice-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.invoice-grid .invoice-card {
+    grid-column: 1 / -1;
+}
+
+.invoice-card {
+    background: var(--produkt-account-card-bg, #e8e8e8);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    color: var(--produkt-account-card-text, #000);
+    position: relative;
+}
+
+.invoice-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.invoice-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.invoice-actions {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.invoice-title {
+    margin: 0;
+}
+
+.invoice-download {
+    font-weight: 600;
+    text-decoration: none !important;
+    color: var(--produkt-account-card-text, #000);
+}
+
+.invoice-download:hover {
+    text-decoration: underline;
+}
+
+.invoice-download.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.invoice-status-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+.status-badge.status-paid {
+    background-color: #28a745;
+}
+
+.status-badge.status-open {
+    background-color: #fd7e14;
+}
+
+.status-badge.status-void {
+    background-color: #6c757d;
+}
+
+.status-badge.status-uncollectible {
+    background-color: #c53030;
+}
+
+.status-badge.status-draft {
+    background-color: #17a2b8;
+}
+
+.invoice-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+
+.invoice-row span:first-child {
+    font-weight: 600;
+}
+
+.invoice-value {
+    font-weight: 700;
+}
+
+.subscription-detail-card .card-title {
+    margin: 0 0 6px;
+}
+
+.subscription-detail-card p {
+    margin: 2px 0;
+}
+
+.subscription-detail-content {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.subscription-wide-card {
+    grid-column: 1 / -1;
+    aspect-ratio: auto;
+}
+
+.pill-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.2px;
+}
+
+.pill-badge.success {
+    background: #d4edda;
+    color: #1b5e20;
+}
+
+.pill-badge.cancelled {
+    background: #ffe1e1;
+    color: #8a1f1f;
+}
+
+.pill-badge.inactive {
+    background: #ededed;
+    color: #4a4a4a;
+}
+
+.subscription-status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: auto;
+}
+
+.cancel-button {
+    background: #c9c9c9;
+    color: #555;
+    cursor: not-allowed;
+}
+
+.cancel-button.is-active {
+    background: var(--produkt-account-button-bg, #000);
+    color: var(--produkt-account-button-text, #fff);
+    cursor: pointer;
+}
+
+.cancel-button.is-active:hover {
+    background: var(--produkt-account-button-hover-bg, #1a1a1a);
+    color: var(--produkt-account-button-hover-text, #fff);
+}
 img.wp-smiley, img.emoji {
     height: 1em;
     width: 1em;
@@ -138,6 +519,85 @@ img.wp-smiley, img.emoji {
 .abo-box p,
 .order-box p {
     margin: 8px 0;
+}
+
+.order-product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.order-product-row {
+    display: grid;
+    grid-template-columns: minmax(100px, 150px) 1fr auto;
+    gap: 14px;
+    align-items: start;
+    padding: 12px 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.order-product-row:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.order-product-thumbwrap {
+    max-width: 150px;
+}
+
+.order-product-thumb {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+}
+
+.order-product-meta p {
+    margin: 4px 0;
+}
+
+.order-product-price {
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .order-product-row {
+        grid-template-columns: 1fr;
+    }
+
+    .order-product-price {
+        text-align: left;
+    }
+}
+
+@media (max-width: 720px) {
+    .account-dashboard-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card-title {
+        font-size: 15px;
+    }
+
+    .card-metric {
+        font-size: 34px;
+    }
+
+    .card-code {
+        font-size: 15px;
+    }
+
+    .subscription-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .subscription-detail-card {
+        aspect-ratio: auto !important;
+    }
 }
 
 .abo-box form {
@@ -276,15 +736,72 @@ body.produkt-login-page #colophon {
     color: var(--produkt-login-text, #1f1f1f);
 }
 
+.login-brand-logo {
+    display: inline-block;
+}
+
+.login-brand-logo a {
+    display: inline-block;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    z-index: 1;
+}
+
+.login-brand-logo a:hover {
+    opacity: 0.8;
+}
+
 .login-brand-logo img {
     max-width: 100px;
     height: auto;
+    display: block;
+    pointer-events: none;
 }
 
 .produkt-login-panel form {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.code-input-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.code-input {
+    width: 48px;
+    height: 48px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    border: 1px solid #d6dede;
+    border-radius: 8px;
+    background: #f8faf8;
+    color: var(--produkt-login-text, #1f1f1f);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    box-sizing: border-box;
+    padding: 0;
+    line-height: 48px;
+    vertical-align: middle;
+}
+
+.code-input:focus {
+    outline: none;
+    border-color: #000000;
+    background: #ffffff;
+}
+
+.code-separator {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--produkt-login-text, #1f1f1f);
+    margin: 0 4px;
 }
 
 .produkt-login-panel input {
@@ -343,6 +860,12 @@ body.produkt-login-page #colophon {
     text-align: center;
 }
 
+.login-box .login-brand-logo {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+}
+
 .login-box h1 {
     margin-top: 0;
     margin-bottom: 16px;
@@ -355,6 +878,44 @@ body.produkt-login-page #colophon {
 
 .login-box form {
     margin-bottom: 15px;
+}
+
+.login-box .code-input-group {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+.login-box .code-input {
+    width: 48px;
+    height: 48px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    color: #000;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    box-sizing: border-box;
+    padding: 0;
+    line-height: 48px;
+    vertical-align: middle;
+}
+
+.login-box .code-input:focus {
+    outline: none;
+    border-color: #000;
+    background: #f8f8f8;
+}
+
+.login-box .code-separator {
+    font-size: 20px;
+    font-weight: 600;
+    color: #000;
+    margin: 0 4px;
 }
 
 .login-box input {
@@ -388,6 +949,36 @@ body.produkt-login-page #colophon {
 }
 
 @media (max-width: 768px) {
+    .code-input-group {
+        gap: 6px;
+    }
+    
+    .code-input {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        line-height: 44px;
+        padding: 0;
+    }
+    
+    .code-separator {
+        font-size: 18px;
+        margin: 0 2px;
+    }
+    
+    .login-box .code-input {
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+        line-height: 44px;
+        padding: 0;
+    }
+    
+    .login-box .code-separator {
+        font-size: 18px;
+        margin: 0 2px;
+    }
+    
     .produkt-login-wrapper.login-layout-split {
         grid-template-columns: 1fr;
     }

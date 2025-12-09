@@ -2,7 +2,8 @@
 if (!defined('ABSPATH')) exit;
 
 $order = $order_data ?? null;
-$modus = get_option('produkt_betriebsmodus', 'miete');
+$modus = pv_get_order_mode((array) ($order_data ?? []), (int) ($order->id ?? 0));
+$is_purchase = ($modus === 'kauf');
 
 if (empty($order) || !is_object($order)) {
     echo '<p>Fehler: Keine gültigen Auftragsdaten übergeben.</p>';
@@ -74,6 +75,28 @@ if ($modus === 'miete' && $is_completed_order && $start_timestamp) {
     $rental_elapsed_days = $diff_days;
 }
 
+$invoice_number_display = '';
+$invoice_url = '';
+if ($is_purchase) {
+    $invoice_number_display = pv_ensure_invoice_number((array) ($order_data ?? []), (int) $order->id);
+    $invoice_url = pv_get_invoice_download_url((int) $order->id);
+    if (!$invoice_url) {
+        $invoice_url = $order->invoice_url ?? '';
+    }
+
+    if (!$invoice_url) {
+        $generated_path = pv_generate_invoice_pdf((int) $order->id);
+
+        if ($generated_path) {
+            $refreshed_order = pv_get_order_by_id((int) $order->id);
+            if ($refreshed_order) {
+                $order = (object) $refreshed_order;
+                $invoice_url = $order->invoice_url ?? '';
+            }
+        }
+    }
+}
+
 $start_label_rental = ($modus === 'miete' && $is_completed_order && $start_timestamp)
     ? date_i18n('d.m.Y', $start_timestamp)
     : '–';
@@ -143,31 +166,33 @@ $rental_payments = $rental_payments ?? [];
         <?php endif; ?>
     </div>
 
-    <!-- Mietzeitraum -->
-    <div class="rental-period-box">
-        <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
-        <h3>Mietzeitraum</h3>
-        <?php if ($modus === 'miete') : ?>
-            <div class="rental-progress-number"><?php echo esc_html($day_counter_label); ?></div>
-            <div class="rental-progress rental-progress-days">
-                <div class="day-counter-text">Tage seit Buchung</div>
-            </div>
-            <div class="rental-dates">
-                <span>Start: <?php echo esc_html($start_label_rental); ?></span>
-            </div>
-        <?php else : ?>
-            <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
-            <div class="rental-progress">
-                <div class="bar">
-                    <div class="fill" style="width: <?php echo intval($percent); ?>%;"></div>
+    <?php if (!$is_purchase) : ?>
+        <!-- Mietzeitraum -->
+        <div class="rental-period-box">
+            <div class="badge-status"><?php echo esc_html($badge_status); ?></div>
+            <h3>Mietzeitraum</h3>
+            <?php if ($modus === 'miete') : ?>
+                <div class="rental-progress-number"><?php echo esc_html($day_counter_label); ?></div>
+                <div class="rental-progress rental-progress-days">
+                    <div class="day-counter-text">Tage seit Buchung</div>
                 </div>
-            </div>
-            <div class="rental-dates">
-                <span>Abgeholt: <?php echo esc_html($start_label_sale); ?></span>
-                <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
-            </div>
-        <?php endif; ?>
-    </div>
+                <div class="rental-dates">
+                    <span>Start: <?php echo esc_html($start_label_rental); ?></span>
+                </div>
+            <?php else : ?>
+                <div class="rental-progress-number"><?php echo intval($percent); ?>%</div>
+                <div class="rental-progress">
+                    <div class="bar">
+                        <div class="fill" style="width: <?php echo intval($percent); ?>%;"></div>
+                    </div>
+                </div>
+                <div class="rental-dates">
+                    <span>Abgeholt: <?php echo esc_html($start_label_sale); ?></span>
+                    <span>Rückgabe: <?php echo esc_html($end_label); ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
 
     <!-- Produktliste -->
     <div class="product-list">
@@ -199,17 +224,29 @@ $rental_payments = $rental_payments ?? [];
                         <div>Hinweis: Wochenendtarif</div>
                     <?php endif; ?>
                     <?php
-                        $duration_label = ($modus === 'miete') ? 'Mindestlaufzeit' : 'Miettage';
-                        if ($modus === 'miete') {
-                            $duration_value = $p->duration_name ?? $p->dauer_text ?? '–';
-                        } else {
-                            $duration_value = $days !== null ? $days : ($p->dauer_text ?? '–');
-                            if ($days !== null) {
-                                $duration_value .= ' Tag' . ($days === 1 ? '' : 'e');
+                        // Prüfe, ob Betriebsmodus "Einmalkauf" ist
+                        $betriebsmodus = get_option('produkt_betriebsmodus', 'miete');
+                        $is_einmalkauf = ($betriebsmodus === 'kauf');
+                        
+                        // Miettage nur anzeigen bei Miete ODER bei Betriebsmodus "Einmalkauf"
+                        // Nicht anzeigen bei direktem Kauf im Vermietungsmodus
+                        $show_duration = ($modus === 'miete') || ($is_einmalkauf && $modus === 'kauf');
+                        
+                        if ($show_duration) {
+                            $duration_label = ($modus === 'miete') ? 'Mindestlaufzeit' : 'Miettage';
+                            if ($modus === 'miete') {
+                                $duration_value = $p->duration_name ?? $p->dauer_text ?? '–';
+                            } else {
+                                $duration_value = $days !== null ? $days : ($p->dauer_text ?? '–');
+                                if ($days !== null) {
+                                    $duration_value .= ' Tag' . ($days === 1 ? '' : 'e');
+                                }
                             }
+                            ?>
+                            <div><?php echo esc_html($duration_label); ?>: <?php echo esc_html($duration_value); ?></div>
+                            <?php
                         }
                     ?>
-                    <div><?php echo esc_html($duration_label); ?>: <?php echo esc_html($duration_value); ?></div>
                 </div>
 
                 <div class="product-price">
@@ -247,7 +284,7 @@ $rental_payments = $rental_payments ?? [];
                 <?php if (!empty($order_logs)) : ?>
                     <div class="order-log-list">
                         <?php
-                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment'];
+                        $system_events = ['inventory_returned_not_accepted','inventory_returned_accepted','welcome_email_sent','status_updated','checkout_completed','auto_rental_payment','tracking_updated','tracking_email_sent'];
                         foreach ($order_logs as $log) :
                             $is_customer = !in_array($log->event, $system_events, true);
                             $avatar = $is_customer ? $initials : 'H2';
@@ -269,6 +306,12 @@ $rental_payments = $rental_payments ?? [];
                                     break;
                                 case 'auto_rental_payment':
                                     $text = $log->message ?: 'Monatszahlung verbucht.';
+                                    break;
+                                case 'tracking_updated':
+                                    $text = $log->message ?: 'Tracking aktualisiert.';
+                                    break;
+                                case 'tracking_email_sent':
+                                    $text = $log->message ?: 'Tracking an Kunden gesendet.';
                                     break;
                                 default:
                                     $text = $log->message ?: $log->event;
@@ -323,7 +366,52 @@ $rental_payments = $rental_payments ?? [];
                     <?php endif; ?>
                 </div>
             </div>
+        <?php elseif ($is_purchase) : ?>
+            <div class="produkt-accordion-item">
+                <button type="button" class="produkt-accordion-header">Rechnung</button>
+                <div class="produkt-accordion-content">
+                    <?php if ($invoice_number_display) : ?>
+                        <p><strong>Rechnungsnummer:</strong> <?php echo esc_html($invoice_number_display); ?></p>
+                    <?php endif; ?>
+
+                    <?php if ($invoice_url) : ?>
+                        <a class="button button-primary invoice-download-btn" href="<?php echo esc_url($invoice_url); ?>" target="_blank" rel="noopener">
+                            Rechnung herunterladen
+                        </a>
+                    <?php else : ?>
+                        <p>Keine Rechnung verfügbar.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
         <?php endif; ?>
+        <div class="produkt-accordion-item tracking-accordion">
+            <button type="button" class="produkt-accordion-header">Tracking</button>
+            <div class="produkt-accordion-content">
+                <p class="tracking-hint">Hinterlegen Sie die Sendungsnummer, um sie bei Bedarf anzupassen oder erneut an den Kunden zu senden.</p>
+                <div class="tracking-input-row">
+                    <div class="tracking-provider">
+                        <label for="tracking-provider-select">Versanddienstleister</label>
+                        <select id="tracking-provider-select" class="tracking-provider-select">
+                            <option value="">Auswählen …</option>
+                            <option value="gls" <?php selected(($order->shipping_provider ?? '') === 'gls'); ?>>GLS</option>
+                            <option value="hermes" <?php selected(($order->shipping_provider ?? '') === 'hermes'); ?>>Hermes</option>
+                            <option value="dhl" <?php selected(($order->shipping_provider ?? '') === 'dhl'); ?>>DHL</option>
+                            <option value="dpd" <?php selected(($order->shipping_provider ?? '') === 'dpd'); ?>>DPD</option>
+                        </select>
+                    </div>
+                    <div class="tracking-number-field">
+                        <label for="tracking-number-input" class="screen-reader-text">Trackingnummer</label>
+                        <input type="text" id="tracking-number-input" class="tracking-number-input" placeholder="z. B. 003404341234" value="<?php echo esc_attr($order->tracking_number ?? ''); ?>">
+                    </div>
+                </div>
+                <div class="tracking-actions">
+                    <button type="button" class="button button-primary invoice-download-btn tracking-send-btn">An Kunden senden</button>
+                    <button type="button" class="button button-primary invoice-download-btn tracking-save-btn">Nur speichern</button>
+                    <button type="button" class="button button-primary invoice-download-btn tracking-clear-btn">Tracking löschen</button>
+                </div>
+                <div class="tracking-status" aria-live="polite"></div>
+            </div>
+        </div>
     </div>
     <div class="order-notes-section">
         <h3>Notizen</h3>

@@ -88,6 +88,10 @@ class StripeService {
                 $session_data['customer'] = $customer_id;
             } else {
                 $session_data['customer_creation'] = 'always';
+                // Für Gäste: E-Mail vorbefüllen
+                if (!empty($args['customer_email'])) {
+                    $session_data['customer_email'] = $args['customer_email'];
+                }
             }
 
             $session = \Stripe\Checkout\Session::create($session_data);
@@ -336,6 +340,70 @@ class StripeService {
         }
     }
 
+    /**
+     * Retrieve paid invoices for a Stripe customer.
+     *
+     * @param string $customer_id Stripe customer ID
+     * @param int    $limit       Maximum number of invoices to fetch
+     * @return array|\WP_Error
+     */
+    public static function get_customer_invoices($customer_id, $limit = 20) {
+        if (empty($customer_id)) {
+            return [];
+        }
+
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            $page_limit = max(1, min($limit, 100));
+            $invoices   = \Stripe\Invoice::all([
+                'customer' => $customer_id,
+                'limit'    => $page_limit,
+                'expand'   => ['data.lines'],
+            ]);
+
+            $result = [];
+            $count  = 0;
+
+            foreach ($invoices->autoPagingIterator() as $invoice) {
+                $count++;
+                if ($count > $limit) {
+                    break;
+                }
+                $period_start = null;
+                $period_end   = null;
+
+                if (!empty($invoice->lines->data) && !empty($invoice->lines->data[0]->period)) {
+                    $period_start = $invoice->lines->data[0]->period->start ?? null;
+                    $period_end   = $invoice->lines->data[0]->period->end ?? null;
+                }
+
+                $result[] = [
+                    'id'           => $invoice->id,
+                    'number'       => $invoice->number ?? $invoice->id,
+                    'subscription' => $invoice->subscription ?? '',
+                    'order_number' => $invoice->metadata->order_number ?? $invoice->metadata->order_id ?? '',
+                    'hosted_url'   => $invoice->hosted_invoice_url ?? '',
+                    'pdf_url'      => $invoice->invoice_pdf ?? '',
+                    'created'      => $invoice->created ?? null,
+                    'period_start' => $period_start,
+                    'period_end'   => $period_end,
+                    'amount_total' => $invoice->total ?? 0,
+                    'currency'     => isset($invoice->currency) ? strtoupper($invoice->currency) : '',
+                    'status'       => $invoice->status ?? '',
+                    'paid'         => !empty($invoice->paid),
+                ];
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_invoices', $e->getMessage());
+        }
+    }
+
 
 
     /**
@@ -544,6 +612,66 @@ class StripeService {
 
         } catch (\Exception $e) {
             return new \WP_Error('stripe_create', $e->getMessage());
+        }
+    }
+
+    /**
+     * Create or retrieve a Stripe product without creating a price.
+     *
+     * @param array $product_data {
+     *     @type string   $name
+     *     @type string   $mode
+     *     @type int      $plugin_product_id
+     *     @type int      $variant_id
+     *     @type int|null $duration_id
+     * }
+     * @return array|\WP_Error
+     */
+    public static function create_or_retrieve_product($product_data) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        try {
+            $cache_key = 'produkt_stripe_product_' . md5(json_encode($product_data));
+            $cached    = get_transient($cache_key);
+            if ($cached !== false) {
+                return $cached;
+            }
+
+            $query = sprintf(
+                'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["duration_id"]:"%d" AND metadata["mode"]:"%s"',
+                $product_data['plugin_product_id'],
+                $product_data['variant_id'],
+                $product_data['duration_id'] ?? 0,
+                $product_data['mode']
+            );
+
+            $found = \Stripe\Product::search(['query' => $query, 'limit' => 1]);
+            $stripe_product = $found && !empty($found->data) ? $found->data[0] : null;
+
+            if (!$stripe_product) {
+                $stripe_product = \Stripe\Product::create([
+                    'name'     => $product_data['name'],
+                    'metadata' => [
+                        'plugin_product_id' => $product_data['plugin_product_id'],
+                        'variant_id'        => $product_data['variant_id'],
+                        'duration_id'       => $product_data['duration_id'] ?? 0,
+                        'mode'              => $product_data['mode'],
+                    ],
+                ]);
+            }
+
+            $result = [
+                'stripe_product_id' => $stripe_product->id,
+            ];
+
+            set_transient($cache_key, $result, DAY_IN_SECONDS);
+
+            return $result;
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_product_create', $e->getMessage());
         }
     }
     /**
@@ -956,7 +1084,7 @@ class StripeService {
             $start_date    = $start_date_raw !== '' ? $start_date_raw : null;
             $end_date      = $end_date_raw !== '' ? $end_date_raw : null;
             $days          = intval($metadata['days'] ?? 0);
-            $weekend_tarif  = intval($metadata['weekend_tarif'] ?? ($existing_orders[0]->weekend_tariff ?? 0));
+            $weekend_tarif  = intval($metadata['weekend_tarif'] ?? 0);
             $user_ip       = sanitize_text_field($metadata['user_ip'] ?? '');
             $user_agent    = sanitize_text_field($metadata['user_agent'] ?? '');
 
@@ -986,9 +1114,21 @@ class StripeService {
 
             global $wpdb;
             $existing_orders = $wpdb->get_results($wpdb->prepare(
-                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
+                "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number, order_items FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
                 $session->id
             ));
+
+            if (!empty($existing_orders)) {
+                $produkt_name = $produkt_name ?: ($existing_orders[0]->produkt_name ?? '');
+                $zustand      = $zustand ?: ($existing_orders[0]->zustand_text ?? '');
+                $produktfarbe = $produktfarbe ?: ($existing_orders[0]->produktfarbe_text ?? '');
+                $gestellfarbe = $gestellfarbe ?: ($existing_orders[0]->gestellfarbe_text ?? '');
+                $extra        = $extra ?: ($existing_orders[0]->extra_text ?? '');
+                $dauer        = $dauer ?: ($existing_orders[0]->dauer_text ?? '');
+                if (!$weekend_tarif) {
+                    $weekend_tarif = intval($existing_orders[0]->weekend_tariff ?? 0);
+                }
+            }
 
             $shipping_price_id = $metadata['shipping_price_id'] ?? '';
             if (!$shipping_price_id && !empty($existing_orders)) {
@@ -1080,12 +1220,21 @@ class StripeService {
             }
 
             $welcome_sent = false;
+            $final_order_number = null;
+
             if (!empty($existing_orders)) {
                 foreach ($existing_orders as $ord) {
                     $send_welcome = ($ord->status !== 'abgeschlossen');
                     $update_data = $data;
                     $update_data['created_at'] = $ord->created_at;
-                    if (empty($ord->order_number)) {
+                    $finalize_number = ($ord->status === 'offen');
+                    if ($finalize_number && $final_order_number === null) {
+                        $final_order_number = pv_generate_order_number();
+                    }
+
+                    if ($finalize_number && $final_order_number !== '') {
+                        $update_data['order_number'] = $final_order_number;
+                    } elseif (empty($ord->order_number)) {
                         $gen_num = pv_generate_order_number();
                         if ($gen_num !== '') {
                             $update_data['order_number'] = $gen_num;
@@ -1104,6 +1253,13 @@ class StripeService {
                         $update_data,
                         ['id' => $ord->id]
                     );
+                    if (!empty($update_data['order_number']) && $update_data['order_number'] !== $ord->order_number) {
+                        produkt_add_order_log(
+                            $ord->id,
+                            'order_number_finalized',
+                            ($ord->order_number ? $ord->order_number . ' -> ' : '') . $update_data['order_number']
+                        );
+                    }
                     if ($send_welcome) {
                         produkt_add_order_log($ord->id, 'status_updated', 'offen -> abgeschlossen');
                     }
@@ -1115,22 +1271,48 @@ class StripeService {
                         $welcome_sent = true;
                     }
                     if ($ord->status === 'offen') {
-                        if ($ord->variant_id) {
-                            $wpdb->query($wpdb->prepare(
-                                "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
-                                $ord->variant_id
-                            ));
-                            if ($ord->product_color_id) {
-                                $wpdb->query($wpdb->prepare(
-                                    "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
-                                    $ord->variant_id,
-                                    $ord->product_color_id
-                                ));
+                        $items = [];
+                        if (!empty($ord->order_items)) {
+                            $decoded = json_decode($ord->order_items, true);
+                            if (is_array($decoded)) {
+                                $items = $decoded;
                             }
                         }
-                        if (!empty($ord->extra_ids)) {
-                            $ids = array_filter(array_map('intval', explode(',', $ord->extra_ids)));
-                            foreach ($ids as $eid) {
+
+                        if (empty($items)) {
+                            $items[] = [
+                                'variant_id'       => $ord->variant_id,
+                                'product_color_id' => $ord->product_color_id,
+                                'extra_ids'        => $ord->extra_ids,
+                            ];
+                        }
+
+                        foreach ($items as $itm) {
+                            $variant_id = intval($itm['variant_id'] ?? 0);
+                            $product_color_id = intval($itm['product_color_id'] ?? 0);
+                            if ($variant_id) {
+                                $wpdb->query($wpdb->prepare(
+                                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                    $variant_id
+                                ));
+                                if ($product_color_id) {
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                        $variant_id,
+                                        $product_color_id
+                                    ));
+                                }
+                            }
+
+                            $extra_ids_raw = $itm['extra_ids'] ?? '';
+                            $extra_ids = [];
+                            if (is_array($extra_ids_raw)) {
+                                $extra_ids = array_filter(array_map('intval', $extra_ids_raw));
+                            } elseif (!empty($extra_ids_raw)) {
+                                $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+                            }
+
+                            foreach ($extra_ids as $eid) {
                                 $wpdb->query($wpdb->prepare(
                                     "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                     $eid

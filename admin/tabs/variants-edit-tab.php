@@ -5,7 +5,33 @@ $modus = get_option('produkt_betriebsmodus', 'miete');
 $mietpreis_monatlich = number_format((float)$edit_item->mietpreis_monatlich, 2, '.', '');
 $verkaufspreis_formatted = number_format((float)$verkaufspreis_einmalig, 2, '.', '');
 $weekend_price = floatval($edit_item->weekend_price);
-$weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
+$sale_enabled = intval($edit_item->sale_enabled ?? 0);
+$sale_price_cents = intval(round($verkaufspreis_einmalig * 100));
+$has_sale_options = false;
+
+global $wpdb;
+$sale_conditions = $wpdb->get_results($wpdb->prepare(
+    "SELECT c.*, COALESCE(vo.sale_available, 0) AS sale_available FROM {$wpdb->prefix}produkt_conditions c " .
+    "LEFT JOIN {$wpdb->prefix}produkt_variant_options vo ON vo.variant_id = %d AND vo.option_type = 'condition' AND vo.option_id = c.id " .
+    "WHERE c.category_id = %d ORDER BY c.sort_order, c.name",
+    $edit_item->id,
+    $selected_category
+));
+$sale_product_colors = $wpdb->get_results($wpdb->prepare(
+    "SELECT c.*, COALESCE(vo.sale_available, 0) AS sale_available FROM {$wpdb->prefix}produkt_colors c " .
+    "LEFT JOIN {$wpdb->prefix}produkt_variant_options vo ON vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.option_id = c.id " .
+    "WHERE c.category_id = %d AND c.color_type = 'product' ORDER BY c.sort_order, c.name",
+    $edit_item->id,
+    $selected_category
+));
+$sale_frame_colors = $wpdb->get_results($wpdb->prepare(
+    "SELECT c.*, COALESCE(vo.sale_available, 0) AS sale_available FROM {$wpdb->prefix}produkt_colors c " .
+    "LEFT JOIN {$wpdb->prefix}produkt_variant_options vo ON vo.variant_id = %d AND vo.option_type = 'frame_color' AND vo.option_id = c.id " .
+    "WHERE c.category_id = %d AND c.color_type = 'frame' ORDER BY c.sort_order, c.name",
+    $edit_item->id,
+    $selected_category
+));
+$has_sale_options = !empty($sale_product_colors) || !empty($sale_frame_colors) || !empty($sale_conditions);
 ?>
 
 <div class="produkt-edit-variant">
@@ -37,24 +63,90 @@ $weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
                         <label>Name *</label>
                         <input type="text" name="name" value="<?php echo esc_attr($edit_item->name); ?>" required>
                     </div>
-                    <?php if ($modus !== 'kauf'): ?>
-                    <div class="produkt-form-group">
-                        <label>Monatlicher Mietpreis *</label>
-                        <input type="number" step="0.01" name="mietpreis_monatlich" value="<?php echo esc_attr($mietpreis_monatlich); ?>" required>
-                    </div>
-                    <div class="produkt-form-group">
-                        <label>Einmaliger Verkaufspreis</label>
-                        <input type="number" step="0.01" name="verkaufspreis_einmalig" value="<?php echo esc_attr($verkaufspreis_formatted); ?>">
-                    </div>
-                    <?php else: ?>
-                        <input type="hidden" name="mietpreis_monatlich" value="0">
-                    <?php endif; ?>
+                    <input type="hidden" name="mietpreis_monatlich" value="0">
                 </div>
                 <div class="produkt-form-group full-width">
                     <label>Beschreibung</label>
                     <textarea name="description" rows="3"><?php echo esc_textarea($edit_item->description); ?></textarea>
                 </div>
             </div>
+
+            <?php if ($modus !== 'kauf'): ?>
+            <div class="dashboard-card produkt-sale-card">
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Produkt-Verkauf</h2>
+                        <p class="card-subline">Einmaliger Verkauf</p>
+                    </div>
+                    <label class="produkt-toggle-label">
+                        <input type="checkbox" name="sale_enabled" value="1" class="sale-toggle" <?php checked($sale_enabled, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                        <span>Verkauf aktiv</span>
+                    </label>
+                </div>
+                <div class="price-cards sale-price-cards">
+                  <div class="price-card" data-field="verkaufspreis_einmalig">
+                    <div class="price-card-head">
+                      <div class="price-title">Verkaufspreis Direktverkauf</div>
+                      <span class="price-badge">EUR</span>
+                    </div>
+                    <div class="price-display">
+                      <input type="text" class="price-input sale-dependent" placeholder="0,00" aria-label="Verkaufspreis Direktverkauf in Euro" />
+                      <span class="price-suffix">€</span>
+                      <input type="hidden" name="verkaufspreis_einmalig" class="price-hidden sale-dependent" value="<?php echo $sale_price_cents; ?>">
+                    </div>
+                    <?php if ($has_sale_options): ?>
+                    <div class="price-options">
+                      <?php if (!empty($sale_product_colors)): ?>
+                      <div class="price-option-group">
+                        <div class="price-option-title">Produktfarbe</div>
+                        <div class="sale-option-grid">
+                            <?php foreach ($sale_product_colors as $color): ?>
+                            <label class="produkt-toggle-label sale-option-toggle">
+                                <input type="checkbox" name="sale_product_colors[]" value="<?php echo esc_attr($color->id); ?>" class="sale-dependent" <?php checked(intval($color->sale_available ?? 0), 1); ?>>
+                                <span class="produkt-toggle-slider"></span>
+                                <span><?php echo esc_html($color->name); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                      </div>
+                      <?php endif; ?>
+
+                      <?php if (!empty($sale_frame_colors)): ?>
+                      <div class="price-option-group">
+                        <div class="price-option-title">Gestellfarbe</div>
+                        <div class="sale-option-grid">
+                            <?php foreach ($sale_frame_colors as $color): ?>
+                            <label class="produkt-toggle-label sale-option-toggle">
+                                <input type="checkbox" name="sale_frame_colors[]" value="<?php echo esc_attr($color->id); ?>" class="sale-dependent" <?php checked(intval($color->sale_available ?? 0), 1); ?>>
+                                <span class="produkt-toggle-slider"></span>
+                                <span><?php echo esc_html($color->name); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                      </div>
+                      <?php endif; ?>
+
+                      <?php if (!empty($sale_conditions)): ?>
+                      <div class="price-option-group">
+                        <div class="price-option-title">Zustand</div>
+                        <div class="sale-option-grid">
+                            <?php foreach ($sale_conditions as $condition): ?>
+                            <label class="produkt-toggle-label sale-option-toggle">
+                                <input type="checkbox" name="sale_conditions[]" value="<?php echo esc_attr($condition->id); ?>" class="sale-dependent" <?php checked(intval($condition->sale_available ?? 0), 1); ?>>
+                                <span class="produkt-toggle-slider"></span>
+                                <span><?php echo esc_html($condition->name); ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                      </div>
+                      <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
+                  </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <?php if ($modus === 'kauf'): ?>
             <div class="dashboard-card">
@@ -194,11 +286,11 @@ $weekend_price_formatted = number_format((float)$weekend_price, 2, '.', '');
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.produkt-media-button').forEach(function(btn){
-        btn.addEventListener('click', function(e){
-            e.preventDefault();
-            const target = document.getElementById(this.dataset.target);
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.produkt-media-button').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                const target = document.getElementById(this.dataset.target);
             const preview = document.getElementById(this.dataset.target + '_preview');
             const frame = wp.media({title: 'Bild auswählen', button: {text: 'Bild verwenden'}, multiple: false});
             frame.on('select', function(){
@@ -217,6 +309,24 @@ document.addEventListener('DOMContentLoaded', function() {
             if (preview) preview.innerHTML = '<span>Noch kein Bild vorhanden</span>';
         });
     });
+
+    const saleToggle = document.querySelector('.produkt-sale-card .sale-toggle');
+    const saleCard = document.querySelector('.produkt-sale-card');
+    const saleDependentFields = document.querySelectorAll('.produkt-sale-card .sale-dependent');
+
+    function handleSaleToggle() {
+        if (!saleCard || !saleToggle) return;
+        const enabled = saleToggle.checked;
+        saleCard.classList.toggle('sale-disabled', !enabled);
+        saleDependentFields.forEach(function(field) {
+            field.disabled = !enabled;
+        });
+    }
+
+    if (saleToggle) {
+        saleToggle.addEventListener('change', handleSaleToggle);
+        handleSaleToggle();
+    }
 });
 </script>
 

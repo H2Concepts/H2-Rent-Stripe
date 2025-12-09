@@ -13,6 +13,7 @@ class SeoModule {
         add_action('wp_head', [self::class, 'add_schema_markup']);
         add_action('init', [self::class, 'add_sitemap_rewrite']);
         add_action('template_redirect', [self::class, 'render_sitemap']);
+        add_filter('rank_math/frontend/breadcrumb/items', [self::class, 'filter_breadcrumb_items']);
         // add sitemap reference to robots.txt
         add_filter('robots_txt', [self::class, 'add_sitemap_to_robots'], 10, 2);
     }
@@ -138,6 +139,166 @@ class SeoModule {
         if (!empty($og_image)) {
             echo '<meta name="twitter:image" content="' . esc_url($og_image) . '">' . "\n";
         }
+    }
+
+    public static function filter_breadcrumb_items($crumbs) {
+        $slug          = sanitize_title(get_query_var('produkt_slug'));
+        $category_slug = sanitize_title(get_query_var('produkt_category_slug'));
+
+        if (empty($slug) && empty($category_slug)) {
+            return $crumbs;
+        }
+
+        $home_label = __('Home', 'h2-concepts');
+        $home_url   = home_url('/');
+
+        if (!empty($crumbs)) {
+            $home_label = self::get_crumb_label($crumbs[0]) ?: $home_label;
+            $home_url   = self::get_crumb_url($crumbs[0]) ?: $home_url;
+        }
+
+        $shop_page_id = get_option(\PRODUKT_SHOP_PAGE_OPTION);
+        $shop_label   = __('Shop', 'h2-concepts');
+        $shop_url     = '';
+
+        if ($shop_page_id) {
+            $shop_label = get_the_title($shop_page_id) ?: $shop_label;
+            $shop_url   = get_permalink($shop_page_id);
+        }
+
+        if (empty($shop_url)) {
+            $shop_url = home_url('/shop/');
+        }
+
+        $final_crumbs = [
+            [
+                'label' => $home_label,
+                'url'   => $home_url,
+                0       => $home_label,
+                1       => $home_url,
+            ],
+            [
+                'label' => $shop_label,
+                'url'   => $shop_url,
+                0       => $shop_label,
+                1       => $shop_url,
+            ],
+        ];
+
+        if (!empty($category_slug)) {
+            $category = self::get_product_category_by_slug($category_slug);
+            if ($category) {
+                $label = $category->name;
+                $final_crumbs[] = [
+                    'label' => $label,
+                    'url'   => '',
+                    0       => $label,
+                    1       => '',
+                ];
+            }
+        }
+
+        if (!empty($slug)) {
+            $product = self::get_product_by_slug($slug);
+            if ($product) {
+                $label = $product->product_title;
+                $final_crumbs[] = [
+                    'label' => $label,
+                    'url'   => '',
+                    0       => $label,
+                    1       => '',
+                ];
+            }
+        }
+
+        return $final_crumbs;
+    }
+
+    private static function crumb_exists($crumbs, $label) {
+        foreach ($crumbs as $crumb) {
+            $existing_label = self::get_crumb_label($crumb);
+
+            if (!empty($existing_label) && strtolower($existing_label) === strtolower($label)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function get_crumb_label($crumb) {
+        if (is_array($crumb)) {
+            return $crumb['label'] ?? ($crumb[0] ?? '');
+        }
+
+        if (is_object($crumb) && isset($crumb->label)) {
+            return $crumb->label;
+        }
+
+        return '';
+    }
+
+    private static function get_crumb_url($crumb) {
+        if (is_array($crumb)) {
+            return $crumb['url'] ?? ($crumb[1] ?? '');
+        }
+
+        if (is_object($crumb) && isset($crumb->url)) {
+            return $crumb->url;
+        }
+
+        return '';
+    }
+
+    private static function get_product_by_slug($slug) {
+        global $wpdb;
+
+        if (empty($slug)) {
+            return null;
+        }
+
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_categories WHERE REPLACE(LOWER(product_title),' ', '-') = %s",
+            $slug
+        ));
+
+        if (!$category) {
+            $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->product_title) === $slug) {
+                    $category = $cat;
+                    break;
+                }
+            }
+        }
+
+        return $category;
+    }
+
+    private static function get_product_category_by_slug($slug) {
+        global $wpdb;
+
+        if (empty($slug)) {
+            return null;
+        }
+
+        $table = $wpdb->prefix . 'produkt_product_categories';
+        $category = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE slug = %s",
+            $slug
+        ));
+
+        if (!$category) {
+            $categories = $wpdb->get_results("SELECT * FROM {$table}");
+            foreach ($categories as $cat) {
+                if (sanitize_title($cat->name) === $slug) {
+                    $category = $cat;
+                    break;
+                }
+            }
+        }
+
+        return $category;
     }
 
     public static function add_schema_markup() {

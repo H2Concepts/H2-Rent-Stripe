@@ -120,6 +120,23 @@ function pv_get_image_url_by_variant_or_category($variant_id, $category_id) {
     return $image_url ?: '';
 }
 
+function pv_get_category_title_by_id($category_id) {
+    global $wpdb;
+
+    if (!$category_id) {
+        return '';
+    }
+
+    $title = $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+            $category_id
+        )
+    );
+
+    return $title ?: '';
+}
+
 /**
  * Determine the start and end dates for an order.
  * Falls back to parsing the dauer_text when the explicit
@@ -405,30 +422,125 @@ function pv_generate_order_number() {
 }
 
 /**
+ * Generate and increment the next invoice number.
+ *
+ * @return string Invoice number or empty string when numbering disabled
+ */
+function pv_generate_invoice_number() {
+    $next = get_option('produkt_next_invoice_number', '');
+    if ($next === '') {
+        return '';
+    }
+
+    if (preg_match('/^(.*?)(\d+)$/', $next, $m)) {
+        $prefix   = $m[1];
+        $num      = (int) $m[2];
+        $len      = strlen($m[2]);
+        $next_val = $prefix . str_pad($num + 1, $len, '0', STR_PAD_LEFT);
+    } else {
+        $num      = (int) $next;
+        $next_val = (string) ($num + 1);
+    }
+
+    update_option('produkt_next_invoice_number', $next_val);
+    update_option('produkt_last_invoice_number', $next);
+
+    return $next;
+}
+
+/**
+ * Ensure an invoice number exists for the given order.
+ *
+ * @param array $order
+ * @param int   $order_id
+ * @return string Invoice number or empty string when not available
+ */
+function pv_ensure_invoice_number(array $order, int $order_id) {
+    if ($order_id <= 0) {
+        return $order['invoice_number'] ?? '';
+    }
+
+    $invoice_number = $order['invoice_number'] ?? '';
+    if ($invoice_number !== '') {
+        return $invoice_number;
+    }
+
+    $generated = pv_generate_invoice_number();
+    if ($generated === '') {
+        return '';
+    }
+
+    global $wpdb;
+    $wpdb->update(
+        "{$wpdb->prefix}produkt_orders",
+        ['invoice_number' => $generated],
+        ['id' => $order_id],
+        ['%s'],
+        ['%d']
+    );
+
+    return $generated;
+}
+
+/**
+ * Create a provisional order number based on the current date and time.
+ *
+ * Uses the pattern DDMMYYHHMM so open orders get a unique, time-based
+ * identifier that will later be replaced by the final sequential number.
+ *
+ * @return string
+ */
+function pv_generate_preliminary_order_number() {
+    $timestamp = function_exists('current_time') ? current_time('timestamp') : time();
+    return date_i18n('dmyHi', $timestamp);
+}
+
+/**
  * Build the email footer HTML from stored settings.
  *
  * @return string
  */
 function pv_get_email_footer_html() {
     $footer = get_option('produkt_email_footer', []);
-    $parts = [];
+    $lines = [];
+
     if (!empty($footer['company'])) {
-        $parts[] = esc_html($footer['company']);
+        $lines[] = esc_html($footer['company']);
     }
     if (!empty($footer['owner'])) {
-        $parts[] = esc_html($footer['owner']);
+        $lines[] = esc_html($footer['owner']);
     }
     if (!empty($footer['street'])) {
-        $parts[] = esc_html($footer['street']);
+        $lines[] = esc_html($footer['street']);
     }
     if (!empty($footer['postal_city'])) {
-        $parts[] = esc_html($footer['postal_city']);
+        $lines[] = esc_html($footer['postal_city']);
     }
-    if (!$parts) {
+
+    $website   = !empty($footer['website']) ? esc_url($footer['website']) : '';
+    $copyright = !empty($footer['copyright']) ? esc_html($footer['copyright']) : '';
+
+    if (!$lines && !$website && !$copyright) {
         return '';
     }
-    return '<div style="background:#f8f9fa;color:#555;padding:20px;text-align:center;font-size:12px;">'
-        . implode('<br>', $parts) . '</div>';
+
+    $content = '<div style="padding:20px;text-align:center;background:#F6F7FA;color:#000;font-size:12px;line-height:1.6;">';
+
+    if ($lines) {
+        $content .= '<div>' . implode('<br>', $lines) . '</div>';
+    }
+
+    if ($website) {
+        $content .= '<div style="margin-top:8px;"><a href="' . $website . '" style="color:#000;text-decoration:none;">' . esc_html($footer['website']) . '</a></div>';
+    }
+
+    if ($copyright) {
+        $content .= '<div style="margin-top:8px;">' . $copyright . '</div>';
+    }
+
+    $content .= '</div>';
+
+    return $content;
 }
 
 /**
@@ -439,6 +551,52 @@ function pv_get_email_footer_html() {
 function pv_is_invoice_email_enabled() {
     $value = get_option('produkt_invoice_email_enabled', '1');
     return in_array($value, ['1', 1, true, 'true', 'on'], true);
+}
+
+/**
+ * Determine the order mode, falling back to database or global defaults when missing.
+ *
+ * @param array $order    Order payload
+ * @param int   $order_id Optional order ID reference
+ * @return string Either 'kauf' or 'miete'
+ */
+function pv_get_order_mode(array $order = [], int $order_id = 0) {
+    $mode = $order['mode'] ?? '';
+
+    if (!$mode && $order_id) {
+        global $wpdb;
+        $mode = $wpdb->get_var($wpdb->prepare(
+            "SELECT mode FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+    }
+
+    if (!$mode) {
+        $mode = get_option('produkt_betriebsmodus', 'miete');
+    }
+
+    $mode = strtolower(trim((string) $mode));
+
+    if (in_array($mode, ['kauf', 'sale', 'einmalkauf', 'direct', 'purchase'], true)) {
+        return 'kauf';
+    }
+
+    return 'miete';
+}
+
+/**
+ * Decide whether the plugin should send its own invoice email for the given order.
+ *
+ * @param array $order    Order payload
+ * @param int   $order_id Optional order ID reference
+ * @return bool
+ */
+function pv_should_send_invoice_email(array $order = [], int $order_id = 0) {
+    if (!pv_is_invoice_email_enabled()) {
+        return false;
+    }
+
+    return pv_get_order_mode($order, $order_id) === 'kauf';
 }
 
 /**
@@ -478,7 +636,7 @@ function pv_get_order_by_id($order_id) {
                 COALESCE(pc.name, o.produktfarbe_text) AS product_color_name,
                 COALESCE(fc.name, o.gestellfarbe_text) AS frame_color_name,
                 sm.name AS shipping_name,
-                sm.service_provider AS shipping_provider
+                COALESCE(NULLIF(o.shipping_provider, ''), sm.service_provider) AS shipping_provider
          FROM {$wpdb->prefix}produkt_orders o
          LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
          LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
@@ -495,7 +653,291 @@ function pv_get_order_by_id($order_id) {
     );
 
     $row = $wpdb->get_row($sql, ARRAY_A);
-    return $row ?: null;
+
+    if (!$row) {
+        return null;
+    }
+
+    $row['produkte'] = pv_expand_order_products($row);
+
+    return $row;
+}
+
+/**
+ * Retrieve an order by Stripe session id including expanded products.
+ *
+ * @param string $session_id
+ * @return array|null
+ */
+function pv_get_order_by_session_id($session_id) {
+    global $wpdb;
+
+    $sql = $wpdb->prepare(
+        "SELECT o.*, c.name AS category_name,
+                COALESCE(v.name, o.produkt_name) AS variant_name,
+                COALESCE(NULLIF(GROUP_CONCAT(e.name SEPARATOR ', '), ''), o.extra_text) AS extra_names,
+                sm.name AS shipping_name
+         FROM {$wpdb->prefix}produkt_orders o
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON o.category_id = c.id
+         LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
+         LEFT JOIN {$wpdb->prefix}produkt_extras e ON FIND_IN_SET(e.id, o.extra_ids)
+         LEFT JOIN {$wpdb->prefix}produkt_shipping_methods sm
+            ON sm.stripe_price_id = COALESCE(o.shipping_price_id, c.shipping_price_id)
+         WHERE o.stripe_session_id = %s
+         GROUP BY o.id
+         ORDER BY o.id DESC LIMIT 1",
+        $session_id
+    );
+
+    $row = $wpdb->get_row($sql, ARRAY_A);
+    if (!$row) {
+        return null;
+    }
+
+    $row['produkte'] = pv_expand_order_products($row);
+    return $row;
+}
+
+/**
+ * Expand serialized order items into product objects with resolved names and images.
+ *
+ * @param array|object $row Order row data
+ * @return array
+ */
+function pv_expand_order_products($row) {
+    global $wpdb;
+
+    $row_arr = is_object($row) ? (array) $row : (array) $row;
+
+    $items = [];
+    if (!empty($row_arr['order_items'])) {
+        $decoded = json_decode($row_arr['order_items'], true);
+        if (is_array($decoded)) {
+            $items = $decoded;
+        }
+    }
+
+    if (empty($items)) {
+        $items[] = [
+            'category_id'      => $row_arr['category_id'] ?? 0,
+            'variant_id'       => $row_arr['variant_id'] ?? 0,
+            'extra_ids'        => $row_arr['extra_ids'] ?? '',
+            'duration_id'      => $row_arr['duration_id'] ?? 0,
+            'condition_id'     => $row_arr['condition_id'] ?? 0,
+            'product_color_id' => $row_arr['product_color_id'] ?? 0,
+            'frame_color_id'   => $row_arr['frame_color_id'] ?? 0,
+            'final_price'      => $row_arr['final_price'] ?? 0,
+            'start_date'       => $row_arr['start_date'] ?? null,
+            'end_date'         => $row_arr['end_date'] ?? null,
+            'weekend_tariff'   => $row_arr['weekend_tariff'] ?? 0,
+            'metadata'         => [
+                'produkt'      => $row_arr['produkt_name'] ?? '',
+                'extra'        => $row_arr['extra_text'] ?? '',
+                'dauer_name'   => $row_arr['dauer_text'] ?? '',
+                'zustand'      => $row_arr['zustand_text'] ?? '',
+                'produktfarbe' => $row_arr['produktfarbe_text'] ?? '',
+                'gestellfarbe' => $row_arr['gestellfarbe_text'] ?? '',
+            ],
+        ];
+    }
+
+    $variant_ids   = [];
+    $category_ids  = [];
+    $duration_ids  = [];
+    $condition_ids = [];
+    $color_ids     = [];
+    $frame_ids     = [];
+    $extra_ids_all = [];
+
+    foreach ($items as $itm) {
+        $variant_ids[]   = intval($itm['variant_id'] ?? 0);
+        $category_ids[]  = intval($itm['category_id'] ?? ($row_arr['category_id'] ?? 0));
+        $duration_ids[]  = intval($itm['duration_id'] ?? 0);
+        $condition_ids[] = intval($itm['condition_id'] ?? 0);
+        $color_ids[]     = intval($itm['product_color_id'] ?? 0);
+        $frame_ids[]     = intval($itm['frame_color_id'] ?? 0);
+
+        $extra_raw = $itm['extra_ids'] ?? '';
+        if (is_array($extra_raw)) {
+            $extra_ids_all = array_merge($extra_ids_all, array_map('intval', $extra_raw));
+        } elseif (!empty($extra_raw)) {
+            $extra_ids_all = array_merge($extra_ids_all, array_map('intval', explode(',', $extra_raw)));
+        }
+    }
+
+    $variant_map   = pv_get_name_map($wpdb->prefix . 'produkt_variants', $variant_ids);
+    $category_map  = pv_get_name_map($wpdb->prefix . 'produkt_categories', $category_ids);
+    $duration_map  = pv_get_name_map($wpdb->prefix . 'produkt_durations', $duration_ids);
+    $condition_map = pv_get_name_map($wpdb->prefix . 'produkt_conditions', $condition_ids);
+    $color_map     = pv_get_name_map($wpdb->prefix . 'produkt_colors', $color_ids);
+    $frame_map     = pv_get_name_map($wpdb->prefix . 'produkt_colors', $frame_ids);
+    $extras_map    = pv_get_name_map($wpdb->prefix . 'produkt_extras', $extra_ids_all);
+
+    $produkte = [];
+    foreach ($items as $itm) {
+        $extra_raw = $itm['extra_ids'] ?? '';
+        $extra_ids = [];
+        if (is_array($extra_raw)) {
+            $extra_ids = array_filter(array_map('intval', $extra_raw));
+        } elseif (!empty($extra_raw)) {
+            $extra_ids = array_filter(array_map('intval', explode(',', $extra_raw)));
+        }
+
+        $extra_names = [];
+        foreach ($extra_ids as $exid) {
+            if (isset($extras_map[$exid])) {
+                $extra_names[] = $extras_map[$exid];
+            }
+        }
+
+        $variant_id  = intval($itm['variant_id'] ?? 0);
+        $category_id = intval($itm['category_id'] ?? $row_arr['category_id'] ?? 0);
+
+        $category_name = '';
+        if ($category_id && isset($category_map[$category_id])) {
+            $category_name = $category_map[$category_id];
+        } elseif (!empty($itm['metadata']['produkt'])) {
+            $category_name = $itm['metadata']['produkt'];
+        } elseif (!empty($row_arr['category_name'])) {
+            $category_name = $row_arr['category_name'];
+        } elseif (!empty($row_arr['produkt_name'])) {
+            $category_name = $row_arr['produkt_name'];
+        }
+
+        $produkte[] = (object) [
+            'produkt_name'       => $category_name,
+            'variant_name'       => $variant_map[$variant_id] ?? ($row_arr['variant_name'] ?? ''),
+            'extra_names'        => implode(', ', $extra_names),
+            'duration_name'      => $duration_map[intval($itm['duration_id'] ?? 0)] ?? ($itm['metadata']['dauer_name'] ?? $row_arr['duration_name'] ?? ''),
+            'condition_name'     => $condition_map[intval($itm['condition_id'] ?? 0)] ?? ($itm['metadata']['zustand'] ?? ''),
+            'product_color_name' => $color_map[intval($itm['product_color_id'] ?? 0)] ?? ($itm['metadata']['produktfarbe'] ?? ''),
+            'frame_color_name'   => $frame_map[intval($itm['frame_color_id'] ?? 0)] ?? ($itm['metadata']['gestellfarbe'] ?? ''),
+            'weekend_tariff'     => !empty($itm['weekend_tariff']) ? 1 : 0,
+            'final_price'        => floatval($itm['final_price'] ?? 0),
+            'start_date'         => $itm['start_date'] ?? ($row_arr['start_date'] ?? null),
+            'end_date'           => $itm['end_date'] ?? ($row_arr['end_date'] ?? null),
+            'image_url'          => pv_get_image_url_by_variant_or_category($variant_id, $category_id),
+            'category_id'        => $category_id,
+            'duration_id'        => intval($itm['duration_id'] ?? 0),
+        ];
+    }
+
+    return $produkte;
+}
+
+function pv_get_name_map($table, $ids) {
+    global $wpdb;
+
+    $ids = array_values(array_filter(array_map('intval', (array) $ids)));
+    if (empty($ids)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+    $rows = $wpdb->get_results(
+        $wpdb->prepare(
+            "SELECT id, name FROM {$table} WHERE id IN ($placeholders)",
+            ...$ids
+        )
+    );
+
+    $map = [];
+    foreach ($rows as $row) {
+        $map[intval($row->id)] = $row->name;
+    }
+
+    return $map;
+}
+
+/**
+ * Generate a deterministic HMAC token for secure invoice downloads.
+ *
+ * @param int $order_id
+ * @return string
+ */
+function pv_get_invoice_download_token($order_id) {
+    $order_id = (int) $order_id;
+    $secret   = (defined('AUTH_SALT') ? AUTH_SALT : '') . (defined('LOGGED_IN_SALT') ? LOGGED_IN_SALT : '');
+
+    if (!$order_id || !$secret) {
+        return '';
+    }
+
+    return hash_hmac('sha256', (string) $order_id, $secret);
+}
+
+/**
+ * Build a signed download URL for an invoice.
+ *
+ * @param int $order_id
+ * @return string
+ */
+function pv_get_invoice_download_url($order_id) {
+    $order_id = (int) $order_id;
+    $token    = pv_get_invoice_download_token($order_id);
+
+    if (!$order_id || !$token) {
+        return '';
+    }
+
+    return add_query_arg(
+        [
+            'h2_invoice_download' => $order_id,
+            'token'               => $token,
+        ],
+        home_url('/')
+    );
+}
+
+/**
+ * Stream an invoice PDF after validating the signed token.
+ */
+function pv_handle_invoice_download() {
+    if (empty($_GET['h2_invoice_download']) || empty($_GET['token'])) {
+        return;
+    }
+
+    $order_id = (int) $_GET['h2_invoice_download'];
+    $token    = sanitize_text_field(wp_unslash($_GET['token']));
+
+    $expected = pv_get_invoice_download_token($order_id);
+    if (!$order_id || !$expected || !hash_equals($expected, $token)) {
+        wp_die('Ungültiger Download-Link.', 'Fehler', ['response' => 403]);
+    }
+
+    global $wpdb;
+
+    $table_orders = $wpdb->prefix . 'produkt_orders';
+    $order        = $wpdb->get_row(
+        $wpdb->prepare("SELECT invoice_url, invoice_number FROM {$table_orders} WHERE id = %d", $order_id)
+    );
+
+    if (!$order || empty($order->invoice_url)) {
+        wp_die('Rechnung nicht gefunden.', 'Fehler', ['response' => 404]);
+    }
+
+    $upload_dir = wp_upload_dir();
+    $basedir    = trailingslashit($upload_dir['basedir']) . 'rechnungen-h2-rental-pro/';
+
+    $filename = basename($order->invoice_url);
+    $filepath = $basedir . $filename;
+
+    if (!file_exists($filepath)) {
+        wp_die('Datei nicht gefunden.', 'Fehler', ['response' => 404]);
+    }
+
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    header('Content-Type: application/pdf');
+
+    $download_name = 'rechnung-' . preg_replace('/[^a-zA-Z0-9_\-]/', '', $order->invoice_number ?? (string) $order_id) . '.pdf';
+    header('Content-Disposition: attachment; filename="' . $download_name . '"');
+    header('Content-Length: ' . filesize($filepath));
+
+    readfile($filepath);
+    exit;
 }
 
 /**
@@ -511,29 +953,72 @@ function pv_generate_invoice_pdf($order_id) {
         return false;
     }
 
+    $invoice_number       = pv_ensure_invoice_number($order, $order_id);
+    $order_number_display = !empty($order['order_number']) ? $order['order_number'] : (string) $order_id;
+    $invoice_display      = $invoice_number ?: ($order_number_display ? $order_number_display : ('RE-' . $order_id));
+
     // 2. PDF-API-Endpunkt + Key
     $endpoint = 'https://h2concepts.de/tools/generate-invoice.php?key=h2c_92DF!kf392AzJxLP0sQRX';
 
     // 3. Daten aufbauen
     $sender    = pv_get_invoice_sender();
-    $logo_url = get_option('plugin_firma_logo_url', '');
-    $product    = $order['produkt_name'];
-    if (!$product) {
-        $product = $order['variant_name'] ?? '';
+    $logo_url  = get_option('plugin_firma_logo_url', '');
+
+    // Haupt-Produktname: zuerst Kategorie, dann Fallbacks (inkl. erstem Positionseintrag)
+    $first_item     = !empty($order['produkte'][0]) ? $order['produkte'][0] : null;
+    $variant_name   = $order['variant_name'] ?? ($first_item->variant_name ?? '');
+    $condition_name = $order['condition_name'] ?? ($first_item->condition_name ?? '');
+    $product_color  = $order['product_color_name'] ?? ($first_item->product_color_name ?? '');
+    $frame_color    = $order['frame_color_name'] ?? ($first_item->frame_color_name ?? '');
+
+    $base_product = $order['category_name']
+        ?: ($first_item ? ($first_item->produkt_name ?? '') : '')
+        ?: $order['produkt_name']
+        ?: $variant_name;
+
+    $details = [];
+
+    // Ausführung (Variant)
+    if (!empty($variant_name) && $variant_name !== $base_product) {
+        $details[] = 'Ausführung: ' . $variant_name;
     }
-    if (!empty($order['product_color_name'])) {
-        $product .= ' – ' . $order['product_color_name'];
+
+    // Zustand
+    if (!empty($condition_name)) {
+        $details[] = 'Zustand: ' . $condition_name;
     }
-    if (!empty($order['frame_color_name'])) {
-        $product .= ' – ' . $order['frame_color_name'];
+
+    // Farben (Produkt + Gestell)
+    $color_parts = [];
+    if (!empty($product_color)) {
+        $color_parts[] = $product_color;
     }
+    if (!empty($frame_color)) {
+        $color_parts[] = $frame_color;
+    }
+    if ($color_parts) {
+        $details[] = 'Farbe: ' . implode(' / ', $color_parts);
+    }
+
+    // Alles zu einem mehrzeiligen Produkt-String zusammenbauen
+    $product = $base_product;
+    if ($details) {
+        $product .= "\n" . implode("\n", $details);
+    }
+
+    // UI-Einstellungen (Buttons & Tooltips) laden – u.a. MwSt-Toggle
+    $ui           = get_option('produkt_ui_settings', []);
+    $vat_included = isset($ui['vat_included']) ? (int) $ui['vat_included'] : 0;
 
     $customer_name = trim($order['customer_name']);
     $customer_addr = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
     $post_data = [
-        'rechnungsnummer'  => ($order['order_number'] ?: ('RE-' . $order_id)),
+        'rechnungsnummer'  => $invoice_display,
         'rechnungsdatum'   => date('Y-m-d'),
+        // Bestellnummer für das Template (falls vorhanden, sonst Fallback auf ID)
+        'bestellnummer'    => $order_number_display,
+
         'kunde_name'       => $customer_name ?: 'Kunde',
         'kunde_adresse'    => $customer_addr,
 
@@ -545,6 +1030,9 @@ function pv_generate_invoice_pdf($order_id) {
         'firma_email'      => $sender['firma_email'],
         'firma_telefon'    => $sender['firma_telefon'],
         'firma_logo_url'   => $logo_url,
+
+        // MwSt-Einstellung aus dem Buttons-&-Tooltips-Tab
+        'vat_included'     => $vat_included ? 1 : 0,
     ];
 
     // 4. Mietdauer bestimmen
@@ -643,13 +1131,29 @@ function pv_generate_invoice_pdf($order_id) {
         wp_mkdir_p($subdir);
     }
 
-    $filename = 'rechnung-' . $order_id . '.pdf';
+    // Sicheren Dateinamen generieren:
+    // Rechnungsnummer + zufälliger Token, damit niemand über "36 -> 37" andere Rechnungen findet
+    if (!function_exists('wp_generate_password')) {
+        require_once ABSPATH . 'wp-includes/pluggable.php';
+    }
+
+    // 20 Zeichen, nur Buchstaben/Zahlen, alles klein = URL- & Dateinamen-tauglich
+    $random_suffix = strtolower(wp_generate_password(20, false, false));
+
+    $safe_invoice_slug = sanitize_title_with_dashes($invoice_display);
+    if ($safe_invoice_slug === '') {
+        $safe_invoice_slug = 'rechnung-' . (int) $order_id;
+    }
+
+    $filename = 'rechnung-' . $safe_invoice_slug . '-' . $random_suffix . '.pdf';
     $path     = $subdir . $filename;
+
     file_put_contents($path, $pdf_data);
 
     // URL speichern
     global $wpdb;
     $invoice_url = trailingslashit($upload_dir['baseurl']) . 'rechnungen-h2-rental-pro/' . $filename;
+
     $wpdb->update(
         "{$wpdb->prefix}produkt_orders",
         ['invoice_url' => $invoice_url],

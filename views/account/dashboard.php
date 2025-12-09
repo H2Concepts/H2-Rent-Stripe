@@ -12,7 +12,9 @@
         <div class="login-panel-header">
             <?php if ($login_logo) : ?>
                 <div class="login-brand-logo">
-                    <img src="<?php echo esc_url($login_logo); ?>" alt="<?php echo esc_attr($site_name); ?> Logo">
+                    <a href="<?php echo esc_url(home_url('/')); ?>" title="<?php echo esc_attr($site_name); ?>">
+                        <img src="<?php echo esc_url($login_logo); ?>" alt="<?php echo esc_attr($site_name); ?> Logo">
+                    </a>
                 </div>
             <?php endif; ?>
         </div>
@@ -32,8 +34,17 @@
                     <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
                     <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
                     <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
-                    <label for="login-code" class="screen-reader-text">6-stelliger Code</label>
-                    <input id="login-code" type="text" name="code" placeholder="6-stelliger Code" required>
+                    <label for="login-code-combined" class="screen-reader-text">6-stelliger Code</label>
+                    <input id="login-code-combined" type="hidden" name="code" required>
+                    <div class="code-input-group">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 1" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 2" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 3" autocomplete="off">
+                        <span class="code-separator">-</span>
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 4" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 5" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 6" autocomplete="off">
+                    </div>
                     <button type="submit" name="verify_login_code">Einloggen</button>
                 </form>
             <?php endif; ?>
@@ -47,6 +58,13 @@
 <?php else : ?>
 <div class="produkt-login-wrapper">
     <div class="login-box">
+        <?php if ($login_logo) : ?>
+            <div class="login-brand-logo">
+                <a href="<?php echo esc_url(home_url('/')); ?>" title="<?php echo esc_attr($site_name); ?>">
+                    <img src="<?php echo esc_url($login_logo); ?>" alt="<?php echo esc_attr($site_name); ?> Logo">
+                </a>
+            </div>
+        <?php endif; ?>
         <h1>Login</h1>
         <p>Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.</p>
         <?php if (!empty($message)) { echo $message; } ?>
@@ -61,7 +79,16 @@
             <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
             <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
             <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
-            <input type="text" name="code" placeholder="6-stelliger Code" required>
+            <input id="login-code-combined-classic" type="hidden" name="code" required>
+            <div class="code-input-group">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 1" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 2" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 3" autocomplete="off">
+                <span class="code-separator">-</span>
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 4" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 5" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 6" autocomplete="off">
+            </div>
             <button type="submit" name="verify_login_code">Einloggen</button>
         </form>
         <?php endif; ?>
@@ -71,8 +98,9 @@
 <?php endif; ?>
 <?php else : ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
-    <h1>Kundenkonto</h1>
+    <h2>Mein Konto</h2>
     <?php if (!empty($message)) { echo $message; } ?>
+    <?php if ($is_sale) : ?>
         <div class="account-layout">
             <aside class="account-sidebar shop-category-list">
                 <h2>Hallo <?php echo esc_html($full_name); ?></h2>
@@ -86,7 +114,6 @@
                 </ul>
             </aside>
             <div>
-        <?php if ($is_sale) : ?>
             <?php if (!empty($sale_orders)) : ?>
                 <?php $first = $sale_orders[0]; ?>
                 <div class="abo-row">
@@ -137,47 +164,393 @@
             <?php else : ?>
                 <p>Keine Bestellungen.</p>
             <?php endif; ?>
-        <?php else : ?>
-            <?php if (!empty($subscriptions)) : ?>
-                <?php foreach ($subscriptions as $sub) : ?>
-                    <?php
-                    $order = $order_map[$sub['subscription_id']] ?? null;
-                    if (!$order) {
-                        continue;
-                    }
-                    $product_name = $order->produkt_name ?? $sub['subscription_id'];
-                    $start_ts = strtotime($sub['start_date']);
-                    $start_formatted = date_i18n('d.m.Y', $start_ts);
-                    $laufzeit_in_monaten = pv_get_minimum_duration_months($order);
-                    $cancelable_ts            = strtotime("+{$laufzeit_in_monaten} months", $start_ts);
-                    $kuendigungsfenster_ts    = strtotime('-14 days', $cancelable_ts);
-                    $kuendigbar_ab_date       = date_i18n('d.m.Y', $kuendigungsfenster_ts);
-                    $cancelable               = time() >= $kuendigungsfenster_ts;
-                    $is_extended              = time() > $cancelable_ts;
-
-                    $period_end_ts   = null;
-                    $period_end_date = '';
-                    if (!empty($sub['current_period_end'])) {
-                        $period_end_ts   = strtotime($sub['current_period_end']);
-                        $period_end_date = date_i18n('d.m.Y', $period_end_ts);
-                    }
-
-                    $variant_id = $order->variant_id ?? 0;
-                    $image_url  = pv_get_image_url_by_variant_or_category($variant_id, $order->category_id ?? 0);
-
-                    $address = '';
-                    if (!empty($order->customer_street) && !empty($order->customer_postal) && !empty($order->customer_city)) {
-                        $address = esc_html(trim($order->customer_street . ', ' . $order->customer_postal . ' ' . $order->customer_city));
-                    }
-                    ?>
-                    <?php include PRODUKT_PLUGIN_PATH . 'includes/render-subscription.php'; ?>
-                <?php endforeach; ?>
-            <?php else : ?>
-                <p>Keine aktiven Abos.</p>
-            <?php endif; ?>
-        <?php endif; ?>
-
             </div>
         </div>
+    <?php else : ?>
+        <?php
+            $active_subscriptions = !empty($subscriptions) ? array_filter($subscriptions) : [];
+            $active_count         = is_array($active_subscriptions) ? count($active_subscriptions) : 0;
+            $subscription_lookup  = [];
+            foreach ($active_subscriptions as $sub_meta) {
+                if (!empty($sub_meta['subscription_key'])) {
+                    $subscription_lookup[$sub_meta['subscription_key']] = $sub_meta;
+                }
+            }
+
+            $view               = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'overview';
+            $selected_sub_id    = isset($_GET['subscription']) ? sanitize_text_field($_GET['subscription']) : '';
+            $selected_order_id  = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : '';
+            $overview_url       = remove_query_arg(['view', 'subscription', 'order']);
+            $subscriptions_url  = add_query_arg('view', 'abos', $overview_url);
+            $invoices_url       = add_query_arg('view', 'rechnungen', $overview_url);
+
+            $monthly_total = 0.0;
+
+            if (!empty($active_subscriptions)) {
+                foreach ($active_subscriptions as $sub) {
+                    $sub_id         = trim((string) ($sub['subscription_key'] ?? ''));
+                    $orders_for_sub = $order_map[$sub_id] ?? [];
+                    if (!is_array($orders_for_sub)) {
+                        $orders_for_sub = [$orders_for_sub];
+                    }
+
+                    foreach ($orders_for_sub as $order) {
+                        if ($order && isset($order->final_price)) {
+                            $monthly_total += max(0.0, (float) $order->final_price);
+                        }
+                    }
+                }
+            }
+
+            $monthly_total_formatted = number_format($monthly_total, 2, ',', '.');
+            $user_id                 = get_current_user_id();
+            $ref_seed                = $user_id ? $user_id . wp_get_current_user()->user_email : 'customer';
+            $invite_code             = 'FREUND-' . strtoupper(substr(md5($ref_seed), 0, 6));
+
+            $selected_order = null;
+            $selected_sub_id = trim((string) $selected_sub_id);
+
+            if ($selected_sub_id) {
+                $orders_for_selected = $order_map[$selected_sub_id] ?? [];
+                if (!is_array($orders_for_selected)) {
+                    $orders_for_selected = [$orders_for_selected];
+                }
+
+                if ($selected_order_id) {
+                    foreach ($orders_for_selected as $order_item) {
+                        if ((string) ($order_item->id ?? '') === (string) $selected_order_id) {
+                            $selected_order = $order_item;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$selected_order && !empty($orders_for_selected)) {
+                    $selected_order = $orders_for_selected[0];
+                }
+            }
+        ?>
+        <?php if ($view === 'abos' && !$selected_sub_id) : ?>
+            <div class="account-section-header">
+                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
+                <h4>Meine Abos</h4>
+            </div>
+            <div class="subscription-grid">
+                <?php if (!empty($active_subscriptions)) : ?>
+                    <?php foreach ($active_subscriptions as $sub) : ?>
+                        <?php
+                            $sub_id         = trim((string) ($sub['subscription_key'] ?? ''));
+                            $orders_for_sub = $order_map[$sub_id] ?? [];
+                            if (!is_array($orders_for_sub)) {
+                                $orders_for_sub = [$orders_for_sub];
+                            }
+                        ?>
+                        <?php foreach ($orders_for_sub as $order) : ?>
+                            <?php
+                                $variant_id  = $order ? ($order->variant_id ?? 0) : 0;
+                                $category_id = $order ? ($order->category_id ?? 0) : 0;
+                                $image_url   = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+                                $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
+                                if (!$product && !empty($order->category_id)) {
+                                    $product = pv_get_category_title_by_id((int) $order->category_id);
+                                }
+                                $product     = $product ?: ($order ? ($order->variant_name ?? 'Produkt') : 'Produkt');
+                                $order_date  = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
+                                $duration    = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
+                                $payments    = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
+                                $monthly     = number_format($payments['monthly_amount'] ?? 0, 2, ',', '.') . ' €';
+                                $min_months  = $order ? pv_get_minimum_duration_months($order) : 0;
+                                $min_label   = $min_months ? $min_months . ' Monate' : '';
+                                $detail_url  = add_query_arg(
+                                    [
+                                        'view'         => 'abo-detail',
+                                        'subscription' => $sub_id,
+                                        'order'        => $order->id ?? '',
+                                    ],
+                                    $overview_url
+                                );
+                            ?>
+                            <a class="subscription-card" href="<?php echo esc_url($detail_url); ?>">
+                                <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                                <div class="subscription-card-body">
+                                    <div class="subscription-card-title"><?php echo esc_html($product); ?></div>
+                                    <div class="subscription-meta">
+                                        <span class="pill-badge success">ABO AKTIV</span>
+                                        <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
+                                        <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
+                                        <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                                    </div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <p>Keine aktiven Abos vorhanden.</p>
+                <?php endif; ?>
+            </div>
+        <?php elseif ($view === 'rechnungen') : ?>
+            <div class="account-section-header">
+                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
+                <h4>Meine Rechnungen</h4>
+            </div>
+            <?php
+                $purchase_invoices = array_filter($invoice_orders, function ($inv) {
+                    return ($inv->mode ?? '') === 'kauf';
+                });
+            ?>
+            <?php $has_invoices = !empty($stripe_invoices) || !empty($purchase_invoices); ?>
+            <?php if ($has_invoices) : ?>
+                <div class="subscription-grid invoice-grid">
+                    <?php if (!empty($stripe_invoices)) : ?>
+                        <?php foreach ($stripe_invoices as $invoice) : ?>
+                            <?php
+                                $date_format  = get_option('date_format') ?: 'd.m.Y';
+                                $created      = !empty($invoice['created']) ? date_i18n($date_format, $invoice['created']) : '';
+                                $period_start = !empty($invoice['period_start']) ? date_i18n($date_format, $invoice['period_start']) : '';
+                                $period_end   = !empty($invoice['period_end']) ? date_i18n($date_format, $invoice['period_end']) : '';
+                                $period_label = ($period_start && $period_end) ? ($period_start . ' – ' . $period_end) : ($period_start ?: '');
+                                $amount_label = number_format((float) ($invoice['amount_total'] / 100), 2, ',', '.');
+                                $currency     = !empty($invoice['currency']) ? $invoice['currency'] : 'EUR';
+                                $order_number = '';
+
+                                if (!empty($invoice['order_number'])) {
+                                    $order_number = $invoice['order_number'];
+                                } elseif (!empty($invoice['subscription']) && !empty($subscription_order_numbers[$invoice['subscription']] ?? '')) {
+                                    $order_number = $subscription_order_numbers[$invoice['subscription']];
+                                }
+
+                                $status_raw   = $invoice['status'] ?? '';
+                                $is_paid_flag = !empty($invoice['paid']);
+
+                                $status_label = 'Unbekannt';
+                                $status_class = 'status-unknown';
+
+                                if ($is_paid_flag || $status_raw === 'paid') {
+                                    $status_label = 'Bezahlt';
+                                    $status_class = 'status-paid';
+                                } elseif ($status_raw === 'open') {
+                                    $status_label = 'Offen';
+                                    $status_class = 'status-open';
+                                } elseif ($status_raw === 'void') {
+                                    $status_label = 'Storniert';
+                                    $status_class = 'status-void';
+                                } elseif ($status_raw === 'uncollectible') {
+                                    $status_label = 'Nicht einziehbar';
+                                    $status_class = 'status-uncollectible';
+                                } elseif ($status_raw === 'draft') {
+                                    $status_label = 'Entwurf';
+                                    $status_class = 'status-draft';
+                                }
+                            ?>
+                            <div class="subscription-card invoice-card">
+                                <span class="status-badge invoice-status-badge <?php echo esc_attr($status_class); ?>">
+                                    <?php echo esc_html($status_label); ?>
+                                </span>
+                                <div class="subscription-card-body">
+                                    <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
+                                    <div class="subscription-meta invoice-meta">
+                                        <?php if ($order_number) : ?>
+                                            <div class="invoice-row">
+                                                <strong>Bestellnummer:</strong> <?php echo esc_html($order_number); ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php if ($period_label) : ?>
+                                            <div class="invoice-row">
+                                                <strong>Zeitraum:</strong> <?php echo esc_html($period_label); ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php if ($created) : ?>
+                                            <div class="invoice-row">
+                                                <strong>Rechnungsdatum:</strong> <?php echo esc_html($created); ?>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <div class="invoice-row">
+                                            <strong>Rechnungsbetrag:</strong> <?php echo esc_html($amount_label . ' ' . $currency); ?>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-actions">
+                                        <?php if (!empty($invoice['pdf_url'])) : ?>
+                                            <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
+                                                Herunterladen
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <?php if (!empty($purchase_invoices)) : ?>
+                        <?php foreach ($purchase_invoices as $invoice) : ?>
+                            <?php
+                                $invoice_number = !empty($invoice->invoice_number)
+                                    ? $invoice->invoice_number
+                                    : (!empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? ''));
+                                $order_number   = !empty($invoice->order_number) ? $invoice->order_number : ($invoice->id ?? '');
+                                $purchase_date  = !empty($invoice->created_at) ? date_i18n('d.m.Y', strtotime($invoice->created_at)) : '–';
+                                $invoice_date   = !empty($invoice->invoice_sent_at) ? date_i18n('d.m.Y', strtotime($invoice->invoice_sent_at)) : $purchase_date;
+                                $amount_cents   = isset($invoice->amount_total) ? intval($invoice->amount_total) : 0;
+                                $amount_number  = $amount_cents > 0 ? ($amount_cents / 100) : floatval($invoice->final_price ?? 0) + floatval($invoice->shipping_cost ?? 0);
+                                $amount_label   = number_format($amount_number, 2, ',', '.');
+                                $download_url   = pv_get_invoice_download_url((int) ($invoice->id ?? 0));
+                                if (!$download_url && !empty($invoice->invoice_url)) {
+                                    $download_url = $invoice->invoice_url;
+                                }
+                            ?>
+                            <div class="subscription-card invoice-card">
+                                <div class="subscription-card-body">
+                                    <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
+                                    <div class="subscription-meta invoice-meta">
+                                        <div class="invoice-row">
+                                            <strong>Bestellnummer:</strong> <?php echo esc_html($order_number ?: '–'); ?>
+                                        </div>
+                                        <div class="invoice-row">
+                                            <strong>Kaufdatum:</strong> <?php echo esc_html($purchase_date); ?>
+                                        </div>
+                                        <div class="invoice-row">
+                                            <strong>Rechnungsdatum:</strong> <?php echo esc_html($invoice_date ?: '–'); ?>
+                                        </div>
+                                        <div class="invoice-row">
+                                            <strong>Rechnungsbetrag:</strong> <?php echo esc_html($amount_label); ?> €
+                                        </div>
+                                    </div>
+                                    <div class="invoice-actions">
+                                        <?php if ($download_url) : ?>
+                                            <a class="invoice-download-btn" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>
+                                                Herunterladen
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+            <?php else : ?>
+                <p>Aktuell liegen keine Rechnungen vor.</p>
+            <?php endif; ?>
+        <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
+            <?php
+                $product      = $selected_order->category_name ?? $selected_order->product_title ?? $selected_order->produkt_name ?? ($selected_order->category_title ?? '');
+                if (!$product && !empty($selected_order->category_id)) {
+                    $product = pv_get_category_title_by_id((int) $selected_order->category_id);
+                }
+                $product      = $product ?: ($selected_order->variant_name ?? 'Produkt');
+                $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
+                $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
+                $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : 'Mindestlaufzeit');
+                $condition    = $selected_order->condition_name ?? $selected_order->zustand_text ?? '';
+                $color        = $selected_order->product_color_name ?? $selected_order->produktfarbe_text ?? '';
+                $variant      = $selected_order->variant_name ?? '';
+                $payments     = pv_calculate_rental_payments($selected_order);
+                $monthly      = number_format($payments['monthly_amount'], 2, ',', '.') . ' €';
+
+                $start_date_raw = pv_get_order_start_date($selected_order);
+                $start_date_raw = $start_date_raw ?: (!empty($selected_order->created_at) ? date('Y-m-d', strtotime($selected_order->created_at)) : '');
+                $start_ts       = $start_date_raw ? strtotime($start_date_raw) : current_time('timestamp');
+                $min_months     = pv_get_minimum_duration_months($selected_order);
+                $min_end_ts     = strtotime('+' . $min_months . ' months', $start_ts);
+                $min_end_date   = date_i18n('d.m.Y', $min_end_ts);
+                $cancel_ready_ts = strtotime('-14 days', $min_end_ts);
+                $cancel_ready    = current_time('timestamp') >= $cancel_ready_ts;
+                $cancel_open_date = date_i18n('d.m.Y', $cancel_ready_ts);
+                $selected_meta   = $subscription_lookup[$selected_sub_id] ?? [];
+                $cancel_sub_id   = $selected_meta['subscription_id'] ?? $selected_sub_id;
+                $cancel_label    = $cancel_ready ? 'Jetzt kündigen' : 'Nicht möglich';
+
+                $status_raw   = strtolower($selected_meta['status'] ?? ($selected_order->status ?? 'active'));
+                $status_class = 'success';
+                $status_label = 'Abo Aktiv';
+
+                if (in_array($status_raw, ['canceled', 'cancelled'], true)) {
+                    if (current_time('timestamp') >= $min_end_ts) {
+                        $status_class = 'inactive';
+                        $status_label = 'Inaktiv';
+                    } else {
+                        $status_class = 'cancelled';
+                        $status_label = 'Gekündigt';
+                    }
+                } elseif (in_array($status_raw, ['inactive', 'inaktiv'], true)) {
+                    $status_class = 'inactive';
+                    $status_label = 'Inaktiv';
+                }
+            ?>
+            <div class="account-section-header">
+                <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
+                <h4><?php echo esc_html($product); ?></h4>
+            </div>
+            <div class="subscription-detail-grid">
+                <div class="subscription-detail-card">
+                    <div class="card-title">Bestellt</div>
+                    <div class="subscription-detail-content">
+                        <p><strong>Bestelldatum:</strong><br><?php echo esc_html($order_date); ?></p>
+                        <p><strong>Bestellnummer:</strong><br><?php echo esc_html($order_number); ?></p>
+                    </div>
+                </div>
+                <div class="subscription-detail-card">
+                    <div class="card-title">Produkt</div>
+                    <div class="subscription-detail-content">
+                        <p><strong>Produkt:</strong><br><?php echo esc_html($product); ?></p>
+                        <?php if (!empty($variant)) : ?><p><strong>Ausführung:</strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
+                        <?php if (!empty($condition)) : ?><p><strong>Zustand:</strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
+                        <?php if (!empty($color)) : ?><p><strong>Farbe:</strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
+                    </div>
+                </div>
+                <div class="subscription-detail-card">
+                    <div class="card-title">Ende Mindestlaufzeit</div>
+                    <div class="subscription-detail-content">
+                        <p><strong>Datum:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                    </div>
+                </div>
+                <div class="subscription-detail-card">
+                    <div class="card-title">Kündigung</div>
+                    <div class="subscription-detail-content">
+                        <form method="post">
+                            <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
+                            <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
+                            <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>><?php echo esc_html($cancel_label); ?></button>
+                        </form>
+                        <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
+                    </div>
+                </div>
+                <div class="subscription-detail-card subscription-wide-card">
+                    <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"><?php echo esc_html($status_label); ?></span>
+                    <div class="card-title">Abodetails</div>
+                    <div class="subscription-detail-content">
+                        <p><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_months . ' Monate'); ?></p>
+                        <p><strong>Monatlicher Mietpreis:</strong> <?php echo esc_html($monthly); ?></p>
+                        <p><strong>Ende Mindestlaufzeit:</strong> <?php echo esc_html($min_end_date); ?></p>
+                        <p><strong>Datum für Kündigung:</strong> <?php echo esc_html($cancel_open_date); ?></p>
+                    </div>
+                </div>
+            </div>
+        <?php else : ?>
+            <div class="account-dashboard-grid">
+                <div class="account-dashboard-card">
+                    <div class="card-title">Aktive Abos</div>
+                    <div class="card-metric"><?php echo esc_html($active_count); ?></div>
+                    <a class="card-button card-button-link" href="<?php echo esc_url($subscriptions_url); ?>">Abos ansehen</a>
+                </div>
+                <div class="account-dashboard-card">
+                    <div class="card-title">Summe pro Monat</div>
+                    <div class="card-metric"><?php echo esc_html($monthly_total_formatted); ?>€</div>
+                    <a class="card-button card-button-link" href="<?php echo esc_url($invoices_url); ?>">Alle Rechnungen</a>
+                </div>
+                <div class="account-dashboard-card">
+                    <div class="card-title">Freunde einladen</div>
+                    <div class="card-code"><?php echo esc_html($invite_code); ?></div>
+                    <button type="button" class="card-button" aria-disabled="true">Code kopieren</button>
+                </div>
+                <div class="account-dashboard-card">
+                    <div class="card-title">Logout</div>
+                    <div class="card-helper">Beende deine Sitzung sicher.</div>
+                    <a class="card-button card-button-link" href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Jetzt ausloggen</a>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
+<?php endif; ?>

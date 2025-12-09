@@ -17,8 +17,20 @@ if (isset($_POST['submit_branding'])) {
     $front_border_color = sanitize_hex_color($_POST['front_border_color']);
     $front_button_text_color = sanitize_hex_color($_POST['front_button_text_color']);
     $filter_button_color = sanitize_hex_color($_POST['filter_button_color']);
+    $filter_button_hover_color = sanitize_hex_color($_POST['filter_button_hover_color'] ?? $_POST['filter_button_color']);
+    $filter_button_icon_color = sanitize_hex_color($_POST['filter_button_icon_color']);
+    $account_card_bg = sanitize_hex_color($_POST['account_card_bg']);
+    $account_card_text = sanitize_hex_color($_POST['account_card_text']);
+    $account_button_bg = sanitize_hex_color($_POST['account_button_bg']);
+    $account_button_hover_bg = sanitize_hex_color($_POST['account_button_hover_bg']);
+    $account_button_text = sanitize_hex_color($_POST['account_button_text']);
+    $account_button_hover_text = sanitize_hex_color($_POST['account_button_hover_text']);
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
+    $filter_button_position = sanitize_text_field($_POST['filter_button_position'] ?? 'bottom_left');
+    $shop_layout = sanitize_text_field($_POST['shop_layout'] ?? 'filters_left');
+    $sticky_header_mode = sanitize_text_field($_POST['sticky_header_mode'] ?? 'header');
+    $sticky_header_mode = in_array($sticky_header_mode, ['disabled', 'header', 'footer'], true) ? $sticky_header_mode : 'header';
     $login_bg_image = esc_url_raw($_POST['login_bg_image']);
     $login_layout = sanitize_text_field($_POST['login_layout'] ?? 'classic');
     $login_logo   = esc_url_raw($_POST['login_logo'] ?? '');
@@ -42,8 +54,19 @@ if (isset($_POST['submit_branding'])) {
         'front_border_color' => $front_border_color,
         'front_button_text_color' => $front_button_text_color,
         'filter_button_color' => $filter_button_color,
+        'filter_button_hover_color' => $filter_button_hover_color,
+        'filter_button_icon_color' => $filter_button_icon_color,
+        'account_card_bg' => $account_card_bg,
+        'account_card_text' => $account_card_text,
+        'account_button_bg' => $account_button_bg,
+        'account_button_hover_bg' => $account_button_hover_bg,
+        'account_button_text' => $account_button_text,
+        'account_button_hover_text' => $account_button_hover_text,
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
+        'filter_button_position' => $filter_button_position,
+        'shop_layout' => $shop_layout,
+        'sticky_header_mode' => $sticky_header_mode,
         'product_padding' => $product_padding,
         'login_bg_image' => $login_bg_image,
         'login_layout' => $login_layout,
@@ -194,6 +217,28 @@ if (isset($_POST['submit_branding'])) {
                     </div>
 
                     <div class="produkt-form-group">
+                        <label>Filter-Button-Farbe (Hover)</label>
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_hover_color = esc_attr($branding['filter_button_hover_color'] ?? ($branding['filter_button_color'] ?? '#5f7f5f')); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_hover_color; ?>;"></div>
+                            <input type="text" name="filter_button_hover_color" value="<?php echo $filter_button_hover_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_hover_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe des mobilen Filter-Buttons bei Hover</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Filter-Icon-Farbe</label>
+                        <div class="produkt-color-picker">
+                            <?php $filter_button_icon_color = esc_attr($branding['filter_button_icon_color'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $filter_button_icon_color; ?>;"></div>
+                            <input type="text" name="filter_button_icon_color" value="<?php echo $filter_button_icon_color; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $filter_button_icon_color; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Farbe des Icons auf dem mobilen Filter-Button</small>
+                    </div>
+
+                    <div class="produkt-form-group">
                         <label>Textfarbe (Frontend)</label>
                         <div class="produkt-color-picker">
                             <?php $front_text_color = esc_attr($branding['front_text_color'] ?? '#4a674a'); ?>
@@ -202,6 +247,72 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $front_text_color; ?>" class="produkt-color-input">
                         </div>
                         <small>Farbe für Preis- und Hinweistexte</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Karten-Hintergrund (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_card_bg = esc_attr($branding['account_card_bg'] ?? '#e8e8e8'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_card_bg; ?>;"></div>
+                            <input type="text" name="account_card_bg" value="<?php echo $account_card_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_card_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hintergrundfarbe für Karten im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Karten-Textfarbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_card_text = esc_attr($branding['account_card_text'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_card_text; ?>;"></div>
+                            <input type="text" name="account_card_text" value="<?php echo $account_card_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_card_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe für Karten im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Farbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_bg = esc_attr($branding['account_button_bg'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_bg; ?>;"></div>
+                            <input type="text" name="account_button_bg" value="<?php echo $account_button_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Primäre Button-Farbe im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button Hover-Farbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_hover_bg = esc_attr($branding['account_button_hover_bg'] ?? '#1a1a1a'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_hover_bg; ?>;"></div>
+                            <input type="text" name="account_button_hover_bg" value="<?php echo $account_button_hover_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_hover_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hover-Farbe der Buttons im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Textfarbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_text = esc_attr($branding['account_button_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_text; ?>;"></div>
+                            <input type="text" name="account_button_text" value="<?php echo $account_button_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe der Buttons im Kundenkonto</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Button-Text Hover-Farbe (Kundenkonto)</label>
+                        <div class="produkt-color-picker">
+                            <?php $account_button_hover_text = esc_attr($branding['account_button_hover_text'] ?? '#ffffff'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $account_button_hover_text; ?>;"></div>
+                            <input type="text" name="account_button_hover_text" value="<?php echo $account_button_hover_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $account_button_hover_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe bei Hover auf Buttons im Kundenkonto</small>
                     </div>
 
                     <div class="produkt-form-group">
@@ -249,6 +360,21 @@ if (isset($_POST['submit_branding'])) {
                     </div>
 
                     <div class="produkt-form-group">
+                        <label>Position des mobilen Filter-Buttons</label>
+                        <?php $filter_button_position = esc_attr($branding['filter_button_position'] ?? 'bottom_left'); ?>
+                        <select name="filter_button_position">
+                            <option value="bottom_left" <?php selected($filter_button_position, 'bottom_left'); ?>>Unten links</option>
+                            <option value="bottom_center" <?php selected($filter_button_position, 'bottom_center'); ?>>Unten mittig</option>
+                            <option value="bottom_right" <?php selected($filter_button_position, 'bottom_right'); ?>>Unten rechts</option>
+                            <option value="middle_left" <?php selected($filter_button_position, 'middle_left'); ?>>Mitte links</option>
+                            <option value="middle_right" <?php selected($filter_button_position, 'middle_right'); ?>>Mitte rechts</option>
+                            <option value="top_left" <?php selected($filter_button_position, 'top_left'); ?>>Oben links</option>
+                            <option value="top_right" <?php selected($filter_button_position, 'top_right'); ?>>Oben rechts</option>
+                        </select>
+                        <small>Steuert die Position des Filter/Kategorien-Buttons auf Mobilgeräten.</small>
+                    </div>
+
+                    <div class="produkt-form-group">
                         <label class="produkt-toggle-label">
                             <input type="checkbox" name="product_padding" value="1" <?php echo !isset($branding['product_padding']) || $branding['product_padding'] == '1' ? 'checked' : ''; ?>>
                             <span class="produkt-toggle-slider"></span>
@@ -269,6 +395,85 @@ if (isset($_POST['submit_branding'])) {
                         <small>Eigene CSS-Regeln für die Produktseite</small>
                     </div>
                 </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Shop-Layout</h2>
+                <p class="card-subline">Steuerung der Filter-Position im Shop</p>
+
+                <div class="layout-option-grid" data-input-name="shop_layout">
+                    <?php $selected_shop_layout = $branding['shop_layout'] ?? 'filters_left'; ?>
+                    <div class="layout-option-card <?php echo ($selected_shop_layout === 'filters_left') ? 'active' : ''; ?>" data-value="filters_left">
+                        <div class="layout-option-name">Filter links</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="12" width="40" height="76" rx="8" fill="#d8e8de" />
+                                <rect x="60" y="20" width="88" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="60" y="40" width="88" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="60" y="60" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                        <input type="hidden" name="shop_layout" value="<?php echo esc_attr($selected_shop_layout); ?>">
+                    </div>
+                    <div class="layout-option-card <?php echo ($selected_shop_layout === 'filters_top') ? 'active' : ''; ?>" data-value="filters_top">
+                        <div class="layout-option-name">Filter oben (Dropdown)</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="16" y="14" width="128" height="16" rx="8" fill="#d8e8de" />
+                                <rect x="120" y="14" width="24" height="16" rx="8" fill="#cbd5e1" />
+                                <rect x="16" y="38" width="128" height="48" rx="10" fill="#ffffff" stroke="#d1d5db" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h2>Sticky-Header</h2>
+                <p class="card-subline">Steuerung der Preisleiste auf Produktseiten</p>
+
+                <div class="layout-option-grid" data-input-name="sticky_header_mode">
+                    <?php $sticky_header_mode = in_array($branding['sticky_header_mode'] ?? 'header', ['disabled', 'header', 'footer'], true) ? $branding['sticky_header_mode'] : 'header'; ?>
+                    <div class="layout-option-card <?php echo ($sticky_header_mode === 'disabled') ? 'active' : ''; ?>" data-value="disabled">
+                        <div class="layout-option-name">Deaktiviert</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#f6f6f6" />
+                                <rect x="20" y="18" width="120" height="18" rx="8" fill="#e5e7eb" />
+                                <line x1="20" y1="64" x2="140" y2="64" stroke="#d1d5db" stroke-width="6" stroke-linecap="round" />
+                                <line x1="20" y1="78" x2="100" y2="78" stroke="#e5e7eb" stroke-width="6" stroke-linecap="round" />
+                                <line x1="110" y1="78" x2="140" y2="78" stroke="#e5e7eb" stroke-width="6" stroke-linecap="round" />
+                                <line x1="20" y1="32" x2="140" y2="32" stroke="#ef4444" stroke-width="12" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="layout-option-card <?php echo ($sticky_header_mode === 'header') ? 'active' : ''; ?>" data-value="header">
+                        <div class="layout-option-name">Sticky oben</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="10" width="136" height="20" rx="10" fill="#d8e8de" />
+                                <rect x="20" y="40" width="120" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="20" y="60" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="layout-option-card <?php echo ($sticky_header_mode === 'footer') ? 'active' : ''; ?>" data-value="footer">
+                        <div class="layout-option-name">Sticky unten</div>
+                        <div class="layout-option-preview">
+                            <svg viewBox="0 0 160 100" xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true">
+                                <rect x="0" y="0" width="160" height="100" rx="12" fill="#eef2f7" />
+                                <rect x="12" y="70" width="136" height="20" rx="10" fill="#d8e8de" />
+                                <rect x="20" y="20" width="120" height="12" rx="6" fill="#cbd5e1" />
+                                <rect x="20" y="40" width="88" height="12" rx="6" fill="#cbd5e1" />
+                            </svg>
+                        </div>
+                    </div>
+                    <input type="hidden" name="sticky_header_mode" value="<?php echo esc_attr($sticky_header_mode); ?>">
+                </div>
+                <p class="card-subline">Optionen gelten für mobile und Desktop-Ansichten.</p>
             </div>
 
             <div class="dashboard-card">
