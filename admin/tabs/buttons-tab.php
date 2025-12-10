@@ -15,6 +15,10 @@ if (isset($_POST['submit_buttons'])) {
         'vat_included'      => isset($_POST['vat_included']) ? 1 : 0,
         'duration_tooltip'  => sanitize_textarea_field($_POST['duration_tooltip'] ?? ''),
         'condition_tooltip' => sanitize_textarea_field($_POST['condition_tooltip'] ?? ''),
+        'cart_icon'         => esc_url_raw($_POST['cart_icon'] ?? ''),
+        'cart_badge_position' => in_array($_POST['cart_badge_position'] ?? 'top_right', ['top_right', 'bottom_left'], true)
+            ? sanitize_text_field($_POST['cart_badge_position'])
+            : 'top_right',
         'show_tooltips'     => isset($_POST['show_tooltips']) ? 1 : 0,
     ];
     update_option('produkt_ui_settings', $settings);
@@ -45,9 +49,11 @@ if (isset($_POST['submit_buttons'])) {
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
 }
 
-$ui = get_option('produkt_ui_settings', [
+$ui = wp_parse_args(get_option('produkt_ui_settings', []), [
     'button_text' => '',
     'button_icon' => '',
+    'cart_icon' => '',
+    'cart_badge_position' => 'top_right',
     'payment_icons' => [],
     'price_label' => '',
     'shipping_label' => '',
@@ -130,6 +136,26 @@ $inject_block_nav_all = (int) get_option('produkt_inject_block_nav_all', 0);
                 <h2>Warenkorb</h2>
                 <p class="card-subline">Menü-Auswahl</p>
                 <div class="form-grid">
+                    <div class="produkt-form-group">
+                        <label>Warenkorb-Icon</label>
+                        <div class="image-field-row">
+                            <div id="cart_icon_preview" class="image-preview">
+                                <?php if (!empty($ui['cart_icon'])): ?>
+                                    <img src="<?php echo esc_url($ui['cart_icon']); ?>" alt="">
+                                <?php else: ?>
+                                    <span>Noch kein Bild vorhanden</span>
+                                <?php endif; ?>
+                            </div>
+                            <button type="button" class="icon-btn produkt-media-button" data-target="cart_icon" aria-label="Bild auswählen">
+                                <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
+                            </button>
+                            <button type="button" class="icon-btn produkt-remove-image" data-target="cart_icon" aria-label="Bild entfernen">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/><path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/></svg>
+                            </button>
+                        </div>
+                        <input type="hidden" name="cart_icon" id="cart_icon" value="<?php echo esc_attr($ui['cart_icon']); ?>">
+                        <p class="description">Eigenes Warenkorb-Icon für die Navigation hochladen.</p>
+                    </div>
                     <div class="produkt-form-group full-width">
                         <label>Menüs</label>
                         <?php if (!empty($all_menus)): ?>
@@ -142,6 +168,14 @@ $inject_block_nav_all = (int) get_option('produkt_inject_block_nav_all', 0);
                         <?php else: ?>
                         <p>Keine Menüs gefunden.</p>
                         <?php endif; ?>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Position der Warenkorb-Badge</label>
+                        <select name="cart_badge_position">
+                            <option value="top_right" <?php selected($ui['cart_badge_position'], 'top_right'); ?>>Oben rechts</option>
+                            <option value="bottom_left" <?php selected($ui['cart_badge_position'], 'bottom_left'); ?>>Unten links</option>
+                        </select>
+                        <p class="description">Wählen Sie, ob die Stückzahl-Badge rechts oben oder links unten am Icon angezeigt wird.</p>
                     </div>
                     <div class="produkt-form-group full-width">
                         <label class="produkt-toggle-label">
