@@ -1675,7 +1675,7 @@ img.wp-smiley, img.emoji {
 }
 .produkt-cart-panel .cart-item + .cart-item {
     border-top: 1px solid #e0e0e0;
-    padding-top: 0.75rem;
+    padding-top: 1.75rem;
 }
 .produkt-cart-panel .cart-item-remove {
     cursor: pointer;
