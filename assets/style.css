@@ -1809,6 +1809,20 @@ img.wp-smiley, img.emoji {
     left: auto;
     transform: translate(50%, -50%);
 }
+.h2-cart-badge.badge-top-left {
+    top: 0;
+    left: 0;
+    bottom: auto;
+    right: auto;
+    transform: translate(-50%, -50%);
+}
+.h2-cart-badge.badge-bottom-right {
+    bottom: 0;
+    right: 0;
+    top: auto;
+    left: auto;
+    transform: translate(50%, 50%);
+}
 .h2-cart-badge.badge-bottom-left {
     bottom: 0;
     left: 0;

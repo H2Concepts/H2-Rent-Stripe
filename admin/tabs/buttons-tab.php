@@ -16,7 +16,11 @@ if (isset($_POST['submit_buttons'])) {
         'duration_tooltip'  => sanitize_textarea_field($_POST['duration_tooltip'] ?? ''),
         'condition_tooltip' => sanitize_textarea_field($_POST['condition_tooltip'] ?? ''),
         'cart_icon'         => esc_url_raw($_POST['cart_icon'] ?? ''),
-        'cart_badge_position' => in_array($_POST['cart_badge_position'] ?? 'top_right', ['top_right', 'bottom_left'], true)
+        'cart_badge_position' => in_array(
+            $_POST['cart_badge_position'] ?? 'top_right',
+            ['top_right', 'top_left', 'bottom_right', 'bottom_left'],
+            true
+        )
             ? sanitize_text_field($_POST['cart_badge_position'])
             : 'top_right',
         'show_tooltips'     => isset($_POST['show_tooltips']) ? 1 : 0,
@@ -173,9 +177,11 @@ $inject_block_nav_all = (int) get_option('produkt_inject_block_nav_all', 0);
                         <label>Position der Warenkorb-Badge</label>
                         <select name="cart_badge_position">
                             <option value="top_right" <?php selected($ui['cart_badge_position'], 'top_right'); ?>>Oben rechts</option>
+                            <option value="top_left" <?php selected($ui['cart_badge_position'], 'top_left'); ?>>Oben links</option>
+                            <option value="bottom_right" <?php selected($ui['cart_badge_position'], 'bottom_right'); ?>>Unten rechts</option>
                             <option value="bottom_left" <?php selected($ui['cart_badge_position'], 'bottom_left'); ?>>Unten links</option>
                         </select>
-                        <p class="description">Wählen Sie, ob die Stückzahl-Badge rechts oben oder links unten am Icon angezeigt wird.</p>
+                        <p class="description">Wählen Sie in welcher Ecke die Stückzahl-Badge am Icon angezeigt wird.</p>
                     </div>
                     <div class="produkt-form-group full-width">
                         <label class="produkt-toggle-label">

@@ -981,8 +981,23 @@ class Plugin {
         $ui = get_option('produkt_ui_settings', []);
         $cart_icon = isset($ui['cart_icon']) ? esc_url($ui['cart_icon']) : '';
         $position  = $ui['cart_badge_position'] ?? 'top_right';
-        $position  = in_array($position, ['top_right', 'bottom_left'], true) ? $position : 'top_right';
-        $badge_class = $position === 'bottom_left' ? ' badge-bottom-left' : ' badge-top-right';
+        $position  = in_array($position, ['top_right', 'top_left', 'bottom_right', 'bottom_left'], true) ? $position : 'top_right';
+
+        switch ($position) {
+            case 'top_left':
+                $badge_class = ' badge-top-left';
+                break;
+            case 'bottom_right':
+                $badge_class = ' badge-bottom-right';
+                break;
+            case 'bottom_left':
+                $badge_class = ' badge-bottom-left';
+                break;
+            case 'top_right':
+            default:
+                $badge_class = ' badge-top-right';
+                break;
+        }
 
         $icon_markup = $cart_icon
             ? '<img src="' . esc_url($cart_icon) . '" alt="' . esc_attr__('Warenkorb', 'produkt') . '">' 
