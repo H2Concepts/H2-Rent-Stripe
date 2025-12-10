@@ -224,7 +224,7 @@ jQuery(document).ready(function($) {
             
             // Ausführung (nur wenn vorhanden)
             if (item.variant_name && item.variant_name.trim()) {
-                details.append($('<div>', {class: 'cart-item-variant'}).text('Ausführung: ' + item.variant_name));
+                details.append($('<div>', {class: 'cart-item-variant'}).text(item.variant_name));
             }
             
             // Extras (nur wenn vorhanden)
@@ -241,17 +241,26 @@ jQuery(document).ready(function($) {
             
             // Produktfarbe (nur wenn vorhanden)
             if (item.produktfarbe && item.produktfarbe.trim()) {
-                details.append($('<div>', {class: 'cart-item-color'}).text('Farbe: ' + item.produktfarbe));
+                const colorRow = $('<div>', {class: 'cart-item-color'});
+                colorRow.append($('<span>', {class: 'cart-item-label'}).text('Farbe: '));
+                colorRow.append($('<span>', {class: 'cart-item-value'}).text(item.produktfarbe));
+                details.append(colorRow);
             }
-            
+
             // Gestellfarbe (nur wenn vorhanden)
             if (item.gestellfarbe && item.gestellfarbe.trim()) {
-                details.append($('<div>', {class: 'cart-item-color'}).text('Gestellfarbe: ' + item.gestellfarbe));
+                const frameRow = $('<div>', {class: 'cart-item-color'});
+                frameRow.append($('<span>', {class: 'cart-item-label'}).text('Gestellfarbe: '));
+                frameRow.append($('<span>', {class: 'cart-item-value'}).text(item.gestellfarbe));
+                details.append(frameRow);
             }
-            
+
             // Zustand (nur wenn vorhanden)
             if (item.zustand && item.zustand.trim()) {
-                details.append($('<div>', {class: 'cart-item-condition'}).text('Zustand: ' + item.zustand));
+                const conditionRow = $('<div>', {class: 'cart-item-condition'});
+                conditionRow.append($('<span>', {class: 'cart-item-label'}).text('Zustand: '));
+                conditionRow.append($('<span>', {class: 'cart-item-value'}).text(item.zustand));
+                details.append(conditionRow);
             }
             
             // Mietdauer (nur wenn vorhanden)
@@ -262,7 +271,10 @@ jQuery(document).ready(function($) {
                 period = item.dauer_name;
             }
             if (period) {
-                details.append($('<div>', {class: 'cart-item-period'}).text('Mietdauer: ' + period));
+                const periodRow = $('<div>', {class: 'cart-item-period'});
+                periodRow.append($('<span>', {class: 'cart-item-label'}).text('Mietdauer: '));
+                periodRow.append($('<span>', {class: 'cart-item-value'}).text(period));
+                details.append(periodRow);
             }
             
             // Wochenendtarif (nur wenn vorhanden)

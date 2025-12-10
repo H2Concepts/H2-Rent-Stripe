@@ -1725,16 +1725,29 @@ img.wp-smiley, img.emoji {
 .produkt-cart-panel .cart-item-variant,
 .produkt-cart-panel .cart-item-condition {
     font-size: 0.875rem;
-    color: #555;
+}
+
+.produkt-cart-panel .cart-item-variant {
+    color: #000;
+    margin-bottom: 10px;
+}
+
+.produkt-cart-panel .cart-item-label {
+    color: #5d5d5d;
+}
+
+.produkt-cart-panel .cart-item-value {
+    color: #000;
 }
 .produkt-cart-panel .cart-item-extras {
     display: flex;
     flex-direction: column;
 }
 .produkt-cart-panel .cart-item-price {
-    font-weight: 600;
+    font-weight: 700;
     margin-left: auto;
     white-space: nowrap;
+    align-self: flex-end;
 }
 .produkt-cart-panel .cart-close {
     width: 23px;
