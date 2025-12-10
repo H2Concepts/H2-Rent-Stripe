@@ -201,11 +201,22 @@ jQuery(document).ready(function($) {
         updateCartBadge();
     }
 
+    function getCartTotalSuffix() {
+        if (typeof produkt_ajax !== 'undefined' && produkt_ajax.betriebsmodus === 'kauf') {
+            return '';
+        }
+        const suffixAttr = $('.cart-total-amount').data('suffix');
+        if (typeof suffixAttr === 'string') {
+            return suffixAttr;
+        }
+        return ' / Monat';
+    }
+
     function renderCart() {
         const list = $('#produkt-cart-panel .cart-items').empty();
         if (!cart.length) {
             list.append('<p>Ihr Warenkorb ist leer.</p>');
-            $('.cart-total-amount').text('0€');
+            $('.cart-total-amount').text('0€' + getCartTotalSuffix());
             updateCartBadge();
             return;
         }
@@ -224,7 +235,7 @@ jQuery(document).ready(function($) {
             
             // Ausführung (nur wenn vorhanden)
             if (item.variant_name && item.variant_name.trim()) {
-                details.append($('<div>', {class: 'cart-item-variant'}).text('Ausführung: ' + item.variant_name));
+                details.append($('<div>', {class: 'cart-item-variant'}).text(item.variant_name));
             }
             
             // Extras (nur wenn vorhanden)
@@ -241,17 +252,26 @@ jQuery(document).ready(function($) {
             
             // Produktfarbe (nur wenn vorhanden)
             if (item.produktfarbe && item.produktfarbe.trim()) {
-                details.append($('<div>', {class: 'cart-item-color'}).text('Farbe: ' + item.produktfarbe));
+                const colorRow = $('<div>', {class: 'cart-item-color'});
+                colorRow.append($('<span>', {class: 'cart-item-label'}).text('Farbe: '));
+                colorRow.append($('<span>', {class: 'cart-item-value'}).text(item.produktfarbe));
+                details.append(colorRow);
             }
-            
+
             // Gestellfarbe (nur wenn vorhanden)
             if (item.gestellfarbe && item.gestellfarbe.trim()) {
-                details.append($('<div>', {class: 'cart-item-color'}).text('Gestellfarbe: ' + item.gestellfarbe));
+                const frameRow = $('<div>', {class: 'cart-item-color'});
+                frameRow.append($('<span>', {class: 'cart-item-label'}).text('Gestellfarbe: '));
+                frameRow.append($('<span>', {class: 'cart-item-value'}).text(item.gestellfarbe));
+                details.append(frameRow);
             }
-            
+
             // Zustand (nur wenn vorhanden)
             if (item.zustand && item.zustand.trim()) {
-                details.append($('<div>', {class: 'cart-item-condition'}).text('Zustand: ' + item.zustand));
+                const conditionRow = $('<div>', {class: 'cart-item-condition'});
+                conditionRow.append($('<span>', {class: 'cart-item-label'}).text('Zustand: '));
+                conditionRow.append($('<span>', {class: 'cart-item-value'}).text(item.zustand));
+                details.append(conditionRow);
             }
             
             // Mietdauer (nur wenn vorhanden)
@@ -262,7 +282,10 @@ jQuery(document).ready(function($) {
                 period = item.dauer_name;
             }
             if (period) {
-                details.append($('<div>', {class: 'cart-item-period'}).text('Mietdauer: ' + period));
+                const periodRow = $('<div>', {class: 'cart-item-period'});
+                periodRow.append($('<span>', {class: 'cart-item-label'}).text('Mietdauer: '));
+                periodRow.append($('<span>', {class: 'cart-item-value'}).text(period));
+                details.append(periodRow);
             }
             
             // Wochenendtarif (nur wenn vorhanden)
@@ -270,11 +293,16 @@ jQuery(document).ready(function($) {
                 details.append($('<div>', {class: 'cart-item-weekend'}).text('Wochenendtarif'));
             }
             const price = $('<div>', {class: 'cart-item-price'}).text(formatPrice(item.final_price) + '€');
-            const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
+            const rem = $('<span>', {
+                class: 'cart-item-remove',
+                'data-index': idx,
+                'aria-label': 'Artikel entfernen',
+                title: 'Artikel entfernen'
+            }).html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65.56 65.83" role="img" aria-hidden="true"><path d="M62.78,10.94h-13v-4c0-3.31-2.69-6-6-6h-22c-3.31,0-6,2.69-6,6v4H2.78c-1.11,0-2,.89-2,2s.89,2,2,2h3.19l4.46,44.59c.29,3.07,2.88,5.42,5.96,5.41h32.77c3.08.01,5.67-2.33,5.96-5.4l4.46-44.6h3.19c1.11,0,2-.89,2-2s-.89-2-2-2h0ZM19.78,6.94c0-1.11.89-2,2-2h22c1.11,0,2,.89,2,2v4h-26v-4ZM51.14,59.15c-.1,1.02-.96,1.8-1.98,1.8H16.39c-1.03,0-1.89-.78-1.98-1.8L9.99,14.94h45.58l-4.42,44.2Z"/></svg>');
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });
-        $('.cart-total-amount').text(formatPrice(total) + '€');
+        $('.cart-total-amount').text(formatPrice(total) + '€' + getCartTotalSuffix());
         updateCartBadge();
     }
 

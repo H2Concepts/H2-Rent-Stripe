@@ -27,6 +27,8 @@ if (isset($_POST['submit_branding'])) {
     $account_button_hover_text = sanitize_hex_color($_POST['account_button_hover_text']);
     $cart_badge_bg = sanitize_hex_color($_POST['cart_badge_bg']);
     $cart_badge_text = sanitize_hex_color($_POST['cart_badge_text']);
+    $discount_badge_bg = sanitize_hex_color($_POST['discount_badge_bg']);
+    $discount_badge_text = sanitize_hex_color($_POST['discount_badge_text']);
     $filter_button_position = sanitize_text_field($_POST['filter_button_position'] ?? 'bottom_left');
     $shop_layout = sanitize_text_field($_POST['shop_layout'] ?? 'filters_left');
     $sticky_header_mode = sanitize_text_field($_POST['sticky_header_mode'] ?? 'header');
@@ -64,6 +66,8 @@ if (isset($_POST['submit_branding'])) {
         'account_button_hover_text' => $account_button_hover_text,
         'cart_badge_bg' => $cart_badge_bg,
         'cart_badge_text' => $cart_badge_text,
+        'discount_badge_bg' => $discount_badge_bg,
+        'discount_badge_text' => $discount_badge_text,
         'filter_button_position' => $filter_button_position,
         'shop_layout' => $shop_layout,
         'sticky_header_mode' => $sticky_header_mode,
@@ -357,6 +361,28 @@ if (isset($_POST['submit_branding'])) {
                             <input type="color" value="<?php echo $cart_badge_text; ?>" class="produkt-color-input">
                         </div>
                         <small>Textfarbe der Warenkorb-Badge</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Rabatt-Badge Hintergrund</label>
+                        <div class="produkt-color-picker">
+                            <?php $discount_badge_bg = esc_attr($branding['discount_badge_bg'] ?? '#e3e8e3'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $discount_badge_bg; ?>;"></div>
+                            <input type="text" name="discount_badge_bg" value="<?php echo $discount_badge_bg; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $discount_badge_bg; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Hintergrundfarbe des Rabatt-Badges auf der Produktseite</small>
+                    </div>
+
+                    <div class="produkt-form-group">
+                        <label>Rabatt-Badge Textfarbe</label>
+                        <div class="produkt-color-picker">
+                            <?php $discount_badge_text = esc_attr($branding['discount_badge_text'] ?? '#000000'); ?>
+                            <div class="produkt-color-preview-circle" style="background-color: <?php echo $discount_badge_text; ?>;"></div>
+                            <input type="text" name="discount_badge_text" value="<?php echo $discount_badge_text; ?>" class="produkt-color-value">
+                            <input type="color" value="<?php echo $discount_badge_text; ?>" class="produkt-color-input">
+                        </div>
+                        <small>Textfarbe des Rabatt-Badges auf der Produktseite</small>
                     </div>
 
                     <div class="produkt-form-group">

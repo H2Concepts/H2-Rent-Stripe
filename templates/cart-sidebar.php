@@ -1,7 +1,8 @@
+<?php $produkt_cart_mode = get_option('produkt_betriebsmodus', 'miete'); ?>
 <div id="produkt-cart-overlay" class="produkt-cart-overlay"></div>
 <div id="produkt-cart-panel" class="produkt-cart-panel">
     <div class="cart-header">
-        <span class="cart-title">Warenkorb</span>
+        <span class="cart-title">Dein Warenkorb</span>
         <button type="button" class="cart-close" aria-label="Warenkorb schließen">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="12" fill="#000"/>
@@ -10,7 +11,7 @@
         </button>
     </div>
     <div class="cart-items"></div>
-    <div class="cart-summary"><span>Summe</span><span class="cart-total-amount">0€</span></div>
+    <div class="cart-summary"><span>Gesamtsumme</span><span class="cart-total-amount" data-suffix="<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?>">0€<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?></span></div>
     <button id="produkt-cart-checkout">Jetzt bestellen</button>
 </div>
 
