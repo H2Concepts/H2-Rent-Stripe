@@ -1,7 +1,12 @@
+<?php 
+$produkt_cart_mode = get_option('produkt_betriebsmodus', 'miete');
+$ui = get_option('produkt_ui_settings', []);
+$payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] : [];
+?>
 <div id="produkt-cart-overlay" class="produkt-cart-overlay"></div>
 <div id="produkt-cart-panel" class="produkt-cart-panel">
     <div class="cart-header">
-        <span class="cart-title">Warenkorb</span>
+        <span class="cart-title">Dein Warenkorb</span>
         <button type="button" class="cart-close" aria-label="Warenkorb schließen">
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="12" fill="#000"/>
@@ -10,7 +15,15 @@
         </button>
     </div>
     <div class="cart-items"></div>
-    <div class="cart-summary"><span>Summe</span><span class="cart-total-amount">0€</span></div>
+    <div class="cart-shipping"><span>Versand</span><span class="cart-shipping-amount">0€</span></div>
+    <div class="cart-summary"><span>Gesamtsumme</span><span class="cart-total-amount" data-suffix="<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?>">0€<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?></span></div>
+    <?php if (!empty($payment_icons)): ?>
+    <div class="cart-payment-icons produkt-payment-icons">
+        <?php foreach ($payment_icons as $icon): ?>
+            <img src="<?php echo esc_url(PRODUKT_PLUGIN_URL . 'assets/payment-icons/' . $icon . '.svg'); ?>" alt="<?php echo esc_attr($icon); ?>">
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
     <button id="produkt-cart-checkout">Jetzt bestellen</button>
 </div>
 

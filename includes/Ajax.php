@@ -583,6 +583,211 @@ class Ajax {
         wp_send_json_success(['days' => $days]);
     }
 
+    public function ajax_get_variant_durations() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $variant_id = intval($_POST['variant_id']);
+        if (!$variant_id) {
+            wp_send_json_error(['message' => 'Variant ID required']);
+        }
+
+        global $wpdb;
+        $variant = $wpdb->get_row($wpdb->prepare(
+            "SELECT category_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+            $variant_id
+        ));
+
+        if (!$variant) {
+            wp_send_json_error(['message' => 'Variant not found']);
+        }
+
+        $durations = $wpdb->get_results($wpdb->prepare(
+            "SELECT id, name, months_minimum, sort_order FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY months_minimum ASC, sort_order ASC, id ASC",
+            $variant->category_id
+        ));
+
+        $durations_data = [];
+        foreach ($durations as $duration) {
+            $durations_data[] = [
+                'id' => (int) $duration->id,
+                'name' => $duration->name,
+                'months_minimum' => (int) $duration->months_minimum,
+                'sort_order' => (int) $duration->sort_order
+            ];
+        }
+
+        wp_send_json_success(['durations' => $durations_data]);
+    }
+
+    public function ajax_update_cart_item_duration() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $cart_index = isset($_POST['cart_index']) ? intval($_POST['cart_index']) : -1;
+        $new_duration_id = isset($_POST['duration_id']) ? intval($_POST['duration_id']) : 0;
+        
+        if ($cart_index < 0 || !$new_duration_id) {
+            wp_send_json_error(['message' => 'Invalid parameters']);
+        }
+
+        // Get cart from localStorage is handled in JavaScript, but we need to recalculate price
+        $variant_id = isset($_POST['variant_id']) ? intval($_POST['variant_id']) : 0;
+        $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';
+        $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+        $condition_id = isset($_POST['condition_id']) ? intval($_POST['condition_id']) : null;
+        $product_color_id = isset($_POST['product_color_id']) ? intval($_POST['product_color_id']) : null;
+        $frame_color_id = isset($_POST['frame_color_id']) ? intval($_POST['frame_color_id']) : null;
+
+        if (!$variant_id) {
+            wp_send_json_error(['message' => 'Variant ID required']);
+        }
+
+        // Use existing price calculation logic
+        date_default_timezone_set('Europe/Berlin');
+        
+        global $wpdb;
+        
+        $variant = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+            $variant_id
+        ));
+
+        $modus = get_option('produkt_betriebsmodus', 'miete');
+
+        if ($modus === 'kauf') {
+            wp_send_json_error(['message' => 'Not available in purchase mode']);
+        }
+
+        $base_duration_id = null;
+        $base_duration_price = null;
+        if ($variant) {
+            $base_duration = $wpdb->get_row($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}produkt_durations WHERE category_id = %d ORDER BY months_minimum ASC, sort_order ASC, id ASC LIMIT 1",
+                $variant->category_id
+            ));
+            if ($base_duration) {
+                $base_duration_id = (int) $base_duration->id;
+                $base_duration_price = $wpdb->get_var($wpdb->prepare(
+                    "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                    $base_duration_id,
+                    $variant_id
+                ));
+            }
+        }
+
+        $extras = [];
+        if (!empty($extra_ids)) {
+            $placeholders = implode(',', array_fill(0, count($extra_ids), '%d'));
+            $query = $wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_extras WHERE id IN ($placeholders)",
+                ...$extra_ids
+            );
+            $extras = $wpdb->get_results($query);
+        }
+
+        $duration = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}produkt_durations WHERE id = %d",
+            $new_duration_id
+        ));
+
+        $condition = null;
+        if ($condition_id) {
+            $condition = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM {$wpdb->prefix}produkt_conditions WHERE id = %d",
+                $condition_id
+            ));
+        }
+
+        if ($variant && $duration) {
+            // Get duration name
+            $duration_name = $duration->name;
+
+            // Determine the Stripe price ID to use
+            $price_id_to_use = $wpdb->get_var($wpdb->prepare(
+                "SELECT stripe_price_id FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $new_duration_id,
+                $variant_id
+            ));
+
+            if (empty($price_id_to_use)) {
+                $price_id_to_use = $variant->stripe_price_id;
+            }
+
+            // For display, get the price
+            $duration_custom_price = $wpdb->get_var($wpdb->prepare(
+                "SELECT custom_price FROM {$wpdb->prefix}produkt_duration_prices WHERE duration_id = %d AND variant_id = %d",
+                $new_duration_id,
+                $variant_id
+            ));
+
+            $variant_price = 0;
+            if ($duration_custom_price !== null && floatval($duration_custom_price) > 0) {
+                $variant_price = floatval($duration_custom_price);
+            } else {
+                if (!empty($variant->stripe_price_id)) {
+                    $price_res = StripeService::get_price_amount($variant->stripe_price_id);
+                    if (!is_wp_error($price_res)) {
+                        $variant_price = floatval($price_res);
+                    }
+                } else {
+                    $variant_price = floatval($variant->base_price);
+                    if ($variant_price <= 0) {
+                        $variant_price = floatval($variant->mietpreis_monatlich);
+                    }
+                }
+            }
+
+            $extras_price = 0;
+            foreach ($extras as $ex) {
+                $pid = $ex->stripe_price_id_rent ?: $ex->stripe_price_id;
+                if (!empty($pid)) {
+                    $pr = StripeService::get_price_amount($pid);
+                    if (!is_wp_error($pr)) {
+                        $extras_price += floatval($pr);
+                    }
+                } else {
+                    $fallback = $ex->price_rent ?? $ex->price;
+                    $extras_price += floatval($fallback);
+                }
+            }
+
+            // Apply condition price modifier
+            if ($condition && $condition->price_modifier != 0) {
+                $modifier = 1 + floatval($condition->price_modifier);
+                $variant_price *= $modifier;
+                $extras_price  *= $modifier;
+            }
+
+            $final_price = $variant_price + $extras_price;
+
+            wp_send_json_success([
+                'final_price' => $final_price,
+                'price_id' => $price_id_to_use,
+                'duration_name' => $duration_name
+            ]);
+        } else {
+            wp_send_json_error(['message' => 'Variant or duration not found']);
+        }
+    }
+
+    public function ajax_get_shipping_price() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+        $shipping_price_id = isset($_POST['shipping_price_id']) ? sanitize_text_field($_POST['shipping_price_id']) : '';
+        
+        $shipping_cost = 0;
+        if (!empty($shipping_price_id)) {
+            $amt = StripeService::get_price_amount($shipping_price_id);
+            if (!is_wp_error($amt)) {
+                $shipping_cost = floatval($amt);
+            }
+        } else {
+            global $wpdb;
+            $shipping = $wpdb->get_row("SELECT price FROM {$wpdb->prefix}produkt_shipping_methods WHERE is_default = 1 LIMIT 1");
+            if ($shipping) {
+                $shipping_cost = floatval($shipping->price);
+            }
+        }
+        
+        wp_send_json_success(['shipping_cost' => $shipping_cost]);
+    }
+
     public function ajax_get_extra_booked_days() {
         check_ajax_referer('produkt_nonce', 'nonce');
         $extra_ids_raw = isset($_POST['extra_ids']) ? sanitize_text_field($_POST['extra_ids']) : '';

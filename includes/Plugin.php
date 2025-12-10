@@ -43,6 +43,7 @@ class Plugin {
         add_shortcode('produkt_account', [$this, 'render_customer_account']);
         add_shortcode('produkt_confirmation', [$this, 'render_order_confirmation']);
         add_shortcode('produkt_category_layout', [$this, 'render_category_layout']);
+        add_shortcode('produkt_cart_icon', [$this, 'render_cart_icon_shortcode']);
         add_action('init', [$this, 'register_customer_role']);
         add_action('wp_enqueue_scripts', [$this->admin, 'enqueue_frontend_assets']);
         add_action('admin_enqueue_scripts', [$this->admin, 'enqueue_admin_assets']);
@@ -75,6 +76,13 @@ class Plugin {
         add_action('wp_ajax_nopriv_check_extra_availability', [$this->ajax, 'ajax_check_extra_availability']);
         add_action('wp_ajax_notify_availability', [$this->ajax, 'ajax_notify_availability']);
         add_action('wp_ajax_nopriv_notify_availability', [$this->ajax, 'ajax_notify_availability']);
+
+        add_action('wp_ajax_get_variant_durations', [$this->ajax, 'ajax_get_variant_durations']);
+        add_action('wp_ajax_nopriv_get_variant_durations', [$this->ajax, 'ajax_get_variant_durations']);
+        add_action('wp_ajax_update_cart_item_duration', [$this->ajax, 'ajax_update_cart_item_duration']);
+        add_action('wp_ajax_nopriv_update_cart_item_duration', [$this->ajax, 'ajax_update_cart_item_duration']);
+        add_action('wp_ajax_get_shipping_price', [$this->ajax, 'ajax_get_shipping_price']);
+        add_action('wp_ajax_nopriv_get_shipping_price', [$this->ajax, 'ajax_get_shipping_price']);
 
         add_action('wp_ajax_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
         add_action('wp_ajax_nopriv_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
@@ -977,6 +985,35 @@ class Plugin {
         return $show;
     }
 
+    private function get_cart_icon_markup() {
+        $ui = get_option('produkt_ui_settings', []);
+        $cart_icon = isset($ui['cart_icon']) ? esc_url($ui['cart_icon']) : '';
+        $position  = $ui['cart_badge_position'] ?? 'top_right';
+        $position  = in_array($position, ['top_right', 'top_left', 'bottom_right', 'bottom_left'], true) ? $position : 'top_right';
+
+        switch ($position) {
+            case 'top_left':
+                $badge_class = ' badge-top-left';
+                break;
+            case 'bottom_right':
+                $badge_class = ' badge-bottom-right';
+                break;
+            case 'bottom_left':
+                $badge_class = ' badge-bottom-left';
+                break;
+            case 'top_right':
+            default:
+                $badge_class = ' badge-top-right';
+                break;
+        }
+
+        $icon_markup = $cart_icon
+            ? '<img src="' . esc_url($cart_icon) . '" alt="' . esc_attr__('Warenkorb', 'produkt') . '">' 
+            : '<svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg>';
+
+        return '<span class="cart-icon">' . $icon_markup . '<span class="h2-cart-badge' . $badge_class . '" data-h2-cart-count="0">0</span></span>';
+    }
+
     /**
      * Append a cart icon to the main navigation menu.
      */
@@ -1008,7 +1045,7 @@ class Plugin {
         if ($current_menu_id && in_array($current_menu_id, $inject_menus, true)) {
             $items .= '<li class="menu-item plugin-cart-icon">'
                 . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
-                . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg><span class="h2-cart-badge" data-h2-cart-count="0">0</span></span>'
+                . $this->get_cart_icon_markup()
                 . '</a></li>';
         }
         return $items;
@@ -1038,7 +1075,7 @@ class Plugin {
 
         $icon = '<li class="wp-block-navigation-item plugin-cart-icon">'
             . '<a class="wp-block-navigation-item__content h2-cart-link" href="#" onclick="openCartSidebar();return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
-            . '<span class="cart-icon"><svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg><span class="h2-cart-badge" data-h2-cart-count="0">0</span></span>'
+            . $this->get_cart_icon_markup()
             . '</a></li>';
 
         return preg_replace('#</ul>\s*</nav>#', $icon . '</ul></nav>', $content, 1) ?: $content;
@@ -1052,6 +1089,33 @@ class Plugin {
             return;
         }
         include PRODUKT_PLUGIN_PATH . 'templates/cart-sidebar.php';
+    }
+
+    /**
+     * Shortcode to display the cart icon anywhere on the page.
+     * 
+     * Usage: [produkt_cart_icon] or [produkt_cart_icon class="custom-class"]
+     * 
+     * @param array $atts Shortcode attributes
+     * @return string HTML markup for the cart icon
+     */
+    public function render_cart_icon_shortcode($atts) {
+        if (!$this->is_cart_enabled()) {
+            return '';
+        }
+
+        $atts = shortcode_atts([
+            'class' => 'produkt-cart-icon-shortcode',
+        ], $atts, 'produkt_cart_icon');
+
+        $class = esc_attr($atts['class']);
+        
+        $icon_markup = $this->get_cart_icon_markup();
+        
+        return '<span class="' . $class . '">'
+            . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+            . $icon_markup
+            . '</a></span>';
     }
 
     /**

@@ -33,6 +33,35 @@ jQuery(document).ready(function($) {
     let emailCheckTimer = null;
     let emailExists = false;
 
+    function saveShippingSelection(priceId, cost) {
+        try {
+            localStorage.setItem('produkt_shipping_selection', JSON.stringify({
+                priceId: priceId || '',
+                cost: !isNaN(parseFloat(cost)) ? parseFloat(cost) : 0
+            }));
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
+    function loadShippingSelection() {
+        try {
+            const stored = JSON.parse(localStorage.getItem('produkt_shipping_selection') || '{}');
+            if (stored && typeof stored === 'object') {
+                if (stored.priceId) {
+                    shippingPriceId = stored.priceId.toString();
+                }
+                if (!isNaN(parseFloat(stored.cost))) {
+                    currentShippingCost = parseFloat(stored.cost);
+                }
+            }
+        } catch (e) {
+            // ignore parse errors
+        }
+    }
+
+    loadShippingSelection();
+
     const $loginModal = $('#checkout-login-modal');
     const $loginEmail = $('#checkout-login-email');
     const $emailWarning = $('#checkout-email-warning');
@@ -201,14 +230,99 @@ jQuery(document).ready(function($) {
         updateCartBadge();
     }
 
+    function getCartTotalSuffix() {
+        if (typeof produkt_ajax !== 'undefined' && produkt_ajax.betriebsmodus === 'kauf') {
+            return '';
+        }
+        const suffixAttr = $('.cart-total-amount').data('suffix');
+        if (typeof suffixAttr === 'string') {
+            return suffixAttr;
+        }
+        return ' / Monat';
+    }
+
+    function updateCartShippingDisplay() {
+        const $shippingAmount = $('.cart-shipping-amount');
+        if (!$shippingAmount.length) return;
+        $shippingAmount.text(formatPrice(currentShippingCost) + '€');
+    }
+
+    function updateCartShippingCost(callback) {
+        if (cart.length === 0) {
+            // Warenkorb leer - Versand auf 0 setzen
+            currentShippingCost = 0;
+            updateCartShippingDisplay();
+            if (callback) callback();
+            return;
+        }
+
+        // Versandpreis aus dem ersten Item im Warenkorb nehmen
+        const firstItem = cart[0];
+        const itemShippingPriceId = firstItem.shipping_price_id || shippingPriceId;
+
+        if (!itemShippingPriceId) {
+            // Keine shipping_price_id - auf 0 setzen oder Standard verwenden
+            currentShippingCost = 0;
+            updateCartShippingDisplay();
+            if (callback) callback();
+            return;
+        }
+
+        // Versandpreis über AJAX abrufen
+        $.ajax({
+            url: produkt_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'get_shipping_price',
+                shipping_price_id: itemShippingPriceId,
+                nonce: produkt_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data && response.data.shipping_cost !== undefined) {
+                    currentShippingCost = parseFloat(response.data.shipping_cost) || 0;
+                    saveShippingSelection(itemShippingPriceId, currentShippingCost);
+                    updateCartShippingDisplay();
+                } else {
+                    currentShippingCost = 0;
+                    updateCartShippingDisplay();
+                }
+                if (callback) callback();
+            },
+            error: function() {
+                currentShippingCost = 0;
+                updateCartShippingDisplay();
+                if (callback) callback();
+            }
+        });
+    }
+
+    function updateCartTotal() {
+        let total = 0;
+        cart.forEach((item) => {
+            total += parseFloat(item.final_price || 0);
+        });
+        
+        // Im Vermietungsmodus wird der Versand separat angezeigt und nicht zur Gesamtsumme hinzugefügt
+        // Im Kaufmodus wird der Versand zur Gesamtsumme hinzugefügt
+        const isRentalMode = (typeof produkt_ajax !== 'undefined' && produkt_ajax.betriebsmodus !== 'kauf');
+        if (!isRentalMode) {
+            total += currentShippingCost;
+        }
+        
+        $('.cart-total-amount').text(formatPrice(total) + '€' + getCartTotalSuffix());
+    }
+
     function renderCart() {
         const list = $('#produkt-cart-panel .cart-items').empty();
         if (!cart.length) {
             list.append('<p>Ihr Warenkorb ist leer.</p>');
-            $('.cart-total-amount').text('0€');
+            currentShippingCost = 0;
+            $('.cart-total-amount').text('0€' + getCartTotalSuffix());
+            updateCartShippingDisplay();
             updateCartBadge();
             return;
         }
+        
         let total = 0;
         cart.forEach((item, idx) => {
             total += parseFloat(item.final_price || 0);
@@ -224,7 +338,7 @@ jQuery(document).ready(function($) {
             
             // Ausführung (nur wenn vorhanden)
             if (item.variant_name && item.variant_name.trim()) {
-                details.append($('<div>', {class: 'cart-item-variant'}).text('Ausführung: ' + item.variant_name));
+                details.append($('<div>', {class: 'cart-item-variant'}).text(item.variant_name));
             }
             
             // Extras (nur wenn vorhanden)
@@ -241,28 +355,74 @@ jQuery(document).ready(function($) {
             
             // Produktfarbe (nur wenn vorhanden)
             if (item.produktfarbe && item.produktfarbe.trim()) {
-                details.append($('<div>', {class: 'cart-item-color'}).text('Farbe: ' + item.produktfarbe));
+                const colorRow = $('<div>', {class: 'cart-item-color'});
+                colorRow.append($('<span>', {class: 'cart-item-label'}).text('Farbe: '));
+                colorRow.append($('<span>', {class: 'cart-item-value'}).text(item.produktfarbe));
+                details.append(colorRow);
             }
-            
+
             // Gestellfarbe (nur wenn vorhanden)
             if (item.gestellfarbe && item.gestellfarbe.trim()) {
-                details.append($('<div>', {class: 'cart-item-color'}).text('Gestellfarbe: ' + item.gestellfarbe));
+                const frameRow = $('<div>', {class: 'cart-item-color'});
+                frameRow.append($('<span>', {class: 'cart-item-label'}).text('Gestellfarbe: '));
+                frameRow.append($('<span>', {class: 'cart-item-value'}).text(item.gestellfarbe));
+                details.append(frameRow);
             }
-            
+
             // Zustand (nur wenn vorhanden)
             if (item.zustand && item.zustand.trim()) {
-                details.append($('<div>', {class: 'cart-item-condition'}).text('Zustand: ' + item.zustand));
+                const conditionRow = $('<div>', {class: 'cart-item-condition'});
+                conditionRow.append($('<span>', {class: 'cart-item-label'}).text('Zustand: '));
+                conditionRow.append($('<span>', {class: 'cart-item-value'}).text(item.zustand));
+                details.append(conditionRow);
             }
             
             // Mietdauer (nur wenn vorhanden)
             let period = '';
+            let isRentalMode = (typeof produkt_ajax !== 'undefined' && produkt_ajax.betriebsmodus !== 'kauf');
             if (item.start_date && item.end_date) {
                 period = item.start_date + ' - ' + item.end_date + ' (' + item.days + ' Tage)';
             } else if (item.dauer_name && item.dauer_name.trim()) {
                 period = item.dauer_name;
             }
-            if (period) {
-                details.append($('<div>', {class: 'cart-item-period'}).text('Mietdauer: ' + period));
+            if (period && isRentalMode && item.duration_id && item.variant_id) {
+                // Editierbares Mietdauer-Element mit Pfeilen
+                const periodRow = $('<div>', {class: 'cart-item-period-editable'});
+                const durationSelector = $('<div>', {
+                    class: 'cart-duration-selector',
+                    'data-cart-index': idx,
+                    'data-variant-id': item.variant_id,
+                    'data-current-duration-id': item.duration_id,
+                    'data-extra-ids': item.extra_ids || '',
+                    'data-condition-id': item.condition_id || '',
+                    'data-product-color-id': item.product_color_id || '',
+                    'data-frame-color-id': item.frame_color_id || ''
+                });
+                
+                const leftArrow = $('<button>', {
+                    type: 'button',
+                    class: 'cart-duration-arrow cart-duration-arrow-left',
+                    'aria-label': 'Vorherige Mietdauer'
+                }).html('&lt;');
+                
+                const durationDisplay = $('<span>', {
+                    class: 'cart-duration-display'
+                }).text(period);
+                
+                const rightArrow = $('<button>', {
+                    type: 'button',
+                    class: 'cart-duration-arrow cart-duration-arrow-right',
+                    'aria-label': 'Nächste Mietdauer'
+                }).html('&gt;');
+                
+                durationSelector.append(leftArrow, durationDisplay, rightArrow);
+                periodRow.append(durationSelector);
+                details.append(periodRow);
+            } else if (period) {
+                const periodRow = $('<div>', {class: 'cart-item-period'});
+                periodRow.append($('<span>', {class: 'cart-item-label'}).text('Mietdauer: '));
+                periodRow.append($('<span>', {class: 'cart-item-value'}).text(period));
+                details.append(periodRow);
             }
             
             // Wochenendtarif (nur wenn vorhanden)
@@ -270,11 +430,20 @@ jQuery(document).ready(function($) {
                 details.append($('<div>', {class: 'cart-item-weekend'}).text('Wochenendtarif'));
             }
             const price = $('<div>', {class: 'cart-item-price'}).text(formatPrice(item.final_price) + '€');
-            const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
+            const rem = $('<span>', {
+                class: 'cart-item-remove',
+                'data-index': idx,
+                'aria-label': 'Artikel entfernen',
+                title: 'Artikel entfernen'
+            }).html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65.56 65.83" role="img" aria-hidden="true"><path d="M62.78,10.94h-13v-4c0-3.31-2.69-6-6-6h-22c-3.31,0-6,2.69-6,6v4H2.78c-1.11,0-2,.89-2,2s.89,2,2,2h3.19l4.46,44.59c.29,3.07,2.88,5.42,5.96,5.41h32.77c3.08.01,5.67-2.33,5.96-5.4l4.46-44.6h3.19c1.11,0,2-.89,2-2s-.89-2-2-2h0ZM19.78,6.94c0-1.11.89-2,2-2h22c1.11,0,2,.89,2,2v4h-26v-4ZM51.14,59.15c-.1,1.02-.96,1.8-1.98,1.8H16.39c-1.03,0-1.89-.78-1.98-1.8L9.99,14.94h45.58l-4.42,44.2Z"/></svg>');
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });
-        $('.cart-total-amount').text(formatPrice(total) + '€');
+        
+        // Versandpreis aktualisieren und dann Gesamtsumme berechnen
+        updateCartShippingCost(function() {
+            updateCartTotal();
+        });
         updateCartBadge();
     }
 
@@ -299,7 +468,120 @@ jQuery(document).ready(function($) {
             cart.splice(idx, 1);
             saveCart();
             renderCart();
+            // Versandpreis wird in renderCart() über updateCartShippingCost() aktualisiert
         }
+    });
+
+    // Mietdauer im Warenkorb ändern
+    $(document).on('click', '.cart-duration-arrow', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const $selector = $(this).closest('.cart-duration-selector');
+        const cartIndex = parseInt($selector.data('cart-index'));
+        const variantId = parseInt($selector.data('variant-id'));
+        const currentDurationId = parseInt($selector.data('current-duration-id'));
+        const isLeft = $(this).hasClass('cart-duration-arrow-left');
+        
+        if (isNaN(cartIndex) || isNaN(variantId) || isNaN(currentDurationId) || cartIndex < 0 || cartIndex >= cart.length) {
+            return;
+        }
+
+        const $display = $selector.find('.cart-duration-display');
+        $display.text('Lädt...');
+        $selector.find('.cart-duration-arrow').prop('disabled', true);
+
+        // Verfügbare Mietdauern abrufen
+        $.ajax({
+            url: produkt_ajax.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'get_variant_durations',
+                variant_id: variantId,
+                nonce: produkt_ajax.nonce
+            },
+            success: function(response) {
+                if (response.success && response.data && response.data.durations) {
+                    const durations = response.data.durations;
+                    if (durations.length === 0) {
+                        $display.text(cart[cartIndex].dauer_name || '');
+                        $selector.find('.cart-duration-arrow').prop('disabled', false);
+                        return;
+                    }
+
+                    // Aktuellen Index finden
+                    let currentIndex = -1;
+                    for (let i = 0; i < durations.length; i++) {
+                        if (durations[i].id === currentDurationId) {
+                            currentIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (currentIndex === -1) {
+                        currentIndex = 0;
+                    }
+
+                    // Nächste oder vorherige Mietdauer bestimmen
+                    let newIndex;
+                    if (isLeft) {
+                        newIndex = currentIndex > 0 ? currentIndex - 1 : durations.length - 1;
+                    } else {
+                        newIndex = currentIndex < durations.length - 1 ? currentIndex + 1 : 0;
+                    }
+
+                    const newDuration = durations[newIndex];
+                    const newDurationId = newDuration.id;
+
+                    // Preis neu berechnen
+                    const item = cart[cartIndex];
+                    $.ajax({
+                        url: produkt_ajax.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'update_cart_item_duration',
+                            cart_index: cartIndex,
+                            variant_id: variantId,
+                            duration_id: newDurationId,
+                            extra_ids: (typeof item.extra_ids === 'string' ? item.extra_ids : (item.extra_ids || '')),
+                            condition_id: item.condition_id || '',
+                            product_color_id: item.product_color_id || '',
+                            frame_color_id: item.frame_color_id || '',
+                            nonce: produkt_ajax.nonce
+                        },
+                        success: function(priceResponse) {
+                            if (priceResponse.success && priceResponse.data) {
+                                // Warenkorb-Item aktualisieren
+                                cart[cartIndex].duration_id = newDurationId;
+                                cart[cartIndex].dauer_name = priceResponse.data.duration_name;
+                                cart[cartIndex].final_price = priceResponse.data.final_price;
+                                cart[cartIndex].price_id = priceResponse.data.price_id;
+                                
+                                saveCart();
+                                // renderCart() wird aufgerufen, was updateCartShippingCost() und updateCartTotal() aufruft
+                                renderCart();
+                            } else {
+                                $display.text(cart[cartIndex].dauer_name || '');
+                                $selector.find('.cart-duration-arrow').prop('disabled', false);
+                                alert('Fehler beim Aktualisieren der Mietdauer');
+                            }
+                        },
+                        error: function() {
+                            $display.text(cart[cartIndex].dauer_name || '');
+                            $selector.find('.cart-duration-arrow').prop('disabled', false);
+                            alert('Fehler beim Aktualisieren des Preises');
+                        }
+                    });
+                } else {
+                    $display.text(cart[cartIndex].dauer_name || '');
+                    $selector.find('.cart-duration-arrow').prop('disabled', false);
+                }
+            },
+            error: function() {
+                $display.text(cart[cartIndex].dauer_name || '');
+                $selector.find('.cart-duration-arrow').prop('disabled', false);
+            }
+        });
     });
     // Get category ID from container
     const container = $('.produkt-container');
@@ -324,6 +606,8 @@ jQuery(document).ready(function($) {
             shippingProvider = firstShip.data('provider') || shippingProvider;
         }
         $('#produkt-field-shipping').val(shippingPriceId);
+        saveShippingSelection(shippingPriceId, currentShippingCost);
+        updateCartShippingDisplay();
     }
 
     if (produkt_ajax.betriebsmodus === 'kauf') {
@@ -528,6 +812,8 @@ jQuery(document).ready(function($) {
             }
             shippingProvider = $(this).data('provider') || '';
             $('#produkt-field-shipping').val(shippingPriceId);
+            saveShippingSelection(shippingPriceId, currentShippingCost);
+            updateCartShippingDisplay();
         } else if (type === 'duration') {
             selectedDuration = id;
         } else if (type === 'condition') {
