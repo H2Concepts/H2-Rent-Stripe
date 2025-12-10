@@ -1673,6 +1673,10 @@ img.wp-smiley, img.emoji {
     gap: 0.75rem;
     margin-bottom: 0.75rem;
 }
+.produkt-cart-panel .cart-item + .cart-item {
+    border-top: 1px solid #e0e0e0;
+    padding-top: 0.75rem;
+}
 .produkt-cart-panel .cart-item-remove {
     cursor: pointer;
     color: #dc3545;
