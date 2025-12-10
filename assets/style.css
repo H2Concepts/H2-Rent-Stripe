@@ -8,6 +8,8 @@
     --produkt-filter-button-bg: #5f7f5f;
     --produkt-cart-badge-bg: #000000;
     --produkt-cart-badge-color: #ffffff;
+    --produkt-discount-badge-bg: #e3e8e3;
+    --produkt-discount-badge-text: #000000;
 }
 img.wp-smiley, img.emoji {
     height: 1em;
@@ -648,8 +650,8 @@ img.wp-smiley, img.emoji {
 }
 
 .produkt-discount-badge {
-    background: #e3e8e3;
-    color: var(--produkt-text-color);
+    background: var(--produkt-discount-badge-bg, #e3e8e3);
+    color: var(--produkt-discount-badge-text, var(--produkt-text-color));
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.7rem;
