@@ -1684,6 +1684,12 @@ img.wp-smiley, img.emoji {
     flex: 0 0 64px;
     border-radius: 0.5rem;
     overflow: hidden;
+    padding: 6px;
+    background: #f6f6f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eee;
 }
 .produkt-cart-panel .cart-item-image img {
     width: 100%;
