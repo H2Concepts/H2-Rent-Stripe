@@ -201,11 +201,22 @@ jQuery(document).ready(function($) {
         updateCartBadge();
     }
 
+    function getCartTotalSuffix() {
+        if (typeof produkt_ajax !== 'undefined' && produkt_ajax.betriebsmodus === 'kauf') {
+            return '';
+        }
+        const suffixAttr = $('.cart-total-amount').data('suffix');
+        if (typeof suffixAttr === 'string') {
+            return suffixAttr;
+        }
+        return ' / Monat';
+    }
+
     function renderCart() {
         const list = $('#produkt-cart-panel .cart-items').empty();
         if (!cart.length) {
             list.append('<p>Ihr Warenkorb ist leer.</p>');
-            $('.cart-total-amount').text('0€');
+            $('.cart-total-amount').text('0€' + getCartTotalSuffix());
             updateCartBadge();
             return;
         }
@@ -291,7 +302,7 @@ jQuery(document).ready(function($) {
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });
-        $('.cart-total-amount').text(formatPrice(total) + '€');
+        $('.cart-total-amount').text(formatPrice(total) + '€' + getCartTotalSuffix());
         updateCartBadge();
     }
 
