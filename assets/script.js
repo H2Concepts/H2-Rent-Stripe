@@ -270,7 +270,12 @@ jQuery(document).ready(function($) {
                 details.append($('<div>', {class: 'cart-item-weekend'}).text('Wochenendtarif'));
             }
             const price = $('<div>', {class: 'cart-item-price'}).text(formatPrice(item.final_price) + '€');
-            const rem = $('<span>', {class: 'cart-item-remove', 'data-index': idx}).text('×');
+            const rem = $('<span>', {
+                class: 'cart-item-remove',
+                'data-index': idx,
+                'aria-label': 'Artikel entfernen',
+                title: 'Artikel entfernen'
+            }).html('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65.56 65.83" role="img" aria-hidden="true"><path d="M62.78,10.94h-13v-4c0-3.31-2.69-6-6-6h-22c-3.31,0-6,2.69-6,6v4H2.78c-1.11,0-2,.89-2,2s.89,2,2,2h3.19l4.46,44.59c.29,3.07,2.88,5.42,5.96,5.41h32.77c3.08.01,5.67-2.33,5.96-5.4l4.46-44.6h3.19c1.11,0,2-.89,2-2s-.89-2-2-2h0ZM19.78,6.94c0-1.11.89-2,2-2h22c1.11,0,2,.89,2,2v4h-26v-4ZM51.14,59.15c-.1,1.02-.96,1.8-1.98,1.8H16.39c-1.03,0-1.89-.78-1.98-1.8L9.99,14.94h45.58l-4.42,44.2Z"/></svg>');
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });

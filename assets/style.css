@@ -1677,6 +1677,16 @@ img.wp-smiley, img.emoji {
     cursor: pointer;
     color: #dc3545;
     margin-left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+.produkt-cart-panel .cart-item-remove svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
 }
 .produkt-cart-panel .cart-item-image {
     width: 64px;
