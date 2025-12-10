@@ -11,6 +11,7 @@
         </button>
     </div>
     <div class="cart-items"></div>
+    <div class="cart-shipping"><span>Versand</span><span class="cart-shipping-amount">0€</span></div>
     <div class="cart-summary"><span>Gesamtsumme</span><span class="cart-total-amount" data-suffix="<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?>">0€<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?></span></div>
     <button id="produkt-cart-checkout">Jetzt bestellen</button>
 </div>

@@ -1791,11 +1791,17 @@ img.wp-smiley, img.emoji {
     font-size: 1.125rem;
     font-weight: 700;
 }
-.produkt-cart-panel .cart-summary {
+.produkt-cart-panel .cart-summary,
+.produkt-cart-panel .cart-shipping {
     display: flex;
     justify-content: space-between;
-    padding: 2rem 2rem 1rem;
+    padding: 0.75rem 2rem 0.75rem;
     font-weight: 700;
+}
+
+.produkt-cart-panel .cart-summary {
+    padding-top: 1.25rem;
+    padding-bottom: 1rem;
     border-top: 1px solid #ddd;
 }
 

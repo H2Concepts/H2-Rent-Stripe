@@ -33,6 +33,35 @@ jQuery(document).ready(function($) {
     let emailCheckTimer = null;
     let emailExists = false;
 
+    function saveShippingSelection(priceId, cost) {
+        try {
+            localStorage.setItem('produkt_shipping_selection', JSON.stringify({
+                priceId: priceId || '',
+                cost: !isNaN(parseFloat(cost)) ? parseFloat(cost) : 0
+            }));
+        } catch (e) {
+            // ignore storage errors
+        }
+    }
+
+    function loadShippingSelection() {
+        try {
+            const stored = JSON.parse(localStorage.getItem('produkt_shipping_selection') || '{}');
+            if (stored && typeof stored === 'object') {
+                if (stored.priceId) {
+                    shippingPriceId = stored.priceId.toString();
+                }
+                if (!isNaN(parseFloat(stored.cost))) {
+                    currentShippingCost = parseFloat(stored.cost);
+                }
+            }
+        } catch (e) {
+            // ignore parse errors
+        }
+    }
+
+    loadShippingSelection();
+
     const $loginModal = $('#checkout-login-modal');
     const $loginEmail = $('#checkout-login-email');
     const $emailWarning = $('#checkout-email-warning');
@@ -212,11 +241,18 @@ jQuery(document).ready(function($) {
         return ' / Monat';
     }
 
+    function updateCartShippingDisplay() {
+        const $shippingAmount = $('.cart-shipping-amount');
+        if (!$shippingAmount.length) return;
+        $shippingAmount.text(formatPrice(currentShippingCost) + '€');
+    }
+
     function renderCart() {
         const list = $('#produkt-cart-panel .cart-items').empty();
         if (!cart.length) {
             list.append('<p>Ihr Warenkorb ist leer.</p>');
             $('.cart-total-amount').text('0€' + getCartTotalSuffix());
+            updateCartShippingDisplay();
             updateCartBadge();
             return;
         }
@@ -302,6 +338,7 @@ jQuery(document).ready(function($) {
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });
+        updateCartShippingDisplay();
         $('.cart-total-amount').text(formatPrice(total) + '€' + getCartTotalSuffix());
         updateCartBadge();
     }
@@ -352,6 +389,8 @@ jQuery(document).ready(function($) {
             shippingProvider = firstShip.data('provider') || shippingProvider;
         }
         $('#produkt-field-shipping').val(shippingPriceId);
+        saveShippingSelection(shippingPriceId, currentShippingCost);
+        updateCartShippingDisplay();
     }
 
     if (produkt_ajax.betriebsmodus === 'kauf') {
@@ -556,6 +595,8 @@ jQuery(document).ready(function($) {
             }
             shippingProvider = $(this).data('provider') || '';
             $('#produkt-field-shipping').val(shippingPriceId);
+            saveShippingSelection(shippingPriceId, currentShippingCost);
+            updateCartShippingDisplay();
         } else if (type === 'duration') {
             selectedDuration = id;
         } else if (type === 'condition') {
