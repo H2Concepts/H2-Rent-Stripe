@@ -166,8 +166,8 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                             <?php if ($type !== 'Verkauf'): ?>
                                 <small class="text-gray">/Monat</small>
                             <?php endif; ?>
-                            <?php if ($order->shipping_cost > 0): ?>
-                                <br><span class="text-gray">+ <?php echo number_format($order->shipping_cost, 2, ',', '.'); ?>€ einmalig</span>
+                            <?php if (isset($order->shipping_cost) || !empty($order->shipping_name)): ?>
+                                <br><span class="text-gray">+ <?php echo esc_html(pv_format_shipping_cost_label($order->shipping_cost ?? 0)); ?> einmalig</span>
                             <?php endif; ?>
                         </td>
                         <td>

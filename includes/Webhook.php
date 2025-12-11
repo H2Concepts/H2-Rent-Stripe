@@ -105,9 +105,10 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $is_rental   = ($mode === 'miete');
     $subject     = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date  = date_i18n('d.m.Y', strtotime($order['created_at']));
-    $price_label = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
-    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
-    $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $price_label     = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
+    $shipping_amount = floatval($order['shipping_cost'] ?? 0);
+    $shipping        = pv_format_shipping_cost_label($shipping_amount);
+    $total_first     = number_format((float) $order['final_price'] + $shipping_amount, 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
@@ -295,9 +296,10 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
     $mode         = pv_get_order_mode($order, $order_id);
     $is_rental    = ($mode === 'miete');
     $order_date   = !empty($order['created_at']) ? date_i18n('d.m.Y', strtotime($order['created_at'])) : date_i18n('d.m.Y');
-    $shipping     = number_format((float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
+    $shipping_raw = floatval($order['shipping_cost'] ?? 0);
+    $shipping     = pv_format_shipping_cost_label($shipping_raw);
     $subtotal     = number_format((float) ($order['final_price'] ?? 0), 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
-    $total_first  = number_format((float) ($order['final_price'] ?? 0) + (float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
+    $total_first  = number_format((float) ($order['final_price'] ?? 0) + $shipping_raw, 2, ',', '.') . '€';
     $shipping_name = $order['shipping_name'] ?? '';
     $provider      = $order['shipping_provider'] ?? '';
     $postal_code   = isset($order['customer_postal']) ? preg_replace('/[^0-9A-Za-z]/', '', $order['customer_postal']) : '';
@@ -427,9 +429,10 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $subject     = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
     $order_date  = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
-    $price_label = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
-    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
-    $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $price_label     = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
+    $shipping_amount = floatval($order['shipping_cost'] ?? 0);
+    $shipping        = pv_format_shipping_cost_label($shipping_amount);
+    $total_first     = number_format((float) $order['final_price'] + $shipping_amount, 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
 

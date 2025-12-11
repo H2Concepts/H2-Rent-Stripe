@@ -6,6 +6,38 @@ function pv_get_variant_image_url($variant_id) {
     return $img_id ? wp_get_attachment_image_url($img_id, 'medium') : '';
 }
 
+if (!function_exists('pv_format_shipping_cost_label')) {
+    /**
+     * Format a shipping amount for display and return "Kostenlos" for free shipping.
+     *
+     * @param float  $shipping_cost Raw shipping amount.
+     * @param string $free_label    Label to use when shipping is free.
+     *
+     * @return string Human-readable shipping amount.
+     */
+    function pv_format_shipping_cost_label($shipping_cost, $free_label = 'Kostenlos') {
+        $cost = floatval($shipping_cost);
+        if ($cost > 0) {
+            return number_format($cost, 2, ',', '.') . '€';
+        }
+
+        return $free_label;
+    }
+}
+
+if (!function_exists('pv_is_free_shipping_cost')) {
+    /**
+     * Determine whether a given shipping amount qualifies as free shipping.
+     *
+     * @param float $shipping_cost Raw shipping amount.
+     *
+     * @return bool True when the shipping amount is zero or below.
+     */
+    function pv_is_free_shipping_cost($shipping_cost) {
+        return floatval($shipping_cost) <= 0;
+    }
+}
+
 function pv_format_subscription_period($start, $end) {
     return date('d.m.Y', strtotime($start)) . ' – ' . date('d.m.Y', strtotime($end));
 }
@@ -1095,11 +1127,16 @@ function pv_generate_invoice_pdf($order_id) {
     }
 
     // Versandkosten als eigener Artikel
-    if (!empty($order['shipping_cost']) && floatval($order['shipping_cost']) > 0) {
+    $has_shipping = isset($order['shipping_cost']) || !empty($order['shipping_name']);
+    if ($has_shipping) {
         $shipping_name = $order['shipping_name'] ?: 'Versand';
+        if (pv_is_free_shipping_cost($order['shipping_cost'] ?? 0)) {
+            $shipping_name .= ' (Kostenlos)';
+        }
+
         $post_data["artikel_{$i}_name"]  = $shipping_name;
         $post_data["artikel_{$i}_menge"] = 1;
-        $post_data["artikel_{$i}_preis"] = floatval($order['shipping_cost']);
+        $post_data["artikel_{$i}_preis"] = floatval($order['shipping_cost'] ?? 0);
         $i++;
     }
 

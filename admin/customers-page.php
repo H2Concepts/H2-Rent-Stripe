@@ -593,7 +593,12 @@ if (!$customer_id) {
                                 ?>
                                 <td><?php echo esc_html($start . ' - ' . $end); ?></td>
                                 <td><?php echo number_format($o->final_price, 2, ',', '.'); ?>€</td>
-                                <td><?php echo esc_html($o->shipping_name ?: '–'); ?><?php if ($o->shipping_cost > 0) : ?> (<?php echo number_format($o->shipping_cost, 2, ',', '.'); ?>€)<?php endif; ?></td>
+                                <td>
+                                    <?php echo esc_html($o->shipping_name ?: '–'); ?>
+                                    <?php if (isset($o->shipping_cost)) : ?>
+                                        (<?php echo esc_html(pv_format_shipping_cost_label($o->shipping_cost)); ?>)
+                                    <?php endif; ?>
+                                </td>
                                 <td class="details-cell">
                                     <button type="button" class="icon-btn icon-btn-no-stroke view-details-link" data-order-id="<?php echo esc_attr($o->id); ?>" aria-label="Details">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22.1">

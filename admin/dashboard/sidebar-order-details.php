@@ -260,12 +260,11 @@ $rental_payments = $rental_payments ?? [];
     <div class="total-section">
         <p><strong>Gesamtpreis:</strong> <?php echo number_format((float)$order->final_price, 2, ',', '.'); ?> €</p>
 
-        <?php if ($order->shipping_cost > 0 || !empty($order->shipping_name)) : ?>
+        <?php if (($order->shipping_cost ?? 0) > 0 || !empty($order->shipping_name)) : ?>
+            <?php $shipping_label = pv_format_shipping_cost_label($order->shipping_cost ?? 0); ?>
             <p><strong>Versand:</strong>
                 <?php echo esc_html($order->shipping_name ?: 'Versand'); ?>
-                <?php if ($order->shipping_cost > 0) : ?>
-                    – <?php echo number_format((float)$order->shipping_cost, 2, ',', '.'); ?> €
-                <?php endif; ?>
+                – <?php echo esc_html($shipping_label); ?>
             </p>
         <?php endif; ?>
     </div>
