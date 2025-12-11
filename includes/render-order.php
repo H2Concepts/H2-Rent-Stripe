@@ -70,8 +70,17 @@ if (!defined('ABSPATH')) { exit; }
         <div class="order-totals">
             <p><strong>Zwischensumme:</strong> <?php echo esc_html(number_format((float) $order->final_price, 2, ',', '.')); ?>€<?php echo esc_html($price_suffix); ?></p>
             <?php if (isset($order->shipping_cost) || !empty($order->shipping_name)) : ?>
-                <?php $shipping_label = pv_format_shipping_cost_label($order->shipping_cost ?? 0); ?>
-                <p><strong>Versand:</strong> <?php echo esc_html($order->shipping_name ?: 'Versand'); ?> - <?php echo esc_html($shipping_label); ?></p>
+                <?php
+                $shipping_cost  = $order->shipping_cost ?? 0;
+                $shipping_label = pv_format_shipping_cost_label($shipping_cost);
+                ?>
+                <p><strong>Versand:</strong>
+                    <?php if (pv_is_free_shipping_cost($shipping_cost)) : ?>
+                        <?php echo esc_html($shipping_label); ?>
+                    <?php else : ?>
+                        <?php echo esc_html($order->shipping_name ?: 'Versand'); ?> - <?php echo esc_html($shipping_label); ?>
+                    <?php endif; ?>
+                </p>
             <?php endif; ?>
             <?php $total = (float) $order->final_price + (float) $order->shipping_cost; ?>
             <p><strong>Gesamtsumme:</strong> <?php echo esc_html(number_format($total, 2, ',', '.')); ?>€</p>
