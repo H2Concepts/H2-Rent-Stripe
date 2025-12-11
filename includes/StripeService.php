@@ -700,6 +700,66 @@ class StripeService {
     }
 
     /**
+     * Ensure a Stripe product has an image based on the plugin variant data.
+     *
+     * @param int $variant_id
+     * @return true|\WP_Error True on success or when nothing to update, WP_Error on Stripe failure.
+     */
+    public static function ensure_product_image_from_variant($variant_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        $variant_id = (int) $variant_id;
+        if ($variant_id <= 0) {
+            return true;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_variants';
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT stripe_product_id, image_url_1, image_url_2, image_url_3, image_url_4, image_url_5 FROM {$table} WHERE id = %d",
+                $variant_id
+            )
+        );
+
+        if (!$row || empty($row->stripe_product_id)) {
+            return true;
+        }
+
+        $image_url = '';
+        foreach (['image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5'] as $col) {
+            if (!empty($row->$col)) {
+                $image_url = esc_url_raw($row->$col);
+                break;
+            }
+        }
+
+        if (empty($image_url)) {
+            return true;
+        }
+
+        try {
+            $product = \Stripe\Product::retrieve($row->stripe_product_id);
+
+            $has_image = !empty($product->images) && in_array($image_url, $product->images, true);
+
+            if (!$has_image) {
+                \Stripe\Product::update($product->id, [
+                    'images' => [$image_url],
+                ]);
+            }
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_image_update', $e->getMessage());
+        }
+
+        return true;
+    }
+
+    /**
      * Create or retrieve a Stripe product without creating a price.
      *
      * @param array $product_data {

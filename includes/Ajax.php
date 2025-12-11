@@ -1918,6 +1918,7 @@ function produkt_create_embedded_checkout_session() {
         $cart_subtotal = 0;
         $free_shipping_enabled = intval(get_option('produkt_free_shipping_enabled', 0));
         $free_shipping_threshold = floatval(get_option('produkt_free_shipping_threshold', 0));
+        $synced_variant_images = [];
         foreach ($cart_items as $it) {
             $it_days = isset($it['days']) ? max(1, intval($it['days'])) : 1;
             $it_start = sanitize_text_field($it['start_date'] ?? '');
@@ -1925,6 +1926,12 @@ function produkt_create_embedded_checkout_session() {
             $pid      = sanitize_text_field($it['price_id'] ?? '');
             if (!$pid) { continue; }
             $line_items[] = [ 'price' => $pid, 'quantity' => $it_days ];
+
+            $variant_id_for_image = intval($it['variant_id'] ?? 0);
+            if ($variant_id_for_image > 0 && !isset($synced_variant_images[$variant_id_for_image])) {
+                \ProduktVerleih\StripeService::ensure_product_image_from_variant($variant_id_for_image);
+                $synced_variant_images[$variant_id_for_image] = true;
+            }
 
             $extra_price_ids = [];
             if (!empty($it['extra_price_ids'])) {
