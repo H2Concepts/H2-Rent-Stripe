@@ -19,6 +19,17 @@ if (isset($_POST['submit_stripe'])) {
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
+if (isset($_POST['produkt_clear_stripe_cache'])) {
+    \ProduktVerleih\Admin::verify_admin_action();
+
+    $deleted = 0;
+    if (class_exists('\\ProduktVerleih\\StripeService')) {
+        $deleted = \ProduktVerleih\StripeService::clear_stripe_cache();
+    }
+
+    echo '<div class="notice notice-success"><p>🔄 Stripe-Cache wurde gelöscht. Alle Stripe-Produkte und -Preise werden beim nächsten Sync neu geladen. (Gelöschte Cache-Einträge: ' . intval($deleted) . ')</p></div>';
+}
+
 $stripe_publishable_key = get_option('produkt_stripe_publishable_key', '');
 $stripe_secret_key   = get_option('produkt_stripe_secret_key', '');
 $stripe_pmc_id       = get_option('produkt_stripe_pmc_id', '');
@@ -93,6 +104,9 @@ $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
                                     <option value="direct" <?php selected($cart_mode, 'direct'); ?>>Ohne Warenkorb-Funktion</option>
                                 </select>
                             </div>
+                            <button type="submit" name="produkt_clear_stripe_cache" class="produkt-button secondary" style="margin-left: auto;">
+                                Stripe Cache löschen
+                            </button>
                         </div>
                     </div>
                 </div>

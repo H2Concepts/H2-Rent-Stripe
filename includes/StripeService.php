@@ -162,6 +162,43 @@ class StripeService {
     }
 
     /**
+     * Löscht alle Stripe-bezogenen Transients des Plugins.
+     *
+     * Betroffen sind u. a.:
+     * - produkt_stripe_price_*
+     * - produkt_stripe_price_formatted_*
+     * - produkt_stripe_pair_*
+     *
+     * @return int Anzahl gelöschter Datenbank-Einträge.
+     */
+    public static function clear_stripe_cache() {
+        global $wpdb;
+
+        $table = $wpdb->options;
+
+        $transient_like = $wpdb->esc_like('_transient_produkt_stripe_') . '%';
+        $timeout_like   = $wpdb->esc_like('_transient_timeout_produkt_stripe_') . '%';
+
+        $deleted = 0;
+
+        $deleted += (int) $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$table} WHERE option_name LIKE %s",
+                $transient_like
+            )
+        );
+
+        $deleted += (int) $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$table} WHERE option_name LIKE %s",
+                $timeout_like
+            )
+        );
+
+        return $deleted;
+    }
+
+    /**
      * Retrieve the lowest price among multiple Stripe price IDs with caching.
      *
      * @param array $price_ids Array of Stripe price IDs
