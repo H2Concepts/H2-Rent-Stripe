@@ -539,6 +539,34 @@ class StripeService {
         }
 
         try {
+            global $wpdb;
+
+            // Standard: kein Bild
+            $image_url = '';
+
+            // plugin_product_id = Variant-ID in deinem System
+            if (!empty($product_data['plugin_product_id'])) {
+                $variant_id     = (int) $product_data['plugin_product_id'];
+                $variants_table = $wpdb->prefix . 'produkt_variants';
+
+                $variant_row = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT image_url_1, image_url_2, image_url_3, image_url_4, image_url_5\n                     FROM {$variants_table}\n                     WHERE id = %d",
+                        $variant_id
+                    )
+                );
+
+                if ($variant_row) {
+                    foreach (['image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5'] as $col) {
+                        if (!empty($variant_row->$col)) {
+                            // Öffentliche URL aus der DB nutzen
+                            $image_url = esc_url_raw($variant_row->$col);
+                            break;
+                        }
+                    }
+                }
+            }
+
             $cache_key = 'produkt_stripe_pair_' . md5(json_encode($product_data));
             $cached    = get_transient($cache_key);
             if ($cached !== false) {
@@ -557,7 +585,8 @@ class StripeService {
             $stripe_product = $found && !empty($found->data) ? $found->data[0] : null;
 
             if (!$stripe_product) {
-                $stripe_product = \Stripe\Product::create([
+                // Neues Stripe-Produkt anlegen
+                $product_params = [
                     'name'     => $product_data['name'],
                     'metadata' => [
                         'plugin_product_id' => $product_data['plugin_product_id'],
@@ -565,7 +594,25 @@ class StripeService {
                         'duration_id'       => $product_data['duration_id'] ?? 0,
                         'mode'              => $product_data['mode'],
                     ],
-                ]);
+                ];
+
+                if (!empty($image_url)) {
+                    $product_params['images'] = [$image_url];
+                }
+
+                $stripe_product = \Stripe\Product::create($product_params);
+            } else {
+                // Produkt existiert bereits → Bild ggf. aktualisieren
+                if (!empty($image_url)) {
+                    $should_update_image = empty($stripe_product->images)
+                        || !in_array($image_url, $stripe_product->images, true);
+
+                    if ($should_update_image) {
+                        \Stripe\Product::update($stripe_product->id, [
+                            'images' => [$image_url],
+                        ]);
+                    }
+                }
             }
 
             $prices = \Stripe\Price::all(['product' => $stripe_product->id, 'limit' => 100]);
