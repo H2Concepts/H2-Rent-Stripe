@@ -21,6 +21,7 @@ jQuery(document).ready(function($) {
     let selectedVariantSaleEnabled = false;
     let shippingPriceId = '';
     let shippingProvider = '';
+    let freeShippingActive = false;
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
@@ -58,6 +59,28 @@ jQuery(document).ready(function($) {
         } catch (e) {
             // ignore parse errors
         }
+    }
+
+    function isFreeShippingEnabled() {
+        return typeof produkt_ajax !== 'undefined'
+            && parseInt(produkt_ajax.free_shipping_enabled || 0, 10) === 1
+            && !isNaN(parseFloat(produkt_ajax.free_shipping_threshold))
+            && parseFloat(produkt_ajax.free_shipping_threshold) > 0;
+    }
+
+    function getCartSubtotal() {
+        return cart.reduce((sum, item) => sum + parseFloat(item.final_price || 0), 0);
+    }
+
+    function isFreeShippingActive(subtotal) {
+        if (!isFreeShippingEnabled()) return false;
+        const threshold = parseFloat(produkt_ajax.free_shipping_threshold || 0);
+        if (isNaN(subtotal) || subtotal <= 0) return false;
+        return subtotal >= threshold;
+    }
+
+    function getShippingPriceIdForValue(amount) {
+        return isFreeShippingActive(amount) ? '' : shippingPriceId;
     }
 
     loadShippingSelection();
@@ -244,17 +267,30 @@ jQuery(document).ready(function($) {
     function updateCartShippingDisplay() {
         const $shippingAmount = $('.cart-shipping-amount');
         if (!$shippingAmount.length) return;
-        $shippingAmount.text(formatPrice(currentShippingCost) + '€');
+        const displayText = freeShippingActive ? 'Kostenlos' : (formatPrice(currentShippingCost) + '€');
+        $shippingAmount.text(displayText);
     }
 
     function updateCartShippingCost(callback) {
         if (cart.length === 0) {
             // Warenkorb leer - Versand auf 0 setzen
             currentShippingCost = 0;
+            freeShippingActive = false;
             updateCartShippingDisplay();
             if (callback) callback();
             return;
         }
+
+        const subtotal = getCartSubtotal();
+        if (isFreeShippingActive(subtotal)) {
+            freeShippingActive = true;
+            currentShippingCost = 0;
+            updateCartShippingDisplay();
+            if (callback) callback();
+            return;
+        }
+
+        freeShippingActive = false;
 
         // Versandpreis aus dem ersten Item im Warenkorb nehmen
         const firstItem = cart[0];
@@ -608,7 +644,8 @@ jQuery(document).ready(function($) {
             }
             shippingProvider = firstShip.data('provider') || shippingProvider;
         }
-        $('#produkt-field-shipping').val(shippingPriceId);
+        const initialSubtotal = getCartSubtotal() || currentPrice || selectedSalePrice || 0;
+        $('#produkt-field-shipping').val(getShippingPriceIdForValue(initialSubtotal));
         saveShippingSelection(shippingPriceId, currentShippingCost);
         updateCartShippingDisplay();
     }
@@ -814,7 +851,8 @@ jQuery(document).ready(function($) {
                 currentShippingCost = cost;
             }
             shippingProvider = $(this).data('provider') || '';
-            $('#produkt-field-shipping').val(shippingPriceId);
+            const amountForShipping = cart.length ? getCartSubtotal() : (currentPrice || selectedSalePrice || 0);
+            $('#produkt-field-shipping').val(getShippingPriceIdForValue(amountForShipping));
             saveShippingSelection(shippingPriceId, currentShippingCost);
             updateCartShippingDisplay();
         } else if (type === 'duration') {
@@ -925,8 +963,10 @@ jQuery(document).ready(function($) {
             if (extraPriceIds.length) {
                 params.set('extra_price_ids', extraPriceIds.join(','));
             }
-            if (shippingPriceId) {
-                params.set('shipping_price_id', shippingPriceId);
+            const subtotalForShipping = cart.length ? getCartSubtotal() : currentPrice;
+            const shippingIdForCheckout = getShippingPriceIdForValue(subtotalForShipping);
+            if (shippingIdForCheckout) {
+                params.set('shipping_price_id', shippingIdForCheckout);
             }
             if (currentCategoryId) {
                 params.set('category_id', currentCategoryId);
@@ -990,8 +1030,10 @@ jQuery(document).ready(function($) {
         if (extraPriceIds.length) {
             params.set('extra_price_ids', extraPriceIds.join(','));
         }
-        if (shippingPriceId) {
-            params.set('shipping_price_id', shippingPriceId);
+        const saleSubtotal = selectedSalePrice || currentPrice;
+        const shippingIdForSale = getShippingPriceIdForValue(saleSubtotal);
+        if (shippingIdForSale) {
+            params.set('shipping_price_id', shippingIdForSale);
         }
         if (currentCategoryId) {
             params.set('category_id', currentCategoryId);
@@ -2284,7 +2326,11 @@ function updateSelectedDays() {
         e.preventDefault();
         if (!cart.length) return;
         saveCart();
-        const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingPriceId ? '&shipping_price_id=' + encodeURIComponent(shippingPriceId) : '');
+        const cartSubtotal = getCartSubtotal();
+        freeShippingActive = isFreeShippingActive(cartSubtotal);
+        const shippingIdForCart = getShippingPriceIdForValue(cartSubtotal);
+        updateCartShippingDisplay();
+        const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingIdForCart ? '&shipping_price_id=' + encodeURIComponent(shippingIdForCart) : '');
         if (produkt_ajax.is_logged_in) {
             window.location.href = targetUrl;
         } else {

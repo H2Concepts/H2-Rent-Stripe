@@ -461,6 +461,8 @@ class Admin {
                     'options'  => $options,
                     'triggers' => $popup_triggers,
                 ],
+                'free_shipping_enabled'   => intval(get_option('produkt_free_shipping_enabled', 0)),
+                'free_shipping_threshold' => floatval(get_option('produkt_free_shipping_threshold', 0)),
             ]);
         }
     }
