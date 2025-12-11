@@ -1272,6 +1272,14 @@
     transform: translateX(18px);
 }
 
+.produkt-form-group.is-disabled {
+    opacity: 0.6;
+}
+
+.produkt-form-group.is-disabled input {
+    cursor: not-allowed;
+}
+
 /* Summary statistics */
 .produkt-summary-grid {
     display: grid;

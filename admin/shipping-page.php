@@ -93,6 +93,26 @@ if (isset($_POST['save_shipping'])) {
     }
 }
 
+if (isset($_POST['save_free_shipping'])) {
+    if (
+        !isset($_POST['free_shipping_nonce']) ||
+        !wp_verify_nonce($_POST['free_shipping_nonce'], 'save_free_shipping_action')
+    ) {
+        wp_die('Ungültige Anfrage – bitte Seite neu laden und erneut versuchen.');
+    }
+    if (!current_user_can('manage_options')) {
+        wp_die(__('Insufficient permissions.', 'h2-concepts'));
+    }
+
+    $free_shipping_enabled = isset($_POST['free_shipping_enabled']) ? 1 : 0;
+    $free_shipping_threshold = floatval($_POST['free_shipping_threshold'] ?? 0);
+
+    update_option('produkt_free_shipping_enabled', $free_shipping_enabled);
+    update_option('produkt_free_shipping_threshold', $free_shipping_threshold);
+
+    echo '<div class="notice notice-success"><p>✅ Kostenloser Versand aktualisiert!</p></div>';
+}
+
 // Handle delete
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) &&
     wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
@@ -120,6 +140,8 @@ $providers = [
     'ups'    => 'UPS',
     'dpd'    => 'DPD'
 ];
+$free_shipping_enabled = intval(get_option('produkt_free_shipping_enabled', 0));
+$free_shipping_threshold = floatval(get_option('produkt_free_shipping_threshold', 0));
 ?>
 <div class="produkt-admin dashboard-wrapper">
     <div id="shipping-modal" class="modal-overlay" data-open="<?php echo $edit_shipping ? '1' : '0'; ?>">
@@ -217,4 +239,36 @@ $providers = [
             </tbody>
         </table>
     </div>
+    <form method="post" class="h2-rental-card produkt-compact-form">
+        <?php wp_nonce_field('save_free_shipping_action', 'free_shipping_nonce'); ?>
+        <input type="hidden" name="save_free_shipping" value="1">
+        <div class="card-header-flex">
+            <div>
+                <h2>Kostenloser Versand</h2>
+                <p class="card-subline">Versandkosten automatisch ab einem Warenwert erlassen</p>
+            </div>
+            <label class="produkt-toggle-label" for="free_shipping_enabled">
+                <input type="checkbox" id="free_shipping_enabled" name="free_shipping_enabled" value="1" <?php checked($free_shipping_enabled, 1); ?> data-free-shipping-toggle>
+                <span class="produkt-toggle-slider"></span>
+            </label>
+        </div>
+        <div class="form-grid">
+            <div class="produkt-form-group">
+                <label for="free_shipping_threshold">Kostenloser Versand ab</label>
+                <div class="input-with-suffix">
+                    <input type="number" step="0.01" min="0" id="free_shipping_threshold" name="free_shipping_threshold" value="<?php echo esc_attr($free_shipping_threshold); ?>" placeholder="59" data-free-shipping-threshold>
+                    <span class="suffix">€</span>
+                </div>
+                <p class="description">Warenwert, ab dem im Checkout keine Versandkosten mehr berechnet werden.</p>
+            </div>
+        </div>
+        <p>
+            <button type="submit" class="icon-btn" aria-label="Speichern">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                    <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
+                    <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
+                </svg>
+            </button>
+        </p>
+    </form>
 </div>

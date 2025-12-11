@@ -14,8 +14,6 @@ if (isset($_POST['submit_stripe'])) {
     update_option('produkt_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
     update_option('produkt_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
     update_option('produkt_ct_agb', wp_kses_post($_POST['ct_agb'] ?? ''));
-    update_option('produkt_free_shipping_enabled', isset($_POST['free_shipping_enabled']) ? 1 : 0);
-    update_option('produkt_free_shipping_threshold', floatval($_POST['free_shipping_threshold'] ?? 0));
     update_option('produkt_betriebsmodus', sanitize_text_field($_POST['produkt_betriebsmodus'] ?? 'miete'));
     update_option('produkt_miete_cart_mode', sanitize_text_field($_POST['produkt_miete_cart_mode'] ?? 'direct'));
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
@@ -32,8 +30,6 @@ $ct_shipping         = get_option('produkt_ct_shipping', '');
 $ct_submit           = get_option('produkt_ct_submit', '');
 $ct_after_submit     = get_option('produkt_ct_after_submit', '');
 $ct_agb              = get_option('produkt_ct_agb', '');
-$free_shipping_enabled   = intval(get_option('produkt_free_shipping_enabled', 0));
-$free_shipping_threshold = floatval(get_option('produkt_free_shipping_threshold', 0));
 $modus               = get_option('produkt_betriebsmodus', 'miete');
 $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
 ?>
@@ -124,28 +120,6 @@ $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
                     <div class="produkt-form-group">
                         <label>Cancel URL</label>
                         <input type="text" name="cancel_url" value="<?php echo esc_attr($cancel_url); ?>" placeholder="<?php echo esc_attr(home_url('/abbrechen')); ?>">
-                    </div>
-                </div>
-            </div>
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <div>
-                        <h2>Kostenloser Versand</h2>
-                        <p class="card-subline">Versandkosten automatisch ab einem Warenwert erlassen</p>
-                    </div>
-                    <label class="switch" aria-label="Kostenlosen Versand aktivieren">
-                        <input type="checkbox" name="free_shipping_enabled" value="1" <?php checked($free_shipping_enabled, 1); ?>>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                <div class="form-grid">
-                    <div class="produkt-form-group">
-                        <label for="free_shipping_threshold">Kostenloser Versand ab</label>
-                        <div class="input-with-suffix">
-                            <input type="number" step="0.01" min="0" id="free_shipping_threshold" name="free_shipping_threshold" value="<?php echo esc_attr($free_shipping_threshold); ?>" placeholder="59">
-                            <span class="suffix">€</span>
-                        </div>
-                        <p class="description">Warenwert, ab dem im Checkout keine Versandkosten mehr berechnet werden.</p>
                     </div>
                 </div>
             </div>
