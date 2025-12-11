@@ -2007,11 +2007,53 @@ function produkt_create_embedded_checkout_session() {
             'user_ip'    => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
         ];
+
         if ($shipping_price_id) {
             $metadata['shipping_price_id'] = $shipping_price_id;
         }
         if ($free_shipping_applied) {
             $metadata['free_shipping'] = 1;
+        }
+
+        // Zusatz: Produkt-Metadaten (Farbe, Zustand etc.) an Stripe geben
+        if (!empty($orders)) {
+            $first_meta = $orders[0]['metadata'] ?? [];
+
+            // Für Ein-Produkt-Fälle: direkt wie früher
+            if (!empty($first_meta)) {
+                if (!empty($first_meta['produkt'] ?? '')) {
+                    $metadata['produkt'] = $first_meta['produkt'];
+                }
+                if (!empty($first_meta['dauer_name'] ?? '')) {
+                    $metadata['dauer_name'] = $first_meta['dauer_name'];
+                }
+                if (!empty($first_meta['zustand'] ?? '')) {
+                    $metadata['zustand'] = $first_meta['zustand'];
+                }
+                if (!empty($first_meta['produktfarbe'] ?? '')) {
+                    $metadata['produktfarbe'] = $first_meta['produktfarbe'];
+                }
+                if (!empty($first_meta['gestellfarbe'] ?? '')) {
+                    $metadata['gestellfarbe'] = $first_meta['gestellfarbe'];
+                }
+            }
+
+            // Kompakte JSON-Liste aller Artikel-Metadaten für Stripe / Webhooks
+            $items_meta = array_map(
+                static function ($order) {
+                    return $order['metadata'] ?? [];
+                },
+                $orders
+            );
+
+            $items_json = wp_json_encode($items_meta);
+
+            // Stripe-Metadaten-Wertlimit beachten (ca. 500 Zeichen)
+            if (strlen($items_json) > 450) {
+                $items_json = substr($items_json, 0, 450) . '…';
+            }
+
+            $metadata['cart_items'] = $items_json;
         }
 
         $tos_url = get_option('produkt_tos_url', home_url('/agb'));
