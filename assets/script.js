@@ -334,7 +334,10 @@ jQuery(document).ready(function($) {
             const details = $('<div>', {class: 'cart-item-details'});
             // Kategoriename als Hauptname (Fallback auf produkt oder 'Produkt')
             const categoryName = item.category_name || item.produkt || 'Produkt';
-            details.append($('<div>', {class: 'cart-item-name'}).text(categoryName));
+            const nameElement = item.product_url
+                ? $('<a>', {class: 'cart-item-name', href: item.product_url, text: categoryName})
+                : $('<div>', {class: 'cart-item-name'}).text(categoryName);
+            details.append(nameElement);
             
             // Ausführung (nur wenn vorhanden)
             if (item.variant_name && item.variant_name.trim()) {
@@ -903,7 +906,8 @@ jQuery(document).ready(function($) {
                 dauer_name: dauerName,
                 zustand: zustandName,
                 produktfarbe: produktfarbeName,
-                gestellfarbe: gestellfarbeName
+                gestellfarbe: gestellfarbeName,
+                product_url: window.location.href
             };
             cart.push(item);
             saveCart();
