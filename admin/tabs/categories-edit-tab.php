@@ -582,8 +582,16 @@ function produkt_category_icon($slug)
         <div id="tab-inventory" class="produkt-subtab-content">
         <div class="produkt-form-sections">
             <div class="dashboard-card">
-                <h2>Lagerverwaltung</h2>
-                <p class="card-subline">Bestände verwalten</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Lagerverwaltung</h2>
+                        <p class="card-subline">Bestände verwalten</p>
+                    </div>
+                    <label class="produkt-toggle">
+                        <input type="checkbox" name="inventory_enabled" value="1" <?php checked(isset($edit_item->inventory_enabled) ? intval($edit_item->inventory_enabled) : 0, 1); ?>>
+                        <span class="produkt-toggle-slider"></span>
+                    </label>
+                </div>
                 <?php
                     $variants = $wpdb->get_results(
                         $wpdb->prepare(
@@ -613,6 +621,7 @@ function produkt_category_icon($slug)
                                     ));
                                 ?>
                                 <?php if (!empty($colors)): ?>
+                                    <?php $color_index = 0; ?>
                                     <?php foreach ($colors as $c): ?>
                                         <?php $key = $v->id . '_' . $c->color_id; ?>
                                         <tr>
@@ -644,6 +653,7 @@ function produkt_category_icon($slug)
                                             </td>
                                             <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo esc_attr($c->sku); ?>"></td>
                                         </tr>
+                                        <?php $color_index++; ?>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
@@ -671,8 +681,8 @@ function produkt_category_icon($slug)
                                                     <input type="number" id="rent-<?php echo $v->id; ?>" name="stock_rented[<?php echo $v->id; ?>]" value="<?php echo intval($v->stock_rented); ?>" min="0">
                                                     <button type="button" class="inv-plus" data-target="rent-<?php echo $v->id; ?>">+</button>
                                                 </div>
-                                            </div>
-                                        </td>
+                                                </div>
+                                            </td>
                                         <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
                                     </tr>
                                 <?php endif; ?>

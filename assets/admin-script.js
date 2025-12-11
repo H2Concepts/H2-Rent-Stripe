@@ -433,6 +433,21 @@ jQuery(document).ready(function($) {
     }
 }
 
+    var freeShippingToggle = document.querySelector('[data-free-shipping-toggle]');
+    var freeShippingThreshold = document.querySelector('[data-free-shipping-threshold]');
+    if (freeShippingToggle && freeShippingThreshold) {
+        var freeShippingGroup = freeShippingThreshold.closest('.produkt-form-group');
+        var updateFreeShippingState = function() {
+            var enabled = freeShippingToggle.checked;
+            freeShippingThreshold.readOnly = !enabled;
+            if (freeShippingGroup) {
+                freeShippingGroup.classList.toggle('is-disabled', !enabled);
+            }
+        };
+        freeShippingToggle.addEventListener('change', updateFreeShippingState);
+        updateFreeShippingState();
+    }
+
     var durationModal = $('#duration-modal');
     if (durationModal.length) {
         var durationForm = durationModal.find('form');

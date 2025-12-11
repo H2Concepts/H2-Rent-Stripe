@@ -36,6 +36,9 @@ add_filter('pre_get_document_title', function () use ($category) {
 // Get category data
 $category_id = isset($category) ? $category->id : 1;
 
+// Check if inventory management is enabled for this category
+$inventory_enabled = isset($category->inventory_enabled) ? (bool) $category->inventory_enabled : false;
+
 // Get all data for this category
 $variants = $wpdb->get_results($wpdb->prepare(
     "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE category_id = %d ORDER BY sort_order",
@@ -452,10 +455,43 @@ if ($price_layout !== 'sidebar') {
                     <h3>Wählen Sie Ihre Ausführung</h3>
                     <div class="produkt-options variants layout-<?php echo esc_attr($layout_style); ?>">
                         <?php foreach ($variants as $variant): ?>
-                        <div class="produkt-option <?php echo !($variant->available ?? 1) ? 'unavailable' : ''; ?>"
+                        <?php
+                            // Check availability: if inventory is enabled, check stock_available; otherwise use available flag
+                            $variant_available = true;
+                            $stock_available = 0;
+                            if ($inventory_enabled) {
+                                // Check if variant has product colors
+                                $has_product_colors = $wpdb->get_var($wpdb->prepare(
+                                    "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color'",
+                                    $variant->id
+                                ));
+                                
+                                if ($has_product_colors > 0) {
+                                    // If variant has product colors, check if at least one color is available
+                                    // First check if variant has any colors with stock_available > 0
+                                    $available_colors = $wpdb->get_var($wpdb->prepare(
+                                        "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND stock_available > 0 AND available = 1",
+                                        $variant->id
+                                    ));
+                                    // Variant is only available if at least one color has stock > 0
+                                    $variant_available = ($available_colors > 0) && ($variant->available ?? 1);
+                                    // Set stock_available to the count of available colors
+                                    $stock_available = intval($available_colors);
+                                } else {
+                                    // No product colors, use variant stock directly
+                                    $stock_available = intval($variant->stock_available ?? 0);
+                                    $variant_available = ($stock_available > 0) && ($variant->available ?? 1);
+                                }
+                            } else {
+                                $variant_available = ($variant->available ?? 1);
+                            }
+                        ?>
+                        <div class="produkt-option <?php echo !$variant_available ? 'unavailable' : ''; ?>"
                              data-type="variant"
                              data-id="<?php echo esc_attr($variant->id); ?>"
-                             data-available="<?php echo esc_attr(($variant->available ?? 1) ? 'true' : 'false'); ?>"
+                             data-available="<?php echo esc_attr($variant_available ? 'true' : 'false'); ?>"
+                             data-stock="<?php echo esc_attr($stock_available); ?>"
+                             data-inventory-enabled="<?php echo esc_attr($inventory_enabled ? 'true' : 'false'); ?>"
                              data-delivery="<?php echo esc_attr($variant->delivery_time ?? ''); ?>"
                              data-weekend="<?php echo intval($variant->weekend_only ?? 0); ?>"
                              data-min-days="<?php echo intval($variant->min_rental_days ?? 0); ?>"
@@ -655,8 +691,27 @@ if ($price_layout !== 'sidebar') {
                         <?php
                             $color_preview_class = 'produkt-color-preview' . (!empty($color->is_multicolor) ? ' produkt-color-preview--multicolor' : '');
                             $color_preview_style = empty($color->is_multicolor) ? 'background-color: ' . esc_attr($color->color_code) . ';' : '';
+                            
+                            // Get stock_available for this color from variant_options if inventory is enabled
+                            $stock_available = null;
+                            $color_available = true;
+                            if ($inventory_enabled && !empty($variants)) {
+                                // Get stock from first variant (will be updated via AJAX when variant is selected)
+                                $first_variant_id = $variants[0]->id ?? 0;
+                                if ($first_variant_id) {
+                                    $color_option = $wpdb->get_row($wpdb->prepare(
+                                        "SELECT stock_available, available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                        $first_variant_id,
+                                        $color->id
+                                    ));
+                                    if ($color_option) {
+                                        $stock_available = intval($color_option->stock_available ?? 0);
+                                        $color_available = ($stock_available > 0) && ($color_option->available ?? 1);
+                                    }
+                                }
+                            }
                         ?>
-                        <div class="produkt-option" data-type="product-color" data-id="<?php echo esc_attr($color->id); ?>" data-available="true" data-color-name="<?php echo esc_attr($color->name); ?>" data-color-image="<?php echo esc_url($color->image_url ?? ''); ?>">
+                        <div class="produkt-option <?php echo !$color_available ? 'unavailable' : ''; ?>" data-type="product-color" data-id="<?php echo esc_attr($color->id); ?>" data-available="<?php echo esc_attr($color_available ? 'true' : 'false'); ?>" data-stock="<?php echo esc_attr($stock_available !== null ? $stock_available : ''); ?>" data-inventory-enabled="<?php echo esc_attr($inventory_enabled ? 'true' : 'false'); ?>" data-color-name="<?php echo esc_attr($color->name); ?>" data-color-image="<?php echo esc_url($color->image_url ?? ''); ?>">
                             <div class="produkt-option-content">
                                 <div class="produkt-color-display">
                                     <div class="<?php echo esc_attr($color_preview_class); ?>" style="<?php echo esc_attr($color_preview_style); ?>"></div>
@@ -711,7 +766,7 @@ if ($price_layout !== 'sidebar') {
                     <div class="produkt-availability-wrapper" id="produkt-availability-wrapper" style="display:none;">
                         <div id="produkt-availability-status" class="produkt-availability-status available">
                             <span class="status-dot"></span>
-                            <span class="status-text">Sofort verfügbar</span>
+                            <span class="status-text"><span class="stock-count"></span>Sofort verfügbar</span>
                         </div>
                         <div id="produkt-delivery-box" class="produkt-delivery-box" style="display:none;">
                             Lieferung <span id="produkt-delivery-time">3-5 Werktage</span>

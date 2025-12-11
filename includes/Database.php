@@ -198,6 +198,26 @@ class Database {
         if (empty($popular_text_color_exists)) {
             $wpdb->query("ALTER TABLE $table_durations ADD COLUMN popular_text_color VARCHAR(30) DEFAULT '' AFTER popular_gradient_end");
         }
+
+        // Ensure inventory_enabled column exists for categories
+        $table_categories = $wpdb->prefix . 'produkt_categories';
+        $inventory_enabled_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_categories LIKE 'inventory_enabled'");
+        if (empty($inventory_enabled_exists)) {
+            $wpdb->query("ALTER TABLE $table_categories ADD COLUMN inventory_enabled TINYINT(1) DEFAULT 0 AFTER sort_order");
+        }
+
+        // Ensure show_stock column exists for variants
+        $table_variants = $wpdb->prefix . 'produkt_variants';
+        $show_stock_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'show_stock'");
+        if (empty($show_stock_exists)) {
+            $wpdb->query("ALTER TABLE $table_variants ADD COLUMN show_stock TINYINT(1) DEFAULT 0 AFTER stock_rented");
+        }
+
+        // Ensure stock_threshold column exists for variants
+        $stock_threshold_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_variants LIKE 'stock_threshold'");
+        if (empty($stock_threshold_exists)) {
+            $wpdb->query("ALTER TABLE $table_variants ADD COLUMN stock_threshold INT DEFAULT 0 AFTER show_stock");
+        }
         
         // Create categories table if it doesn't exist
         $table_categories = $wpdb->prefix . 'produkt_categories';
@@ -2229,7 +2249,7 @@ class Database {
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
                  WHERE COALESCE(o.inventory_reverted, 0) = 0
                    AND (o.mode IS NULL OR o.mode NOT IN ('kauf','sale'))
-                   AND (o.status IS NULL OR o.status NOT IN ('storniert','abgebrochen','cancelled','refunded','failed'))
+                   AND o.status = 'abgeschlossen'
                  ORDER BY COALESCE(o.end_date, o.created_at)"
             );
         }
@@ -2287,12 +2307,28 @@ class Database {
         global $wpdb;
         $order = $wpdb->get_row(
             $wpdb->prepare(
-                "SELECT variant_id, extra_ids, product_color_id, inventory_reverted FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+                "SELECT variant_id, extra_ids, product_color_id, inventory_reverted, mode, category_id FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
                 $order_id
             )
         );
         if (!$order || $order->inventory_reverted) {
             return false;
+        }
+        
+        // Nur im Vermietungsmodus die Lagerverwaltung aktualisieren
+        if ($order->mode !== 'miete') {
+            return false;
+        }
+        
+        // Prüfe ob Lagerverwaltung für die Kategorie aktiviert ist
+        if ($order->category_id) {
+            $category = $wpdb->get_row($wpdb->prepare(
+                "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                $order->category_id
+            ));
+            if (!$category || !$category->inventory_enabled) {
+                return false;
+            }
         }
         if ($order->variant_id) {
             $wpdb->query(

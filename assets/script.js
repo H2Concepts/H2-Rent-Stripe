@@ -21,6 +21,7 @@ jQuery(document).ready(function($) {
     let selectedVariantSaleEnabled = false;
     let shippingPriceId = '';
     let shippingProvider = '';
+    let freeShippingActive = false;
     let startDate = null;
     let endDate = null;
     let selectedDays = 0;
@@ -58,6 +59,28 @@ jQuery(document).ready(function($) {
         } catch (e) {
             // ignore parse errors
         }
+    }
+
+    function isFreeShippingEnabled() {
+        return typeof produkt_ajax !== 'undefined'
+            && parseInt(produkt_ajax.free_shipping_enabled || 0, 10) === 1
+            && !isNaN(parseFloat(produkt_ajax.free_shipping_threshold))
+            && parseFloat(produkt_ajax.free_shipping_threshold) > 0;
+    }
+
+    function getCartSubtotal() {
+        return cart.reduce((sum, item) => sum + parseFloat(item.final_price || 0), 0);
+    }
+
+    function isFreeShippingActive(subtotal) {
+        if (!isFreeShippingEnabled()) return false;
+        const threshold = parseFloat(produkt_ajax.free_shipping_threshold || 0);
+        if (isNaN(subtotal) || subtotal <= 0) return false;
+        return subtotal >= threshold;
+    }
+
+    function getShippingPriceIdForValue(amount) {
+        return isFreeShippingActive(amount) ? '' : shippingPriceId;
     }
 
     loadShippingSelection();
@@ -241,20 +264,70 @@ jQuery(document).ready(function($) {
         return ' / Monat';
     }
 
+    function updateFreeShippingBanner() {
+        const $banner = $('.cart-free-shipping-banner');
+        if (!$banner.length) return;
+
+        const threshold = (typeof produkt_ajax !== 'undefined' && produkt_ajax.free_shipping_threshold !== undefined)
+            ? parseFloat(produkt_ajax.free_shipping_threshold)
+            : 0;
+        const enabled = isFreeShippingEnabled() && threshold > 0;
+
+        if (!enabled) {
+            $banner.hide();
+            return;
+        }
+
+        const subtotal = getCartSubtotal();
+        const remaining = Math.max(threshold - subtotal, 0);
+        const reached = subtotal >= threshold && subtotal > 0;
+
+        const $text = $banner.find('.cart-free-shipping-text');
+        const $progress = $banner.find('.cart-free-shipping-progress');
+        const $bar = $banner.find('.cart-free-shipping-progress-bar');
+
+        if (reached) {
+            $text.text('Du hast Anspruch auf kostenlosen Versand.');
+        } else {
+            $text.text('Gib noch ' + formatPrice(remaining) + '€ mehr aus, um kostenlosen Versand zu erhalten!');
+        }
+
+        const percent = Math.max(0, Math.min(100, threshold > 0 ? (subtotal / threshold) * 100 : 0));
+        $progress.attr('aria-valuenow', Math.round(percent));
+        $progress.attr('aria-valuetext', reached ? 'Kostenloser Versand erreicht' : 'Noch ' + formatPrice(remaining) + '€');
+        $bar.css('width', percent + '%');
+        $bar.toggleClass('achieved', reached);
+
+        $banner.show();
+    }
+
     function updateCartShippingDisplay() {
         const $shippingAmount = $('.cart-shipping-amount');
         if (!$shippingAmount.length) return;
-        $shippingAmount.text(formatPrice(currentShippingCost) + '€');
+        const displayText = freeShippingActive ? 'Kostenlos' : (formatPrice(currentShippingCost) + '€');
+        $shippingAmount.text(displayText);
     }
 
     function updateCartShippingCost(callback) {
         if (cart.length === 0) {
             // Warenkorb leer - Versand auf 0 setzen
             currentShippingCost = 0;
+            freeShippingActive = false;
             updateCartShippingDisplay();
             if (callback) callback();
             return;
         }
+
+        const subtotal = getCartSubtotal();
+        if (isFreeShippingActive(subtotal)) {
+            freeShippingActive = true;
+            currentShippingCost = 0;
+            updateCartShippingDisplay();
+            if (callback) callback();
+            return;
+        }
+
+        freeShippingActive = false;
 
         // Versandpreis aus dem ersten Item im Warenkorb nehmen
         const firstItem = cart[0];
@@ -319,6 +392,7 @@ jQuery(document).ready(function($) {
             currentShippingCost = 0;
             $('.cart-total-amount').text('0€' + getCartTotalSuffix());
             updateCartShippingDisplay();
+            updateFreeShippingBanner();
             updateCartBadge();
             return;
         }
@@ -334,7 +408,10 @@ jQuery(document).ready(function($) {
             const details = $('<div>', {class: 'cart-item-details'});
             // Kategoriename als Hauptname (Fallback auf produkt oder 'Produkt')
             const categoryName = item.category_name || item.produkt || 'Produkt';
-            details.append($('<div>', {class: 'cart-item-name'}).text(categoryName));
+            const nameElement = item.product_url
+                ? $('<a>', {class: 'cart-item-name', href: item.product_url, text: categoryName})
+                : $('<div>', {class: 'cart-item-name'}).text(categoryName);
+            details.append(nameElement);
             
             // Ausführung (nur wenn vorhanden)
             if (item.variant_name && item.variant_name.trim()) {
@@ -439,7 +516,9 @@ jQuery(document).ready(function($) {
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });
-        
+
+        updateFreeShippingBanner();
+
         // Versandpreis aktualisieren und dann Gesamtsumme berechnen
         updateCartShippingCost(function() {
             updateCartTotal();
@@ -605,7 +684,8 @@ jQuery(document).ready(function($) {
             }
             shippingProvider = firstShip.data('provider') || shippingProvider;
         }
-        $('#produkt-field-shipping').val(shippingPriceId);
+        const initialSubtotal = getCartSubtotal() || currentPrice || selectedSalePrice || 0;
+        $('#produkt-field-shipping').val(getShippingPriceIdForValue(initialSubtotal));
         saveShippingSelection(shippingPriceId, currentShippingCost);
         updateCartShippingDisplay();
     }
@@ -734,7 +814,7 @@ jQuery(document).ready(function($) {
             $('#produkt-notify-success').hide();
             $('#produkt-availability-wrapper').show();
             $('#produkt-availability-status').addClass('unavailable').removeClass('available');
-            $('#produkt-availability-status .status-text').text('Nicht auf Lager');
+            $('#produkt-availability-status .status-text').html('<span class="stock-count"></span>Nicht auf Lager');
             $('#produkt-delivery-box').hide();
             scrollToNotify();
             return;
@@ -811,7 +891,8 @@ jQuery(document).ready(function($) {
                 currentShippingCost = cost;
             }
             shippingProvider = $(this).data('provider') || '';
-            $('#produkt-field-shipping').val(shippingPriceId);
+            const amountForShipping = cart.length ? getCartSubtotal() : (currentPrice || selectedSalePrice || 0);
+            $('#produkt-field-shipping').val(getShippingPriceIdForValue(amountForShipping));
             saveShippingSelection(shippingPriceId, currentShippingCost);
             updateCartShippingDisplay();
         } else if (type === 'duration') {
@@ -822,6 +903,25 @@ jQuery(document).ready(function($) {
             selectedProductColor = id;
             $('#selected-product-color-name').text($(this).data('color-name'));
             updateColorImage($(this));
+            
+            // Update availability status with stock count if inventory is enabled
+            const $selectedVariant = $('.produkt-option[data-type="variant"].selected');
+            const inventoryEnabled = $selectedVariant.data('inventory-enabled') === true || $selectedVariant.data('inventory-enabled') === 'true';
+            if (inventoryEnabled && $('#produkt-availability-wrapper').is(':visible')) {
+                const stockAvailable = parseInt($(this).data('stock') || 0, 10);
+                const isAvailable = stockAvailable > 0;
+                if (isAvailable) {
+                    $('#produkt-availability-status').removeClass('unavailable').addClass('available');
+                    // Show stock count before "Sofort verfügbar"
+                    const stockDisplay = stockAvailable + ' ';
+                    $('#produkt-availability-status .status-text').html('<span class="stock-count">' + stockDisplay + '</span>Sofort verfügbar');
+                } else {
+                    $('#produkt-availability-status').addClass('unavailable').removeClass('available');
+                    $('#produkt-availability-status .status-text').html('<span class="stock-count"></span>Nicht auf Lager');
+                    $('#produkt-rent-button').prop('disabled', true);
+                    $('.produkt-mobile-button').prop('disabled', true);
+                }
+            }
         } else if (type === 'frame-color') {
             selectedFrameColor = id;
             $('#selected-frame-color-name').text($(this).data('color-name'));
@@ -903,7 +1003,8 @@ jQuery(document).ready(function($) {
                 dauer_name: dauerName,
                 zustand: zustandName,
                 produktfarbe: produktfarbeName,
-                gestellfarbe: gestellfarbeName
+                gestellfarbe: gestellfarbeName,
+                product_url: window.location.href
             };
             cart.push(item);
             saveCart();
@@ -921,8 +1022,10 @@ jQuery(document).ready(function($) {
             if (extraPriceIds.length) {
                 params.set('extra_price_ids', extraPriceIds.join(','));
             }
-            if (shippingPriceId) {
-                params.set('shipping_price_id', shippingPriceId);
+            const subtotalForShipping = cart.length ? getCartSubtotal() : currentPrice;
+            const shippingIdForCheckout = getShippingPriceIdForValue(subtotalForShipping);
+            if (shippingIdForCheckout) {
+                params.set('shipping_price_id', shippingIdForCheckout);
             }
             if (currentCategoryId) {
                 params.set('category_id', currentCategoryId);
@@ -986,8 +1089,10 @@ jQuery(document).ready(function($) {
         if (extraPriceIds.length) {
             params.set('extra_price_ids', extraPriceIds.join(','));
         }
-        if (shippingPriceId) {
-            params.set('shipping_price_id', shippingPriceId);
+        const saleSubtotal = selectedSalePrice || currentPrice;
+        const shippingIdForSale = getShippingPriceIdForValue(saleSubtotal);
+        if (shippingIdForSale) {
+            params.set('shipping_price_id', shippingIdForSale);
         }
         if (currentCategoryId) {
             params.set('category_id', currentCategoryId);
@@ -1391,8 +1496,17 @@ jQuery(document).ready(function($) {
             } else if (optionType === 'product-color' || optionType === 'frame-color') {
                 const previewClass = option.is_multicolor == 1 ? 'produkt-color-preview produkt-color-preview--multicolor' : 'produkt-color-preview';
                 const previewStyle = option.is_multicolor == 1 ? '' : `style="background-color: ${option.color_code};"`;
+                
+                // Check if inventory is enabled and stock_available is 0
+                const $selectedVariant = $('.produkt-option[data-type="variant"].selected');
+                const inventoryEnabled = $selectedVariant.data('inventory-enabled') === true || $selectedVariant.data('inventory-enabled') === 'true';
+                const stockAvailable = typeof option.stock_available !== 'undefined' ? parseInt(option.stock_available, 10) : null;
+                const isAvailable = inventoryEnabled && stockAvailable !== null 
+                    ? (stockAvailable > 0 && option.available != 0)
+                    : (option.available != 0);
+                
                 optionHtml = `
-                    <div class="produkt-option ${option.available == 0 ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${option.available == 0 ? 'false' : 'true'}" data-sale-available="${typeof option.sale_available !== 'undefined' ? option.sale_available : ''}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
+                    <div class="produkt-option ${!isAvailable ? 'unavailable' : ''}" data-type="${optionType}" data-id="${option.id}" data-available="${isAvailable ? 'true' : 'false'}" data-sale-available="${typeof option.sale_available !== 'undefined' ? option.sale_available : ''}" data-stock="${stockAvailable !== null ? stockAvailable : ''}" data-inventory-enabled="${inventoryEnabled ? 'true' : 'false'}" data-color-name="${option.name}" data-color-image="${option.image_url || ''}">
                         <div class="produkt-option-content">
                             <div class="produkt-color-display">
                                 <div class="${previewClass}" ${previewStyle}></div>
@@ -1567,9 +1681,27 @@ jQuery(document).ready(function($) {
                         $('.produkt-mobile-button').prop('disabled', !isAvailable);
 
                         $('#produkt-availability-wrapper').show();
+                        
+                        // Get stock information from selected variant and product color
+                        const $selectedVariant = $('.produkt-option[data-type="variant"].selected');
+                        const $selectedProductColor = $('.produkt-option[data-type="product-color"].selected');
+                        const inventoryEnabled = $selectedVariant.data('inventory-enabled') === true || $selectedVariant.data('inventory-enabled') === 'true';
+                        let stockAvailable = null;
+                        
+                        if (inventoryEnabled) {
+                            // If product color is selected, use its stock; otherwise use variant stock
+                            if ($selectedProductColor.length > 0) {
+                                stockAvailable = parseInt($selectedProductColor.data('stock') || 0, 10);
+                            } else {
+                                stockAvailable = parseInt($selectedVariant.data('stock') || 0, 10);
+                            }
+                        }
+                        
                         if (isAvailable) {
                             $('#produkt-availability-status').removeClass('unavailable').addClass('available');
-                            $('#produkt-availability-status .status-text').text('Sofort verfügbar');
+                            // Show stock count before "Sofort verfügbar" if inventory is enabled and stock > 0
+                            const stockDisplay = (inventoryEnabled && stockAvailable !== null && stockAvailable > 0) ? stockAvailable + ' ' : '';
+                            $('#produkt-availability-status .status-text').html('<span class="stock-count">' + stockDisplay + '</span>Sofort verfügbar');
                             if (shippingProvider === 'pickup') {
                                 $('#produkt-delivery-box').text('Abholung').show();
                             } else {
@@ -1577,7 +1709,7 @@ jQuery(document).ready(function($) {
                             }
                         } else {
                             $('#produkt-availability-status').addClass('unavailable').removeClass('available');
-                            $('#produkt-availability-status .status-text').text('Nicht auf Lager');
+                            $('#produkt-availability-status .status-text').html('<span class="stock-count"></span>Nicht auf Lager');
                             $('#produkt-delivery-box').hide();
                         }
 
@@ -2280,7 +2412,11 @@ function updateSelectedDays() {
         e.preventDefault();
         if (!cart.length) return;
         saveCart();
-        const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingPriceId ? '&shipping_price_id=' + encodeURIComponent(shippingPriceId) : '');
+        const cartSubtotal = getCartSubtotal();
+        freeShippingActive = isFreeShippingActive(cartSubtotal);
+        const shippingIdForCart = getShippingPriceIdForValue(cartSubtotal);
+        updateCartShippingDisplay();
+        const targetUrl = produkt_ajax.checkout_url + '?cart=1' + (shippingIdForCart ? '&shipping_price_id=' + encodeURIComponent(shippingIdForCart) : '');
         if (produkt_ajax.is_logged_in) {
             window.location.href = targetUrl;
         } else {

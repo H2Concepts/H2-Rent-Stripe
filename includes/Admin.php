@@ -461,6 +461,8 @@ class Admin {
                     'options'  => $options,
                     'triggers' => $popup_triggers,
                 ],
+                'free_shipping_enabled'   => intval(get_option('produkt_free_shipping_enabled', 0)),
+                'free_shipping_threshold' => floatval(get_option('produkt_free_shipping_threshold', 0)),
             ]);
         }
     }
@@ -748,9 +750,10 @@ class Admin {
                         'rating_value' => $rating_value,
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
+                        'inventory_enabled' => isset($_POST['inventory_enabled']) ? 1 : 0,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'),
+                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d','%d','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -899,12 +902,13 @@ class Admin {
                         'rating_value' => $rating_value,
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
+                        'inventory_enabled' => isset($_POST['inventory_enabled']) ? 1 : 0,
                     ],
                     array(
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
                         '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%d','%s','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d'
+                        '%s','%s','%d','%s','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d','%d'
                     )
                 );
 

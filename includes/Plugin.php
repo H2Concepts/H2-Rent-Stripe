@@ -718,6 +718,11 @@ class Plugin {
             $legacy_key = base64_decode('ZmVkZXJ3aWVnZV9wb3B1cF9zZXR0aW5ncw==');
             $popup_settings = get_option($legacy_key, []);
         }
+
+        if (!is_array($popup_settings)) {
+            $popup_settings = [];
+        }
+
         $google_optin_enabled = isset($popup_settings['google_optin_enabled']) ? intval($popup_settings['google_optin_enabled']) : 0;
         $google_merchant_id   = isset($popup_settings['google_merchant_id']) ? sanitize_text_field($popup_settings['google_merchant_id']) : '';
 

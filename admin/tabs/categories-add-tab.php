@@ -489,8 +489,16 @@ foreach ($filter_groups as $g) {
 
         <div id="tab-inventory" class="produkt-subtab-content">
             <div class="dashboard-card">
-                <h2>Lagerverwaltung</h2>
-                <p class="card-subline">Bestände und Extras</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Lagerverwaltung</h2>
+                        <p class="card-subline">Bestände und Extras</p>
+                    </div>
+                    <label class="produkt-toggle">
+                        <input type="checkbox" name="inventory_enabled" value="1">
+                        <span class="produkt-toggle-slider"></span>
+                    </label>
+                </div>
                 <p>Speichern Sie das Produkt, um die Lagerverwaltung zu aktivieren.</p>
             </div>
         </div><!-- end tab-inventory -->

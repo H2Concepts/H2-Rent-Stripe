@@ -162,6 +162,43 @@ class StripeService {
     }
 
     /**
+     * Löscht alle Stripe-bezogenen Transients des Plugins.
+     *
+     * Betroffen sind u. a.:
+     * - produkt_stripe_price_*
+     * - produkt_stripe_price_formatted_*
+     * - produkt_stripe_pair_*
+     *
+     * @return int Anzahl gelöschter Datenbank-Einträge.
+     */
+    public static function clear_stripe_cache() {
+        global $wpdb;
+
+        $table = $wpdb->options;
+
+        $transient_like = $wpdb->esc_like('_transient_produkt_stripe_') . '%';
+        $timeout_like   = $wpdb->esc_like('_transient_timeout_produkt_stripe_') . '%';
+
+        $deleted = 0;
+
+        $deleted += (int) $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$table} WHERE option_name LIKE %s",
+                $transient_like
+            )
+        );
+
+        $deleted += (int) $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$table} WHERE option_name LIKE %s",
+                $timeout_like
+            )
+        );
+
+        return $deleted;
+    }
+
+    /**
      * Retrieve the lowest price among multiple Stripe price IDs with caching.
      *
      * @param array $price_ids Array of Stripe price IDs
@@ -539,6 +576,34 @@ class StripeService {
         }
 
         try {
+            global $wpdb;
+
+            // Standard: kein Bild
+            $image_url = '';
+
+            // plugin_product_id = Variant-ID in deinem System
+            if (!empty($product_data['plugin_product_id'])) {
+                $variant_id     = (int) $product_data['plugin_product_id'];
+                $variants_table = $wpdb->prefix . 'produkt_variants';
+
+                $variant_row = $wpdb->get_row(
+                    $wpdb->prepare(
+                        "SELECT image_url_1, image_url_2, image_url_3, image_url_4, image_url_5\n                     FROM {$variants_table}\n                     WHERE id = %d",
+                        $variant_id
+                    )
+                );
+
+                if ($variant_row) {
+                    foreach (['image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5'] as $col) {
+                        if (!empty($variant_row->$col)) {
+                            // Öffentliche URL aus der DB nutzen
+                            $image_url = esc_url_raw($variant_row->$col);
+                            break;
+                        }
+                    }
+                }
+            }
+
             $cache_key = 'produkt_stripe_pair_' . md5(json_encode($product_data));
             $cached    = get_transient($cache_key);
             if ($cached !== false) {
@@ -557,7 +622,8 @@ class StripeService {
             $stripe_product = $found && !empty($found->data) ? $found->data[0] : null;
 
             if (!$stripe_product) {
-                $stripe_product = \Stripe\Product::create([
+                // Neues Stripe-Produkt anlegen
+                $product_params = [
                     'name'     => $product_data['name'],
                     'metadata' => [
                         'plugin_product_id' => $product_data['plugin_product_id'],
@@ -565,7 +631,25 @@ class StripeService {
                         'duration_id'       => $product_data['duration_id'] ?? 0,
                         'mode'              => $product_data['mode'],
                     ],
-                ]);
+                ];
+
+                if (!empty($image_url)) {
+                    $product_params['images'] = [$image_url];
+                }
+
+                $stripe_product = \Stripe\Product::create($product_params);
+            } else {
+                // Produkt existiert bereits → Bild ggf. aktualisieren
+                if (!empty($image_url)) {
+                    $should_update_image = empty($stripe_product->images)
+                        || !in_array($image_url, $stripe_product->images, true);
+
+                    if ($should_update_image) {
+                        \Stripe\Product::update($stripe_product->id, [
+                            'images' => [$image_url],
+                        ]);
+                    }
+                }
             }
 
             $prices = \Stripe\Price::all(['product' => $stripe_product->id, 'limit' => 100]);
@@ -613,6 +697,66 @@ class StripeService {
         } catch (\Exception $e) {
             return new \WP_Error('stripe_create', $e->getMessage());
         }
+    }
+
+    /**
+     * Ensure a Stripe product has an image based on the plugin variant data.
+     *
+     * @param int $variant_id
+     * @return true|\WP_Error True on success or when nothing to update, WP_Error on Stripe failure.
+     */
+    public static function ensure_product_image_from_variant($variant_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+
+        $variant_id = (int) $variant_id;
+        if ($variant_id <= 0) {
+            return true;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_variants';
+
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT stripe_product_id, image_url_1, image_url_2, image_url_3, image_url_4, image_url_5 FROM {$table} WHERE id = %d",
+                $variant_id
+            )
+        );
+
+        if (!$row || empty($row->stripe_product_id)) {
+            return true;
+        }
+
+        $image_url = '';
+        foreach (['image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5'] as $col) {
+            if (!empty($row->$col)) {
+                $image_url = esc_url_raw($row->$col);
+                break;
+            }
+        }
+
+        if (empty($image_url)) {
+            return true;
+        }
+
+        try {
+            $product = \Stripe\Product::retrieve($row->stripe_product_id);
+
+            $has_image = !empty($product->images) && in_array($image_url, $product->images, true);
+
+            if (!$has_image) {
+                \Stripe\Product::update($product->id, [
+                    'images' => [$image_url],
+                ]);
+            }
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_image_update', $e->getMessage());
+        }
+
+        return true;
     }
 
     /**
@@ -1270,7 +1414,12 @@ class StripeService {
                         produkt_add_order_log($ord->id, 'welcome_email_sent');
                         $welcome_sent = true;
                     }
-                    if ($ord->status === 'offen') {
+                    // Lagerverwaltung nur im Vermietungsmodus, nur wenn Status "abgeschlossen" ist und nur wenn für die Kategorie aktiviert
+                    $category = $wpdb->get_row($wpdb->prepare(
+                        "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $ord->category_id
+                    ));
+                    if ($ord->status === 'offen' && $data['mode'] === 'miete' && $data['status'] === 'abgeschlossen' && $category && $category->inventory_enabled) {
                         $items = [];
                         if (!empty($ord->order_items)) {
                             $decoded = json_decode($ord->order_items, true);
@@ -1328,8 +1477,95 @@ class StripeService {
                 }
                 $data['stripe_session_id'] = $session->id;
                 $data['stripe_subscription_id'] = $subscription_id;
+                
+                // Hole variant_id, extra_ids, product_color_id aus der vorläufigen Bestellung, falls vorhanden
+                $preliminary_order = $wpdb->get_row($wpdb->prepare(
+                    "SELECT variant_id, extra_ids, product_color_id, category_id, order_items FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s AND status = 'offen' LIMIT 1",
+                    $session->id
+                ));
+                
+                if ($preliminary_order) {
+                    $data['variant_id'] = $preliminary_order->variant_id;
+                    $data['extra_ids'] = $preliminary_order->extra_ids;
+                    $data['product_color_id'] = $preliminary_order->product_color_id;
+                    $data['category_id'] = $preliminary_order->category_id;
+                    if (!empty($preliminary_order->order_items)) {
+                        $data['order_items'] = $preliminary_order->order_items;
+                    }
+                }
+                
                 $wpdb->insert("{$wpdb->prefix}produkt_orders", $data);
                 $order_id = $wpdb->insert_id;
+                
+                // Lagerverwaltung aktualisieren für Vermietungsmodus, nur wenn Status "abgeschlossen" ist und nur wenn für die Kategorie aktiviert
+                if ($data['mode'] === 'miete' && $data['status'] === 'abgeschlossen') {
+                    // Prüfe ob Lagerverwaltung für die Kategorie aktiviert ist
+                    $category_id = $preliminary_order ? $preliminary_order->category_id : ($data['category_id'] ?? 0);
+                    $category = $category_id ? $wpdb->get_row($wpdb->prepare(
+                        "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                        $category_id
+                    )) : null;
+                    
+                    if ($category && $category->inventory_enabled) {
+                        // Hole die Bestelldaten aus der Datenbank
+                        $new_order = $wpdb->get_row($wpdb->prepare(
+                            "SELECT variant_id, extra_ids, product_color_id, order_items FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+                            $order_id
+                        ));
+                    
+                    if ($new_order) {
+                        $items = [];
+                        if (!empty($new_order->order_items)) {
+                            $decoded = json_decode($new_order->order_items, true);
+                            if (is_array($decoded)) {
+                                $items = $decoded;
+                            }
+                        }
+                        
+                        if (empty($items)) {
+                            $items[] = [
+                                'variant_id'       => $new_order->variant_id,
+                                'product_color_id' => $new_order->product_color_id,
+                                'extra_ids'        => $new_order->extra_ids,
+                            ];
+                        }
+                        
+                        foreach ($items as $itm) {
+                            $variant_id = intval($itm['variant_id'] ?? 0);
+                            $product_color_id = intval($itm['product_color_id'] ?? 0);
+                            if ($variant_id) {
+                                $wpdb->query($wpdb->prepare(
+                                    "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                    $variant_id
+                                ));
+                                if ($product_color_id) {
+                                    $wpdb->query($wpdb->prepare(
+                                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
+                                        $variant_id,
+                                        $product_color_id
+                                    ));
+                                }
+                            }
+                            
+                            $extra_ids_raw = $itm['extra_ids'] ?? '';
+                            $extra_ids = [];
+                            if (is_array($extra_ids_raw)) {
+                                $extra_ids = array_filter(array_map('intval', $extra_ids_raw));
+                            } elseif (!empty($extra_ids_raw)) {
+                                $extra_ids = array_filter(array_map('intval', explode(',', $extra_ids_raw)));
+                            }
+                            
+                            foreach ($extra_ids as $eid) {
+                                $wpdb->query($wpdb->prepare(
+                                    "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
+                                    $eid
+                                ));
+                            }
+                        }
+                    }
+                    }
+                }
+                
                 produkt_add_order_log($order_id, 'order_created');
                 produkt_add_order_log($order_id, 'checkout_completed');
                 send_produkt_welcome_email($data, $order_id);

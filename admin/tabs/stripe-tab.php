@@ -19,6 +19,17 @@ if (isset($_POST['submit_stripe'])) {
     echo '<div class="notice notice-success"><p>✅ Stripe-Einstellungen gespeichert!</p></div>';
 }
 
+if (isset($_POST['produkt_clear_stripe_cache'])) {
+    \ProduktVerleih\Admin::verify_admin_action();
+
+    $deleted = 0;
+    if (class_exists('\\ProduktVerleih\\StripeService')) {
+        $deleted = \ProduktVerleih\StripeService::clear_stripe_cache();
+    }
+
+    echo '<div class="notice notice-success"><p>🔄 Stripe-Cache wurde gelöscht. Alle Stripe-Produkte und -Preise werden beim nächsten Sync neu geladen. (Gelöschte Cache-Einträge: ' . intval($deleted) . ')</p></div>';
+}
+
 $stripe_publishable_key = get_option('produkt_stripe_publishable_key', '');
 $stripe_secret_key   = get_option('produkt_stripe_secret_key', '');
 $stripe_pmc_id       = get_option('produkt_stripe_pmc_id', '');
@@ -45,8 +56,13 @@ $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
         </button>
         <div class="produkt-form-sections">
             <div class="dashboard-card">
-                <h2>Stripe API Keys</h2>
-                <p class="card-subline">Zugangsdaten für den Zahlungsanbieter</p>
+                <div class="card-header-flex">
+                    <div>
+                        <h2>Stripe API Keys</h2>
+                        <p class="card-subline">Zugangsdaten für den Zahlungsanbieter</p>
+                    </div>
+                    <button type="submit" name="produkt_clear_stripe_cache" value="1" class="button button-secondary">Stripe Cache löschen</button>
+                </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">
                         <label>Publishable Key</label>
@@ -87,7 +103,6 @@ $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
                                 <option value="kauf" <?php selected($modus, 'kauf'); ?>>Einmalverkauf</option>
                             </select>
                             <div class="produkt-form-group" id="produkt-cart-mode" style="display: <?php echo $modus === 'miete' ? 'block' : 'none'; ?>; margin: 0;">
-                                <label for="produkt_miete_cart_mode">Warenkorb-Funktion</label>
                                 <select name="produkt_miete_cart_mode" id="produkt_miete_cart_mode">
                                     <option value="cart" <?php selected($cart_mode, 'cart'); ?>>Mit Warenkorb-Funktion</option>
                                     <option value="direct" <?php selected($cart_mode, 'direct'); ?>>Ohne Warenkorb-Funktion</option>

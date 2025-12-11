@@ -105,9 +105,10 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $is_rental   = ($mode === 'miete');
     $subject     = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
     $order_date  = date_i18n('d.m.Y', strtotime($order['created_at']));
-    $price_label = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
-    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
-    $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $price_label     = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
+    $shipping_amount = floatval($order['shipping_cost'] ?? 0);
+    $shipping        = pv_format_shipping_cost_label($shipping_amount);
+    $total_first     = number_format((float) $order['final_price'] + $shipping_amount, 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city']);
 
@@ -295,9 +296,10 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
     $mode         = pv_get_order_mode($order, $order_id);
     $is_rental    = ($mode === 'miete');
     $order_date   = !empty($order['created_at']) ? date_i18n('d.m.Y', strtotime($order['created_at'])) : date_i18n('d.m.Y');
-    $shipping     = number_format((float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
+    $shipping_raw = floatval($order['shipping_cost'] ?? 0);
+    $shipping     = pv_format_shipping_cost_label($shipping_raw);
     $subtotal     = number_format((float) ($order['final_price'] ?? 0), 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
-    $total_first  = number_format((float) ($order['final_price'] ?? 0) + (float) ($order['shipping_cost'] ?? 0), 2, ',', '.') . '€';
+    $total_first  = number_format((float) ($order['final_price'] ?? 0) + $shipping_raw, 2, ',', '.') . '€';
     $shipping_name = $order['shipping_name'] ?? '';
     $provider      = $order['shipping_provider'] ?? '';
     $postal_code   = isset($order['customer_postal']) ? preg_replace('/[^0-9A-Za-z]/', '', $order['customer_postal']) : '';
@@ -427,9 +429,10 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $subject     = 'Neue Bestellung #' . (!empty($order['order_number']) ? $order['order_number'] : $order_id);
     $order_date  = date_i18n('d.m.Y H:i', strtotime($order['created_at']));
 
-    $price_label = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
-    $shipping    = number_format((float) $order['shipping_cost'], 2, ',', '.') . '€';
-    $total_first = number_format((float) $order['final_price'] + (float) $order['shipping_cost'], 2, ',', '.') . '€';
+    $price_label     = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
+    $shipping_amount = floatval($order['shipping_cost'] ?? 0);
+    $shipping        = pv_format_shipping_cost_label($shipping_amount);
+    $total_first     = number_format((float) $order['final_price'] + $shipping_amount, 2, ',', '.') . '€';
 
     $address = trim($order['customer_street'] . ', ' . $order['customer_postal'] . ' ' . $order['customer_city'] . ', ' . $order['customer_country']);
 
@@ -600,6 +603,152 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $from_email = get_option('admin_email');
     $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
     wp_mail(get_option('admin_email'), $subject, $message, $headers);
+}
+
+/**
+ * Send low stock notification email to admin
+ */
+function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int $product_color_id = null): void {
+    global $wpdb;
+    
+    // Get variant information
+    $variant = $wpdb->get_row($wpdb->prepare(
+        "SELECT v.*, c.name AS category_name FROM {$wpdb->prefix}produkt_variants v 
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON c.id = v.category_id 
+         WHERE v.id = %d",
+        $variant_id
+    ));
+    
+    if (!$variant) {
+        return;
+    }
+    
+    // Get product color name if applicable
+    $color_name = '';
+    if ($product_color_id) {
+        $color = $wpdb->get_row($wpdb->prepare(
+            "SELECT name FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
+            $product_color_id
+        ));
+        if ($color) {
+            $color_name = $color->name;
+        }
+    }
+    
+    $site_title = get_bloginfo('name');
+    $logo_url   = get_option('plugin_firma_logo_url', '');
+    $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+    
+    $subject = 'Lagerbestand niedrig: ' . esc_html($variant->name) . ($color_name ? ' - ' . esc_html($color_name) : '');
+    
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+    
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+    }
+    
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Lagerbestand niedrig</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo Team,<br>der Lagerbestand für ein Produkt ist niedrig geworden. Bitte prüfen Sie den Bestand und entscheiden Sie, ob neue Produkte eingekauft werden müssen.</p>';
+    
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Produktinformationen</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Kategorie:</strong></td><td>' . esc_html($variant->category_name ?? 'N/A') . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Ausführung:</strong></td><td>' . esc_html($variant->name) . '</td></tr>';
+    if ($color_name) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Farbe:</strong></td><td>' . esc_html($color_name) . '</td></tr>';
+    }
+    $message .= '<tr><td style="padding:6px 0;"><strong>Verfügbar:</strong></td><td><strong style="color:#dc3232;font-size:16px;">' . esc_html($stock_available) . '</strong></td></tr>';
+    if (!empty($variant->sku)) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>SKU:</strong></td><td>' . esc_html($variant->sku) . '</td></tr>';
+    }
+    $message .= '</table>';
+    
+    $message .= '</div>';
+    
+    $message .= '<p style="margin:16px 0 0;font-size:12px;line-height:1.6;">Bitte prüfen Sie den Lagerbestand im Admin-Bereich und entscheiden Sie, ob neue Produkte eingekauft werden müssen.</p>';
+    
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+    
+    $message .= '</div>';
+    $message .= '</body></html>';
+    
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    $from_email = get_option('admin_email');
+    $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
+    wp_mail(get_option('admin_email'), $subject, $message, $headers);
+}
+
+/**
+ * Check if stock threshold is reached and send notification email
+ */
+function check_stock_threshold(int $variant_id, int $stock_available, ?int $product_color_id = null): void {
+    global $wpdb;
+    
+    // Get variant with threshold
+    $variant = $wpdb->get_row($wpdb->prepare(
+        "SELECT stock_threshold, category_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+        $variant_id
+    ));
+    
+    if (!$variant || empty($variant->stock_threshold) || $variant->stock_threshold <= 0) {
+        return;
+    }
+    
+    // Check if inventory is enabled for this category
+    $category = $wpdb->get_row($wpdb->prepare(
+        "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+        $variant->category_id
+    ));
+    
+    if (!$category || !$category->inventory_enabled) {
+        return;
+    }
+    
+    // Check if stock is at or below threshold
+    if ($stock_available <= $variant->stock_threshold) {
+        // Use a temporary order_id field to store variant_id for threshold notifications
+        // We'll use a special format: variant_id * 1000000 + (product_color_id or 0)
+        $notification_id = $variant_id * 1000000 + ($product_color_id ?? 0);
+        
+        // Check if we already sent an email for this variant/color combination recently (within last 24 hours)
+        $last_notification = $wpdb->get_var($wpdb->prepare(
+            "SELECT created_at FROM {$wpdb->prefix}produkt_order_logs 
+             WHERE order_id = %d AND event = 'low_stock_notification' 
+             ORDER BY created_at DESC LIMIT 1",
+            $notification_id
+        ));
+        
+        $should_send = true;
+        if ($last_notification) {
+            $last_time = strtotime($last_notification);
+            $current_time = current_time('timestamp');
+            // Only send if last notification was more than 24 hours ago
+            if (($current_time - $last_time) < 86400) {
+                $should_send = false;
+            }
+        }
+        
+        if ($should_send) {
+            send_admin_low_stock_email($variant_id, $stock_available, $product_color_id);
+            // Log the notification
+            $wpdb->insert(
+                $wpdb->prefix . 'produkt_order_logs',
+                [
+                    'order_id'   => $notification_id,
+                    'event'      => 'low_stock_notification',
+                    'message'    => sprintf('Lagerbestand niedrig: %d verfügbar (Schwellenwert: %d)', $stock_available, $variant->stock_threshold),
+                    'created_at' => current_time('mysql', true),
+                ],
+                ['%d', '%s', '%s', '%s']
+            );
+        }
+    }
 }
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {
