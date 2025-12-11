@@ -156,7 +156,7 @@ $total_variants = count($variants);
                 <p class="card-subline">Für welches Produkt möchten Sie Farben bearbeiten?</p>
                 <form method="get" action="" class="produkt-category-selector" style="background:none;border:none;padding:0;">
                     <input type="hidden" name="page" value="produkt-colors">
-                    <select name="category" onchange="this.form.submit()">
+                    <select name="category" id="category-select" onchange="this.form.submit()">
                         <?php foreach ($categories as $category): ?>
                             <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>><?php echo esc_html($category->name); ?></option>
                         <?php endforeach; ?>
