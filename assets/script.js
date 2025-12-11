@@ -264,6 +264,43 @@ jQuery(document).ready(function($) {
         return ' / Monat';
     }
 
+    function updateFreeShippingBanner() {
+        const $banner = $('.cart-free-shipping-banner');
+        if (!$banner.length) return;
+
+        const threshold = (typeof produkt_ajax !== 'undefined' && produkt_ajax.free_shipping_threshold !== undefined)
+            ? parseFloat(produkt_ajax.free_shipping_threshold)
+            : 0;
+        const enabled = isFreeShippingEnabled() && threshold > 0;
+
+        if (!enabled) {
+            $banner.hide();
+            return;
+        }
+
+        const subtotal = getCartSubtotal();
+        const remaining = Math.max(threshold - subtotal, 0);
+        const reached = subtotal >= threshold && subtotal > 0;
+
+        const $text = $banner.find('.cart-free-shipping-text');
+        const $progress = $banner.find('.cart-free-shipping-progress');
+        const $bar = $banner.find('.cart-free-shipping-progress-bar');
+
+        if (reached) {
+            $text.text('Du hast Anspruch auf kostenlosen Versand.');
+        } else {
+            $text.text('Gib noch ' + formatPrice(remaining) + '€ mehr aus, um kostenlosen Versand zu erhalten!');
+        }
+
+        const percent = Math.max(0, Math.min(100, threshold > 0 ? (subtotal / threshold) * 100 : 0));
+        $progress.attr('aria-valuenow', Math.round(percent));
+        $progress.attr('aria-valuetext', reached ? 'Kostenloser Versand erreicht' : 'Noch ' + formatPrice(remaining) + '€');
+        $bar.css('width', percent + '%');
+        $bar.toggleClass('achieved', reached);
+
+        $banner.show();
+    }
+
     function updateCartShippingDisplay() {
         const $shippingAmount = $('.cart-shipping-amount');
         if (!$shippingAmount.length) return;
@@ -355,6 +392,7 @@ jQuery(document).ready(function($) {
             currentShippingCost = 0;
             $('.cart-total-amount').text('0€' + getCartTotalSuffix());
             updateCartShippingDisplay();
+            updateFreeShippingBanner();
             updateCartBadge();
             return;
         }
@@ -478,7 +516,9 @@ jQuery(document).ready(function($) {
             row.append(imgWrap, details, price, rem);
             list.append(row);
         });
-        
+
+        updateFreeShippingBanner();
+
         // Versandpreis aktualisieren und dann Gesamtsumme berechnen
         updateCartShippingCost(function() {
             updateCartTotal();

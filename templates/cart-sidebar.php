@@ -14,6 +14,12 @@ $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] :
             </svg>
         </button>
     </div>
+    <div class="cart-free-shipping-banner" style="display: none;">
+        <div class="cart-free-shipping-text"></div>
+        <div class="cart-free-shipping-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="cart-free-shipping-progress-bar"></div>
+        </div>
+    </div>
     <div class="cart-items"></div>
     <div class="cart-shipping"><span>Versand</span><span class="cart-shipping-amount">0€</span></div>
     <div class="cart-summary"><span>Gesamtsumme</span><span class="cart-total-amount" data-suffix="<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?>">0€<?php echo $produkt_cart_mode === 'kauf' ? '' : ' / Monat'; ?></span></div>
