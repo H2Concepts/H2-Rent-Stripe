@@ -167,7 +167,12 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                                 <small class="text-gray">/Monat</small>
                             <?php endif; ?>
                             <?php if (isset($order->shipping_cost) || !empty($order->shipping_name)): ?>
-                                <br><span class="text-gray">+ <?php echo esc_html(pv_format_shipping_cost_label($order->shipping_cost ?? 0)); ?> einmalig</span>
+                                <?php $is_free_shipping = pv_is_free_shipping_cost($order->shipping_cost ?? 0); ?>
+                                <?php if ($is_free_shipping): ?>
+                                    <br><span class="text-gray">Kostenloser Versand</span>
+                                <?php else: ?>
+                                    <br><span class="text-gray">+ <?php echo esc_html(pv_format_shipping_cost_label($order->shipping_cost ?? 0)); ?> einmalig</span>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </td>
                         <td>
