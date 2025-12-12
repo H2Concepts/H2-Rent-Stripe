@@ -26,7 +26,8 @@ class Ajax {
             $variant_id
         ));
 
-        $modus = get_option('produkt_betriebsmodus', 'miete');
+        $modus_option = get_option('produkt_betriebsmodus', 'miete');
+        $modus = ($modus_option === 'kauf') ? 'kauf' : 'miete';
 
         $base_duration_id = null;
         $base_duration_price = null;
@@ -1409,7 +1410,9 @@ function produkt_create_subscription() {
             ],
         ];
 
-        $mode = get_option('produkt_betriebsmodus', 'miete');
+        $mode_option = get_option('produkt_betriebsmodus', 'miete');
+        $mode = ($mode_option === 'kauf') ? 'kauf' : 'miete';
+
         if ($mode === 'kauf') {
             $cust_email = sanitize_email($body['email'] ?? '');
             $current_user = wp_get_current_user();
@@ -1487,7 +1490,8 @@ function produkt_create_checkout_session() {
         $start_date = sanitize_text_field($body['start_date'] ?? '');
         $end_date   = sanitize_text_field($body['end_date'] ?? '');
         $sale_mode  = !empty($body['sale_mode']);
-        $modus      = $sale_mode ? 'kauf' : get_option('produkt_betriebsmodus', 'miete');
+        $modus_option = $sale_mode ? 'kauf' : get_option('produkt_betriebsmodus', 'miete');
+        $modus = ($modus_option === 'kauf') ? 'kauf' : 'miete';
         $price_id = sanitize_text_field($body['price_id'] ?? '');
         if (!$price_id) {
             wp_send_json_error(['message' => 'Keine Preis-ID vorhanden']);

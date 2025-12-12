@@ -578,6 +578,7 @@ class StripeService {
         try {
             $condition_id = isset($product_data['condition_id']) ? (int) $product_data['condition_id'] : 0;
             $duration_meta_id = isset($product_data['duration_id']) ? (int) $product_data['duration_id'] : 0;
+            $mode = (isset($product_data['mode']) && $product_data['mode'] === 'kauf') ? 'kauf' : 'miete';
             global $wpdb;
 
             // Standard: kein Bild
@@ -616,7 +617,7 @@ class StripeService {
                 'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["mode"]:"%s"',
                 (int) $product_data['plugin_product_id'],
                 (int) $product_data['variant_id'],
-                $product_data['mode']
+                $mode
             );
 
             $found = \Stripe\Product::search(['query' => $query, 'limit' => 1]);
@@ -629,7 +630,7 @@ class StripeService {
                     'metadata' => [
                         'plugin_product_id' => (int) $product_data['plugin_product_id'],
                         'variant_id'        => (int) $product_data['variant_id'],
-                        'mode'              => $product_data['mode'],
+                        'mode'              => $mode,
                     ],
                 ];
 
@@ -657,7 +658,7 @@ class StripeService {
             $amount = (int) ($product_data['price'] * 100);
             foreach ($prices->data as $p) {
                 $match = $p->unit_amount == $amount && $p->currency === 'eur';
-                if ($product_data['mode'] === 'miete') {
+                if ($mode === 'miete') {
                     $match = $match && isset($p->recurring) && $p->recurring->interval === 'month';
                 } else {
                     $match = $match && !isset($p->recurring);
@@ -690,14 +691,14 @@ class StripeService {
                     'unit_amount' => $amount,
                     'currency'    => 'eur',
                     'product'     => $stripe_product->id,
-                    'nickname'    => ($product_data['mode'] === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
+                    'nickname'    => ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
                     'metadata'    => [
                         'condition_id' => $condition_id,
                         'duration_id'  => $duration_meta_id,
                     ],
                 ];
 
-                if ($product_data['mode'] === 'miete') {
+                if ($mode === 'miete') {
                     $price_params['recurring'] = [
                         'interval' => 'month',
                     ];
