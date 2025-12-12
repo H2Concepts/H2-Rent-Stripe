@@ -145,13 +145,6 @@ class Ajax {
                 }
             }
 
-            // Apply condition price modifier to whole price like before
-            if ($condition && $condition->price_modifier != 0) {
-                $modifier = 1 + floatval($condition->price_modifier);
-                $variant_price *= $modifier;
-                $extras_price  *= $modifier;
-            }
-
             // Base price for the variant
             $base_price = $variant_price;
             if ($modus !== 'kauf') {
@@ -183,6 +176,31 @@ class Ajax {
 
                 $final_price = $duration_price + $extras_price;
             }
+
+            // Zustand-Preisanpassung nach der Berechnung anwenden
+            if ($condition && $condition->price_modifier != 0) {
+                $modifier = 1 + floatval($condition->price_modifier);
+
+                if ($modus === 'kauf') {
+                    $base_price    *= $modifier;
+                    $duration_price = $base_price;
+                    $extras_price  *= $modifier;
+                    $final_price    = ($duration_price + $extras_price) * $days;
+
+                    if ($original_price !== null) {
+                        $original_price *= $modifier;
+                    }
+                } else {
+                    $base_price    *= $modifier;
+                    $duration_price*= $modifier;
+                    $extras_price  *= $modifier;
+                    $final_price    = $duration_price + $extras_price;
+
+                    if ($original_price !== null) {
+                        $original_price *= $modifier;
+                    }
+                }
+            }
             $shipping_cost = 0;
             if (!empty($_POST['shipping_price_id'])) {
                 $spid = sanitize_text_field($_POST['shipping_price_id']);
@@ -196,14 +214,34 @@ class Ajax {
                     $shipping_cost = floatval($shipping->price);
                 }
             }
-            
+
+            $price_id_for_checkout = $used_price_id;
+
+            if ($modus !== 'kauf' && $condition && $duration && $duration_price > 0) {
+                $condition_id = (int) $condition->id;
+
+                $stripe_data = StripeService::create_or_update_product_and_price(array(
+                    'plugin_product_id' => $variant_id,
+                    'variant_id'        => $variant_id,
+                    'duration_id'       => $duration_id,
+                    'name'              => $variant->name . ' – ' . $duration->name . ' – ' . $condition->name,
+                    'price'             => $duration_price,
+                    'mode'              => $modus,
+                    'condition_id'      => $condition_id,
+                ));
+
+                if (!is_wp_error($stripe_data) && !empty($stripe_data['stripe_price_id'])) {
+                    $price_id_for_checkout = $stripe_data['stripe_price_id'];
+                }
+            }
+
             wp_send_json_success(array(
                 'base_price'    => $base_price,
                 'final_price'   => $final_price,
                 'original_price'=> $original_price,
                 'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
-                'price_id'      => $used_price_id,
+                'price_id'      => $price_id_for_checkout,
                 'available'     => $variant->available ? true : false,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: '',

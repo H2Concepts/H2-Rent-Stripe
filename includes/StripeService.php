@@ -576,6 +576,7 @@ class StripeService {
         }
 
         try {
+            $condition_id = isset($product_data['condition_id']) ? (int) $product_data['condition_id'] : 0;
             global $wpdb;
 
             // Standard: kein Bild
@@ -662,6 +663,15 @@ class StripeService {
                 } else {
                     $match = $match && !isset($p->recurring);
                 }
+
+                $existing_condition_id = 0;
+                if (isset($p->metadata) && isset($p->metadata['condition_id'])) {
+                    $existing_condition_id = (int) $p->metadata['condition_id'];
+                }
+                if ($existing_condition_id !== $condition_id) {
+                    $match = false;
+                }
+
                 if ($match) {
                     $stripe_price = $p;
                     break;
@@ -674,6 +684,9 @@ class StripeService {
                     'currency'    => 'eur',
                     'product'     => $stripe_product->id,
                     'nickname'    => ($product_data['mode'] === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
+                    'metadata'    => [
+                        'condition_id' => $condition_id,
+                    ],
                 ];
 
                 if ($product_data['mode'] === 'miete') {

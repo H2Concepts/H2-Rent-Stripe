@@ -543,17 +543,39 @@ class Database {
                 variant_id mediumint(9) NOT NULL,
                 option_type varchar(50) NOT NULL,
                 option_id mediumint(9) NOT NULL,
+                condition_id mediumint(9) DEFAULT NULL,
                 available tinyint(1) DEFAULT 1,
                 sale_available tinyint(1) DEFAULT 0,
                 stock_available int DEFAULT 0,
                 stock_rented int DEFAULT 0,
                 sku varchar(255) DEFAULT NULL,
                 PRIMARY KEY (id),
-                UNIQUE KEY variant_option (variant_id, option_type, option_id)
+                UNIQUE KEY variant_option (variant_id, option_type, option_id, condition_id)
             ) $charset_collate;";
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
+        }
+
+        // Ensure condition_id column exists for variant options
+        $condition_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'condition_id'");
+        if (empty($condition_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN condition_id mediumint(9) DEFAULT NULL AFTER option_id");
+        }
+
+        // Ensure unique index includes condition_id
+        $existing_index = $wpdb->get_results("SHOW INDEX FROM $table_variant_options WHERE Key_name = 'variant_option'");
+        $index_needs_update = false;
+        if (!empty($existing_index)) {
+            $columns = array_map(function($row) { return $row->Column_name; }, $existing_index);
+            if (!in_array('condition_id', $columns, true)) {
+                $index_needs_update = true;
+            }
+        }
+
+        if ($index_needs_update) {
+            $wpdb->query("ALTER TABLE $table_variant_options DROP INDEX variant_option");
+            $wpdb->query("ALTER TABLE $table_variant_options ADD UNIQUE KEY variant_option (variant_id, option_type, option_id, condition_id)");
         }
 
         // Create variant durations table if it doesn't exist
