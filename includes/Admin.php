@@ -806,28 +806,84 @@ class Admin {
                         }
                     }
                     if (!empty($_POST['color_stock_available']) && is_array($_POST['color_stock_available'])) {
-                        foreach ($_POST['color_stock_available'] as $vid => $colors) {
-                            foreach ($colors as $cid => $qty) {
-                                $vid = intval($vid);
-                                $cid = intval($cid);
-                                $available = intval($qty);
-                                $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
-                                $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
-                                $wpdb->update(
-                                    $wpdb->prefix . 'produkt_variant_options',
-                                    [
-                                        'stock_available' => $available,
-                                        'stock_rented'    => $rented,
-                                        'sku'             => $sku
-                                    ],
-                                    [
-                                        'variant_id'  => $vid,
-                                        'option_type' => 'product_color',
-                                        'option_id'   => $cid,
-                                    ],
-                                    ['%d','%d','%s'],
-                                    ['%d','%s','%d']
-                                );
+                        foreach ($_POST['color_stock_available'] as $vid => $colors_or_conditions) {
+                            $vid = intval($vid);
+                            if (!is_array($colors_or_conditions)) {
+                                continue;
+                            }
+
+                            // Detect if conditions are used (3rd dimension)
+                            $uses_conditions = !empty($colors_or_conditions) && is_array(reset($colors_or_conditions));
+
+                            if ($uses_conditions) {
+                                foreach ($colors_or_conditions as $cond_id => $colors) {
+                                    $cond_id = intval($cond_id);
+                                    foreach ($colors as $cid => $qty) {
+                                        $cid = intval($cid);
+                                        $available = intval($qty);
+                                        $rented = intval($_POST['color_stock_rented'][$vid][$cond_id][$cid] ?? 0);
+                                        $sku = sanitize_text_field($_POST['color_sku'][$vid][$cond_id][$cid] ?? '');
+
+                                        $condition_clause = $cond_id ? $wpdb->prepare('condition_id = %d', $cond_id) : 'condition_id IS NULL';
+                                        $params = $cond_id
+                                            ? [$available, $rented, $sku, $vid, $cid, $cond_id]
+                                            : [$available, $rented, $sku, $vid, $cid];
+                                        $placeholders = $cond_id
+                                            ? "%d, stock_rented = %d, sku = %s WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND $condition_clause"
+                                            : "%d, stock_rented = %d, sku = %s WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND $condition_clause";
+
+                                        $sql = $cond_id
+                                            ? $wpdb->prepare(
+                                                "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = $placeholders",
+                                                ...$params
+                                            )
+                                            : $wpdb->prepare(
+                                                "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = $placeholders",
+                                                ...$params
+                                            );
+
+                                        $result = $wpdb->query($sql);
+
+                                        if ($result === false || $wpdb->rows_affected === 0) {
+                                            $wpdb->insert(
+                                                $wpdb->prefix . 'produkt_variant_options',
+                                                [
+                                                    'variant_id'      => $vid,
+                                                    'option_type'     => 'product_color',
+                                                    'option_id'       => $cid,
+                                                    'condition_id'    => $cond_id ?: null,
+                                                    'available'       => 1,
+                                                    'stock_available' => $available,
+                                                    'stock_rented'    => $rented,
+                                                    'sku'             => $sku,
+                                                ],
+                                                ['%d','%s','%d','%d','%d','%d','%s']
+                                            );
+                                        }
+                                    }
+                                }
+                            } else {
+                                foreach ($colors_or_conditions as $cid => $qty) {
+                                    $cid = intval($cid);
+                                    $available = intval($qty);
+                                    $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
+                                    $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
+                                    $wpdb->update(
+                                        $wpdb->prefix . 'produkt_variant_options',
+                                        [
+                                            'stock_available' => $available,
+                                            'stock_rented'    => $rented,
+                                            'sku'             => $sku
+                                        ],
+                                        [
+                                            'variant_id'  => $vid,
+                                            'option_type' => 'product_color',
+                                            'option_id'   => $cid,
+                                        ],
+                                        ['%d','%d','%s'],
+                                        ['%d','%s','%d']
+                                    );
+                                }
                             }
                         }
                     }
