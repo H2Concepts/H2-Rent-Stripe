@@ -615,54 +615,105 @@ function produkt_category_icon($slug)
                         <tbody>
                             <?php foreach ($variants as $v): ?>
                                 <?php
-                                    $colors = $wpdb->get_results($wpdb->prepare(
-                                        "SELECT vo.option_id AS color_id, vo.stock_available, vo.stock_rented, vo.sku, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
+                                    $conditions = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT c.id, c.name FROM {$wpdb->prefix}produkt_conditions c JOIN {$wpdb->prefix}produkt_variant_options vo ON vo.option_id = c.id AND vo.variant_id = %d AND vo.option_type = 'condition' WHERE vo.available = 1 ORDER BY c.sort_order, c.name",
                                         $v->id
                                     ));
+
+                                    $base_colors = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT DISTINCT c.id, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
+                                        $v->id
+                                    ));
+
+                                    $color_rows = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT vo.option_id AS color_id, COALESCE(vo.condition_id, 0) AS condition_id, vo.stock_available, vo.stock_rented, vo.sku, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
+                                        $v->id
+                                    ));
+
+                                    $color_map = [];
+                                    foreach ($color_rows as $row) {
+                                        $color_map[intval($row->condition_id)][intval($row->color_id)] = $row;
+                                    }
+
+                                    $price_val = ($modus === 'kauf') ? $v->verkaufspreis_einmalig : $v->base_price;
                                 ?>
-                                <?php if (!empty($colors)): ?>
-                                    <?php $color_index = 0; ?>
-                                    <?php foreach ($colors as $c): ?>
-                                        <?php $key = $v->id . '_' . $c->color_id; ?>
-                                        <tr>
-                                            <td><?php echo esc_html($v->name . ' - ' . $c->name); ?></td>
+
+                                <?php if (!empty($base_colors)): ?>
+                                    <?php if (!empty($conditions)): ?>
+                                        <?php foreach ($conditions as $condition): ?>
+                                            <?php $cond_key = intval($condition->id); ?>
+                                            <?php foreach ($base_colors as $c): ?>
+                                                <?php
+                                                    $key = $v->id . '_' . $cond_key . '_' . $c->id;
+                                                    $row_data = $color_map[$cond_key][intval($c->id)] ?? null;
+                                                    $available_val = $row_data ? intval($row_data->stock_available) : 0;
+                                                    $rented_val = $row_data ? intval($row_data->stock_rented) : 0;
+                                                    $sku_val = $row_data ? $row_data->sku : '';
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo esc_html($v->name . ' - ' . $condition->name . ' - ' . $c->name); ?></td>
+                                                    <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                                    <td class="inventory-cell">
+                                                        <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
+                                                            <span class="inventory-available-count"><?php echo $available_val; ?></span>
+                                                        </div>
+                                                        <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
+                                                            <label>Verfügbar</label>
+                                                            <div class="quantity-control">
+                                                                <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
+                                                                <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $cond_key; ?>][<?php echo $c->id; ?>]" value="<?php echo $available_val; ?>" min="0">
+                                                                <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                                            </div>
+                                                            <label>In Vermietung</label>
+                                                            <div class="quantity-control">
+                                                                <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
+                                                                <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $cond_key; ?>][<?php echo $c->id; ?>]" value="<?php echo $rented_val; ?>" min="0">
+                                                                <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $cond_key; ?>][<?php echo $c->id; ?>]" value="<?php echo esc_attr($sku_val); ?>"></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <?php foreach ($base_colors as $c): ?>
                                             <?php
-                                                $price_val = ($modus === 'kauf')
-                                                    ? $v->verkaufspreis_einmalig
-                                                    : $v->base_price;
+                                                $key = $v->id . '_' . $c->id;
+                                                $row_data = $color_map[0][intval($c->id)] ?? null;
+                                                $available_val = $row_data ? intval($row_data->stock_available) : 0;
+                                                $rented_val = $row_data ? intval($row_data->stock_rented) : 0;
+                                                $sku_val = $row_data ? $row_data->sku : '';
                                             ?>
-                                            <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
-                                            <td class="inventory-cell">
-                                                <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
-                                                    <span class="inventory-available-count"><?php echo intval($c->stock_available); ?></span>
-                                                </div>
-                                                <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
-                                                    <label>Verfügbar</label>
-                                                    <div class="quantity-control">
-                                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
-                                                        <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo intval($c->stock_available); ?>" min="0">
-                                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                            <tr>
+                                                <td><?php echo esc_html($v->name . ' - ' . $c->name); ?></td>
+                                                <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                                <td class="inventory-cell">
+                                                    <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
+                                                        <span class="inventory-available-count"><?php echo $available_val; ?></span>
                                                     </div>
-                                                    <label>In Vermietung</label>
-                                                    <div class="quantity-control">
-                                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
-                                                        <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo intval($c->stock_rented); ?>" min="0">
-                                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                    <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
+                                                        <label>Verfügbar</label>
+                                                        <div class="quantity-control">
+                                                            <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
+                                                            <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $c->id; ?>]" value="<?php echo $available_val; ?>" min="0">
+                                                            <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                                        </div>
+                                                        <label>In Vermietung</label>
+                                                        <div class="quantity-control">
+                                                            <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
+                                                            <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $c->id; ?>]" value="<?php echo $rented_val; ?>" min="0">
+                                                            <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo esc_attr($c->sku); ?>"></td>
-                                        </tr>
-                                        <?php $color_index++; ?>
-                                    <?php endforeach; ?>
+                                                </td>
+                                                <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $c->id; ?>]" value="<?php echo esc_attr($sku_val); ?>"></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <tr>
                                         <td><?php echo esc_html($v->name); ?></td>
-                                        <?php
-                                            $price_val = ($modus === 'kauf')
-                                                ? $v->verkaufspreis_einmalig
-                                                : $v->base_price;
-                                        ?>
                                         <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
                                         <td class="inventory-cell">
                                             <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
