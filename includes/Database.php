@@ -1274,10 +1274,14 @@ class Database {
             variant_id mediumint(9) NOT NULL,
             option_type varchar(50) NOT NULL,
             option_id mediumint(9) NOT NULL,
+            condition_id mediumint(9) DEFAULT NULL,
             available tinyint(1) DEFAULT 1,
             sale_available tinyint(1) DEFAULT 0,
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
+            sku varchar(255) DEFAULT NULL,
             PRIMARY KEY (id),
-            UNIQUE KEY variant_option (variant_id, option_type, option_id)
+            UNIQUE KEY variant_option (variant_id, option_type, option_id, condition_id)
         ) $charset_collate;";
 
         // Variant durations table
