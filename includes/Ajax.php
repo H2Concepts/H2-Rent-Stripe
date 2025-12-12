@@ -224,7 +224,7 @@ class Ajax {
                     'plugin_product_id' => $variant_id,
                     'variant_id'        => $variant_id,
                     'duration_id'       => $duration_id,
-                    'name'              => $variant->name . ' – ' . $duration->name . ' – ' . $condition->name,
+                    'name'              => $variant->name,
                     'price'             => $duration_price,
                     'mode'              => $modus,
                     'condition_id'      => $condition_id,

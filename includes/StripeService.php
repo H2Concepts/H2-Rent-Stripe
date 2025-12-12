@@ -577,6 +577,7 @@ class StripeService {
 
         try {
             $condition_id = isset($product_data['condition_id']) ? (int) $product_data['condition_id'] : 0;
+            $duration_meta_id = isset($product_data['duration_id']) ? (int) $product_data['duration_id'] : 0;
             global $wpdb;
 
             // Standard: kein Bild
@@ -612,10 +613,9 @@ class StripeService {
             }
 
             $query = sprintf(
-                'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["duration_id"]:"%d" AND metadata["mode"]:"%s"',
-                $product_data['plugin_product_id'],
-                $product_data['variant_id'],
-                $product_data['duration_id'] ?? 0,
+                'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["mode"]:"%s"',
+                (int) $product_data['plugin_product_id'],
+                (int) $product_data['variant_id'],
                 $product_data['mode']
             );
 
@@ -627,9 +627,8 @@ class StripeService {
                 $product_params = [
                     'name'     => $product_data['name'],
                     'metadata' => [
-                        'plugin_product_id' => $product_data['plugin_product_id'],
-                        'variant_id'        => $product_data['variant_id'],
-                        'duration_id'       => $product_data['duration_id'] ?? 0,
+                        'plugin_product_id' => (int) $product_data['plugin_product_id'],
+                        'variant_id'        => (int) $product_data['variant_id'],
                         'mode'              => $product_data['mode'],
                     ],
                 ];
@@ -672,6 +671,14 @@ class StripeService {
                     $match = false;
                 }
 
+                $existing_duration_id = 0;
+                if (isset($p->metadata) && isset($p->metadata['duration_id'])) {
+                    $existing_duration_id = (int) $p->metadata['duration_id'];
+                }
+                if ($existing_duration_id !== $duration_meta_id) {
+                    $match = false;
+                }
+
                 if ($match) {
                     $stripe_price = $p;
                     break;
@@ -686,6 +693,7 @@ class StripeService {
                     'nickname'    => ($product_data['mode'] === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
                     'metadata'    => [
                         'condition_id' => $condition_id,
+                        'duration_id'  => $duration_meta_id,
                     ],
                 ];
 
