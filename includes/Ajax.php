@@ -175,32 +175,14 @@ class Ajax {
                     $discount = 1 - ($duration_price / $base_price);
                 }
 
-                $final_price = $duration_price + $extras_price;
-            }
-
-            // Zustand-Preisanpassung nach der Berechnung anwenden
-            if ($condition && $condition->price_modifier != 0) {
-                $modifier = 1 + floatval($condition->price_modifier);
-
-                if ($modus === 'kauf') {
-                    $base_price    *= $modifier;
-                    $duration_price = $base_price;
+                // Ab hier: Zustands-Aufpreis anwenden (nur auf Produktpreis + Extras, nicht auf Versand)
+                if ($condition && $condition->price_modifier != 0) {
+                    $modifier = 1 + floatval($condition->price_modifier);
+                    $duration_price *= $modifier;
                     $extras_price  *= $modifier;
-                    $final_price    = ($duration_price + $extras_price) * $days;
-
-                    if ($original_price !== null) {
-                        $original_price *= $modifier;
-                    }
-                } else {
-                    $base_price    *= $modifier;
-                    $duration_price*= $modifier;
-                    $extras_price  *= $modifier;
-                    $final_price    = $duration_price + $extras_price;
-
-                    if ($original_price !== null) {
-                        $original_price *= $modifier;
-                    }
                 }
+
+                $final_price = $duration_price + $extras_price;
             }
             // Ensure we have a Stripe price ID available for checkout
             if (empty($used_price_id)) {
@@ -248,7 +230,11 @@ class Ajax {
                     'condition_id'      => $condition_id,
                 ));
 
-                if (!is_wp_error($stripe_data) && !empty($stripe_data['stripe_price_id'])) {
+                if (is_wp_error($stripe_data)) {
+                    wp_send_json_error('Stripe price creation failed: ' . $stripe_data->get_error_message());
+                }
+
+                if (!empty($stripe_data['stripe_price_id'])) {
                     $price_id_for_checkout = $stripe_data['stripe_price_id'];
                 }
             }

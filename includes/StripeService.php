@@ -576,107 +576,75 @@ class StripeService {
         }
 
         try {
-            $condition_id = isset($product_data['condition_id']) ? (int) $product_data['condition_id'] : 0;
-            $duration_meta_id = isset($product_data['duration_id']) ? (int) $product_data['duration_id'] : 0;
-            $mode = (isset($product_data['mode']) && $product_data['mode'] === 'kauf') ? 'kauf' : 'miete';
-            global $wpdb;
-
-            // Standard: kein Bild
-            $image_url = '';
-
-            // plugin_product_id = Variant-ID in deinem System
-            if (!empty($product_data['plugin_product_id'])) {
-                $variant_id     = (int) $product_data['plugin_product_id'];
-                $variants_table = $wpdb->prefix . 'produkt_variants';
-
-                $variant_row = $wpdb->get_row(
-                    $wpdb->prepare(
-                        "SELECT image_url_1, image_url_2, image_url_3, image_url_4, image_url_5\n                     FROM {$variants_table}\n                     WHERE id = %d",
-                        $variant_id
-                    )
-                );
-
-                if ($variant_row) {
-                    foreach (['image_url_1', 'image_url_2', 'image_url_3', 'image_url_4', 'image_url_5'] as $col) {
-                        if (!empty($variant_row->$col)) {
-                            // Öffentliche URL aus der DB nutzen
-                            $image_url = esc_url_raw($variant_row->$col);
-                            break;
-                        }
-                    }
-                }
-            }
-
             $cache_key = 'produkt_stripe_pair_' . md5(json_encode($product_data));
             $cached    = get_transient($cache_key);
             if ($cached !== false) {
                 return $cached;
             }
 
+            $plugin_product_id = isset($product_data['plugin_product_id']) ? (int) $product_data['plugin_product_id'] : 0;
+            $variant_id        = isset($product_data['variant_id']) ? (int) $product_data['variant_id'] : 0;
+            $duration_meta_id  = isset($product_data['duration_id']) ? (int) $product_data['duration_id'] : 0;
+            $mode              = !empty($product_data['mode']) ? $product_data['mode'] : 'miete';
+            $condition_id      = isset($product_data['condition_id']) ? (int) $product_data['condition_id'] : 0;
+
+            // 1) Genau EIN Stripe-Produkt pro Variante + Modus
             $query = sprintf(
                 'metadata["plugin_product_id"]:"%d" AND metadata["variant_id"]:"%d" AND metadata["mode"]:"%s"',
-                (int) $product_data['plugin_product_id'],
-                (int) $product_data['variant_id'],
+                $plugin_product_id,
+                $variant_id,
                 $mode
             );
 
-            $found = \Stripe\Product::search(['query' => $query, 'limit' => 1]);
-            $stripe_product = $found && !empty($found->data) ? $found->data[0] : null;
+            $found = \Stripe\Product::search([
+                'query' => $query,
+                'limit' => 1,
+            ]);
+            $stripe_product = ($found && !empty($found->data)) ? $found->data[0] : null;
 
             if (!$stripe_product) {
-                // Neues Stripe-Produkt anlegen
-                $product_params = [
+                $stripe_product = \Stripe\Product::create([
                     'name'     => $product_data['name'],
                     'metadata' => [
-                        'plugin_product_id' => (int) $product_data['plugin_product_id'],
-                        'variant_id'        => (int) $product_data['variant_id'],
+                        'plugin_product_id' => $plugin_product_id,
+                        'variant_id'        => $variant_id,
                         'mode'              => $mode,
                     ],
-                ];
-
-                if (!empty($image_url)) {
-                    $product_params['images'] = [$image_url];
-                }
-
-                $stripe_product = \Stripe\Product::create($product_params);
+                ]);
             } else {
-                // Produkt existiert bereits → Bild ggf. aktualisieren
-                if (!empty($image_url)) {
-                    $should_update_image = empty($stripe_product->images)
-                        || !in_array($image_url, $stripe_product->images, true);
-
-                    if ($should_update_image) {
-                        \Stripe\Product::update($stripe_product->id, [
-                            'images' => [$image_url],
-                        ]);
-                    }
+                // Produktname bei Bedarf aktualisieren
+                if (!empty($product_data['name']) && $stripe_product->name !== $product_data['name']) {
+                    \Stripe\Product::update($stripe_product->id, [
+                        'name' => $product_data['name'],
+                    ]);
                 }
             }
 
-            $prices = \Stripe\Price::all(['product' => $stripe_product->id, 'limit' => 100]);
+            // 2) Passenden Preis innerhalb dieses Produkts finden
+            $prices = \Stripe\Price::all([
+                'product' => $stripe_product->id,
+                'limit'   => 100,
+            ]);
+
             $stripe_price = null;
-            $amount = (int) ($product_data['price'] * 100);
+            $amount = (int) round($product_data['price'] * 100);
+
             foreach ($prices->data as $p) {
-                $match = $p->unit_amount == $amount && $p->currency === 'eur';
+                $match = ($p->unit_amount == $amount && $p->currency === 'eur');
+
                 if ($mode === 'miete') {
-                    $match = $match && isset($p->recurring) && $p->recurring->interval === 'month';
+                    $match = $match
+                        && isset($p->recurring)
+                        && isset($p->recurring->interval)
+                        && $p->recurring->interval === 'month';
                 } else {
                     $match = $match && !isset($p->recurring);
                 }
 
-                $existing_condition_id = 0;
-                if (isset($p->metadata) && isset($p->metadata['condition_id'])) {
-                    $existing_condition_id = (int) $p->metadata['condition_id'];
-                }
-                if ($existing_condition_id !== $condition_id) {
-                    $match = false;
-                }
+                $price_duration_id  = isset($p->metadata['duration_id']) ? (int) $p->metadata['duration_id'] : 0;
+                $price_condition_id = isset($p->metadata['condition_id']) ? (int) $p->metadata['condition_id'] : 0;
 
-                $existing_duration_id = 0;
-                if (isset($p->metadata) && isset($p->metadata['duration_id'])) {
-                    $existing_duration_id = (int) $p->metadata['duration_id'];
-                }
-                if ($existing_duration_id !== $duration_meta_id) {
+                if ($price_duration_id !== $duration_meta_id || $price_condition_id !== $condition_id) {
                     $match = false;
                 }
 
@@ -686,6 +654,7 @@ class StripeService {
                 }
             }
 
+            // 3) Wenn kein passender Preis existiert → neuen anlegen
             if (!$stripe_price) {
                 $price_params = [
                     'unit_amount' => $amount,
@@ -693,8 +662,11 @@ class StripeService {
                     'product'     => $stripe_product->id,
                     'nickname'    => ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat',
                     'metadata'    => [
-                        'condition_id' => $condition_id,
-                        'duration_id'  => $duration_meta_id,
+                        'plugin_product_id' => $plugin_product_id,
+                        'variant_id'        => $variant_id,
+                        'duration_id'       => $duration_meta_id,
+                        'condition_id'      => $condition_id,
+                        'mode'              => $mode,
                     ],
                 ];
 
