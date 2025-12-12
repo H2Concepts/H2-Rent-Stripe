@@ -202,6 +202,23 @@ class Ajax {
                     }
                 }
             }
+            // Ensure we have a Stripe price ID available for checkout
+            if (empty($used_price_id)) {
+                $stripe_data = StripeService::create_or_update_product_and_price(array(
+                    'plugin_product_id' => $variant_id,
+                    'variant_id'        => $variant_id,
+                    'duration_id'       => $duration_id,
+                    'name'              => $variant ? $variant->name : '',
+                    'price'             => ($modus === 'kauf') ? $base_price : $duration_price,
+                    'mode'              => $modus,
+                    'condition_id'      => $condition ? (int) $condition->id : 0,
+                ));
+
+                if (!is_wp_error($stripe_data) && !empty($stripe_data['stripe_price_id'])) {
+                    $used_price_id = $stripe_data['stripe_price_id'];
+                }
+            }
+
             $shipping_cost = 0;
             if (!empty($_POST['shipping_price_id'])) {
                 $spid = sanitize_text_field($_POST['shipping_price_id']);
