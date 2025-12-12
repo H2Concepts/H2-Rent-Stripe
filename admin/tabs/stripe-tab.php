@@ -108,6 +108,9 @@ $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
                                     <option value="direct" <?php selected($cart_mode, 'direct'); ?>>Ohne Warenkorb-Funktion</option>
                                 </select>
                             </div>
+                            <button type="submit" name="produkt_clear_stripe_cache" class="produkt-button secondary" style="margin-left: auto;">
+                                Stripe Cache löschen
+                            </button>
                         </div>
                     </div>
                 </div>
