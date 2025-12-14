@@ -1,3 +1,5 @@
+// Kategorie wird jetzt bereits im PHP gesetzt (via Cookie), daher keine JavaScript-Umleitung mehr nötig
+
 jQuery(document).ready(function($) {
     // Sidebar öffnen bei Klick auf "Details ansehen"
     $(document).on('click', '.view-details-link', function(e) {
@@ -225,15 +227,14 @@ jQuery(document).ready(function($) {
 
     var catSelect = $('#category-select');
     if (catSelect.length) {
-        var savedCat = localStorage.getItem('produkt_last_category');
-        if (savedCat && catSelect.val() !== savedCat && window.location.search.indexOf('category=') === -1) {
-            catSelect.val(savedCat);
-            if (catSelect.val() === savedCat) {
-                catSelect.closest('form').submit();
-            }
-        }
         catSelect.on('change', function() {
-            localStorage.setItem('produkt_last_category', $(this).val());
+            var categoryId = $(this).val();
+            // Synchronisiere localStorage und Cookie
+            localStorage.setItem('produkt_last_category', categoryId);
+            // Setze Cookie für PHP (30 Tage Gültigkeit)
+            var expires = new Date();
+            expires.setTime(expires.getTime() + (30 * 24 * 60 * 60 * 1000));
+            document.cookie = 'produkt_last_category=' + categoryId + ';expires=' + expires.toUTCString() + ';path=/';
         });
     }
 
@@ -1138,29 +1139,102 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.querySelectorAll('.layout-option-grid').forEach(grid => {
-        const card = grid.closest('.dashboard-card');
-        const inputName = grid.dataset.inputName || 'layout_style';
-        let hidden = card ? card.querySelector(`input[name="${inputName}"]`) : null;
-        if (!hidden && card) {
-            hidden = card.querySelector('input[type="hidden"]');
-        }
-        function setActive(val) {
+    // Funktion zur Initialisierung der Layout-Auswahl
+    function initLayoutOptionGrids() {
+        document.querySelectorAll('.layout-option-grid').forEach(grid => {
+            // Überspringe, wenn bereits initialisiert
+            if (grid.dataset.initialized === 'true') {
+                return;
+            }
+            grid.dataset.initialized = 'true';
+            
+            const inputName = grid.dataset.inputName || 'layout_style';
+            // Suche das versteckte Input-Feld - zuerst im gleichen dashboard-card, dann im gesamten Formular
+            const card = grid.closest('.dashboard-card');
+            const form = grid.closest('form');
+            let hidden = null;
+            
+            // Versuche zuerst im dashboard-card zu finden (direkt vor dem grid)
+            if (card) {
+                hidden = card.querySelector(`input[name="${inputName}"][type="hidden"]`);
+            }
+            
+            // Falls nicht gefunden, suche im gesamten Formular
+            if (!hidden && form) {
+                hidden = form.querySelector(`input[name="${inputName}"][type="hidden"]`);
+            }
+            
+            // Falls immer noch nicht gefunden, erstelle ein neues Feld
+            if (!hidden) {
+                hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = inputName;
+                // Prüfe, ob bereits eine Karte aktiv ist (serverseitig gesetzt)
+                const activeCard = grid.querySelector('.layout-option-card.active');
+                hidden.value = activeCard ? activeCard.dataset.value : 'default';
+                // Füge es direkt vor dem grid ein
+                if (card) {
+                    card.insertBefore(hidden, grid);
+                } else if (form) {
+                    form.appendChild(hidden);
+                }
+            }
+            
+            function setActive(val) {
+                grid.querySelectorAll('.layout-option-card').forEach(card => {
+                    card.classList.toggle('active', card.dataset.value === val);
+                });
+            }
+            
+            // Initialisiere den aktiven Zustand basierend auf dem aktuellen Wert
+            // Prüfe zuerst, ob bereits eine Karte aktiv ist (serverseitig gesetzt)
+            const activeCard = grid.querySelector('.layout-option-card.active');
+            if (activeCard) {
+                const activeValue = activeCard.dataset.value;
+                if (hidden) {
+                    hidden.value = activeValue;
+                }
+                setActive(activeValue);
+            } else {
+                // Falls keine aktiv ist, verwende den Wert aus dem versteckten Feld
+                const currentValue = hidden ? (hidden.value || 'default') : 'default';
+                setActive(currentValue);
+                if (hidden) {
+                    hidden.value = currentValue;
+                }
+            }
+            
+            // Event-Listener für Klicks
             grid.querySelectorAll('.layout-option-card').forEach(card => {
-                card.classList.toggle('active', card.dataset.value === val);
-            });
-        }
-        grid.querySelectorAll('.layout-option-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const val = card.dataset.value;
-                if (hidden) hidden.value = val;
-                setActive(val);
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const val = this.dataset.value;
+                    if (hidden) {
+                        hidden.value = val;
+                    }
+                    setActive(val);
+                });
             });
         });
-        if (hidden) {
-            setActive(hidden.value || 'default');
+    }
+    
+    // Initialisiere sofort beim DOMContentLoaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initLayoutOptionGrids);
+    } else {
+        initLayoutOptionGrids();
+    }
+    
+    // Initialisiere auch nach Tab-Wechsel (für dynamisch geladene Inhalte)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.produkt-subtab')) {
+            setTimeout(initLayoutOptionGrids, 100);
         }
     });
+    
+    // Initialisiere auch nach kurzer Verzögerung (für dynamisch geladene Inhalte)
+    setTimeout(initLayoutOptionGrids, 500);
 
     // Load orders incrementally
     const orderRows = document.querySelectorAll('.activity-table tbody tr');

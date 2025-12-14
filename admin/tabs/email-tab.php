@@ -52,6 +52,298 @@ if (!function_exists('produkt_send_test_customer_email')) {
     }
 }
 
+if (!function_exists('produkt_send_test_email_by_type')) {
+    function produkt_send_test_email_by_type(string $type) {
+        $admin_email = get_option('admin_email');
+        if (empty($admin_email)) {
+            return new \WP_Error('missing_admin_email', 'Es ist keine Admin-E-Mail-Adresse hinterlegt.');
+        }
+
+        switch ($type) {
+            case 'login_code': {
+                $site_title = get_bloginfo('name');
+                $logo_url = get_option('plugin_firma_logo_url', '');
+                $divider = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+                $code = 123456;
+
+                $message = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+                $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+                }
+                $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Login-Code für dein Kundenkonto</h1>';
+                $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+                $message .= '<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Gebe den Code zum Einloggen im Kundenkonto ein:</p>';
+                $message .= '<div style="text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;padding:14px;border:1px solid #E6E8ED;border-radius:12px;background:#F6F7FA;">' . esc_html($code) . '</div>';
+                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">Dies ist eine Test-E-Mail (Login-Code).<br><br><strong>Dieser Code ist nun für 15 Minuten gültig.</strong></p>';
+                $message .= '</div>';
+                $message .= $divider;
+                $footer_html = function_exists('pv_get_email_footer_html') ? pv_get_email_footer_html() : '';
+                if ($footer_html) {
+                    $message .= $footer_html;
+                }
+                $message .= '</div>';
+                $message .= '</body></html>';
+
+                $headers = ['Content-Type: text/html; charset=UTF-8'];
+                $from_name = get_bloginfo('name');
+                $from_email = get_option('admin_email');
+                $headers[] = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+                $sent = wp_mail($admin_email, 'Ihr Login-Code (TEST)', $message, $headers);
+                return $sent ? true : new \WP_Error('send_failed', 'Login-Code Test-E-Mail konnte nicht gesendet werden.');
+            }
+
+            case 'customer_order_confirmation':
+                return produkt_send_test_customer_email();
+
+            case 'admin_order_confirmation': {
+                $start = current_time('timestamp');
+                $end   = strtotime('+30 days', $start);
+                $order = [
+                    'customer_email'    => $admin_email,
+                    'customer_name'     => 'Max Mustermann',
+                    'customer_phone'    => '01234 567890',
+                    'customer_street'   => 'Musterstraße 1',
+                    'customer_postal'   => '12345',
+                    'customer_city'     => 'Musterstadt',
+                    'customer_country'  => 'Deutschland',
+                    'mode'              => 'kauf',
+                    'created_at'        => current_time('mysql'),
+                    'final_price'       => 199.99,
+                    'shipping_cost'     => 9.99,
+                    'order_items'       => json_encode([
+                        [
+                            'produkt_name'       => 'Kinderwagen Modell X',
+                            'variant_name'       => 'Edition 2024',
+                            'extra_names'        => 'Regenschutz, Becherhalter',
+                            'product_color_name' => 'Space Grau',
+                            'frame_color_name'   => 'Schwarz',
+                            'condition_name'     => 'Neu',
+                            'duration_name'      => '1 Monat',
+                            'start_date'         => date('Y-m-d', $start),
+                            'end_date'           => date('Y-m-d', $end),
+                            'final_price'        => 199.99,
+                        ],
+                    ]),
+                    'order_number'      => 'TEST-1001',
+                    'produkt_name'      => 'Kinderwagen Modell X',
+                    'extra_text'        => 'Regenschutz, Becherhalter',
+                    'dauer_text'        => '1 Monat',
+                    'zustand_text'      => 'Neu',
+                    'produktfarbe_text' => 'Space Grau',
+                    'gestellfarbe_text' => 'Schwarz',
+                ];
+                \ProduktVerleih\send_admin_order_email($order, 0, 'TEST-SESSION');
+                return true;
+            }
+
+            case 'low_stock_variant': {
+                global $wpdb;
+                $variant_id = (int) $wpdb->get_var("SELECT id FROM {$wpdb->prefix}produkt_variants ORDER BY id ASC LIMIT 1");
+                if (!$variant_id) {
+                    return new \WP_Error('missing_variant', 'Keine Ausführung gefunden (für Lagerbestand-niedrig Test).');
+                }
+                $row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT option_id, COALESCE(condition_id, 0) AS condition_id, stock_available, stock_threshold
+                     FROM {$wpdb->prefix}produkt_variant_options
+                     WHERE variant_id = %d AND option_type = 'product_color'
+                     ORDER BY id ASC LIMIT 1",
+                    $variant_id
+                ));
+                $product_color_id = $row ? (int) $row->option_id : null;
+                $condition_id = $row ? ((int) $row->condition_id ?: null) : null;
+                $stock_available = $row ? (int) ($row->stock_available ?? 0) : 2;
+                $threshold = $row ? (int) ($row->stock_threshold ?? 2) : 2;
+                \ProduktVerleih\send_admin_low_stock_email($variant_id, $stock_available, $product_color_id, $condition_id, $threshold);
+                return true;
+            }
+
+            case 'low_stock_extra': {
+                global $wpdb;
+                $extra = $wpdb->get_row("SELECT id, stock_available, stock_threshold FROM {$wpdb->prefix}produkt_extras ORDER BY id ASC LIMIT 1");
+                $extra_id = $extra ? (int) $extra->id : 0;
+                $stock_available = $extra ? (int) ($extra->stock_available ?? 2) : 2;
+                $threshold = $extra ? (int) ($extra->stock_threshold ?? 2) : 2;
+
+                if (function_exists('\\ProduktVerleih\\send_admin_low_stock_extra_email')) {
+                    \ProduktVerleih\send_admin_low_stock_extra_email($extra_id ?: 0, $stock_available, $threshold);
+                    return true;
+                }
+
+                return new \WP_Error('missing_template', 'Extra Low-Stock Template-Funktion wurde nicht gefunden.');
+            }
+
+            case 'customer_rental_cancellation': {
+                if (!function_exists('\\ProduktVerleih\\send_customer_rental_cancellation_email')) {
+                    return new \WP_Error('missing_template', 'Kündigungsbestätigung (Kunde) Template-Funktion wurde nicht gefunden.');
+                }
+
+                $now = current_time('timestamp');
+                $end = strtotime('+21 days', $now);
+
+                $order_override = [
+                    'customer_email'   => $admin_email,
+                    'customer_name'    => 'Max Mustermann',
+                    'customer_phone'   => '01234 567890',
+                    'customer_street'  => 'Musterstraße 1',
+                    'customer_postal'  => '12345',
+                    'customer_city'    => 'Musterstadt',
+                    'customer_country' => 'Deutschland',
+                    'mode'             => 'miete',
+                    'order_number'     => 'TEST-MIETE-2001',
+                    'created_at'       => current_time('mysql'),
+                    // Used for status counts
+                    'order_items'      => json_encode([
+                        [
+                            'rental_status' => 'gekündigt',
+                            'end_date'      => date('Y-m-d', $end),
+                        ],
+                    ]),
+                    // Used for rendering product details in this template
+                    'produkte'         => [
+                        (object) [
+                            'produkt_name'       => 'Kinderwagen Modell X',
+                            'variant_name'       => 'Edition 2024',
+                            'extra_names'        => 'Regenschutz, Becherhalter',
+                            'condition_name'     => 'Neu',
+                            'product_color_name' => 'Space Grau',
+                            'frame_color_name'   => 'Schwarz',
+                            'final_price'        => 39.90,
+                            'start_date'         => date('Y-m-d', $now),
+                            'end_date'           => date('Y-m-d', $end),
+                            'image_url'          => '',
+                        ],
+                    ],
+                ];
+
+                \ProduktVerleih\send_customer_rental_cancellation_email(0, 0, $order_override);
+                return true;
+            }
+
+            case 'admin_rental_cancellation': {
+                if (!function_exists('\\ProduktVerleih\\send_admin_rental_cancellation_email')) {
+                    return new \WP_Error('missing_template', 'Kündigung (Admin) Template-Funktion wurde nicht gefunden.');
+                }
+
+                $now = current_time('timestamp');
+                $end = strtotime('+21 days', $now);
+
+                $order_override = [
+                    'customer_email'   => $admin_email,
+                    'customer_name'    => 'Max Mustermann',
+                    'customer_phone'   => '01234 567890',
+                    'customer_street'  => 'Musterstraße 1',
+                    'customer_postal'  => '12345',
+                    'customer_city'    => 'Musterstadt',
+                    'customer_country' => 'Deutschland',
+                    'mode'             => 'miete',
+                    'order_number'     => 'TEST-MIETE-2001',
+                    'created_at'       => current_time('mysql'),
+                    'order_items'      => json_encode([
+                        [
+                            'rental_status' => 'gekündigt',
+                            'end_date'      => date('Y-m-d', $end),
+                        ],
+                        [
+                            'rental_status' => 'aktiv',
+                        ],
+                    ]),
+                    'produkte'         => [
+                        (object) [
+                            'produkt_name'       => 'Kinderwagen Modell X',
+                            'variant_name'       => 'Edition 2024',
+                            'extra_names'        => 'Regenschutz, Becherhalter',
+                            'condition_name'     => 'Neu',
+                            'product_color_name' => 'Space Grau',
+                            'frame_color_name'   => 'Schwarz',
+                            'final_price'        => 39.90,
+                            'start_date'         => date('Y-m-d', $now),
+                            'end_date'           => date('Y-m-d', $end),
+                            'image_url'          => '',
+                        ],
+                        (object) [
+                            'produkt_name'       => 'Buggy Modell Y',
+                            'variant_name'       => 'Classic',
+                            'extra_names'        => '',
+                            'condition_name'     => 'Neu',
+                            'product_color_name' => 'Schwarz',
+                            'frame_color_name'   => '',
+                            'final_price'        => 29.90,
+                            'start_date'         => date('Y-m-d', $now),
+                            'end_date'           => '',
+                            'image_url'          => '',
+                        ],
+                    ],
+                ];
+
+                \ProduktVerleih\send_admin_rental_cancellation_email(0, 0, $order_override);
+                return true;
+            }
+
+            case 'newsletter': {
+                $token = 'TEST-TOKEN-' . bin2hex(random_bytes(16));
+                $confirm_url = add_query_arg([
+                    'action' => 'produkt_newsletter_confirm',
+                    'token'  => rawurlencode($token),
+                ], admin_url('admin-post.php'));
+
+                $subject = 'Bitte Newsletter-Anmeldung bestätigen (TEST)';
+
+                $site_title = get_bloginfo('name');
+                $logo_url   = get_option('plugin_firma_logo_url', '');
+                $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+                $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+                $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+                }
+
+                $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Newsletter-Anmeldung bestätigen</h1>';
+                $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo,<br>vielen Dank für Ihre Newsletter-Anmeldung! Bitte bestätigen Sie Ihre Anmeldung, indem Sie auf den folgenden Button klicken:</p>';
+
+                $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+                $message .= '<p style="margin:0 0 20px;font-size:14px;line-height:1.6;">Mit Ihrer Bestätigung erhalten Sie regelmäßig aktuelle Informationen von ' . esc_html($site_title) . ' zu Produkten und exklusiven Angeboten.</p>';
+
+                $message .= '<div style="text-align:center;margin:18px 0 8px;">';
+                $message .= '<a href="' . esc_url($confirm_url) . '" style="display:inline-block;padding:14px 36px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Anmeldung bestätigen</a>';
+                $message .= '</div>';
+                $message .= '</div>';
+
+                $message .= '<p style="margin:16px 0 8px;font-size:12px;line-height:1.6;color:#666;">Wenn Sie sich nicht angemeldet haben, ignorieren Sie diese E-Mail einfach.</p>';
+                $message .= '<p style="margin:8px 0 0;font-size:12px;line-height:1.6;color:#999;"><em>Dies ist eine Test-E-Mail (Newsletter).</em></p>';
+
+                if ($logo_url) {
+                    $message .= '<div style="text-align:center;margin:22px 0 8px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:70px;max-width:100%;height:auto;"></div>';
+                }
+
+                $message .= $divider;
+
+                $footer_html = function_exists('pv_get_email_footer_html') ? pv_get_email_footer_html() : '';
+                if ($footer_html) {
+                    $message .= $footer_html;
+                }
+
+                $message .= '</div>';
+                $message .= '</body></html>';
+
+                $headers = ['Content-Type: text/html; charset=UTF-8'];
+                $from_name  = get_bloginfo('name');
+                $from_email = get_option('admin_email');
+                $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+                $sent = wp_mail($admin_email, $subject, $message, $headers);
+                return $sent ? true : new \WP_Error('send_failed', 'Newsletter Test-E-Mail konnte nicht gesendet werden.');
+            }
+
+            default:
+                return new \WP_Error('unknown_type', 'Unbekannter Test-E-Mail-Typ.');
+        }
+    }
+}
+
 if (isset($_POST['submit_email_settings']) || isset($_POST['send_test_email'])) {
     \ProduktVerleih\Admin::verify_admin_action();
     $footer = [
@@ -87,7 +379,8 @@ if (isset($_POST['submit_email_settings']) || isset($_POST['send_test_email'])) 
     echo '<div class="notice notice-success"><p>✅ Einstellungen gespeichert!</p></div>';
 
     if (isset($_POST['send_test_email'])) {
-        $test_result = produkt_send_test_customer_email();
+        $test_type = sanitize_text_field($_POST['test_email_type'] ?? 'customer_order_confirmation');
+        $test_result = produkt_send_test_email_by_type($test_type);
         if (true === $test_result) {
             echo '<div class="notice notice-success"><p>✅ Test-E-Mail wurde versendet.</p></div>';
         } elseif (is_wp_error($test_result)) {
@@ -134,7 +427,19 @@ $invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
                         <h2>Email Footer</h2>
                         <p class="card-subline">Absenderinformationen</p>
                     </div>
-                    <button type="submit" name="send_test_email" value="1" class="button button-secondary">Test Email versenden</button>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <select name="test_email_type" style="min-width:260px;">
+                            <option value="login_code">Login Code versenden</option>
+                            <option value="customer_order_confirmation" selected>Kunde Bestellbestätigung</option>
+                            <option value="admin_order_confirmation">Admin Bestellbestätigung</option>
+                            <option value="customer_rental_cancellation">Kündigungsbestätigung (Kunde)</option>
+                            <option value="admin_rental_cancellation">Kündigung (Admin)</option>
+                            <option value="low_stock_variant">Lagerbestand Niedrig</option>
+                            <option value="low_stock_extra">Lagerbestand Niedrig (Extras)</option>
+                            <option value="newsletter">Newsletter</option>
+                        </select>
+                        <button type="submit" name="send_test_email" value="1" class="button button-secondary">Test Email versenden</button>
+                    </div>
                 </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">

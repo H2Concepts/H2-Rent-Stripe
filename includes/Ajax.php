@@ -25,6 +25,13 @@ class Ajax {
             "SELECT * FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
             $variant_id
         ));
+        $category_inventory_enabled = 0;
+        if ($variant && !empty($variant->category_id)) {
+            $category_inventory_enabled = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                (int) $variant->category_id
+            ));
+        }
 
         $modus = get_option('produkt_betriebsmodus', 'miete');
 
@@ -197,6 +204,47 @@ class Ajax {
                 }
             }
             
+            // Determine stock + "show quantity" for the selected combination (variant vs variant+condition+product_color)
+            $stock_available = null;
+            $show_stock_count = 0;
+            if ($category_inventory_enabled) {
+                if ($product_color_id) {
+                    // per row (variant + condition + color)
+                    $vo_has_show_stock = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_variant_options LIKE 'show_stock'");
+                    $select_show_stock = $vo_has_show_stock ? 'show_stock' : '0 AS show_stock';
+                    if ($condition_id) {
+                        $row = $wpdb->get_row($wpdb->prepare(
+                            "SELECT stock_available, {$select_show_stock} FROM {$wpdb->prefix}produkt_variant_options
+                             WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                            $variant_id,
+                            $product_color_id,
+                            $condition_id
+                        ));
+                    } else {
+                        $row = $wpdb->get_row($wpdb->prepare(
+                            "SELECT stock_available, {$select_show_stock} FROM {$wpdb->prefix}produkt_variant_options
+                             WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                            $variant_id,
+                            $product_color_id
+                        ));
+                    }
+                    if ($row) {
+                        $stock_available = (int) ($row->stock_available ?? 0);
+                        $show_stock_count = (int) ($row->show_stock ?? 0);
+                    }
+                } else {
+                    // variant-level stock
+                    $stock_available = isset($variant->stock_available) ? (int) $variant->stock_available : 0;
+                    $show_stock_count = isset($variant->show_stock) ? (int) $variant->show_stock : 0;
+                }
+            }
+
+            // If inventory is enabled, stock == 0 should make it unavailable (even if "available" flag is true)
+            $is_available = $variant->available ? true : false;
+            if ($category_inventory_enabled && $stock_available !== null && $stock_available <= 0) {
+                $is_available = false;
+            }
+
             wp_send_json_success(array(
                 'base_price'    => $base_price,
                 'final_price'   => $final_price,
@@ -204,11 +252,14 @@ class Ajax {
                 'discount'      => $discount,
                 'shipping_cost' => $shipping_cost,
                 'price_id'      => $used_price_id,
-                'available'     => $variant->available ? true : false,
+                'available'     => $is_available,
                 'availability_note' => $variant->availability_note ?: '',
                 'delivery_time' => $variant->delivery_time ?: '',
                 'weekend_applied' => $weekend_applied,
-                'weekend_price_set' => $variant->weekend_price > 0
+                'weekend_price_set' => $variant->weekend_price > 0,
+                'stock_available'   => $stock_available,
+                'show_stock_count'  => $show_stock_count,
+                'inventory_enabled' => $category_inventory_enabled ? 1 : 0,
             ));
         } else {
             wp_send_json_error('Invalid selection');
@@ -279,11 +330,47 @@ class Ajax {
         
         global $wpdb;
         
-        // Get variant-specific options
+        // Get variant-specific options (may include multiple rows per color due to condition-specific inventory)
         $variant_options = $wpdb->get_results($wpdb->prepare(
-            "SELECT option_type, option_id, available, sale_available, stock_available, stock_rented, sku FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d",
+            "SELECT option_type, option_id, available, sale_available, stock_available, stock_rented, sku, condition_id
+             FROM {$wpdb->prefix}produkt_variant_options
+             WHERE variant_id = %d",
             $variant_id
         ));
+
+        // Aggregate product-color rows per color (prevents duplicates in frontend)
+        $product_color_agg_rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT option_id,
+                    MAX(available) AS available,
+                    MAX(sale_available) AS sale_available,
+                    MAX(stock_available) AS stock_available,
+                    MAX(stock_rented) AS stock_rented
+             FROM {$wpdb->prefix}produkt_variant_options
+             WHERE variant_id = %d AND option_type = 'product_color'
+             GROUP BY option_id",
+            $variant_id
+        ));
+        $product_color_agg = [];
+        foreach ($product_color_agg_rows as $r) {
+            $product_color_agg[(int) $r->option_id] = $r;
+        }
+
+        // Aggregate frame-color rows per color
+        $frame_color_agg_rows = $wpdb->get_results($wpdb->prepare(
+            "SELECT option_id,
+                    MAX(available) AS available,
+                    MAX(sale_available) AS sale_available,
+                    MAX(stock_available) AS stock_available,
+                    MAX(stock_rented) AS stock_rented
+             FROM {$wpdb->prefix}produkt_variant_options
+             WHERE variant_id = %d AND option_type = 'frame_color'
+             GROUP BY option_id",
+            $variant_id
+        ));
+        $frame_color_agg = [];
+        foreach ($frame_color_agg_rows as $r) {
+            $frame_color_agg[(int) $r->option_id] = $r;
+        }
         
         $conditions = array();
         $product_colors = array();
@@ -293,6 +380,8 @@ class Ajax {
         
         if (!empty($variant_options)) {
             // Get specific options for this variant
+            $seen_product_colors = [];
+            $seen_frame_colors = [];
             foreach ($variant_options as $option) {
                 switch ($option->option_type) {
                     case 'condition':
@@ -307,15 +396,22 @@ class Ajax {
                         }
                         break;
                     case 'product_color':
+                        // Ignore condition-specific inventory rows for color listing; we'll aggregate per color_id
+                        $color_id = (int) $option->option_id;
+                        if (isset($seen_product_colors[$color_id])) {
+                            break;
+                        }
+                        $seen_product_colors[$color_id] = true;
                         $color = $wpdb->get_row($wpdb->prepare(
                             "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
-                            $option->option_id
+                            $color_id
                         ));
                         if ($color) {
-                            $color->available = intval($option->available);
-                            $color->sale_available = isset($option->sale_available) ? intval($option->sale_available) : 0;
-                            $color->stock_available = intval($option->stock_available);
-                            $color->stock_rented = intval($option->stock_rented);
+                            $agg = $product_color_agg[$color_id] ?? null;
+                            $color->available = $agg ? intval($agg->available) : intval($option->available);
+                            $color->sale_available = $agg ? intval($agg->sale_available) : (isset($option->sale_available) ? intval($option->sale_available) : 0);
+                            $color->stock_available = $agg ? intval($agg->stock_available) : intval($option->stock_available);
+                            $color->stock_rented = $agg ? intval($agg->stock_rented) : intval($option->stock_rented);
                             $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
@@ -329,15 +425,21 @@ class Ajax {
                         }
                         break;
                     case 'frame_color':
+                        $color_id = (int) $option->option_id;
+                        if (isset($seen_frame_colors[$color_id])) {
+                            break;
+                        }
+                        $seen_frame_colors[$color_id] = true;
                         $color = $wpdb->get_row($wpdb->prepare(
                             "SELECT * FROM {$wpdb->prefix}produkt_colors WHERE id = %d",
-                            $option->option_id
+                            $color_id
                         ));
                         if ($color) {
-                            $color->available = intval($option->available);
-                            $color->sale_available = isset($option->sale_available) ? intval($option->sale_available) : 0;
-                            $color->stock_available = intval($option->stock_available);
-                            $color->stock_rented = intval($option->stock_rented);
+                            $agg = $frame_color_agg[$color_id] ?? null;
+                            $color->available = $agg ? intval($agg->available) : intval($option->available);
+                            $color->sale_available = $agg ? intval($agg->sale_available) : (isset($option->sale_available) ? intval($option->sale_available) : 0);
+                            $color->stock_available = $agg ? intval($agg->stock_available) : intval($option->stock_available);
+                            $color->stock_rented = $agg ? intval($agg->stock_rented) : intval($option->stock_rented);
                             $color->sku = $option->sku;
                             $image = $wpdb->get_var($wpdb->prepare(
                                 "SELECT image_url FROM {$wpdb->prefix}produkt_color_variant_images WHERE color_id = %d AND variant_id = %d",
@@ -2014,6 +2116,10 @@ function produkt_create_embedded_checkout_session() {
             'user_ip'    => $_SERVER['REMOTE_ADDR'] ?? '',
             'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255),
         ];
+
+        $newsletter_enabled = get_option('produkt_newsletter_enabled', '1');
+        $newsletter_optin = ($newsletter_enabled === '1' && !empty($body['newsletter_optin'])) ? 1 : 0;
+        $metadata['newsletter_optin'] = $newsletter_optin;
 
         if ($shipping_price_id) {
             $metadata['shipping_price_id'] = $shipping_price_id;

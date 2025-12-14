@@ -121,16 +121,21 @@ register_activation_hook(__FILE__, function () {
     if (!wp_next_scheduled('produkt_inventory_return_cron')) {
         wp_schedule_event(time(), 'daily', 'produkt_inventory_return_cron');
     }
+    if (!wp_next_scheduled('produkt_rental_status_cron')) {
+        wp_schedule_event(time(), 'daily', 'produkt_rental_status_cron');
+    }
 });
 
 // Clear cron job on deactivation
 register_deactivation_hook(__FILE__, function () {
     wp_clear_scheduled_hook('produkt_stripe_status_cron');
     wp_clear_scheduled_hook('produkt_inventory_return_cron');
+    wp_clear_scheduled_hook('produkt_rental_status_cron');
 });
 
 add_action('produkt_stripe_status_cron', ['\ProduktVerleih\StripeService', 'cron_refresh_stripe_archive_cache']);
 add_action('produkt_inventory_return_cron', ['\ProduktVerleih\Database', 'process_inventory_returns']);
+add_action('produkt_rental_status_cron', ['\ProduktVerleih\Database', 'process_rental_statuses']);
 
 // Initialize the plugin after WordPress has loaded
 add_action('plugins_loaded', function () {
@@ -240,6 +245,9 @@ function produkt_simple_checkout_button($atts = []) {
             return info;
         }
         const clientInfo = await collectClientInfo();
+        const newsletterOptin = (() => {
+            try { return localStorage.getItem('produkt_newsletter_optin') === '1' ? 1 : 0; } catch(e){ return 0; }
+        })();
         const fetchClientSecret = async () => {
 <?php if ($cart_mode): ?>
             const items = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
@@ -250,7 +258,8 @@ function produkt_simple_checkout_button($atts = []) {
                     cart_items: items,
                     shipping_price_id: <?php echo json_encode($shipping_price_id); ?>,
                     client_info: clientInfo,
-                    email: checkoutEmail
+                    email: checkoutEmail,
+                    newsletter_optin: newsletterOptin
                 })
             });
 <?php else: ?>
@@ -281,7 +290,8 @@ function produkt_simple_checkout_button($atts = []) {
                     end_date: <?php echo json_encode($metadata['end_date']); ?>,
                     days: <?php echo json_encode($metadata['days']); ?>,
                     client_info: clientInfo,
-                    email: checkoutEmail
+                    email: checkoutEmail,
+                    newsletter_optin: newsletterOptin
                 })
             });
 <?php endif; ?>

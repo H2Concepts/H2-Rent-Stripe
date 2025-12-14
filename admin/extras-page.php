@@ -10,8 +10,18 @@ $table_name = $wpdb->prefix . 'produkt_extras';
 // Get all categories for dropdown
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
-// Get selected category from URL parameter
-$selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 1);
+// Get selected category from URL parameter, cookie, or default
+$selected_category = isset($_GET['category']) ? intval($_GET['category']) : null;
+if (!$selected_category && isset($_COOKIE['produkt_last_category'])) {
+    $selected_category = intval($_COOKIE['produkt_last_category']);
+}
+if (!$selected_category) {
+    $selected_category = isset($categories[0]) ? $categories[0]->id : 1;
+}
+// Set cookie for next time
+if (!headers_sent()) {
+    setcookie('produkt_last_category', $selected_category, time() + (86400 * 30), '/');
+}
 
 // Get active tab
 $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'list';

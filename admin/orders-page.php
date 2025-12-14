@@ -111,7 +111,7 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                         <th class="col-id">ID</th>
                         <th class="col-date">Datum</th>
                         <th>Kunde</th>
-                        <th>Versandadresse</th>
+                        <th class="col-shipping">Versandadresse</th>
                         <th class="col-type">Produkttyp</th>
                         <th class="col-price">Preis</th>
                         <th class="col-discount">Rabatt</th>
@@ -183,13 +183,25 @@ $search_term = isset($search_term) ? $search_term : (isset($_GET['s']) ? sanitiz
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($order->status === 'offen'): ?>
-                                <span class="badge badge-warning">Offen</span>
-                            <?php elseif ($order->status === 'gekündigt'): ?>
-                                <span class="badge badge-danger">Gekündigt</span>
-                            <?php else: ?>
-                                <span class="badge badge-success">Bezahlt</span>
-                            <?php endif; ?>
+                            <?php
+                                $status = strtolower((string) ($order->status ?? ''));
+                                $mode = strtolower((string) ($order->mode ?? ''));
+                                if ($status === 'offen') {
+                                    echo '<span class="badge badge-warning">Offen</span>';
+                                } elseif ($mode === 'miete') {
+                                    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+                                    $meta = pv_get_rental_status_badge_meta($order);
+                                    $label = $meta['label'] ?? 'Miete';
+                                    $style = $meta['style'] ?? '';
+                                    echo '<span class="badge"' . ($style ? ' style="' . esc_attr($style) . '"' : '') . '>' . esc_html($label) . '</span>';
+                                } elseif ($status === 'beendet') {
+                                    echo '<span class="badge badge-danger">Beendet</span>';
+                                } elseif ($status === 'gekündigt') {
+                                    echo '<span class="badge badge-danger">Gekündigt</span>';
+                                } else {
+                                    echo '<span class="badge badge-success">Bezahlt</span>';
+                                }
+                            ?>
                             <?php if ($due): ?>
                                 <span class="badge badge-danger">Rückgabe</span>
                             <?php endif; ?>

@@ -619,7 +619,11 @@ class Admin {
             $price_label = sanitize_text_field($_POST['price_label'] ?? ($global_ui['price_label'] ?? ''));
             $price_period = sanitize_text_field($_POST['price_period'] ?? ($global_ui['price_period'] ?? 'month'));
             $vat_included = isset($_POST['vat_included']) ? 1 : (isset($global_ui['vat_included']) ? intval($global_ui['vat_included']) : 0);
-            $layout_style = sanitize_text_field($_POST['layout_style']);
+            $layout_style = sanitize_text_field($_POST['layout_style'] ?? 'default');
+            // only allow known layout values (prevents empty/invalid values that would break UI)
+            if (!in_array($layout_style, ['default', 'grid', 'list'], true)) {
+                $layout_style = 'default';
+            }
             $price_layout = sanitize_text_field($_POST['price_layout'] ?? 'default');
             $description_layout = sanitize_text_field($_POST['description_layout'] ?? 'left');
             $duration_tooltip = sanitize_textarea_field($_POST['duration_tooltip'] ?? ($global_ui['duration_tooltip'] ?? ''));
@@ -704,6 +708,7 @@ class Admin {
             }
 
             if (isset($_POST['id']) && $_POST['id']) {
+                // Don't pass a long $format array here: it's easy to get out of sync and break saving (e.g. layout_style).
                 $result = $wpdb->update(
                     $table_name,
                     [
@@ -753,7 +758,6 @@ class Admin {
                         'inventory_enabled' => isset($_POST['inventory_enabled']) ? 1 : 0,
                     ],
                     ['id' => intval($_POST['id'])],
-                    array('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d','%d','%d'),
                 );
 
                 $produkt_id = intval($_POST['id']);
@@ -792,62 +796,240 @@ class Admin {
                             $available = intval($qty);
                             $rented = intval($_POST['stock_rented'][$vid] ?? 0);
                             $sku = sanitize_text_field($_POST['sku'][$vid] ?? '');
+                            $show_stock = !empty($_POST['variant_show_stock'][$vid]) ? 1 : 0;
                             $wpdb->update(
                                 $wpdb->prefix . 'produkt_variants',
                                 [
                                     'stock_available' => $available,
                                     'stock_rented'    => $rented,
-                                    'sku'             => $sku
+                                    'sku'             => $sku,
+                                    'show_stock'      => $show_stock,
                                 ],
                                 ['id' => $vid],
-                                ['%d','%d','%s'],
+                                ['%d','%d','%s','%d'],
                                 ['%d']
                             );
                         }
                     }
+
+                    // Save stock threshold per variant (low-stock email trigger)
+                    if (!empty($_POST['stock_threshold']) && is_array($_POST['stock_threshold'])) {
+                        foreach ($_POST['stock_threshold'] as $vid => $threshold) {
+                            $vid = intval($vid);
+                            $threshold = max(0, intval($threshold));
+                            // only update variants of this category/product
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_variants',
+                                ['stock_threshold' => $threshold],
+                                ['id' => $vid, 'category_id' => $produkt_id],
+                                ['%d'],
+                                ['%d', '%d']
+                            );
+                        }
+                    }
                     if (!empty($_POST['color_stock_available']) && is_array($_POST['color_stock_available'])) {
-                        foreach ($_POST['color_stock_available'] as $vid => $colors) {
-                            foreach ($colors as $cid => $qty) {
-                                $vid = intval($vid);
-                                $cid = intval($cid);
-                                $available = intval($qty);
-                                $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
-                                $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
-                                $wpdb->update(
-                                    $wpdb->prefix . 'produkt_variant_options',
-                                    [
-                                        'stock_available' => $available,
-                                        'stock_rented'    => $rented,
-                                        'sku'             => $sku
-                                    ],
-                                    [
-                                        'variant_id'  => $vid,
-                                        'option_type' => 'product_color',
-                                        'option_id'   => $cid,
-                                    ],
-                                    ['%d','%d','%s'],
-                                    ['%d','%s','%d']
-                                );
+                        // Ensure schema exists (older installs may miss these columns)
+                        $vo_threshold_exists = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_variant_options LIKE 'stock_threshold'");
+                        if (!$vo_threshold_exists) {
+                            $wpdb->query("ALTER TABLE {$wpdb->prefix}produkt_variant_options ADD COLUMN stock_threshold INT DEFAULT 0 AFTER sku");
+                        }
+                        $vo_show_stock_exists = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_variant_options LIKE 'show_stock'");
+                        if (!$vo_show_stock_exists) {
+                            $wpdb->query("ALTER TABLE {$wpdb->prefix}produkt_variant_options ADD COLUMN show_stock TINYINT(1) DEFAULT 0 AFTER available");
+                        }
+                        foreach ($_POST['color_stock_available'] as $vid => $colors_or_conditions) {
+                            $vid = intval($vid);
+                            if (!is_array($colors_or_conditions)) {
+                                continue;
+                            }
+
+                            // Detect if conditions are used (3rd dimension)
+                            $uses_conditions = !empty($colors_or_conditions) && is_array(reset($colors_or_conditions));
+
+                            if ($uses_conditions) {
+                                foreach ($colors_or_conditions as $cond_id => $colors) {
+                                    $cond_id = intval($cond_id);
+                                    foreach ($colors as $cid => $qty) {
+                                        $cid = intval($cid);
+                                        $available = intval($qty);
+                                        $rented = intval($_POST['color_stock_rented'][$vid][$cond_id][$cid] ?? 0);
+                                        $sku = sanitize_text_field($_POST['color_sku'][$vid][$cond_id][$cid] ?? '');
+                                        $threshold = max(0, intval($_POST['color_stock_threshold'][$vid][$cond_id][$cid] ?? 0));
+                                        $show_stock = !empty($_POST['color_show_stock'][$vid][$cond_id][$cid]) ? 1 : 0;
+
+                                        // Prüfe zuerst, ob der Eintrag bereits existiert
+                                        if ($cond_id) {
+                                            $existing = $wpdb->get_var($wpdb->prepare(
+                                                "SELECT id FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                                                $vid,
+                                                $cid,
+                                                $cond_id
+                                            ));
+                                        } else {
+                                            $existing = $wpdb->get_var($wpdb->prepare(
+                                                "SELECT id FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                                $vid,
+                                                $cid
+                                            ));
+                                        }
+
+                                        if ($existing) {
+                                            // Update existing entry
+                                            if ($cond_id) {
+                                                $wpdb->update(
+                                                    $wpdb->prefix . 'produkt_variant_options',
+                                                    [
+                                                        'stock_available' => $available,
+                                                        'stock_rented'    => $rented,
+                                                        'sku'             => $sku,
+                                                        'show_stock'      => $show_stock,
+                                                        'stock_threshold' => $threshold,
+                                                    ],
+                                                    [
+                                                        'variant_id'  => $vid,
+                                                        'option_type' => 'product_color',
+                                                        'option_id'    => $cid,
+                                                        'condition_id' => $cond_id,
+                                                    ],
+                                                    ['%d', '%d', '%s', '%d', '%d'],
+                                                    ['%d', '%s', '%d', '%d']
+                                                );
+                                            } else {
+                                                // Für NULL condition_id müssen wir die WHERE-Klausel manuell bauen
+                                                $wpdb->query($wpdb->prepare(
+                                                    "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = %d, stock_rented = %d, sku = %s, show_stock = %d, stock_threshold = %d WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                                    $available,
+                                                    $rented,
+                                                    $sku,
+                                                    $show_stock,
+                                                    $threshold,
+                                                    $vid,
+                                                    $cid
+                                                ));
+                                            }
+                                        } else {
+                                            // Insert new entry
+                                            if ($cond_id) {
+                                                $wpdb->insert(
+                                                    $wpdb->prefix . 'produkt_variant_options',
+                                                    [
+                                                        'variant_id'      => $vid,
+                                                        'option_type'     => 'product_color',
+                                                        'option_id'       => $cid,
+                                                        'condition_id'    => $cond_id,
+                                                        'available'       => 1,
+                                                        'stock_available' => $available,
+                                                        'stock_rented'    => $rented,
+                                                        'sku'             => $sku,
+                                                        'show_stock'      => $show_stock,
+                                                        'stock_threshold' => $threshold,
+                                                    ],
+                                                    ['%d', '%s', '%d', '%d', '%d', '%d', '%d', '%s', '%d', '%d']
+                                                );
+                                            } else {
+                                                // Für NULL condition_id müssen wir INSERT manuell bauen
+                                                $wpdb->query($wpdb->prepare(
+                                                    "INSERT INTO {$wpdb->prefix}produkt_variant_options (variant_id, option_type, option_id, condition_id, available, stock_available, stock_rented, sku, show_stock, stock_threshold) VALUES (%d, 'product_color', %d, NULL, 1, %d, %d, %s, %d, %d)",
+                                                    $vid,
+                                                    $cid,
+                                                    $available,
+                                                    $rented,
+                                                    $sku,
+                                                    $show_stock,
+                                                    $threshold
+                                                ));
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                foreach ($colors_or_conditions as $cid => $qty) {
+                                    $cid = intval($cid);
+                                    $available = intval($qty);
+                                    $rented = intval($_POST['color_stock_rented'][$vid][$cid] ?? 0);
+                                    $sku = sanitize_text_field($_POST['color_sku'][$vid][$cid] ?? '');
+                                    $threshold = max(0, intval($_POST['color_stock_threshold'][$vid][0][$cid] ?? 0));
+                                    $show_stock = !empty($_POST['color_show_stock'][$vid][0][$cid]) ? 1 : 0;
+                                    
+                                    // Prüfe zuerst, ob der Eintrag bereits existiert
+                                    $existing = $wpdb->get_var($wpdb->prepare(
+                                        "SELECT id FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                        $vid,
+                                        $cid
+                                    ));
+                                    
+                                    if ($existing) {
+                                        // Update existing entry
+                                        $wpdb->query($wpdb->prepare(
+                                            "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = %d, stock_rented = %d, sku = %s, show_stock = %d, stock_threshold = %d WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                            $available,
+                                            $rented,
+                                            $sku,
+                                            $show_stock,
+                                            $threshold,
+                                            $vid,
+                                            $cid
+                                        ));
+                                    } else {
+                                        // Insert new entry
+                                        $wpdb->query($wpdb->prepare(
+                                            "INSERT INTO {$wpdb->prefix}produkt_variant_options (variant_id, option_type, option_id, condition_id, available, stock_available, stock_rented, sku, show_stock, stock_threshold) VALUES (%d, 'product_color', %d, NULL, 1, %d, %d, %s, %d, %d)",
+                                            $vid,
+                                            $cid,
+                                            $available,
+                                            $rented,
+                                            $sku,
+                                            $show_stock,
+                                            $threshold
+                                        ));
+                                    }
+                                }
                             }
                         }
                     }
 
                     if (!empty($_POST['extra_stock_available']) && is_array($_POST['extra_stock_available'])) {
+                        // Ensure schema exists (older installs may miss these columns)
+                        $extra_threshold_exists = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_extras LIKE 'stock_threshold'");
+                        if (!$extra_threshold_exists) {
+                            $wpdb->query("ALTER TABLE {$wpdb->prefix}produkt_extras ADD COLUMN stock_threshold INT DEFAULT 0 AFTER stock_rented");
+                        }
+                        $extra_show_stock_exists = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_extras LIKE 'show_stock'");
+                        if (!$extra_show_stock_exists) {
+                            $wpdb->query("ALTER TABLE {$wpdb->prefix}produkt_extras ADD COLUMN show_stock TINYINT(1) DEFAULT 0 AFTER stock_rented");
+                        }
                         foreach ($_POST['extra_stock_available'] as $eid => $qty) {
                             $eid = intval($eid);
                             $available = intval($qty);
                             $rented = intval($_POST['extra_stock_rented'][$eid] ?? 0);
                             $sku = sanitize_text_field($_POST['extra_sku'][$eid] ?? '');
+                            $show_stock = !empty($_POST['extra_show_stock'][$eid]) ? 1 : 0;
                             $wpdb->update(
                                 $wpdb->prefix . 'produkt_extras',
                                 [
                                     'stock_available' => $available,
                                     'stock_rented'    => $rented,
-                                    'sku'             => $sku
+                                    'sku'             => $sku,
+                                    'show_stock'      => $show_stock,
                                 ],
                                 ['id' => $eid],
-                                ['%d','%d','%s'],
+                                ['%d','%d','%s','%d'],
                                 ['%d']
+                            );
+                        }
+                    }
+
+                    // Save stock threshold per extra
+                    if (!empty($_POST['extra_stock_threshold']) && is_array($_POST['extra_stock_threshold'])) {
+                        foreach ($_POST['extra_stock_threshold'] as $eid => $threshold) {
+                            $eid = intval($eid);
+                            $threshold = max(0, intval($threshold));
+                            $wpdb->update(
+                                $wpdb->prefix . 'produkt_extras',
+                                ['stock_threshold' => $threshold],
+                                ['id' => $eid, 'category_id' => $produkt_id],
+                                ['%d'],
+                                ['%d', '%d']
                             );
                         }
                     }
@@ -856,6 +1038,7 @@ class Admin {
                     echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
                 }
             } else {
+                // Don't pass a long $format array here: it's easy to get out of sync and break saving (e.g. layout_style).
                 $result = $wpdb->insert(
                     $table_name,
                     [
@@ -903,13 +1086,7 @@ class Admin {
                         'rating_link' => $rating_link,
                         'sort_order' => $sort_order,
                         'inventory_enabled' => isset($_POST['inventory_enabled']) ? 1 : 0,
-                    ],
-                    array(
-                        '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s',
-                        '%s','%s','%d','%s','%s','%s','%s','%s','%d','%d','%d','%f','%s','%d','%d'
-                    )
+                    ]
                 );
 
                 $produkt_id = $wpdb->insert_id;

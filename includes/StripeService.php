@@ -463,6 +463,29 @@ class StripeService {
     }
 
     /**
+     * Get the current period end (Y-m-d) for a Stripe subscription.
+     *
+     * @param string $subscription_id
+     * @return string|\WP_Error Y-m-d date string
+     */
+    public static function get_subscription_period_end_date($subscription_id) {
+        $init = self::init();
+        if (is_wp_error($init)) {
+            return $init;
+        }
+        try {
+            $sub = \Stripe\Subscription::retrieve($subscription_id);
+            $ts = isset($sub->current_period_end) ? (int) $sub->current_period_end : 0;
+            if ($ts <= 0) {
+                return new \WP_Error('missing_period_end', 'Stripe Subscription current_period_end fehlt.');
+            }
+            return gmdate('Y-m-d', $ts);
+        } catch (\Exception $e) {
+            return new \WP_Error('stripe_subscription', $e->getMessage());
+        }
+    }
+
+    /**
      * Update an existing Stripe product name.
      *
      * @param string $product_id Stripe product ID
@@ -1256,6 +1279,23 @@ class StripeService {
                 ]
             );
 
+            $newsletter_optin = intval($metadata['newsletter_optin'] ?? 0);
+            $newsletter_enabled = get_option('produkt_newsletter_enabled', '1');
+            if ($newsletter_enabled === '1' && $newsletter_optin === 1 && !empty($email)) {
+                require_once PRODUKT_PLUGIN_PATH . 'includes/NewsletterService.php';
+                \ProduktVerleih\NewsletterService::create_or_refresh_pending([
+                    'email'            => $email,
+                    'first_name'       => $first_name,
+                    'last_name'        => $last_name,
+                    'phone'            => $phone,
+                    'street'           => $street,
+                    'postal_code'      => $postal,
+                    'city'             => $city,
+                    'country'          => $country,
+                    'stripe_session_id'=> $session->id ?? '',
+                ]);
+            }
+
             global $wpdb;
             $existing_orders = $wpdb->get_results($wpdb->prepare(
                 "SELECT id, status, created_at, category_id, shipping_cost, shipping_price_id, variant_id, product_color_id, extra_ids, order_number, order_items FROM {$wpdb->prefix}produkt_orders WHERE stripe_session_id = %s",
@@ -1439,17 +1479,54 @@ class StripeService {
                         foreach ($items as $itm) {
                             $variant_id = intval($itm['variant_id'] ?? 0);
                             $product_color_id = intval($itm['product_color_id'] ?? 0);
+                            $condition_id = intval($itm['condition_id'] ?? 0);
                             if ($variant_id) {
                                 $wpdb->query($wpdb->prepare(
                                     "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                     $variant_id
                                 ));
                                 if ($product_color_id) {
-                                    $wpdb->query($wpdb->prepare(
-                                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
-                                        $variant_id,
-                                        $product_color_id
-                                    ));
+                                    if ($condition_id) {
+                                        $wpdb->query($wpdb->prepare(
+                                            "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                                            $variant_id,
+                                            $product_color_id,
+                                            $condition_id
+                                        ));
+                                    } else {
+                                        $wpdb->query($wpdb->prepare(
+                                            "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                            $variant_id,
+                                            $product_color_id
+                                        ));
+                                    }
+                                    // Low stock notification (color-specific stock)
+                                    if (function_exists('check_stock_threshold')) {
+                                        if ($condition_id) {
+                                            $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                                                $variant_id,
+                                                $product_color_id,
+                                                $condition_id
+                                            ));
+                                        } else {
+                                            $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                                $variant_id,
+                                                $product_color_id
+                                            ));
+                                        }
+                                        \check_stock_threshold($variant_id, $new_stock, $product_color_id, $condition_id ?: null);
+                                    }
+                                } else {
+                                    // Low stock notification (variant stock)
+                                    if (function_exists('check_stock_threshold')) {
+                                        $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                            "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                                            $variant_id
+                                        ));
+                                        \check_stock_threshold($variant_id, $new_stock, null);
+                                    }
                                 }
                             }
 
@@ -1466,6 +1543,13 @@ class StripeService {
                                     "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                     $eid
                                 ));
+                                if (function_exists('check_extra_stock_threshold')) {
+                                    $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                        "SELECT stock_available FROM {$wpdb->prefix}produkt_extras WHERE id = %d",
+                                        $eid
+                                    ));
+                                    \check_extra_stock_threshold($eid, $new_stock);
+                                }
                             }
                         }
                     }
@@ -1533,17 +1617,54 @@ class StripeService {
                         foreach ($items as $itm) {
                             $variant_id = intval($itm['variant_id'] ?? 0);
                             $product_color_id = intval($itm['product_color_id'] ?? 0);
+                            $condition_id = intval($itm['condition_id'] ?? 0);
                             if ($variant_id) {
                                 $wpdb->query($wpdb->prepare(
                                     "UPDATE {$wpdb->prefix}produkt_variants SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                     $variant_id
                                 ));
                                 if ($product_color_id) {
-                                    $wpdb->query($wpdb->prepare(
-                                        "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
-                                        $variant_id,
-                                        $product_color_id
-                                    ));
+                                    if ($condition_id) {
+                                        $wpdb->query($wpdb->prepare(
+                                            "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                                            $variant_id,
+                                            $product_color_id,
+                                            $condition_id
+                                        ));
+                                    } else {
+                                        $wpdb->query($wpdb->prepare(
+                                            "UPDATE {$wpdb->prefix}produkt_variant_options SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                            $variant_id,
+                                            $product_color_id
+                                        ));
+                                    }
+                                    // Low stock notification (color-specific stock)
+                                    if (function_exists('check_stock_threshold')) {
+                                        if ($condition_id) {
+                                            $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                                                $variant_id,
+                                                $product_color_id,
+                                                $condition_id
+                                            ));
+                                        } else {
+                                            $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                                "SELECT stock_available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                                                $variant_id,
+                                                $product_color_id
+                                            ));
+                                        }
+                                        \check_stock_threshold($variant_id, $new_stock, $product_color_id, $condition_id ?: null);
+                                    }
+                                } else {
+                                    // Low stock notification (variant stock)
+                                    if (function_exists('check_stock_threshold')) {
+                                        $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                            "SELECT stock_available FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                                            $variant_id
+                                        ));
+                                        \check_stock_threshold($variant_id, $new_stock, null);
+                                    }
                                 }
                             }
                             
@@ -1560,6 +1681,13 @@ class StripeService {
                                     "UPDATE {$wpdb->prefix}produkt_extras SET stock_available = GREATEST(stock_available - 1,0), stock_rented = stock_rented + 1 WHERE id = %d",
                                     $eid
                                 ));
+                                if (function_exists('check_extra_stock_threshold')) {
+                                    $new_stock = (int) $wpdb->get_var($wpdb->prepare(
+                                        "SELECT stock_available FROM {$wpdb->prefix}produkt_extras WHERE id = %d",
+                                        $eid
+                                    ));
+                                    \check_extra_stock_threshold($eid, $new_stock);
+                                }
                             }
                         }
                     }

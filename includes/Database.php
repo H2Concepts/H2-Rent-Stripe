@@ -31,7 +31,7 @@ class Database {
         // Add image columns to variants table if they don't exist
         $table_variants = $wpdb->prefix . 'produkt_variants';
         $columns_to_add = array(
-            'stripe_price_id'        => 'VARCHAR(255) DEFAULT ""',
+            'stripe_price_id'        => "VARCHAR(255) DEFAULT ''",
             'stripe_price_id_sale'   => 'VARCHAR(255) DEFAULT NULL',
             'stripe_price_id_rent'   => 'VARCHAR(255) DEFAULT NULL',
             'stripe_product_id'      => 'VARCHAR(255) DEFAULT NULL',
@@ -48,9 +48,9 @@ class Database {
             'image_url_4' => 'TEXT',
             'image_url_5' => 'TEXT',
             'available' => 'TINYINT(1) DEFAULT 1',
-            'availability_note' => 'VARCHAR(255) DEFAULT ""',
-            'delivery_time' => 'VARCHAR(255) DEFAULT ""',
-            'sku' => 'VARCHAR(100) DEFAULT ""',
+            'availability_note' => "VARCHAR(255) DEFAULT ''",
+            'delivery_time' => "VARCHAR(255) DEFAULT ''",
+            'sku' => "VARCHAR(100) DEFAULT ''",
             'stock_available' => 'INT DEFAULT 0',
             'stock_rented' => 'INT DEFAULT 0',
             'weekend_only' => 'TINYINT(1) DEFAULT 0',
@@ -159,6 +159,19 @@ class Database {
         if (empty($rented_exists)) {
             $after = !empty($avail_exists) ? 'stock_available' : (!empty($sku_exists) ? 'sku' : 'image_url');
             $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_rented INT DEFAULT 0 AFTER $after");
+        }
+
+        // Per-extra toggle for showing the quantity on frontend
+        $extra_show_stock_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'show_stock'");
+        if (empty($extra_show_stock_exists)) {
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN show_stock TINYINT(1) DEFAULT 0 AFTER stock_rented");
+        }
+
+        // Per-extra low stock threshold
+        $extra_threshold_exists = $wpdb->get_results("SHOW COLUMNS FROM $table_extras LIKE 'stock_threshold'");
+        if (empty($extra_threshold_exists)) {
+            $after = !empty($extra_show_stock_exists) ? 'show_stock' : 'stock_rented';
+            $wpdb->query("ALTER TABLE $table_extras ADD COLUMN stock_threshold INT DEFAULT 0 AFTER $after");
         }
 
         // Ensure separate price columns exist
@@ -282,7 +295,7 @@ class Database {
                 'meta_title' => 'VARCHAR(255)',
                 'meta_description' => 'TEXT',
                 'short_description' => 'TEXT',
-                'features_title' => 'VARCHAR(255) DEFAULT ""',
+                'features_title' => "VARCHAR(255) DEFAULT ''",
                 'feature_1_icon' => 'TEXT',
                 'feature_1_title' => 'VARCHAR(255)',
                 'feature_1_description' => 'TEXT',
@@ -304,15 +317,15 @@ class Database {
                 'tech_blocks'     => 'LONGTEXT',
                 'scope_blocks'    => 'LONGTEXT',
                 'shipping_cost'   => 'DECIMAL(10,2) DEFAULT 0',
-                'shipping_provider' => 'VARCHAR(50) DEFAULT ""',
-                'shipping_price_id' => 'VARCHAR(255) DEFAULT ""',
-                'price_label' => 'VARCHAR(255) DEFAULT "Monatlicher Mietpreis"',
-                'shipping_label' => 'VARCHAR(255) DEFAULT "Einmalige Versandkosten:"',
-                'price_period' => 'VARCHAR(20) DEFAULT "month"',
+                'shipping_provider' => "VARCHAR(50) DEFAULT ''",
+                'shipping_price_id' => "VARCHAR(255) DEFAULT ''",
+                'price_label' => "VARCHAR(255) DEFAULT 'Monatlicher Mietpreis'",
+                'shipping_label' => "VARCHAR(255) DEFAULT 'Einmalige Versandkosten:'",
+                'price_period' => "VARCHAR(20) DEFAULT 'month'",
                 'vat_included' => 'TINYINT(1) DEFAULT 0',
-                'layout_style' => 'VARCHAR(50) DEFAULT "default"',
-                'price_layout' => 'VARCHAR(50) DEFAULT "default"',
-                'description_layout' => 'VARCHAR(50) DEFAULT "left"',
+                'layout_style' => "VARCHAR(50) DEFAULT 'default'",
+                'price_layout' => "VARCHAR(50) DEFAULT 'default'",
+                'description_layout' => "VARCHAR(50) DEFAULT 'left'",
                 'duration_tooltip' => 'TEXT',
                 'condition_tooltip' => 'TEXT',
                 'show_features' => 'TINYINT(1) DEFAULT 0',
@@ -543,17 +556,40 @@ class Database {
                 variant_id mediumint(9) NOT NULL,
                 option_type varchar(50) NOT NULL,
                 option_id mediumint(9) NOT NULL,
+                condition_id mediumint(9) DEFAULT NULL,
                 available tinyint(1) DEFAULT 1,
                 sale_available tinyint(1) DEFAULT 0,
                 stock_available int DEFAULT 0,
                 stock_rented int DEFAULT 0,
                 sku varchar(255) DEFAULT NULL,
+                stock_threshold int DEFAULT 0,
                 PRIMARY KEY (id),
-                UNIQUE KEY variant_option (variant_id, option_type, option_id)
+                UNIQUE KEY variant_option (variant_id, option_type, option_id, condition_id)
             ) $charset_collate;";
 
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
+        }
+
+        // Ensure condition_id column exists for variant options
+        $condition_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'condition_id'");
+        if (empty($condition_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN condition_id mediumint(9) DEFAULT NULL AFTER option_id");
+        }
+
+        // Ensure unique index includes condition_id
+        $existing_index = $wpdb->get_results("SHOW INDEX FROM $table_variant_options WHERE Key_name = 'variant_option'");
+        $index_needs_update = false;
+        if (!empty($existing_index)) {
+            $columns = array_map(function($row) { return $row->Column_name; }, $existing_index);
+            if (!in_array('condition_id', $columns, true)) {
+                $index_needs_update = true;
+            }
+        }
+
+        if ($index_needs_update) {
+            $wpdb->query("ALTER TABLE $table_variant_options DROP INDEX variant_option");
+            $wpdb->query("ALTER TABLE $table_variant_options ADD UNIQUE KEY variant_option (variant_id, option_type, option_id, condition_id)");
         }
 
         // Create variant durations table if it doesn't exist
@@ -803,7 +839,37 @@ class Database {
                 }
             }
         }
-        
+
+        // Newsletter Opt-ins table (Double Opt-In)
+        $table_newsletter = $wpdb->prefix . 'produkt_newsletter_optins';
+        $newsletter_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_newsletter'");
+        if (!$newsletter_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql_newsletter = "CREATE TABLE $table_newsletter (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                email VARCHAR(255) NOT NULL,
+                first_name VARCHAR(255) DEFAULT '',
+                last_name VARCHAR(255) DEFAULT '',
+                phone VARCHAR(50) DEFAULT '',
+                street VARCHAR(255) DEFAULT '',
+                postal_code VARCHAR(20) DEFAULT '',
+                city VARCHAR(255) DEFAULT '',
+                country VARCHAR(50) DEFAULT '',
+                status TINYINT(1) DEFAULT 0,
+                token_hash CHAR(64) DEFAULT NULL,
+                requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                confirmed_at DATETIME DEFAULT NULL,
+                confirm_ip VARCHAR(45) DEFAULT NULL,
+                confirm_user_agent TEXT DEFAULT NULL,
+                stripe_session_id VARCHAR(255) DEFAULT '',
+                PRIMARY KEY (id),
+                UNIQUE KEY email (email),
+                KEY status (status),
+                KEY requested_at (requested_at)
+            ) $charset_collate;";
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql_newsletter);
+        }
 
         // Add availability column to variant options table if it doesn't exist
         $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
@@ -812,9 +878,16 @@ class Database {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN available TINYINT(1) DEFAULT 1 AFTER option_id");
         }
 
+        // Per-row toggle for showing the quantity on frontend
+        $vo_show_stock_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'show_stock'");
+        if (empty($vo_show_stock_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN show_stock TINYINT(1) DEFAULT 0 AFTER available");
+        }
+
         $stock_avail_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'stock_available'");
         if (empty($stock_avail_column)) {
-            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN stock_available INT DEFAULT 0 AFTER available");
+            $after = !empty($vo_show_stock_column) ? 'show_stock' : 'available';
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN stock_available INT DEFAULT 0 AFTER $after");
         }
 
         $stock_rented_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'stock_rented'");
@@ -825,6 +898,12 @@ class Database {
         $sku_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sku'");
         if (empty($sku_column)) {
             $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN sku VARCHAR(255) DEFAULT NULL AFTER stock_rented");
+        }
+
+        // Per-row low stock threshold for variant options (e.g. per condition + color)
+        $vo_threshold_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'stock_threshold'");
+        if (empty($vo_threshold_column)) {
+            $wpdb->query("ALTER TABLE $table_variant_options ADD COLUMN stock_threshold INT DEFAULT 0 AFTER sku");
         }
 
         $sale_available_column = $wpdb->get_results("SHOW COLUMNS FROM $table_variant_options LIKE 'sale_available'");
@@ -1148,6 +1227,8 @@ class Database {
             sku varchar(100) DEFAULT '',
             stock_available int DEFAULT 0,
             stock_rented int DEFAULT 0,
+            show_stock tinyint(1) DEFAULT 0,
+            stock_threshold int DEFAULT 0,
             active tinyint(1) DEFAULT 1,
             sort_order int(11) DEFAULT 0,
             PRIMARY KEY (id)
@@ -1246,16 +1327,25 @@ class Database {
         ) $charset_collate;";
         
         // Variant options table
+        // IMPORTANT: Keep this in sync with the actual table used in runtime code.
+        // Older versions used UNIQUE KEY variant_option (variant_id, option_type, option_id) without condition_id.
+        // That causes "Duplicate key name 'variant_option'" on activation when a newer unique index already exists.
         $table_variant_options = $wpdb->prefix . 'produkt_variant_options';
         $sql_variant_options = "CREATE TABLE $table_variant_options (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             variant_id mediumint(9) NOT NULL,
             option_type varchar(50) NOT NULL,
             option_id mediumint(9) NOT NULL,
+            condition_id mediumint(9) DEFAULT NULL,
             available tinyint(1) DEFAULT 1,
             sale_available tinyint(1) DEFAULT 0,
+            show_stock tinyint(1) DEFAULT 0,
+            stock_available int DEFAULT 0,
+            stock_rented int DEFAULT 0,
+            sku varchar(255) DEFAULT NULL,
+            stock_threshold int DEFAULT 0,
             PRIMARY KEY (id),
-            UNIQUE KEY variant_option (variant_id, option_type, option_id)
+            UNIQUE KEY variant_option (variant_id, option_type, option_id, condition_id)
         ) $charset_collate;";
 
         // Variant durations table
@@ -1475,6 +1565,35 @@ class Database {
 
         dbDelta($sql_notifications);
 
+        // Newsletter Opt-ins table (Double Opt-In)
+        $table_newsletter = $wpdb->prefix . 'produkt_newsletter_optins';
+        $newsletter_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_newsletter'");
+        if (!$newsletter_exists) {
+            $sql_newsletter = "CREATE TABLE $table_newsletter (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                email VARCHAR(255) NOT NULL,
+                first_name VARCHAR(255) DEFAULT '',
+                last_name VARCHAR(255) DEFAULT '',
+                phone VARCHAR(50) DEFAULT '',
+                street VARCHAR(255) DEFAULT '',
+                postal_code VARCHAR(20) DEFAULT '',
+                city VARCHAR(255) DEFAULT '',
+                country VARCHAR(50) DEFAULT '',
+                status TINYINT(1) DEFAULT 0,
+                token_hash CHAR(64) DEFAULT NULL,
+                requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                confirmed_at DATETIME DEFAULT NULL,
+                confirm_ip VARCHAR(45) DEFAULT NULL,
+                confirm_user_agent TEXT DEFAULT NULL,
+                stripe_session_id VARCHAR(255) DEFAULT '',
+                PRIMARY KEY (id),
+                UNIQUE KEY email (email),
+                KEY status (status),
+                KEY requested_at (requested_at)
+            ) $charset_collate;";
+            dbDelta($sql_newsletter);
+        }
+
         // Order logs table
         $table_logs = $wpdb->prefix . 'produkt_order_logs';
         $sql_logs = "CREATE TABLE $table_logs (
@@ -1488,6 +1607,29 @@ class Database {
         ) $charset_collate;";
 
         dbDelta($sql_logs);
+
+        // Newsletter Opt-ins: confirm_ip und confirm_user_agent nachrüsten
+        $table = $wpdb->prefix . 'produkt_newsletter_optins';
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'");
+        if ($table_exists) {
+            // confirm_ip nachrüsten, wenn fehlt
+            $col = $wpdb->get_var($wpdb->prepare(
+                "SHOW COLUMNS FROM $table LIKE %s",
+                'confirm_ip'
+            ));
+            if (!$col) {
+                $wpdb->query("ALTER TABLE $table ADD COLUMN confirm_ip VARCHAR(45) DEFAULT NULL AFTER confirmed_at");
+            }
+
+            // confirm_user_agent nachrüsten, wenn fehlt
+            $col = $wpdb->get_var($wpdb->prepare(
+                "SHOW COLUMNS FROM $table LIKE %s",
+                'confirm_user_agent'
+            ));
+            if (!$col) {
+                $wpdb->query("ALTER TABLE $table ADD COLUMN confirm_user_agent TEXT DEFAULT NULL AFTER confirm_ip");
+            }
+        }
 
     }
     
@@ -2222,6 +2364,8 @@ class Database {
                 $today
             ));
         } else {
+            // Rental mode: end_date may be stored per item inside order_items (cart orders),
+            // so we must fetch candidate orders and filter due returns after expanding items.
             $orders = $wpdb->get_results(
                 "SELECT
                         o.id,
@@ -2249,7 +2393,7 @@ class Database {
                  LEFT JOIN {$wpdb->prefix}produkt_variants v ON o.variant_id = v.id
                  WHERE COALESCE(o.inventory_reverted, 0) = 0
                    AND (o.mode IS NULL OR o.mode NOT IN ('kauf','sale'))
-                   AND o.status = 'abgeschlossen'
+                   AND o.status IN ('abgeschlossen','gekündigt','beendet')
                  ORDER BY COALESCE(o.end_date, o.created_at)"
             );
         }
@@ -2257,12 +2401,16 @@ class Database {
         $orders = $orders ?: [];
 
         $expanded_orders = [];
+        $today = current_time('Y-m-d');
         foreach ($orders as $o) {
             self::ensure_return_pending_log((int) $o->id);
 
             $products = pv_expand_order_products($o);
             if (empty($products)) {
-                $expanded_orders[] = $o;
+                // Fallback: only include as due when order-level end_date is set and reached
+                if (!empty($o->end_date) && substr((string) $o->end_date, 0, 10) <= $today) {
+                    $expanded_orders[] = $o;
+                }
                 continue;
             }
 
@@ -2273,7 +2421,19 @@ class Database {
                 $clone->extra_names   = $p->extra_names ?? $o->extra_names;
                 $clone->start_date    = $p->start_date ?? $o->start_date;
                 $clone->end_date      = $p->end_date ?? $o->end_date;
-                $expanded_orders[]    = $clone;
+                
+                // Include items that are:
+                // 1. Cancelled (gekündigt) - appear immediately in "Offene Rückgaben"
+                // 2. Ended (beendet) - appear immediately
+                // 3. Rental period has ended (end_date <= today)
+                $rental_status = pv_normalize_rental_status($p->rental_status ?? null);
+                $end = !empty($clone->end_date) ? substr((string) $clone->end_date, 0, 10) : '';
+                $is_cancelled_or_ended = in_array($rental_status, ['gekündigt', 'beendet'], true);
+                $period_ended = ($end && $end <= $today);
+                
+                if ($is_cancelled_or_ended || $period_ended) {
+                    $expanded_orders[] = $clone;
+                }
             }
         }
 
@@ -2379,5 +2539,170 @@ class Database {
         // Ensure pending return logs exist for overdue orders so they appear
         // in the admin dashboard for manual processing.
         self::get_due_returns();
+    }
+
+    /**
+     * Mark a single rental item inside an order as cancelled/ended (stored in order_items JSON).
+     *
+     * @param int    $order_id
+     * @param int    $product_index
+     * @param string $status One of: aktiv|gekündigt|beendet
+     * @return true|\WP_Error
+     */
+    public static function set_rental_item_status(int $order_id, int $product_index, string $status, ?string $end_date = null) {
+        global $wpdb;
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+        $status = pv_normalize_rental_status($status);
+
+        $order = $wpdb->get_row($wpdb->prepare(
+            "SELECT id, status, mode, order_items FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+            $order_id
+        ));
+        if (!$order) {
+            return new \WP_Error('missing_order', 'Bestellung nicht gefunden.');
+        }
+
+        $raw = $order->order_items ?? '';
+        $items = [];
+        if (!empty($raw)) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $items = $decoded;
+            }
+        }
+        if (empty($items)) {
+            $items = [[]];
+        }
+
+        if ($product_index < 0 || $product_index >= count($items)) {
+            // fallback to first item
+            $product_index = 0;
+        }
+
+        $items[$product_index]['rental_status'] = $status;
+        $items[$product_index]['rental_status_updated_at'] = current_time('mysql', true);
+        if ($end_date) {
+            $items[$product_index]['end_date'] = substr($end_date, 0, 10);
+        }
+
+        $new_json = wp_json_encode($items);
+        $wpdb->update(
+            $wpdb->prefix . 'produkt_orders',
+            ['order_items' => $new_json],
+            ['id' => $order_id],
+            ['%s'],
+            ['%d']
+        );
+
+        // Update order.status only when all items share the same terminal state.
+        $counts = pv_get_rental_item_status_counts((object) ['order_items' => $new_json, 'status' => $order->status]);
+        $total = max(1, (int) $counts['total']);
+        $ended = (int) $counts['beendet'];
+        $cancelled = (int) $counts['gekuendigt'];
+        $active = (int) $counts['aktiv'];
+
+        $new_order_status = $order->status;
+        if ($ended === $total) {
+            $new_order_status = 'beendet';
+        } elseif ($cancelled === $total) {
+            $new_order_status = 'gekündigt';
+        } elseif ($active === $total) {
+            // keep existing (usually 'abgeschlossen')
+            $new_order_status = $order->status;
+        } else {
+            // mixed -> keep 'abgeschlossen' to represent still-running rentals
+            $new_order_status = 'abgeschlossen';
+        }
+
+        if ($new_order_status && $new_order_status !== $order->status) {
+            $wpdb->update(
+                $wpdb->prefix . 'produkt_orders',
+                ['status' => $new_order_status],
+                ['id' => $order_id],
+                ['%s'],
+                ['%d']
+            );
+            if (function_exists('\\produkt_add_order_log')) {
+                \produkt_add_order_log($order_id, 'status_updated', ($order->status ?: '') . ' -> ' . $new_order_status);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Daily cron hook: mark rental items as "beendet" when end_date has passed.
+     */
+    public static function process_rental_statuses(): void {
+        global $wpdb;
+        require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+
+        $today = current_time('Y-m-d');
+        $orders = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, status, mode, order_items
+                 FROM {$wpdb->prefix}produkt_orders
+                 WHERE (mode IS NULL OR mode NOT IN ('kauf','sale'))
+                   AND status IN ('abgeschlossen','gekündigt')
+                   AND (end_date IS NULL OR end_date <= %s OR end_date > %s)", // no-op filter; per-item end_date is in order_items
+                $today,
+                $today
+            )
+        );
+
+        foreach ($orders as $o) {
+            $raw = $o->order_items ?? '';
+            if (empty($raw)) {
+                continue;
+            }
+            $items = json_decode($raw, true);
+            if (!is_array($items) || empty($items)) {
+                continue;
+            }
+            $changed = false;
+            foreach ($items as $idx => $it) {
+                $end = $it['end_date'] ?? '';
+                if (!$end) {
+                    continue;
+                }
+                $end = substr((string) $end, 0, 10);
+                if ($end <= $today) {
+                    $cur = pv_normalize_rental_status($it['rental_status'] ?? ($o->status ?? 'aktiv'));
+                    if ($cur !== 'beendet') {
+                        $items[$idx]['rental_status'] = 'beendet';
+                        $items[$idx]['rental_status_updated_at'] = current_time('mysql', true);
+                        $changed = true;
+                    }
+                }
+            }
+            if ($changed) {
+                $new_json = wp_json_encode($items);
+                $wpdb->update(
+                    $wpdb->prefix . 'produkt_orders',
+                    ['order_items' => $new_json],
+                    ['id' => (int) $o->id],
+                    ['%s'],
+                    ['%d']
+                );
+                // also recalc order-level status
+                $counts = pv_get_rental_item_status_counts((object) ['order_items' => $new_json, 'status' => $o->status]);
+                $total = max(1, (int) $counts['total']);
+                if ((int) $counts['beendet'] === $total) {
+                    if ($o->status !== 'beendet') {
+                        $wpdb->update(
+                            $wpdb->prefix . 'produkt_orders',
+                            ['status' => 'beendet'],
+                            ['id' => (int) $o->id],
+                            ['%s'],
+                            ['%d']
+                        );
+                        if (function_exists('\\produkt_add_order_log')) {
+                            \produkt_add_order_log((int) $o->id, 'status_updated', ($o->status ?: '') . ' -> beendet');
+                        }
+                    }
+                }
+            }
+        }
     }
 }

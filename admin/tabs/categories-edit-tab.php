@@ -116,9 +116,13 @@ function produkt_category_icon($slug)
         <div class="dashboard-card">
             <h2>Layout</h2>
             <p class="card-subline">Darstellung im Frontend</p>
-            <input type="hidden" name="layout_style" value="<?php echo esc_attr($edit_item->layout_style ?? 'default'); ?>">
+            <?php
+            $raw_layout_style = $edit_item->layout_style ?? '';
+            $current_layout_style = in_array($raw_layout_style, ['default', 'grid', 'list'], true) ? $raw_layout_style : 'default';
+            ?>
+            <input type="hidden" name="layout_style" value="<?php echo esc_attr($current_layout_style); ?>">
             <div class="layout-option-grid" data-input-name="layout_style">
-                <div class="layout-option-card" data-value="default">
+                <div class="layout-option-card <?php echo ($current_layout_style === 'default') ? 'active' : ''; ?>" data-value="default">
                     <div class="layout-option-name">Standard (Horizontal)</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
@@ -128,7 +132,7 @@ function produkt_category_icon($slug)
                         </svg>
                     </div>
                 </div>
-                <div class="layout-option-card" data-value="grid">
+                <div class="layout-option-card <?php echo ($current_layout_style === 'grid') ? 'active' : ''; ?>" data-value="grid">
                     <div class="layout-option-name">Grid (Karten-Layout)</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
@@ -139,7 +143,7 @@ function produkt_category_icon($slug)
                         </svg>
                     </div>
                 </div>
-                <div class="layout-option-card" data-value="list">
+                <div class="layout-option-card <?php echo ($current_layout_style === 'list') ? 'active' : ''; ?>" data-value="list">
                     <div class="layout-option-name">Liste (Vertikal)</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
@@ -155,9 +159,10 @@ function produkt_category_icon($slug)
         <div class="dashboard-card">
             <h2>Layout Preis</h2>
             <p class="card-subline">Position der Preisbox</p>
-            <input type="hidden" name="price_layout" value="<?php echo esc_attr($edit_item->price_layout ?? 'default'); ?>">
+            <?php $current_price_layout = $edit_item->price_layout ?? 'default'; ?>
+            <input type="hidden" name="price_layout" value="<?php echo esc_attr($current_price_layout); ?>">
             <div class="layout-option-grid" data-input-name="price_layout">
-                <div class="layout-option-card" data-value="default">
+                <div class="layout-option-card <?php echo ($current_price_layout === 'default') ? 'active' : ''; ?>" data-value="default">
                     <div class="layout-option-name">Standardposition</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
@@ -166,7 +171,7 @@ function produkt_category_icon($slug)
                         </svg>
                     </div>
                 </div>
-                <div class="layout-option-card" data-value="sidebar">
+                <div class="layout-option-card <?php echo ($current_price_layout === 'sidebar') ? 'active' : ''; ?>" data-value="sidebar">
                     <div class="layout-option-name">Neben dem Konfigurator</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
@@ -181,9 +186,10 @@ function produkt_category_icon($slug)
         <div class="dashboard-card">
             <h2>Layout Beschreibung</h2>
             <p class="card-subline">Position der Produktdetails</p>
-            <input type="hidden" name="description_layout" value="<?php echo esc_attr($edit_item->description_layout ?? 'left'); ?>">
+            <?php $current_description_layout = $edit_item->description_layout ?? 'left'; ?>
+            <input type="hidden" name="description_layout" value="<?php echo esc_attr($current_description_layout); ?>">
             <div class="layout-option-grid" data-input-name="description_layout">
-                <div class="layout-option-card" data-value="left">
+                <div class="layout-option-card <?php echo ($current_description_layout === 'left') ? 'active' : ''; ?>" data-value="left">
                     <div class="layout-option-name">Standard (Links unter den Bildern)</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
@@ -193,7 +199,7 @@ function produkt_category_icon($slug)
                         </svg>
                     </div>
                 </div>
-                <div class="layout-option-card" data-value="right">
+                <div class="layout-option-card <?php echo ($current_description_layout === 'right') ? 'active' : ''; ?>" data-value="right">
                     <div class="layout-option-name">Rechts über dem Konfigurator</div>
                     <div class="layout-option-preview">
                         <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
@@ -609,60 +615,166 @@ function produkt_category_icon($slug)
                                 <th>Ausführung</th>
                                 <th>Preis</th>
                                 <th>Menge</th>
+                                <th>Menge anzeigen</th>
+                                <th>Schwellenwert</th>
                                 <th>SKU</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($variants as $v): ?>
                                 <?php
-                                    $colors = $wpdb->get_results($wpdb->prepare(
-                                        "SELECT vo.option_id AS color_id, vo.stock_available, vo.stock_rented, vo.sku, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
+                                    $conditions = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT c.id, c.name FROM {$wpdb->prefix}produkt_conditions c JOIN {$wpdb->prefix}produkt_variant_options vo ON vo.option_id = c.id AND vo.variant_id = %d AND vo.option_type = 'condition' WHERE vo.available = 1 ORDER BY c.sort_order, c.name",
                                         $v->id
                                     ));
+
+                                    $base_colors = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT DISTINCT c.id, c.name FROM {$wpdb->prefix}produkt_variant_options vo JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1 ORDER BY c.sort_order, c.name",
+                                        $v->id
+                                    ));
+
+                                    // Columns may not exist yet on older installs; fall back to safe defaults to avoid DB errors
+                                    $vo_has_threshold = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_variant_options LIKE 'stock_threshold'");
+                                    $threshold_select = $vo_has_threshold ? 'vo.stock_threshold' : '0 AS stock_threshold';
+                                    $vo_has_show_stock = $wpdb->get_var("SHOW COLUMNS FROM {$wpdb->prefix}produkt_variant_options LIKE 'show_stock'");
+                                    $show_stock_select = $vo_has_show_stock ? 'vo.show_stock' : '0 AS show_stock';
+                                    $color_rows = $wpdb->get_results($wpdb->prepare(
+                                        "SELECT vo.option_id AS color_id, COALESCE(vo.condition_id, 0) AS condition_id, vo.stock_available, vo.stock_rented, {$show_stock_select}, {$threshold_select}, vo.sku, c.name
+                                         FROM {$wpdb->prefix}produkt_variant_options vo
+                                         JOIN {$wpdb->prefix}produkt_colors c ON c.id = vo.option_id
+                                         WHERE vo.variant_id = %d AND vo.option_type = 'product_color' AND vo.available = 1
+                                         ORDER BY c.sort_order, c.name",
+                                        $v->id
+                                    ));
+
+                                    $color_map = [];
+                                    foreach ($color_rows as $row) {
+                                        $color_map[intval($row->condition_id)][intval($row->color_id)] = $row;
+                                    }
+
+                                    $price_val = ($modus === 'kauf') ? $v->verkaufspreis_einmalig : $v->base_price;
+                                    // For variants without colors, stock_threshold is stored on the variant row
+                                    $threshold_val = isset($v->stock_threshold) ? intval($v->stock_threshold) : 0;
                                 ?>
-                                <?php if (!empty($colors)): ?>
-                                    <?php $color_index = 0; ?>
-                                    <?php foreach ($colors as $c): ?>
-                                        <?php $key = $v->id . '_' . $c->color_id; ?>
-                                        <tr>
-                                            <td><?php echo esc_html($v->name . ' - ' . $c->name); ?></td>
+
+                                <?php if (!empty($base_colors)): ?>
+                                    <?php if (!empty($conditions)): ?>
+                                        <?php foreach ($conditions as $condition): ?>
+                                            <?php $cond_key = intval($condition->id); ?>
+                                            <?php foreach ($base_colors as $c): ?>
+                                                <?php
+                                                    $key = $v->id . '_' . $cond_key . '_' . $c->id;
+                                                    $row_data = $color_map[$cond_key][intval($c->id)] ?? null;
+                                                    $available_val = $row_data ? intval($row_data->stock_available) : 0;
+                                                    $rented_val = $row_data ? intval($row_data->stock_rented) : 0;
+                                                    $threshold_row_val = $row_data ? intval($row_data->stock_threshold ?? 0) : 0;
+                                                    $sku_val = $row_data ? $row_data->sku : '';
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo esc_html($v->name . ' - ' . $condition->name . ' - ' . $c->name); ?></td>
+                                                    <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                                    <td class="inventory-cell">
+                                                        <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
+                                                            <span class="inventory-available-count"><?php echo $available_val; ?></span>
+                                                        </div>
+                                                        <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
+                                                            <label>Verfügbar</label>
+                                                            <div class="quantity-control">
+                                                                <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
+                                                                <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $cond_key; ?>][<?php echo $c->id; ?>]" value="<?php echo $available_val; ?>" min="0">
+                                                                <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                                            </div>
+                                                            <label>In Vermietung</label>
+                                                            <div class="quantity-control">
+                                                                <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
+                                                                <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $cond_key; ?>][<?php echo $c->id; ?>]" value="<?php echo $rented_val; ?>" min="0">
+                                                                <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <?php $row_show_stock = $row_data ? intval($row_data->show_stock ?? 0) : 0; ?>
+                                                        <label class="produkt-toggle" style="transform: scale(0.9); transform-origin: left center;">
+                                                            <input type="checkbox"
+                                                                   name="color_show_stock[<?php echo intval($v->id); ?>][<?php echo intval($cond_key); ?>][<?php echo intval($c->id); ?>]"
+                                                                   value="1"
+                                                                   <?php checked($row_show_stock, 1); ?>>
+                                                            <span class="produkt-toggle-slider"></span>
+                                                        </label>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="number"
+                                                            name="color_stock_threshold[<?php echo intval($v->id); ?>][<?php echo intval($cond_key); ?>][<?php echo intval($c->id); ?>]"
+                                                            value="<?php echo $threshold_row_val; ?>"
+                                                            min="0"
+                                                            style="width:90px;"
+                                                            title="Benachrichtigung per E-Mail, wenn Verfügbar auf diesen Wert fällt"
+                                                        >
+                                                    </td>
+                                                    <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $cond_key; ?>][<?php echo $c->id; ?>]" value="<?php echo esc_attr($sku_val); ?>"></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <?php foreach ($base_colors as $c): ?>
                                             <?php
-                                                $price_val = ($modus === 'kauf')
-                                                    ? $v->verkaufspreis_einmalig
-                                                    : $v->base_price;
+                                                $key = $v->id . '_' . $c->id;
+                                                $row_data = $color_map[0][intval($c->id)] ?? null;
+                                                $available_val = $row_data ? intval($row_data->stock_available) : 0;
+                                                $rented_val = $row_data ? intval($row_data->stock_rented) : 0;
+                                                $threshold_row_val = $row_data ? intval($row_data->stock_threshold ?? 0) : 0;
+                                                $sku_val = $row_data ? $row_data->sku : '';
                                             ?>
-                                            <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
-                                            <td class="inventory-cell">
-                                                <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
-                                                    <span class="inventory-available-count"><?php echo intval($c->stock_available); ?></span>
-                                                </div>
-                                                <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
-                                                    <label>Verfügbar</label>
-                                                    <div class="quantity-control">
-                                                        <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
-                                                        <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo intval($c->stock_available); ?>" min="0">
-                                                        <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                            <tr>
+                                                <td><?php echo esc_html($v->name . ' - ' . $c->name); ?></td>
+                                                <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
+                                                <td class="inventory-cell">
+                                                    <div class="inventory-trigger" data-variant="<?php echo $key; ?>">
+                                                        <span class="inventory-available-count"><?php echo $available_val; ?></span>
                                                     </div>
-                                                    <label>In Vermietung</label>
-                                                    <div class="quantity-control">
-                                                        <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
-                                                        <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo intval($c->stock_rented); ?>" min="0">
-                                                        <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                    <div class="inventory-popup" id="inv-popup-<?php echo $key; ?>">
+                                                        <label>Verfügbar</label>
+                                                        <div class="quantity-control">
+                                                            <button type="button" class="inv-minus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">-</button>
+                                                            <input type="number" id="avail-<?php echo $key; ?>" name="color_stock_available[<?php echo $v->id; ?>][<?php echo $c->id; ?>]" value="<?php echo $available_val; ?>" min="0">
+                                                            <button type="button" class="inv-plus" data-target="avail-<?php echo $key; ?>" data-variant="<?php echo $key; ?>">+</button>
+                                                        </div>
+                                                        <label>In Vermietung</label>
+                                                        <div class="quantity-control">
+                                                            <button type="button" class="inv-minus" data-target="rent-<?php echo $key; ?>">-</button>
+                                                            <input type="number" id="rent-<?php echo $key; ?>" name="color_stock_rented[<?php echo $v->id; ?>][<?php echo $c->id; ?>]" value="<?php echo $rented_val; ?>" min="0">
+                                                            <button type="button" class="inv-plus" data-target="rent-<?php echo $key; ?>">+</button>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $c->color_id; ?>]" value="<?php echo esc_attr($c->sku); ?>"></td>
-                                        </tr>
-                                        <?php $color_index++; ?>
-                                    <?php endforeach; ?>
+                                                </td>
+                                                <td>
+                                                    <?php $row_show_stock = $row_data ? intval($row_data->show_stock ?? 0) : 0; ?>
+                                                    <label class="produkt-toggle" style="transform: scale(0.9); transform-origin: left center;">
+                                                        <input type="checkbox"
+                                                               name="color_show_stock[<?php echo intval($v->id); ?>][0][<?php echo intval($c->id); ?>]"
+                                                               value="1"
+                                                               <?php checked($row_show_stock, 1); ?>>
+                                                        <span class="produkt-toggle-slider"></span>
+                                                    </label>
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        name="color_stock_threshold[<?php echo intval($v->id); ?>][0][<?php echo intval($c->id); ?>]"
+                                                        value="<?php echo $threshold_row_val; ?>"
+                                                        min="0"
+                                                        style="width:90px;"
+                                                        title="Benachrichtigung per E-Mail, wenn Verfügbar auf diesen Wert fällt"
+                                                    >
+                                                </td>
+                                                <td><input type="text" name="color_sku[<?php echo $v->id; ?>][<?php echo $c->id; ?>]" value="<?php echo esc_attr($sku_val); ?>"></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <tr>
                                         <td><?php echo esc_html($v->name); ?></td>
-                                        <?php
-                                            $price_val = ($modus === 'kauf')
-                                                ? $v->verkaufspreis_einmalig
-                                                : $v->base_price;
-                                        ?>
                                         <td><?php echo number_format((float)$price_val, 2, ',', '.'); ?>€</td>
                                         <td class="inventory-cell">
                                             <div class="inventory-trigger" data-variant="<?php echo $v->id; ?>">
@@ -683,6 +795,26 @@ function produkt_category_icon($slug)
                                                 </div>
                                                 </div>
                                             </td>
+                                        <td>
+                                            <?php $variant_show_stock = isset($v->show_stock) ? intval($v->show_stock) : 0; ?>
+                                            <label class="produkt-toggle" style="transform: scale(0.9); transform-origin: left center;">
+                                                <input type="checkbox"
+                                                       name="variant_show_stock[<?php echo intval($v->id); ?>]"
+                                                       value="1"
+                                                       <?php checked($variant_show_stock, 1); ?>>
+                                                <span class="produkt-toggle-slider"></span>
+                                            </label>
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="number"
+                                                name="stock_threshold[<?php echo intval($v->id); ?>]"
+                                                value="<?php echo $threshold_val; ?>"
+                                                min="0"
+                                                style="width:90px;"
+                                                title="Benachrichtigung per E-Mail, wenn Verfügbar auf diesen Wert fällt"
+                                            >
+                                        </td>
                                         <td><input type="text" name="sku[<?php echo $v->id; ?>]" value="<?php echo esc_attr($v->sku); ?>"></td>
                                     </tr>
                                 <?php endif; ?>
@@ -712,6 +844,8 @@ function produkt_category_icon($slug)
                                 <th>Extra</th>
                                 <th>Preis</th>
                                 <th>Menge</th>
+                                <th>Menge anzeigen</th>
+                                <th>Schwellenwert</th>
                                 <th>SKU</th>
                             </tr>
                         </thead>
@@ -750,6 +884,26 @@ function produkt_category_icon($slug)
                                             <button type="button" class="inv-plus" data-target="rent-<?php echo $e->id; ?>">+</button>
                                         </div>
                                     </div>
+                                </td>
+                                <td>
+                                    <?php $extra_show_stock = isset($e->show_stock) ? intval($e->show_stock) : 0; ?>
+                                    <label class="produkt-toggle" style="transform: scale(0.9); transform-origin: left center;">
+                                        <input type="checkbox"
+                                               name="extra_show_stock[<?php echo intval($e->id); ?>]"
+                                               value="1"
+                                               <?php checked($extra_show_stock, 1); ?>>
+                                        <span class="produkt-toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="extra_stock_threshold[<?php echo intval($e->id); ?>]"
+                                        value="<?php echo intval($e->stock_threshold ?? 0); ?>"
+                                        min="0"
+                                        style="width:90px;"
+                                        title="Benachrichtigung per E-Mail, wenn Verfügbar auf diesen Wert fällt"
+                                    >
                                 </td>
                                 <td><input type="text" name="extra_sku[<?php echo $e->id; ?>]" value="<?php echo esc_attr($e->sku); ?>"></td>
                             </tr>

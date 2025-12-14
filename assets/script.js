@@ -903,25 +903,7 @@ jQuery(document).ready(function($) {
             selectedProductColor = id;
             $('#selected-product-color-name').text($(this).data('color-name'));
             updateColorImage($(this));
-            
-            // Update availability status with stock count if inventory is enabled
-            const $selectedVariant = $('.produkt-option[data-type="variant"].selected');
-            const inventoryEnabled = $selectedVariant.data('inventory-enabled') === true || $selectedVariant.data('inventory-enabled') === 'true';
-            if (inventoryEnabled && $('#produkt-availability-wrapper').is(':visible')) {
-                const stockAvailable = parseInt($(this).data('stock') || 0, 10);
-                const isAvailable = stockAvailable > 0;
-                if (isAvailable) {
-                    $('#produkt-availability-status').removeClass('unavailable').addClass('available');
-                    // Show stock count before "Sofort verfügbar"
-                    const stockDisplay = stockAvailable + ' ';
-                    $('#produkt-availability-status .status-text').html('<span class="stock-count">' + stockDisplay + '</span>Sofort verfügbar');
-                } else {
-                    $('#produkt-availability-status').addClass('unavailable').removeClass('available');
-                    $('#produkt-availability-status .status-text').html('<span class="stock-count"></span>Nicht auf Lager');
-                    $('#produkt-rent-button').prop('disabled', true);
-                    $('.produkt-mobile-button').prop('disabled', true);
-                }
-            }
+            // Availability status (incl. optional stock count) is finalized by the get_product_price AJAX response.
         } else if (type === 'frame-color') {
             selectedFrameColor = id;
             $('#selected-frame-color-name').text($(this).data('color-name'));
@@ -1682,25 +1664,16 @@ jQuery(document).ready(function($) {
 
                         $('#produkt-availability-wrapper').show();
                         
-                        // Get stock information from selected variant and product color
-                        const $selectedVariant = $('.produkt-option[data-type="variant"].selected');
-                        const $selectedProductColor = $('.produkt-option[data-type="product-color"].selected');
-                        const inventoryEnabled = $selectedVariant.data('inventory-enabled') === true || $selectedVariant.data('inventory-enabled') === 'true';
-                        let stockAvailable = null;
-                        
-                        if (inventoryEnabled) {
-                            // If product color is selected, use its stock; otherwise use variant stock
-                            if ($selectedProductColor.length > 0) {
-                                stockAvailable = parseInt($selectedProductColor.data('stock') || 0, 10);
-                            } else {
-                                stockAvailable = parseInt($selectedVariant.data('stock') || 0, 10);
-                            }
-                        }
+                        const inventoryEnabled = data.inventory_enabled === 1 || data.inventory_enabled === '1' || data.inventory_enabled === true;
+                        const stockAvailable = (typeof data.stock_available !== 'undefined' && data.stock_available !== null)
+                            ? parseInt(data.stock_available, 10)
+                            : null;
+                        const showStockCount = (data.show_stock_count === 1 || data.show_stock_count === '1' || data.show_stock_count === true);
                         
                         if (isAvailable) {
                             $('#produkt-availability-status').removeClass('unavailable').addClass('available');
                             // Show stock count before "Sofort verfügbar" if inventory is enabled and stock > 0
-                            const stockDisplay = (inventoryEnabled && stockAvailable !== null && stockAvailable > 0) ? stockAvailable + ' ' : '';
+                            const stockDisplay = (inventoryEnabled && showStockCount && stockAvailable !== null && stockAvailable > 0) ? stockAvailable + ' ' : '';
                             $('#produkt-availability-status .status-text').html('<span class="stock-count">' + stockDisplay + '</span>Sofort verfügbar');
                             if (shippingProvider === 'pickup') {
                                 $('#produkt-delivery-box').text('Abholung').show();
@@ -2306,6 +2279,11 @@ function updateSelectedDays() {
             return;
         }
         
+        try {
+            const cb = document.getElementById('checkout-newsletter-optin');
+            localStorage.setItem('produkt_newsletter_optin', (cb && cb.checked) ? '1' : '0');
+        } catch(e){}
+        
         const $btn = $(this);
         const originalText = $btn.text();
         $btn.prop('disabled', true).text('Wird gesendet...');
@@ -2443,6 +2421,10 @@ function updateSelectedDays() {
             alert('Bitte geben Sie eine gültige E-Mail-Adresse ein');
             return;
         }
+        try {
+            const cb = document.getElementById('checkout-newsletter-optin');
+            localStorage.setItem('produkt_newsletter_optin', (cb && cb.checked) ? '1' : '0');
+        } catch(e){}
         setStoredCheckoutEmail(email);
         $loginModal.hide();
         $('body').removeClass('produkt-popup-open');

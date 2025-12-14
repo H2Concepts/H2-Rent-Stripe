@@ -44,6 +44,17 @@ $payment_icons = is_array($ui['payment_icons'] ?? null) ? $ui['payment_icons'] :
                 Zu dieser E-Mail-Adresse besteht bereits ein Kundenkonto.<br>
                 Sie können sich anmelden, damit wir Ihre Daten automatisch übernehmen.
             </div>
+            <?php 
+            $newsletter_enabled = get_option('produkt_newsletter_enabled', '1');
+            if ($newsletter_enabled === '1'): 
+            ?>
+            <div class="checkout-newsletter-optin" style="margin: 14px 0 6px;">
+                <label class="checkout-label" style="display:flex; gap:10px; align-items:flex-start;">
+                    <input type="checkbox" id="checkout-newsletter-optin" value="1" style="margin-top:3px;">
+                    <span>Registriere dich für E-Mails, um aktuelle Informationen von LittleLoopa zu Produkten und exklusiven Angeboten zu erhalten.</span>
+                </label>
+            </div>
+            <?php endif; ?>
             <button id="checkout-login-btn">Code zum einloggen anfordern</button>
             <button id="checkout-back-shop" class="secondary">&#10229; Zurück zum Shop</button>
             <p class="guest-text"><span>Noch kein Konto bei uns?</span> <a href="#" id="checkout-guest-link">Als Gast bestellen</a></p>

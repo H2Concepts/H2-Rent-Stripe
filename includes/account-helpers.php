@@ -63,6 +63,142 @@ function pv_get_subscription_status_badge($status) {
     return '<span class="status-badge ' . esc_attr($class) . '">' . esc_html($label) . '</span>';
 }
 
+/**
+ * Normalize rental status strings.
+ *
+ * @param mixed $status
+ * @return string one of: aktiv|gekündigt|beendet
+ */
+function pv_normalize_rental_status($status) {
+    $s = strtolower(trim((string) $status));
+    if (in_array($s, ['beendet', 'ended', 'end'], true)) {
+        return 'beendet';
+    }
+    if (in_array($s, ['gekündigt', 'gekundigt', 'cancelled', 'canceled', 'cancel_at_period_end'], true)) {
+        return 'gekündigt';
+    }
+    return 'aktiv';
+}
+
+/**
+ * Get per-item rental statuses for an order (supports cart orders via order_items JSON).
+ *
+ * @param object|array $order
+ * @return array{total:int,aktiv:int,gekuendigt:int,beendet:int,statuses:array<int,string>}
+ */
+function pv_get_rental_item_status_counts($order) {
+    if (is_array($order)) {
+        $order = (object) $order;
+    }
+    $statuses = [];
+    $raw_items = $order->order_items ?? '';
+    $items = [];
+    if (!empty($raw_items)) {
+        $decoded = json_decode($raw_items, true);
+        if (is_array($decoded)) {
+            $items = $decoded;
+        }
+    }
+    if (empty($items)) {
+        $items = [['rental_status' => pv_normalize_rental_status($order->status ?? 'aktiv')]];
+    }
+    $today = function_exists('current_time') ? current_time('Y-m-d') : date('Y-m-d');
+    foreach ($items as $it) {
+        $s = pv_normalize_rental_status($it['rental_status'] ?? ($order->status ?? 'aktiv'));
+        // If cancellation end date is reached, treat as ended for display immediately.
+        $end = !empty($it['end_date']) ? substr((string) $it['end_date'], 0, 10) : '';
+        if ($s === 'gekündigt' && $end && $end <= $today) {
+            $s = 'beendet';
+        }
+        $statuses[] = $s;
+    }
+    $counts = ['aktiv' => 0, 'gekündigt' => 0, 'beendet' => 0];
+    foreach ($statuses as $s) {
+        $counts[$s] = ($counts[$s] ?? 0) + 1;
+    }
+    return [
+        'total'      => count($statuses),
+        'aktiv'      => (int) ($counts['aktiv'] ?? 0),
+        'gekuendigt' => (int) ($counts['gekündigt'] ?? 0),
+        'beendet'    => (int) ($counts['beendet'] ?? 0),
+        'statuses'   => $statuses,
+    ];
+}
+
+/**
+ * Build badge label + (optional) split background for rental orders.
+ *
+ * Colors:
+ * - aktiv: green
+ * - gekündigt: blue
+ * - beendet: red
+ *
+ * @param object|array $order
+ * @return array{label:string,style:string,class:string}
+ */
+function pv_get_rental_status_badge_meta($order) {
+    $c = pv_get_rental_item_status_counts($order);
+    $total = max(1, (int) $c['total']);
+    $active = (int) $c['aktiv'];
+    $cancelled = (int) $c['gekuendigt'];
+    $ended = (int) $c['beendet'];
+
+    $green = '#16a34a';
+    $blue  = '#1d4ed8';
+    $red   = '#dc2626';
+
+    // All ended
+    if ($ended === $total) {
+        return ['label' => 'Beendet', 'style' => 'background:' . $red . ';color:#fff;', 'class' => 'badge'];
+    }
+    // All cancelled (but not ended)
+    if ($cancelled === $total) {
+        return ['label' => 'Gekündigt', 'style' => 'background:' . $blue . ';color:#fff;', 'class' => 'badge'];
+    }
+    // All active
+    if ($active === $total) {
+        return ['label' => 'In Vermietung', 'style' => 'background:' . $green . ';color:#fff;', 'class' => 'badge'];
+    }
+
+    // Mixed 2-state (preferred for split visuals)
+    $unique = array_values(array_unique($c['statuses']));
+    if (count($unique) === 2) {
+        if ($cancelled > 0 && $active > 0) {
+            $pct = (int) round(($cancelled / $total) * 100);
+            return [
+                'label' => $cancelled . '/' . $total . ' gekündigt',
+                'style' => 'background:linear-gradient(90deg,' . $blue . ' 0%,' . $blue . ' ' . $pct . '%,' . $green . ' ' . $pct . '%,' . $green . ' 100%);color:#fff;',
+                'class' => 'badge',
+            ];
+        }
+        if ($ended > 0 && $active > 0) {
+            $pct = (int) round(($ended / $total) * 100);
+            return [
+                'label' => $ended . '/' . $total . ' beendet',
+                'style' => 'background:linear-gradient(90deg,' . $red . ' 0%,' . $red . ' ' . $pct . '%,' . $green . ' ' . $pct . '%,' . $green . ' 100%);color:#fff;',
+                'class' => 'badge',
+            ];
+        }
+        if ($ended > 0 && $cancelled > 0) {
+            $pct = (int) round(($ended / $total) * 100);
+            return [
+                'label' => $ended . '/' . $total . ' beendet',
+                'style' => 'background:linear-gradient(90deg,' . $red . ' 0%,' . $red . ' ' . $pct . '%,' . $blue . ' ' . $pct . '%,' . $blue . ' 100%);color:#fff;',
+                'class' => 'badge',
+            ];
+        }
+    }
+
+    // Fallback (3-state)
+    if ($ended > 0) {
+        return ['label' => $ended . '/' . $total . ' beendet', 'style' => 'background:' . $red . ';color:#fff;', 'class' => 'badge'];
+    }
+    if ($cancelled > 0) {
+        return ['label' => $cancelled . '/' . $total . ' gekündigt', 'style' => 'background:' . $blue . ';color:#fff;', 'class' => 'badge'];
+    }
+    return ['label' => 'In Vermietung', 'style' => 'background:' . $green . ';color:#fff;', 'class' => 'badge'];
+}
+
 if (!function_exists('pv_normalize_hex_color_value')) {
     /**
      * Normalize stored hex color strings to a consistent "#rrggbb" format.
@@ -344,7 +480,7 @@ function pv_calculate_rental_payments($order, $logs = null) {
 
     $mode    = strtolower($order->mode);
     $status  = strtolower($order->status);
-    $allowed = ['abgeschlossen', 'gekündigt'];
+    $allowed = ['abgeschlossen', 'gekündigt', 'beendet'];
     if ($mode === 'kauf' || !in_array($status, $allowed, true)) {
         return $result;
     }
@@ -848,6 +984,7 @@ function pv_expand_order_products($row) {
             'final_price'        => floatval($itm['final_price'] ?? 0),
             'start_date'         => $itm['start_date'] ?? ($row_arr['start_date'] ?? null),
             'end_date'           => $itm['end_date'] ?? ($row_arr['end_date'] ?? null),
+            'rental_status'      => $itm['rental_status'] ?? null,
             'image_url'          => pv_get_image_url_by_variant_or_category($variant_id, $category_id),
             'category_id'        => $category_id,
             'duration_id'        => intval($itm['duration_id'] ?? 0),

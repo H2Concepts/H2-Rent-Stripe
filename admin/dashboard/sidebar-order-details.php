@@ -35,15 +35,9 @@ $is_open_order = ($order_status === 'offen');
 
 $badge_status = '–';
 if ($modus === 'miete') {
-    if ($is_completed_order) {
-        $badge_status = 'In Vermietung';
-    } elseif ($is_open_order) {
-        $badge_status = 'Nicht abgeschlossen';
-    } elseif ($order_status === 'gekündigt') {
-        $badge_status = 'Gekündigt';
-    } else {
-        $badge_status = $order_status ? ucfirst($order_status) : 'Miete';
-    }
+    require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+    $meta = pv_get_rental_status_badge_meta($order);
+    $badge_status = $meta['label'] ?? 'Miete';
 } else {
     if ($percent >= 100) {
         $badge_status = 'Abgeschlossen';

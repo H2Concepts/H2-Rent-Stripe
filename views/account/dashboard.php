@@ -461,21 +461,38 @@
                 $cancel_sub_id   = $selected_meta['subscription_id'] ?? $selected_sub_id;
                 $cancel_label    = $cancel_ready ? 'Jetzt kündigen' : 'Nicht möglich';
 
-                $status_raw   = strtolower($selected_meta['status'] ?? ($selected_order->status ?? 'active'));
+                // Prefer our persisted per-item rental status (supports cart orders).
+                $status_style = '';
                 $status_class = 'success';
-                $status_label = 'Abo Aktiv';
-
-                if (in_array($status_raw, ['canceled', 'cancelled'], true)) {
-                    if (current_time('timestamp') >= $min_end_ts) {
-                        $status_class = 'inactive';
-                        $status_label = 'Inaktiv';
-                    } else {
+                $status_label = 'Aktiv';
+                $item_status = '';
+                $item_end_date = '';
+                if (!empty($selected_order->order_items)) {
+                    $decoded = json_decode($selected_order->order_items, true);
+                    if (is_array($decoded)) {
+                        $idx = (int) ($selected_order->product_index ?? 0);
+                        $item_status = $decoded[$idx]['rental_status'] ?? '';
+                        $item_end_date = $decoded[$idx]['end_date'] ?? '';
+                    }
+                }
+                if (function_exists('pv_normalize_rental_status')) {
+                    $item_status = pv_normalize_rental_status($item_status);
+                }
+                $item_end_date = $item_end_date ? substr((string) $item_end_date, 0, 10) : '';
+                $item_end_label = $item_end_date ? date_i18n('d.m.Y', strtotime($item_end_date)) : '';
+                if ($item_status === 'beendet') {
+                    $status_class = 'inactive';
+                    $status_label = 'Beendet';
+                } elseif ($item_status === 'gekündigt') {
+                    $status_class = 'cancelled';
+                    $status_label = 'Gekündigt';
+                } else {
+                    // fallback: infer from Stripe status
+                    $status_raw = strtolower($selected_meta['status'] ?? ($selected_order->status ?? 'active'));
+                    if (in_array($status_raw, ['canceled', 'cancelled'], true)) {
                         $status_class = 'cancelled';
                         $status_label = 'Gekündigt';
                     }
-                } elseif (in_array($status_raw, ['inactive', 'inaktiv'], true)) {
-                    $status_class = 'inactive';
-                    $status_label = 'Inaktiv';
                 }
             ?>
             <div class="account-section-header">
@@ -511,19 +528,24 @@
                         <form method="post">
                             <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
                             <input type="hidden" name="subscription_id" value="<?php echo esc_attr($cancel_sub_id); ?>">
+                            <input type="hidden" name="order_id" value="<?php echo esc_attr((int) ($selected_order->id ?? 0)); ?>">
+                            <input type="hidden" name="product_index" value="<?php echo esc_attr((int) ($selected_order->product_index ?? 0)); ?>">
                             <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>><?php echo esc_html($cancel_label); ?></button>
                         </form>
                         <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
                     </div>
                 </div>
                 <div class="subscription-detail-card subscription-wide-card">
-                    <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"><?php echo esc_html($status_label); ?></span>
+                    <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"<?php echo $status_style ? ' style="' . esc_attr($status_style) . '"' : ''; ?>><?php echo esc_html($status_label); ?></span>
                     <div class="card-title">Abodetails</div>
                     <div class="subscription-detail-content">
                         <p><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_months . ' Monate'); ?></p>
                         <p><strong>Monatlicher Mietpreis:</strong> <?php echo esc_html($monthly); ?></p>
                         <p><strong>Ende Mindestlaufzeit:</strong> <?php echo esc_html($min_end_date); ?></p>
                         <p><strong>Datum für Kündigung:</strong> <?php echo esc_html($cancel_open_date); ?></p>
+                        <?php if ($item_end_label && in_array($item_status, ['gekündigt','beendet'], true)) : ?>
+                            <p><strong>Läuft bis:</strong> <?php echo esc_html($item_end_label); ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

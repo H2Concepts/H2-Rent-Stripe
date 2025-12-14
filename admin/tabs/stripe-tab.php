@@ -10,6 +10,8 @@ if (isset($_POST['submit_stripe'])) {
     update_option('produkt_tos_url', esc_url_raw($_POST['tos_url'] ?? ''));
     update_option('produkt_success_url', esc_url_raw($_POST['success_url'] ?? ''));
     update_option('produkt_cancel_url', esc_url_raw($_POST['cancel_url'] ?? ''));
+    update_option('produkt_newsletter_success_url', esc_url_raw($_POST['newsletter_success_url'] ?? ''));
+    update_option('produkt_newsletter_error_url', esc_url_raw($_POST['newsletter_error_url'] ?? ''));
     update_option('produkt_ct_shipping', wp_kses_post($_POST['ct_shipping'] ?? ''));
     update_option('produkt_ct_submit', wp_kses_post($_POST['ct_submit'] ?? ''));
     update_option('produkt_ct_after_submit', wp_kses_post($_POST['ct_after_submit'] ?? ''));
@@ -37,6 +39,8 @@ $stripe_webhook_secret = get_option('produkt_stripe_webhook_secret', '');
 $tos_url             = get_option('produkt_tos_url', home_url('/agb'));
 $success_url         = get_option('produkt_success_url', home_url('/danke'));
 $cancel_url          = get_option('produkt_cancel_url', home_url('/abbrechen'));
+$newsletter_success_url = get_option('produkt_newsletter_success_url', home_url('/newsletter-bestaetigt'));
+$newsletter_error_url   = get_option('produkt_newsletter_error_url', home_url('/newsletter-fehler'));
 $ct_shipping         = get_option('produkt_ct_shipping', '');
 $ct_submit           = get_option('produkt_ct_submit', '');
 $ct_after_submit     = get_option('produkt_ct_after_submit', '');
@@ -135,6 +139,22 @@ $cart_mode           = get_option('produkt_miete_cart_mode', 'direct');
                     <div class="produkt-form-group">
                         <label>Cancel URL</label>
                         <input type="text" name="cancel_url" value="<?php echo esc_attr($cancel_url); ?>" placeholder="<?php echo esc_attr(home_url('/abbrechen')); ?>">
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-card">
+                <h2>Newsletter</h2>
+                <p class="card-subline">Weiterleitungen nach Double-Opt-In Bestätigung</p>
+                <div class="form-grid">
+                    <div class="produkt-form-group">
+                        <label>Newsletter bestätigt (Danke-Seite URL)</label>
+                        <input type="text" name="newsletter_success_url" value="<?php echo esc_attr($newsletter_success_url); ?>" placeholder="<?php echo esc_attr(home_url('/newsletter-bestaetigt')); ?>">
+                        <p class="description">Hierhin wird nach erfolgreicher Newsletter-Bestätigung weitergeleitet.</p>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label>Newsletter Fehler (Fehler-Seite URL)</label>
+                        <input type="text" name="newsletter_error_url" value="<?php echo esc_attr($newsletter_error_url); ?>" placeholder="<?php echo esc_attr(home_url('/newsletter-fehler')); ?>">
+                        <p class="description">Hierhin wird geleitet, wenn Token ungültig/abgelaufen ist.</p>
                     </div>
                 </div>
             </div>

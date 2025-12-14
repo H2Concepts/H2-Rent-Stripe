@@ -31,6 +31,7 @@ class Plugin {
         $this->ensure_required_pages();
 
         require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        require_once PRODUKT_PLUGIN_PATH . 'includes/NewsletterService.php';
 
         // Replace deprecated emoji and admin bar functions with enqueue versions.
         $this->replace_deprecated_wp_functions();
@@ -76,6 +77,11 @@ class Plugin {
         add_action('wp_ajax_nopriv_check_extra_availability', [$this->ajax, 'ajax_check_extra_availability']);
         add_action('wp_ajax_notify_availability', [$this->ajax, 'ajax_notify_availability']);
         add_action('wp_ajax_nopriv_notify_availability', [$this->ajax, 'ajax_notify_availability']);
+
+        add_action('admin_post_nopriv_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
+        add_action('admin_post_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
+        add_action('admin_post_produkt_newsletter_resend', [__CLASS__, 'handle_newsletter_resend']);
+        add_action('admin_post_produkt_newsletter_delete', [__CLASS__, 'handle_newsletter_delete']);
 
         add_action('wp_ajax_get_variant_durations', [$this->ajax, 'ajax_get_variant_durations']);
         add_action('wp_ajax_nopriv_get_variant_durations', [$this->ajax, 'ajax_get_variant_durations']);
@@ -780,7 +786,7 @@ class Plugin {
                     "email": "<?php echo esc_js($customer_email); ?>",
                     "delivery_country": "<?php echo esc_js($delivery_country); ?>",
                     "estimated_delivery_date": "<?php echo esc_js($estimated_delivery_date); ?>",
-                    "opt_in_style": "BOTTOM_LEFT_DIALOG"
+                    "opt_in_style": "CENTER_DIALOG"
                 });
             });
         };
@@ -1255,6 +1261,96 @@ class Plugin {
 
         add_action('wp_enqueue_scripts', 'wp_enqueue_emoji_styles');
         add_action('admin_enqueue_scripts', 'wp_enqueue_admin_bar_header_styles');
+    }
+
+    public static function handle_newsletter_confirm() {
+        $token = isset($_GET['token']) ? sanitize_text_field(wp_unslash($_GET['token'])) : '';
+        $ok = false;
+
+        if ($token !== '') {
+            require_once PRODUKT_PLUGIN_PATH . 'includes/NewsletterService.php';
+            $ok = \ProduktVerleih\NewsletterService::confirm_from_token($token);
+        }
+
+        $success = get_option('produkt_newsletter_success_url', home_url('/newsletter-bestaetigt'));
+        $error   = get_option('produkt_newsletter_error_url', home_url('/newsletter-fehler'));
+
+        $target = $ok ? $success : $error;
+        wp_safe_redirect($target);
+        exit;
+    }
+
+    public static function handle_newsletter_resend() {
+        if (!current_user_can('manage_options')) { wp_die('Unauthorized'); }
+        check_admin_referer('produkt_newsletter_resend');
+
+        $email = isset($_GET['email']) ? sanitize_email(wp_unslash($_GET['email'])) : '';
+        if (!$email) {
+            $ref = wp_get_referer() ?: admin_url();
+            $ref = remove_query_arg(['pn_notice', 'pn_notice_type'], $ref);
+            $ref = add_query_arg([
+                'pn_notice'      => 'newsletter_action_failed',
+                'pn_notice_type' => 'error',
+            ], $ref);
+            wp_safe_redirect($ref);
+            exit;
+        }
+
+        require_once PRODUKT_PLUGIN_PATH . 'includes/NewsletterService.php';
+        $result = \ProduktVerleih\NewsletterService::resend_double_optin($email);
+
+        $ref = wp_get_referer() ?: admin_url();
+        $ref = remove_query_arg(['pn_notice', 'pn_notice_type'], $ref);
+
+        if ($result === 'sent') {
+            $ref = add_query_arg([
+                'pn_notice'      => 'newsletter_resend_ok',
+                'pn_notice_type' => 'success',
+            ], $ref);
+        } elseif ($result === 'already_confirmed') {
+            $ref = add_query_arg([
+                'pn_notice'      => 'newsletter_resend_already_confirmed',
+                'pn_notice_type' => 'warning',
+            ], $ref);
+        } else {
+            $ref = add_query_arg([
+                'pn_notice'      => 'newsletter_action_failed',
+                'pn_notice_type' => 'error',
+            ], $ref);
+        }
+
+        wp_safe_redirect($ref);
+        exit;
+    }
+
+    public static function handle_newsletter_delete() {
+        if (!current_user_can('manage_options')) { wp_die('Unauthorized'); }
+        check_admin_referer('produkt_newsletter_delete');
+
+        $email = isset($_GET['email']) ? sanitize_email(wp_unslash($_GET['email'])) : '';
+        if (!$email) {
+            $ref = wp_get_referer() ?: admin_url();
+            $ref = remove_query_arg(['pn_notice', 'pn_notice_type'], $ref);
+            $ref = add_query_arg([
+                'pn_notice'      => 'newsletter_action_failed',
+                'pn_notice_type' => 'error',
+            ], $ref);
+            wp_safe_redirect($ref);
+            exit;
+        }
+
+        require_once PRODUKT_PLUGIN_PATH . 'includes/NewsletterService.php';
+        \ProduktVerleih\NewsletterService::delete_by_email($email);
+
+        $ref = wp_get_referer() ?: admin_url();
+        $ref = remove_query_arg(['pn_notice', 'pn_notice_type'], $ref);
+        $ref = add_query_arg([
+            'pn_notice'      => 'newsletter_delete_ok',
+            'pn_notice_type' => 'success',
+        ], $ref);
+
+        wp_safe_redirect($ref);
+        exit;
     }
 }
 

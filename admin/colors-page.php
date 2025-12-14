@@ -23,8 +23,18 @@ if (empty($multicolor_exists)) {
 // Get all categories
 $categories = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}produkt_categories ORDER BY sort_order, name");
 
-// Selected category
-$selected_category = isset($_GET['category']) ? intval($_GET['category']) : (isset($categories[0]) ? $categories[0]->id : 0);
+// Get selected category from URL parameter, cookie, or default
+$selected_category = isset($_GET['category']) ? intval($_GET['category']) : null;
+if (!$selected_category && isset($_COOKIE['produkt_last_category'])) {
+    $selected_category = intval($_COOKIE['produkt_last_category']);
+}
+if (!$selected_category) {
+    $selected_category = isset($categories[0]) ? $categories[0]->id : 0;
+}
+// Set cookie for next time
+if (!headers_sent()) {
+    setcookie('produkt_last_category', $selected_category, time() + (86400 * 30), '/');
+}
 
 // Variants for selected category
 $variants = $wpdb->get_results($wpdb->prepare(
@@ -96,18 +106,21 @@ if (isset($_POST['submit'])) {
     ));
     foreach ($all_variants as $v) {
         $available = isset($variant_inputs[$v->id]) ? 1 : 0;
-        $exists = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM $table_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
-            $v->id, $option_type, $color_id
+        // Update ALL rows for this variant/color (there may be multiple rows e.g. per condition)
+        $wpdb->query($wpdb->prepare(
+            "UPDATE $table_variant_options SET available = %d WHERE variant_id = %d AND option_type = %s AND option_id = %d",
+            $available,
+            (int) $v->id,
+            $option_type,
+            (int) $color_id
         ));
-        if ($exists) {
-            $wpdb->update($table_variant_options, ['available' => $available], ['id' => $exists], ['%d'], ['%d']);
-        } else {
+        // Ensure at least one base row exists (condition_id NULL)
+        if ($wpdb->rows_affected === 0) {
             $wpdb->insert($table_variant_options, [
-                'variant_id' => $v->id,
+                'variant_id'  => (int) $v->id,
                 'option_type' => $option_type,
-                'option_id' => $color_id,
-                'available' => $available
+                'option_id'   => (int) $color_id,
+                'available'   => $available
             ], ['%d','%s','%d','%d']);
         }
     }
@@ -244,8 +257,9 @@ $total_variants = count($variants);
                     <?php if (empty($product_colors)): ?>
                         <tr><td colspan="4">Keine Farben vorhanden.</td></tr>
                     <?php else: foreach ($product_colors as $color):
+                        // Count distinct variants; inventory rows may exist per condition/color
                         $available_count = $wpdb->get_var($wpdb->prepare(
-                            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'product_color' AND option_id = %d AND available = 1",
+                            "SELECT COUNT(DISTINCT variant_id) FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'product_color' AND option_id = %d AND available = 1",
                             $color->id
                         ));
                         $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
@@ -296,7 +310,7 @@ $total_variants = count($variants);
                         <tr><td colspan="4">Keine Gestellfarben vorhanden.</td></tr>
                     <?php else: foreach ($frame_colors as $color):
                         $available_count = $wpdb->get_var($wpdb->prepare(
-                            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'frame_color' AND option_id = %d AND available = 1",
+                            "SELECT COUNT(DISTINCT variant_id) FROM {$wpdb->prefix}produkt_variant_options WHERE option_type = 'frame_color' AND option_id = %d AND available = 1",
                             $color->id
                         ));
                         $availability = $total_variants ? ($available_count . ' / ' . $total_variants) : '0';
@@ -392,8 +406,9 @@ $total_variants = count($variants);
                     <div class="variant-availability-grid">
                         <?php foreach ($variants as $v):
                             $opt_type = (!$is_sale && $edit_item && $edit_item->color_type === 'frame') ? 'frame_color' : 'product_color';
+                            // Use MAX(available) to support multiple rows (e.g. condition-specific inventory rows)
                             $available = $wpdb->get_var($wpdb->prepare(
-                                "SELECT available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
+                                "SELECT MAX(available) FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = %s AND option_id = %d",
                                 $v->id, $opt_type, $edit_item->id ?? 0
                             )); ?>
                         <label class="produkt-toggle-label" style="min-width:160px;">

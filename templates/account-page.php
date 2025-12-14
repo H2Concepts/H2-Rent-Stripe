@@ -22,6 +22,42 @@ if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
             $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
         } else {
             $message = '<p>' . esc_html__('Kündigung vorgemerkt.', 'h2-concepts') . '</p>';
+            // Persist status in our orders table (per item when available)
+            $order_id = intval($_POST['order_id'] ?? 0);
+            $product_index = intval($_POST['product_index'] ?? 0);
+            if ($order_id > 0) {
+                // determine rental end date: prefer Stripe current_period_end, fallback to existing item end_date
+                $end_date = '';
+                $end_res = \ProduktVerleih\StripeService::get_subscription_period_end_date($sub_id);
+                if (!is_wp_error($end_res)) {
+                    $end_date = $end_res;
+                }
+                if (!$end_date) {
+                    global $wpdb;
+                    $row = $wpdb->get_row($wpdb->prepare(
+                        "SELECT order_items, end_date, created_at FROM {$wpdb->prefix}produkt_orders WHERE id = %d",
+                        $order_id
+                    ));
+                    if ($row) {
+                        $items = json_decode($row->order_items ?? '', true);
+                        if (is_array($items) && isset($items[$product_index]['end_date'])) {
+                            $end_date = substr((string) $items[$product_index]['end_date'], 0, 10);
+                        }
+                        if (!$end_date && !empty($row->end_date)) {
+                            $end_date = substr((string) $row->end_date, 0, 10);
+                        }
+                    }
+                }
+                \ProduktVerleih\Database::set_rental_item_status($order_id, $product_index, 'gekündigt', $end_date ?: null);
+
+                // Send cancellation emails (customer + all admins)
+                if (function_exists('\\ProduktVerleih\\send_customer_rental_cancellation_email')) {
+                    \ProduktVerleih\send_customer_rental_cancellation_email($order_id, $product_index);
+                }
+                if (function_exists('\\ProduktVerleih\\send_admin_rental_cancellation_email')) {
+                    \ProduktVerleih\send_admin_rental_cancellation_email($order_id, $product_index);
+                }
+            }
         }
     }
 }
@@ -59,7 +95,7 @@ if (is_user_logged_in()) {
 $rental_orders = [];
 
 foreach ($orders as $o) {
-    if (($o->status ?? '') !== 'abgeschlossen') {
+    if (!in_array(($o->status ?? ''), ['abgeschlossen', 'gekündigt', 'beendet'], true)) {
         continue;
     }
 

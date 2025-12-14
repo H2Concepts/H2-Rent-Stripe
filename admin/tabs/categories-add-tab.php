@@ -92,7 +92,7 @@ foreach ($filter_groups as $g) {
                 <p class="card-subline">Darstellung im Frontend</p>
                 <input type="hidden" name="layout_style" value="default">
                 <div class="layout-option-grid" data-input-name="layout_style">
-                    <div class="layout-option-card" data-value="default">
+                    <div class="layout-option-card active" data-value="default">
                         <div class="layout-option-name">Standard (Horizontal)</div>
                         <div class="layout-option-preview">
                             <svg viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg">
@@ -131,7 +131,7 @@ foreach ($filter_groups as $g) {
                 <p class="card-subline">Position der Preisbox</p>
                 <input type="hidden" name="price_layout" value="default">
                 <div class="layout-option-grid" data-input-name="price_layout">
-                    <div class="layout-option-card" data-value="default">
+                    <div class="layout-option-card active" data-value="default">
                         <div class="layout-option-name">Standardposition</div>
                         <div class="layout-option-preview">
                             <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">
@@ -157,7 +157,7 @@ foreach ($filter_groups as $g) {
                 <p class="card-subline">Position der Produktdetails</p>
                 <input type="hidden" name="description_layout" value="left">
                 <div class="layout-option-grid" data-input-name="description_layout">
-                    <div class="layout-option-card" data-value="left">
+                    <div class="layout-option-card active" data-value="left">
                         <div class="layout-option-name">Standard (Links unter den Bildern)</div>
                         <div class="layout-option-preview">
                             <svg viewBox="0 0 120 60" xmlns="http://www.w3.org/2000/svg">

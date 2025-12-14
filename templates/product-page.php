@@ -253,7 +253,8 @@ $price_period = $ui['price_period'] ?? 'month';
 $vat_included = isset($ui['vat_included']) ? intval($ui['vat_included']) : 0;
 
 // Layout
-$layout_style = isset($category) ? ($category->layout_style ?? 'default') : 'default';
+$layout_style_raw = isset($category) ? ($category->layout_style ?? '') : '';
+$layout_style = in_array($layout_style_raw, ['default', 'grid', 'list'], true) ? $layout_style_raw : 'default';
 $price_layout = isset($category) ? ($category->price_layout ?? 'default') : 'default';
 $description_layout = isset($category) ? ($category->description_layout ?? 'left') : 'left';
 
@@ -692,22 +693,21 @@ if ($price_layout !== 'sidebar') {
                             $color_preview_class = 'produkt-color-preview' . (!empty($color->is_multicolor) ? ' produkt-color-preview--multicolor' : '');
                             $color_preview_style = empty($color->is_multicolor) ? 'background-color: ' . esc_attr($color->color_code) . ';' : '';
                             
-                            // Get stock_available for this color from variant_options if inventory is enabled
+                            // Initial render: DO NOT decide availability by stock here.
+                            // Stock is variant/condition-dependent and will be handled after the user selects a variant (AJAX).
                             $stock_available = null;
-                            $color_available = true;
-                            if ($inventory_enabled && !empty($variants)) {
-                                // Get stock from first variant (will be updated via AJAX when variant is selected)
-                                $first_variant_id = $variants[0]->id ?? 0;
-                                if ($first_variant_id) {
-                                    $color_option = $wpdb->get_row($wpdb->prepare(
-                                        "SELECT stock_available, available FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d",
-                                        $first_variant_id,
-                                        $color->id
-                                    ));
-                                    if ($color_option) {
-                                        $stock_available = intval($color_option->stock_available ?? 0);
-                                        $color_available = ($stock_available > 0) && ($color_option->available ?? 1);
-                                    }
+                            $color_available = (int) ($color->available ?? 1) === 1;
+                            if (!empty($variants)) {
+                                // If this color is disabled for all variants, show it as unavailable even before variant selection.
+                                $max_available = $wpdb->get_var($wpdb->prepare(
+                                    "SELECT MAX(vo.available) FROM {$wpdb->prefix}produkt_variant_options vo
+                                     JOIN {$wpdb->prefix}produkt_variants v ON v.id = vo.variant_id
+                                     WHERE v.category_id = %d AND vo.option_type = 'product_color' AND vo.option_id = %d",
+                                    $category_id,
+                                    (int) $color->id
+                                ));
+                                if ($max_available !== null) {
+                                    $color_available = $color_available && ((int) $max_available === 1);
                                 }
                             }
                         ?>

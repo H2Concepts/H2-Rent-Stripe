@@ -606,9 +606,299 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
 }
 
 /**
+ * Send cancellation confirmation email to customer (rental mode only).
+ *
+ * Trigger: customer cancels a rental item (cancel at period end).
+ *
+ * @param int   $order_id
+ * @param int   $product_index Index within order_items / expanded products
+ * @param array $order_override Optional order payload (used for test emails)
+ * @return bool Whether the mail was sent
+ */
+function send_customer_rental_cancellation_email(int $order_id, int $product_index = 0, array $order_override = []): bool {
+    $order = null;
+    if (!empty($order_override)) {
+        $order = $order_override;
+    } elseif ($order_id > 0 && function_exists('pv_get_order_by_id')) {
+        $order = pv_get_order_by_id($order_id);
+    }
+
+    if (!is_array($order) || empty($order['customer_email'])) {
+        return false;
+    }
+
+    $mode = pv_get_order_mode($order, $order_id);
+    if ($mode !== 'miete') {
+        return false;
+    }
+
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : ($order_id ?: '—');
+    $customer_name = trim((string) ($order['customer_name'] ?? ''));
+
+    $produkte = $order['produkte'] ?? null;
+    if (!is_array($produkte)) {
+        $produkte = pv_expand_order_products($order);
+    }
+    if (!is_array($produkte)) {
+        $produkte = [];
+    }
+    if ($product_index < 0 || $product_index >= count($produkte)) {
+        $product_index = 0;
+    }
+    $item = !empty($produkte[$product_index]) ? $produkte[$product_index] : null;
+    if (!is_object($item)) {
+        return false;
+    }
+
+    $end_date = !empty($item->end_date) ? substr((string) $item->end_date, 0, 10) : '';
+    $end_label = $end_date ? date_i18n('d.m.Y', strtotime($end_date)) : '';
+
+    $counts = function_exists('pv_get_rental_item_status_counts') ? pv_get_rental_item_status_counts((object) $order) : null;
+    $total_items = is_array($counts) ? max(1, (int) ($counts['total'] ?? 1)) : 1;
+
+    $site_title = get_bloginfo('name');
+    $logo_url   = get_option('plugin_firma_logo_url', '');
+    $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+    $subject = 'Kündigungsbestätigung – Bestellung #' . $bestellnr;
+
+    $details = [];
+    if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
+    if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
+    if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+    if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
+    if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
+    if ($end_label) { $details[] = 'Läuft bis: ' . esc_html($end_label); }
+
+    $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+    $account_url     = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 28px;">Kündigung bestätigt</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($customer_name ?: ''); 
+    $message .= ',<br>wir haben Ihre Kündigung erhalten und zum Laufzeitende vorgemerkt.';
+    if ($end_label) {
+        $message .= ' Ihre Miete läuft bis zum <strong>' . esc_html($end_label) . '</strong> und endet dann automatisch.';
+    }
+    $message .= '</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Details zur Kündigung</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:42%;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Status:</strong></td><td>Kündigung vorgemerkt</td></tr>';
+    if ($total_items > 1) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Hinweis:</strong></td><td>Diese Kündigung betrifft 1 von ' . esc_html((string) $total_items) . ' Artikeln in Ihrer Bestellung.</td></tr>';
+    }
+    if ($end_label) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Laufzeitende:</strong></td><td>' . esc_html($end_label) . '</td></tr>';
+    }
+    $message .= '</table>';
+
+    $message .= $divider;
+
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Betroffener Artikel</h2>';
+    $message .= '<div style="padding:12px 0;">';
+    $message .= '<div style="display:flex;gap:16px;align-items:flex-start;">';
+    if (!empty($item->image_url)) {
+        $message .= '<div style="width:64px;flex-shrink:0;margin-right:12px;">'
+            . '<img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;">'
+            . '</div>';
+    } else {
+        $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;margin-right:12px;"></div>';
+    }
+    $message .= '<div style="flex:1;">';
+    $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name ?? '') . '</div>';
+    if (!empty($details)) {
+        $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
+    }
+    $message .= '</div>';
+    $message .= '</div>';
+    $message .= '</div>';
+
+    $message .= '</div>';
+
+    $message .= '<div style="text-align:center;margin:18px 0 8px;">';
+    $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:14px 36px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Zum Kundenkonto</a>';
+    $message .= '</div>';
+
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+
+    $message .= '</div>';
+    $message .= '</body></html>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    $from_name  = get_bloginfo('name');
+    $from_email = get_option('admin_email');
+    $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+    return (bool) wp_mail($order['customer_email'], $subject, $message, $headers);
+}
+
+/**
+ * Send cancellation notification email to all admins (rental mode only).
+ *
+ * @param int   $order_id
+ * @param int   $product_index
+ * @param array $order_override Optional order payload (used for test emails)
+ * @return bool
+ */
+function send_admin_rental_cancellation_email(int $order_id, int $product_index = 0, array $order_override = []): bool {
+    $order = null;
+    if (!empty($order_override)) {
+        $order = $order_override;
+    } elseif ($order_id > 0 && function_exists('pv_get_order_by_id')) {
+        $order = pv_get_order_by_id($order_id);
+    }
+
+    if (!is_array($order)) {
+        return false;
+    }
+
+    $mode = pv_get_order_mode($order, $order_id);
+    if ($mode !== 'miete') {
+        return false;
+    }
+
+    $bestellnr = !empty($order['order_number']) ? $order['order_number'] : ($order_id ?: '—');
+    $customer_name  = trim((string) ($order['customer_name'] ?? ''));
+    $customer_email = trim((string) ($order['customer_email'] ?? ''));
+    $customer_phone = trim((string) ($order['customer_phone'] ?? ''));
+    $address = trim((string) (($order['customer_street'] ?? '') . ', ' . ($order['customer_postal'] ?? '') . ' ' . ($order['customer_city'] ?? '') . (!empty($order['customer_country']) ? (', ' . $order['customer_country']) : '')));
+
+    $produkte = $order['produkte'] ?? null;
+    if (!is_array($produkte)) {
+        $produkte = pv_expand_order_products($order);
+    }
+    if (!is_array($produkte)) {
+        $produkte = [];
+    }
+    if ($product_index < 0 || $product_index >= count($produkte)) {
+        $product_index = 0;
+    }
+    $item = !empty($produkte[$product_index]) ? $produkte[$product_index] : null;
+
+    $end_date = (is_object($item) && !empty($item->end_date)) ? substr((string) $item->end_date, 0, 10) : '';
+    $end_label = $end_date ? date_i18n('d.m.Y', strtotime($end_date)) : '';
+
+    $counts = function_exists('pv_get_rental_item_status_counts') ? pv_get_rental_item_status_counts((object) $order) : null;
+    $total_items = is_array($counts) ? max(1, (int) ($counts['total'] ?? 1)) : 1;
+    $cancelled = is_array($counts) ? (int) ($counts['gekuendigt'] ?? 0) : 0;
+    $ended = is_array($counts) ? (int) ($counts['beendet'] ?? 0) : 0;
+    $active = is_array($counts) ? (int) ($counts['aktiv'] ?? 0) : 0;
+
+    $site_title = get_bloginfo('name');
+    $logo_url   = get_option('plugin_firma_logo_url', '');
+    $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+    $subject = 'Kündigung erhalten – Bestellung #' . $bestellnr;
+
+    $details = [];
+    if (is_object($item)) {
+        if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
+        if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
+        if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+        if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
+        if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
+    }
+    if ($end_label) { $details[] = 'Läuft bis: ' . esc_html($end_label); }
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 28px;">Kündigung eingegangen</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo Team,<br>ein Kunde hat eine Kündigung zum Laufzeitende ausgelöst. Bitte prüfen Sie die Bestellung im Backend.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Bestell- & Kundendaten</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:42%;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
+    if ($order_id > 0) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Order-ID:</strong></td><td>' . esc_html((string) $order_id) . '</td></tr>';
+    }
+    if ($customer_name) { $message .= '<tr><td style="padding:6px 0;"><strong>Name:</strong></td><td>' . esc_html($customer_name) . '</td></tr>'; }
+    if ($customer_email) { $message .= '<tr><td style="padding:6px 0;"><strong>E-Mail:</strong></td><td>' . esc_html($customer_email) . '</td></tr>'; }
+    if ($customer_phone) { $message .= '<tr><td style="padding:6px 0;"><strong>Telefon:</strong></td><td>' . esc_html($customer_phone) . '</td></tr>'; }
+    if (trim($address, " ,")) { $message .= '<tr><td style="padding:6px 0;"><strong>Adresse:</strong></td><td>' . esc_html($address) . '</td></tr>'; }
+    if ($total_items > 1) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Status-Split:</strong></td><td>'
+            . esc_html((string) $cancelled) . '/' . esc_html((string) $total_items) . ' gekündigt'
+            . ($ended ? ' · ' . esc_html((string) $ended) . '/' . esc_html((string) $total_items) . ' beendet' : '')
+            . ($active ? ' · ' . esc_html((string) $active) . '/' . esc_html((string) $total_items) . ' aktiv' : '')
+            . '</td></tr>';
+    }
+    if ($end_label) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Laufzeitende:</strong></td><td>' . esc_html($end_label) . '</td></tr>';
+    }
+    $message .= '</table>';
+
+    $message .= $divider;
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Betroffener Artikel</h2>';
+    if (is_object($item)) {
+        $message .= '<div style="padding:12px 0;">';
+        $message .= '<div style="display:flex;gap:16px;align-items:flex-start;">';
+        if (!empty($item->image_url)) {
+            $message .= '<div style="width:64px;flex-shrink:0;margin-right:12px;"><img src="' . esc_url($item->image_url) . '" alt="' . esc_attr($item->produkt_name) . '" style="width:64px;height:64px;object-fit:cover;border-radius:8px;background:#F0F1F4;display:block;"></div>';
+        } else {
+            $message .= '<div style="width:64px;height:64px;border-radius:8px;background:#F0F1F4;margin-right:12px;"></div>';
+        }
+        $message .= '<div style="flex:1;">';
+        $message .= '<div style="font-weight:700;font-size:14px;line-height:1.4;">' . esc_html($item->produkt_name ?? '') . '</div>';
+        if (!empty($details)) {
+            $message .= '<div style="margin-top:6px;font-size:13px;color:#4A4A4A;line-height:1.5;">' . implode('<br>', $details) . '</div>';
+        }
+        $message .= '</div>';
+        $message .= '</div>';
+        $message .= '</div>';
+    } else {
+        $message .= '<p style="margin:0 0 8px;font-size:14px;line-height:1.6;">(Artikel konnte nicht aufgelöst werden.)</p>';
+    }
+
+    $message .= '</div>';
+
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+
+    $message .= '</div>';
+    $message .= '</body></html>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    $from_email = get_option('admin_email');
+    $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
+
+    $admin_users = get_users(['role' => 'administrator', 'fields' => ['user_email']]);
+    $emails = [];
+    foreach ($admin_users as $u) {
+        if (!empty($u->user_email) && is_email($u->user_email)) {
+            $emails[] = $u->user_email;
+        }
+    }
+    if (empty($emails)) {
+        $emails = [get_option('admin_email')];
+    }
+
+    return (bool) wp_mail($emails, $subject, $message, $headers);
+}
+
+/**
  * Send low stock notification email to admin
  */
-function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int $product_color_id = null): void {
+function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int $product_color_id = null, ?int $condition_id = null, ?int $threshold = null): void {
     global $wpdb;
     
     // Get variant information
@@ -634,12 +924,26 @@ function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int 
             $color_name = $color->name;
         }
     }
+
+    // Get condition name if applicable
+    $condition_name = '';
+    if ($condition_id) {
+        $cond = $wpdb->get_row($wpdb->prepare(
+            "SELECT name FROM {$wpdb->prefix}produkt_conditions WHERE id = %d",
+            $condition_id
+        ));
+        if ($cond) {
+            $condition_name = $cond->name;
+        }
+    }
     
     $site_title = get_bloginfo('name');
     $logo_url   = get_option('plugin_firma_logo_url', '');
     $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
     
-    $subject = 'Lagerbestand niedrig: ' . esc_html($variant->name) . ($color_name ? ' - ' . esc_html($color_name) : '');
+    $subject = 'Lagerbestand niedrig: ' . esc_html($variant->name)
+        . ($condition_name ? ' - ' . esc_html($condition_name) : '')
+        . ($color_name ? ' - ' . esc_html($color_name) : '');
     
     $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
     $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
@@ -657,10 +961,16 @@ function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int 
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
     $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Kategorie:</strong></td><td>' . esc_html($variant->category_name ?? 'N/A') . '</td></tr>';
     $message .= '<tr><td style="padding:6px 0;"><strong>Ausführung:</strong></td><td>' . esc_html($variant->name) . '</td></tr>';
+    if ($condition_name) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Zustand:</strong></td><td>' . esc_html($condition_name) . '</td></tr>';
+    }
     if ($color_name) {
         $message .= '<tr><td style="padding:6px 0;"><strong>Farbe:</strong></td><td>' . esc_html($color_name) . '</td></tr>';
     }
     $message .= '<tr><td style="padding:6px 0;"><strong>Verfügbar:</strong></td><td><strong style="color:#dc3232;font-size:16px;">' . esc_html($stock_available) . '</strong></td></tr>';
+    if (!is_null($threshold)) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Schwellenwert:</strong></td><td>' . esc_html((string) $threshold) . '</td></tr>';
+    }
     if (!empty($variant->sku)) {
         $message .= '<tr><td style="padding:6px 0;"><strong>SKU:</strong></td><td>' . esc_html($variant->sku) . '</td></tr>';
     }
@@ -681,29 +991,149 @@ function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int 
     $headers = ['Content-Type: text/html; charset=UTF-8'];
     $from_email = get_option('admin_email');
     $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
-    wp_mail(get_option('admin_email'), $subject, $message, $headers);
+
+    // Send to all administrators
+    $admin_users = get_users(['role' => 'administrator', 'fields' => ['user_email']]);
+    $emails = [];
+    foreach ($admin_users as $u) {
+        if (!empty($u->user_email) && is_email($u->user_email)) {
+            $emails[] = $u->user_email;
+        }
+    }
+    if (empty($emails)) {
+        $emails = [get_option('admin_email')];
+    }
+
+    wp_mail($emails, $subject, $message, $headers);
+}
+
+/**
+ * Send low stock notification email to admins for Extras (same design as variant low-stock email)
+ */
+function send_admin_low_stock_extra_email(int $extra_id, int $stock_available, ?int $threshold = null): void {
+    global $wpdb;
+
+    $extra = $wpdb->get_row($wpdb->prepare(
+        "SELECT e.*, c.name AS category_name
+         FROM {$wpdb->prefix}produkt_extras e
+         LEFT JOIN {$wpdb->prefix}produkt_categories c ON c.id = e.category_id
+         WHERE e.id = %d",
+        $extra_id
+    ));
+
+    $extra_name = $extra ? ($extra->name ?? ('Extra #' . $extra_id)) : ('Extra #' . $extra_id);
+    $category_name = $extra ? ($extra->category_name ?? 'N/A') : 'N/A';
+    $sku = $extra ? ($extra->sku ?? '') : '';
+
+    $site_title = get_bloginfo('name');
+    $logo_url   = get_option('plugin_firma_logo_url', '');
+    $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+    $subject = 'Lagerbestand niedrig (Extra): ' . esc_html($extra_name);
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="max-width:100px;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Lagerbestand niedrig</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo Team,<br>der Lagerbestand für ein Extra ist niedrig geworden. Bitte prüfen Sie den Bestand und entscheiden Sie, ob neue Produkte eingekauft werden müssen.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Produktinformationen</h2>';
+    $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
+    $message .= '<tr><td style="padding:6px 0;width:40%;"><strong>Kategorie:</strong></td><td>' . esc_html($category_name) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Extra:</strong></td><td>' . esc_html($extra_name) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>Verfügbar:</strong></td><td><strong style="color:#dc3232;font-size:16px;">' . esc_html((string) $stock_available) . '</strong></td></tr>';
+    if (!is_null($threshold)) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>Schwellenwert:</strong></td><td>' . esc_html((string) $threshold) . '</td></tr>';
+    }
+    if (!empty($sku)) {
+        $message .= '<tr><td style="padding:6px 0;"><strong>SKU:</strong></td><td>' . esc_html($sku) . '</td></tr>';
+    }
+    $message .= '</table>';
+    $message .= '</div>';
+
+    $message .= '<p style="margin:16px 0 0;font-size:12px;line-height:1.6;">Bitte prüfen Sie den Lagerbestand im Admin-Bereich und entscheiden Sie, ob neue Produkte eingekauft werden müssen.</p>';
+
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+
+    $message .= '</div>';
+    $message .= '</body></html>';
+
+    $headers = ['Content-Type: text/html; charset=UTF-8'];
+    $from_email = get_option('admin_email');
+    $headers[] = 'From: H2 Rental Pro <' . $from_email . '>';
+
+    $admin_users = get_users(['role' => 'administrator', 'fields' => ['user_email']]);
+    $emails = [];
+    foreach ($admin_users as $u) {
+        if (!empty($u->user_email) && is_email($u->user_email)) {
+            $emails[] = $u->user_email;
+        }
+    }
+    if (empty($emails)) {
+        $emails = [get_option('admin_email')];
+    }
+
+    wp_mail($emails, $subject, $message, $headers);
 }
 
 /**
  * Check if stock threshold is reached and send notification email
  */
-function check_stock_threshold(int $variant_id, int $stock_available, ?int $product_color_id = null): void {
+function check_stock_threshold(int $variant_id, int $stock_available, ?int $product_color_id = null, ?int $condition_id = null): void {
     global $wpdb;
-    
-    // Get variant with threshold
-    $variant = $wpdb->get_row($wpdb->prepare(
-        "SELECT stock_threshold, category_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
-        $variant_id
-    ));
-    
-    if (!$variant || empty($variant->stock_threshold) || $variant->stock_threshold <= 0) {
+
+    // Determine threshold:
+    // - if product_color_id is set: use variant_options stock_threshold for this variant + condition + color
+    // - else: use variant stock_threshold
+    $threshold = 0;
+    $category_id = 0;
+    if ($product_color_id) {
+        $category_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT category_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+            $variant_id
+        ));
+        if ($condition_id) {
+            $threshold = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT stock_threshold FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id = %d",
+                $variant_id,
+                $product_color_id,
+                $condition_id
+            ));
+        } else {
+            $threshold = (int) $wpdb->get_var($wpdb->prepare(
+                "SELECT stock_threshold FROM {$wpdb->prefix}produkt_variant_options WHERE variant_id = %d AND option_type = 'product_color' AND option_id = %d AND condition_id IS NULL",
+                $variant_id,
+                $product_color_id
+            ));
+        }
+    } else {
+        $variant = $wpdb->get_row($wpdb->prepare(
+            "SELECT stock_threshold, category_id FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+            $variant_id
+        ));
+        if (!$variant) {
+            return;
+        }
+        $threshold = (int) ($variant->stock_threshold ?? 0);
+        $category_id = (int) ($variant->category_id ?? 0);
+    }
+
+    if ($threshold <= 0 || $category_id <= 0) {
         return;
     }
     
     // Check if inventory is enabled for this category
     $category = $wpdb->get_row($wpdb->prepare(
         "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
-        $variant->category_id
+        $category_id
     ));
     
     if (!$category || !$category->inventory_enabled) {
@@ -711,44 +1141,53 @@ function check_stock_threshold(int $variant_id, int $stock_available, ?int $prod
     }
     
     // Check if stock is at or below threshold
-    if ($stock_available <= $variant->stock_threshold) {
-        // Use a temporary order_id field to store variant_id for threshold notifications
-        // We'll use a special format: variant_id * 1000000 + (product_color_id or 0)
-        $notification_id = $variant_id * 1000000 + ($product_color_id ?? 0);
-        
-        // Check if we already sent an email for this variant/color combination recently (within last 24 hours)
-        $last_notification = $wpdb->get_var($wpdb->prepare(
-            "SELECT created_at FROM {$wpdb->prefix}produkt_order_logs 
-             WHERE order_id = %d AND event = 'low_stock_notification' 
-             ORDER BY created_at DESC LIMIT 1",
-            $notification_id
-        ));
-        
-        $should_send = true;
-        if ($last_notification) {
-            $last_time = strtotime($last_notification);
-            $current_time = current_time('timestamp');
-            // Only send if last notification was more than 24 hours ago
-            if (($current_time - $last_time) < 86400) {
-                $should_send = false;
-            }
+    if ($stock_available <= $threshold) {
+        // Rate limit: only one email per row (variant+condition+color) per 24h
+        $key = 'pv_low_stock_' . $variant_id . '_' . (int) ($condition_id ?? 0) . '_' . (int) ($product_color_id ?? 0);
+        if (get_transient($key)) {
+            return;
         }
-        
-        if ($should_send) {
-            send_admin_low_stock_email($variant_id, $stock_available, $product_color_id);
-            // Log the notification
-            $wpdb->insert(
-                $wpdb->prefix . 'produkt_order_logs',
-                [
-                    'order_id'   => $notification_id,
-                    'event'      => 'low_stock_notification',
-                    'message'    => sprintf('Lagerbestand niedrig: %d verfügbar (Schwellenwert: %d)', $stock_available, $variant->stock_threshold),
-                    'created_at' => current_time('mysql', true),
-                ],
-                ['%d', '%s', '%s', '%s']
-            );
-        }
+        send_admin_low_stock_email($variant_id, $stock_available, $product_color_id, $condition_id, $threshold);
+        set_transient($key, 1, DAY_IN_SECONDS);
     }
+}
+
+/**
+ * Check extra stock threshold and send admin notification
+ */
+function check_extra_stock_threshold(int $extra_id, int $stock_available): void {
+    global $wpdb;
+
+    $extra = $wpdb->get_row($wpdb->prepare(
+        "SELECT id, category_id, stock_threshold FROM {$wpdb->prefix}produkt_extras WHERE id = %d",
+        $extra_id
+    ));
+    if (!$extra) {
+        return;
+    }
+    $threshold = (int) ($extra->stock_threshold ?? 0);
+    if ($threshold <= 0) {
+        return;
+    }
+    $category = $wpdb->get_row($wpdb->prepare(
+        "SELECT inventory_enabled FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+        (int) $extra->category_id
+    ));
+    if (!$category || !$category->inventory_enabled) {
+        return;
+    }
+    if ($stock_available > $threshold) {
+        return;
+    }
+
+    $key = 'pv_low_stock_extra_' . (int) $extra_id;
+    if (get_transient($key)) {
+        return;
+    }
+
+    send_admin_low_stock_extra_email($extra_id, $stock_available, $threshold);
+
+    set_transient($key, 1, DAY_IN_SECONDS);
 }
 
 function produkt_add_order_log(int $order_id, string $event, string $message = ''): void {
