@@ -77,6 +77,7 @@ class Plugin {
         add_action('wp_ajax_nopriv_check_extra_availability', [$this->ajax, 'ajax_check_extra_availability']);
         add_action('wp_ajax_notify_availability', [$this->ajax, 'ajax_notify_availability']);
         add_action('wp_ajax_nopriv_notify_availability', [$this->ajax, 'ajax_notify_availability']);
+        add_action('wp_ajax_submit_product_review', [$this->ajax, 'ajax_submit_product_review']);
 
         add_action('admin_post_nopriv_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
         add_action('admin_post_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
@@ -92,6 +93,11 @@ class Plugin {
 
         add_action('wp_ajax_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
         add_action('wp_ajax_nopriv_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
+
+        add_action('produkt_send_review_reminders_daily', [$this, 'send_review_reminders_daily']);
+        if (!wp_next_scheduled('produkt_send_review_reminders_daily')) {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', 'produkt_send_review_reminders_daily');
+        }
 
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
@@ -180,6 +186,10 @@ class Plugin {
     }
 
     public function deactivate() {
+        $timestamp = wp_next_scheduled('produkt_send_review_reminders_daily');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'produkt_send_review_reminders_daily');
+        }
         flush_rewrite_rules();
     }
 
@@ -1351,6 +1361,74 @@ class Plugin {
 
         wp_safe_redirect($ref);
         exit;
+    }
+
+    public function send_review_reminders_daily() {
+        global $wpdb;
+        Database::backfill_review_targets_batch(200);
+
+        $targets = Database::get_pending_review_targets_for_reminders(200);
+        if (empty($targets)) {
+            return;
+        }
+
+        $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        $account_url = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+
+        foreach ($targets as $target) {
+            $customer_id = (int) ($target->customer_id ?? 0);
+            $subscription_key = (string) ($target->subscription_key ?? '');
+
+            if (!$customer_id || !$subscription_key) {
+                continue;
+            }
+
+            $existing_review_id = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM {$wpdb->prefix}produkt_reviews WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                    $customer_id,
+                    $subscription_key
+                )
+            );
+
+            if ($existing_review_id) {
+                Database::mark_review_target_reviewed($customer_id, $subscription_key, $existing_review_id);
+                continue;
+            }
+
+            if (Database::has_sent_review_reminder($customer_id, $subscription_key)) {
+                continue;
+            }
+
+            $email = sanitize_email($target->email ?? '');
+            if (!$email) {
+                continue;
+            }
+
+            $product_name = $target->product_name ?? '';
+            $customer_name = trim(($target->first_name ?? '') . ' ' . ($target->last_name ?? ''));
+            $cta_url = add_query_arg(
+                [
+                    'view'   => 'abos',
+                    'review' => rawurlencode($subscription_key),
+                ],
+                $account_url
+            );
+
+            $sent = function_exists(__NAMESPACE__ . '\\send_produkt_review_reminder_email')
+                ? send_produkt_review_reminder_email(
+                    $email,
+                    $customer_name,
+                    $product_name,
+                    $cta_url,
+                    $target->end_date ?? ''
+                )
+                : false;
+
+            if ($sent) {
+                Database::log_review_reminder($customer_id, $subscription_key);
+            }
+        }
     }
 }
 

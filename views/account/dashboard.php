@@ -235,6 +235,13 @@
                 <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
                 <h4>Meine Abos</h4>
             </div>
+            <?php
+                $all_keys = array_keys($order_map ?? []);
+                $reviewed_keys = [];
+                if (!empty($customer_row_id) && !empty($all_keys)) {
+                    $reviewed_keys = \ProduktVerleih\Database::get_reviewed_subscription_keys((int) $customer_row_id, $all_keys);
+                }
+            ?>
             <div class="subscription-grid">
                 <?php if (!empty($active_subscriptions)) : ?>
                     <?php foreach ($active_subscriptions as $sub) : ?>
@@ -247,21 +254,19 @@
                         ?>
                         <?php foreach ($orders_for_sub as $order) : ?>
                             <?php
-                                $variant_id  = $order ? ($order->variant_id ?? 0) : 0;
-                                $category_id = $order ? ($order->category_id ?? 0) : 0;
-                                $image_url   = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
-                                $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
+                                $variant_id      = $order ? ($order->variant_id ?? 0) : 0;
+                                $category_id     = $order ? ($order->category_id ?? 0) : 0;
+                                $image_url       = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+                                $product         = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
                                 if (!$product && !empty($order->category_id)) {
                                     $product = pv_get_category_title_by_id((int) $order->category_id);
                                 }
-                                $product     = $product ?: ($order ? ($order->variant_name ?? 'Produkt') : 'Produkt');
-                                $order_date  = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
-                                $duration    = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
-                                $payments    = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
-                                $monthly     = number_format($payments['monthly_amount'] ?? 0, 2, ',', '.') . ' €';
-                                $min_months  = $order ? pv_get_minimum_duration_months($order) : 0;
-                                $min_label   = $min_months ? $min_months . ' Monate' : '';
-                                $detail_url  = add_query_arg(
+                                $product         = $product ?: ($order ? ($order->variant_name ?? 'Produkt') : 'Produkt');
+                                $order_date      = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
+                                $payments        = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
+                                $monthly_amount  = max(0.0, (float) ($payments['monthly_amount'] ?? 0));
+                                $monthly_display = number_format($monthly_amount, 2, ',', '.') . '€/Monat';
+                                $detail_url      = add_query_arg(
                                     [
                                         'view'         => 'abo-detail',
                                         'subscription' => $sub_id,
@@ -269,19 +274,35 @@
                                     ],
                                     $overview_url
                                 );
+                                $is_reviewed     = !empty($reviewed_keys[$sub_id]);
                             ?>
-                            <a class="subscription-card" href="<?php echo esc_url($detail_url); ?>">
-                                <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                            <div class="subscription-card">
+                                <div class="subscription-image-wrap">
+                                    <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                                    <span class="pill-badge success subscription-status-badge">ABO AKTIV</span>
+                                </div>
                                 <div class="subscription-card-body">
+                                    <div class="subscription-date">Bestellt am: <?php echo esc_html($order_date); ?></div>
                                     <div class="subscription-card-title"><?php echo esc_html($product); ?></div>
-                                    <div class="subscription-meta">
-                                        <span class="pill-badge success">ABO AKTIV</span>
-                                        <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
-                                        <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
-                                        <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                                    <div class="subscription-price"><?php echo esc_html($monthly_display); ?></div>
+                                    <div class="subscription-actions">
+                                        <a class="card-button card-button-link secondary-button" href="<?php echo esc_url($detail_url); ?>">Details ansehen</a>
+                                        <?php if ($is_reviewed): ?>
+                                            <button type="button" class="card-button reviewed" aria-disabled="true" disabled>Bewertet ✓</button>
+                                        <?php else: ?>
+                                            <button
+                                                type="button"
+                                                class="card-button card-button-link open-review-modal"
+                                                data-subscription-key="<?php echo esc_attr($sub_id); ?>"
+                                                data-order-id="<?php echo esc_attr($order->id ?? 0); ?>"
+                                                data-product-index="<?php echo esc_attr($order->product_index ?? 0); ?>"
+                                                data-product-id="<?php echo esc_attr($order->category_id ?? 0); ?>"
+                                                data-product-name="<?php echo esc_attr($product); ?>"
+                                            >Jetzt bewerten</button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
-                            </a>
+                            </div>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
                 <?php else : ?>

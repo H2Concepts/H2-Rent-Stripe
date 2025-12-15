@@ -896,6 +896,60 @@ function send_admin_rental_cancellation_email(int $order_id, int $product_index 
 }
 
 /**
+ * Send a review reminder email to customers after their rental ends.
+ */
+function send_produkt_review_reminder_email(string $email, string $customer_name, string $product_name, string $cta_url, string $end_date = ''): bool {
+    if (empty($email)) {
+        return false;
+    }
+
+    $site_title = get_bloginfo('name');
+    $logo_url   = get_option('plugin_firma_logo_url', '');
+    $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+    $friendly_name = trim($customer_name);
+    $product_label = $product_name ? $product_name : 'dein Produkt';
+    $end_label     = $end_date ? date_i18n('d.m.Y', strtotime($end_date)) : '';
+
+    $subject = 'Wie hat dir ' . $product_label . ' gefallen?';
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 28px;">Wie hat dir ' . esc_html($product_label) . ' gefallen?</h1>';
+    $message .= '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($friendly_name ?: '') . ',</p>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">deine Mietzeit ist beendet' . ($end_label ? ' (Ende: ' . esc_html($end_label) . ')' : '') . '. Teile deine Erfahrung mit anderen und hilf ihnen bei der Entscheidung.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<div style="font-size:15px;font-weight:700;margin-bottom:6px;">' . esc_html($product_label) . '</div>';
+    $message .= '<p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:#4A4A4A;">Dein Feedback dauert nur eine Minute und hilft anderen Kunden, das passende Produkt zu finden.</p>';
+    $message .= '<div style="text-align:center;margin:10px 0 6px;">';
+    $message .= '<a href="' . esc_url($cta_url) . '" style="display:inline-block;padding:14px 28px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;font-size:15px;">Jetzt bewerten</a>';
+    $message .= '</div>';
+    $message .= '<p style="margin:12px 0 0;font-size:12px;color:#7A7A7A;">Der Link öffnet dein Kundenkonto und startet das Bewertungsfenster automatisch.</p>';
+    $message .= '</div>';
+
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+
+    $message .= '</div>';
+    $message .= '</body></html>';
+
+    $headers    = ['Content-Type: text/html; charset=UTF-8'];
+    $from_name  = get_bloginfo('name');
+    $from_email = get_option('admin_email');
+    $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+    return (bool) wp_mail($email, $subject, $message, $headers);
+}
+
+/**
  * Send low stock notification email to admin
  */
 function send_admin_low_stock_email(int $variant_id, int $stock_available, ?int $product_color_id = null, ?int $condition_id = null, ?int $threshold = null): void {

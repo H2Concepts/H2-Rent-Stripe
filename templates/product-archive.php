@@ -220,12 +220,26 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
                     <?php
                         $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
                         $rating_display = number_format($rating_value, 1, ',', '');
+                        $manual_override = ($rating_value > 0 && !empty($cat->rating_link));
                     ?>
-                    <?php if ($cat->show_rating && $rating_value > 0): ?>
+                    <?php if ($cat->show_rating && $manual_override): ?>
                         <div class="produkt-rating">
                             <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
                             <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
                         </div>
+                    <?php elseif ($cat->show_rating): ?>
+                        <?php
+                            $summary = \ProduktVerleih\Database::get_product_reviews_summary((int) $cat->id);
+                            $real_avg = (float) ($summary['avg'] ?? 0);
+                            $real_cnt = (int) ($summary['count'] ?? 0);
+                        ?>
+                        <?php if (!empty($real_cnt) && $real_avg > 0): ?>
+                            <?php $real_display = number_format($real_avg, 1, ',', ''); ?>
+                            <div class="produkt-rating">
+                                <span class="produkt-rating-number"><?php echo esc_html($real_display); ?></span>
+                                <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($real_avg); ?>;"></span>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                     <div class="shop-product-price">
                         <?php echo esc_html(pv_format_price_label($price_data)); ?>

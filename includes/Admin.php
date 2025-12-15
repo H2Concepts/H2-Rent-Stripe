@@ -167,6 +167,15 @@ class Admin {
             array($this, 'filters_page')
         );
 
+        add_submenu_page(
+            'produkt-verleih',
+            'Kundenbewertungen',
+            'Kundenbewertungen',
+            'manage_options',
+            'produkt-reviews',
+            array($this, 'reviews_page')
+        );
+
 
         // New settings menu with Stripe integration tab
         add_submenu_page(
@@ -1205,7 +1214,11 @@ class Admin {
     public function content_blocks_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/content-blocks-page.php';
     }
-    
+
+    public function reviews_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/reviews-page.php';
+    }
+
     public function orders_page() {
         global $wpdb;
         $notice = '';

@@ -14,6 +14,8 @@ if (!isset($message)) {
     $message = '';
 }
 
+$view = isset($_GET['view']) ? sanitize_key($_GET['view']) : 'overview';
+
 if (isset($_POST['cancel_subscription'], $_POST['cancel_subscription_nonce'])) {
     if (wp_verify_nonce($_POST['cancel_subscription_nonce'], 'cancel_subscription_action')) {
         $sub_id = sanitize_text_field($_POST['subscription_id']);
@@ -74,6 +76,7 @@ $invoice_orders   = [];
 $subscription_order_numbers = [];
 $stripe_invoices  = [];
 $customer_ids     = [];
+$customer_row_id  = 0;
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -92,7 +95,9 @@ if (is_user_logged_in()) {
         }
     }
 
-$rental_orders = [];
+    $customer_row_id = Database::get_customer_row_id_by_email($current_user->user_email);
+
+    $rental_orders = [];
 
 foreach ($orders as $o) {
     if (!in_array(($o->status ?? ''), ['abgeschlossen', 'gekündigt', 'beendet'], true)) {
@@ -166,42 +171,65 @@ foreach ($orders as $o) {
 
     $customer_ids = array_values(array_unique(array_filter($customer_ids)));
 
-    if (!empty($customer_ids)) {
+    $need_invoices = ($view === 'rechnungen');
+    $need_subs     = in_array($view, ['abos', 'abo-detail'], true);
+
+    if (!empty($customer_ids) && ($need_invoices || $need_subs)) {
         $invoice_lookup = [];
 
         foreach ($customer_ids as $cid) {
-            $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($cid, 50);
-            if (is_wp_error($invoice_data)) {
-                $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
-            } else {
-                foreach ($invoice_data as $invoice_row) {
-                    if (!empty($invoice_row['id'])) {
-                        $invoice_lookup[$invoice_row['id']] = $invoice_row;
+            if ($need_invoices) {
+                $invoice_cache_key = 'pv_inv_' . md5($cid);
+                $invoice_data = get_transient($invoice_cache_key);
+                if ($invoice_data === false) {
+                    $invoice_data = \ProduktVerleih\StripeService::get_customer_invoices($cid, 50);
+                    if (!is_wp_error($invoice_data)) {
+                        set_transient($invoice_cache_key, $invoice_data, 15 * MINUTE_IN_SECONDS);
                     }
                 }
-            }
 
-            $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($cid);
-            if (!is_wp_error($subs)) {
-                foreach ($subs as $sub) {
-                    $base_id = trim((string) ($sub['subscription_id'] ?? ''));
-                    if ($base_id === '') {
-                        continue;
-                    }
-
-                    foreach ($subscription_map as $key => $meta) {
-                        if (strpos($key, $base_id) === 0) {
-                            $subscription_map[$key]['status']     = $sub['status'] ?? ($meta['status'] ?? 'active');
-                            $subscription_map[$key]['start_date'] = $sub['start_date'] ?? ($meta['start_date'] ?? '');
+                if (is_wp_error($invoice_data)) {
+                    $message .= '<p style="color:red;">' . esc_html($invoice_data->get_error_message()) . '</p>';
+                } else {
+                    foreach ($invoice_data as $invoice_row) {
+                        if (!empty($invoice_row['id'])) {
+                            $invoice_lookup[$invoice_row['id']] = $invoice_row;
                         }
                     }
                 }
-            } else {
-                $message .= '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+            }
+
+            if ($need_subs) {
+                $subs_cache_key = 'pv_subs_' . md5($cid);
+                $subs = get_transient($subs_cache_key);
+                if ($subs === false) {
+                    $subs = \ProduktVerleih\StripeService::get_active_subscriptions_for_customer($cid);
+                    if (!is_wp_error($subs)) {
+                        set_transient($subs_cache_key, $subs, 15 * MINUTE_IN_SECONDS);
+                    }
+                }
+
+                if (!is_wp_error($subs)) {
+                    foreach ($subs as $sub) {
+                        $base_id = trim((string) ($sub['subscription_id'] ?? ''));
+                        if ($base_id === '') {
+                            continue;
+                        }
+
+                        foreach ($subscription_map as $key => $meta) {
+                            if (strpos($key, $base_id) === 0) {
+                                $subscription_map[$key]['status']     = $sub['status'] ?? ($meta['status'] ?? 'active');
+                                $subscription_map[$key]['start_date'] = $sub['start_date'] ?? ($meta['start_date'] ?? '');
+                            }
+                        }
+                    }
+                } else {
+                    $message .= '<p style="color:red;">' . esc_html($subs->get_error_message()) . '</p>';
+                }
             }
         }
 
-        if (!empty($invoice_lookup)) {
+        if ($need_invoices && !empty($invoice_lookup)) {
             $stripe_invoices = array_values($invoice_lookup);
             usort($stripe_invoices, function ($a, $b) {
                 return ($b['created'] ?? 0) <=> ($a['created'] ?? 0);

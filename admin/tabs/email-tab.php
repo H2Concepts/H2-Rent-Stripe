@@ -281,6 +281,26 @@ if (!function_exists('produkt_send_test_email_by_type')) {
                 return true;
             }
 
+            case 'review_reminder': {
+                $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                $account_url     = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+                $subscription_key = 'demo-sub-001';
+                $cta_url = add_query_arg([
+                    'view'   => 'abos',
+                    'review' => $subscription_key,
+                ], $account_url);
+
+                $sent = \ProduktVerleih\send_produkt_review_reminder_email(
+                    $admin_email,
+                    'Max Mustermann',
+                    'Kinderfahrrad Woom GO 2',
+                    $cta_url,
+                    date('Y-m-d', current_time('timestamp') - DAY_IN_SECONDS)
+                );
+
+                return $sent ? true : new \WP_Error('send_failed', 'Bewertungs-Erinnerung konnte nicht gesendet werden.');
+            }
+
             case 'newsletter': {
                 $token = 'TEST-TOKEN-' . bin2hex(random_bytes(16));
                 $confirm_url = add_query_arg([
@@ -434,6 +454,7 @@ $invoice_email_enabled = get_option('produkt_invoice_email_enabled', '1');
                             <option value="admin_order_confirmation">Admin Bestellbestätigung</option>
                             <option value="customer_rental_cancellation">Kündigungsbestätigung (Kunde)</option>
                             <option value="admin_rental_cancellation">Kündigung (Admin)</option>
+                            <option value="review_reminder">Bewertungs-Erinnerung</option>
                             <option value="low_stock_variant">Lagerbestand Niedrig</option>
                             <option value="low_stock_extra">Lagerbestand Niedrig (Extras)</option>
                             <option value="newsletter">Newsletter</option>

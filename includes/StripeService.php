@@ -1552,6 +1552,7 @@ class StripeService {
                                 }
                             }
                         }
+                        Database::sync_review_targets_for_order($ord->id);
                     }
                 }
             } else {
@@ -1693,7 +1694,9 @@ class StripeService {
                     }
                     }
                 }
-                
+
+                Database::sync_review_targets_for_order($order_id);
+
                 produkt_add_order_log($order_id, 'order_created');
                 produkt_add_order_log($order_id, 'checkout_completed');
                 send_produkt_welcome_email($data, $order_id);
