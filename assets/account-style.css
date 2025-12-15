@@ -957,6 +957,28 @@ body.produkt-login-page #colophon {
     text-decoration: underline;
 }
 
+.review-btn {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+}
+
+.review-btn.reviewed {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.subscription-review-cta {
+  margin-top: 10px;
+}
+
+.produkt-review-modal .review-stars { display:flex; gap:6px; margin:10px 0; }
+.produkt-review-modal .review-star { font-size:20px; background:none; border:none; cursor:pointer; opacity:.35; }
+.produkt-review-modal .review-star.active { opacity:1; }
+
 @media (max-width: 768px) {
     .code-input-group {
         gap: 6px;

@@ -33,6 +33,7 @@ jQuery(document).ready(function($) {
     let cart = JSON.parse(localStorage.getItem('produkt_cart') || '[]');
     let emailCheckTimer = null;
     let emailExists = false;
+    let reviewPayload = null;
 
     function saveShippingSelection(priceId, cost) {
         try {
@@ -232,6 +233,34 @@ jQuery(document).ready(function($) {
     );
     $('body').append(tooltipModal);
 
+    const reviewModal = $('<div>', { id: 'produkt-review-modal', class: 'produkt-tooltip-modal produkt-review-modal' }).append(
+      $('<div>', { class: 'modal-content' }).append(
+        $('<div>', { class: 'modal-header' }).append(
+          $('<div>', { class: 'modal-title' }).text('Bewertung abgeben'),
+          $('<button>', { class: 'modal-close', 'aria-label': 'Schließen' }).text('×')
+        ),
+        $('<div>', { class: 'modal-text' }).append(
+          $('<div>', { class: 'review-product-name' }),
+          $('<div>', { class: 'review-stars', 'data-rating': 0 }),
+          $('<textarea>', { class: 'review-text', rows: 3, placeholder: 'Kurzer Text (optional)…' }),
+          $('<button>', { class: 'review-submit-btn' }).text('Bewertung einreichen'),
+          $('<div>', { class: 'review-hint' })
+        )
+      )
+    );
+
+    $('body').append(reviewModal);
+
+    function renderReviewStars($wrap, rating) {
+      $wrap.empty();
+      for (let i = 1; i <= 5; i++) {
+        const $s = $('<button>', { type: 'button', class: 'review-star', 'data-star': i, 'aria-label': i + ' Sterne' }).text('★');
+        if (i <= rating) $s.addClass('active');
+        $wrap.append($s);
+      }
+    }
+    renderReviewStars($('#produkt-review-modal .review-stars'), 0);
+
     $(document).on('click', '.produkt-tooltip', function(e){
         e.preventDefault();
         const text = $(this).find('.produkt-tooltiptext').text().trim();
@@ -246,6 +275,67 @@ jQuery(document).ready(function($) {
             $('#produkt-tooltip-modal').hide();
             $('body').removeClass('produkt-popup-open');
         }
+    });
+
+    $(document).on('click', '.open-review-modal', function () {
+      const $btn = $(this);
+
+      reviewPayload = {
+        subscription_key: $btn.data('subscription-key'),
+        order_id: parseInt($btn.data('order-id'), 10) || 0,
+        product_index: parseInt($btn.data('product-index'), 10) || 0,
+        product_id: parseInt($btn.data('product-id'), 10) || 0,
+        rating: 0
+      };
+
+      $('#produkt-review-modal .review-product-name').text($btn.data('product-name') || '');
+      $('#produkt-review-modal .review-text').val('');
+      $('#produkt-review-modal .review-hint').text('');
+      renderReviewStars($('#produkt-review-modal .review-stars'), 0);
+
+      $('#produkt-review-modal').css('display', 'flex');
+      $('body').addClass('produkt-popup-open');
+    });
+
+    $(document).on('click', '#produkt-review-modal', function(e){
+      if (e.target === this || $(e.target).hasClass('modal-close')) {
+        $('#produkt-review-modal').hide();
+        $('body').removeClass('produkt-popup-open');
+      }
+    });
+
+    $(document).on('click', '#produkt-review-modal .review-star', function(){
+      const val = parseInt($(this).data('star'), 10) || 0;
+      reviewPayload.rating = val;
+      renderReviewStars($('#produkt-review-modal .review-stars'), val);
+    });
+
+    $(document).on('click', '#produkt-review-modal .review-submit-btn', function(){
+      if (!reviewPayload || !reviewPayload.subscription_key) return;
+
+      const text = ($('#produkt-review-modal .review-text').val() || '').trim();
+
+      $.post(produkt_ajax.ajax_url, {
+        action: 'submit_product_review',
+        nonce: produkt_ajax.nonce,
+        subscription_key: reviewPayload.subscription_key,
+        order_id: reviewPayload.order_id,
+        product_index: reviewPayload.product_index,
+        product_id: reviewPayload.product_id,
+        rating: reviewPayload.rating,
+        review_text: text
+      }).done(function(res){
+        if (!res || !res.success) {
+          $('#produkt-review-modal .review-hint').text((res && res.data && res.data.message) ? res.data.message : 'Fehler.');
+          return;
+        }
+
+        const selector = '.open-review-modal[data-subscription-key="' + reviewPayload.subscription_key + '"]';
+        $(selector).replaceWith('<button type="button" class="review-btn reviewed" disabled>Bewertet ✓</button>');
+
+        $('#produkt-review-modal').hide();
+        $('body').removeClass('produkt-popup-open');
+      });
     });
 
     function saveCart() {

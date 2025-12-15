@@ -1418,7 +1418,8 @@ img.wp-smiley, img.emoji {
     font-size: 13px;
 }
 
-.produkt-star-rating {
+.produkt-star-rating,
+.produkt-review-stars {
     --rating: 0;
     --star-size: 16px;
     font-size: var(--star-size);
@@ -1429,12 +1430,14 @@ img.wp-smiley, img.emoji {
     white-space: nowrap;
 }
 
-.produkt-star-rating::before {
+.produkt-star-rating::before,
+.produkt-review-stars::before {
     content: "\2605\2605\2605\2605\2605";
     letter-spacing: 3px;
 }
 
-.produkt-star-rating::after {
+.produkt-star-rating::after,
+.produkt-review-stars::after {
     content: "\2605\2605\2605\2605\2605";
     letter-spacing: 3px;
     color: #ffc107;
@@ -1447,6 +1450,32 @@ img.wp-smiley, img.emoji {
 
 .produkt-star-black::after {
     color: #000;
+}
+
+.produkt-reviews {
+    margin: 32px 0;
+}
+
+.produkt-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.produkt-review-item {
+    padding: 16px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.produkt-review-text {
+    margin: 8px 0;
+}
+
+.produkt-review-date {
+    font-size: 12px;
+    color: #777;
 }
 
 /* Exit Intent Popup */

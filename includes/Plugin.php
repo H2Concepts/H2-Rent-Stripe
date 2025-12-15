@@ -77,6 +77,7 @@ class Plugin {
         add_action('wp_ajax_nopriv_check_extra_availability', [$this->ajax, 'ajax_check_extra_availability']);
         add_action('wp_ajax_notify_availability', [$this->ajax, 'ajax_notify_availability']);
         add_action('wp_ajax_nopriv_notify_availability', [$this->ajax, 'ajax_notify_availability']);
+        add_action('wp_ajax_submit_product_review', [$this->ajax, 'ajax_submit_product_review']);
 
         add_action('admin_post_nopriv_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
         add_action('admin_post_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);

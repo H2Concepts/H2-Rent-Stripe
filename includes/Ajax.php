@@ -1300,6 +1300,95 @@ class Ajax {
         wp_send_json_success();
     }
 
+    public function ajax_submit_product_review() {
+        check_ajax_referer('produkt_nonce', 'nonce');
+
+        if (!is_user_logged_in()) {
+            wp_send_json_error(['message' => 'Nicht eingeloggt.']);
+        }
+
+        $subscription_key = isset($_POST['subscription_key']) ? sanitize_text_field($_POST['subscription_key']) : '';
+        $order_id         = isset($_POST['order_id']) ? (int) $_POST['order_id'] : 0;
+        $product_index    = isset($_POST['product_index']) ? (int) $_POST['product_index'] : 0;
+        $product_id       = isset($_POST['product_id']) ? (int) $_POST['product_id'] : 0;
+
+        $rating           = isset($_POST['rating']) ? (int) $_POST['rating'] : 0;
+        $review_text      = isset($_POST['review_text']) ? sanitize_textarea_field($_POST['review_text']) : '';
+
+        if ($rating < 1 || $rating > 5) {
+            wp_send_json_error(['message' => 'Bitte 1–5 Sterne wählen.']);
+        }
+        if (!$subscription_key || !$order_id || !$product_id) {
+            wp_send_json_error(['message' => 'Ungültige Daten.']);
+        }
+
+        $user = wp_get_current_user();
+        $email = $user ? $user->user_email : '';
+        if (!$email) {
+            wp_send_json_error(['message' => 'Keine E-Mail gefunden.']);
+        }
+
+        global $wpdb;
+
+        // 1) customer_id aus produkt_customers
+        $customer_id = \ProduktVerleih\Database::get_customer_row_id_by_email($email);
+        if (!$customer_id) {
+            wp_send_json_error(['message' => 'Kunde nicht gefunden.']);
+        }
+
+        // 2) Order muss dem Kunden gehören
+        $orders_table = $wpdb->prefix . 'produkt_orders';
+        $order_row = $wpdb->get_row($wpdb->prepare(
+            "SELECT id, customer_email, order_items, category_id FROM $orders_table WHERE id = %d LIMIT 1",
+            $order_id
+        ));
+        if (!$order_row || strtolower((string)$order_row->customer_email) !== strtolower($email)) {
+            wp_send_json_error(['message' => 'Order gehört nicht zu diesem Konto.']);
+        }
+
+        // 3) product_id muss zu dem product_index passen (bei Cart Orders)
+        $real_product_id = 0;
+        $items = [];
+        if (!empty($order_row->order_items)) {
+            $decoded = json_decode($order_row->order_items, true);
+            if (is_array($decoded)) $items = $decoded;
+        }
+
+        if (!empty($items) && isset($items[$product_index])) {
+            $real_product_id = (int) ($items[$product_index]['category_id'] ?? 0);
+        } else {
+            $real_product_id = (int) ($order_row->category_id ?? 0);
+        }
+
+        if ($real_product_id !== (int)$product_id) {
+            wp_send_json_error(['message' => 'Produkt passt nicht zur Bestellung.']);
+        }
+
+        // 4) Duplicate block (DB unique ist ohnehin da)
+        if (\ProduktVerleih\Database::has_review_for_subscription_key($customer_id, $subscription_key)) {
+            wp_send_json_error(['message' => 'Bereits bewertet.']);
+        }
+
+        // 5) Insert
+        $reviews_table = $wpdb->prefix . 'produkt_reviews';
+        $ok = $wpdb->insert($reviews_table, [
+            'product_id'        => $product_id,
+            'customer_id'       => $customer_id,
+            'subscription_key'  => $subscription_key,
+            'order_id'          => $order_id,
+            'product_index'     => $product_index,
+            'rating'            => $rating,
+            'review_text'       => $review_text,
+            'status'            => 'approved'
+        ], ['%d','%d','%s','%d','%d','%d','%s','%s']);
+
+        if (!$ok) {
+            wp_send_json_error(['message' => 'Speichern fehlgeschlagen.']);
+        }
+
+        wp_send_json_success(['message' => 'Danke! Bewertung gespeichert.']);
+    }
+
 }
 
 add_action('wp_ajax_create_payment_intent', __NAMESPACE__ . '\\produkt_create_payment_intent');

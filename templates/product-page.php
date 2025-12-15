@@ -340,14 +340,32 @@ $initial_frame_colors = $wpdb->get_results($wpdb->prepare(
                             echo esc_html(pv_format_price_label($pd));
                         ?>
                     </div>
-                    <?php if ($show_rating && $rating_value > 0): ?>
-                    <div class="produkt-rating">
-                        <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
-                        <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
-                        <?php if (!empty($rating_link)): ?>
-                            <a href="<?php echo esc_url($rating_link); ?>" target="_blank">Bewertungen ansehen</a>
+                    <?php if ($show_rating): ?>
+                        <?php
+                            $manual_override = ($rating_value > 0 && !empty($rating_link));
+                            if (!$manual_override) {
+                                $summary = \ProduktVerleih\Database::get_product_reviews_summary((int)$category_id);
+                                $real_avg = (float) ($summary['avg'] ?? 0);
+                                $real_cnt = (int) ($summary['count'] ?? 0);
+                            }
+                        ?>
+
+                        <?php if ($manual_override): ?>
+                            <div class="produkt-rating">
+                                <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
+                                <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
+                                <a href="<?php echo esc_url($rating_link); ?>" target="_blank" rel="noopener">Bewertungen ansehen</a>
+                            </div>
+                        <?php elseif (!empty($real_cnt) && $real_avg > 0): ?>
+                            <?php
+                                $real_display = number_format($real_avg, 1, ',', '');
+                            ?>
+                            <div class="produkt-rating">
+                                <span class="produkt-rating-number"><?php echo esc_html($real_display); ?></span>
+                                <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($real_avg); ?>;"></span>
+                                <a href="#produkt-reviews">Bewertungen ansehen (<?php echo esc_html($real_cnt); ?>)</a>
+                            </div>
                         <?php endif; ?>
-                    </div>
                     <?php endif; ?>
                     <div class="produkt-product-description">
                         <?php echo wp_kses_post(wpautop($product_description)); ?>
@@ -833,6 +851,30 @@ if ($price_layout !== 'sidebar') {
             </div>
         </div>
     </div>
+
+    <?php if ($show_rating && empty($manual_override)): ?>
+        <?php
+            $summary = \ProduktVerleih\Database::get_product_reviews_summary((int)$category_id);
+            $real_cnt = (int) ($summary['count'] ?? 0);
+            $reviews = $real_cnt ? \ProduktVerleih\Database::get_latest_product_reviews((int)$category_id, 6) : [];
+        ?>
+        <?php if ($real_cnt): ?>
+            <div id="produkt-reviews" class="produkt-reviews">
+                <h3>Bewertungen (<?php echo esc_html($real_cnt); ?>)</h3>
+                <div class="produkt-review-list">
+                    <?php foreach ($reviews as $r): ?>
+                        <div class="produkt-review-item">
+                            <div class="produkt-review-stars" style="--rating: <?php echo esc_attr((int)$r->rating); ?>;"></div>
+                            <?php if (!empty($r->review_text)): ?>
+                                <div class="produkt-review-text"><?php echo esc_html($r->review_text); ?></div>
+                            <?php endif; ?>
+                            <div class="produkt-review-date"><?php echo esc_html(date_i18n('d.m.Y', strtotime($r->created_at))); ?></div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    <?php endif; ?>
 
     <!-- Features Section -->
     <?php if ($show_features): ?>

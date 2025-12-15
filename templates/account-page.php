@@ -74,6 +74,7 @@ $invoice_orders   = [];
 $subscription_order_numbers = [];
 $stripe_invoices  = [];
 $customer_ids     = [];
+$customer_row_id  = 0;
 
 if (is_user_logged_in()) {
     $user_id = get_current_user_id();
@@ -92,7 +93,9 @@ if (is_user_logged_in()) {
         }
     }
 
-$rental_orders = [];
+    $customer_row_id = Database::get_customer_row_id_by_email($current_user->user_email);
+
+    $rental_orders = [];
 
 foreach ($orders as $o) {
     if (!in_array(($o->status ?? ''), ['abgeschlossen', 'gekündigt', 'beendet'], true)) {

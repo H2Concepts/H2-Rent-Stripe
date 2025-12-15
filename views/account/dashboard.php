@@ -235,6 +235,13 @@
                 <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
                 <h4>Meine Abos</h4>
             </div>
+            <?php
+                $all_keys = array_keys($order_map ?? []);
+                $reviewed_keys = [];
+                if (!empty($customer_row_id) && !empty($all_keys)) {
+                    $reviewed_keys = \ProduktVerleih\Database::get_reviewed_subscription_keys((int) $customer_row_id, $all_keys);
+                }
+            ?>
             <div class="subscription-grid">
                 <?php if (!empty($active_subscriptions)) : ?>
                     <?php foreach ($active_subscriptions as $sub) : ?>
@@ -279,6 +286,24 @@
                                         <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
                                         <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
                                         <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                                    </div>
+                                    <?php
+                                        $is_reviewed = !empty($reviewed_keys[$sub_id]);
+                                    ?>
+                                    <div class="subscription-review-cta">
+                                        <?php if ($is_reviewed): ?>
+                                            <button type="button" class="review-btn reviewed" disabled>Bewertet ✓</button>
+                                        <?php else: ?>
+                                            <button
+                                                type="button"
+                                                class="review-btn open-review-modal"
+                                                data-subscription-key="<?php echo esc_attr($sub_id); ?>"
+                                                data-order-id="<?php echo esc_attr($order->id ?? 0); ?>"
+                                                data-product-index="<?php echo esc_attr($order->product_index ?? 0); ?>"
+                                                data-product-id="<?php echo esc_attr($order->category_id ?? 0); ?>"
+                                                data-product-name="<?php echo esc_attr($product); ?>"
+                                            >Jetzt bewerten</button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </a>

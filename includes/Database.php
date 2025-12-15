@@ -1487,6 +1487,34 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_customers);
 
+        // Create reviews table if it doesn't exist
+        $table_reviews = $wpdb->prefix . 'produkt_reviews';
+        $reviews_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_reviews'");
+
+        if (!$reviews_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE $table_reviews (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                product_id BIGINT UNSIGNED NOT NULL,
+                customer_id BIGINT UNSIGNED NOT NULL,
+                subscription_key VARCHAR(255) NOT NULL,
+                order_id BIGINT UNSIGNED DEFAULT NULL,
+                product_index INT UNSIGNED DEFAULT 0,
+                rating TINYINT UNSIGNED NOT NULL,
+                review_text TEXT DEFAULT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'approved',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uniq_review (customer_id, subscription_key),
+                KEY product_id (product_id),
+                KEY status (status),
+                KEY created_at (created_at)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($sql);
+        }
+
         // Shipping methods table
         $table_shipping = $wpdb->prefix . 'produkt_shipping_methods';
         $sql_shipping = "CREATE TABLE $table_shipping (
@@ -1843,7 +1871,8 @@ class Database {
             'produkt_category_filters',
             'produkt_customers',
             'produkt_customer_notes',
-            'produkt_category_layouts'
+            'produkt_category_layouts',
+            'produkt_reviews'
         );
 
         foreach ($tables as $table) {
@@ -2059,6 +2088,76 @@ class Database {
         }
 
         return $customer_id ? $customer_id : '';
+    }
+
+    public static function get_customer_row_id_by_email($email) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_customers';
+        return (int) $wpdb->get_var(
+            $wpdb->prepare("SELECT id FROM $table WHERE email = %s LIMIT 1", sanitize_email($email))
+        );
+    }
+
+    public static function has_review_for_subscription_key($customer_id, $subscription_key) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_reviews';
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM $table WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                (int) $customer_id,
+                (string) $subscription_key
+            )
+        ) > 0;
+    }
+
+    public static function get_reviewed_subscription_keys($customer_id, array $subscription_keys) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_reviews';
+        $subscription_keys = array_values(array_filter(array_map('strval', $subscription_keys)));
+        if (!$customer_id || empty($subscription_keys)) return [];
+
+        $placeholders = implode(',', array_fill(0, count($subscription_keys), '%s'));
+        $sql = $wpdb->prepare(
+            "SELECT subscription_key FROM $table
+             WHERE customer_id = %d AND subscription_key IN ($placeholders)",
+            array_merge([(int)$customer_id], $subscription_keys)
+        );
+
+        $rows = $wpdb->get_col($sql);
+        return array_fill_keys($rows ?: [], true);
+    }
+
+    public static function get_product_reviews_summary($product_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_reviews';
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT COUNT(*) AS cnt, AVG(rating) AS avg_rating
+                 FROM $table
+                 WHERE product_id = %d AND status = 'approved'",
+                (int) $product_id
+            )
+        );
+        return [
+            'count' => (int) ($row->cnt ?? 0),
+            'avg'   => (float) ($row->avg_rating ?? 0),
+        ];
+    }
+
+    public static function get_latest_product_reviews($product_id, $limit = 6) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_reviews';
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT rating, review_text, created_at
+                 FROM $table
+                 WHERE product_id = %d AND status = 'approved'
+                 ORDER BY created_at DESC
+                 LIMIT %d",
+                (int) $product_id,
+                (int) $limit
+            )
+        );
     }
 
     /**
