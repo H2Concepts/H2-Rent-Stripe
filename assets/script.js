@@ -277,7 +277,9 @@ jQuery(document).ready(function($) {
         }
     });
 
-    $(document).on('click', '.open-review-modal', function () {
+    $(document).on('click', '.open-review-modal', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
       const $btn = $(this);
 
       reviewPayload = {
