@@ -2187,6 +2187,111 @@ class Database {
         );
     }
 
+    public static function get_review_admin_metrics() {
+        global $wpdb;
+        $reviews_table = $wpdb->prefix . 'produkt_reviews';
+        $orders_table  = $wpdb->prefix . 'produkt_orders';
+
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table");
+        $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 1");
+        $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 5");
+
+        $orders = $wpdb->get_results("SELECT id, order_items, status, stripe_subscription_id, mode FROM $orders_table WHERE mode = 'miete'");
+        $active_keys = [];
+
+        if (!empty($orders)) {
+            foreach ($orders as $order) {
+                $items = [];
+                if (!empty($order->order_items)) {
+                    $decoded = json_decode($order->order_items, true);
+                    if (is_array($decoded)) {
+                        $items = $decoded;
+                    }
+                }
+
+                if (empty($items)) {
+                    $items = [['rental_status' => $order->status ?? 'aktiv']];
+                }
+
+                foreach ($items as $idx => $item) {
+                    $status = function_exists('pv_normalize_rental_status')
+                        ? pv_normalize_rental_status($item['rental_status'] ?? ($order->status ?? 'aktiv'))
+                        : ($item['rental_status'] ?? ($order->status ?? 'aktiv'));
+
+                    if ($status !== 'aktiv') {
+                        continue;
+                    }
+
+                    $base_sub_id = trim((string) ($order->stripe_subscription_id ?? ''));
+                    $key = $base_sub_id !== ''
+                        ? ($base_sub_id . '-' . $idx)
+                        : ('order-' . $order->id . '-' . $idx);
+
+                    $active_keys[$key] = true;
+                }
+            }
+        }
+
+        $unreviewed = 0;
+        if (!empty($active_keys)) {
+            $keys = array_keys($active_keys);
+            $placeholders = implode(',', array_fill(0, count($keys), '%s'));
+            $reviewed = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT DISTINCT subscription_key FROM $reviews_table WHERE subscription_key IN ($placeholders)",
+                    $keys
+                )
+            );
+            $unreviewed = max(0, count($active_keys) - count($reviewed));
+        }
+
+        return [
+            'total'       => $total,
+            'one_star'    => $one,
+            'five_star'   => $five,
+            'unreviewed'  => $unreviewed,
+        ];
+    }
+
+    public static function get_reviews_with_meta($category_id = 0, $search_term = '', $limit = 200) {
+        global $wpdb;
+        $reviews_table   = $wpdb->prefix . 'produkt_reviews';
+        $customers_table = $wpdb->prefix . 'produkt_customers';
+        $categories_table = $wpdb->prefix . 'produkt_categories';
+
+        $clauses = [];
+        $params  = [];
+
+        if ($category_id) {
+            $clauses[] = 'r.product_id = %d';
+            $params[]  = (int) $category_id;
+        }
+
+        $search_term = trim((string) $search_term);
+        if ($search_term !== '') {
+            $clauses[] = '(cat.name LIKE %s OR c.first_name LIKE %s OR c.last_name LIKE %s OR r.review_text LIKE %s)';
+            $like = '%' . $wpdb->esc_like($search_term) . '%';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $sql = "SELECT r.*, c.first_name, c.last_name, cat.name AS product_name
+                FROM $reviews_table r
+                LEFT JOIN $customers_table c ON r.customer_id = c.id
+                LEFT JOIN $categories_table cat ON r.product_id = cat.id";
+
+        if (!empty($clauses)) {
+            $sql .= ' WHERE ' . implode(' AND ', $clauses);
+        }
+
+        $sql .= ' ORDER BY r.created_at DESC';
+        $sql .= ' LIMIT ' . intval($limit);
+
+        return !empty($params) ? $wpdb->get_results($wpdb->prepare($sql, ...$params)) : $wpdb->get_results($sql);
+    }
+
     /**
      * Update the Stripe customer ID for a user identified by email.
      *

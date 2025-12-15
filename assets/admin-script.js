@@ -403,6 +403,47 @@ jQuery(document).ready(function($) {
         }
     }
 
+    var reviewModal = $('#review-modal');
+    if (reviewModal.length) {
+        function openReviewModal() {
+            reviewModal.show();
+            $('body').addClass('block-modal-open');
+        }
+        function closeReviewModal() {
+            reviewModal.hide();
+            $('body').removeClass('block-modal-open');
+        }
+
+        $(document).on('click', '.review-view-btn', function(e) {
+            e.preventDefault();
+            var btn = $(this);
+            var rating = parseFloat(btn.data('rating')) || 0;
+            var ratingNumber = rating ? rating.toFixed(1).replace('.', ',') : '0,0';
+
+            reviewModal.find('.review-modal-product').text(btn.data('product') || '');
+            reviewModal.find('.review-modal-name').text(btn.data('name') || '');
+            reviewModal.find('.review-modal-title').text(btn.data('title') || '');
+            reviewModal.find('.review-modal-date').text(btn.data('date') || '');
+            reviewModal.find('.review-modal-text').text(btn.data('text') || '');
+            reviewModal.find('.review-modal-rating').html(
+                '<div class="produkt-star-rating" style="--rating:' + rating + ';"></div>' +
+                '<span class="rating-number" style="margin-left:8px;">' + ratingNumber + '</span>'
+            );
+
+            openReviewModal();
+        });
+
+        reviewModal.on('click', function(e) {
+            if (e.target === this) {
+                closeReviewModal();
+            }
+        });
+
+        reviewModal.find('.modal-close').on('click', function(){
+            closeReviewModal();
+        });
+    }
+
     var shipModal = $('#shipping-modal');
     if (shipModal.length) {
         function openShipModal() {
