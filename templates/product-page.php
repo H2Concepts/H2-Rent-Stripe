@@ -868,7 +868,8 @@ if ($price_layout !== 'sidebar') {
                         <div class="summary-rating">
                             <div class="summary-rating-number"><?php echo esc_html(number_format($avg_rating, 1, ',', '')); ?></div>
                             <div class="produkt-review-stars large" style="--rating: <?php echo esc_attr($avg_rating); ?>;"></div>
-                            <div class="summary-count"><?php echo esc_html($real_cnt); ?> Bewertungen</div>
+                            <?php $count_label = ($real_cnt === 1) ? 'Bewertung' : 'Bewertungen'; ?>
+                            <div class="summary-count"><?php echo esc_html($real_cnt . ' ' . $count_label); ?></div>
                         </div>
                         <div class="summary-breakdown">
                             <?php for ($i = 5; $i >= 1; $i--): ?>
@@ -877,7 +878,8 @@ if ($price_layout !== 'sidebar') {
                                     $percent = $real_cnt ? round(($count / $real_cnt) * 100) : 0;
                                 ?>
                                 <div class="breakdown-row">
-                                    <span class="breakdown-label"><?php echo esc_html($i); ?> Sterne</span>
+                                    <?php $star_label = ($i === 1) ? 'Stern' : 'Sterne'; ?>
+                                    <span class="breakdown-label"><?php echo esc_html($i . ' ' . $star_label); ?></span>
                                     <div class="breakdown-bar">
                                         <div class="breakdown-bar-fill" style="width: <?php echo esc_attr($percent); ?>%;"></div>
                                     </div>
