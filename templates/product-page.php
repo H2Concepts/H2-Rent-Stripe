@@ -856,21 +856,100 @@ if ($price_layout !== 'sidebar') {
         <?php
             $summary = \ProduktVerleih\Database::get_product_reviews_summary((int)$category_id);
             $real_cnt = (int) ($summary['count'] ?? 0);
-            $reviews = $real_cnt ? \ProduktVerleih\Database::get_latest_product_reviews((int)$category_id, 6) : [];
+            $avg_rating = (float) ($summary['avg'] ?? 0);
+            $reviews = $real_cnt ? \ProduktVerleih\Database::get_latest_product_reviews((int)$category_id, 12) : [];
+            $breakdown = $real_cnt ? \ProduktVerleih\Database::get_product_reviews_breakdown((int)$category_id) : [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
         ?>
         <?php if ($real_cnt): ?>
             <div id="produkt-reviews" class="produkt-reviews">
-                <h3>Bewertungen (<?php echo esc_html($real_cnt); ?>)</h3>
-                <div class="produkt-review-list">
-                    <?php foreach ($reviews as $r): ?>
-                        <div class="produkt-review-item">
-                            <div class="produkt-review-stars" style="--rating: <?php echo esc_attr((int)$r->rating); ?>;"></div>
-                            <?php if (!empty($r->review_text)): ?>
-                                <div class="produkt-review-text"><?php echo esc_html($r->review_text); ?></div>
-                            <?php endif; ?>
-                            <div class="produkt-review-date"><?php echo esc_html(date_i18n('d.m.Y', strtotime($r->created_at))); ?></div>
+                <div class="produkt-reviews-grid">
+                    <div class="produkt-review-summary">
+                        <div class="summary-rating">
+                            <div class="summary-rating-number"><?php echo esc_html(number_format($avg_rating, 1, ',', '')); ?></div>
+                            <div class="produkt-review-stars large" style="--rating: <?php echo esc_attr($avg_rating); ?>;"></div>
+                            <div class="summary-count"><?php echo esc_html($real_cnt); ?> Bewertungen</div>
                         </div>
-                    <?php endforeach; ?>
+                        <div class="summary-breakdown">
+                            <?php for ($i = 5; $i >= 1; $i--): ?>
+                                <?php
+                                    $count = (int) ($breakdown[$i] ?? 0);
+                                    $percent = $real_cnt ? round(($count / $real_cnt) * 100) : 0;
+                                ?>
+                                <div class="breakdown-row">
+                                    <span class="breakdown-label"><?php echo esc_html($i); ?> Sterne</span>
+                                    <div class="breakdown-bar">
+                                        <div class="breakdown-bar-fill" style="width: <?php echo esc_attr($percent); ?>%;"></div>
+                                    </div>
+                                    <span class="breakdown-percent"><?php echo esc_html($percent); ?>%</span>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+
+                    <div class="produkt-review-list">
+                        <?php foreach ($reviews as $r): ?>
+                            <?php
+                                $raw_text = trim((string) ($r->review_text ?? ''));
+                                $title = '';
+                                $feature_line = '';
+                                $body_lines = [];
+
+                                if (preg_match('/^Titel:\s*(.+)$/mi', $raw_text, $m)) {
+                                    $title = trim($m[1]);
+                                }
+                                if (preg_match('/^Eigenschaften:\s*(.+)$/mi', $raw_text, $m)) {
+                                    $feature_line = trim($m[1]);
+                                }
+
+                                $lines = array_filter(array_map('trim', preg_split('/\r?\n+/', $raw_text)));
+                                foreach ($lines as $line) {
+                                    if (stripos($line, 'titel:') === 0) continue;
+                                    if (stripos($line, 'eigenschaften:') === 0) continue;
+                                    $body_lines[] = $line;
+                                }
+
+                                $body_text = trim(implode("\n", $body_lines));
+                                $features = array_filter(array_map('trim', explode(',', $feature_line)));
+
+                                $name = trim((string) ($r->first_name ?? '')) . ' ' . trim((string) ($r->last_name ?? ''));
+                                $name = trim($name) ?: 'Kunde';
+                                $parts = array_filter(explode(' ', $name));
+                                $initials = '';
+                                foreach ($parts as $p) {
+                                    $char = function_exists('mb_substr') ? mb_substr($p, 0, 1) : substr($p, 0, 1);
+                                    $initials .= function_exists('mb_strtoupper') ? mb_strtoupper($char) : strtoupper($char);
+                                }
+                            ?>
+                            <div class="produkt-review-item">
+                                <div class="review-avatar"><?php echo esc_html($initials ?: 'K'); ?></div>
+                                <div class="review-content">
+                                    <div class="review-header">
+                                        <div class="review-title-wrap">
+                                            <div class="review-title">
+                                                <?php echo esc_html($title ?: $name); ?>
+                                            </div>
+                                            <div class="review-badge">✔ Verifizierter Kauf</div>
+                                        </div>
+                                        <div class="produkt-review-stars" style="--rating: <?php echo esc_attr((int) $r->rating); ?>;"></div>
+                                    </div>
+                                    <div class="review-meta">
+                                        <span class="reviewer-name"><?php echo esc_html($name); ?></span>
+                                        <span class="review-date">• <?php echo esc_html(date_i18n('d.m.Y', strtotime($r->created_at))); ?></span>
+                                    </div>
+                                    <?php if (!empty($body_text)): ?>
+                                        <div class="produkt-review-text"><?php echo nl2br(esc_html($body_text)); ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($features)): ?>
+                                        <div class="review-tags">
+                                            <?php foreach ($features as $feat): ?>
+                                                <span class="review-tag"><?php echo esc_html($feat); ?></span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
         <?php endif; ?>

@@ -2144,15 +2144,42 @@ class Database {
         ];
     }
 
+    public static function get_product_reviews_breakdown($product_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_reviews';
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT rating, COUNT(*) AS cnt FROM $table WHERE product_id = %d AND status = 'approved' GROUP BY rating",
+                (int) $product_id
+            )
+        );
+
+        $counts = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
+
+        if (!empty($rows)) {
+            foreach ($rows as $row) {
+                $rating = (int) ($row->rating ?? 0);
+                if ($rating >= 1 && $rating <= 5) {
+                    $counts[$rating] = (int) ($row->cnt ?? 0);
+                }
+            }
+        }
+
+        return $counts;
+    }
+
     public static function get_latest_product_reviews($product_id, $limit = 6) {
         global $wpdb;
         $table = $wpdb->prefix . 'produkt_reviews';
+        $customers_table = $wpdb->prefix . 'produkt_customers';
+
         return $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT rating, review_text, created_at
-                 FROM $table
-                 WHERE product_id = %d AND status = 'approved'
-                 ORDER BY created_at DESC
+                "SELECT r.rating, r.review_text, r.created_at, c.first_name, c.last_name
+                 FROM $table r
+                 LEFT JOIN $customers_table c ON r.customer_id = c.id
+                 WHERE r.product_id = %d AND r.status = 'approved'
+                 ORDER BY r.created_at DESC
                  LIMIT %d",
                 (int) $product_id,
                 (int) $limit
