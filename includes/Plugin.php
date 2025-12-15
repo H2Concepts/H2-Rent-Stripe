@@ -94,6 +94,11 @@ class Plugin {
         add_action('wp_ajax_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
         add_action('wp_ajax_nopriv_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
 
+        add_action('produkt_send_review_reminders_daily', [$this, 'send_review_reminders_daily']);
+        if (!wp_next_scheduled('produkt_send_review_reminders_daily')) {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', 'produkt_send_review_reminders_daily');
+        }
+
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
         add_filter('display_post_states', [$this, 'mark_shop_page'], 10, 2);
@@ -181,6 +186,10 @@ class Plugin {
     }
 
     public function deactivate() {
+        $timestamp = wp_next_scheduled('produkt_send_review_reminders_daily');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'produkt_send_review_reminders_daily');
+        }
         flush_rewrite_rules();
     }
 
@@ -1352,6 +1361,104 @@ class Plugin {
 
         wp_safe_redirect($ref);
         exit;
+    }
+
+    public function send_review_reminders_daily() {
+        global $wpdb;
+
+        $today_ts = current_time('timestamp');
+        $today    = date('Y-m-d', $today_ts);
+        $cutoff   = date('Y-m-d', $today_ts - (120 * DAY_IN_SECONDS));
+
+        $orders = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, customer_email, customer_name, order_items, category_id, variant_id, duration_id, condition_id, product_color_id, frame_color_id, extra_ids, start_date, end_date, created_at, stripe_subscription_id AS subscription_id, mode, status
+                 FROM {$wpdb->prefix}produkt_orders
+                 WHERE mode = 'miete'
+                   AND status IN ('abgeschlossen','gekündigt','beendet')
+                   AND COALESCE(end_date, created_at) >= %s",
+                $cutoff
+            )
+        );
+
+        if (empty($orders)) {
+            return;
+        }
+
+        foreach ($orders as $order) {
+            $email = sanitize_email($order->customer_email ?? '');
+            if (!$email) {
+                continue;
+            }
+
+            $customer_id = Database::get_customer_row_id_by_email($email);
+            if (!$customer_id) {
+                continue;
+            }
+
+            $items = pv_expand_order_products($order);
+            if (empty($items)) {
+                $items = [
+                    (object) [
+                        'produkt_name' => $order->produkt_name ?? '',
+                        'end_date'     => $order->end_date ?? '',
+                    ],
+                ];
+            }
+
+            foreach ($items as $idx => $item) {
+                $end_date = $item->end_date ?? ($order->end_date ?? '');
+                $end_date = $end_date ? substr((string) $end_date, 0, 10) : '';
+
+                if (!$end_date || $end_date > $today) {
+                    continue;
+                }
+
+                $base_sub_id = '';
+                if (!empty($order->subscription_id)) {
+                    $base_sub_id = trim((string) $order->subscription_id);
+                } elseif (!empty($order->stripe_subscription_id)) {
+                    $base_sub_id = trim((string) $order->stripe_subscription_id);
+                }
+
+                $subscription_key = $base_sub_id !== ''
+                    ? ($base_sub_id . '-' . $idx)
+                    : ('order-' . $order->id . '-' . $idx);
+
+                if (Database::has_review_for_subscription_key($customer_id, $subscription_key)) {
+                    continue;
+                }
+
+                if (Database::has_sent_review_reminder($customer_id, $subscription_key)) {
+                    continue;
+                }
+
+                $product_name = $item->produkt_name ?? ($order->produkt_name ?? '');
+                $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+                $account_url = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+                $cta_url = add_query_arg(
+                    [
+                        'view'   => 'abos',
+                        'review' => rawurlencode($subscription_key),
+                    ],
+                    $account_url
+                );
+
+                $sent = function_exists(__NAMESPACE__ . '\\send_produkt_review_reminder_email')
+                    ? send_produkt_review_reminder_email(
+                        $email,
+                        $order->customer_name ?? '',
+                        $product_name,
+                        $cta_url,
+                        $end_date
+                    )
+                    : false;
+
+                if ($sent) {
+                    Database::log_review_reminder($customer_id, $subscription_key);
+                }
+            }
+        }
     }
 }
 

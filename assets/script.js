@@ -437,6 +437,22 @@ jQuery(document).ready(function($) {
 
     setupReviewLazyLoad();
 
+    const reviewParam = new URLSearchParams(window.location.search).get('review');
+    if (reviewParam) {
+      const key = decodeURIComponent(reviewParam);
+      setTimeout(() => {
+        const $target = $('.open-review-modal').filter(function(){
+          return String($(this).data('subscription-key')) === key;
+        }).first();
+
+        if ($target.length) {
+          $target.trigger('click');
+          const offset = $target.offset().top - 120;
+          $('html, body').animate({ scrollTop: offset }, 300);
+        }
+      }, 300);
+    }
+
     function saveCart() {
         localStorage.setItem('produkt_cart', JSON.stringify(cart));
         updateCartBadge();

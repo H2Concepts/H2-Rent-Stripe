@@ -1088,6 +1088,25 @@ class Database {
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
+
+        // Ensure review reminders table exists
+        $table_review_reminders = $wpdb->prefix . 'produkt_review_reminders';
+        $reminder_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_review_reminders'");
+        if (!$reminder_exists) {
+            $charset_collate = $wpdb->get_charset_collate();
+            $reminder_sql = "CREATE TABLE $table_review_reminders (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                customer_id BIGINT UNSIGNED NOT NULL,
+                subscription_key VARCHAR(255) NOT NULL,
+                sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uniq_customer_subscription (customer_id, subscription_key),
+                KEY sent_at (sent_at)
+            ) $charset_collate;";
+
+            require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+            dbDelta($reminder_sql);
+        }
     }
     
     public function create_tables() {
@@ -1487,6 +1506,19 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_customers);
 
+        // Review reminders table
+        $table_review_reminders = $wpdb->prefix . 'produkt_review_reminders';
+        $reminder_sql = "CREATE TABLE $table_review_reminders (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            subscription_key VARCHAR(255) NOT NULL,
+            sent_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_customer_subscription (customer_id, subscription_key),
+            KEY sent_at (sent_at)
+        ) $charset_collate;";
+        dbDelta($reminder_sql);
+
         // Create reviews table if it doesn't exist
         $table_reviews = $wpdb->prefix . 'produkt_reviews';
         $reviews_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_reviews'");
@@ -1872,7 +1904,8 @@ class Database {
             'produkt_customers',
             'produkt_customer_notes',
             'produkt_category_layouts',
-            'produkt_reviews'
+            'produkt_reviews',
+            'produkt_review_reminders'
         );
 
         foreach ($tables as $table) {
@@ -2095,6 +2128,32 @@ class Database {
         $table = $wpdb->prefix . 'produkt_customers';
         return (int) $wpdb->get_var(
             $wpdb->prepare("SELECT id FROM $table WHERE email = %s LIMIT 1", sanitize_email($email))
+        );
+    }
+
+    public static function has_sent_review_reminder($customer_id, $subscription_key) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_review_reminders';
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM $table WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                (int) $customer_id,
+                (string) $subscription_key
+            )
+        ) > 0;
+    }
+
+    public static function log_review_reminder($customer_id, $subscription_key) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_review_reminders';
+        return (bool) $wpdb->insert(
+            $table,
+            [
+                'customer_id'      => (int) $customer_id,
+                'subscription_key' => (string) $subscription_key,
+                'sent_at'          => current_time('mysql'),
+            ],
+            ['%d', '%s', '%s']
         );
     }
 
