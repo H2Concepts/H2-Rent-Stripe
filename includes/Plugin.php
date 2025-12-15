@@ -159,7 +159,8 @@ class Plugin {
         $needs_schema =
             !$this->db->categories_table_has_parent_column() ||
             !$this->db->customer_notes_table_exists() ||
-            !$this->db->category_layouts_table_exists();
+            !$this->db->category_layouts_table_exists() ||
+            !$this->db->review_targets_table_exists();
         if (version_compare($current_version, PRODUKT_VERSION, '<') || $needs_schema) {
             $this->db->update_database();
             update_option('produkt_version', PRODUKT_VERSION);

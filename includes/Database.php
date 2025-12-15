@@ -4,11 +4,14 @@ namespace ProduktVerleih;
 class Database {
     public function update_database() {
         global $wpdb;
-        
+
+        // Ensure review targets table exists on updates
+        self::ensure_review_targets_table();
+
         // Add category_id column to all tables if it doesn't exist
         $tables_to_update = array(
             'produkt_variants',
-            'produkt_extras', 
+            'produkt_extras',
             'produkt_durations'
         );
         
@@ -1507,24 +1510,7 @@ class Database {
         dbDelta($sql_customers);
 
         // Review targets table (per subscription_key/product)
-        $table_targets = $wpdb->prefix . 'produkt_review_targets';
-        $sql_targets = "CREATE TABLE $table_targets (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            customer_id BIGINT UNSIGNED NOT NULL,
-            subscription_key VARCHAR(255) NOT NULL,
-            product_id BIGINT UNSIGNED NOT NULL,
-            order_id BIGINT UNSIGNED DEFAULT NULL,
-            end_date DATE DEFAULT NULL,
-            review_id BIGINT UNSIGNED DEFAULT NULL,
-            reminder_sent_at DATETIME DEFAULT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            UNIQUE KEY uniq_target (customer_id, subscription_key),
-            KEY idx_end_review (end_date, review_id),
-            KEY idx_product (product_id),
-            KEY idx_review_id (review_id)
-        ) {$charset_collate};";
-        dbDelta($sql_targets);
+        self::ensure_review_targets_table();
 
         // Review reminders table
         $table_review_reminders = $wpdb->prefix . 'produkt_review_reminders';
@@ -1932,6 +1918,36 @@ class Database {
         foreach ($tables as $table) {
             $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}$table");
         }
+    }
+
+    /**
+     * Ensure the review targets table exists with the expected schema.
+     */
+    public static function ensure_review_targets_table() {
+        global $wpdb;
+
+        $table_targets   = $wpdb->prefix . 'produkt_review_targets';
+        $charset_collate = $wpdb->get_charset_collate();
+
+        $sql_targets = "CREATE TABLE $table_targets (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            subscription_key VARCHAR(255) NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            order_id BIGINT UNSIGNED DEFAULT NULL,
+            end_date DATE DEFAULT NULL,
+            review_id BIGINT UNSIGNED DEFAULT NULL,
+            reminder_sent_at DATETIME DEFAULT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_target (customer_id, subscription_key),
+            KEY idx_end_review (end_date, review_id),
+            KEY idx_product (product_id),
+            KEY idx_review_id (review_id)
+        ) {$charset_collate};";
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        dbDelta($sql_targets);
     }
 
     /**
@@ -2536,6 +2552,9 @@ class Database {
         $reviews_table  = $wpdb->prefix . 'produkt_reviews';
         $targets_table  = $wpdb->prefix . 'produkt_review_targets';
 
+        // Ensure the targets table exists to avoid runtime errors after updates
+        self::ensure_review_targets_table();
+
         $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved'");
         $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved' AND rating = 1");
         $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved' AND rating = 5");
@@ -2792,6 +2811,15 @@ class Database {
         global $wpdb;
         $table = $wpdb->prefix . 'produkt_product_categories';
         return (bool) $wpdb->get_var("SHOW COLUMNS FROM $table LIKE 'parent_id'");
+    }
+
+    /**
+     * Check if the review targets table exists.
+     */
+    public function review_targets_table_exists() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_review_targets';
+        return (bool) $wpdb->get_var("SHOW TABLES LIKE '$table'");
     }
 
     public function customer_notes_table_exists() {
