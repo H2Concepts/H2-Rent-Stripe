@@ -2536,9 +2536,9 @@ class Database {
         $reviews_table  = $wpdb->prefix . 'produkt_reviews';
         $targets_table  = $wpdb->prefix . 'produkt_review_targets';
 
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table");
-        $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 1");
-        $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 5");
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved'");
+        $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved' AND rating = 1");
+        $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved' AND rating = 5");
 
         $today = current_time('Y-m-d');
 
