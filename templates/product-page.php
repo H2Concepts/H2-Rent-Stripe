@@ -928,13 +928,12 @@ if ($price_layout !== 'sidebar') {
                                             <div class="review-title">
                                                 <?php echo esc_html($title ?: $name); ?>
                                             </div>
-                                            <div class="review-badge">✔ Verifizierter Kauf</div>
+                                            <div class="review-badge">Verifizierter Kauf</div>
                                         </div>
                                         <div class="produkt-review-stars" style="--rating: <?php echo esc_attr((int) $r->rating); ?>;"></div>
                                     </div>
                                     <div class="review-meta">
-                                        <span class="reviewer-name"><?php echo esc_html($name); ?></span>
-                                        <span class="review-date">• <?php echo esc_html(date_i18n('d.m.Y', strtotime($r->created_at))); ?></span>
+                                        <span class="review-date"><?php echo esc_html(date_i18n('d.m.Y', strtotime($r->created_at))); ?></span>
                                     </div>
                                     <?php if (!empty($body_text)): ?>
                                         <div class="produkt-review-text"><?php echo nl2br(esc_html($body_text)); ?></div>
