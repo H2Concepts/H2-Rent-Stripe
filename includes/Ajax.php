@@ -1386,6 +1386,9 @@ class Ajax {
             wp_send_json_error(['message' => 'Speichern fehlgeschlagen.']);
         }
 
+        $review_id = (int) $wpdb->insert_id;
+        \ProduktVerleih\Database::mark_review_target_reviewed($customer_id, $subscription_key, $review_id);
+
         wp_send_json_success(['message' => 'Danke! Bewertung gespeichert.']);
     }
 

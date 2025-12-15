@@ -1506,6 +1506,26 @@ class Database {
         ) $charset_collate;";
         dbDelta($sql_customers);
 
+        // Review targets table (per subscription_key/product)
+        $table_targets = $wpdb->prefix . 'produkt_review_targets';
+        $sql_targets = "CREATE TABLE $table_targets (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            subscription_key VARCHAR(255) NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            order_id BIGINT UNSIGNED DEFAULT NULL,
+            end_date DATE DEFAULT NULL,
+            review_id BIGINT UNSIGNED DEFAULT NULL,
+            reminder_sent_at DATETIME DEFAULT NULL,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY uniq_target (customer_id, subscription_key),
+            KEY idx_end_review (end_date, review_id),
+            KEY idx_product (product_id),
+            KEY idx_review_id (review_id)
+        ) {$charset_collate};";
+        dbDelta($sql_targets);
+
         // Review reminders table
         $table_review_reminders = $wpdb->prefix . 'produkt_review_reminders';
         $reminder_sql = "CREATE TABLE $table_review_reminders (
@@ -1905,7 +1925,8 @@ class Database {
             'produkt_customer_notes',
             'produkt_category_layouts',
             'produkt_reviews',
-            'produkt_review_reminders'
+            'produkt_review_reminders',
+            'produkt_review_targets'
         );
 
         foreach ($tables as $table) {
@@ -2133,10 +2154,24 @@ class Database {
 
     public static function has_sent_review_reminder($customer_id, $subscription_key) {
         global $wpdb;
-        $table = $wpdb->prefix . 'produkt_review_reminders';
+        $targets_table = $wpdb->prefix . 'produkt_review_targets';
+        $reminders_table = $wpdb->prefix . 'produkt_review_reminders';
+
+        $sent = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM $targets_table WHERE customer_id = %d AND subscription_key = %s AND reminder_sent_at IS NOT NULL",
+                (int) $customer_id,
+                (string) $subscription_key
+            )
+        );
+
+        if ($sent > 0) {
+            return true;
+        }
+
         return (int) $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(*) FROM $table WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                "SELECT COUNT(*) FROM $reminders_table WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
                 (int) $customer_id,
                 (string) $subscription_key
             )
@@ -2145,6 +2180,8 @@ class Database {
 
     public static function log_review_reminder($customer_id, $subscription_key) {
         global $wpdb;
+        self::mark_review_target_reminder_sent($customer_id, $subscription_key);
+
         $table = $wpdb->prefix . 'produkt_review_reminders';
         return (bool) $wpdb->insert(
             $table,
@@ -2155,6 +2192,245 @@ class Database {
             ],
             ['%d', '%s', '%s']
         );
+    }
+
+    public static function upsert_review_target($customer_id, $subscription_key, $product_id, $order_id, $end_date, $review_id = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_review_targets';
+
+        $normalized_date = $end_date ? date('Y-m-d', strtotime($end_date)) : '';
+        $normalized_review = (int) ($review_id ?: 0);
+
+        $wpdb->query(
+            $wpdb->prepare(
+                "INSERT INTO $table (customer_id, subscription_key, product_id, order_id, end_date, review_id)
+                 VALUES (%d, %s, %d, %d, NULLIF(%s,''), NULLIF(%d,0))
+                 ON DUPLICATE KEY UPDATE
+                   product_id = VALUES(product_id),
+                   order_id = VALUES(order_id),
+                   end_date = VALUES(end_date),
+                   review_id = COALESCE(NULLIF(VALUES(review_id),0), review_id)",
+                (int) $customer_id,
+                (string) $subscription_key,
+                (int) $product_id,
+                (int) $order_id,
+                $normalized_date,
+                $normalized_review
+            )
+        );
+    }
+
+    public static function mark_review_target_reviewed($customer_id, $subscription_key, $review_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_review_targets';
+        $wpdb->update(
+            $table,
+            ['review_id' => (int) $review_id],
+            ['customer_id' => (int) $customer_id, 'subscription_key' => (string) $subscription_key],
+            ['%d'],
+            ['%d', '%s']
+        );
+    }
+
+    public static function mark_review_target_reminder_sent($customer_id, $subscription_key) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'produkt_review_targets';
+        $wpdb->update(
+            $table,
+            ['reminder_sent_at' => current_time('mysql')],
+            ['customer_id' => (int) $customer_id, 'subscription_key' => (string) $subscription_key],
+            ['%s'],
+            ['%d', '%s']
+        );
+    }
+
+    public static function get_pending_review_targets_for_reminders($limit = 200) {
+        global $wpdb;
+        $targets_table = $wpdb->prefix . 'produkt_review_targets';
+        $customers_table = $wpdb->prefix . 'produkt_customers';
+        $categories_table = $wpdb->prefix . 'produkt_categories';
+
+        $today = current_time('Y-m-d');
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT t.customer_id, t.subscription_key, t.product_id, t.order_id, t.end_date, c.email, c.first_name, c.last_name, cat.name AS product_name
+                 FROM $targets_table t
+                 LEFT JOIN $customers_table c ON t.customer_id = c.id
+                 LEFT JOIN $categories_table cat ON t.product_id = cat.id
+                 WHERE t.review_id IS NULL
+                   AND t.end_date IS NOT NULL
+                   AND t.end_date <= %s
+                   AND (t.reminder_sent_at IS NULL OR t.reminder_sent_at = '')
+                 ORDER BY t.end_date ASC
+                 LIMIT %d",
+                $today,
+                (int) $limit
+            )
+        );
+    }
+
+    public static function backfill_review_targets_batch($limit = 200) {
+        global $wpdb;
+
+        $last_id = (int) get_option('produkt_review_targets_backfill_last_id', 0);
+        $orders = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, customer_email, category_id, order_items, end_date, stripe_subscription_id, subscription_id, mode, status
+                 FROM {$wpdb->prefix}produkt_orders
+                 WHERE id > %d
+                   AND (mode IS NULL OR mode NOT IN ('kauf','sale'))
+                 ORDER BY id ASC
+                 LIMIT %d",
+                $last_id,
+                (int) $limit
+            )
+        );
+
+        if (empty($orders)) {
+            return false;
+        }
+
+        if (!function_exists('pv_expand_order_products')) {
+            require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        }
+
+        foreach ($orders as $order) {
+            $customer_id = self::get_customer_row_id_by_email($order->customer_email ?? '');
+            if (!$customer_id) {
+                $last_id = max($last_id, (int) $order->id);
+                continue;
+            }
+
+            $items = pv_expand_order_products($order);
+            if (empty($items)) {
+                $items = [
+                    (object) [
+                        'category_id' => $order->category_id ?? 0,
+                        'end_date'    => $order->end_date ?? '',
+                    ],
+                ];
+            }
+
+            foreach ($items as $idx => $item) {
+                $product_id = (int) ($item->category_id ?? $order->category_id ?? 0);
+                if (!$product_id) {
+                    continue;
+                }
+
+                $base_sub_id = '';
+                if (!empty($order->stripe_subscription_id)) {
+                    $base_sub_id = trim((string) $order->stripe_subscription_id);
+                } elseif (!empty($order->subscription_id)) {
+                    $base_sub_id = trim((string) $order->subscription_id);
+                }
+
+                $subscription_key = $base_sub_id !== ''
+                    ? ($base_sub_id . '-' . $idx)
+                    : ('order-' . $order->id . '-' . $idx);
+
+                $end_date = $item->end_date ?? ($order->end_date ?? '');
+                $end_date = $end_date ? substr((string) $end_date, 0, 10) : null;
+
+                $review_id = (int) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT id FROM {$wpdb->prefix}produkt_reviews WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                        $customer_id,
+                        $subscription_key
+                    )
+                );
+
+                self::upsert_review_target(
+                    $customer_id,
+                    $subscription_key,
+                    $product_id,
+                    (int) $order->id,
+                    $end_date,
+                    $review_id ?: null
+                );
+            }
+
+            $last_id = max($last_id, (int) $order->id);
+        }
+
+        update_option('produkt_review_targets_backfill_last_id', $last_id);
+
+        return count($orders) >= $limit;
+    }
+
+    public static function sync_review_targets_for_order($order_id) {
+        global $wpdb;
+
+        $order = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT id, customer_email, category_id, order_items, end_date, stripe_subscription_id, subscription_id, mode, status
+                 FROM {$wpdb->prefix}produkt_orders
+                 WHERE id = %d
+                 LIMIT 1",
+                (int) $order_id
+            )
+        );
+
+        if (!$order || ($order->mode === 'kauf' || $order->mode === 'sale')) {
+            return;
+        }
+
+        $customer_id = self::get_customer_row_id_by_email($order->customer_email ?? '');
+        if (!$customer_id) {
+            return;
+        }
+
+        if (!function_exists('pv_expand_order_products')) {
+            require_once PRODUKT_PLUGIN_PATH . 'includes/account-helpers.php';
+        }
+
+        $items = pv_expand_order_products($order);
+        if (empty($items)) {
+            $items = [
+                (object) [
+                    'category_id' => $order->category_id ?? 0,
+                    'end_date'    => $order->end_date ?? '',
+                ],
+            ];
+        }
+
+        foreach ($items as $idx => $item) {
+            $product_id = (int) ($item->category_id ?? $order->category_id ?? 0);
+            if (!$product_id) {
+                continue;
+            }
+
+            $base_sub_id = '';
+            if (!empty($order->stripe_subscription_id)) {
+                $base_sub_id = trim((string) $order->stripe_subscription_id);
+            } elseif (!empty($order->subscription_id)) {
+                $base_sub_id = trim((string) $order->subscription_id);
+            }
+
+            $subscription_key = $base_sub_id !== ''
+                ? ($base_sub_id . '-' . $idx)
+                : ('order-' . $order->id . '-' . $idx);
+
+            $end_date = $item->end_date ?? ($order->end_date ?? '');
+            $end_date = $end_date ? substr((string) $end_date, 0, 10) : null;
+
+            $review_id = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM {$wpdb->prefix}produkt_reviews WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                    $customer_id,
+                    $subscription_key
+                )
+            );
+
+            self::upsert_review_target(
+                $customer_id,
+                $subscription_key,
+                $product_id,
+                (int) $order->id,
+                $end_date,
+                $review_id ?: null
+            );
+        }
     }
 
     public static function has_review_for_subscription_key($customer_id, $subscription_key) {
@@ -2247,74 +2523,41 @@ class Database {
     }
 
     public static function get_review_admin_metrics() {
+        return self::get_review_admin_metrics_fast();
+    }
+
+    public static function get_review_admin_metrics_fast() {
         global $wpdb;
-        $reviews_table = $wpdb->prefix . 'produkt_reviews';
-        $orders_table  = $wpdb->prefix . 'produkt_orders';
 
-        $cache_key = 'produkt_reviews_admin_metrics';
+        $cache_key = 'produkt_reviews_admin_metrics_v2';
         $cached = get_transient($cache_key);
-        if (is_array($cached)) {
-            return $cached;
-        }
+        if (is_array($cached)) return $cached;
 
-        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table");
-        $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 1");
-        $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 5");
+        $reviews_table  = $wpdb->prefix . 'produkt_reviews';
+        $targets_table  = $wpdb->prefix . 'produkt_review_targets';
 
-        $orders = $wpdb->get_results("SELECT id, order_items, status, stripe_subscription_id, mode FROM $orders_table WHERE mode = 'miete'");
-        $active_keys = [];
+        $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved'");
+        $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved' AND rating = 1");
+        $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE status = 'approved' AND rating = 5");
 
-        if (!empty($orders)) {
-            foreach ($orders as $order) {
-                $items = [];
-                if (!empty($order->order_items)) {
-                    $decoded = json_decode($order->order_items, true);
-                    if (is_array($decoded)) {
-                        $items = $decoded;
-                    }
-                }
+        $today = current_time('Y-m-d');
 
-                if (empty($items)) {
-                    $items = [['rental_status' => $order->status ?? 'aktiv']];
-                }
-
-                foreach ($items as $idx => $item) {
-                    $status = function_exists('pv_normalize_rental_status')
-                        ? pv_normalize_rental_status($item['rental_status'] ?? ($order->status ?? 'aktiv'))
-                        : ($item['rental_status'] ?? ($order->status ?? 'aktiv'));
-
-                    if ($status !== 'aktiv') {
-                        continue;
-                    }
-
-                    $base_sub_id = trim((string) ($order->stripe_subscription_id ?? ''));
-                    $key = $base_sub_id !== ''
-                        ? ($base_sub_id . '-' . $idx)
-                        : ('order-' . $order->id . '-' . $idx);
-
-                    $active_keys[$key] = true;
-                }
-            }
-        }
-
-        $unreviewed = 0;
-        if (!empty($active_keys)) {
-            $keys = array_keys($active_keys);
-            $placeholders = implode(',', array_fill(0, count($keys), '%s'));
-            $reviewed = $wpdb->get_col(
-                $wpdb->prepare(
-                    "SELECT DISTINCT subscription_key FROM $reviews_table WHERE subscription_key IN ($placeholders)",
-                    $keys
-                )
-            );
-            $unreviewed = max(0, count($active_keys) - count($reviewed));
-        }
+        $unreviewed = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*)
+                 FROM $targets_table
+                 WHERE review_id IS NULL
+                   AND end_date IS NOT NULL
+                   AND end_date <= %s",
+                $today
+            )
+        );
 
         $payload = [
-            'total'       => $total,
-            'one_star'    => $one,
-            'five_star'   => $five,
-            'unreviewed'  => $unreviewed,
+            'total'      => $total,
+            'one_star'   => $one,
+            'five_star'  => $five,
+            'unreviewed' => $unreviewed,
         ];
 
         set_transient($cache_key, $payload, 5 * MINUTE_IN_SECONDS);
