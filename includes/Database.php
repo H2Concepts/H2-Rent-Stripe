@@ -2251,6 +2251,12 @@ class Database {
         $reviews_table = $wpdb->prefix . 'produkt_reviews';
         $orders_table  = $wpdb->prefix . 'produkt_orders';
 
+        $cache_key = 'produkt_reviews_admin_metrics';
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
         $total = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table");
         $one   = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 1");
         $five  = (int) $wpdb->get_var("SELECT COUNT(*) FROM $reviews_table WHERE rating = 5");
@@ -2304,12 +2310,15 @@ class Database {
             $unreviewed = max(0, count($active_keys) - count($reviewed));
         }
 
-        return [
+        $payload = [
             'total'       => $total,
             'one_star'    => $one,
             'five_star'   => $five,
             'unreviewed'  => $unreviewed,
         ];
+
+        set_transient($cache_key, $payload, 5 * MINUTE_IN_SECONDS);
+        return $payload;
     }
 
     public static function get_reviews_with_meta($category_id = 0, $search_term = '', $limit = 200) {
@@ -2934,10 +2943,8 @@ class Database {
                 "SELECT id, status, mode, order_items
                  FROM {$wpdb->prefix}produkt_orders
                  WHERE (mode IS NULL OR mode NOT IN ('kauf','sale'))
-                   AND status IN ('abgeschlossen','gekündigt')
-                   AND (end_date IS NULL OR end_date <= %s OR end_date > %s)", // no-op filter; per-item end_date is in order_items
-                $today,
-                $today
+                   AND status IN ('abgeschlossen','gekündigt')",
+                []
             )
         );
 
