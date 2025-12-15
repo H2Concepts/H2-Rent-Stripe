@@ -89,24 +89,23 @@ if (!function_exists('pv_extract_review_title_admin')) {
                 <form method="get" class="produkt-filter-form product-search-bar">
                     <input type="hidden" name="page" value="produkt-reviews">
                     <div class="search-input-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
-                            <path d="M60.7,53.9c-6.6,9.2-18.5,12.5-29.1,8-10.6-4.5-16.4-15.4-14.3-26.7,2.1-11.3,11.5-19.6,22.9-20.3,11.4-.8,21.6,6.5,24.8,17.5,2.1,7.1.6,14.8-4,20.9,1.9,1.9,3.7,3.8,5.5,5.7,1.5,1.6,3,3.2,4.6,4.7,2,1.8,2.7,4.2,1.3,6.4-1.2,2-3.6,2.9-5.8,2.3-1.1-.3-2-.9-2.8-1.7-3.1-3.1-6.2-6.2-9.3-9.3-.1-.2-.2-.3-.5-.7ZM54.2,35.5c0-9.2-7.4-16.6-16.6-16.6-9.2,0-16.6,7.4-16.6,16.6s7.4,16.6,16.6,16.6c9.2,0,16.6-7.4,16.6-16.6Z"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="search-icon">
+                            <path d="M10 2a8 8 0 105.3 14.1l4.3 4.3a1 1 0 101.4-1.4l-4.3-4.3A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/>
                         </svg>
-                        <input type="search" name="s" placeholder="Nach Produkt oder Kunde suchen" value="<?php echo esc_attr($search_term); ?>">
+                        <input type="text" name="s" placeholder="Nach Produkt oder Kunde suchen" value="<?php echo esc_attr($search_term); ?>">
                     </div>
                     <select name="category">
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?php echo esc_attr($cat->id); ?>" <?php selected($selected_category, $cat->id); ?>><?php echo str_repeat('--', $cat->depth ?? 0) . ' ' . esc_html($cat->name); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <button type="submit" class="button">Filtern</button>
                 </form>
             </div>
         </div>
 
         <form method="post" class="produkt-compact-form">
             <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-            <table class="wp-list-table widefat fixed striped">
+            <table class="activity-table">
                 <thead>
                     <tr>
                         <th>Produkt</th>
@@ -140,7 +139,7 @@ if (!function_exists('pv_extract_review_title_admin')) {
                                     <span class="rating-number"><?php echo number_format($rating, 1, ',', ''); ?></span>
                                 </td>
                                 <td>
-                                    <button type="button" class="icon-btn review-view-btn" aria-label="Ansehen"
+                                    <button type="button" class="icon-btn icon-btn-no-stroke review-view-btn" aria-label="Ansehen"
                                         data-title="<?php echo esc_attr($modal_title); ?>"
                                         data-text="<?php echo esc_attr($view_text); ?>"
                                         data-product="<?php echo esc_attr($product_name); ?>"
