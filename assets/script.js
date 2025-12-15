@@ -412,6 +412,31 @@ jQuery(document).ready(function($) {
       });
     });
 
+    function setupReviewLazyLoad() {
+      $('.produkt-review-list').each(function(){
+        const $list = $(this);
+        const step = parseInt($list.data('review-step'), 10) || 3;
+        const $items = $list.find('.produkt-review-item');
+        const $btn = $list.next('.review-load-more');
+
+        if (!$items.length || !$btn.length) return;
+
+        $items.slice(step).addClass('review-hidden');
+
+        $btn.on('click', function(){
+          const visible = $items.not('.review-hidden').length;
+          const nextCount = visible + step;
+          $items.slice(0, nextCount).removeClass('review-hidden');
+
+          if ($items.not('.review-hidden').length >= $items.length) {
+            $btn.hide();
+          }
+        });
+      });
+    }
+
+    setupReviewLazyLoad();
+
     function saveCart() {
         localStorage.setItem('produkt_cart', JSON.stringify(cart));
         updateCartBadge();

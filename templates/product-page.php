@@ -857,7 +857,8 @@ if ($price_layout !== 'sidebar') {
             $summary = \ProduktVerleih\Database::get_product_reviews_summary((int)$category_id);
             $real_cnt = (int) ($summary['count'] ?? 0);
             $avg_rating = (float) ($summary['avg'] ?? 0);
-            $reviews = $real_cnt ? \ProduktVerleih\Database::get_latest_product_reviews((int)$category_id, 12) : [];
+            $fetch_limit = $real_cnt > 0 ? min($real_cnt, 60) : 0;
+            $reviews = $fetch_limit ? \ProduktVerleih\Database::get_latest_product_reviews((int)$category_id, $fetch_limit) : [];
             $breakdown = $real_cnt ? \ProduktVerleih\Database::get_product_reviews_breakdown((int)$category_id) : [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
         ?>
         <?php if ($real_cnt): ?>
@@ -886,8 +887,8 @@ if ($price_layout !== 'sidebar') {
                         </div>
                     </div>
 
-                    <div class="produkt-review-list">
-                        <?php foreach ($reviews as $r): ?>
+                    <div class="produkt-review-list" data-review-step="3">
+                        <?php foreach ($reviews as $review_index => $r): ?>
                             <?php
                                 $raw_text = trim((string) ($r->review_text ?? ''));
                                 $title = '';
@@ -920,7 +921,7 @@ if ($price_layout !== 'sidebar') {
                                     $initials .= function_exists('mb_strtoupper') ? mb_strtoupper($char) : strtoupper($char);
                                 }
                             ?>
-                            <div class="produkt-review-item">
+                            <div class="produkt-review-item<?php echo $review_index >= 3 ? ' review-hidden' : ''; ?>">
                                 <div class="review-avatar"><?php echo esc_html($initials ?: 'K'); ?></div>
                                 <div class="review-content">
                                     <div class="review-header">
@@ -949,6 +950,9 @@ if ($price_layout !== 'sidebar') {
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php if (count($reviews) > 3): ?>
+                        <button type="button" class="review-load-more" data-show="3">Weitere Bewertungen ansehen</button>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endif; ?>
