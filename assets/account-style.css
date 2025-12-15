@@ -975,9 +975,145 @@ body.produkt-login-page #colophon {
   margin-top: 10px;
 }
 
-.produkt-review-modal .review-stars { display:flex; gap:6px; margin:10px 0; }
-.produkt-review-modal .review-star { font-size:20px; background:none; border:none; cursor:pointer; opacity:.35; }
+.produkt-review-modal .modal-content {
+  padding: 20px;
+  max-width: 460px;
+  width: 92%;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.produkt-review-modal .modal-header {
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+}
+
+.produkt-review-modal .modal-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.produkt-review-modal .modal-subline {
+  color: #555;
+  margin-top: -4px;
+  margin-bottom: 12px;
+}
+
+.produkt-review-modal .review-stars-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.produkt-review-modal .review-stars { display:flex; gap:10px; margin:10px 0 4px; }
+.produkt-review-modal .review-star { font-size:26px; background:none; border:none; cursor:pointer; opacity:.35; transition: opacity 0.2s ease; }
 .produkt-review-modal .review-star.active { opacity:1; }
+
+.produkt-review-modal .review-rating-hint {
+  text-align: center;
+  font-weight: 600;
+  min-height: 20px;
+  color: #222;
+  margin-bottom: 12px;
+}
+
+.produkt-review-modal .modal-divider {
+  height: 1px;
+  background: #eee;
+  margin: 8px 0 14px;
+}
+
+.produkt-review-modal .modal-section {
+  margin-bottom: 14px;
+}
+
+.produkt-review-modal .modal-block-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.produkt-review-modal .modal-block-subline {
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.produkt-review-modal .review-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.produkt-review-modal .review-pill {
+  border: 1px solid #ddd;
+  background: #f8f8f8;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.produkt-review-modal .review-pill.selected {
+  border-color: #000;
+  background: #000;
+  color: #fff;
+}
+
+.produkt-review-modal .review-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.produkt-review-modal .review-title,
+.produkt-review-modal .review-text {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.produkt-review-modal .review-text {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.produkt-review-modal .review-consent label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.produkt-review-modal .review-consent input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.produkt-review-modal .modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.produkt-review-modal .review-submit-btn {
+  background: #000;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.produkt-review-modal .review-hint {
+  color: #c00;
+  font-weight: 600;
+  min-height: 18px;
+}
 
 @media (max-width: 768px) {
     .code-input-group {

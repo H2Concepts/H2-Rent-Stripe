@@ -233,23 +233,66 @@ jQuery(document).ready(function($) {
     );
     $('body').append(tooltipModal);
 
+    const reviewPillOptions = [
+      'Sehr gute Qualität',
+      'Einfach aufzubauen',
+      'Leicht zu reinigen',
+      'Moderner Look',
+      'Fühlt sich wertig an',
+      'Schneller Aufbau',
+      'Platzsparend',
+      'Kinderleicht zu nutzen'
+    ];
+
     const reviewModal = $('<div>', { id: 'produkt-review-modal', class: 'produkt-tooltip-modal produkt-review-modal' }).append(
       $('<div>', { class: 'modal-content' }).append(
         $('<div>', { class: 'modal-header' }).append(
-          $('<div>', { class: 'modal-title' }).text('Bewertung abgeben'),
+          $('<div>', { class: 'modal-title' }).text('Wie hat dir das Produkt gefallen?'),
           $('<button>', { class: 'modal-close', 'aria-label': 'Schließen' }).text('×')
         ),
-        $('<div>', { class: 'modal-text' }).append(
-          $('<div>', { class: 'review-product-name' }),
-          $('<div>', { class: 'review-stars', 'data-rating': 0 }),
-          $('<textarea>', { class: 'review-text', rows: 3, placeholder: 'Kurzer Text (optional)…' }),
-          $('<button>', { class: 'review-submit-btn' }).text('Bewertung einreichen'),
+        $('<div>', { class: 'modal-subline' }).text('Teile deine Erfahrung mit anderen'),
+        $('<div>', { class: 'modal-section review-stars-wrap' }).append(
+          $('<div>', { class: 'review-stars', 'data-rating': 0 })
+        ),
+        $('<div>', { class: 'review-rating-hint' }),
+        $('<div>', { class: 'modal-divider' }),
+        $('<div>', { class: 'modal-section' }).append(
+          $('<div>', { class: 'modal-block-title' }).text('Was mochtest du am Produkt?'),
+          $('<div>', { class: 'review-pills' }).append(
+            reviewPillOptions.map(opt => $('<button>', { type: 'button', class: 'review-pill', 'data-pill': opt }).text(opt))
+          )
+        ),
+        $('<div>', { class: 'modal-section' }).append(
+          $('<label>', { class: 'review-label' }).text('Titel'),
+          $('<input>', { type: 'text', class: 'review-title', placeholder: 'Kurzer Titel …' })
+        ),
+        $('<div>', { class: 'modal-section review-text-block' }).append(
+          $('<div>', { class: 'modal-block-title' }).text('Danke für dein Feedback!'),
+          $('<div>', { class: 'modal-block-subline' }).text('Teile deine Erfahrung und helfe anderen bei ihrer Entscheidung.'),
+          $('<textarea>', { class: 'review-text', rows: 3, placeholder: 'Erzähle mehr …' })
+        ),
+        $('<div>', { class: 'modal-section review-consent' }).append(
+          $('<label>').append(
+            $('<input>', { type: 'checkbox', class: 'review-consent-checkbox' }),
+            $('<span>').text('Ich akzeptiere die Datenschutzbedingungen')
+          )
+        ),
+        $('<div>', { class: 'modal-section modal-actions' }).append(
+          $('<button>', { class: 'review-submit-btn' }).text('Bewertung absenden'),
           $('<div>', { class: 'review-hint' })
         )
       )
     );
 
     $('body').append(reviewModal);
+
+    const reviewRatingMessages = {
+      1: 'Hat funktioniert, darf gerne noch besser werden.',
+      2: 'Ordentliche Basis – mit etwas Feinschliff top.',
+      3: 'Gut – tut, was es soll.',
+      4: 'Richtig gut, hat mich begeistert.',
+      5: 'Würde ich 100% wieder mieten.'
+    };
 
     function renderReviewStars($wrap, rating) {
       $wrap.empty();
@@ -258,6 +301,7 @@ jQuery(document).ready(function($) {
         if (i <= rating) $s.addClass('active');
         $wrap.append($s);
       }
+      $('#produkt-review-modal .review-rating-hint').text(reviewRatingMessages[rating] || '');
     }
     renderReviewStars($('#produkt-review-modal .review-stars'), 0);
 
@@ -290,9 +334,11 @@ jQuery(document).ready(function($) {
         rating: 0
       };
 
-      $('#produkt-review-modal .review-product-name').text($btn.data('product-name') || '');
+      $('#produkt-review-modal .review-title').val('');
       $('#produkt-review-modal .review-text').val('');
       $('#produkt-review-modal .review-hint').text('');
+      $('#produkt-review-modal .review-consent-checkbox').prop('checked', false);
+      $('#produkt-review-modal .review-pill').removeClass('selected');
       renderReviewStars($('#produkt-review-modal .review-stars'), 0);
 
       $('#produkt-review-modal').css('display', 'flex');
@@ -312,10 +358,36 @@ jQuery(document).ready(function($) {
       renderReviewStars($('#produkt-review-modal .review-stars'), val);
     });
 
+    $(document).on('click', '#produkt-review-modal .review-pill', function(){
+      $(this).toggleClass('selected');
+    });
+
     $(document).on('click', '#produkt-review-modal .review-submit-btn', function(){
       if (!reviewPayload || !reviewPayload.subscription_key) return;
 
+      if (!reviewPayload.rating) {
+        $('#produkt-review-modal .review-hint').text('Bitte wähle eine Sternebewertung.');
+        return;
+      }
+
+      if (!$('#produkt-review-modal .review-consent-checkbox').is(':checked')) {
+        $('#produkt-review-modal .review-hint').text('Bitte akzeptiere die Datenschutzbedingungen.');
+        return;
+      }
+
+      const title = ($('#produkt-review-modal .review-title').val() || '').trim();
       const text = ($('#produkt-review-modal .review-text').val() || '').trim();
+      const pills = [];
+      $('#produkt-review-modal .review-pill.selected').each(function(){
+        const val = $(this).data('pill');
+        if (val) pills.push(val);
+      });
+
+      const parts = [];
+      if (title) parts.push('Titel: ' + title);
+      if (pills.length) parts.push('Eigenschaften: ' + pills.join(', '));
+      if (text) parts.push(text);
+      const finalText = parts.join('\n\n');
 
       $.post(produkt_ajax.ajax_url, {
         action: 'submit_product_review',
@@ -325,7 +397,7 @@ jQuery(document).ready(function($) {
         product_index: reviewPayload.product_index,
         product_id: reviewPayload.product_id,
         rating: reviewPayload.rating,
-        review_text: text
+        review_text: finalText
       }).done(function(res){
         if (!res || !res.success) {
           $('#produkt-review-modal .review-hint').text((res && res.data && res.data.message) ? res.data.message : 'Fehler.');
