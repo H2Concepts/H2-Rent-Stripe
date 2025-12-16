@@ -4,14 +4,24 @@
   * Plugin URI: https://h2concepts.de
   * Description: Ein Plugin für den Verleih von Waren mit konfigurierbaren Produkten und Stripe-Integration
  * Version: 1.0.1
-  * Author: H2 Concepts
-  * License: GPL v2 or later
-  * Text Domain: h2-concepts
-  */
+ * Author: H2 Concepts
+ * License: GPL v2 or later
+ * Text Domain: h2-rental-pro
+ * Domain Path: /languages
+ */
  
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// Load plugin textdomain for i18n
+add_action('plugins_loaded', function () {
+    load_plugin_textdomain(
+        'h2-rental-pro',
+        false,
+        dirname(plugin_basename(__FILE__)) . '/languages'
+    );
+});
 
 // Define plugin path constants
 if (!defined('H2_RENT_PLUGIN_DIR')) {

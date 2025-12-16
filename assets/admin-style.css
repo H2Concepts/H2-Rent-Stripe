@@ -4472,3 +4472,117 @@ MCA0MjEuOUwwIDBaIiBmaWxsPSIjNjkxM2U5Ij48L3BhdGg+PC9nPjwvc3ZnPg==\
 .produkt-sale-card.sale-disabled input.sale-dependent {
     cursor: not-allowed;
 }
+
+/* Review Modal Styles */
+.review-modal-content {
+    max-width: 720px;
+    padding: 40px;
+}
+
+.review-modal-content .modal-title {
+    margin-bottom: 24px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #141e26;
+}
+
+.review-modal-content .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.review-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.review-modal-product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.review-modal-product {
+    font-size: 18px;
+    font-weight: 700;
+    color: #141e26;
+    line-height: 1.4;
+}
+
+.review-modal-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.review-modal-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.review-modal-date {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.review-modal-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.review-modal-rating .rating-number {
+    font-size: 16px;
+    font-weight: 700;
+    color: #141e26;
+}
+
+.review-modal-content-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.review-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #141e26;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.review-modal-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #374151;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.review-modal-text:empty {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .review-modal-content {
+        padding: 24px;
+        max-width: 95%;
+    }
+
+    .review-modal-header {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .review-modal-rating {
+        align-self: flex-start;
+    }
+}

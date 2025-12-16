@@ -103,7 +103,7 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
 
     $mode        = pv_get_order_mode($order, $order_id);
     $is_rental   = ($mode === 'miete');
-    $subject     = 'Herzlich willkommen und vielen Dank für Ihre Bestellung!';
+    $subject     = __('Herzlich willkommen und vielen Dank für Ihre Bestellung!', 'h2-rental-pro');
     $order_date  = date_i18n('d.m.Y', strtotime($order['created_at']));
     $price_label     = number_format((float) $order['final_price'], 2, ',', '.') . '€' . ($is_rental ? '/Monat' : '');
     $shipping_amount = floatval($order['shipping_cost'] ?? 0);
@@ -170,19 +170,19 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $item_count = count($items);
     foreach ($items as $idx => $item) {
         $details = [];
-        if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
-        if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
-        if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
-        if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
-        if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+        if (!empty($item->variant_name)) { $details[] = __('Ausführung:', 'h2-rental-pro') . ' ' . esc_html($item->variant_name); }
+        if (!empty($item->extra_names)) { $details[] = __('Extras:', 'h2-rental-pro') . ' ' . esc_html($item->extra_names); }
+        if (!empty($item->product_color_name)) { $details[] = __('Farbe:', 'h2-rental-pro') . ' ' . esc_html($item->product_color_name); }
+        if (!empty($item->frame_color_name)) { $details[] = __('Gestellfarbe:', 'h2-rental-pro') . ' ' . esc_html($item->frame_color_name); }
+        if (!empty($item->condition_name)) { $details[] = __('Zustand:', 'h2-rental-pro') . ' ' . esc_html($item->condition_name); }
         $period_obj = (object) array_merge((array) $order, (array) $item);
         list($sd, $ed) = pv_get_order_period($period_obj);
         if ($sd && $ed) {
-            $details[] = 'Zeitraum: ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed)));
+            $details[] = __('Zeitraum:', 'h2-rental-pro') . ' ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed)));
         }
         $days = pv_get_order_rental_days($period_obj);
         $duration_text = $item->duration_name ?? ($order['dauer_text'] ?? '');
-        $duration_label = $is_rental ? 'Mindestlaufzeit' : 'Miettage';
+        $duration_label = $is_rental ? __('Mindestlaufzeit', 'h2-rental-pro') : __('Miettage', 'h2-rental-pro');
         if ($days !== null) {
             $details[] = $duration_label . ': ' . esc_html($days);
         } elseif (!empty($duration_text)) {
@@ -218,15 +218,15 @@ function send_produkt_welcome_email(array $order, int $order_id, bool $attach_in
     $message .= $divider;
 
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price_label) . '</td></tr>';
-    $ship_text = $shipping_name ?: 'Versand';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Zwischensumme', 'h2-rental-pro') . '</strong></td><td style="text-align:right;">' . esc_html($price_label) . '</td></tr>';
+    $ship_text = $shipping_name ?: __('Versand', 'h2-rental-pro');
     $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
-    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
+    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>' . esc_html__('Gesamtsumme', 'h2-rental-pro') . '</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
     $message .= '</table>';
 
     $message .= '</div>';
 
-    $message .= '<p style="margin:16px 0 8px;font-size:12px;line-height:1.6;">Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.</p>';
+    $message .= '<p style="margin:16px 0 8px;font-size:12px;line-height:1.6;">' . esc_html__('Bitte prüfen Sie die Angaben und antworten Sie auf diese E-Mail, falls Sie Fragen oder Änderungswünsche haben.', 'h2-rental-pro') . '</p>';
 
     $message .= '<div style="text-align:center;margin:18px 0 8px;">';
     $message .= '<a href="' . esc_url($account_url) . '" style="display:inline-block;padding:14px 36px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Zum Kundenkonto</a>';
@@ -336,25 +336,25 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
         $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
     }
 
-    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 24px;">Ihr Paket ist unterwegs!</h1>';
-    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($customer_name) . ',<br>wir haben Ihre Bestellung verpackt und an den Versand übergeben. Hier finden Sie alle Infos zur Sendungsverfolgung und zu Ihren Produkten.</p>';
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 24px;">' . esc_html__('Ihr Paket ist unterwegs!', 'h2-rental-pro') . '</h1>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">' . sprintf(esc_html__('Hallo %s,', 'h2-rental-pro'), esc_html($customer_name)) . '<br>' . esc_html__('wir haben Ihre Bestellung verpackt und an den Versand übergeben. Hier finden Sie alle Infos zur Sendungsverfolgung und zu Ihren Produkten.', 'h2-rental-pro') . '</p>';
 
     $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
-    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">Sendungsverfolgung</h2>';
+    $message .= '<h2 style="margin:0 0 12px;font-size:18px;">' . esc_html__('Sendungsverfolgung', 'h2-rental-pro') . '</h2>';
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;line-height:1.4;">';
-    $message .= '<tr><td style="padding:6px 0;width:42%;"><strong>Bestellnummer:</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
-    $message .= '<tr><td style="padding:6px 0;"><strong>Datum:</strong></td><td>' . esc_html($order_date) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;width:42%;"><strong>' . esc_html__('Bestellnummer:', 'h2-rental-pro') . '</strong></td><td>' . esc_html($bestellnr) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Datum:', 'h2-rental-pro') . '</strong></td><td>' . esc_html($order_date) . '</td></tr>';
     if ($shipping_name) {
-        $message .= '<tr><td style="padding:6px 0;"><strong>Versandart:</strong></td><td>' . esc_html($shipping_name) . '</td></tr>';
+        $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Versandart:', 'h2-rental-pro') . '</strong></td><td>' . esc_html($shipping_name) . '</td></tr>';
     }
     if ($provider) {
-        $message .= '<tr><td style="padding:6px 0;"><strong>Versandanbieter:</strong></td><td>' . esc_html($provider) . '</td></tr>';
+        $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Versandanbieter:', 'h2-rental-pro') . '</strong></td><td>' . esc_html($provider) . '</td></tr>';
     }
-    $message .= '<tr><td style="padding:6px 0;"><strong>Trackingnummer:</strong></td><td>' . esc_html($tracking_number) . '</td></tr>';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Trackingnummer:', 'h2-rental-pro') . '</strong></td><td>' . esc_html($tracking_number) . '</td></tr>';
     $message .= '</table>';
 
     $message .= '<div style="text-align:center;margin:20px 0 8px;">';
-    $message .= '<a href="' . esc_url($tracking_url) . '" style="display:inline-block;padding:14px 32px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">Paket verfolgen</a>';
+    $message .= '<a href="' . esc_url($tracking_url) . '" style="display:inline-block;padding:14px 32px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:bold;font-size:15px;">' . esc_html__('Paket verfolgen', 'h2-rental-pro') . '</a>';
     $message .= '</div>';
     $message .= '</div>';
 
@@ -398,8 +398,8 @@ function send_produkt_tracking_email(array $order, int $order_id, string $tracki
 
     $message .= $divider;
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $ship_text = $shipping_name ?: 'Versand';
-    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($subtotal) . '</td></tr>';
+    $ship_text = $shipping_name ?: __('Versand', 'h2-rental-pro');
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Zwischensumme', 'h2-rental-pro') . '</strong></td><td style="text-align:right;">' . esc_html($subtotal) . '</td></tr>';
     $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
     $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
     $message .= '</table>';
@@ -533,19 +533,19 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $item_count = count($items);
     foreach ($items as $idx => $item) {
         $details = [];
-        if (!empty($item->variant_name)) { $details[] = 'Ausführung: ' . esc_html($item->variant_name); }
-        if (!empty($item->extra_names)) { $details[] = 'Extras: ' . esc_html($item->extra_names); }
-        if (!empty($item->product_color_name)) { $details[] = 'Farbe: ' . esc_html($item->product_color_name); }
-        if (!empty($item->frame_color_name)) { $details[] = 'Gestellfarbe: ' . esc_html($item->frame_color_name); }
-        if (!empty($item->condition_name)) { $details[] = 'Zustand: ' . esc_html($item->condition_name); }
+        if (!empty($item->variant_name)) { $details[] = __('Ausführung:', 'h2-rental-pro') . ' ' . esc_html($item->variant_name); }
+        if (!empty($item->extra_names)) { $details[] = __('Extras:', 'h2-rental-pro') . ' ' . esc_html($item->extra_names); }
+        if (!empty($item->product_color_name)) { $details[] = __('Farbe:', 'h2-rental-pro') . ' ' . esc_html($item->product_color_name); }
+        if (!empty($item->frame_color_name)) { $details[] = __('Gestellfarbe:', 'h2-rental-pro') . ' ' . esc_html($item->frame_color_name); }
+        if (!empty($item->condition_name)) { $details[] = __('Zustand:', 'h2-rental-pro') . ' ' . esc_html($item->condition_name); }
         $period_obj = (object) array_merge((array) $order, (array) $item);
         list($sd,$ed) = pv_get_order_period($period_obj);
         if ($sd && $ed) {
-            $details[] = 'Zeitraum: ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed)));
+            $details[] = __('Zeitraum:', 'h2-rental-pro') . ' ' . esc_html(date_i18n('d.m.Y', strtotime($sd))) . ' - ' . esc_html(date_i18n('d.m.Y', strtotime($ed)));
         }
         $days = pv_get_order_rental_days($period_obj);
         $duration_text = $item->duration_name ?? ($order['dauer_text'] ?? '');
-        $duration_label = $is_rental ? 'Mindestlaufzeit' : 'Miettage';
+        $duration_label = $is_rental ? __('Mindestlaufzeit', 'h2-rental-pro') : __('Miettage', 'h2-rental-pro');
         if ($days !== null) {
             $details[] = $duration_label . ': ' . esc_html($days);
         } elseif (!empty($duration_text)) {
@@ -581,10 +581,10 @@ function send_admin_order_email(array $order, int $order_id, string $session_id)
     $message .= $divider;
 
     $message .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $message .= '<tr><td style="padding:6px 0;"><strong>Zwischensumme</strong></td><td style="text-align:right;">' . esc_html($price_label) . '</td></tr>';
-    $ship_text = $shipping_name ?: 'Versand';
+    $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html__('Zwischensumme', 'h2-rental-pro') . '</strong></td><td style="text-align:right;">' . esc_html($price_label) . '</td></tr>';
+    $ship_text = $shipping_name ?: __('Versand', 'h2-rental-pro');
     $message .= '<tr><td style="padding:6px 0;"><strong>' . esc_html($ship_text) . '</strong></td><td style="text-align:right;">' . esc_html($shipping) . '</td></tr>';
-    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>Gesamtsumme</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
+    $message .= '<tr><td style="padding:6px 0;font-size:16px;"><strong>' . esc_html__('Gesamtsumme', 'h2-rental-pro') . '</strong></td><td style="text-align:right;font-size:16px;"><strong>' . esc_html($total_first) . '</strong></td></tr>';
     $message .= '</table>';
 
     $message .= '</div>';
@@ -893,6 +893,60 @@ function send_admin_rental_cancellation_email(int $order_id, int $product_index 
     }
 
     return (bool) wp_mail($emails, $subject, $message, $headers);
+}
+
+/**
+ * Send a review reminder email to customers after their rental ends.
+ */
+function send_produkt_review_reminder_email(string $email, string $customer_name, string $product_name, string $cta_url, string $end_date = ''): bool {
+    if (empty($email)) {
+        return false;
+    }
+
+    $site_title = get_bloginfo('name');
+    $logo_url   = get_option('plugin_firma_logo_url', '');
+    $divider    = '<div style="height:1px;background:#E6E8ED;margin:20px 0;"></div>';
+
+    $friendly_name = trim($customer_name);
+    $product_label = $product_name ? $product_name : 'dein Produkt';
+    $end_label     = $end_date ? date_i18n('d.m.Y', strtotime($end_date)) : '';
+
+    $subject = 'Wie hat dir ' . $product_label . ' gefallen?';
+
+    $message  = '<html><body style="margin:0;padding:0;background:#F6F7FA;font-family:Arial,sans-serif;color:#000;">';
+    $message .= '<div style="max-width:680px;margin:0 auto;padding:24px;">';
+
+    if ($logo_url) {
+        $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
+    }
+
+    $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 28px;">Wie hat dir ' . esc_html($product_label) . ' gefallen?</h1>';
+    $message .= '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;">Hallo ' . esc_html($friendly_name ?: '') . ',</p>';
+    $message .= '<p style="margin:0 0 16px;font-size:14px;line-height:1.6;">deine Mietzeit ist beendet' . ($end_label ? ' (Ende: ' . esc_html($end_label) . ')' : '') . '. Teile deine Erfahrung mit anderen und hilf ihnen bei der Entscheidung.</p>';
+
+    $message .= '<div style="background:#FFFFFF;border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
+    $message .= '<div style="font-size:15px;font-weight:700;margin-bottom:6px;">' . esc_html($product_label) . '</div>';
+    $message .= '<p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:#4A4A4A;">Dein Feedback dauert nur eine Minute und hilft anderen Kunden, das passende Produkt zu finden.</p>';
+    $message .= '<div style="text-align:center;margin:10px 0 6px;">';
+    $message .= '<a href="' . esc_url($cta_url) . '" style="display:inline-block;padding:14px 28px;background:#000;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;font-size:15px;">Jetzt bewerten</a>';
+    $message .= '</div>';
+    $message .= '<p style="margin:12px 0 0;font-size:12px;color:#7A7A7A;">Der Link öffnet dein Kundenkonto und startet das Bewertungsfenster automatisch.</p>';
+    $message .= '</div>';
+
+    $footer_html = pv_get_email_footer_html();
+    if ($footer_html) {
+        $message .= $divider . $footer_html;
+    }
+
+    $message .= '</div>';
+    $message .= '</body></html>';
+
+    $headers    = ['Content-Type: text/html; charset=UTF-8'];
+    $from_name  = get_bloginfo('name');
+    $from_email = get_option('admin_email');
+    $headers[]  = 'From: ' . $from_name . ' <' . $from_email . '>';
+
+    return (bool) wp_mail($email, $subject, $message, $headers);
 }
 
 /**

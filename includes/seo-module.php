@@ -149,7 +149,7 @@ class SeoModule {
             return $crumbs;
         }
 
-        $home_label = __('Home', 'h2-concepts');
+        $home_label = __('Home', 'h2-rental-pro');
         $home_url   = home_url('/');
 
         if (!empty($crumbs)) {
@@ -158,7 +158,7 @@ class SeoModule {
         }
 
         $shop_page_id = get_option(\PRODUKT_SHOP_PAGE_OPTION);
-        $shop_label   = __('Shop', 'h2-concepts');
+        $shop_label   = __('Shop', 'h2-rental-pro');
         $shop_url     = '';
 
         if ($shop_page_id) {
@@ -405,19 +405,71 @@ class SeoModule {
             $schema['image'] = $category->default_image;
         }
 
-        $total_interactions = $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}produkt_analytics WHERE category_id = %d AND event_type = 'rent_button_click'",
-            $category->id
-        ));
+        // Echte Bewertungen aus der Datenbank holen
+        $reviews_summary = Database::get_product_reviews_summary((int) $category->id);
+        $review_count = (int) ($reviews_summary['count'] ?? 0);
+        $avg_rating = (float) ($reviews_summary['avg'] ?? 0);
 
-        if ($total_interactions > 0) {
+        // AggregateRating hinzufügen, wenn Bewertungen vorhanden sind
+        if ($review_count > 0 && $avg_rating > 0) {
             $schema['aggregateRating'] = [
                 '@type' => 'AggregateRating',
-                'ratingValue' => '4.8',
-                'reviewCount' => max(1, floor($total_interactions / 10)),
+                'ratingValue' => number_format($avg_rating, 1, '.', ''),
+                'reviewCount' => $review_count,
                 'bestRating' => '5',
                 'worstRating' => '1'
             ];
+
+            // Einzelne Reviews hinzufügen (max. 10 für Schema)
+            $reviews = Database::get_latest_product_reviews((int) $category->id, 10);
+            if (!empty($reviews)) {
+                $schema['review'] = [];
+                foreach ($reviews as $review) {
+                    $rating = (float) ($review->rating ?? 0);
+                    $review_text = trim((string) ($review->review_text ?? ''));
+                    $author_name = trim(($review->first_name ?? '') . ' ' . ($review->last_name ?? ''));
+                    $author_name = $author_name !== '' ? $author_name : 'Anonymer Kunde';
+                    $date_published = !empty($review->created_at) ? date('c', strtotime($review->created_at)) : date('c');
+
+                    // Titel aus Review-Text extrahieren (falls vorhanden)
+                    $title = '';
+                    $text = $review_text;
+                    if (preg_match('/^Titel:\s*(.+)$/mi', $review_text, $m)) {
+                        $title = trim($m[1]);
+                        $text = preg_replace('/^Titel:\s*' . preg_quote($title, '/') . '\s*$/mi', '', $text);
+                        $text = trim($text);
+                    } elseif (preg_match('/^#\s*(.+)$/m', $review_text, $m)) {
+                        $title = trim($m[1]);
+                        $text = preg_replace('/^#\s*' . preg_quote($title, '/') . '\s*$/m', '', $text);
+                        $text = trim($text);
+                    }
+
+                    $review_schema = [
+                        '@type' => 'Review',
+                        'author' => [
+                            '@type' => 'Person',
+                            'name' => $author_name
+                        ],
+                        'datePublished' => $date_published,
+                        'reviewRating' => [
+                            '@type' => 'Rating',
+                            'ratingValue' => (string) $rating,
+                            'bestRating' => '5',
+                            'worstRating' => '1'
+                        ]
+                    ];
+
+                    if ($title !== '') {
+                        $review_schema['headline'] = $title;
+                    }
+
+                    if ($text !== '') {
+                        $review_schema['reviewBody'] = $text;
+                    }
+
+                    $schema['review'][] = $review_schema;
+                }
+            }
         }
 
         echo '<script type="application/ld+json">' . "\n";

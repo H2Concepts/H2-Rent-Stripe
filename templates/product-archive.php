@@ -125,9 +125,9 @@ foreach ($filter_groups as $fg) {
 
 ob_start();
 ?>
-    <h2>Produkte</h2>
+    <h2><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?></h2>
     <ul>
-        <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
+        <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>"><?php echo esc_html__('Alle Kategorien', 'h2-rental-pro'); ?></a></li>
         <?php foreach ($kats as $kat): ?>
             <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
             <li class="<?php echo esc_attr($cls); ?>">
@@ -165,14 +165,14 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
 <div class="produkt-shop-archive shop-overview-container produkt-container shop-layout-<?php echo esc_attr($shop_layout); ?>">
     <?php if ($not_found): ?>
         <<?php echo $heading_tag; ?>><?= esc_html($heading_text) ?></<?php echo $heading_tag; ?>>
-        <p>Kategorie nicht gefunden.</p>
+        <p><?php echo esc_html__('Kategorie nicht gefunden.', 'h2-rental-pro'); ?></p>
     <?php else: ?>
         <?php if ($shop_layout === 'filters_top'): ?>
             <div class="shop-title-row">
                 <<?php echo $heading_tag; ?>><?= esc_html($heading_text) ?></<?php echo $heading_tag; ?>>
                 <?php if ($show_filter_toggle): ?>
                     <button id="shop-filter-dropdown-toggle" class="shop-filter-dropdown-toggle" aria-expanded="false" aria-controls="shop-filter-dropdown">
-                        <span>Filter</span>
+                        <span><?php echo esc_html__('Filter', 'h2-rental-pro'); ?></span>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                             <path fill="currentColor" d="M12 15.5 5 8.5l1.4-1.4L12 12.7l5.6-5.6L19 8.5z" />
                         </svg>
@@ -199,7 +199,7 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
         <?php endif; ?>
         <div class="shop-products-area">
             <?php if (empty($categories) && !$not_found): ?>
-                <p>Keine Produkte in dieser Kategorie gefunden.</p>
+                <p><?php echo esc_html__('Keine Produkte in dieser Kategorie gefunden.', 'h2-rental-pro'); ?></p>
             <?php endif; ?>
 
             <div class="shop-product-grid">
@@ -220,12 +220,26 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
                     <?php
                         $rating_value = floatval(str_replace(',', '.', $cat->rating_value));
                         $rating_display = number_format($rating_value, 1, ',', '');
+                        $manual_override = ($rating_value > 0 && !empty($cat->rating_link));
                     ?>
-                    <?php if ($cat->show_rating && $rating_value > 0): ?>
+                    <?php if ($cat->show_rating && $manual_override): ?>
                         <div class="produkt-rating">
                             <span class="produkt-rating-number"><?php echo esc_html($rating_display); ?></span>
                             <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($rating_value); ?>;"></span>
                         </div>
+                    <?php elseif ($cat->show_rating): ?>
+                        <?php
+                            $summary = \ProduktVerleih\Database::get_product_reviews_summary((int) $cat->id);
+                            $real_avg = (float) ($summary['avg'] ?? 0);
+                            $real_cnt = (int) ($summary['count'] ?? 0);
+                        ?>
+                        <?php if (!empty($real_cnt) && $real_avg > 0): ?>
+                            <?php $real_display = number_format($real_avg, 1, ',', ''); ?>
+                            <div class="produkt-rating">
+                                <span class="produkt-rating-number"><?php echo esc_html($real_display); ?></span>
+                                <span class="produkt-star-rating" style="--rating: <?php echo esc_attr($real_avg); ?>;"></span>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                     <div class="shop-product-price">
                         <?php echo esc_html(pv_format_price_label($price_data)); ?>
@@ -246,7 +260,7 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
     </div>
 </div> <!-- .shop-overview-layout -->
 
-<button id="shop-filter-toggle" class="shop-filter-button" aria-label="Filter">
+<button id="shop-filter-toggle" class="shop-filter-button" aria-label="<?php echo esc_attr__('Filter', 'h2-rental-pro'); ?>">
     <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 67.5 52.7">
       <path fill="currentColor" d="M64.7,40.3h-5.8c-.7-4.9-4.9-8.6-10-8.6s-9.3,3.8-10,8.6H2.7c-.8,0-1.5.7-1.5,1.5s.7,1.5,1.5,1.5h36.2c.7,4.9,4.9,8.6,10,8.6s9.3-3.8,10-8.6h5.8c.8,0,1.5-.7,1.5-1.5s-.7-1.5-1.5-1.5ZM48.9,48.9c-3.9,0-7.1-3.2-7.1-7.1s3.2-7.1,7.1-7.1,7.1,3.2,7.1,7.1-3.2,7.1-7.1,7.1Z"/>
       <path fill="currentColor" d="M64.7,10.3H28.5c-.7-4.9-4.9-8.6-10-8.6s-9.3,3.8-10,8.6H2.7c-.8,0-1.5.7-1.5,1.5s.7,1.5,1.5,1.5h5.8c.7,4.9,4.9,8.6,10,8.6s9.3-3.8,10-8.6h36.2c.8,0,1.5-.7,1.5-1.5s-.7-1.5-1.5-1.5ZM18.5,18.9c-3.9,0-7.1-3.2-7.1-7.1s3.2-7.1,7.1-7.1,7.1,3.2,7.1,7.1-3.2,7.1-7.1,7.1Z"/>
@@ -254,10 +268,10 @@ $show_filter_toggle = ($shop_layout === 'filters_top' && $filter_panel_markup !=
 </button>
 <div id="shop-filter-overlay" class="shop-filter-overlay">
     <div class="shop-filter-content">
-        <button id="shop-filter-close" class="shop-filter-close" aria-label="Close">&times;</button>
-        <h2>Produkte</h2>
+        <button id="shop-filter-close" class="shop-filter-close" aria-label="<?php echo esc_attr__('Close', 'h2-rental-pro'); ?>">&times;</button>
+        <h2><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?></h2>
         <ul>
-            <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>">Alle Kategorien</a></li>
+            <li><a href="<?php echo esc_url(home_url('/shop/')); ?>" class="<?php echo empty($category_slug) ? 'active' : ''; ?>"><?php echo esc_html__('Alle Kategorien', 'h2-rental-pro'); ?></a></li>
             <?php foreach ($kats as $kat): ?>
                 <?php $cls = $kat->depth ? 'sub-category' : 'main-category'; ?>
                 <li class="<?php echo esc_attr($cls); ?>">

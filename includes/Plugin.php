@@ -77,6 +77,7 @@ class Plugin {
         add_action('wp_ajax_nopriv_check_extra_availability', [$this->ajax, 'ajax_check_extra_availability']);
         add_action('wp_ajax_notify_availability', [$this->ajax, 'ajax_notify_availability']);
         add_action('wp_ajax_nopriv_notify_availability', [$this->ajax, 'ajax_notify_availability']);
+        add_action('wp_ajax_submit_product_review', [$this->ajax, 'ajax_submit_product_review']);
 
         add_action('admin_post_nopriv_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
         add_action('admin_post_produkt_newsletter_confirm', [__CLASS__, 'handle_newsletter_confirm']);
@@ -92,6 +93,11 @@ class Plugin {
 
         add_action('wp_ajax_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
         add_action('wp_ajax_nopriv_exit_intent_feedback', [$this->ajax, 'ajax_exit_intent_feedback']);
+
+        add_action('produkt_send_review_reminders_daily', [$this, 'send_review_reminders_daily']);
+        if (!wp_next_scheduled('produkt_send_review_reminders_daily')) {
+            wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', 'produkt_send_review_reminders_daily');
+        }
 
         add_filter('admin_footer_text', [$this->admin, 'custom_admin_footer']);
         add_action('admin_head', [$this->admin, 'custom_admin_styles']);
@@ -153,7 +159,8 @@ class Plugin {
         $needs_schema =
             !$this->db->categories_table_has_parent_column() ||
             !$this->db->customer_notes_table_exists() ||
-            !$this->db->category_layouts_table_exists();
+            !$this->db->category_layouts_table_exists() ||
+            !$this->db->review_targets_table_exists();
         if (version_compare($current_version, PRODUKT_VERSION, '<') || $needs_schema) {
             $this->db->update_database();
             update_option('produkt_version', PRODUKT_VERSION);
@@ -180,6 +187,10 @@ class Plugin {
     }
 
     public function deactivate() {
+        $timestamp = wp_next_scheduled('produkt_send_review_reminders_daily');
+        if ($timestamp) {
+            wp_unschedule_event($timestamp, 'produkt_send_review_reminders_daily');
+        }
         flush_rewrite_rules();
     }
 
@@ -459,12 +470,12 @@ class Plugin {
                     $message .= '<div style="text-align:center;margin-bottom:16px;"><img src="' . esc_url($logo_url) . '" alt="' . esc_attr($site_title) . '" style="width:100px;max-width:100%;height:auto;"></div>';
                 }
 
-                $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">Login-Code für dein Kundenkonto</h1>';
+                $message .= '<h1 style="text-align:center;font-size:22px;margin:0 0 40px;">' . esc_html__('Login-Code für dein Kundenkonto', 'h2-rental-pro') . '</h1>';
 
                 $message .= '<div style="background:#FFFFFF;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">';
-                $message .= '<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">Gebe den Code zum Einloggen im Kundenkonto ein:</p>';
+                $message .= '<p style="margin:0 0 12px;font-size:14px;line-height:1.6;">' . esc_html__('Gebe den Code zum Einloggen im Kundenkonto ein:', 'h2-rental-pro') . '</p>';
                 $message .= '<div style="text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;padding:14px;border:1px solid #E6E8ED;border-radius:12px;background:#F6F7FA;">' . esc_html($code) . '</div>';
-                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">Nutze diesen Code um die Verifizierung auf der Webseite abzuschließen.<br><br>Gib diesen Code bitte nicht weiter. Mitarbeiter von ' . esc_html($site_title) . ' werden dich niemals bitten, diesen Code per Telefon oder SMS zu bestätigen.<br><br><strong>Dieser Code ist nun für 15 Minuten gültig.</strong></p>';
+                $message .= '<p style="margin:16px 0 0;font-size:14px;line-height:1.7;">' . esc_html__('Nutze diesen Code um die Verifizierung auf der Webseite abzuschließen.', 'h2-rental-pro') . '<br><br>' . sprintf(esc_html__('Gib diesen Code bitte nicht weiter. Mitarbeiter von %s werden dich niemals bitten, diesen Code per Telefon oder SMS zu bestätigen.', 'h2-rental-pro'), esc_html($site_title)) . '<br><br><strong>' . esc_html__('Dieser Code ist nun für 15 Minuten gültig.', 'h2-rental-pro') . '</strong></p>';
                 $message .= '</div>';
 
                 if ($logo_url) {
@@ -538,10 +549,10 @@ class Plugin {
                                 if (is_wp_error($res)) {
                                     $message = '<p style="color:red;">' . esc_html($res->get_error_message()) . '</p>';
                                 } else {
-                                    $message = '<p>' . esc_html__('Kündigung vorgemerkt. Laufzeit endet am ', 'h2-concepts') . esc_html($period_end_date) . '</p>';
+                                    $message = '<p>' . esc_html__('Kündigung vorgemerkt. Laufzeit endet am ', 'h2-rental-pro') . esc_html($period_end_date) . '</p>';
                                 }
                             } else {
-                                $message = '<p style="color:red;">' . esc_html__('Dieses Abo kann noch nicht gekündigt werden.', 'h2-concepts') . '</p>';
+                                $message = '<p style="color:red;">' . esc_html__('Dieses Abo kann noch nicht gekündigt werden.', 'h2-rental-pro') . '</p>';
                             }
 
                             break;
@@ -924,19 +935,19 @@ class Plugin {
     public function mark_shop_page($states, $post) {
         $shop_page_id = get_option(PRODUKT_SHOP_PAGE_OPTION);
         if ($post->ID == $shop_page_id) {
-            $states[] = __('Shop-Seite', 'h2-concepts');
+            $states[] = __('Shop-Seite', 'h2-rental-pro');
         }
         $customer_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
         if ($post->ID == $customer_page_id) {
-            $states[] = __('Kundenkonto-Seite', 'h2-concepts');
+            $states[] = __('Kundenkonto-Seite', 'h2-rental-pro');
         }
         $checkout_page_id = get_option(PRODUKT_CHECKOUT_PAGE_OPTION);
         if ($post->ID == $checkout_page_id) {
-            $states[] = __('Checkout-Seite', 'h2-concepts');
+            $states[] = __('Checkout-Seite', 'h2-rental-pro');
         }
         $confirm_page_id = get_option(PRODUKT_CONFIRM_PAGE_OPTION);
         if ($post->ID == $confirm_page_id) {
-            $states[] = __('Bestellbestätigung', 'h2-concepts');
+            $states[] = __('Bestellbestätigung', 'h2-rental-pro');
         }
         return $states;
     }
@@ -1019,7 +1030,7 @@ class Plugin {
         }
 
         $icon_markup = $cart_icon
-            ? '<img src="' . esc_url($cart_icon) . '" alt="' . esc_attr__('Warenkorb', 'produkt') . '">' 
+            ? '<img src="' . esc_url($cart_icon) . '" alt="' . esc_attr__('Warenkorb', 'h2-rental-pro') . '">' 
             : '<svg viewBox="0 0 61 46.8" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2.2.2c-1.1,0-2,.9-2,2s.2,1,.6,1.4.9.6,1.4.6h3.9c2.1,0,4,1.4,4.7,3.4l2.2,6.7h0c0,0,5.4,16.8,5.4,16.8,1.1,3.4,4.2,5.7,7.8,5.7h23.5c3.6,0,6.6-2.5,7.4-6l3.6-16.5c.7-3.5-2-6.8-5.5-6.8H18c-1,0-2,.3-2.8.8l-.6-1.9C13.4,2.7,9.9.2,6.1.2h-3.9ZM18,11.5h37.1c1.1,0,1.8.9,1.6,2l-3.5,16.5c-.4,1.7-1.8,2.8-3.5,2.8h-23.5c-1.8,0-3.4-1.2-4-2.9l-5.4-16.7c-.3-.9.3-1.7,1.2-1.7h0ZM27,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6ZM46.4,39.3c-1.9,0-3.6,1.6-3.6,3.6s1.6,3.6,3.6,3.6,3.6-1.6,3.6-3.6-1.6-3.6-3.6-3.6Z"/></svg>';
 
         return '<span class="cart-icon">' . $icon_markup . '<span class="h2-cart-badge' . $badge_class . '" data-h2-cart-count="0">0</span></span>';
@@ -1055,7 +1066,7 @@ class Plugin {
 
         if ($current_menu_id && in_array($current_menu_id, $inject_menus, true)) {
             $items .= '<li class="menu-item plugin-cart-icon">'
-                . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+                . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'h2-rental-pro') . '">'
                 . $this->get_cart_icon_markup()
                 . '</a></li>';
         }
@@ -1085,7 +1096,7 @@ class Plugin {
         }
 
         $icon = '<li class="wp-block-navigation-item plugin-cart-icon">'
-            . '<a class="wp-block-navigation-item__content h2-cart-link" href="#" onclick="openCartSidebar();return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+            . '<a class="wp-block-navigation-item__content h2-cart-link" href="#" onclick="openCartSidebar();return false;" aria-label="' . esc_attr__('Warenkorb', 'h2-rental-pro') . '">'
             . $this->get_cart_icon_markup()
             . '</a></li>';
 
@@ -1124,7 +1135,7 @@ class Plugin {
         $icon_markup = $this->get_cart_icon_markup();
         
         return '<span class="' . $class . '">'
-            . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'produkt') . '">'
+            . '<a href="#" class="h2-cart-link" onclick="openCartSidebar(); return false;" aria-label="' . esc_attr__('Warenkorb', 'h2-rental-pro') . '">'
             . $icon_markup
             . '</a></span>';
     }
@@ -1156,7 +1167,7 @@ class Plugin {
         require_once PRODUKT_PLUGIN_PATH . 'includes/shop-helpers.php';
 
         echo '<section class="produkt-search-products">';
-        echo '<h2 class="produkt-search-products__title">' . esc_html__('Gefundene Produkte', 'h2-concepts') . '</h2>';
+        echo '<h2 class="produkt-search-products__title">' . esc_html__('Gefundene Produkte', 'h2-rental-pro') . '</h2>';
         echo '<div class="shop-product-grid">';
 
         foreach ($products as $product) {
@@ -1202,7 +1213,7 @@ class Plugin {
         echo '</section>';
 
         echo '<div class="produkt-search-divider">';
-        echo '<h2 class="produkt-search-divider__title">' . esc_html__('Weitere Themen', 'h2-concepts') . '</h2>';
+        echo '<h2 class="produkt-search-divider__title">' . esc_html__('Weitere Themen', 'h2-rental-pro') . '</h2>';
         echo '</div>';
     }
 
@@ -1235,8 +1246,8 @@ class Plugin {
         }
 
         $settings_url = admin_url('admin.php?page=produkt-settings&tab=email');
-        echo '<div class="notice notice-warning"><p><strong>' . esc_html__('Sie bieten Produkte zum Verkauf an, bitte aktivieren Sie den Rechnungsversand in den Einstellungen, damit der Kunde eine automatisierte Rechnung erhält.', 'h2-concepts') . '</strong> ';
-        echo '<a href="' . esc_url($settings_url) . '">' . esc_html__('Zu den Einstellungen wechseln', 'h2-concepts') . '</a>';
+        echo '<div class="notice notice-warning"><p><strong>' . esc_html__('Sie bieten Produkte zum Verkauf an, bitte aktivieren Sie den Rechnungsversand in den Einstellungen, damit der Kunde eine automatisierte Rechnung erhält.', 'h2-rental-pro') . '</strong> ';
+        echo '<a href="' . esc_url($settings_url) . '">' . esc_html__('Zu den Einstellungen wechseln', 'h2-rental-pro') . '</a>';
         echo '</p></div>';
     }
 
@@ -1351,6 +1362,74 @@ class Plugin {
 
         wp_safe_redirect($ref);
         exit;
+    }
+
+    public function send_review_reminders_daily() {
+        global $wpdb;
+        Database::backfill_review_targets_batch(200);
+
+        $targets = Database::get_pending_review_targets_for_reminders(200);
+        if (empty($targets)) {
+            return;
+        }
+
+        $account_page_id = get_option(PRODUKT_CUSTOMER_PAGE_OPTION);
+        $account_url = $account_page_id ? get_permalink($account_page_id) : home_url('/kundenkonto');
+
+        foreach ($targets as $target) {
+            $customer_id = (int) ($target->customer_id ?? 0);
+            $subscription_key = (string) ($target->subscription_key ?? '');
+
+            if (!$customer_id || !$subscription_key) {
+                continue;
+            }
+
+            $existing_review_id = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT id FROM {$wpdb->prefix}produkt_reviews WHERE customer_id = %d AND subscription_key = %s LIMIT 1",
+                    $customer_id,
+                    $subscription_key
+                )
+            );
+
+            if ($existing_review_id) {
+                Database::mark_review_target_reviewed($customer_id, $subscription_key, $existing_review_id);
+                continue;
+            }
+
+            if (Database::has_sent_review_reminder($customer_id, $subscription_key)) {
+                continue;
+            }
+
+            $email = sanitize_email($target->email ?? '');
+            if (!$email) {
+                continue;
+            }
+
+            $product_name = $target->product_name ?? '';
+            $customer_name = trim(($target->first_name ?? '') . ' ' . ($target->last_name ?? ''));
+            $cta_url = add_query_arg(
+                [
+                    'view'   => 'abos',
+                    'review' => rawurlencode($subscription_key),
+                ],
+                $account_url
+            );
+
+            $sent = function_exists(__NAMESPACE__ . '\\send_produkt_review_reminder_email')
+                ? send_produkt_review_reminder_email(
+                    $email,
+                    $customer_name,
+                    $product_name,
+                    $cta_url,
+                    $target->end_date ?? ''
+                )
+                : false;
+
+            if ($sent) {
+                Database::log_review_reminder($customer_id, $subscription_key);
+            }
+        }
     }
 }
 

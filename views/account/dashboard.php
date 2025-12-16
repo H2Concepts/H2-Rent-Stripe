@@ -19,38 +19,38 @@
             <?php endif; ?>
         </div>
         <div class="login-panel-main">
-            <h1>Schön, dass du da bist!</h1>
-            <p class="login-lead">Melde dich mit der E-Mail an, die du bei deiner Bestellung angegeben hast. Wir senden dir einen Login-Code.</p>
+            <h1><?php echo esc_html__('Schön, dass du da bist!', 'h2-rental-pro'); ?></h1>
+            <p class="login-lead"><?php echo esc_html__('Melde dich mit der E-Mail an, die du bei deiner Bestellung angegeben hast. Wir senden dir einen Login-Code.', 'h2-rental-pro'); ?></p>
             <?php if (!empty($message)) { echo $message; } ?>
             <form method="post" class="login-email-form">
                 <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
                 <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
-                <label for="login-email" class="screen-reader-text">E-Mail-Adresse</label>
-                <input id="login-email" type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
-                <button type="submit" name="request_login_code">Code zum Einloggen anfordern</button>
+                <label for="login-email" class="screen-reader-text"><?php echo esc_html__('E-Mail-Adresse', 'h2-rental-pro'); ?></label>
+                <input id="login-email" type="email" name="email" placeholder="<?php echo esc_attr__('Ihre E-Mail', 'h2-rental-pro'); ?>" value="<?php echo esc_attr($email_value); ?>" required>
+                <button type="submit" name="request_login_code"><?php echo esc_html__('Code zum Einloggen anfordern', 'h2-rental-pro'); ?></button>
             </form>
             <?php if ($show_code_form) : ?>
                 <form method="post" class="login-code-form">
                     <?php wp_nonce_field('verify_login_code_action', 'verify_login_code_nonce'); ?>
                     <input type="hidden" name="email" value="<?php echo esc_attr($email_value); ?>">
                     <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
-                    <label for="login-code-combined" class="screen-reader-text">6-stelliger Code</label>
+                    <label for="login-code-combined" class="screen-reader-text"><?php echo esc_html__('6-stelliger Code', 'h2-rental-pro'); ?></label>
                     <input id="login-code-combined" type="hidden" name="code" required>
                     <div class="code-input-group">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 1" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 2" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 3" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 1', 'h2-rental-pro'); ?>" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 2', 'h2-rental-pro'); ?>" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 3', 'h2-rental-pro'); ?>" autocomplete="off">
                         <span class="code-separator">-</span>
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 4" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 5" autocomplete="off">
-                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 6" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 4', 'h2-rental-pro'); ?>" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 5', 'h2-rental-pro'); ?>" autocomplete="off">
+                        <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 6', 'h2-rental-pro'); ?>" autocomplete="off">
                     </div>
-                    <button type="submit" name="verify_login_code">Einloggen</button>
+                    <button type="submit" name="verify_login_code"><?php echo esc_html__('Einloggen', 'h2-rental-pro'); ?></button>
                 </form>
             <?php endif; ?>
         </div>
-        <p class="login-signup-hint">Du hast noch kein <?php echo esc_html($site_name); ?>-Account?<br>
-            <a href="<?php echo esc_url(home_url('/shop')); ?>">Jetzt <?php echo esc_html($site_name); ?>-Kunde werden.</a>
+        <p class="login-signup-hint"><?php printf(esc_html__('Du hast noch kein %s-Account?', 'h2-rental-pro'), esc_html($site_name)); ?><br>
+            <a href="<?php echo esc_url(home_url('/shop')); ?>"><?php printf(esc_html__('Jetzt %s-Kunde werden.', 'h2-rental-pro'), esc_html($site_name)); ?></a>
         </p>
     </div>
     <div class="produkt-login-visual"<?php echo $login_bg_image ? ' style="background-image:url(' . esc_url($login_bg_image) . ');"' : ''; ?> aria-hidden="true"></div>
@@ -65,14 +65,14 @@
                 </a>
             </div>
         <?php endif; ?>
-        <h1>Login</h1>
-        <p>Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.</p>
+        <h1><?php echo esc_html__('Login', 'h2-rental-pro'); ?></h1>
+        <p><?php echo esc_html__('Bitte die Email Adresse eingeben die bei Ihrer Bestellung verwendet wurde.', 'h2-rental-pro'); ?></p>
         <?php if (!empty($message)) { echo $message; } ?>
         <form method="post" class="login-email-form">
             <?php wp_nonce_field('request_login_code_action', 'request_login_code_nonce'); ?>
             <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
-            <input type="email" name="email" placeholder="Ihre E-Mail" value="<?php echo esc_attr($email_value); ?>" required>
-            <button type="submit" name="request_login_code">Code zum einloggen anfordern</button>
+            <input type="email" name="email" placeholder="<?php echo esc_attr__('Ihre E-Mail', 'h2-rental-pro'); ?>" value="<?php echo esc_attr($email_value); ?>" required>
+            <button type="submit" name="request_login_code"><?php echo esc_html__('Code zum einloggen anfordern', 'h2-rental-pro'); ?></button>
         </form>
         <?php if ($show_code_form) : ?>
         <form method="post" class="login-code-form">
@@ -81,35 +81,35 @@
             <input type="hidden" name="redirect_to" value="<?php echo esc_url($redirect_to); ?>">
             <input id="login-code-combined-classic" type="hidden" name="code" required>
             <div class="code-input-group">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 1" autocomplete="off">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 2" autocomplete="off">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 3" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 1', 'h2-rental-pro'); ?>" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 2', 'h2-rental-pro'); ?>" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 3', 'h2-rental-pro'); ?>" autocomplete="off">
                 <span class="code-separator">-</span>
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 4" autocomplete="off">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 5" autocomplete="off">
-                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Code Ziffer 6" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 4', 'h2-rental-pro'); ?>" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 5', 'h2-rental-pro'); ?>" autocomplete="off">
+                <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="<?php echo esc_attr__('Code Ziffer 6', 'h2-rental-pro'); ?>" autocomplete="off">
             </div>
-            <button type="submit" name="verify_login_code">Einloggen</button>
+            <button type="submit" name="verify_login_code"><?php echo esc_html__('Einloggen', 'h2-rental-pro'); ?></button>
         </form>
         <?php endif; ?>
-        <a class="back-to-shop" href="<?php echo esc_url(home_url('/shop')); ?>">Zurück zum Shop</a>
+        <a class="back-to-shop" href="<?php echo esc_url(home_url('/shop')); ?>"><?php echo esc_html__('Zurück zum Shop', 'h2-rental-pro'); ?></a>
     </div>
 </div>
 <?php endif; ?>
 <?php else : ?>
 <div class="produkt-account-wrapper produkt-container shop-overview-container">
-    <h2>Mein Konto</h2>
+    <h2><?php echo esc_html__('Mein Konto', 'h2-rental-pro'); ?></h2>
     <?php if (!empty($message)) { echo $message; } ?>
     <?php if ($is_sale) : ?>
         <div class="account-layout">
             <aside class="account-sidebar shop-category-list">
-                <h2>Hallo <?php echo esc_html($full_name); ?></h2>
+                <h2><?php printf(esc_html__('Hallo %s', 'h2-rental-pro'), esc_html($full_name)); ?></h2>
                 <ul>
                     <li>
-                        <a href="#" class="active"><?php echo $is_sale ? 'Bestellungen' : 'Abos'; ?></a>
+                        <a href="#" class="active"><?php echo $is_sale ? esc_html__('Bestellungen', 'h2-rental-pro') : esc_html__('Abos', 'h2-rental-pro'); ?></a>
                     </li>
                     <li>
-                        <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Logout</a>
+                        <a href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>"><?php echo esc_html__('Logout', 'h2-rental-pro'); ?></a>
                     </li>
                 </ul>
             </aside>
@@ -118,15 +118,15 @@
                 <?php $first = $sale_orders[0]; ?>
                 <div class="abo-row">
                     <div class="order-box">
-                        <h3>Kundendaten</h3>
+                        <h3><?php echo esc_html__('Kundendaten', 'h2-rental-pro'); ?></h3>
                         <?php if (!empty($first->customer_name)) : ?>
-                            <p><strong>Name:</strong> <?php echo esc_html($first->customer_name); ?></p>
+                            <p><strong><?php echo esc_html__('Name:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($first->customer_name); ?></p>
                         <?php endif; ?>
                         <?php if (!empty($first->customer_email)) : ?>
-                            <p><strong>E-Mail:</strong> <?php echo esc_html($first->customer_email); ?></p>
+                            <p><strong><?php echo esc_html__('E-Mail:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($first->customer_email); ?></p>
                         <?php endif; ?>
                         <?php if (!empty($first->customer_phone)) : ?>
-                            <p><strong>Telefon:</strong> <?php echo esc_html($first->customer_phone); ?></p>
+                            <p><strong><?php echo esc_html__('Telefon:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($first->customer_phone); ?></p>
                         <?php endif; ?>
                         <?php
                             $addr = $customer_addr;
@@ -137,10 +137,10 @@
                                 }
                             }
                         ?>
-                        <h4>Versandadresse</h4>
-                        <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
-                        <h4>Rechnungsadresse</h4>
-                        <p><?php echo esc_html($addr ?: 'Nicht angegeben'); ?></p>
+                        <h4><?php echo esc_html__('Versandadresse', 'h2-rental-pro'); ?></h4>
+                        <p><?php echo esc_html($addr ?: __('Nicht angegeben', 'h2-rental-pro')); ?></p>
+                        <h4><?php echo esc_html__('Rechnungsadresse', 'h2-rental-pro'); ?></h4>
+                        <p><?php echo esc_html($addr ?: __('Nicht angegeben', 'h2-rental-pro')); ?></p>
                     </div>
                     <div class="orders-column produkt-accordions orders-accordion">
                         <?php foreach ($sale_orders as $idx => $order) : ?>
@@ -152,7 +152,7 @@
                             <div class="produkt-accordion-item<?php echo $active; ?>">
                                 <?php $num = !empty($order->order_number) ? $order->order_number : $order->id; ?>
                                 <button type="button" class="produkt-accordion-header">
-                                    Bestellung #<?php echo esc_html($num); ?> – <?php echo esc_html(date_i18n('d.m.Y', strtotime($order->created_at))); ?>
+                                    <?php printf(esc_html__('Bestellung #%s – %s', 'h2-rental-pro'), esc_html($num), esc_html(date_i18n('d.m.Y', strtotime($order->created_at)))); ?>
                                 </button>
                                 <div class="produkt-accordion-content">
                                     <?php include PRODUKT_PLUGIN_PATH . 'includes/render-order-details.php'; ?>
@@ -162,7 +162,7 @@
                     </div>
                 </div>
             <?php else : ?>
-                <p>Keine Bestellungen.</p>
+                <p><?php echo esc_html__('Keine Bestellungen.', 'h2-rental-pro'); ?></p>
             <?php endif; ?>
             </div>
         </div>
@@ -232,9 +232,16 @@
         ?>
         <?php if ($view === 'abos' && !$selected_sub_id) : ?>
             <div class="account-section-header">
-                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
-                <h4>Meine Abos</h4>
+                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; <?php echo esc_html__('Zurück', 'h2-rental-pro'); ?></a>
+                <h4><?php echo esc_html__('Meine Abos', 'h2-rental-pro'); ?></h4>
             </div>
+            <?php
+                $all_keys = array_keys($order_map ?? []);
+                $reviewed_keys = [];
+                if (!empty($customer_row_id) && !empty($all_keys)) {
+                    $reviewed_keys = \ProduktVerleih\Database::get_reviewed_subscription_keys((int) $customer_row_id, $all_keys);
+                }
+            ?>
             <div class="subscription-grid">
                 <?php if (!empty($active_subscriptions)) : ?>
                     <?php foreach ($active_subscriptions as $sub) : ?>
@@ -247,21 +254,19 @@
                         ?>
                         <?php foreach ($orders_for_sub as $order) : ?>
                             <?php
-                                $variant_id  = $order ? ($order->variant_id ?? 0) : 0;
-                                $category_id = $order ? ($order->category_id ?? 0) : 0;
-                                $image_url   = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
-                                $product     = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
+                                $variant_id      = $order ? ($order->variant_id ?? 0) : 0;
+                                $category_id     = $order ? ($order->category_id ?? 0) : 0;
+                                $image_url       = pv_get_image_url_by_variant_or_category($variant_id, $category_id);
+                                $product         = $order ? ($order->category_name ?? $order->product_title ?? $order->produkt_name ?? $order->category_title ?? '') : '';
                                 if (!$product && !empty($order->category_id)) {
                                     $product = pv_get_category_title_by_id((int) $order->category_id);
                                 }
-                                $product     = $product ?: ($order ? ($order->variant_name ?? 'Produkt') : 'Produkt');
-                                $order_date  = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
-                                $duration    = (!empty($order) && !empty($order->duration_name)) ? $order->duration_name : ((!empty($order) && !empty($order->dauer_text)) ? $order->dauer_text : 'Mindestlaufzeit');
-                                $payments    = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
-                                $monthly     = number_format($payments['monthly_amount'] ?? 0, 2, ',', '.') . ' €';
-                                $min_months  = $order ? pv_get_minimum_duration_months($order) : 0;
-                                $min_label   = $min_months ? $min_months . ' Monate' : '';
-                                $detail_url  = add_query_arg(
+                                $product         = $product ?: ($order ? ($order->variant_name ?? __('Produkt', 'h2-rental-pro')) : __('Produkt', 'h2-rental-pro'));
+                                $order_date      = (!empty($order) && !empty($order->created_at)) ? date_i18n('d.m.Y', strtotime($order->created_at)) : '–';
+                                $payments        = $order ? pv_calculate_rental_payments($order) : ['monthly_amount' => 0];
+                                $monthly_amount  = max(0.0, (float) ($payments['monthly_amount'] ?? 0));
+                                $monthly_display = number_format($monthly_amount, 2, ',', '.') . '€/Monat';
+                                $detail_url      = add_query_arg(
                                     [
                                         'view'         => 'abo-detail',
                                         'subscription' => $sub_id,
@@ -269,29 +274,45 @@
                                     ],
                                     $overview_url
                                 );
+                                $is_reviewed     = !empty($reviewed_keys[$sub_id]);
                             ?>
-                            <a class="subscription-card" href="<?php echo esc_url($detail_url); ?>">
-                                <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                            <div class="subscription-card">
+                                <div class="subscription-image-wrap">
+                                    <img class="subscription-thumb" src="<?php echo esc_url($image_url ?: ''); ?>" alt="">
+                                    <span class="pill-badge success subscription-status-badge"><?php echo esc_html__('ABO AKTIV', 'h2-rental-pro'); ?></span>
+                                </div>
                                 <div class="subscription-card-body">
+                                    <div class="subscription-date"><?php printf(esc_html__('Bestellt am: %s', 'h2-rental-pro'), esc_html($order_date)); ?></div>
                                     <div class="subscription-card-title"><?php echo esc_html($product); ?></div>
-                                    <div class="subscription-meta">
-                                        <span class="pill-badge success">ABO AKTIV</span>
-                                        <div><strong>Bestelldatum:</strong> <?php echo esc_html($order_date); ?></div>
-                                        <div><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_label ?: $duration); ?></div>
-                                        <div><strong>Monatliche Kosten:</strong> <?php echo esc_html($monthly); ?></div>
+                                    <div class="subscription-price"><?php echo esc_html($monthly_display); ?></div>
+                                    <div class="subscription-actions">
+                                        <a class="card-button card-button-link secondary-button" href="<?php echo esc_url($detail_url); ?>"><?php echo esc_html__('Details ansehen', 'h2-rental-pro'); ?></a>
+                                        <?php if ($is_reviewed): ?>
+                                            <button type="button" class="card-button reviewed" aria-disabled="true" disabled><?php echo esc_html__('Bewertet ✓', 'h2-rental-pro'); ?></button>
+                                        <?php else: ?>
+                                            <button
+                                                type="button"
+                                                class="card-button card-button-link open-review-modal"
+                                                data-subscription-key="<?php echo esc_attr($sub_id); ?>"
+                                                data-order-id="<?php echo esc_attr($order->id ?? 0); ?>"
+                                                data-product-index="<?php echo esc_attr($order->product_index ?? 0); ?>"
+                                                data-product-id="<?php echo esc_attr($order->category_id ?? 0); ?>"
+                                                data-product-name="<?php echo esc_attr($product); ?>"
+                                            ><?php echo esc_html__('Jetzt bewerten', 'h2-rental-pro'); ?></button>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
-                            </a>
+                            </div>
                         <?php endforeach; ?>
                     <?php endforeach; ?>
                 <?php else : ?>
-                    <p>Keine aktiven Abos vorhanden.</p>
+                    <p><?php echo esc_html__('Keine aktiven Abos vorhanden.', 'h2-rental-pro'); ?></p>
                 <?php endif; ?>
             </div>
         <?php elseif ($view === 'rechnungen') : ?>
             <div class="account-section-header">
-                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; Zurück</a>
-                <h4>Meine Rechnungen</h4>
+                <a class="account-back-link" href="<?php echo esc_url($overview_url); ?>">&larr; <?php echo esc_html__('Zurück', 'h2-rental-pro'); ?></a>
+                <h4><?php echo esc_html__('Meine Rechnungen', 'h2-rental-pro'); ?></h4>
             </div>
             <?php
                 $purchase_invoices = array_filter($invoice_orders, function ($inv) {
@@ -322,23 +343,23 @@
                                 $status_raw   = $invoice['status'] ?? '';
                                 $is_paid_flag = !empty($invoice['paid']);
 
-                                $status_label = 'Unbekannt';
+                                $status_label = __('Unbekannt', 'h2-rental-pro');
                                 $status_class = 'status-unknown';
 
                                 if ($is_paid_flag || $status_raw === 'paid') {
-                                    $status_label = 'Bezahlt';
+                                    $status_label = __('Bezahlt', 'h2-rental-pro');
                                     $status_class = 'status-paid';
                                 } elseif ($status_raw === 'open') {
-                                    $status_label = 'Offen';
+                                    $status_label = __('Offen', 'h2-rental-pro');
                                     $status_class = 'status-open';
                                 } elseif ($status_raw === 'void') {
-                                    $status_label = 'Storniert';
+                                    $status_label = __('Storniert', 'h2-rental-pro');
                                     $status_class = 'status-void';
                                 } elseif ($status_raw === 'uncollectible') {
-                                    $status_label = 'Nicht einziehbar';
+                                    $status_label = __('Nicht einziehbar', 'h2-rental-pro');
                                     $status_class = 'status-uncollectible';
                                 } elseif ($status_raw === 'draft') {
-                                    $status_label = 'Entwurf';
+                                    $status_label = __('Entwurf', 'h2-rental-pro');
                                     $status_class = 'status-draft';
                                 }
                             ?>
@@ -347,34 +368,34 @@
                                     <?php echo esc_html($status_label); ?>
                                 </span>
                                 <div class="subscription-card-body">
-                                    <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice['number']); ?></div>
+                                    <div class="subscription-card-title"><?php printf(esc_html__('Rechnung %s', 'h2-rental-pro'), esc_html($invoice['number'])); ?></div>
                                     <div class="subscription-meta invoice-meta">
                                         <?php if ($order_number) : ?>
                                             <div class="invoice-row">
-                                                <strong>Bestellnummer:</strong> <?php echo esc_html($order_number); ?>
+                                                <strong><?php echo esc_html__('Bestellnummer:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($order_number); ?>
                                             </div>
                                         <?php endif; ?>
 
                                         <?php if ($period_label) : ?>
                                             <div class="invoice-row">
-                                                <strong>Zeitraum:</strong> <?php echo esc_html($period_label); ?>
+                                                <strong><?php echo esc_html__('Zeitraum:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($period_label); ?>
                                             </div>
                                         <?php endif; ?>
 
                                         <?php if ($created) : ?>
                                             <div class="invoice-row">
-                                                <strong>Rechnungsdatum:</strong> <?php echo esc_html($created); ?>
+                                                <strong><?php echo esc_html__('Rechnungsdatum:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($created); ?>
                                             </div>
                                         <?php endif; ?>
 
                                         <div class="invoice-row">
-                                            <strong>Rechnungsbetrag:</strong> <?php echo esc_html($amount_label . ' ' . $currency); ?>
+                                            <strong><?php echo esc_html__('Rechnungsbetrag:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($amount_label . ' ' . $currency); ?>
                                         </div>
                                     </div>
                                     <div class="invoice-actions">
                                         <?php if (!empty($invoice['pdf_url'])) : ?>
                                             <a class="invoice-download-btn" href="<?php echo esc_url($invoice['pdf_url']); ?>" target="_blank" rel="noopener">
-                                                Herunterladen
+                                                <?php echo esc_html__('Herunterladen', 'h2-rental-pro'); ?>
                                             </a>
                                         <?php endif; ?>
                                     </div>
@@ -402,25 +423,25 @@
                             ?>
                             <div class="subscription-card invoice-card">
                                 <div class="subscription-card-body">
-                                    <div class="subscription-card-title">Rechnung <?php echo esc_html($invoice_number); ?></div>
+                                    <div class="subscription-card-title"><?php printf(esc_html__('Rechnung %s', 'h2-rental-pro'), esc_html($invoice_number)); ?></div>
                                     <div class="subscription-meta invoice-meta">
                                         <div class="invoice-row">
-                                            <strong>Bestellnummer:</strong> <?php echo esc_html($order_number ?: '–'); ?>
+                                            <strong><?php echo esc_html__('Bestellnummer:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($order_number ?: '–'); ?>
                                         </div>
                                         <div class="invoice-row">
-                                            <strong>Kaufdatum:</strong> <?php echo esc_html($purchase_date); ?>
+                                            <strong><?php echo esc_html__('Kaufdatum:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($purchase_date); ?>
                                         </div>
                                         <div class="invoice-row">
-                                            <strong>Rechnungsdatum:</strong> <?php echo esc_html($invoice_date ?: '–'); ?>
+                                            <strong><?php echo esc_html__('Rechnungsdatum:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($invoice_date ?: '–'); ?>
                                         </div>
                                         <div class="invoice-row">
-                                            <strong>Rechnungsbetrag:</strong> <?php echo esc_html($amount_label); ?> €
+                                            <strong><?php echo esc_html__('Rechnungsbetrag:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($amount_label); ?> €
                                         </div>
                                     </div>
                                     <div class="invoice-actions">
                                         <?php if ($download_url) : ?>
                                             <a class="invoice-download-btn" href="<?php echo esc_url($download_url); ?>" target="_blank" rel="noopener" download>
-                                                Herunterladen
+                                                <?php echo esc_html__('Herunterladen', 'h2-rental-pro'); ?>
                                             </a>
                                         <?php endif; ?>
                                     </div>
@@ -430,7 +451,7 @@
                     <?php endif; ?>
                 </div>
             <?php else : ?>
-                <p>Aktuell liegen keine Rechnungen vor.</p>
+                <p><?php echo esc_html__('Aktuell liegen keine Rechnungen vor.', 'h2-rental-pro'); ?></p>
             <?php endif; ?>
         <?php elseif ($view === 'abo-detail' && $selected_sub_id && $selected_order) : ?>
             <?php
@@ -438,10 +459,10 @@
                 if (!$product && !empty($selected_order->category_id)) {
                     $product = pv_get_category_title_by_id((int) $selected_order->category_id);
                 }
-                $product      = $product ?: ($selected_order->variant_name ?? 'Produkt');
+                $product      = $product ?: ($selected_order->variant_name ?? __('Produkt', 'h2-rental-pro'));
                 $order_date   = !empty($selected_order->created_at) ? date_i18n('d.m.Y', strtotime($selected_order->created_at)) : '–';
                 $order_number = $selected_order->order_number ?? $selected_order->id ?? '–';
-                $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : 'Mindestlaufzeit');
+                $duration     = !empty($selected_order->duration_name) ? $selected_order->duration_name : (!empty($selected_order->dauer_text) ? $selected_order->dauer_text : __('Mindestlaufzeit', 'h2-rental-pro'));
                 $condition    = $selected_order->condition_name ?? $selected_order->zustand_text ?? '';
                 $color        = $selected_order->product_color_name ?? $selected_order->produktfarbe_text ?? '';
                 $variant      = $selected_order->variant_name ?? '';
@@ -459,12 +480,12 @@
                 $cancel_open_date = date_i18n('d.m.Y', $cancel_ready_ts);
                 $selected_meta   = $subscription_lookup[$selected_sub_id] ?? [];
                 $cancel_sub_id   = $selected_meta['subscription_id'] ?? $selected_sub_id;
-                $cancel_label    = $cancel_ready ? 'Jetzt kündigen' : 'Nicht möglich';
+                $cancel_label    = $cancel_ready ? __('Jetzt kündigen', 'h2-rental-pro') : __('Nicht möglich', 'h2-rental-pro');
 
                 // Prefer our persisted per-item rental status (supports cart orders).
                 $status_style = '';
                 $status_class = 'success';
-                $status_label = 'Aktiv';
+                $status_label = __('Aktiv', 'h2-rental-pro');
                 $item_status = '';
                 $item_end_date = '';
                 if (!empty($selected_order->order_items)) {
@@ -482,48 +503,48 @@
                 $item_end_label = $item_end_date ? date_i18n('d.m.Y', strtotime($item_end_date)) : '';
                 if ($item_status === 'beendet') {
                     $status_class = 'inactive';
-                    $status_label = 'Beendet';
+                    $status_label = __('Beendet', 'h2-rental-pro');
                 } elseif ($item_status === 'gekündigt') {
                     $status_class = 'cancelled';
-                    $status_label = 'Gekündigt';
+                    $status_label = __('Gekündigt', 'h2-rental-pro');
                 } else {
                     // fallback: infer from Stripe status
                     $status_raw = strtolower($selected_meta['status'] ?? ($selected_order->status ?? 'active'));
                     if (in_array($status_raw, ['canceled', 'cancelled'], true)) {
                         $status_class = 'cancelled';
-                        $status_label = 'Gekündigt';
+                        $status_label = __('Gekündigt', 'h2-rental-pro');
                     }
                 }
             ?>
             <div class="account-section-header">
-                <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; Zurück</a>
+                <a class="account-back-link" href="<?php echo esc_url($subscriptions_url); ?>">&larr; <?php echo esc_html__('Zurück', 'h2-rental-pro'); ?></a>
                 <h4><?php echo esc_html($product); ?></h4>
             </div>
             <div class="subscription-detail-grid">
                 <div class="subscription-detail-card">
-                    <div class="card-title">Bestellt</div>
+                    <div class="card-title"><?php echo esc_html__('Bestellt', 'h2-rental-pro'); ?></div>
                     <div class="subscription-detail-content">
-                        <p><strong>Bestelldatum:</strong><br><?php echo esc_html($order_date); ?></p>
-                        <p><strong>Bestellnummer:</strong><br><?php echo esc_html($order_number); ?></p>
+                        <p><strong><?php echo esc_html__('Bestelldatum:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($order_date); ?></p>
+                        <p><strong><?php echo esc_html__('Bestellnummer:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($order_number); ?></p>
                     </div>
                 </div>
                 <div class="subscription-detail-card">
-                    <div class="card-title">Produkt</div>
+                    <div class="card-title"><?php echo esc_html__('Produkt', 'h2-rental-pro'); ?></div>
                     <div class="subscription-detail-content">
-                        <p><strong>Produkt:</strong><br><?php echo esc_html($product); ?></p>
-                        <?php if (!empty($variant)) : ?><p><strong>Ausführung:</strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
-                        <?php if (!empty($condition)) : ?><p><strong>Zustand:</strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
-                        <?php if (!empty($color)) : ?><p><strong>Farbe:</strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
+                        <p><strong><?php echo esc_html__('Produkt:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($product); ?></p>
+                        <?php if (!empty($variant)) : ?><p><strong><?php echo esc_html__('Ausführung:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($variant); ?></p><?php endif; ?>
+                        <?php if (!empty($condition)) : ?><p><strong><?php echo esc_html__('Zustand:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($condition); ?></p><?php endif; ?>
+                        <?php if (!empty($color)) : ?><p><strong><?php echo esc_html__('Farbe:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($color); ?></p><?php endif; ?>
                     </div>
                 </div>
                 <div class="subscription-detail-card">
-                    <div class="card-title">Ende Mindestlaufzeit</div>
+                    <div class="card-title"><?php echo esc_html__('Ende Mindestlaufzeit', 'h2-rental-pro'); ?></div>
                     <div class="subscription-detail-content">
-                        <p><strong>Datum:</strong><br><?php echo esc_html($min_end_date); ?></p>
+                        <p><strong><?php echo esc_html__('Datum:', 'h2-rental-pro'); ?></strong><br><?php echo esc_html($min_end_date); ?></p>
                     </div>
                 </div>
                 <div class="subscription-detail-card">
-                    <div class="card-title">Kündigung</div>
+                    <div class="card-title"><?php echo esc_html__('Kündigung', 'h2-rental-pro'); ?></div>
                     <div class="subscription-detail-content">
                         <form method="post">
                             <?php wp_nonce_field('cancel_subscription_action', 'cancel_subscription_nonce'); ?>
@@ -532,19 +553,19 @@
                             <input type="hidden" name="product_index" value="<?php echo esc_attr((int) ($selected_order->product_index ?? 0)); ?>">
                             <button type="submit" name="cancel_subscription" class="card-button cancel-button<?php echo $cancel_ready ? ' is-active' : ''; ?>" <?php echo ($cancel_ready && $cancel_sub_id) ? '' : 'disabled'; ?>><?php echo esc_html($cancel_label); ?></button>
                         </form>
-                        <p class="card-helper">Kündigung möglich ab dem <?php echo esc_html($cancel_open_date); ?>.</p>
+                        <p class="card-helper"><?php printf(esc_html__('Kündigung möglich ab dem %s.', 'h2-rental-pro'), esc_html($cancel_open_date)); ?></p>
                     </div>
                 </div>
                 <div class="subscription-detail-card subscription-wide-card">
                     <span class="pill-badge <?php echo esc_attr($status_class); ?> subscription-status-badge"<?php echo $status_style ? ' style="' . esc_attr($status_style) . '"' : ''; ?>><?php echo esc_html($status_label); ?></span>
-                    <div class="card-title">Abodetails</div>
+                    <div class="card-title"><?php echo esc_html__('Abodetails', 'h2-rental-pro'); ?></div>
                     <div class="subscription-detail-content">
-                        <p><strong>Mindestlaufzeit:</strong> <?php echo esc_html($min_months . ' Monate'); ?></p>
-                        <p><strong>Monatlicher Mietpreis:</strong> <?php echo esc_html($monthly); ?></p>
-                        <p><strong>Ende Mindestlaufzeit:</strong> <?php echo esc_html($min_end_date); ?></p>
-                        <p><strong>Datum für Kündigung:</strong> <?php echo esc_html($cancel_open_date); ?></p>
+                        <p><strong><?php echo esc_html__('Mindestlaufzeit:', 'h2-rental-pro'); ?></strong> <?php printf(esc_html__('%d Monate', 'h2-rental-pro'), (int) $min_months); ?></p>
+                        <p><strong><?php echo esc_html__('Monatlicher Mietpreis:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($monthly); ?></p>
+                        <p><strong><?php echo esc_html__('Ende Mindestlaufzeit:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($min_end_date); ?></p>
+                        <p><strong><?php echo esc_html__('Datum für Kündigung:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($cancel_open_date); ?></p>
                         <?php if ($item_end_label && in_array($item_status, ['gekündigt','beendet'], true)) : ?>
-                            <p><strong>Läuft bis:</strong> <?php echo esc_html($item_end_label); ?></p>
+                            <p><strong><?php echo esc_html__('Läuft bis:', 'h2-rental-pro'); ?></strong> <?php echo esc_html($item_end_label); ?></p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -552,24 +573,24 @@
         <?php else : ?>
             <div class="account-dashboard-grid">
                 <div class="account-dashboard-card">
-                    <div class="card-title">Aktive Abos</div>
+                    <div class="card-title"><?php echo esc_html__('Aktive Abos', 'h2-rental-pro'); ?></div>
                     <div class="card-metric"><?php echo esc_html($active_count); ?></div>
-                    <a class="card-button card-button-link" href="<?php echo esc_url($subscriptions_url); ?>">Abos ansehen</a>
+                    <a class="card-button card-button-link" href="<?php echo esc_url($subscriptions_url); ?>"><?php echo esc_html__('Abos ansehen', 'h2-rental-pro'); ?></a>
                 </div>
                 <div class="account-dashboard-card">
-                    <div class="card-title">Summe pro Monat</div>
+                    <div class="card-title"><?php echo esc_html__('Summe pro Monat', 'h2-rental-pro'); ?></div>
                     <div class="card-metric"><?php echo esc_html($monthly_total_formatted); ?>€</div>
-                    <a class="card-button card-button-link" href="<?php echo esc_url($invoices_url); ?>">Alle Rechnungen</a>
+                    <a class="card-button card-button-link" href="<?php echo esc_url($invoices_url); ?>"><?php echo esc_html__('Alle Rechnungen', 'h2-rental-pro'); ?></a>
                 </div>
                 <div class="account-dashboard-card">
-                    <div class="card-title">Freunde einladen</div>
+                    <div class="card-title"><?php echo esc_html__('Freunde einladen', 'h2-rental-pro'); ?></div>
                     <div class="card-code"><?php echo esc_html($invite_code); ?></div>
-                    <button type="button" class="card-button" aria-disabled="true">Code kopieren</button>
+                    <button type="button" class="card-button" aria-disabled="true"><?php echo esc_html__('Code kopieren', 'h2-rental-pro'); ?></button>
                 </div>
                 <div class="account-dashboard-card">
-                    <div class="card-title">Logout</div>
-                    <div class="card-helper">Beende deine Sitzung sicher.</div>
-                    <a class="card-button card-button-link" href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>">Jetzt ausloggen</a>
+                    <div class="card-title"><?php echo esc_html__('Logout', 'h2-rental-pro'); ?></div>
+                    <div class="card-helper"><?php echo esc_html__('Beende deine Sitzung sicher.', 'h2-rental-pro'); ?></div>
+                    <a class="card-button card-button-link" href="<?php echo esc_url(wp_logout_url(get_permalink())); ?>"><?php echo esc_html__('Jetzt ausloggen', 'h2-rental-pro'); ?></a>
                 </div>
             </div>
         <?php endif; ?>

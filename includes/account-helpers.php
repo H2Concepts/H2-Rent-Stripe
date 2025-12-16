@@ -266,23 +266,37 @@ function pv_get_minimum_duration_months($order) {
 function pv_get_image_url_by_variant_or_category($variant_id, $category_id) {
     global $wpdb;
 
+    static $variant_image_cache  = [];
+    static $category_image_cache = [];
+
     $image_url = '';
+
     if ($variant_id) {
-        $image_url = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT image_url_1 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
-                $variant_id
-            )
-        );
+        if (array_key_exists($variant_id, $variant_image_cache)) {
+            $image_url = $variant_image_cache[$variant_id];
+        } else {
+            $image_url = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT image_url_1 FROM {$wpdb->prefix}produkt_variants WHERE id = %d",
+                    $variant_id
+                )
+            );
+            $variant_image_cache[$variant_id] = $image_url ?: '';
+        }
     }
 
     if (empty($image_url) && $category_id) {
-        $image_url = $wpdb->get_var(
-            $wpdb->prepare(
-                "SELECT default_image FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
-                $category_id
-            )
-        );
+        if (array_key_exists($category_id, $category_image_cache)) {
+            $image_url = $category_image_cache[$category_id];
+        } else {
+            $image_url = $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT default_image FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
+                    $category_id
+                )
+            );
+            $category_image_cache[$category_id] = $image_url ?: '';
+        }
     }
 
     return $image_url ?: '';
@@ -295,6 +309,12 @@ function pv_get_category_title_by_id($category_id) {
         return '';
     }
 
+    static $category_title_cache = [];
+
+    if (array_key_exists($category_id, $category_title_cache)) {
+        return $category_title_cache[$category_id];
+    }
+
     $title = $wpdb->get_var(
         $wpdb->prepare(
             "SELECT name FROM {$wpdb->prefix}produkt_categories WHERE id = %d",
@@ -302,7 +322,9 @@ function pv_get_category_title_by_id($category_id) {
         )
     );
 
-    return $title ?: '';
+    $category_title_cache[$category_id] = $title ?: '';
+
+    return $category_title_cache[$category_id];
 }
 
 /**

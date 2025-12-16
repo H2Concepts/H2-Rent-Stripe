@@ -17,12 +17,12 @@ get_header();
         <h3 id="produkt-exit-title"></h3>
         <div id="produkt-exit-message"></div>
         <div id="produkt-exit-email-wrapper" style="display:none;">
-            <input type="email" id="produkt-exit-email" placeholder="E-Mail-Adresse">
+            <input type="email" id="produkt-exit-email" placeholder="<?php echo esc_attr__('E-Mail-Adresse', 'h2-rental-pro'); ?>">
         </div>
         <div id="produkt-exit-select-wrapper" style="display:none;">
             <select id="produkt-exit-select"></select>
         </div>
-        <button id="produkt-exit-send" style="display:none;">Senden</button>
+        <button id="produkt-exit-send" style="display:none;"><?php echo esc_html__('Senden', 'h2-rental-pro'); ?></button>
     </div>
 </div>
 <?php get_footer(); ?>

@@ -185,7 +185,7 @@ jQuery(document).ready(function($) {
 
     function toggleRatingFields() {
         var checked = $('input[name="show_rating"]').is(':checked');
-        $('input[name="rating_value"]').prop('required', checked).prop('disabled', !checked);
+        $('input[name="rating_value"]').prop('required', false).prop('disabled', !checked);
         $('input[name="rating_link"]').prop('disabled', !checked).prop('required', false);
         if (!checked) {
             $('input[name="rating_value"], input[name="rating_link"]').val('');
@@ -401,6 +401,81 @@ jQuery(document).ready(function($) {
         if (blockModal.data('open') == 1) {
             openBlockModal();
         }
+    }
+
+    // Verlauf aufklappen/zuklappen
+    $(document).on('click', '.customer-log-toggle', function() {
+        var $btn = $(this);
+        var $hidden = $btn.closest('.dashboard-card').find('.customer-log-hidden');
+        var $texts = $btn.find('.toggle-text');
+        var isExpanded = $btn.data('expanded') === true;
+        
+        if (isExpanded) {
+            $hidden.slideUp();
+            $texts.eq(0).show();
+            $texts.eq(1).hide();
+            $btn.data('expanded', false);
+        } else {
+            $hidden.slideDown();
+            $texts.eq(0).hide();
+            $texts.eq(1).show();
+            $btn.data('expanded', true);
+        }
+    });
+
+    var reviewModal = $('#review-modal');
+    if (reviewModal.length) {
+        function openReviewModal() {
+            reviewModal.show();
+            $('body').addClass('block-modal-open');
+        }
+        function closeReviewModal() {
+            reviewModal.hide();
+            $('body').removeClass('block-modal-open');
+        }
+
+        $(document).on('click', '.review-view-btn', function(e) {
+            e.preventDefault();
+            var btn = $(this);
+            var rating = parseFloat(btn.data('rating')) || 0;
+            var ratingNumber = rating ? rating.toFixed(1).replace('.', ',') : '0,0';
+            var title = btn.data('title') || '';
+            var text = btn.data('text') || '';
+
+            // Titel aus dem Text entfernen, wenn er vorhanden ist
+            if (title && text) {
+                // Entferne "Titel: " Präfix
+                var titlePattern = new RegExp('^Titel:\\s*' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'mi');
+                text = text.replace(titlePattern, '');
+                // Entferne "# " Präfix
+                var hashPattern = new RegExp('^#\\s*' + title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*$', 'm');
+                text = text.replace(hashPattern, '');
+                // Entferne führende Leerzeilen
+                text = text.replace(/^\s*\n\s*\n?/, '');
+            }
+
+            reviewModal.find('.review-modal-product').text(btn.data('product') || '');
+            reviewModal.find('.review-modal-name').text(btn.data('name') || '');
+            reviewModal.find('.review-modal-date').text(btn.data('date') || '');
+            reviewModal.find('.review-modal-title').text(title || '').toggle(title !== '' && title !== '–');
+            reviewModal.find('.review-modal-text').html(text ? text.replace(/\n/g, '<br>') : '').toggle(text.trim() !== '');
+            reviewModal.find('.review-modal-rating').html(
+                '<div class="produkt-star-rating" style="--rating:' + rating + ';"></div>' +
+                '<span class="rating-number">' + ratingNumber + '</span>'
+            );
+
+            openReviewModal();
+        });
+
+        reviewModal.on('click', function(e) {
+            if (e.target === this) {
+                closeReviewModal();
+            }
+        });
+
+        reviewModal.find('.modal-close').on('click', function(){
+            closeReviewModal();
+        });
     }
 
     var shipModal = $('#shipping-modal');

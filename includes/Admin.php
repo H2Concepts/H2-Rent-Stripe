@@ -28,8 +28,8 @@ class Admin {
         // "Dashboard" instead of repeating the plugin name
         add_submenu_page(
             'produkt-verleih',
-            'Dashboard',
-            'Dashboard',
+            __('Dashboard', 'h2-rental-pro'),
+            __('Dashboard', 'h2-rental-pro'),
             'manage_options',
             'produkt-verleih',
             array($this, 'admin_page')
@@ -38,8 +38,8 @@ class Admin {
         // Manage simple product categories
         add_submenu_page(
             'produkt-verleih',
-            'Kategorien',
-            'Kategorien',
+            __('Kategorien', 'h2-rental-pro'),
+            __('Kategorien', 'h2-rental-pro'),
             'manage_options',
             'produkt-kategorien',
             function () {
@@ -50,8 +50,8 @@ class Admin {
         // Submenu: Produkte
         add_submenu_page(
             'produkt-verleih',
-            'Produkte',
-            'Produkte',
+            __('Produkte', 'h2-rental-pro'),
+            __('Produkte', 'h2-rental-pro'),
             'manage_options',
             'produkt-categories',
             array($this, 'categories_page')
@@ -60,8 +60,8 @@ class Admin {
         // Submenu: Produktverwaltung
         add_submenu_page(
             'produkt-verleih',
-            'Ausführungen',
-            'Ausführungen',
+            __('Ausführungen', 'h2-rental-pro'),
+            __('Ausführungen', 'h2-rental-pro'),
             'manage_options',
             'produkt-variants',
             array($this, 'variants_page')
@@ -69,8 +69,8 @@ class Admin {
         
         add_submenu_page(
             'produkt-verleih',
-            'Extras',
-            'Extras',
+            __('Extras', 'h2-rental-pro'),
+            __('Extras', 'h2-rental-pro'),
             'manage_options',
             'produkt-extras',
             array($this, 'extras_page')
@@ -79,8 +79,8 @@ class Admin {
         if (!$is_sale) {
             add_submenu_page(
                 'produkt-verleih',
-                'Mietdauer',
-                'Mietdauer',
+                __('Mietdauer', 'h2-rental-pro'),
+                __('Mietdauer', 'h2-rental-pro'),
                 'manage_options',
                 'produkt-durations',
                 array($this, 'durations_page')
@@ -91,8 +91,8 @@ class Admin {
         if (!$is_sale) {
             add_submenu_page(
                 'produkt-verleih',
-                'Zustand',
-                'Zustand',
+                __('Zustand', 'h2-rental-pro'),
+                __('Zustand', 'h2-rental-pro'),
                 'manage_options',
                 'produkt-conditions',
                 array($this, 'conditions_page')
@@ -101,8 +101,8 @@ class Admin {
 
         add_submenu_page(
             'produkt-verleih',
-            'Farben',
-            'Farben',
+            __('Farben', 'h2-rental-pro'),
+            __('Farben', 'h2-rental-pro'),
             'manage_options',
             'produkt-colors',
             array($this, 'colors_page')
@@ -110,8 +110,8 @@ class Admin {
 
         add_submenu_page(
             'produkt-verleih',
-            'Content-Blöcke',
-            'Content-Blöcke',
+            __('Content-Blöcke', 'h2-rental-pro'),
+            __('Content-Blöcke', 'h2-rental-pro'),
             'manage_options',
             'produkt-content-blocks',
             array($this, 'content_blocks_page')
@@ -121,8 +121,8 @@ class Admin {
         
         add_submenu_page(
             'produkt-verleih',
-            'Bestellungen',
-            'Bestellungen',
+            __('Bestellungen', 'h2-rental-pro'),
+            __('Bestellungen', 'h2-rental-pro'),
             'manage_options',
             'produkt-orders',
             array($this, 'orders_page')
@@ -130,8 +130,8 @@ class Admin {
 
         add_submenu_page(
             'produkt-verleih',
-            'Kunden',
-            'Kunden',
+            __('Kunden', 'h2-rental-pro'),
+            __('Kunden', 'h2-rental-pro'),
             'manage_options',
             'produkt-customers',
             array($this, 'customers_page')
@@ -140,8 +140,8 @@ class Admin {
         if ($is_sale) {
             add_submenu_page(
                 'produkt-verleih',
-                'Kalender',
-                'Kalender',
+                __('Kalender', 'h2-rental-pro'),
+                __('Kalender', 'h2-rental-pro'),
                 'manage_options',
                 'produkt-calendar',
                 array($this, 'calendar_page')
@@ -151,8 +151,8 @@ class Admin {
         // Global shipping settings
         add_submenu_page(
             'produkt-verleih',
-            'Versandkosten',
-            'Versandkosten',
+            __('Versandkosten', 'h2-rental-pro'),
+            __('Versandkosten', 'h2-rental-pro'),
             'manage_options',
             'produkt-shipping',
             array($this, 'shipping_page')
@@ -160,19 +160,28 @@ class Admin {
 
         add_submenu_page(
             'produkt-verleih',
-            'Filter',
-            'Filter',
+            __('Filter', 'h2-rental-pro'),
+            __('Filter', 'h2-rental-pro'),
             'manage_options',
             'produkt-filters',
             array($this, 'filters_page')
+        );
+
+        add_submenu_page(
+            'produkt-verleih',
+            __('Kundenbewertungen', 'h2-rental-pro'),
+            __('Kundenbewertungen', 'h2-rental-pro'),
+            'manage_options',
+            'produkt-reviews',
+            array($this, 'reviews_page')
         );
 
 
         // New settings menu with Stripe integration tab
         add_submenu_page(
             'produkt-verleih',
-            'Einstellungen',
-            'Einstellungen',
+            __('Einstellungen', 'h2-rental-pro'),
+            __('Einstellungen', 'h2-rental-pro'),
             'manage_options',
             'produkt-settings',
             array($this, 'settings_page')
@@ -559,10 +568,10 @@ class Admin {
      */
     public static function verify_admin_action($nonce_field = 'produkt_admin_nonce') {
         if (!current_user_can('manage_options')) {
-            wp_die(__('Insufficient permissions.', 'h2-concepts'));
+            wp_die(__('Insufficient permissions.', 'h2-rental-pro'));
         }
         if (empty($_POST[$nonce_field]) || !wp_verify_nonce($_POST[$nonce_field], 'produkt_admin_action')) {
-            wp_die(__('Invalid nonce.', 'h2-concepts'));
+            wp_die(__('Invalid nonce.', 'h2-rental-pro'));
         }
     }
     
@@ -1205,7 +1214,11 @@ class Admin {
     public function content_blocks_page() {
         include PRODUKT_PLUGIN_PATH . 'admin/content-blocks-page.php';
     }
-    
+
+    public function reviews_page() {
+        include PRODUKT_PLUGIN_PATH . 'admin/reviews-page.php';
+    }
+
     public function orders_page() {
         global $wpdb;
         $notice = '';

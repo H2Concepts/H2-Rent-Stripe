@@ -14,7 +14,7 @@ add_action('plugins_loaded', function () {
             require_once $stripe_path;
         } else {
             add_action('admin_notices', function () {
-                echo '<div class="notice notice-error"><p><strong>Stripe-Bibliothek nicht gefunden:</strong> <code>includes/stripe-php/</code>-Ordner fehlt. Bitte manuell hochladen oder via Composer installieren.</p></div>';
+                echo '<div class="notice notice-error"><p><strong>' . esc_html__('Stripe-Bibliothek nicht gefunden:', 'h2-rental-pro') . '</strong> <code>includes/stripe-php/</code>-Ordner fehlt. ' . esc_html__('Bitte manuell hochladen oder via Composer installieren.', 'h2-rental-pro') . '</p></div>';
             });
         }
     }
