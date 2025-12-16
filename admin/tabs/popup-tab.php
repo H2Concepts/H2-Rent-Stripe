@@ -20,7 +20,7 @@ if (isset($_POST['submit_popup'])) {
     ];
     update_option('produkt_popup_settings', $settings);
 
-    echo '<div class="notice notice-success"><p>✅ Popup-Einstellungen gespeichert!</p></div>';
+    echo '<div class="notice notice-success"><p>✅ ' . esc_html__('Popup-Einstellungen gespeichert!', 'h2-rental-pro') . '</p></div>';
 }
 
 $popup_settings = get_option('produkt_popup_settings');
@@ -52,7 +52,7 @@ $popup_triggers = array_map('intval', $popup_triggers);
 <div class="settings-tab">
     <form method="post" action="">
         <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-        <button type="submit" name="submit_popup" class="icon-btn popup-save-btn" aria-label="Speichern">
+        <button type="submit" name="submit_popup" class="icon-btn popup-save-btn" aria-label="<?php echo esc_attr__('Speichern', 'h2-rental-pro'); ?>">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
                 <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
                 <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
@@ -62,61 +62,61 @@ $popup_triggers = array_map('intval', $popup_triggers);
             <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
-                        <h2>Popup Inhalt</h2>
-                        <p class="card-subline">Einstellungen für das Hinweis-Popup</p>
+                        <h2><?php echo esc_html__('Popup Inhalt', 'h2-rental-pro'); ?></h2>
+                        <p class="card-subline"><?php echo esc_html__('Einstellungen für das Hinweis-Popup', 'h2-rental-pro'); ?></p>
                     </div>
                     <label class="produkt-toggle-label">
                         <input type="checkbox" name="popup_enabled" value="1" <?php checked($popup_enabled, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
-                        <span>Popup aktivieren</span>
+                        <span><?php echo esc_html__('Popup aktivieren', 'h2-rental-pro'); ?></span>
                     </label>
                 </div>
                 <div class="form-grid">
                     <div class="produkt-form-group full-width">
-                        <label>Titel</label>
+                        <label><?php echo esc_html__('Titel', 'h2-rental-pro'); ?></label>
                         <input type="text" name="popup_title" value="<?php echo esc_attr($popup_title); ?>">
                     </div>
                     <div class="produkt-form-group">
-                        <label>Text</label>
+                        <label><?php echo esc_html__('Text', 'h2-rental-pro'); ?></label>
                         <?php wp_editor($popup_content, 'popup_content', ['textarea_name' => 'popup_content']); ?>
                     </div>
                     <div class="produkt-form-group">
-                        <label>Auswahloptionen (optional, eine pro Zeile)</label>
-                        <textarea name="popup_options" rows="4" placeholder="Option 1\nOption 2\nOption 3"><?php echo esc_textarea($popup_options); ?></textarea>
+                        <label><?php echo esc_html__('Auswahloptionen (optional, eine pro Zeile)', 'h2-rental-pro'); ?></label>
+                        <textarea name="popup_options" rows="4" placeholder="<?php echo esc_attr__('Option 1\nOption 2\nOption 3', 'h2-rental-pro'); ?>"><?php echo esc_textarea($popup_options); ?></textarea>
                     </div>
                     <div class="produkt-form-group">
-                        <label>Nicht erneut anzeigen (Tage)</label>
+                        <label><?php echo esc_html__('Nicht erneut anzeigen (Tage)', 'h2-rental-pro'); ?></label>
                         <input type="number" name="popup_days" min="0" value="<?php echo esc_attr($popup_days); ?>">
                     </div>
                     <div class="produkt-form-group">
-                        <label>E-Mail-Feld anzeigen</label>
+                        <label><?php echo esc_html__('E-Mail-Feld anzeigen', 'h2-rental-pro'); ?></label>
                         <label class="produkt-toggle-label">
                             <input type="checkbox" name="popup_email_enabled" value="1" <?php checked($popup_email_enabled, 1); ?>>
                             <span class="produkt-toggle-slider"></span>
                         </label>
                     </div>
                     <div class="produkt-form-group full-width popup-trigger-group">
-                        <label>Trigger</label>
+                        <label><?php echo esc_html__('Trigger', 'h2-rental-pro'); ?></label>
                         <div class="popup-trigger-grid">
                             <div class="popup-trigger-column">
-                                <span class="popup-trigger-heading">Desktop</span>
+                                <span class="popup-trigger-heading"><?php echo esc_html__('Desktop', 'h2-rental-pro'); ?></span>
                                 <label class="produkt-toggle-label">
                                     <input type="checkbox" name="popup_trigger_desktop_exit" value="1" <?php checked($popup_triggers['desktop_exit'] ?? 1, 1); ?>>
                                     <span class="produkt-toggle-slider"></span>
-                                    <span>Exit-Intent (Maus verlässt Seite)</span>
+                                    <span><?php echo esc_html__('Exit-Intent (Maus verlässt Seite)', 'h2-rental-pro'); ?></span>
                                 </label>
                             </div>
                             <div class="popup-trigger-column">
-                                <span class="popup-trigger-heading">Mobile</span>
+                                <span class="popup-trigger-heading"><?php echo esc_html__('Mobile', 'h2-rental-pro'); ?></span>
                                 <label class="produkt-toggle-label">
                                     <input type="checkbox" name="popup_trigger_mobile_scroll" value="1" <?php checked($popup_triggers['mobile_scroll'] ?? 1, 1); ?>>
                                     <span class="produkt-toggle-slider"></span>
-                                    <span>Scroll-Trigger (nach oben)</span>
+                                    <span><?php echo esc_html__('Scroll-Trigger (nach oben)', 'h2-rental-pro'); ?></span>
                                 </label>
                                 <label class="produkt-toggle-label">
                                     <input type="checkbox" name="popup_trigger_mobile_inactivity" value="1" <?php checked($popup_triggers['mobile_inactivity'] ?? 1, 1); ?>>
                                     <span class="produkt-toggle-slider"></span>
-                                    <span>Inaktivität (60 Sekunden)</span>
+                                    <span><?php echo esc_html__('Inaktivität (60 Sekunden)', 'h2-rental-pro'); ?></span>
                                 </label>
                             </div>
                         </div>
@@ -127,19 +127,19 @@ $popup_triggers = array_map('intval', $popup_triggers);
             <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
-                        <h2>Google Opt-In</h2>
-                        <p class="card-subline">Aktiviere das Google Kundenrezensionen Opt-In auf der Bestellbestätigung</p>
+                        <h2><?php echo esc_html__('Google Opt-In', 'h2-rental-pro'); ?></h2>
+                        <p class="card-subline"><?php echo esc_html__('Aktiviere das Google Kundenrezensionen Opt-In auf der Bestellbestätigung', 'h2-rental-pro'); ?></p>
                     </div>
                     <label class="produkt-toggle-label">
                         <input type="checkbox" name="google_optin_enabled" value="1" <?php checked($google_optin_enabled, 1); ?>>
                         <span class="produkt-toggle-slider"></span>
-                        <span>Opt-In aktivieren</span>
+                        <span><?php echo esc_html__('Opt-In aktivieren', 'h2-rental-pro'); ?></span>
                     </label>
                 </div>
                 <div class="form-grid">
                     <div class="produkt-form-group">
-                        <label>Merchant ID</label>
-                        <input type="text" name="google_merchant_id" value="<?php echo esc_attr($google_merchant_id); ?>" placeholder="z.B. 1234567890">
+                        <label><?php echo esc_html__('Merchant ID', 'h2-rental-pro'); ?></label>
+                        <input type="text" name="google_merchant_id" value="<?php echo esc_attr($google_merchant_id); ?>" placeholder="<?php echo esc_attr__('z.B. 1234567890', 'h2-rental-pro'); ?>">
                     </div>
                 </div>
             </div>

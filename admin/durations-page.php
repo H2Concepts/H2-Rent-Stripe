@@ -152,10 +152,10 @@ if (isset($_POST['submit'])) {
         
         $duration_id = intval($_POST['id']);
         if ($result !== false) {
-            echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich aktualisiert!</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__('✅ Mietdauer erfolgreich aktualisiert!', 'h2-rental-pro') . '</p></div>';
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('❌ Fehler beim Aktualisieren: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
         }
     } else {
         // Insert
@@ -179,10 +179,10 @@ if (isset($_POST['submit'])) {
         
         $duration_id = $wpdb->insert_id;
         if ($result !== false) {
-            echo '<div class="notice notice-success"><p>✅ Mietdauer erfolgreich hinzugefügt!</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__('✅ Mietdauer erfolgreich hinzugefügt!', 'h2-rental-pro') . '</p></div>';
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('❌ Fehler beim Hinzufügen: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
         }
     }
 
@@ -228,7 +228,7 @@ if (isset($_POST['submit'])) {
                 continue;
             }
 
-            $duration_name = (isset($edit_item) && $edit_item) ? $edit_item->name : $name;
+            $duration_name = $name;
             $mode          = 'miete';
 
             $ids = $wpdb->get_row($wpdb->prepare("SELECT stripe_price_id FROM $table_prices WHERE id = %d", $exists));
@@ -298,9 +298,9 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
 
     $result = $wpdb->delete($table_name, array('id' => $duration_id), array('%d'));
     if ($result !== false) {
-        echo '<div class="notice notice-success"><p>✅ Mietdauer gelöscht!</p></div>';
+        echo '<div class="notice notice-success"><p>' . esc_html__('✅ Mietdauer gelöscht!', 'h2-rental-pro') . '</p></div>';
     } else {
-        echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('❌ Fehler beim Löschen: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
     }
 }
 
@@ -351,7 +351,7 @@ if ($edit_item) {
 }
 
 $modal_mode  = ($active_tab === 'edit' && $edit_item) ? 'edit' : (($active_tab === 'add') ? 'add' : 'list');
-$modal_title = ($modal_mode === 'edit') ? 'Mietdauer bearbeiten' : 'Neue Mietdauer';
+$modal_title = ($modal_mode === 'edit') ? esc_html__('Mietdauer bearbeiten', 'h2-rental-pro') : esc_html__('Neue Mietdauer', 'h2-rental-pro');
 $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
 $delete_url  = ($modal_mode === 'edit' && $edit_item)
     ? admin_url('admin.php?page=produkt-durations&category=' . $selected_category . '&delete=' . $edit_item->id . '&fw_nonce=' . wp_create_nonce('produkt_admin_action'))
@@ -359,12 +359,13 @@ $delete_url  = ($modal_mode === 'edit' && $edit_item)
 $delete_message = '';
 if ($delete_url && $edit_item) {
     $delete_message = sprintf(
-        'Sind Sie sicher, dass Sie diese Mietdauer löschen möchten?\\n\\n"%s" wird unwiderruflich gelöscht!',
+        esc_html__('Sind Sie sicher, dass Sie diese Mietdauer löschen möchten?%s"%s" wird unwiderruflich gelöscht!', 'h2-rental-pro'),
+        '\n\n',
         $edit_item->name
     );
 }
 
-$subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
+$subline_text = esc_html__('Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.', 'h2-rental-pro');
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
@@ -374,8 +375,8 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
     <div class="dashboard-grid">
         <div class="dashboard-left">
             <div class="dashboard-card card-product-selector">
-                <h2>Produkt auswählen</h2>
-                <p class="card-subline">Für welches Produkt möchten Sie eine Mietdauer verwalten?</p>
+                <h2><?php echo esc_html__('Produkt auswählen', 'h2-rental-pro'); ?></h2>
+                <p class="card-subline"><?php echo esc_html__('Für welches Produkt möchten Sie eine Mietdauer verwalten?', 'h2-rental-pro'); ?></p>
                 <form method="get" action="" class="produkt-category-selector" style="background:none;border:none;padding:0;">
                     <input type="hidden" name="page" value="produkt-durations">
                     <input type="hidden" name="tab" value="list">
@@ -386,7 +387,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <noscript><input type="submit" value="Wechseln" class="button"></noscript>
+                    <noscript><input type="submit" value="<?php echo esc_attr__('Wechseln', 'h2-rental-pro'); ?>" class="button"></noscript>
                 </form>
                 <?php if ($current_category): ?>
                 <div class="selected-product-preview">
@@ -403,9 +404,9 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
         <div class="dashboard-right">
             <div class="dashboard-row">
                 <div class="dashboard-card card-new-product">
-                    <h2>Neue Mietdauer</h2>
-                    <p class="card-subline">Mietdauer erstellen</p>
-                    <a href="#" class="icon-btn add-product-btn js-open-duration-modal" aria-label="Hinzufügen">
+                    <h2><?php echo esc_html__('Neue Mietdauer', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Mietdauer erstellen', 'h2-rental-pro'); ?></p>
+                    <a href="#" class="icon-btn add-product-btn js-open-duration-modal" aria-label="<?php echo esc_attr__('Hinzufügen', 'h2-rental-pro'); ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
                             <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
                             <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
@@ -413,14 +414,14 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                     </a>
                 </div>
                 <div class="dashboard-card card-quicknav">
-                    <h2>Schnellnavigation</h2>
-                    <p class="card-subline">Direkt zu wichtigen Listen</p>
+                    <h2><?php echo esc_html__('Schnellnavigation', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Direkt zu wichtigen Listen', 'h2-rental-pro'); ?></p>
                     <div class="quicknav-grid">
                         <div class="quicknav-card">
                             <a href="admin.php?page=produkt-verleih">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🏠</div>
-                                    <div class="quicknav-label">Dashboard</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Dashboard', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -428,7 +429,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                             <a href="admin.php?page=produkt-categories">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🧩</div>
-                                    <div class="quicknav-label">Kategorien</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Kategorien', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -436,7 +437,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                             <a href="admin.php?page=produkt-products">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🏷️</div>
-                                    <div class="quicknav-label">Produkte</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -444,7 +445,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                             <a href="admin.php?page=produkt-variants&category=<?php echo $selected_category; ?>">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🧩</div>
-                                    <div class="quicknav-label">Ausführungen</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Ausführungen', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -454,8 +455,8 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
             <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
-                        <h2>Mietdauern</h2>
-                        <p class="card-subline">Verfügbare Mindestlaufzeiten</p>
+                        <h2><?php echo esc_html__('Mietdauern', 'h2-rental-pro'); ?></h2>
+                        <p class="card-subline"><?php echo esc_html__('Verfügbare Mindestlaufzeiten', 'h2-rental-pro'); ?></p>
                     </div>
                 </div>
                 <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/durations-list-tab.php'; ?>
@@ -466,7 +467,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
     <div id="duration-modal" class="modal-overlay" data-open="<?php echo esc_attr($modal_open); ?>" data-mode="<?php echo esc_attr($modal_mode); ?>">
         <div class="modal-content">
             <button type="button" class="modal-close">&times;</button>
-            <h2 data-duration-modal-title data-title-add="Neue Mietdauer" data-title-edit="Mietdauer bearbeiten"><?php echo esc_html($modal_title); ?></h2>
+            <h2 data-duration-modal-title data-title-add="<?php echo esc_attr__('Neue Mietdauer', 'h2-rental-pro'); ?>" data-title-edit="<?php echo esc_attr__('Mietdauer bearbeiten', 'h2-rental-pro'); ?>"><?php echo esc_html($modal_title); ?></h2>
             <form method="post" class="produkt-compact-form" data-default-gradient-start="<?php echo esc_attr($popular_default_start); ?>" data-default-gradient-end="<?php echo esc_attr($popular_default_end); ?>" data-default-text-color="<?php echo esc_attr($popular_default_text); ?>">
                 <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                 <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
@@ -474,12 +475,12 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
 
                 <div class="produkt-form-grid">
                     <div class="produkt-form-group">
-                        <label for="duration-name">Name *</label>
-                        <input type="text" id="duration-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Flexible Abo, ab 2+, ab 6+">
+                        <label for="duration-name"><?php echo esc_html__('Name *', 'h2-rental-pro'); ?></label>
+                        <input type="text" id="duration-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="<?php echo esc_attr__('z.B. Flexible Abo, ab 2+, ab 6+', 'h2-rental-pro'); ?>">
                     </div>
 
                     <div class="produkt-form-group">
-                        <label for="duration-months">Mindestmonate *</label>
+                        <label for="duration-months"><?php echo esc_html__('Mindestmonate *', 'h2-rental-pro'); ?></label>
                         <input type="number" id="duration-months" name="months_minimum" value="<?php echo $edit_item ? intval($edit_item->months_minimum) : ''; ?>" min="1" required placeholder="1">
                     </div>
                 </div>
@@ -489,7 +490,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                         <label class="produkt-toggle-label" for="show_badge">
                             <input type="checkbox" name="show_badge" id="show_badge" value="1" <?php checked($edit_item->show_badge ?? 0, 1); ?>>
                             <span class="produkt-toggle-slider"></span>
-                            <span>Rabatt-Badge anzeigen</span>
+                            <span><?php echo esc_html__('Rabatt-Badge anzeigen', 'h2-rental-pro'); ?></span>
                         </label>
                     </div>
 
@@ -497,7 +498,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                         <label class="produkt-toggle-label" for="show_popular">
                             <input type="checkbox" name="show_popular" id="show_popular" value="1" <?php checked($edit_item->show_popular ?? 0, 1); ?>>
                             <span class="produkt-toggle-slider"></span>
-                            <span>Beliebter Artikel</span>
+                            <span><?php echo esc_html__('Beliebter Artikel', 'h2-rental-pro'); ?></span>
                         </label>
                     </div>
                 </div>
@@ -505,7 +506,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <div class="produkt-popular-settings <?php echo !empty($edit_item->show_popular) ? 'is-visible' : ''; ?>" data-popular-settings>
                     <div class="produkt-form-grid">
                         <div class="produkt-form-group">
-                            <label>Gradient Startfarbe</label>
+                            <label><?php echo esc_html__('Gradient Startfarbe', 'h2-rental-pro'); ?></label>
                             <div class="produkt-color-picker">
                                 <div class="produkt-color-preview-circle" data-popular-start-circle style="background-color:<?php echo esc_attr($popular_gradient_start); ?>"></div>
                                 <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_start); ?>" placeholder="#FF8A3D" data-popular-start>
@@ -515,7 +516,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                         </div>
 
                         <div class="produkt-form-group">
-                            <label>Gradient Endfarbe</label>
+                            <label><?php echo esc_html__('Gradient Endfarbe', 'h2-rental-pro'); ?></label>
                             <div class="produkt-color-picker">
                                 <div class="produkt-color-preview-circle" data-popular-end-circle style="background-color:<?php echo esc_attr($popular_gradient_end); ?>"></div>
                                 <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_gradient_end); ?>" placeholder="#FF5B0F" data-popular-end>
@@ -526,7 +527,7 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                     </div>
 
                     <div class="produkt-form-group">
-                        <label>Textfarbe</label>
+                        <label><?php echo esc_html__('Textfarbe', 'h2-rental-pro'); ?></label>
                         <div class="produkt-color-picker">
                             <div class="produkt-color-preview-circle" data-popular-text-circle style="background-color:<?php echo esc_attr($popular_text_color); ?>"></div>
                             <input type="text" class="produkt-color-value" value="<?php echo esc_attr($popular_text_color); ?>" placeholder="#FFFFFF" data-popular-text>
@@ -536,15 +537,15 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                     </div>
 
                     <div class="produkt-form-group produkt-popular-preview-group" data-popular-preview-root>
-                        <label>Badge-Vorschau</label>
+                        <label><?php echo esc_html__('Badge-Vorschau', 'h2-rental-pro'); ?></label>
                         <div class="produkt-popular-preview">
-                            <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;">Beliebt</span>
+                            <span class="produkt-popular-preview-badge" data-popular-preview style="--popular-gradient-start:<?php echo esc_attr($popular_gradient_start); ?>; --popular-gradient-end:<?php echo esc_attr($popular_gradient_end); ?>; --popular-text-color:<?php echo esc_attr($popular_text_color); ?>;"><?php echo esc_html__('Beliebt', 'h2-rental-pro'); ?></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="produkt-form-group">
-                    <label for="duration-sort">Sortierung</label>
+                    <label for="duration-sort"><?php echo esc_html__('Sortierung', 'h2-rental-pro'); ?></label>
                     <input type="number" id="duration-sort" name="sort_order" value="<?php echo $edit_item ? intval($edit_item->sort_order) : 0; ?>" min="0">
                 </div>
 
@@ -566,18 +567,18 @@ $subline_text = 'Verwalten Sie die Mietdauern Ihres ausgewählten Produkts.';
                 <div class="produkt-form-group full-width">
                     <label><?php echo esc_html($variant->name); ?></label>
                     <input type="number" step="0.01" name="variant_custom_price[<?php echo $variant->id; ?>]" value="<?php echo esc_attr($custom_price); ?>" placeholder="0.00">
-                    <small>Preis (monatlich in €)</small>
+                    <small><?php echo esc_html__('Preis (monatlich in €)', 'h2-rental-pro'); ?></small>
                     <?php if ($archived): ?>
-                        <span class="badge badge-gray">Archivierter Stripe-Preis</span>
+                        <span class="badge badge-gray"><?php echo esc_html__('Archivierter Stripe-Preis', 'h2-rental-pro'); ?></span>
                     <?php endif; ?>
                     <?php if ($product_archived): ?>
-                        <span class="badge badge-danger">⚠️ Produkt bei Stripe archiviert</span>
+                        <span class="badge badge-danger"><?php echo esc_html__('⚠️ Produkt bei Stripe archiviert', 'h2-rental-pro'); ?></span>
                     <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
 
                 <p>
-                    <button type="submit" name="submit" class="icon-btn" aria-label="Speichern">
+                    <button type="submit" name="submit" class="icon-btn" aria-label="<?php echo esc_attr__('Speichern', 'h2-rental-pro'); ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"></path><path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"></path></svg>
                     </button>
                 </p>

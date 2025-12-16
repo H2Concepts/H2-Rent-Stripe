@@ -55,12 +55,12 @@ if (isset($_POST['submit'])) {
             array('%d', '%s', '%s', '%f', '%d'),
             array('%d')
         );
-        
+
         if ($result !== false) {
             $condition_id = intval($_POST['id']);
-            echo '<div class="notice notice-success"><p>✅ Zustand erfolgreich aktualisiert!</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__('✅ Zustand erfolgreich aktualisiert!', 'h2-rental-pro') . '</p></div>';
         } else {
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('❌ Fehler beim Aktualisieren: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
         }
     } else {
         // Insert
@@ -75,12 +75,12 @@ if (isset($_POST['submit'])) {
             ),
             array('%d', '%s', '%s', '%f', '%d')
         );
-        
+
         if ($result !== false) {
             $condition_id = $wpdb->insert_id;
-            echo '<div class="notice notice-success"><p>✅ Zustand erfolgreich hinzugefügt!</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__('✅ Zustand erfolgreich hinzugefügt!', 'h2-rental-pro') . '</p></div>';
         } else {
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
+            echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('❌ Fehler beim Hinzufügen: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
         }
     }
 
@@ -106,7 +106,7 @@ if (isset($_POST['submit'])) {
                     'option_type' => 'condition',
                     'option_id' => $condition_id,
                     'available' => $available
-                ], ['%d','%s','%d','%d']);
+                ], ['%d', '%s', '%d', '%d']);
             }
         }
     }
@@ -118,9 +118,9 @@ if (isset($_POST['submit'])) {
 if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET['fw_nonce'], 'produkt_admin_action')) {
     $result = $wpdb->delete($table_name, array('id' => intval($_GET['delete'])), array('%d'));
     if ($result !== false) {
-        echo '<div class="notice notice-success"><p>✅ Zustand gelöscht!</p></div>';
+        echo '<div class="notice notice-success"><p>' . esc_html__('✅ Zustand gelöscht!', 'h2-rental-pro') . '</p></div>';
     } else {
-        echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        echo '<div class="notice notice-error"><p>' . sprintf(esc_html__('❌ Fehler beim Löschen: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
     }
 }
 
@@ -167,7 +167,7 @@ if (!empty($conditions)) {
     }
 }
 
-$subline_text = 'Produktzustände & Preisanpassungen verwalten.';
+$subline_text = esc_html__('Produktzustände & Preisanpassungen verwalten.', 'h2-rental-pro');
 
 $price_modifier_percent = $edit_item ? floatval($edit_item->price_modifier) * 100 : 0;
 $price_modifier_display = rtrim(rtrim(number_format($price_modifier_percent, 2, '.', ''), '0'), '.');
@@ -177,21 +177,25 @@ if ($price_modifier_display === '') {
 if ($price_modifier_display === '-0') {
     $price_modifier_display = '0';
 }
-$modal_mode  = ($active_tab === 'edit' && $edit_item) ? 'edit' : (($active_tab === 'add') ? 'add' : 'list');
-$modal_title = ($modal_mode === 'edit') ? 'Zustand bearbeiten' : 'Neuen Zustand anlegen';
-$modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
+$modal_mode = ($active_tab === 'edit' && $edit_item) ? 'edit' : (($active_tab === 'add') ? 'add' : 'list');
+$modal_title = ($modal_mode === 'edit') ? esc_html__('Zustand bearbeiten', 'h2-rental-pro') : esc_html__('Neuen Zustand anlegen', 'h2-rental-pro');
+$modal_open = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
-    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>,
+        <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline"><?php echo $subline_text; ?></p>
 
     <div class="dashboard-grid">
         <div class="dashboard-left">
             <div class="dashboard-card card-product-selector">
-                <h2>Produkt auswählen</h2>
-                <p class="card-subline">Für welches Produkt möchten Sie Zustände verwalten?</p>
-                <form method="get" action="" class="produkt-category-selector" style="background:none;border:none;padding:0;">
+                <h2><?php echo esc_html__('Produkt auswählen', 'h2-rental-pro'); ?></h2>
+                <p class="card-subline">
+                    <?php echo esc_html__('Für welches Produkt möchten Sie Zustände verwalten?', 'h2-rental-pro'); ?>
+                </p>
+                <form method="get" action="" class="produkt-category-selector"
+                    style="background:none;border:none;padding:0;">
                     <input type="hidden" name="page" value="produkt-conditions">
                     <input type="hidden" name="tab" value="list">
                     <select name="category" id="category-select" onchange="this.form.submit()">
@@ -201,41 +205,47 @@ $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
                             </option>
                         <?php endforeach; ?>
                     </select>
-                    <noscript><input type="submit" value="Wechseln" class="button"></noscript>
+                    <noscript><input type="submit" value="<?php echo esc_attr__('Wechseln', 'h2-rental-pro'); ?>"
+                            class="button"></noscript>
                 </form>
                 <?php if ($current_category): ?>
-                <div class="selected-product-preview">
-                    <?php if (!empty($current_category->default_image)): ?>
-                        <img src="<?php echo esc_url($current_category->default_image); ?>" alt="<?php echo esc_attr($current_category->name); ?>">
-                    <?php else: ?>
-                        <div class="placeholder-icon">🔄</div>
-                    <?php endif; ?>
-                    <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
-                </div>
+                    <div class="selected-product-preview">
+                        <?php if (!empty($current_category->default_image)): ?>
+                            <img src="<?php echo esc_url($current_category->default_image); ?>"
+                                alt="<?php echo esc_attr($current_category->name); ?>">
+                        <?php else: ?>
+                            <div class="placeholder-icon">🔄</div>
+                        <?php endif; ?>
+                        <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
         <div class="dashboard-right">
             <div class="dashboard-row">
                 <div class="dashboard-card card-new-product">
-                    <h2>Neuer Zustand</h2>
-                    <p class="card-subline">Zustand erstellen</p>
-                    <a href="#" class="icon-btn add-product-btn js-open-condition-modal" aria-label="Hinzufügen">
+                    <h2><?php echo esc_html__('Neuer Zustand', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Zustand erstellen', 'h2-rental-pro'); ?></p>
+                    <a href="#" class="icon-btn add-product-btn js-open-condition-modal"
+                        aria-label="<?php echo esc_attr__('Hinzufügen', 'h2-rental-pro'); ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
-                            <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
-                            <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
+                            <path
+                                d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z" />
+                            <path
+                                d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z" />
                         </svg>
                     </a>
                 </div>
                 <div class="dashboard-card card-quicknav">
-                    <h2>Schnellnavigation</h2>
-                    <p class="card-subline">Direkt zu wichtigen Listen</p>
+                    <h2><?php echo esc_html__('Schnellnavigation', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Direkt zu wichtigen Listen', 'h2-rental-pro'); ?></p>
                     <div class="quicknav-grid">
                         <div class="quicknav-card">
                             <a href="admin.php?page=produkt-verleih">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🏠</div>
-                                    <div class="quicknav-label">Dashboard</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Dashboard', 'h2-rental-pro'); ?>
+                                    </div>
                                 </div>
                             </a>
                         </div>
@@ -243,7 +253,8 @@ $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
                             <a href="admin.php?page=produkt-categories">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🧩</div>
-                                    <div class="quicknav-label">Kategorien</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Kategorien', 'h2-rental-pro'); ?>
+                                    </div>
                                 </div>
                             </a>
                         </div>
@@ -251,7 +262,8 @@ $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
                             <a href="admin.php?page=produkt-products">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🏷️</div>
-                                    <div class="quicknav-label">Produkte</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?>
+                                    </div>
                                 </div>
                             </a>
                         </div>
@@ -259,7 +271,8 @@ $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
                             <a href="admin.php?page=produkt-variants&category=<?php echo $selected_category; ?>">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🧩</div>
-                                    <div class="quicknav-label">Ausführungen</div>
+                                    <div class="quicknav-label">
+                                        <?php echo esc_html__('Ausführungen', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -269,8 +282,9 @@ $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
             <div class="dashboard-card">
                 <div class="card-header-flex">
                     <div>
-                        <h2>Zustände</h2>
-                        <p class="card-subline">Verfügbare Produktzustände</p>
+                        <h2><?php echo esc_html__('Zustände', 'h2-rental-pro'); ?></h2>
+                        <p class="card-subline"><?php echo esc_html__('Verfügbare Produktzustände', 'h2-rental-pro'); ?>
+                        </p>
                     </div>
                 </div>
                 <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/conditions-list-tab.php'; ?>
@@ -278,56 +292,76 @@ $modal_open  = ($modal_mode === 'edit' || $modal_mode === 'add') ? '1' : '0';
         </div>
     </div>
 
-    <div id="condition-modal" class="modal-overlay" data-open="<?php echo esc_attr($modal_open); ?>" data-mode="<?php echo esc_attr($modal_mode); ?>">
+    <div id="condition-modal" class="modal-overlay" data-open="<?php echo esc_attr($modal_open); ?>"
+        data-mode="<?php echo esc_attr($modal_mode); ?>">
         <div class="modal-content">
             <button type="button" class="modal-close">&times;</button>
-            <h2 data-condition-modal-title data-title-add="Neuen Zustand anlegen" data-title-edit="Zustand bearbeiten"><?php echo esc_html($modal_title); ?></h2>
+            <h2 data-condition-modal-title
+                data-title-add="<?php echo esc_attr__('Neuen Zustand anlegen', 'h2-rental-pro'); ?>"
+                data-title-edit="<?php echo esc_attr__('Zustand bearbeiten', 'h2-rental-pro'); ?>">
+                <?php echo esc_html($modal_title); ?></h2>
             <form method="post" class="produkt-compact-form">
                 <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                 <input type="hidden" name="category_id" value="<?php echo esc_attr($selected_category); ?>">
                 <input type="hidden" name="id" value="<?php echo $edit_item ? esc_attr($edit_item->id) : ''; ?>">
 
                 <div class="produkt-form-group">
-                    <label for="condition-name">Name *</label>
-                    <input type="text" id="condition-name" name="name" value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required placeholder="z.B. Neuware, Generalüberholt">
+                    <label for="condition-name"><?php echo esc_html__('Name *', 'h2-rental-pro'); ?></label>
+                    <input type="text" id="condition-name" name="name"
+                        value="<?php echo esc_attr($edit_item->name ?? ''); ?>" required
+                        placeholder="<?php echo esc_attr__('z.B. Neuware, Generalüberholt', 'h2-rental-pro'); ?>">
                 </div>
 
                 <div class="produkt-form-group">
-                    <label for="condition-price-modifier">Preisanpassung (%)</label>
-                    <input type="number" id="condition-price-modifier" name="price_modifier" value="<?php echo esc_attr($price_modifier_display); ?>" step="0.01" min="-100" max="100" placeholder="0">
-                    <small>Negative Werte für Rabatte, positive für Aufpreise.</small>
+                    <label
+                        for="condition-price-modifier"><?php echo esc_html__('Preisanpassung (%)', 'h2-rental-pro'); ?></label>
+                    <input type="number" id="condition-price-modifier" name="price_modifier"
+                        value="<?php echo esc_attr($price_modifier_display); ?>" step="0.01" min="-100" max="100"
+                        placeholder="0">
+                    <small><?php echo esc_html__('Negative Werte für Rabatte, positive für Aufpreise.', 'h2-rental-pro'); ?></small>
                 </div>
 
                 <div class="produkt-form-group">
-                    <label for="condition-description">Beschreibung</label>
-                    <textarea id="condition-description" name="description" rows="3" placeholder="Kurze Beschreibung (optional)"><?php echo esc_textarea($edit_item->description ?? ''); ?></textarea>
+                    <label
+                        for="condition-description"><?php echo esc_html__('Beschreibung', 'h2-rental-pro'); ?></label>
+                    <textarea id="condition-description" name="description" rows="3"
+                        placeholder="<?php echo esc_attr__('Kurze Beschreibung (optional)', 'h2-rental-pro'); ?>"><?php echo esc_textarea($edit_item->description ?? ''); ?></textarea>
                 </div>
 
                 <div class="produkt-form-group">
-                    <label for="condition-sort">Sortierung</label>
-                    <input type="number" id="condition-sort" name="sort_order" value="<?php echo $edit_item ? intval($edit_item->sort_order) : 0; ?>" min="0">
+                    <label for="condition-sort"><?php echo esc_html__('Sortierung', 'h2-rental-pro'); ?></label>
+                    <input type="number" id="condition-sort" name="sort_order"
+                        value="<?php echo $edit_item ? intval($edit_item->sort_order) : 0; ?>" min="0">
                 </div>
 
                 <?php if (!empty($variants)): ?>
-                <div class="produkt-form-group full-width">
-                    <label>Verfügbarkeit je Ausführung</label>
-                    <div class="variant-availability-grid">
-                        <?php foreach ($variants as $variant):
-                            $is_available = isset($variant_availability[$variant->id]) ? (bool)$variant_availability[$variant->id] : true;
-                        ?>
-                        <label class="produkt-toggle-label" style="min-width:160px;">
-                            <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" <?php checked($is_available, true); ?>>
-                            <span class="produkt-toggle-slider"></span>
-                            <span><?php echo esc_html($variant->name); ?></span>
-                        </label>
-                        <?php endforeach; ?>
+                    <div class="produkt-form-group full-width">
+                        <label><?php echo esc_html__('Verfügbarkeit je Ausführung', 'h2-rental-pro'); ?></label>
+                        <div class="variant-availability-grid">
+                            <?php foreach ($variants as $variant):
+                                $is_available = isset($variant_availability[$variant->id]) ? (bool) $variant_availability[$variant->id] : true;
+                                ?>
+                                <label class="produkt-toggle-label" style="min-width:160px;">
+                                    <input type="checkbox" name="variant_available[<?php echo $variant->id; ?>]" value="1" <?php checked($is_available, true); ?>>
+                                    <span class="produkt-toggle-slider"></span>
+                                    <span><?php echo esc_html($variant->name); ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                </div>
                 <?php endif; ?>
 
                 <p>
-                    <button type="submit" name="submit" class="icon-btn" aria-label="Speichern">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3"><path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"></path><path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"></path></svg>
+                    <button type="submit" name="submit" class="icon-btn"
+                        aria-label="<?php echo esc_attr__('Speichern', 'h2-rental-pro'); ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                            <path
+                                d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z">
+                            </path>
+                            <path
+                                d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z">
+                            </path>
+                        </svg>
                     </button>
                 </p>
             </form>

@@ -51,8 +51,12 @@ $raw_cats = $wpdb->get_results(
 );
 $categories = Database::get_product_categories_tree();
 $counts = [];
-foreach ($raw_cats as $r) { $counts[$r->id] = $r->product_count; }
-foreach ($categories as $c) { $c->product_count = $counts[$c->id] ?? 0; }
+foreach ($raw_cats as $r) {
+    $counts[$r->id] = $r->product_count;
+}
+foreach ($categories as $c) {
+    $c->product_count = $counts[$c->id] ?? 0;
+}
 
 // Statistiken für Info-Boxen
 $category_count = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}produkt_product_categories WHERE parent_id IS NULL OR parent_id = 0");
@@ -67,7 +71,7 @@ if (isset($_POST['save_layout'])) {
     $name = sanitize_text_field($_POST['layout_name'] ?? '');
     $layout_type = intval($_POST['layout_type'] ?? 1);
     $border_radius = isset($_POST['border_radius']) ? 1 : 0;
-    $heading_tag = in_array($_POST['heading_tag'] ?? '', ['h1','h2','h3','h4','h5','h6'], true) ? $_POST['heading_tag'] : 'h3';
+    $heading_tag = in_array($_POST['heading_tag'] ?? '', ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true) ? $_POST['heading_tag'] : 'h3';
     $cats = $_POST['layout_categories'] ?? [];
     $colors = $_POST['cat_color'] ?? [];
     $images = $_POST['cat_image'] ?? [];
@@ -138,161 +142,206 @@ if (isset($_GET['edit'])) {
     <div id="category-modal" class="modal-overlay" data-open="<?php echo $edit_category ? '1' : '0'; ?>">
         <div class="modal-content">
             <button type="button" class="modal-close">&times;</button>
-            <h2><?php echo $edit_category ? 'Kategorie bearbeiten' : 'Neue Kategorie hinzufügen'; ?></h2>
+            <h2><?php echo $edit_category ? esc_html__('Kategorie bearbeiten', 'h2-rental-pro') : esc_html__('Neue Kategorie hinzufügen', 'h2-rental-pro'); ?>
+            </h2>
             <form method="post" id="produkt-category-form" class="produkt-compact-form">
-            <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
-            <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
-            <div class="form-grid">
-                <div class="produkt-form-group">
-                    <label for="name">Name</label>
-                    <input name="name" type="text" required value="<?php echo esc_attr($edit_category->name ?? ''); ?>">
+                <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
+                <input type="hidden" name="category_id" value="<?php echo esc_attr($edit_category->id ?? ''); ?>">
+                <div class="form-grid">
+                    <div class="produkt-form-group">
+                        <label for="name"><?php echo esc_html__('Name', 'h2-rental-pro'); ?></label>
+                        <input name="name" type="text" required
+                            value="<?php echo esc_attr($edit_category->name ?? ''); ?>">
+                    </div>
+                    <div class="produkt-form-group">
+                        <label for="slug"><?php echo esc_html__('Slug', 'h2-rental-pro'); ?></label>
+                        <input name="slug" type="text" required
+                            value="<?php echo esc_attr($edit_category->slug ?? ''); ?>">
+                    </div>
+                    <div class="produkt-form-group">
+                        <label
+                            for="parent_id"><?php echo esc_html__('Übergeordnete Kategorie', 'h2-rental-pro'); ?></label>
+                        <select name="parent_id">
+                            <option value="0"><?php echo esc_html__('Keine', 'h2-rental-pro'); ?></option>
+                            <?php foreach ($categories as $cat_option): ?>
+                                <?php if (!isset($edit_category->id) || $cat_option->id != $edit_category->id): ?>
+                                    <option value="<?php echo $cat_option->id; ?>" <?php echo (isset($edit_category->parent_id) && $edit_category->parent_id == $cat_option->id) ? 'selected' : ''; ?>>
+                                        <?php echo str_repeat('--', $cat_option->depth) . ' ' . esc_html($cat_option->name); ?>
+                                    </option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="produkt-form-group full-width">
+                        <label for="description"><?php echo esc_html__('Beschreibung', 'h2-rental-pro'); ?></label>
+                        <textarea name="description"
+                            rows="3"><?php echo esc_textarea($edit_category->description ?? ''); ?></textarea>
+                    </div>
                 </div>
-                <div class="produkt-form-group">
-                    <label for="slug">Slug</label>
-                    <input name="slug" type="text" required value="<?php echo esc_attr($edit_category->slug ?? ''); ?>">
-                </div>
-                <div class="produkt-form-group">
-                    <label for="parent_id">Übergeordnete Kategorie</label>
-                    <select name="parent_id">
-                        <option value="0">Keine</option>
-                        <?php foreach ($categories as $cat_option): ?>
-                            <?php if (!isset($edit_category->id) || $cat_option->id != $edit_category->id): ?>
-                                <option value="<?php echo $cat_option->id; ?>" <?php echo (isset($edit_category->parent_id) && $edit_category->parent_id == $cat_option->id) ? 'selected' : ''; ?>>
-                                    <?php echo str_repeat('--', $cat_option->depth) . ' ' . esc_html($cat_option->name); ?>
-                                </option>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="produkt-form-group full-width">
-                    <label for="description">Beschreibung</label>
-                    <textarea name="description" rows="3"><?php echo esc_textarea($edit_category->description ?? ''); ?></textarea>
-                </div>
-            </div>
-            <p>
-                <button type="submit" name="save_category" class="icon-btn" aria-label="Speichern">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
-                        <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
-                        <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
-                    </svg>
-                </button>
-            </p>
-        </form>
+                <p>
+                    <button type="submit" name="save_category" class="icon-btn"
+                        aria-label="<?php echo esc_attr__('Speichern', 'h2-rental-pro'); ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                            <path
+                                d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z" />
+                            <path
+                                d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z" />
+                        </svg>
+                    </button>
+                </p>
+            </form>
         </div>
-</div>
+    </div>
 
     <div id="layout-modal" class="modal-overlay" data-open="<?php echo $edit_layout ? '1' : '0'; ?>">
         <div class="modal-content">
             <button type="button" class="modal-close">&times;</button>
-            <h2><?php echo $edit_layout ? 'Layout bearbeiten' : 'Neues Layout'; ?></h2>
+            <h2><?php echo $edit_layout ? esc_html__('Layout bearbeiten', 'h2-rental-pro') : esc_html__('Neues Layout', 'h2-rental-pro'); ?>
+            </h2>
             <form method="post" class="produkt-compact-form">
                 <?php wp_nonce_field('produkt_admin_action', 'produkt_admin_nonce'); ?>
                 <input type="hidden" name="layout_id" value="<?php echo esc_attr($edit_layout->id ?? ''); ?>">
-                <input type="hidden" name="layout_shortcode" value="<?php echo esc_attr($edit_layout->shortcode ?? ''); ?>">
+                <input type="hidden" name="layout_shortcode"
+                    value="<?php echo esc_attr($edit_layout->shortcode ?? ''); ?>">
                 <div class="form-grid">
-                <div class="produkt-form-group">
-                    <label for="layout_name">Name</label>
-                    <input name="layout_name" type="text" required value="<?php echo esc_attr($edit_layout->name ?? ''); ?>">
-                </div>
-                <div class="produkt-form-group full-width">
-                    <label>Kategorien</label>
-                    <?php $existing_items = $edit_layout ? json_decode($edit_layout->categories, true) : []; ?>
-                    <?php for ($i = 0; $i < 6; $i++): ?>
-                        <?php $ex = $existing_items[$i] ?? []; $color = esc_attr($ex['color'] ?? '#ffffff'); $img = esc_url($ex['image'] ?? ''); ?>
-                        <div class="layout-cat-row">
-                            <select name="layout_categories[]">
-                                <option value="">-- Kategorie wählen --</option>
-                                <?php foreach ($categories as $cat_option): ?>
-                                    <option value="<?php echo $cat_option->id; ?>" <?php selected($ex['id'] ?? '', $cat_option->id); ?>><?php echo esc_html($cat_option->name); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                            <div class="produkt-color-picker">
-                                <div class="produkt-color-preview-circle" style="background-color: <?php echo $color; ?>;"></div>
-                                <input type="text" name="cat_color[]" value="<?php echo $color; ?>" class="produkt-color-value">
-                                <input type="color" value="<?php echo $color; ?>" class="produkt-color-input">
+                    <div class="produkt-form-group">
+                        <label for="layout_name"><?php echo esc_html__('Name', 'h2-rental-pro'); ?></label>
+                        <input name="layout_name" type="text" required
+                            value="<?php echo esc_attr($edit_layout->name ?? ''); ?>">
+                    </div>
+                    <div class="produkt-form-group full-width">
+                        <label><?php echo esc_html__('Kategorien', 'h2-rental-pro'); ?></label>
+                        <?php $existing_items = $edit_layout ? json_decode($edit_layout->categories, true) : []; ?>
+                        <?php for ($i = 0; $i < 6; $i++): ?>
+                            <?php $ex = $existing_items[$i] ?? [];
+                            $color = esc_attr($ex['color'] ?? '#ffffff');
+                            $img = esc_url($ex['image'] ?? ''); ?>
+                            <div class="layout-cat-row">
+                                <select name="layout_categories[]">
+                                    <option value=""><?php echo esc_html__('-- Kategorie wählen --', 'h2-rental-pro'); ?>
+                                    </option>
+                                    <?php foreach ($categories as $cat_option): ?>
+                                        <option value="<?php echo $cat_option->id; ?>" <?php selected($ex['id'] ?? '', $cat_option->id); ?>><?php echo esc_html($cat_option->name); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="produkt-color-picker">
+                                    <div class="produkt-color-preview-circle"
+                                        style="background-color: <?php echo $color; ?>;"></div>
+                                    <input type="text" name="cat_color[]" value="<?php echo $color; ?>"
+                                        class="produkt-color-value">
+                                    <input type="color" value="<?php echo $color; ?>" class="produkt-color-input">
+                                </div>
+                                <div class="image-field">
+                                    <div class="image-preview layout-thumb-preview"
+                                        style="<?php echo $img ? 'background-image:url(' . $img . ');' : ''; ?>"></div>
+                                    <input type="hidden" name="cat_image[]" value="<?php echo $img; ?>">
+                                    <button type="button" class="icon-btn image-select"
+                                        aria-label="<?php echo esc_attr__('Bild auswählen', 'h2-rental-pro'); ?>">
+                                        <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6">
+                                            <path
+                                                d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z" />
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="icon-btn image-remove"
+                                        aria-label="<?php echo esc_attr__('Bild entfernen', 'h2-rental-pro'); ?>">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
+                                            <path
+                                                d="M39.8.4C18 .4.3 18.1.3 40s17.7 39.6 39.6 39.6 39.6-17.7 39.6-39.6S61.7.4 39.8.4ZM39.8 71.3c-17.1 0-31.2-14-31.2-31.2s14.2-31.2 31.2-31.2 31.2 14 31.2 31.2-14.2 31.2-31.2 31.2Z" />
+                                            <path
+                                                d="M53 26.9c-1.7-1.7-4.2-1.7-5.8 0l-7.3 7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8 0-1.7 1.7-1.7 4.2 0 5.8l7.3 7.3-7.3 7.3c-1.7 1.7-1.7 4.2 0 5.8.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2l7.3-7.3 7.3 7.3c.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.7-1.7 1.7-4.2 0-5.8l-7.3-7.3 7.3-7.3c1.7-1.7 1.7-4.4 0-5.8Z" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="image-field">
-                            <div class="image-preview layout-thumb-preview" style="<?php echo $img ? 'background-image:url(' . $img . ');' : ''; ?>"></div>
-                                <input type="hidden" name="cat_image[]" value="<?php echo $img; ?>">
-                                <button type="button" class="icon-btn image-select" aria-label="Bild auswählen">
-                                    <svg id="Ebene_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82.3 82.6"><path d="M74.5.6H7.8C3.8.6.6,3.9.5,7.9v66.7c0,4,3.3,7.3,7.3,7.3h66.7c4,0,7.3-3.3,7.3-7.3V7.9c0-4-3.3-7.3-7.3-7.3ZM7.8,6.8h66.7c.3,0,.5.1.7.3.2.2.3.5.3.7v43.5l-13.2-10.6c-2.6-2-6.3-2-8.9,0l-11.9,8.8-11.8-11.8c-2.9-2.8-7.4-2.8-10.3,0l-12.5,12.5V7.9c0-.6.4-1,1-1h0ZM74.5,75.6H7.8c-.6,0-1-.5-1-1v-15.4l17-17c.2-.2.5-.3.8-.3s.6.1.8.3l17.9,17.9c1.2,1.2,3.2,1.2,4.4,0s1.2-3.2,0-4.4l-1.6-1.6,11.2-8.3c.4-.3.9-.3,1.3,0l17.1,13.7v15.1c0,.6-.5,1-1,1h0ZM45.3,36c4.6,0,8.8-2.8,10.6-7.1,1.8-4.3.8-9.2-2.5-12.5-3.3-3.3-8.2-4.3-12.5-2.5-4.3,1.8-7.1,6-7.1,10.6s5.1,11.5,11.5,11.5h0ZM45.3,19.3c2.1,0,4,1.3,4.8,3.2.8,1.9.4,4.2-1.1,5.7-1.5,1.5-3.7,1.9-5.7,1.1-1.9-.8-3.2-2.7-3.2-4.8s2.3-5.2,5.2-5.2Z"/></svg>
-                                </button>
-                                <button type="button" class="icon-btn image-remove" aria-label="Bild entfernen">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1"><path d="M39.8.4C18 .4.3 18.1.3 40s17.7 39.6 39.6 39.6 39.6-17.7 39.6-39.6S61.7.4 39.8.4ZM39.8 71.3c-17.1 0-31.2-14-31.2-31.2s14.2-31.2 31.2-31.2 31.2 14 31.2 31.2-14.2 31.2-31.2 31.2Z"/><path d="M53 26.9c-1.7-1.7-4.2-1.7-5.8 0l-7.3 7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8 0-1.7 1.7-1.7 4.2 0 5.8l7.3 7.3-7.3 7.3c-1.7 1.7-1.7 4.2 0 5.8.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2l7.3-7.3 7.3 7.3c.8.8 1.9 1.2 2.9 1.2s2.1-.4 2.9-1.2c1.7-1.7 1.7-4.2 0-5.8l-7.3-7.3 7.3-7.3c1.7-1.7 1.7-4.4 0-5.8Z"/></svg>
-                                </button>
+                        <?php endfor; ?>
+                    </div>
+                    <div class="produkt-form-group full-width">
+                        <label><?php echo esc_html__('Layout', 'h2-rental-pro'); ?></label>
+                        <input type="hidden" name="layout_type"
+                            value="<?php echo esc_attr($edit_layout->layout_type ?? 1); ?>">
+                        <div class="layout-option-grid">
+                            <div class="layout-option-card" data-value="1">
+                                <div class="layout-option-preview">
+                                    <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="0" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="42" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="84" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="0" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="42" y="30" width="78" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                    </svg>
+                                </div>
+                                <div class="layout-option-name">Layout 1</div>
+                            </div>
+                            <div class="layout-option-card" data-value="2">
+                                <div class="layout-option-preview">
+                                    <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="0" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="42" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="84" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="0" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="42" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                        <rect x="84" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb" />
+                                    </svg>
+                                </div>
+                                <div class="layout-option-name">Layout 2</div>
                             </div>
                         </div>
-                    <?php endfor; ?>
-                </div>
-                <div class="produkt-form-group full-width">
-                    <label>Layout</label>
-                    <input type="hidden" name="layout_type" value="<?php echo esc_attr($edit_layout->layout_type ?? 1); ?>">
-                    <div class="layout-option-grid">
-                        <div class="layout-option-card" data-value="1">
-                            <div class="layout-option-preview">
-                                <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="84" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="0" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="30" width="78" height="24" rx="4" ry="4" fill="#e5e7eb"/></svg>
-                            </div>
-                            <div class="layout-option-name">Layout 1</div>
-                        </div>
-                        <div class="layout-option-card" data-value="2">
-                            <div class="layout-option-preview">
-                                <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="84" y="0" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="0" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="42" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/><rect x="84" y="30" width="36" height="24" rx="4" ry="4" fill="#e5e7eb"/></svg>
-                            </div>
-                            <div class="layout-option-name">Layout 2</div>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label><?php echo esc_html__('Border Radius', 'h2-rental-pro'); ?></label>
+                        <label class="produkt-toggle-label">
+                            <input type="checkbox" name="border_radius" value="1" <?php echo (!empty($edit_layout->border_radius)) ? 'checked' : ''; ?>>
+                            <span class="produkt-toggle-slider"></span>
+                            <span>20px</span>
+                        </label>
+                    </div>
+                    <div class="produkt-form-group">
+                        <label><?php echo esc_html__('Überschrift', 'h2-rental-pro'); ?></label>
+                        <?php $current_heading = $edit_layout->heading_tag ?? 'h3'; ?>
+                        <div class="heading-radio-group">
+                            <?php foreach (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as $tag): ?>
+                                <label>
+                                    <input type="radio" name="heading_tag" value="<?php echo $tag; ?>" <?php checked($current_heading, $tag); ?>>
+                                    <?php echo strtoupper($tag); ?>
+                                </label>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>
-                <div class="produkt-form-group">
-                    <label>Border Radius</label>
-                    <label class="produkt-toggle-label">
-                        <input type="checkbox" name="border_radius" value="1" <?php echo (!empty($edit_layout->border_radius)) ? 'checked' : ''; ?>>
-                        <span class="produkt-toggle-slider"></span>
-                        <span>20px</span>
-                    </label>
-                </div>
-                <div class="produkt-form-group">
-                    <label>Überschrift</label>
-                    <?php $current_heading = $edit_layout->heading_tag ?? 'h3'; ?>
-                    <div class="heading-radio-group">
-                        <?php foreach (['h1','h2','h3','h4','h5','h6'] as $tag): ?>
-                            <label>
-                                <input type="radio" name="heading_tag" value="<?php echo $tag; ?>" <?php checked($current_heading, $tag); ?>>
-                                <?php echo strtoupper($tag); ?>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-            <p>
-                <button type="submit" name="save_layout" class="icon-btn" aria-label="Speichern">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
-                        <path d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z"/>
-                        <path d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z"/>
-                    </svg>
-                </button>
-            </p>
-        </form>
+                <p>
+                    <button type="submit" name="save_layout" class="icon-btn"
+                        aria-label="<?php echo esc_attr__('Speichern', 'h2-rental-pro'); ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.3 80.3">
+                            <path
+                                d="M32,53.4c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l20.8-20.8c1.7-1.7,1.7-4.2,0-5.8-1.7-1.7-4.2-1.7-5.8,0l-17.9,17.9-7.7-7.7c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l10.6,10.6Z" />
+                            <path
+                                d="M40.2,79.6c21.9,0,39.6-17.7,39.6-39.6S62,.5,40.2.5.6,18.2.6,40.1s17.7,39.6,39.6,39.6ZM40.2,8.8c17.1,0,31.2,14,31.2,31.2s-14,31.2-31.2,31.2-31.2-14.2-31.2-31.2,14.2-31.2,31.2-31.2Z" />
+                        </svg>
+                    </button>
+                </p>
+            </form>
+        </div>
     </div>
-</div>
 
-    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Kategorien verwalten</p>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>,
+        <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <p class="dashboard-subline"><?php echo esc_html__('Kategorien verwalten', 'h2-rental-pro'); ?></p>
 
     <div class="product-info-grid cols-4">
         <div class="product-info-box bg-pastell-gelb">
-            <span class="label">Kategorien</span>
+            <span class="label"><?php echo esc_html__('Kategorien', 'h2-rental-pro'); ?></span>
             <strong class="value"><?php echo intval($category_count); ?></strong>
         </div>
         <div class="product-info-box bg-pastell-gruen">
-            <span class="label">Subkategorien</span>
+            <span class="label"><?php echo esc_html__('Subkategorien', 'h2-rental-pro'); ?></span>
             <strong class="value"><?php echo intval($subcategory_count); ?></strong>
         </div>
         <div class="product-info-box bg-pastell-mint">
-            <span class="label">Gesamt</span>
+            <span class="label"><?php echo esc_html__('Gesamt', 'h2-rental-pro'); ?></span>
             <strong class="value"><?php echo intval($total_category_count); ?></strong>
         </div>
         <div class="product-info-box bg-pastell-orange">
-            <span class="label">Produkte zugeordnet</span>
+            <span class="label"><?php echo esc_html__('Produkte zugeordnet', 'h2-rental-pro'); ?></span>
             <strong class="value"><?php echo intval($products_with_category); ?></strong>
         </div>
     </div>
@@ -301,23 +350,27 @@ if (isset($_GET['edit'])) {
         <div class="h2-rental-card card-category-list">
             <div class="card-header-flex">
                 <div>
-                    <h2>Bestehende Kategorien</h2>
-                    <p class="card-subline">Verwalten Sie Ihre Kategorien</p>
+                    <h2><?php echo esc_html__('Bestehende Kategorien', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Verwalten Sie Ihre Kategorien', 'h2-rental-pro'); ?>
+                    </p>
                 </div>
-                <button id="add-category-btn" type="button" class="icon-btn add-category-btn" aria-label="Hinzufügen">
+                <button id="add-category-btn" type="button" class="icon-btn add-category-btn"
+                    aria-label="<?php echo esc_attr__('Hinzufügen', 'h2-rental-pro'); ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
-                        <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
-                        <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
+                        <path
+                            d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z" />
+                        <path
+                            d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z" />
                     </svg>
                 </button>
             </div>
             <table class="activity-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Slug</th>
-                        <th>Produkte</th>
-                        <th>Aktionen</th>
+                        <th><?php echo esc_html__('Name', 'h2-rental-pro'); ?></th>
+                        <th><?php echo esc_html__('Slug', 'h2-rental-pro'); ?></th>
+                        <th><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?></th>
+                        <th><?php echo esc_html__('Aktionen', 'h2-rental-pro'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -327,16 +380,24 @@ if (isset($_GET['edit'])) {
                             <td><?php echo esc_html($cat->slug); ?></td>
                             <td><?php echo intval($cat->product_count); ?></td>
                             <td>
-                                <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-kategorien&edit=<?php echo $cat->id; ?>'">
+                                <button type="button" class="icon-btn"
+                                    aria-label="<?php echo esc_attr__('Bearbeiten', 'h2-rental-pro'); ?>"
+                                    onclick="window.location.href='?page=produkt-kategorien&edit=<?php echo $cat->id; ?>'">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
-                                        <path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/>
-                                        <path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/>
+                                        <path
+                                            d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z" />
+                                        <path
+                                            d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z" />
                                     </svg>
                                 </button>
-                                <button type="button" class="icon-btn" onclick="if(confirm('Bist du sicher das du Löschen möchtest?')){window.location.href='?page=produkt-kategorien&delete=<?php echo $cat->id; ?>';}" aria-label="Löschen">
+                                <button type="button" class="icon-btn"
+                                    onclick="if(confirm('<?php echo esc_js(__('Bist du sicher das du Löschen möchtest?', 'h2-rental-pro')); ?>')){window.location.href='?page=produkt-kategorien&delete=<?php echo $cat->id; ?>';}"
+                                    aria-label="<?php echo esc_attr__('Löschen', 'h2-rental-pro'); ?>">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
-                                        <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
-                                        <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
+                                        <path
+                                            d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z" />
+                                        <path
+                                            d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z" />
                                     </svg>
                                 </button>
                             </td>
@@ -349,40 +410,52 @@ if (isset($_GET['edit'])) {
         <div class="h2-rental-card card-layout-list">
             <div class="card-header-flex">
                 <div>
-                    <h2>Kategorie Layout</h2>
-                    <p class="card-subline">Layouts für Ihre Homepage</p>
+                    <h2><?php echo esc_html__('Kategorie Layout', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Layouts für Ihre Homepage', 'h2-rental-pro'); ?></p>
                 </div>
-                <button id="add-layout-btn" type="button" class="icon-btn add-category-btn" aria-label="Hinzufügen">
+                <button id="add-layout-btn" type="button" class="icon-btn add-category-btn"
+                    aria-label="<?php echo esc_attr__('Hinzufügen', 'h2-rental-pro'); ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
-                        <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
-                        <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
+                        <path
+                            d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z" />
+                        <path
+                            d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z" />
                     </svg>
                 </button>
             </div>
             <table class="activity-table">
                 <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Shortcode</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
+                    <thead>
+                        <tr>
+                            <th><?php echo esc_html__('Name', 'h2-rental-pro'); ?></th>
+                            <th><?php echo esc_html__('Shortcode', 'h2-rental-pro'); ?></th>
+                            <th><?php echo esc_html__('Aktionen', 'h2-rental-pro'); ?></th>
+                        </tr>
+                    </thead>
                 <tbody>
                     <?php foreach ($layouts as $lay): ?>
                         <tr>
                             <td><?php echo esc_html($lay->name); ?></td>
                             <td><code>[produkt_category_layout id="<?php echo esc_html($lay->shortcode); ?>"]</code></td>
                             <td>
-                                <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-kategorien&edit_layout=<?php echo $lay->id; ?>'">
+                                <button type="button" class="icon-btn"
+                                    aria-label="<?php echo esc_attr__('Bearbeiten', 'h2-rental-pro'); ?>"
+                                    onclick="window.location.href='?page=produkt-kategorien&edit_layout=<?php echo $lay->id; ?>'">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
-                                        <path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/>
-                                        <path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/>
+                                        <path
+                                            d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z" />
+                                        <path
+                                            d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z" />
                                     </svg>
                                 </button>
-                                <button type="button" class="icon-btn" onclick="if(confirm('Bist du sicher das du Löschen möchtest?')){window.location.href='?page=produkt-kategorien&delete_layout=<?php echo $lay->id; ?>';}" aria-label="Löschen">
+                                <button type="button" class="icon-btn"
+                                    onclick="if(confirm('<?php echo esc_js(__('Bist du sicher das du Löschen möchtest?', 'h2-rental-pro')); ?>')){window.location.href='?page=produkt-kategorien&delete_layout=<?php echo $lay->id; ?>';}"
+                                    aria-label="<?php echo esc_attr__('Löschen', 'h2-rental-pro'); ?>">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
-                                        <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
-                                        <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
+                                        <path
+                                            d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z" />
+                                        <path
+                                            d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z" />
                                     </svg>
                                 </button>
                             </td>

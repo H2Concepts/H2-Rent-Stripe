@@ -79,7 +79,8 @@ foreach ($availability_columns as $column) {
     }
 }
 
-function produkt_get_lowest_duration_price_for_variant($variant_id) {
+function produkt_get_lowest_duration_price_for_variant($variant_id)
+{
     global $wpdb;
 
     $variant_id = intval($variant_id);
@@ -96,7 +97,8 @@ function produkt_get_lowest_duration_price_for_variant($variant_id) {
     return $min_price ? floatval($min_price) : 0.0;
 }
 
-function produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors) {
+function produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors)
+{
     global $wpdb;
 
     $option_sets = array(
@@ -150,13 +152,13 @@ function produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $
                 $wpdb->insert(
                     $wpdb->prefix . 'produkt_variant_options',
                     array(
-                        'variant_id'     => $variant_id,
-                        'option_type'    => $type,
-                        'option_id'      => $oid,
-                        'available'      => 1,
+                        'variant_id' => $variant_id,
+                        'option_type' => $type,
+                        'option_id' => $oid,
+                        'available' => 1,
                         'sale_available' => 1,
                     ),
-                    array('%d','%s','%d','%d','%d')
+                    array('%d', '%s', '%d', '%d', '%d')
                 );
             }
         }
@@ -169,7 +171,7 @@ if (isset($_POST['submit'])) {
     $category_id = intval($_POST['category_id']);
     $name = sanitize_text_field($_POST['name']);
     $stripe_product_id = '';
-    $stripe_price_id   = '';
+    $stripe_price_id = '';
     $stripe_price_id_sale = '';
     if (!empty($_POST['id'])) {
         $existing_variant = $wpdb->get_row($wpdb->prepare(
@@ -178,14 +180,14 @@ if (isset($_POST['submit'])) {
         ));
         if ($existing_variant) {
             $stripe_product_id = $existing_variant->stripe_product_id;
-            $stripe_price_id   = $existing_variant->stripe_price_id;
+            $stripe_price_id = $existing_variant->stripe_price_id;
             $stripe_price_id_sale = $existing_variant->stripe_price_id_sale;
             if ($stripe_product_id && $existing_variant->name !== $name) {
                 StripeService::update_product_name($stripe_product_id, $name);
             }
         } else {
             $stripe_product_id = '';
-            $stripe_price_id   = '';
+            $stripe_price_id = '';
             $stripe_price_id_sale = '';
         }
     } else {
@@ -211,15 +213,15 @@ if (isset($_POST['submit'])) {
     }
     $available = isset($_POST['available']) ? 1 : 0;
     $availability_note = sanitize_text_field($_POST['availability_note']);
-    $delivery_time    = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
-    $weekend_only     = isset($_POST['weekend_only']) ? 1 : 0;
-    $min_rental_days  = isset($_POST['min_rental_days']) ? intval($_POST['min_rental_days']) : 0;
-    $active           = isset($_POST['active']) ? 1 : 0;
-    $sort_order       = intval($_POST['sort_order']);
+    $delivery_time = sanitize_text_field(trim($_POST['delivery_time'] ?? ''));
+    $weekend_only = isset($_POST['weekend_only']) ? 1 : 0;
+    $min_rental_days = isset($_POST['min_rental_days']) ? intval($_POST['min_rental_days']) : 0;
+    $active = isset($_POST['active']) ? 1 : 0;
+    $sort_order = intval($_POST['sort_order']);
     $sale_conditions = array_map('intval', $_POST['sale_conditions'] ?? array());
     $sale_product_colors = array_map('intval', $_POST['sale_product_colors'] ?? array());
     $sale_frame_colors = array_map('intval', $_POST['sale_frame_colors'] ?? array());
-    
+
     // Handle multiple images
     $image_data = array();
     for ($i = 1; $i <= 5; $i++) {
@@ -231,29 +233,29 @@ if (isset($_POST['submit'])) {
     if (isset($_POST['id']) && $_POST['id']) {
         // Update
         $update_data = array_merge(array(
-            'category_id'            => $category_id,
-            'name'                   => $name,
-            'description'            => $description,
-            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'category_id' => $category_id,
+            'name' => $name,
+            'description' => $description,
+            'mietpreis_monatlich' => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'weekend_price'         => $weekend_price,
-            'base_price'             => $mietpreis_monatlich,
-            'sale_enabled'           => $sale_enabled,
-            'available'              => $available,
-            'availability_note'      => $availability_note,
-            'delivery_time'          => $delivery_time,
-            'weekend_only'           => $weekend_only,
-            'min_rental_days'        => $min_rental_days,
-            'active'                 => $active,
-            'sort_order'             => $sort_order
+            'weekend_price' => $weekend_price,
+            'base_price' => $mietpreis_monatlich,
+            'sale_enabled' => $sale_enabled,
+            'available' => $available,
+            'availability_note' => $availability_note,
+            'delivery_time' => $delivery_time,
+            'weekend_only' => $weekend_only,
+            'min_rental_days' => $min_rental_days,
+            'active' => $active,
+            'sort_order' => $sort_order
         ), $image_data);
-        
+
         $result = $wpdb->update(
             $table_name,
             $update_data,
             array('id' => intval($_POST['id'])),
             array_merge(
-                array('%d','%s','%s','%f','%f','%f','%f','%d','%d','%s','%s','%d','%d','%d','%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%d'),
                 array_fill(0, 5, '%s')
             ),
             array('%d')
@@ -263,13 +265,13 @@ if (isset($_POST['submit'])) {
         if ($result !== false) {
             produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors);
             if ($result === 0) {
-                echo '<div class="notice notice-warning"><p>⚠️ Keine Änderungen erkannt.</p></div>';
+                echo '<div class="notice notice-warning"><p>⚠️ ' . esc_html__('Keine Änderungen erkannt.', 'h2-rental-pro') . '</p></div>';
             } else {
-                echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich aktualisiert!</p></div>';
+                echo '<div class="notice notice-success"><p>✅ ' . esc_html__('Ausführung erfolgreich aktualisiert!', 'h2-rental-pro') . '</p></div>';
             }
             $mode = get_option('produkt_betriebsmodus', 'miete');
             $product_id = $stripe_product_id;
-            $price_id   = $stripe_price_id;
+            $price_id = $stripe_price_id;
             $price_id_sale = $stripe_price_id_sale;
 
             $needs_product = ($mode === 'kauf' || $mietpreis_monatlich > 0 || ($sale_enabled && $verkaufspreis_einmalig > 0));
@@ -277,10 +279,10 @@ if (isset($_POST['submit'])) {
             if ($needs_product && !$product_id) {
                 $product_res = \ProduktVerleih\StripeService::create_or_retrieve_product([
                     'plugin_product_id' => $variant_id,
-                    'variant_id'        => $variant_id,
-                    'duration_id'       => null,
-                    'name'              => $name,
-                    'mode'              => $mode,
+                    'variant_id' => $variant_id,
+                    'duration_id' => null,
+                    'name' => $name,
+                    'mode' => $mode,
                 ]);
 
                 if (!is_wp_error($product_res)) {
@@ -310,7 +312,7 @@ if (isset($_POST['submit'])) {
                 if ($product_id) {
                     if ($needs_price_update) {
                         $amount = ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich;
-                        $nickname = ($mode === 'kauf') ? 'Einmalverkauf' : 'Vermietung pro Monat';
+                        $nickname = ($mode === 'kauf') ? __('Einmalverkauf', 'h2-rental-pro') : __('Vermietung pro Monat', 'h2-rental-pro');
                         $new_price = \ProduktVerleih\StripeService::create_price($product_id, round($amount * 100), $mode, $nickname);
                         if (!is_wp_error($new_price)) {
                             $wpdb->update($table_name, ['stripe_price_id' => $new_price->id], ['id' => $variant_id], ['%s'], ['%d']);
@@ -324,18 +326,18 @@ if (isset($_POST['submit'])) {
                 } else {
                     $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
                         'plugin_product_id' => $variant_id,
-                        'variant_id'        => $variant_id,
-                        'duration_id'       => null,
-                        'name'              => $name,
-                        'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
-                        'mode'              => $mode,
+                        'variant_id' => $variant_id,
+                        'duration_id' => null,
+                        'name' => $name,
+                        'price' => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
+                        'mode' => $mode,
                     ]);
                     if (!is_wp_error($res)) {
                         $product_id = $res['stripe_product_id'];
-                        $price_id   = $res['stripe_price_id'];
+                        $price_id = $res['stripe_price_id'];
                         $wpdb->update($table_name, [
                             'stripe_product_id' => $product_id,
-                            'stripe_price_id'   => $price_id,
+                            'stripe_price_id' => $price_id,
                             'stripe_price_id_sale' => ($mode === 'kauf') ? $price_id : $price_id_sale,
                         ], ['id' => $variant_id], ['%s', '%s'], ['%d']);
                         if ($mode === 'kauf') {
@@ -353,7 +355,7 @@ if (isset($_POST['submit'])) {
                 }
 
                 if ($needs_sale_update) {
-                    $sale_price = \ProduktVerleih\StripeService::create_price($product_id, round($verkaufspreis_einmalig * 100), 'kauf', 'Einmalverkauf');
+                    $sale_price = \ProduktVerleih\StripeService::create_price($product_id, round($verkaufspreis_einmalig * 100), 'kauf', __('Einmalverkauf', 'h2-rental-pro'));
                     if (!is_wp_error($sale_price)) {
                         $wpdb->update($table_name, ['stripe_price_id_sale' => $sale_price->id], ['id' => $variant_id], ['%s'], ['%d']);
                         $price_id_sale = $sale_price->id;
@@ -366,33 +368,33 @@ if (isset($_POST['submit'])) {
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Aktualisieren: ' . esc_html($wpdb->last_error) . '</p></div>';
+            echo '<div class="notice notice-error"><p>❌ ' . sprintf(esc_html__('Fehler beim Aktualisieren: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
         }
     } else {
         // Insert
         $insert_data = array_merge(array(
-            'category_id'            => $category_id,
-            'name'                   => $name,
-            'description'            => $description,
-            'mietpreis_monatlich'    => $mietpreis_monatlich,
+            'category_id' => $category_id,
+            'name' => $name,
+            'description' => $description,
+            'mietpreis_monatlich' => $mietpreis_monatlich,
             'verkaufspreis_einmalig' => $verkaufspreis_einmalig,
-            'weekend_price'         => $weekend_price,
-            'base_price'             => $mietpreis_monatlich,
-            'sale_enabled'           => $sale_enabled,
-            'available'              => $available,
-            'availability_note'      => $availability_note,
-            'delivery_time'          => $delivery_time,
-            'weekend_only'           => $weekend_only,
-            'min_rental_days'        => $min_rental_days,
-            'active'                 => $active,
-            'sort_order'             => $sort_order
+            'weekend_price' => $weekend_price,
+            'base_price' => $mietpreis_monatlich,
+            'sale_enabled' => $sale_enabled,
+            'available' => $available,
+            'availability_note' => $availability_note,
+            'delivery_time' => $delivery_time,
+            'weekend_only' => $weekend_only,
+            'min_rental_days' => $min_rental_days,
+            'active' => $active,
+            'sort_order' => $sort_order
         ), $image_data);
-        
+
         $result = $wpdb->insert(
             $table_name,
             $insert_data,
             array_merge(
-                array('%d','%s','%s','%f','%f','%f','%f','%d','%d','%s','%s','%d','%d','%d','%d'),
+                array('%d', '%s', '%s', '%f', '%f', '%f', '%f', '%d', '%d', '%s', '%s', '%d', '%d', '%d', '%d'),
                 array_fill(0, 5, '%s')
             )
         );
@@ -400,7 +402,7 @@ if (isset($_POST['submit'])) {
         $variant_id = $wpdb->insert_id;
         if ($result !== false) {
             produkt_update_sale_options($variant_id, $category_id, $sale_enabled, $sale_conditions, $sale_product_colors, $sale_frame_colors);
-            echo '<div class="notice notice-success"><p>✅ Ausführung erfolgreich hinzugefügt!</p></div>';
+            echo '<div class="notice notice-success"><p>✅ ' . esc_html__('Ausführung erfolgreich hinzugefügt!', 'h2-rental-pro') . '</p></div>';
             $mode = get_option('produkt_betriebsmodus', 'miete');
             $product_id = '';
             $price_id = '';
@@ -411,18 +413,18 @@ if (isset($_POST['submit'])) {
             if ($mode === 'kauf' || $mietpreis_monatlich > 0) {
                 $res = \ProduktVerleih\StripeService::create_or_update_product_and_price([
                     'plugin_product_id' => $variant_id,
-                    'variant_id'        => $variant_id,
-                    'duration_id'       => null,
-                    'name'              => $name,
-                    'price'             => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
-                    'mode'              => ($mode === 'kauf') ? 'kauf' : 'miete',
+                    'variant_id' => $variant_id,
+                    'duration_id' => null,
+                    'name' => $name,
+                    'price' => ($mode === 'kauf') ? $verkaufspreis_einmalig : $mietpreis_monatlich,
+                    'mode' => ($mode === 'kauf') ? 'kauf' : 'miete',
                 ]);
                 if (!is_wp_error($res)) {
                     $product_id = $res['stripe_product_id'];
-                    $price_id   = $res['stripe_price_id'];
+                    $price_id = $res['stripe_price_id'];
                     $wpdb->update($table_name, [
                         'stripe_product_id' => $product_id,
-                        'stripe_price_id'   => $price_id,
+                        'stripe_price_id' => $price_id,
                         'stripe_price_id_sale' => ($mode === 'kauf') ? $price_id : null,
                     ], ['id' => $variant_id], ['%s', '%s', '%s'], ['%d']);
                     if ($mode === 'kauf') {
@@ -432,10 +434,10 @@ if (isset($_POST['submit'])) {
             } elseif ($needs_product) {
                 $product_res = \ProduktVerleih\StripeService::create_or_retrieve_product([
                     'plugin_product_id' => $variant_id,
-                    'variant_id'        => $variant_id,
-                    'duration_id'       => null,
-                    'name'              => $name,
-                    'mode'              => $mode,
+                    'variant_id' => $variant_id,
+                    'duration_id' => null,
+                    'name' => $name,
+                    'mode' => $mode,
                 ]);
                 if (!is_wp_error($product_res)) {
                     $product_id = $product_res['stripe_product_id'];
@@ -446,7 +448,7 @@ if (isset($_POST['submit'])) {
             }
 
             if ($product_id && $sale_enabled && $verkaufspreis_einmalig > 0 && empty($price_id_sale)) {
-                $sale_price = \ProduktVerleih\StripeService::create_price($product_id, round($verkaufspreis_einmalig * 100), 'kauf', 'Einmalverkauf');
+                $sale_price = \ProduktVerleih\StripeService::create_price($product_id, round($verkaufspreis_einmalig * 100), 'kauf', __('Einmalverkauf', 'h2-rental-pro'));
                 if (!is_wp_error($sale_price)) {
                     $wpdb->update($table_name, [
                         'stripe_price_id_sale' => $sale_price->id,
@@ -459,7 +461,7 @@ if (isset($_POST['submit'])) {
 
             \ProduktVerleih\StripeService::delete_lowest_price_cache_for_category($category_id);
         } else {
-            echo '<div class="notice notice-error"><p>❌ Fehler beim Hinzufügen: ' . esc_html($wpdb->last_error) . '</p></div>';
+            echo '<div class="notice notice-error"><p>❌ ' . sprintf(esc_html__('Fehler beim Hinzufügen: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
         }
     }
 }
@@ -486,9 +488,9 @@ if (isset($_GET['delete']) && isset($_GET['fw_nonce']) && wp_verify_nonce($_GET[
         );
     }
     if ($result !== false) {
-        echo '<div class="notice notice-success"><p>✅ Ausführung gelöscht!</p></div>';
+        echo '<div class="notice notice-success"><p>✅ ' . esc_html__('Ausführung gelöscht!', 'h2-rental-pro') . '</p></div>';
     } else {
-        echo '<div class="notice notice-error"><p>❌ Fehler beim Löschen: ' . esc_html($wpdb->last_error) . '</p></div>';
+        echo '<div class="notice notice-error"><p>❌ ' . sprintf(esc_html__('Fehler beim Löschen: %s', 'h2-rental-pro'), esc_html($wpdb->last_error)) . '</p></div>';
     }
 }
 
@@ -513,119 +515,135 @@ $branding_results = $wpdb->get_results("SELECT setting_key, setting_value FROM {
 foreach ($branding_results as $result) {
     $branding[$result->setting_key] = $result->setting_value;
 }
-$subline_text = 'Ausführungen verwalten';
+$subline_text = __('Ausführungen verwalten', 'h2-rental-pro');
 if ($active_tab === 'add') {
-    $subline_text = 'Erstellen Sie eine neue Ausführung für das Produkt "' . ($current_category ? esc_html($current_category->name) : 'Unbekannt') . '"';
+    $subline_text = sprintf(__('Erstellen Sie eine neue Ausführung für das Produkt "%s"', 'h2-rental-pro'), ($current_category ? esc_html($current_category->name) : __('Unbekannt', 'h2-rental-pro')));
 } elseif ($active_tab === 'edit' && $edit_item) {
-    $subline_text = 'Bearbeiten Sie die Ausführung "' . esc_html($edit_item->name) . '" für das Produkt "' . ($current_category ? esc_html($current_category->name) : 'Unbekannt') . '"';
+    $subline_text = sprintf(__('Bearbeiten Sie die Ausführung "%s" für das Produkt "%s"', 'h2-rental-pro'), esc_html($edit_item->name), ($current_category ? esc_html($current_category->name) : __('Unbekannt', 'h2-rental-pro')));
 }
 ?>
 
 <div class="produkt-admin dashboard-wrapper">
-    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
+    <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>,
+        <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
     <p class="dashboard-subline"><?php echo $subline_text; ?></p>
 
-<?php if ($active_tab === 'list'): ?>
-    <div class="dashboard-grid">
-        <div class="dashboard-left">
-            <div class="dashboard-card card-product-selector">
-                <h2>Produkt auswählen</h2>
-                <p class="card-subline">Für welches Produkt möchten Sie eine Ausführung bearbeiten?</p>
-                <form method="get" action="" class="produkt-category-selector" style="background:none;border:none;padding:0;">
-                    <input type="hidden" name="page" value="produkt-variants">
-                    <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
-                    <select name="category" id="category-select" onchange="this.form.submit()">
-                        <?php foreach ($categories as $category): ?>
-                            <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>><?php echo esc_html($category->name); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <noscript><input type="submit" value="Wechseln" class="button"></noscript>
-                </form>
-                <?php if ($current_category): ?>
-                <div class="selected-product-preview">
-                    <?php if (!empty($current_category->default_image)): ?>
-                        <img src="<?php echo esc_url($current_category->default_image); ?>" alt="<?php echo esc_attr($current_category->name); ?>">
-                    <?php else: ?>
-                        <div class="placeholder-icon">🏷️</div>
+    <?php if ($active_tab === 'list'): ?>
+        <div class="dashboard-grid">
+            <div class="dashboard-left">
+                <div class="dashboard-card card-product-selector">
+                    <h2><?php echo esc_html__('Produkt auswählen', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline">
+                        <?php echo esc_html__('Für welches Produkt möchten Sie eine Ausführung bearbeiten?', 'h2-rental-pro'); ?>
+                    </p>
+                    <form method="get" action="" class="produkt-category-selector"
+                        style="background:none;border:none;padding:0;">
+                        <input type="hidden" name="page" value="produkt-variants">
+                        <input type="hidden" name="tab" value="<?php echo esc_attr($active_tab); ?>">
+                        <select name="category" id="category-select" onchange="this.form.submit()">
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo $category->id; ?>" <?php selected($selected_category, $category->id); ?>><?php echo esc_html($category->name); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <noscript><input type="submit" value="<?php echo esc_attr__('Wechseln', 'h2-rental-pro'); ?>"
+                                class="button"></noscript>
+                    </form>
+                    <?php if ($current_category): ?>
+                        <div class="selected-product-preview">
+                            <?php if (!empty($current_category->default_image)): ?>
+                                <img src="<?php echo esc_url($current_category->default_image); ?>"
+                                    alt="<?php echo esc_attr($current_category->name); ?>">
+                            <?php else: ?>
+                                <div class="placeholder-icon">🏷️</div>
+                            <?php endif; ?>
+                            <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
+                        </div>
                     <?php endif; ?>
-                    <div class="tile-overlay"><span><?php echo esc_html($current_category->name); ?></span></div>
                 </div>
-                <?php endif; ?>
             </div>
-        </div>
-        <div class="dashboard-right">
-            <div class="dashboard-row">
-                <div class="dashboard-card card-new-product">
-                    <h2>Neue Ausführung</h2>
-                    <p class="card-subline">Ausführung erstellen</p>
-                    <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&tab=add'); ?>" class="icon-btn add-product-btn" aria-label="Hinzufügen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
-                            <path d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z"/>
-                            <path d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z"/>
-                        </svg>
-                    </a>
-                </div>
-                <div class="dashboard-card card-quicknav">
-                    <h2>Schnellnavigation</h2>
-                    <p class="card-subline">Direkt zu wichtigen Listen</p>
-                    <div class="quicknav-grid">
-                        <div class="quicknav-card">
-                            <a href="admin.php?page=produkt-verleih">
-                                <div class="quicknav-inner">
-                                    <div class="quicknav-icon-circle">🏠</div>
-                                    <div class="quicknav-label">Dashboard</div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="quicknav-card">
-                            <a href="admin.php?page=produkt-categories">
-                                <div class="quicknav-inner">
-                                    <div class="quicknav-icon-circle">🧩</div>
-                                    <div class="quicknav-label">Kategorien</div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="quicknav-card">
-                            <a href="admin.php?page=produkt-products">
-                                <div class="quicknav-inner">
-                                    <div class="quicknav-icon-circle">🏷️</div>
-                                    <div class="quicknav-label">Produkte</div>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="quicknav-card">
-                            <a href="admin.php?page=produkt-extras">
-                                <div class="quicknav-inner">
-                                    <div class="quicknav-icon-circle">✨</div>
-                                    <div class="quicknav-label">Extras</div>
-                                </div>
-                            </a>
+            <div class="dashboard-right">
+                <div class="dashboard-row">
+                    <div class="dashboard-card card-new-product">
+                        <h2><?php echo esc_html__('Neue Ausführung', 'h2-rental-pro'); ?></h2>
+                        <p class="card-subline"><?php echo esc_html__('Ausführung erstellen', 'h2-rental-pro'); ?></p>
+                        <a href="<?php echo admin_url('admin.php?page=produkt-variants&category=' . $selected_category . '&tab=add'); ?>"
+                            class="icon-btn add-product-btn"
+                            aria-label="<?php echo esc_attr__('Hinzufügen', 'h2-rental-pro'); ?>">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80.3">
+                                <path
+                                    d="M12.1,12c-15.4,15.4-15.4,40.4,0,55.8,7.7,7.7,17.7,11.7,27.9,11.7s20.2-3.8,27.9-11.5c15.4-15.4,15.4-40.4,0-55.8-15.4-15.6-40.4-15.6-55.8-.2h0ZM62.1,62c-12.1,12.1-31.9,12.1-44.2,0-12.1-12.1-12.1-31.9,0-44.2,12.1-12.1,31.9-12.1,44.2,0,12.1,12.3,12.1,31.9,0,44.2Z" />
+                                <path
+                                    d="M54.6,35.7h-10.4v-10.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v10.4h-10.4c-2.3,0-4.2,1.9-4.2,4.2s1.9,4.2,4.2,4.2h10.4v10.4c0,2.3,1.9,4.2,4.2,4.2s4.2-1.9,4.2-4.2v-10.4h10.4c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2Z" />
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="dashboard-card card-quicknav">
+                        <h2><?php echo esc_html__('Schnellnavigation', 'h2-rental-pro'); ?></h2>
+                        <p class="card-subline"><?php echo esc_html__('Direkt zu wichtigen Listen', 'h2-rental-pro'); ?></p>
+                        <div class="quicknav-grid">
+                            <div class="quicknav-card">
+                                <a href="admin.php?page=produkt-verleih">
+                                    <div class="quicknav-inner">
+                                        <div class="quicknav-icon-circle">🏠</div>
+                                        <div class="quicknav-label"><?php echo esc_html__('Dashboard', 'h2-rental-pro'); ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="quicknav-card">
+                                <a href="admin.php?page=produkt-categories">
+                                    <div class="quicknav-inner">
+                                        <div class="quicknav-icon-circle">🧩</div>
+                                        <div class="quicknav-label"><?php echo esc_html__('Kategorien', 'h2-rental-pro'); ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="quicknav-card">
+                                <a href="admin.php?page=produkt-products">
+                                    <div class="quicknav-inner">
+                                        <div class="quicknav-icon-circle">🏷️</div>
+                                        <div class="quicknav-label"><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="quicknav-card">
+                                <a href="admin.php?page=produkt-extras">
+                                    <div class="quicknav-inner">
+                                        <div class="quicknav-icon-circle">✨</div>
+                                        <div class="quicknav-label"><?php echo esc_html__('Extras', 'h2-rental-pro'); ?>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="dashboard-card">
-                <div class="card-header-flex">
-                    <div>
-                        <h2>Ausführungen</h2>
-                        <p class="card-subline">Vorhandene Varianten des Produkts</p>
+                <div class="dashboard-card">
+                    <div class="card-header-flex">
+                        <div>
+                            <h2><?php echo esc_html__('Ausführungen', 'h2-rental-pro'); ?></h2>
+                            <p class="card-subline">
+                                <?php echo esc_html__('Vorhandene Varianten des Produkts', 'h2-rental-pro'); ?></p>
+                        </div>
                     </div>
-                </div>
-                <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
-                <table class="activity-table">
-                    <thead>
-                        <tr>
-                            <th>Bild</th>
-                            <th>Name</th>
-                            <th>Verfügbar</th>
-                            <th><?php echo ($modus === 'kauf') ? 'Preis' : 'Einmal-Preis'; ?></th>
-                            <th>Bilder</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($variants as $variant): ?>
-                            <?php
+                    <?php $modus = get_option('produkt_betriebsmodus', 'miete'); ?>
+                    <table class="activity-table">
+                        <thead>
+                            <tr>
+                                <th><?php echo esc_html__('Bild', 'h2-rental-pro'); ?></th>
+                                <th><?php echo esc_html__('Name', 'h2-rental-pro'); ?></th>
+                                <th><?php echo esc_html__('Verfügbar', 'h2-rental-pro'); ?></th>
+                                <th><?php echo ($modus === 'kauf') ? esc_html__('Preis', 'h2-rental-pro') : esc_html__('Einmal-Preis', 'h2-rental-pro'); ?>
+                                </th>
+                                <th><?php echo esc_html__('Bilder', 'h2-rental-pro'); ?></th>
+                                <th><?php echo esc_html__('Aktionen', 'h2-rental-pro'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($variants as $variant): ?>
+                                <?php
                                 $image_count = 0;
                                 $main_image = '';
                                 for ($i = 1; $i <= 5; $i++) {
@@ -637,53 +655,65 @@ if ($active_tab === 'add') {
                                         }
                                     }
                                 }
-                            ?>
-                            <tr>
-                                <td>
-                                    <?php if ($main_image): ?>
-                                        <img src="<?php echo esc_url($main_image); ?>" style="width:60px;height:60px;object-fit:cover;border-radius:4px;" alt="<?php echo esc_attr($variant->name); ?>">
-                                    <?php else: ?>
-                                        <div style="width:60px;height:60px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;">📦</div>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?php echo esc_html($variant->name); ?></td>
-                                <td><?php echo ($variant->available ?? 1) ? '✅' : '❌'; ?></td>
-                                <td>
-                                    <?php if ($modus === 'kauf'): ?>
-                                        <?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€
-                                    <?php else: ?>
-                                        <?php if (!empty($variant->sale_enabled) && floatval($variant->verkaufspreis_einmalig) > 0): ?>
+                                ?>
+                                <tr>
+                                    <td>
+                                        <?php if ($main_image): ?>
+                                            <img src="<?php echo esc_url($main_image); ?>"
+                                                style="width:60px;height:60px;object-fit:cover;border-radius:4px;"
+                                                alt="<?php echo esc_attr($variant->name); ?>">
+                                        <?php else: ?>
+                                            <div
+                                                style="width:60px;height:60px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;">
+                                                📦</div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?php echo esc_html($variant->name); ?></td>
+                                    <td><?php echo ($variant->available ?? 1) ? '✅' : '❌'; ?></td>
+                                    <td>
+                                        <?php if ($modus === 'kauf'): ?>
                                             <?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€
                                         <?php else: ?>
-                                            –
+                                            <?php if (!empty($variant->sale_enabled) && floatval($variant->verkaufspreis_einmalig) > 0): ?>
+                                                <?php echo number_format($variant->verkaufspreis_einmalig, 2, ',', '.'); ?>€
+                                            <?php else: ?>
+                                                –
+                                            <?php endif; ?>
                                         <?php endif; ?>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?php echo $image_count; ?></td>
-                                <td>
-                                    <button type="button" class="icon-btn" aria-label="Bearbeiten" onclick="window.location.href='?page=produkt-variants&category=<?php echo $selected_category; ?>&tab=edit&edit=<?php echo $variant->id; ?>'">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
-                                            <path d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z"/>
-                                            <path d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z"/>
-                                        </svg>
-                                    </button>
-                                    <button type="button" class="icon-btn" onclick="if(confirm('Bist du sicher das du Löschen möchtest?')){window.location.href='?page=produkt-variants&category=<?php echo $selected_category; ?>&delete=<?php echo $variant->id; ?>&fw_nonce=<?php echo wp_create_nonce('produkt_admin_action'); ?>';}" aria-label="Löschen">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
-                                            <path d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z"/>
-                                            <path d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z"/>
-                                        </svg>
-                                    </button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                                    </td>
+                                    <td><?php echo $image_count; ?></td>
+                                    <td>
+                                        <button type="button" class="icon-btn"
+                                            aria-label="<?php echo esc_attr__('Bearbeiten', 'h2-rental-pro'); ?>"
+                                            onclick="window.location.href='?page=produkt-variants&category=<?php echo $selected_category; ?>&tab=edit&edit=<?php echo $variant->id; ?>'">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80.8 80.1">
+                                                <path
+                                                    d="M54.7,4.8l-31.5,31.7c-.6.6-1,1.5-1.2,2.3l-3.3,18.3c-.2,1.2.2,2.7,1.2,3.8.8.8,1.9,1.2,2.9,1.2h.8l18.3-3.3c.8-.2,1.7-.6,2.3-1.2l31.7-31.7c5.8-5.8,5.8-15.2,0-21-6-5.8-15.4-5.8-21.2,0h0ZM69.9,19.8l-30.8,30.8-11,1.9,2.1-11.2,30.6-30.6c2.5-2.5,6.7-2.5,9.2,0,2.5,2.7,2.5,6.7,0,9.2Z" />
+                                                <path
+                                                    d="M5.1,79.6h70.8c2.3,0,4.2-1.9,4.2-4.2v-35.4c0-2.3-1.9-4.2-4.2-4.2s-4.2,1.9-4.2,4.2v31.2H9.2V8.8h31.2c2.3,0,4.2-1.9,4.2-4.2s-1.9-4.2-4.2-4.2H5.1c-2.3,0-4.2,1.9-4.2,4.2v70.8c0,2.3,1.9,4.2,4.2,4.2h0Z" />
+                                            </svg>
+                                        </button>
+                                        <button type="button" class="icon-btn"
+                                            onclick="if(confirm('<?php echo esc_js(__('Bist du sicher das du Löschen möchtest?', 'h2-rental-pro')); ?>')){window.location.href='?page=produkt-variants&category=<?php echo $selected_category; ?>&delete=<?php echo $variant->id; ?>&fw_nonce=<?php echo wp_create_nonce('produkt_admin_action'); ?>';}"
+                                            aria-label="<?php echo esc_attr__('Löschen', 'h2-rental-pro'); ?>">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 79.9 80.1">
+                                                <path
+                                                    d="M39.8.4C18,.4.3,18.1.3,40s17.7,39.6,39.6,39.6,39.6-17.7,39.6-39.6S61.7.4,39.8.4ZM39.8,71.3c-17.1,0-31.2-14-31.2-31.2s14.2-31.2,31.2-31.2,31.2,14,31.2,31.2-14.2,31.2-31.2,31.2Z" />
+                                                <path
+                                                    d="M53,26.9c-1.7-1.7-4.2-1.7-5.8,0l-7.3,7.3-7.3-7.3c-1.7-1.7-4.2-1.7-5.8,0-1.7,1.7-1.7,4.2,0,5.8l7.3,7.3-7.3,7.3c-1.7,1.7-1.7,4.2,0,5.8.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2l7.3-7.3,7.3,7.3c.8.8,1.9,1.2,2.9,1.2s2.1-.4,2.9-1.2c1.7-1.7,1.7-4.2,0-5.8l-7.3-7.3,7.3-7.3c1.7-1.7,1.7-4.4,0-5.8h0Z" />
+                                            </svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
-<?php elseif ($active_tab === 'add'): ?>
-    <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-add-tab.php'; ?>
-<?php elseif ($active_tab === 'edit' && $edit_item): ?>
-    <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-edit-tab.php'; ?>
-<?php endif; ?>
+    <?php elseif ($active_tab === 'add'): ?>
+        <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-add-tab.php'; ?>
+    <?php elseif ($active_tab === 'edit' && $edit_item): ?>
+        <?php include PRODUKT_PLUGIN_PATH . 'admin/tabs/variants-edit-tab.php'; ?>
+    <?php endif; ?>
 </div>

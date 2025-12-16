@@ -9,9 +9,9 @@ if (isset($_POST['confirm_return_id'])) {
     $order_id = intval($_POST['confirm_return_id']);
     $success = \ProduktVerleih\Database::process_inventory_return($order_id);
     if ($success) {
-        echo '<div class="updated"><p>Rückgabe erfolgreich bestätigt.</p></div>';
+        echo '<div class="updated"><p>' . esc_html__('Rückgabe erfolgreich bestätigt.', 'h2-rental-pro') . '</p></div>';
     } else {
-        echo '<div class="error"><p>Fehler beim Bestätigen der Rückgabe.</p></div>';
+        echo '<div class="error"><p>' . esc_html__('Fehler beim Bestätigen der Rückgabe.', 'h2-rental-pro') . '</p></div>';
     }
 }
 
@@ -68,17 +68,17 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 <div class="produkt-admin dashboard-wrapper">
 
     <h1 class="dashboard-greeting"><?php echo pv_get_time_greeting(); ?>, <?php echo esc_html(wp_get_current_user()->display_name); ?> 👋</h1>
-    <p class="dashboard-subline">Willkommen in Ihrem Dashboard für Mietprodukte.</p>
+    <p class="dashboard-subline"><?php echo esc_html__('Willkommen in Ihrem Dashboard für Mietprodukte.', 'h2-rental-pro'); ?></p>
 
     <div class="dashboard-grid">
         <!-- Linke Spalte -->
 <div class="dashboard-left">
 
     <div class="dashboard-card card-income">
-        <h2>Gesamteinnahmen <?php echo date_i18n('F'); ?></h2>
-        <p class="card-subline">Ihre Umsatzübersicht für Mietprodukte</p>
+        <h2><?php printf(esc_html__('Gesamteinnahmen %s', 'h2-rental-pro'), date_i18n('F')); ?></h2>
+        <p class="card-subline"><?php echo esc_html__('Ihre Umsatzübersicht für Mietprodukte', 'h2-rental-pro'); ?></p>
         <p class="income-amount">€ <?php echo $monthly_income; ?></p>
-        <small>Zwischen dem 01. – <?php echo date_i18n('d.m.Y'); ?></small>
+        <small><?php printf(esc_html__('Zwischen dem 01. – %s', 'h2-rental-pro'), date_i18n('d.m.Y')); ?></small>
     </div>
 
     <?php
@@ -90,35 +90,35 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
     $fs = function_exists('hrp_fs') ? hrp_fs() : (function_exists('fs') ? fs() : null);
 
     // Lizenz prüfen
-    $license_status = ($fs && $fs->can_use_premium_code()) ? 'Aktiv' : 'Nicht aktiviert';
+    $license_status = ($fs && $fs->can_use_premium_code()) ? __('Aktiv', 'h2-rental-pro') : __('Nicht aktiviert', 'h2-rental-pro');
     ?>
 
     <div class="dashboard-card card-company">
         <div style="display: flex; align-items: center; gap: 1.5rem;">
             <div style="background: #fff; color: #000; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem;">H2</div>
             <div>
-                <h2>Lizenzstatus</h2>
-                <p><strong>Status:</strong> <?php if ($license_status === 'Aktiv') : ?><span class="badge status-abgeschlossen"><?php echo esc_html($license_status); ?></span><?php else : ?><?php echo esc_html($license_status); ?><?php endif; ?></p>
+                <h2><?php echo esc_html__('Lizenzstatus', 'h2-rental-pro'); ?></h2>
+                <p><strong><?php echo esc_html__('Status:', 'h2-rental-pro'); ?></strong> <?php if ($license_status === __('Aktiv', 'h2-rental-pro')) : ?><span class="badge status-abgeschlossen"><?php echo esc_html($license_status); ?></span><?php else : ?><?php echo esc_html($license_status); ?><?php endif; ?></p>
             </div>
         </div>
 
         <div style="margin-top: 1.5rem;">
-            <p><strong>Version:</strong> <?php echo esc_html(PRODUKT_PLUGIN_VERSION); ?></p>
-            <p><strong>Support:</strong> <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
-            <p><strong>Website:</strong> <a href="https://www.h2concepts.de" target="_blank">www.h2concepts.de</a></p>
+            <p><strong><?php echo esc_html__('Version:', 'h2-rental-pro'); ?></strong> <?php echo esc_html(PRODUKT_PLUGIN_VERSION); ?></p>
+            <p><strong><?php echo esc_html__('Support:', 'h2-rental-pro'); ?></strong> <a href="mailto:support@h2concepts.de">support@h2concepts.de</a></p>
+            <p><strong><?php echo esc_html__('Website:', 'h2-rental-pro'); ?></strong> <a href="https://www.h2concepts.de" target="_blank">www.h2concepts.de</a></p>
         </div>
 
         <?php if ($fs) : ?>
         <div style="margin-top: 1.5rem;">
-            <a href="<?php echo esc_url($fs->get_account_url()); ?>" class="button button-primary license-button">Lizenz verwalten</a>
+            <a href="<?php echo esc_url($fs->get_account_url()); ?>" class="button button-primary license-button"><?php echo esc_html__('Lizenz verwalten', 'h2-rental-pro'); ?></a>
         </div>
         <?php endif; ?>
     </div>
 
     <!-- Rückgaben-Box -->
     <div class="dashboard-card card-returns">
-        <h2>Offene Rückgaben</h2>
-        <p class="card-subline">Folgende Rückgaben warten auf Bestätigung:</p>
+        <h2><?php echo esc_html__('Offene Rückgaben', 'h2-rental-pro'); ?></h2>
+        <p class="card-subline"><?php echo esc_html__('Folgende Rückgaben warten auf Bestätigung:', 'h2-rental-pro'); ?></p>
 
         <?php if (!empty($return_orders)): ?>
             <ul class="return-list">
@@ -135,29 +135,29 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <strong>#<?php echo esc_html($return->order_number ?: $return->id); ?></strong><br>
                             <?php echo esc_html($return->customer_name); ?><br>
                             <?php if (!empty($return->category_name)): ?>
-                                Produkt: <?php echo esc_html($return->category_name); ?><br>
+                                <?php printf(esc_html__('Produkt: %s', 'h2-rental-pro'), esc_html($return->category_name)); ?><br>
                             <?php endif; ?>
                             <?php if (!empty($return->variant_name)): ?>
-                                Ausführung: <?php echo esc_html($return->variant_name); ?><br>
+                                <?php printf(esc_html__('Ausführung: %s', 'h2-rental-pro'), esc_html($return->variant_name)); ?><br>
                             <?php endif; ?>
                             <?php if (!empty($return->extra_names)): ?>
-                                Extras: <?php echo esc_html($return->extra_names); ?><br>
+                                <?php printf(esc_html__('Extras: %s', 'h2-rental-pro'), esc_html($return->extra_names)); ?><br>
                             <?php endif; ?>
                             <?php if ($is_rental_mode): ?>
-                                Mietstart: <?php echo esc_html($start_label); ?>
+                                <?php printf(esc_html__('Mietstart: %s', 'h2-rental-pro'), esc_html($start_label)); ?>
                             <?php else: ?>
-                                Rückgabe am: <?php echo esc_html($end_label); ?>
+                                <?php printf(esc_html__('Rückgabe am: %s', 'h2-rental-pro'), esc_html($end_label)); ?>
                             <?php endif; ?>
                         </div>
                         <form method="post" class="return-confirm-form" style="margin-left:auto;">
                             <input type="hidden" name="confirm_return_id" value="<?php echo (int)$return->id; ?>">
-                            <button type="submit" class="button button-primary">Rückgabe bestätigen</button>
+                            <button type="submit" class="button button-primary"><?php echo esc_html__('Rückgabe bestätigen', 'h2-rental-pro'); ?></button>
                         </form>
                     </li>
                 <?php endforeach; ?>
             </ul>
         <?php else: ?>
-            <p style="margin-top: 1rem;">✅ Aktuell stehen keine Rückgaben an.</p>
+            <p style="margin-top: 1rem;">✅ <?php echo esc_html__('Aktuell stehen keine Rückgaben an.', 'h2-rental-pro'); ?></p>
         <?php endif; ?>
     </div>
 
@@ -168,23 +168,23 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 
             <div class="dashboard-row">
                 <div class="dashboard-card card-products">
-                    <h2>Produktübersicht</h2>
-                    <p class="card-subline">Ihre wichtigsten Produktdaten auf einen Blick</p>
+                    <h2><?php echo esc_html__('Produktübersicht', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Ihre wichtigsten Produktdaten auf einen Blick', 'h2-rental-pro'); ?></p>
                     <div class="product-info-grid">
                         <div class="product-info-box bg-pastell-orange">
-                            <span class="label">Produkte</span>
+                            <span class="label"><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?></span>
                             <strong class="value"><?php echo $products; ?></strong>
                         </div>
                         <div class="product-info-box bg-pastell-mint">
-                            <span class="label">Extras</span>
+                            <span class="label"><?php echo esc_html__('Extras', 'h2-rental-pro'); ?></span>
                             <strong class="value"><?php echo $extras; ?></strong>
                         </div>
                         <div class="product-info-box bg-pastell-gruen">
-                            <span class="label">Ausführungen</span>
+                            <span class="label"><?php echo esc_html__('Ausführungen', 'h2-rental-pro'); ?></span>
                             <strong class="value"><?php echo $variants; ?></strong>
                         </div>
                         <div class="product-info-box bg-pastell-gelb">
-                            <span class="label">Kunden</span>
+                            <span class="label"><?php echo esc_html__('Kunden', 'h2-rental-pro'); ?></span>
                             <strong class="value"><?php echo $customers; ?></strong>
                         </div>
                     </div>
@@ -192,14 +192,14 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 
                 <!-- Schnellnavigation -->
                 <div class="dashboard-card card-quicknav">
-                    <h2>Schnellnavigation</h2>
-                    <p class="card-subline">Nützliche Direktlinks für die tägliche Arbeit.</p>
+                    <h2><?php echo esc_html__('Schnellnavigation', 'h2-rental-pro'); ?></h2>
+                    <p class="card-subline"><?php echo esc_html__('Nützliche Direktlinks für die tägliche Arbeit.', 'h2-rental-pro'); ?></p>
                     <div class="quicknav-grid">
                         <div class="quicknav-card">
                             <a href="admin.php?page=produkt-orders">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">📦</div>
-                                    <div class="quicknav-label">Bestellungen</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Bestellungen', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -207,7 +207,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-customers">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">👤</div>
-                                    <div class="quicknav-label">Kunden</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Kunden', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -215,7 +215,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-products">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🛒</div>
-                                    <div class="quicknav-label">Produkte</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Produkte', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -223,7 +223,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-settings">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">⚙️</div>
-                                    <div class="quicknav-label">Einstellungen</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Einstellungen', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -231,7 +231,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-categories">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🏷️</div>
-                                    <div class="quicknav-label">Kategorien</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Kategorien', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -239,7 +239,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-extras">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">✨</div>
-                                    <div class="quicknav-label">Extras</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Extras', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -247,7 +247,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-variants">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">🧩</div>
-                                    <div class="quicknav-label">Ausführungen</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Ausführungen', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -255,7 +255,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                             <a href="admin.php?page=produkt-calendar">
                                 <div class="quicknav-inner">
                                     <div class="quicknav-icon-circle">📅</div>
-                                    <div class="quicknav-label">Kalender</div>
+                                    <div class="quicknav-label"><?php echo esc_html__('Kalender', 'h2-rental-pro'); ?></div>
                                 </div>
                             </a>
                         </div>
@@ -265,17 +265,17 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 
             <!-- Letzte Aktivitäten -->
 <div class="dashboard-card card-activity">
-    <h2>Letzte Aktivitäten</h2>
-    <p class="card-subline">Was zuletzt passiert ist</p>
+    <h2><?php echo esc_html__('Letzte Aktivitäten', 'h2-rental-pro'); ?></h2>
+    <p class="card-subline"><?php echo esc_html__('Was zuletzt passiert ist', 'h2-rental-pro'); ?></p>
     <table class="activity-table">
         <thead>
             <tr>
-                <th>Bestellnr.</th>
-                <th>Kunde</th>
-                <th>Produkt</th>
-                <th>Datum</th>
-                <th>Status</th>
-                <th>Details</th>
+                <th><?php echo esc_html__('Bestellnr.', 'h2-rental-pro'); ?></th>
+                <th><?php echo esc_html__('Kunde', 'h2-rental-pro'); ?></th>
+                <th><?php echo esc_html__('Produkt', 'h2-rental-pro'); ?></th>
+                <th><?php echo esc_html__('Datum', 'h2-rental-pro'); ?></th>
+                <th><?php echo esc_html__('Status', 'h2-rental-pro'); ?></th>
+                <th><?php echo esc_html__('Details', 'h2-rental-pro'); ?></th>
             </tr>
         </thead>
         <tbody>
@@ -286,7 +286,7 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
                     <td><?php echo esc_html($order->produkt_name); ?></td>
                     <td><?php echo date_i18n('d.m.Y', strtotime($order->created_at)); ?></td>
                     <td><span class="badge status-<?php echo esc_attr($order->status); ?>"><?php echo ucfirst($order->status); ?></span></td>
-                    <td><a href="#" class="view-details-link" data-order-id="<?php echo esc_attr($order->id); ?>">Details ansehen</a></td>
+                    <td><a href="#" class="view-details-link" data-order-id="<?php echo esc_attr($order->id); ?>"><?php echo esc_html__('Details ansehen', 'h2-rental-pro'); ?></a></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
@@ -295,12 +295,12 @@ $plugin_name = $branding_result ? esc_html($branding_result->setting_value) : 'H
 			<!-- Sidebar-Overlay für Auftragsdetails -->
 <div id="order-details-sidebar" class="order-details-sidebar">
     <div class="order-details-header">
-        <h3>Auftragsdetails</h3>
+        <h3><?php echo esc_html__('Auftragsdetails', 'h2-rental-pro'); ?></h3>
         <button class="close-sidebar">&times;</button>
     </div>
     <div class="order-details-content">
         <!-- AJAX-Daten werden hier eingefügt -->
-        <p>Lade Details…</p>
+        <p><?php echo esc_html__('Lade Details…', 'h2-rental-pro'); ?></p>
     </div>
 </div>
 <div id="order-details-overlay" class="order-details-overlay"></div>
